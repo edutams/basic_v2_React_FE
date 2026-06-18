@@ -46,7 +46,6 @@ import {
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
 
-
 const InvoiceStudentsView = () => {
   const { session_term_id, class_id, pay_schedule_id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -311,7 +310,8 @@ const InvoiceStudentsView = () => {
       console.error('Failed to save optional payments', err);
       setInvoiceResult({
         success: false,
-        message: err?.response?.data?.message || 'An error occurred while saving optional payments.',
+        message:
+          err?.response?.data?.message || 'An error occurred while saving optional payments.',
       });
     }
   };
@@ -405,7 +405,7 @@ const InvoiceStudentsView = () => {
   const handlePrintInvoice = () => {
     if (!anchorStudent) return;
     handleMenuClose();
-    const url = `/payment-schedule/invoice/print/${session_term_id}/${class_id}/${anchorStudent.user_id}`;
+    const url = `/payment-schedule/invoice/print/${session_term_id}/${class_id}/${anchorStudent.id}`;
     window.open(url, '_blank');
   };
 
@@ -465,7 +465,8 @@ const InvoiceStudentsView = () => {
       console.error('Failed to regenerate invoice', err);
       setInvoiceResult({
         success: false,
-        message: err?.response?.data?.message || 'An error occurred while regenerating the invoice.',
+        message:
+          err?.response?.data?.message || 'An error occurred while regenerating the invoice.',
       });
     } finally {
       setRegeneratingStudent(false);
@@ -901,10 +902,7 @@ const InvoiceStudentsView = () => {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
           <MenuItem onClick={handlePrintInvoice}>Print Invoice</MenuItem>
-          <MenuItem
-            onClick={handleRegenerateInvoice}
-            disabled={regeneratingStudent}
-          >
+          <MenuItem onClick={handleRegenerateInvoice} disabled={regeneratingStudent}>
             {regeneratingStudent ? 'Regenerating...' : 'Regenerate Invoice'}
           </MenuItem>
           <MenuItem onClick={handleMenuClose}>Go to Student Ledger</MenuItem>
@@ -1232,7 +1230,8 @@ const InvoiceStudentsView = () => {
                     Category
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {categories.find((c) => String(c.id) === selectedStudentCategory)?.name || 'N/A'}
+                    {categories.find((c) => String(c.id) === selectedStudentCategory)?.name ||
+                      'N/A'}
                   </Typography>
                 </Box>
               </Stack>

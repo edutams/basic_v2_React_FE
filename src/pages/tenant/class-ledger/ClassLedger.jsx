@@ -789,7 +789,7 @@ const ClassLedger = () => {
             onClick={() => {
               setAnchorEl(null);
               if (activeRow) {
-                window.open(`/class-ledger/${activeRow.id}/invoice`, '_blank');
+                window.open(`/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`, '_blank');
               }
             }}
           >

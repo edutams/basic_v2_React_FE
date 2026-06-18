@@ -202,12 +202,12 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
                   </Typography>
                 </Box>
                 <Box textAlign="right">
-                  {/* <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                  <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                     Invoice #
                   </Typography>
                   <Typography fontWeight={700} fontSize={14}>
                     {invoiceData.invoice_number || 'N/A'}
-                  </Typography> */}
+                  </Typography>
                   <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                     Balance Due
                   </Typography>

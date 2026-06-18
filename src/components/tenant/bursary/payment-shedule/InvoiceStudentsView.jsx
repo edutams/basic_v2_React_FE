@@ -45,7 +45,7 @@ import {
   Description as DescriptionIcon,
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
-import PrintInvoiceModal from './PrintInvoiceModal';
+
 
 const InvoiceStudentsView = () => {
   const { session_term_id, class_id, pay_schedule_id } = useParams();
@@ -405,8 +405,8 @@ const InvoiceStudentsView = () => {
   const handlePrintInvoice = () => {
     if (!anchorStudent) return;
     handleMenuClose();
-    setPrintStudent(anchorStudent);
-    setPrintModalOpen(true);
+    const url = `/payment-schedule/invoice/print/${session_term_id}/${class_id}/${anchorStudent.user_id}`;
+    window.open(url, '_blank');
   };
 
   const handleRegenerateInvoice = () => {
@@ -910,19 +910,6 @@ const InvoiceStudentsView = () => {
           <MenuItem onClick={handleMenuClose}>Go to Student Ledger</MenuItem>
         </Menu>
       </ParentCard>
-
-      {/* ─── Print Invoice Modal ─── */}
-      <PrintInvoiceModal
-        open={printModalOpen}
-        onClose={() => {
-          setPrintModalOpen(false);
-          setPrintStudent(null);
-        }}
-        student={printStudent}
-        sessionTermId={session_term_id}
-        classId={class_id}
-        categoryId={selectedStudentCategory}
-      />
 
       {/* ─── Optional Payment Modal ─── */}
       <Dialog open={optionalModalOpen} onClose={handleCloseOptionalModal} maxWidth="sm" fullWidth>

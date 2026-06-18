@@ -58,6 +58,7 @@ const CreateAdmissionBatch = Loadable(
 
 const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
 const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
+const PrintInvoicePage = Loadable(lazy(() => import('@/components/tenant/bursary/payment-shedule/PrintInvoicePage')));
 const InvoiceStudentsView = Loadable(
   lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceStudentsView')),
 );
@@ -327,6 +328,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="dashboard.index">
             <InvoiceView />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'payment-schedule/invoice/print/:session_term_id/:class_id/:user_id',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <PrintInvoicePage />
           </TenantProtectedRoute>
         ),
       },

@@ -40,7 +40,7 @@ const BCrumb = [
 const CashPost = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { user_id } = useParams();
+  const { user_id,invoiceId } = useParams();
   const navigate = useNavigate();
 
   /* DATA STATE */
@@ -85,13 +85,16 @@ const CashPost = () => {
 
   const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
 
-  /* DYNAMIC PAYABLE CALCULATION */
+  /* DYNAMIC PAYABLE CALCULATION — factors in installment percentage */
   const getPayable = (fee, discountGlobal, penaltyGlobal) => {
     const discountRowEnabled = discountGlobal ? true : !!fee.discountEnabled;
     const penaltyRowEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
     const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
-    return Math.max(0, fee.amount - discount + penalty);
+    // Apply installment percentage if set (default to 100% if none selected)
+    const installmentPct = Number(fee.installment_percentage) || 100;
+    const baseAmount = fee.amount * (installmentPct / 100);
+    return Math.max(0, baseAmount - discount + penalty);
   };
 
   /* ───────────────────────────────────────────── */
@@ -109,6 +112,8 @@ const CashPost = () => {
         termId,
         userId: user_id,
         categoryId,
+        invoiceId,
+
       });
 
       if (!res.success || !res.data) {
@@ -121,7 +126,16 @@ const CashPost = () => {
 
       setStudentInfo(data.student_info);
       setSessionInfo(data.session_info);
-      setInstallments(data.installments || []);
+      const installmentsList = data.installments || [];
+      setInstallments(installmentsList);
+
+      // Helper to find installment percentage from installment_id or name
+      const findInstallmentPct = (item) => {
+        const match = installmentsList.find(
+          (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name
+        );
+        return match ? Number(match.inst1) : 0;
+      };
 
       // Map compulsory data: add editable fields
       const mappedComp = (data.compulsory_data || []).map((item) => ({
@@ -138,6 +152,7 @@ const CashPost = () => {
         balance: item.balance || item.amount,
         installment_id: item.installment_id || null,
         installment_name: item.installment_name || '',
+        installment_percentage: findInstallmentPct(item),
         has_cashpost: !!item.has_cashpost,
       }));
       setCompFees(mappedComp);
@@ -157,6 +172,7 @@ const CashPost = () => {
         balance: item.balance || item.amount,
         installment_id: item.installment_id || null,
         installment_name: item.installment_name || '',
+        installment_percentage: findInstallmentPct(item),
         has_cashpost: !!item.has_cashpost,
       }));
       setOptFees(mappedOpt);
@@ -190,7 +206,7 @@ const CashPost = () => {
     loadCategories();
   }, []);
 
-  // Initial load: fetch session/term once categories are ready.
+  // Initial load: fetch session/term AND cashpost data once categories are ready.
   // Does NOT re-fetch when category changes — only the Fetch button does that.
   useEffect(() => {
     if (categoriesLoading || categories.length === 0) return;
@@ -208,6 +224,9 @@ const CashPost = () => {
             session: active.sesname || '',
             term: active.term_name || '',
           });
+
+          // Load cashpost data with the fetched session/term and selected category
+          await fetchData(active.session_id, active.term_id, selectedCategoryId);
         } else {
           setLoading(false);
           setError('No active session/term found. Please configure bursary settings first.');
@@ -372,6 +391,7 @@ const CashPost = () => {
                           );
                           updateFee(type, fee.id, 'installment_name', e.target.value);
                           updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
+                          updateFee(type, fee.id, 'installment_percentage', Number(selectedInst?.inst1 || 0));
                         }}
                         displayEmpty
                       >

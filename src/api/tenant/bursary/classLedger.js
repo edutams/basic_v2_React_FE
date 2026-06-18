@@ -13,24 +13,26 @@ export const getClassStudentsPaymentStatus = async (payload) => {
     const res = await api.post('/bursary/class_ledger/fetch_payment_status', { payload });
     return res.data;
 }
-export const fetchInvoiceByNumber = async ({ sessionId, termId, userId, invoiceNumber }) => {
+export const fetchInvoiceByNumber = async ({ sessionId, termId, userId, invoiceNumber, categoryId } = {}) => {
     const params = {
         session_id: sessionId,
         term_id: termId,
         user_id: userId,
         invoice_number: invoiceNumber,
     };
+    if (categoryId) params.category_id = categoryId;
     const res = await api.get('/bursary/payment_schedule/fetch_invoice_by_number', { params });
     return res.data;
 };
 
-export const fetchCashPostData = async ({ sessionId, termId, userId, categoryId } = {}) => {
+export const fetchCashPostData = async ({ sessionId, termId, userId, categoryId, invoiceId } = {}) => {
     const params = {
         session_id: sessionId,
         term_id: termId,
         user_id: userId,
     };
     if (categoryId) params.category_id = categoryId;
+    if (invoiceId) params.invoice_id = invoiceId;
     const res = await api.get('/bursary/payment_schedule/fetch_cash_post_data', { params });
     return res.data;
 };

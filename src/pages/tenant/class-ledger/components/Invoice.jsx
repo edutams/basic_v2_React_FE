@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -14,22 +14,37 @@ import {
     Box,
     Avatar,
     Button,
-    FormControl,
-    Select,
-    MenuItem,
-    Grid,
     Switch,
     useTheme,
     Alert,
     Checkbox,
     TextField,
     CircularProgress,
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Divider,
+    Stack,
+    IconButton,
+    FormControl,
+    Select,
+    MenuItem,
+    FormControlLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { fetchInvoiceByNumber } from '@/api/tenant/bursary/classLedger';
-import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+    fetchActiveSessionTerm,
+    fetchActiveCategories,
+    fetchStudentOptionalPayments,
+    saveStudentOptionalPayments,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 
 const BCrumb = [
@@ -43,7 +58,7 @@ const BCrumb = [
 const Invoice = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
-    const { invoiceId,user_id } = useParams();
+    const { invoiceId, user_id } = useParams();
     const navigate = useNavigate();
 
     /* DATA STATE */
@@ -53,11 +68,12 @@ const Invoice = () => {
     const [compFees, setCompFees] = useState([]);
     const [optFees, setOptFees] = useState([]);
     const [installments, setInstallments] = useState([]);
-    const [assignedInstallmentId, setAssignedInstallmentId] = useState(null);
 
-    /* FILTER STATE */
-    const [selectedTermId, setSelectedTermId] = useState('');
-    const [selectedSessionId, setSelectedSessionId] = useState('');
+    /* SESSION / CLASS / CATEGORY IDs (for optional payments modal) */
+    const [sessionTermId, setSessionTermId] = useState(null);
+    const [classId, setClassId] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
     /* UI STATE */
     const [loading, setLoading] = useState(true);
@@ -65,9 +81,11 @@ const Invoice = () => {
     const [dataLoaded, setDataLoaded] = useState(false);
 
     const [optionalEnabled, setOptionalEnabled] = useState(true);
-    const [compInstallment, setCompInstallment] = useState('Select Installment');
-    const [globalInstallment, setGlobalInstallment] = useState('Select Installment');
     const [printModalOpen, setPrintModalOpen] = useState(false);
+
+    /* Refs */
+    const initialCategorySet = useRef(false);
+    const dataLoadedRef = useRef(false);
 
     /* GLOBAL SWITCHES */
     const [compDiscountGlobal, setCompDiscountGlobal] = useState(false);
@@ -75,46 +93,79 @@ const Invoice = () => {
     const [optDiscountGlobal, setOptDiscountGlobal] = useState(false);
     const [optPenaltyGlobal, setOptPenaltyGlobal] = useState(false);
 
+    /* ── Optional Payment Modal State ── */
+    const [optionalModalOpen, setOptionalModalOpen] = useState(false);
+    const [optionalPaymentList, setOptionalPaymentList] = useState([]);
+    const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
+    const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
+
     /* ACTIONS */
     const handleCompCheckChange = (id, checked) => {
-        setCompFees(prev => prev.map(f => f.id === id ? { ...f, checked } : f));
+        setCompFees((prev) => prev.map((f) => (f.id === id ? { ...f, checked } : f)));
     };
 
     const handleOptCheckChange = (id, checked) => {
-        setOptFees(prev => prev.map(f => f.id === id ? { ...f, checked } : f));
+        setOptFees((prev) => prev.map((f) => (f.id === id ? { ...f, checked } : f)));
     };
 
     const handleAllCompCheckChange = (checked) => {
-        setCompFees(prev => prev.map(f => ({ ...f, checked })));
+        setCompFees((prev) => prev.map((f) => ({ ...f, checked })));
     };
 
     const handleAllOptCheckChange = (checked) => {
-        setOptFees(prev => prev.map(f => ({ ...f, checked })));
-    };
-
-    const handleOptOptionChange = (id, value) => {
-        setOptFees(prev => prev.map(f => f.id === id ? { ...f, selectedOption: value } : f));
+        setOptFees((prev) => prev.map((f) => ({ ...f, checked })));
     };
 
     /* DISCOUNT / PENALTY UPDATE ACTIONS */
     const handleDiscountValueChange = (type, id, val) => {
         const setter = type === 'comp' ? setCompFees : setOptFees;
-        setter(prev => prev.map(f => f.id === id ? { ...f, discount: Math.max(0, Number(val || 0)) } : f));
+        setter((prev) =>
+            prev.map((f) =>
+                f.id === id ? { ...f, discount: Math.max(0, Number(val || 0)) } : f
+            )
+        );
     };
 
     const handlePenaltyValueChange = (type, id, val) => {
         const setter = type === 'comp' ? setCompFees : setOptFees;
-        setter(prev => prev.map(f => f.id === id ? { ...f, penalty: Math.max(0, Number(val || 0)) } : f));
+        setter((prev) =>
+            prev.map((f) =>
+                f.id === id ? { ...f, penalty: Math.max(0, Number(val || 0)) } : f
+            )
+        );
+    };
+
+    /* INSTALLMENT CHANGE HANDLER */
+    const handleInstallmentChange = (feeId, value) => {
+        const selectedInst = installments.find(
+            (inst) => inst.inst1 === value || inst.id === value
+        );
+        setCompFees((prev) =>
+            prev.map((f) =>
+                f.id === feeId
+                    ? {
+                          ...f,
+                          installment_name: value,
+                          installment_id: selectedInst?.id || null,
+                          installment_percentage: Number(selectedInst?.inst1 || 0),
+                      }
+                    : f
+            )
+        );
     };
 
     const handleDiscountSwitchChange = (type, id, checked) => {
         const setter = type === 'comp' ? setCompFees : setOptFees;
-        setter(prev => prev.map(f => f.id === id ? { ...f, discountEnabled: checked } : f));
+        setter((prev) =>
+            prev.map((f) => (f.id === id ? { ...f, discountEnabled: checked } : f))
+        );
     };
 
     const handlePenaltySwitchChange = (type, id, checked) => {
         const setter = type === 'comp' ? setCompFees : setOptFees;
-        setter(prev => prev.map(f => f.id === id ? { ...f, penaltyEnabled: checked } : f));
+        setter((prev) =>
+            prev.map((f) => (f.id === id ? { ...f, penaltyEnabled: checked } : f))
+        );
     };
 
     /* DYNAMIC PAYABLE CALCULATION */
@@ -125,7 +176,11 @@ const Invoice = () => {
         const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
         const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
 
-        return Math.max(0, fee.amount - discount + penalty);
+        // Apply installment percentage if set (default to 100% if none selected)
+        const installmentPct = Number(fee.installment_percentage) || 100;
+        const baseAmount = fee.amount * (installmentPct / 100);
+
+        return Math.max(0, baseAmount - discount + penalty);
     };
 
     /* COMPUTATIONS */
@@ -133,103 +188,251 @@ const Invoice = () => {
         return f.checked ? acc + getPayable(f, compDiscountGlobal, compPenaltyGlobal) : acc;
     }, 0);
 
-    const optTotal = optionalEnabled ? optFees.reduce((acc, f) => {
-        return f.checked ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal) : acc;
-    }, 0) : 0;
+    const optTotal = optionalEnabled
+        ? optFees.reduce((acc, f) => {
+              return f.checked
+                  ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal)
+                  : acc;
+          }, 0)
+        : 0;
 
     const grandTotal = compTotal + optTotal;
 
     const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
 
+    /* ── Optional Payment Modal Handlers ── */
+    const handleOpenOptionalModal = async () => {
+        // Guard: check required IDs are loaded
+        if (!sessionTermId || !classId || !selectedCategoryId) {
+            setError('Session/term, class, or category information not loaded yet. Please refresh the page.');
+            return;
+        }
+
+        setOptionalModalOpen(true);
+
+        try {
+            setLoadingOptionalPayments(true);
+            const res = await fetchStudentOptionalPayments({
+                sessionTermId,
+                classId,
+                categoryId: selectedCategoryId,
+            });
+            const list = Array.isArray(res?.data) ? res.data : [];
+            setOptionalPaymentList(list);
+        } catch (err) {
+            console.error('Failed to load optional payments', err);
+            setOptionalPaymentList([]);
+        } finally {
+            setLoadingOptionalPayments(false);
+        }
+    };
+
+    const handleCloseOptionalModal = () => {
+        setOptionalModalOpen(false);
+        setOptionalPaymentList([]);
+        setSelectedOptionalIds(new Set());
+    };
+
+    const handleToggleOptionalItem = (optionId) => {
+        setSelectedOptionalIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(optionId)) {
+                next.delete(optionId);
+            } else {
+                next.add(optionId);
+            }
+            return next;
+        });
+    };
+
+    const handleToggleAllOptional = () => {
+        const allIds = new Set();
+        optionalPaymentList.forEach((group) => {
+            group.options.forEach((opt) => allIds.add(opt.option_id));
+        });
+
+        setSelectedOptionalIds((prev) => {
+            const isAllSelected =
+                prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
+            return isAllSelected ? new Set() : allIds;
+        });
+    };
+
+    const handleAddOptionalPayments = async () => {
+        if (!invoiceId || !user_id) return;
+
+        // Capture selected IDs before closing modal (state resets on close)
+        const optionPaymentIds = [...selectedOptionalIds];
+
+        // Close the modal
+        handleCloseOptionalModal();
+
+        try {
+            const res = await saveStudentOptionalPayments({
+                invoice_number: Number(invoiceId),
+                user_id,
+                option_payment_ids: optionPaymentIds,
+            });
+
+            if (res?.success) {
+                // Refetch invoice data to show the saved optional payments
+                if (sessionInfo) {
+                    await fetchInvoiceData(
+                        sessionInfo.session_id,
+                        sessionInfo.term_id,
+                        selectedCategoryId || undefined
+                    );
+                }
+            } else {
+                setError(res?.message || 'Failed to save optional payments.');
+            }
+        } catch (err) {
+            console.error('Failed to save optional payments', err);
+            setError(
+                err?.response?.data?.message || 'An error occurred while saving optional payments.'
+            );
+        }
+    };
+
+    const allOptionalItems = optionalPaymentList.flatMap((g) => g.options);
+    const allOptionalSelected =
+        allOptionalItems.length > 0 &&
+        allOptionalItems.every((opt) => selectedOptionalIds.has(opt.option_id));
+
+    const totalSelectedOptionalAmount = allOptionalItems
+        .filter((opt) => selectedOptionalIds.has(opt.option_id))
+        .reduce((sum, opt) => sum + (Number(opt.amount) || 0), 0);
+
+    /* ── Fetch categories via API ── */
+    const fetchCategories = useCallback(async () => {
+        try {
+            const res = await fetchActiveCategories();
+            const list =  res.data ?? [];
+            if (list.length > 0) {
+                setCategories(list);
+                setSelectedCategoryId(String(list[0].id));
+            }
+        } catch (err) {
+            console.error('Failed to fetch categories', err);
+        }
+    }, []);
+
     /* ───────────────────────────────────────────── */
     /* DATA FETCHING                                */
     /* ───────────────────────────────────────────── */
-    const fetchInvoiceData = useCallback(async (sessionId, termId) => {
-        if (!invoiceId) return;
+    const fetchInvoiceData = useCallback(
+        async (sessionId, termId, categoryId) => {
+            if (!invoiceId) return;
 
-        setLoading(true);
-        setError('');
+            setLoading(true);
+            setError('');
 
-        try {
-            const res = await fetchInvoiceByNumber({
-                sessionId,
-                termId,
-                invoiceNumber: invoiceId,
-                userId: user_id,
-            });
+            try {
+                const res = await fetchInvoiceByNumber({
+                    sessionId,
+                    termId,
+                    invoiceNumber: invoiceId,
+                    userId: user_id,
+                    categoryId: categoryId || undefined,
+                });
 
-            if (!res.success || !res.data) {
-                setError(res.message || 'Failed to load invoice data');
-                setLoading(false);
-                return;
-            }
-
-            const { data } = res;
-
-            setStudentInfo(data.student_info);
-            setSessionInfo(data.session_info);
-            setInvoiceInfo(data.invoice_info);
-            setInstallments(data.installments || []);
-            setAssignedInstallmentId(data.assigned_installment_id);
-
-            // Map compulsory data: add checked:false
-            const mappedComp = (data.compulsory_data || []).map(item => ({
-                id: item.id,
-                description: item.description,
-                schedule_amount: item.schedule_amount,
-                amount: item.amount,
-                discount: item.discount,
-                discount_enabled: item.discount_enabled,
-                penalty: item.penalty,
-                penalty_enabled: item.penalty_enabled,
-                paid_amount: item.paid_amount,
-                balance: item.balance,
-                status: item.status,
-                checked: false,
-                discountEnabled: !!item.discount_enabled,
-                penaltyEnabled: !!item.penalty_enabled,
-            }));
-            setCompFees(mappedComp);
-
-            // Map optional data: add checked:false, map options to string arrays
-            const mappedOpt = (data.optional_data || []).map(item => ({
-                id: item.id,
-                description: item.description,
-                schedule_amount: item.schedule_amount,
-                amount: item.amount,
-                optionType: item.option_type || '',
-                options: (item.options || []).map(o => o.option_name),
-                selectedOption: item.selected_option_name || '',
-                discount: item.discount,
-                discount_enabled: item.discount_enabled,
-                penalty: item.penalty,
-                penalty_enabled: item.penalty_enabled,
-                paid_amount: item.paid_amount,
-                balance: item.balance,
-                status: item.status,
-                checked: false,
-                discountEnabled: !!item.discount_enabled,
-                penaltyEnabled: !!item.penalty_enabled,
-            }));
-            setOptFees(mappedOpt);
-
-            // Set installment dropdown defaults
-            if (data.assigned_installment_id) {
-                const assigned = data.installments?.find(i => i.id === data.assigned_installment_id);
-                if (assigned) {
-                    setCompInstallment(assigned.inst1 || 'Select Installment');
-                    setGlobalInstallment(assigned.inst1 || 'Select Installment');
+                if (!res.success || !res.data) {
+                    setError(res.message || 'Failed to load invoice data');
+                    setLoading(false);
+                    return;
                 }
-            }
 
-            setDataLoaded(true);
-        } catch (err) {
-            console.error('Failed to fetch invoice data:', err);
-            setError(err?.response?.data?.message || err.message || 'Failed to load invoice data');
-        } finally {
-            setLoading(false);
-        }
-    }, [invoiceId]);
+                const { data } = res;
+
+                setStudentInfo(data.student_info);
+                setSessionInfo(data.session_info);
+                setInvoiceInfo(data.invoice_info);
+
+                // Store IDs needed for optional payments modal
+                if (data.session_info?.session_term_id) {
+                    setSessionTermId(data.session_info.session_term_id);
+                }
+                if (data.student_info?.class_id) {
+                    setClassId(data.student_info.class_id);
+                }
+
+                // Fetch categories (only on initial load, not when category changes)
+                if (!categoryId) {
+                    fetchCategories();
+                }
+
+                // Store installments
+                setInstallments(data.installments || []);
+
+                const installmentsList = data.installments || [];
+
+                // Helper to find installment percentage from installment_id or name
+                const findInstallmentPct = (item) => {
+                    const match = installmentsList.find(
+                        (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name
+                    );
+                    return match ? Number(match.inst1) : 0;
+                };
+
+                // Map compulsory data
+                const mappedComp = (data.compulsory_data || []).map((item) => ({
+                    id: item.id,
+                    description: item.description,
+                    schedule_amount: item.schedule_amount,
+                    amount: item.amount,
+                    discount: item.discount,
+                    discount_enabled: item.discount_enabled,
+                    penalty: item.penalty,
+                    penalty_enabled: item.penalty_enabled,
+                    paid_amount: item.paid_amount,
+                    balance: item.balance,
+                    status: item.status,
+                    checked: false,
+                    discountEnabled: !!item.discount_enabled,
+                    penaltyEnabled: !!item.penalty_enabled,
+                    installment_id: item.installment_id || null,
+                    installment_name: item.installment_name || '',
+                    installment_percentage: findInstallmentPct(item),
+                }));
+                setCompFees(mappedComp);
+
+                // Map optional data — use selected_options for chip display & amount calculation
+                const mappedOpt = (data.optional_data || []).map((item) => ({
+                    id: item.id,
+                    description: item.description,
+                    schedule_amount: item.schedule_amount,
+                    // Calculate amount as the SUM of all selected option amounts
+                    amount: (item.selected_options || []).reduce(
+                        (sum, opt) => sum + (Number(opt.amount) || 0),
+                        0
+                    ),
+                    selectedOptions: item.selected_options || [],
+                    discount: item.discount,
+                    discount_enabled: item.discount_enabled,
+                    penalty: item.penalty,
+                    penalty_enabled: item.penalty_enabled,
+                    paid_amount: item.paid_amount,
+                    balance: item.balance,
+                    status: item.status,
+                    checked: false,
+                    discountEnabled: !!item.discount_enabled,
+                    penaltyEnabled: !!item.penalty_enabled,
+                }));
+                setOptFees(mappedOpt);
+
+                setDataLoaded(true);
+                dataLoadedRef.current = true;
+            } catch (err) {
+                console.error('Failed to fetch invoice data:', err);
+                setError(
+                    err?.response?.data?.message || err.message || 'Failed to load invoice data'
+                );
+            } finally {
+                setLoading(false);
+            }
+        },
+        [invoiceId, user_id]
+    );
 
     // Fetch active session/term on mount, then load invoice data
     useEffect(() => {
@@ -238,8 +441,6 @@ const Invoice = () => {
                 const sessionRes = await fetchActiveSessionTerm();
                 if (sessionRes.status && sessionRes.data) {
                     const active = sessionRes.data;
-                    setSelectedSessionId(active.session_id || '');
-                    setSelectedTermId(active.term_id || '');
                     setSessionInfo({
                         session_id: active.session_id,
                         term_id: active.term_id,
@@ -247,11 +448,13 @@ const Invoice = () => {
                         term: active.term_name || '',
                     });
 
-                    // Fetch invoice using session_id, term_id, invoiceId, and user_id from URL
+                    // Fetch invoice using session_id, term_id (no category initially)
                     await fetchInvoiceData(active.session_id, active.term_id);
                 } else {
                     setLoading(false);
-                    setError('No active session/term found. Please configure bursary settings first.');
+                    setError(
+                        'No active session/term found. Please configure bursary settings first.'
+                    );
                 }
             } catch (err) {
                 console.error('Failed to fetch active session:', err);
@@ -262,6 +465,21 @@ const Invoice = () => {
 
         init();
     }, [fetchInvoiceData]);
+
+    // Re-fetch invoice data when the user changes the category filter
+    useEffect(() => {
+        // Skip the initial category set by fetchCategories
+        if (!initialCategorySet.current) {
+            if (selectedCategoryId) {
+                initialCategorySet.current = true;
+            }
+            return;
+        }
+
+        if (dataLoadedRef.current && selectedCategoryId && sessionInfo?.session_id && sessionInfo?.term_id) {
+            fetchInvoiceData(sessionInfo.session_id, sessionInfo.term_id, selectedCategoryId);
+        }
+    }, [selectedCategoryId]);
 
     /* SECTION HEADER BLOCK */
     const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
@@ -298,7 +516,11 @@ const Invoice = () => {
                     >
                         {icon}
                     </Box>
-                    <Typography variant="subtitle1" fontWeight={700} color={isDark ? '#f1f5f9' : '#334155'}>
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight={700}
+                        color={isDark ? '#f1f5f9' : '#334155'}
+                    >
                         {title}
                     </Typography>
                 </Box>
@@ -308,13 +530,20 @@ const Invoice = () => {
     };
 
     /* ───────────────────────────────────────────── */
-    /* LOADING / ERROR SCREEN                     */
+    /* LOADING / ERROR SCREEN                       */
     /* ───────────────────────────────────────────── */
     if (loading && !dataLoaded) {
         return (
             <PageContainer title="Invoice">
                 <Breadcrumb title="Invoice" items={BCrumb} />
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: 400,
+                    }}
+                >
                     <CircularProgress size={40} />
                 </Box>
             </PageContainer>
@@ -325,8 +554,17 @@ const Invoice = () => {
         return (
             <PageContainer title="Invoice">
                 <Breadcrumb title="Invoice" items={BCrumb} />
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-                    <Alert severity="error" sx={{ maxWidth: 500 }}>{error}</Alert>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: 400,
+                    }}
+                >
+                    <Alert severity="error" sx={{ maxWidth: 500 }}>
+                        {error}
+                    </Alert>
                 </Box>
             </PageContainer>
         );
@@ -370,61 +608,53 @@ const Invoice = () => {
                     }}
                 >
                     {/* Student details */}
-<Box
-    sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        width: '100%',
-        py: 1,
-    }}
->
-    <Avatar
-        sx={{
-            width: 72,
-            height: 72,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            mb: 1.5,
-        }}
-    >
-        <PersonOutlineIcon sx={{ fontSize: 40 }} />
-    </Avatar>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            width: '100%',
+                            py: 1,
+                        }}
+                    >
+                        <Avatar
+                            sx={{
+                                width: 72,
+                                height: 72,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                                mb: 1.5,
+                            }}
+                        >
+                            <PersonOutlineIcon sx={{ fontSize: 40 }} />
+                        </Avatar>
 
-    <Typography
-        variant="h5"
-        fontWeight={800}
-        color="text.primary"
-        sx={{ lineHeight: 1.3 }}
-    >
-        {studentName}
-    </Typography>
+                        <Typography
+                            variant="h5"
+                            fontWeight={800}
+                            color="text.primary"
+                            sx={{ lineHeight: 1.3 }}
+                        >
+                            {studentName}
+                        </Typography>
 
-    <Typography
-        variant="body1"
-        fontWeight={600}
-        color="text.secondary"
-        sx={{ mt: 0.5 }}
-    >
-        <strong>Learner ID:</strong> {studentLearnerId}
-    </Typography>
+                        <Typography
+                            variant="body1"
+                            fontWeight={600}
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                        >
+                            <strong>Learner ID:</strong> {studentLearnerId}
+                        </Typography>
 
-    <Typography
-        variant="body1"
-        fontWeight={600}
-        color="text.secondary"
-    >
-        <strong>Class:</strong> {studentClassName}
-    </Typography>
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">
+                            <strong>Class:</strong> {studentClassName}
+                        </Typography>
 
-    <Typography
-        variant="body1"
-        fontWeight={600}
-        color="text.secondary"
-    >
-        <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
-    </Typography>
-</Box>
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">
+                            <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
+                        </Typography>
+                    </Box>
 
                     {/* BACK BUTTON */}
                     <Button
@@ -447,33 +677,11 @@ const Invoice = () => {
                     </Button>
                 </Box>
 
-                {/* INFO ALERT BANNER
-                {dataLoaded && invoiceInfo?.status && (
-                    <Alert
-                        icon={false}
-                        severity={invoiceInfo.status === 'complete' ? 'success' : 'info'}
-                        sx={{
-                            mb: 4,
-                            bgcolor: isDark ? 'rgba(3, 105, 161, 0.2)' : '#e0f2fe',
-                            color: isDark ? '#bae6fd' : '#0369a1',
-                            border: `1px solid ${isDark ? 'rgba(3, 105, 161, 0.4)' : '#bae6fd'}`,
-                            borderRadius: 2,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            '& .MuiAlert-message': {
-                                textAlign: 'center',
-                                width: '100%',
-                                fontWeight: 500,
-                            },
-                        }}
-                    >
-                        Invoice #{invoiceNumber} — {sessionLabel} {termLabel} — Status: {invoiceInfo.status}
-                    </Alert>
-                )} */}
-
                 {/* ERROR ALERT */}
                 {error && (
-                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                        {error}
+                    </Alert>
                 )}
 
                 {/* COMPULSORY PAYMENT */}
@@ -482,16 +690,20 @@ const Invoice = () => {
                     borderLeftColor: '#10b981',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            flexWrap: 'wrap', 
-                            alignItems: 'center', 
-                            gap: { xs: 1.5, sm: 3 },
-                            width: { xs: '100%', sm: 'auto' },
-                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
-                        }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                gap: { xs: 1.5, sm: 3 },
+                                width: { xs: '100%', sm: 'auto' },
+                                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                            }}
+                        >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                    Discount
+                                </Typography>
                                 <Switch
                                     size="small"
                                     checked={compDiscountGlobal}
@@ -507,7 +719,9 @@ const Invoice = () => {
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Penalty</Typography>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                    Penalty
+                                </Typography>
                                 <Switch
                                     size="small"
                                     checked={compPenaltyGlobal}
@@ -522,13 +736,6 @@ const Invoice = () => {
                                     }}
                                 />
                             </Box>
-                            {/* <Button
-                                variant="contained"
-                                size="small"
-                                onClick={() => setPrintModalOpen(true)}
-                            >
-                                Print Invoice
-                            </Button> */}
                         </Box>
                     ),
                 })}
@@ -540,28 +747,116 @@ const Invoice = () => {
                         borderRadius: 3,
                         mb: 4,
                         overflowX: 'auto',
-                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
                     }}
                 >
-                    <Table sx={{ minWidth: 900 }}>
-                        <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
+                    <Table sx={{ minWidth: 800 }}>
+                        <TableHead
+                            sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}
+                        >
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>#</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Pay Description</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Amount (NGN)</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Discount</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Penalty</TableCell>
-                                <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Payable</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                                        <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    #
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Pay Description
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Amount (NGN)
+                                </TableCell>
+                                <TableCell
+                                    align="center"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Discount
+                                </TableCell>
+                                <TableCell
+                                    align="center"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Penalty
+                                </TableCell>
+                                <TableCell
+                                    align="center"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Installment
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    Payable
+                                </TableCell>
+                                <TableCell
+                                    align="right"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: isDark ? '#94a3b8' : '#475569',
+                                        py: 1.5,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'flex-end',
+                                            gap: 1,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            fontWeight={600}
+                                            color={isDark ? '#94a3b8' : '#475569'}
+                                        >
                                             Mark
                                         </Typography>
                                         <Checkbox
                                             size="small"
-                                            checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                                            indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
-                                            onChange={(e) => handleAllCompCheckChange(e.target.checked)}
+                                            checked={
+                                                compFees.length > 0 &&
+                                                compFees.every((f) => f.checked)
+                                            }
+                                            indeterminate={
+                                                compFees.some((f) => f.checked) &&
+                                                !compFees.every((f) => f.checked)
+                                            }
+                                            onChange={(e) =>
+                                                handleAllCompCheckChange(e.target.checked)
+                                            }
                                             sx={{ p: 0.5 }}
                                         />
                                     </Box>
@@ -570,28 +865,68 @@ const Invoice = () => {
                         </TableHead>
                         <TableBody>
                             {compFees.map((fee, idx) => {
-                                const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                                const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                                const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                                const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
+                                const discountRowEnabled = compDiscountGlobal
+                                    ? true
+                                    : !!fee.discountEnabled;
+                                const penaltyRowEnabled = compPenaltyGlobal
+                                    ? true
+                                    : !!fee.penaltyEnabled;
+                                const discountFieldEnabled = compDiscountGlobal
+                                    ? true
+                                    : !!fee.discountEnabled;
+                                const penaltyFieldEnabled = compPenaltyGlobal
+                                    ? true
+                                    : !!fee.penaltyEnabled;
                                 const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
 
                                 return (
-                                    <TableRow key={fee.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                        <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                                        <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>{fee.description}</TableCell>
-                                        <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                                    <TableRow
+                                        key={fee.id}
+                                        hover
+                                        sx={{
+                                            '&:last-child td, &:last-child th': { border: 0 },
+                                        }}
+                                    >
+                                        <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>
+                                            {idx + 1}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}
+                                        >
+                                            {fee.description}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                py: 1.5,
+                                                fontWeight: 700,
+                                                color: 'text.primary',
+                                                fontSize: '1rem',
+                                            }}
+                                        >
                                             ₦{format(fee.amount)}
                                         </TableCell>
 
                                         {/* DISCOUNT */}
                                         <TableCell align="center" sx={{ py: 1.5 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <Switch
                                                     size="small"
                                                     checked={discountRowEnabled}
                                                     disabled={compDiscountGlobal}
-                                                    onChange={(e) => handleDiscountSwitchChange('comp', fee.id, e.target.checked)}
+                                                    onChange={(e) =>
+                                                        handleDiscountSwitchChange(
+                                                            'comp',
+                                                            fee.id,
+                                                            e.target.checked
+                                                        )
+                                                    }
                                                     sx={{
                                                         '& .MuiSwitch-switchBase.Mui-checked': {
                                                             color: '#8338ec',
@@ -604,10 +939,21 @@ const Invoice = () => {
                                                 <TextField
                                                     size="small"
                                                     type="number"
-                                                    sx={{ width: 80, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                                    sx={{
+                                                        width: 80,
+                                                        bgcolor: isDark
+                                                            ? 'rgba(0,0,0,0.1)'
+                                                            : 'white',
+                                                    }}
                                                     disabled={!discountFieldEnabled}
                                                     value={fee.discount}
-                                                    onChange={(e) => handleDiscountValueChange('comp', fee.id, e.target.value)}
+                                                    onChange={(e) =>
+                                                        handleDiscountValueChange(
+                                                            'comp',
+                                                            fee.id,
+                                                            e.target.value
+                                                        )
+                                                    }
                                                     inputProps={{ min: 0 }}
                                                 />
                                             </Box>
@@ -615,12 +961,25 @@ const Invoice = () => {
 
                                         {/* PENALTY */}
                                         <TableCell align="center" sx={{ py: 1.5 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    justifyContent: 'center',
+                                                }}
+                                            >
                                                 <Switch
                                                     size="small"
                                                     checked={penaltyRowEnabled}
                                                     disabled={compPenaltyGlobal}
-                                                    onChange={(e) => handlePenaltySwitchChange('comp', fee.id, e.target.checked)}
+                                                    onChange={(e) =>
+                                                        handlePenaltySwitchChange(
+                                                            'comp',
+                                                            fee.id,
+                                                            e.target.checked
+                                                        )
+                                                    }
                                                     sx={{
                                                         '& .MuiSwitch-switchBase.Mui-checked': {
                                                             color: '#8338ec',
@@ -633,16 +992,60 @@ const Invoice = () => {
                                                 <TextField
                                                     size="small"
                                                     type="number"
-                                                    sx={{ width: 80, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                                    sx={{
+                                                        width: 80,
+                                                        bgcolor: isDark
+                                                            ? 'rgba(0,0,0,0.1)'
+                                                            : 'white',
+                                                    }}
                                                     disabled={!penaltyFieldEnabled}
                                                     value={fee.penalty}
-                                                    onChange={(e) => handlePenaltyValueChange('comp', fee.id, e.target.value)}
+                                                    onChange={(e) =>
+                                                        handlePenaltyValueChange(
+                                                            'comp',
+                                                            fee.id,
+                                                            e.target.value
+                                                        )
+                                                    }
                                                     inputProps={{ min: 0 }}
                                                 />
                                             </Box>
                                         </TableCell>
 
-                                        <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                                        {/* INSTALLMENT */}
+                                        <TableCell align="center" sx={{ py: 1.5 }}>
+                                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                <Select
+                                                    value={fee.installment_name || ''}
+                                                    onChange={(e) =>
+                                                        handleInstallmentChange(fee.id, e.target.value)
+                                                    }
+                                                    displayEmpty
+                                                    sx={{
+                                                        borderRadius: 2,
+                                                        '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
+                                                    }}
+                                                >
+                                                    <MenuItem value="">
+                                                        <em>Select</em>
+                                                    </MenuItem>
+                                                    {installments.map((inst) => (
+                                                        <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
+                                                            {inst.inst1}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </TableCell>
+
+                                        <TableCell
+                                            sx={{
+                                                py: 1.5,
+                                                fontWeight: 700,
+                                                color: 'text.primary',
+                                                fontSize: '1rem',
+                                            }}
+                                        >
                                             ₦{format(payable)}
                                         </TableCell>
 
@@ -650,7 +1053,12 @@ const Invoice = () => {
                                             <Checkbox
                                                 size="small"
                                                 checked={fee.checked}
-                                                onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
+                                                onChange={(e) =>
+                                                    handleCompCheckChange(
+                                                        fee.id,
+                                                        e.target.checked
+                                                    )
+                                                }
                                             />
                                         </TableCell>
                                     </TableRow>
@@ -658,49 +1066,34 @@ const Invoice = () => {
                             })}
 
                             {/* COMPULSORY TABLE FOOTER ROW */}
-                            <TableRow sx={{ bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe' }}>
-                                <TableCell colSpan={5} sx={{ py: 1.5 }}>
-                                    <Box>
-                                        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                                            Select Installment Plan
-                                        </Typography>
-                                        <FormControl size="small" sx={{ minWidth: 160, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
-                                            <Select
-                                                value={compInstallment}
-                                                onChange={(e) => setCompInstallment(e.target.value)}
-                                                sx={{
-                                                    borderRadius: 2,
-                                                    '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' }
-                                                }}
-                                            >
-                                                <MenuItem value="Select Installment">Select Installment</MenuItem>
-                                                {installments.map((inst) => (
-                                                    <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
-                                                        {inst.inst1}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Box>
+                            <TableRow
+                                sx={{
+                                    bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe',
+                                }}
+                            >
+                                <TableCell colSpan={6} sx={{ py: 1.5 }}>
+                                    <Typography
+                                        variant="body2"
+                                        fontWeight={700}
+                                        color="text.secondary"
+                                    >
+                                        Total Compulsory
+                                    </Typography>
                                 </TableCell>
-                                <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#60a5fa' : '#1e40af', fontSize: '1.25rem' }}>
+                                <TableCell
+                                    sx={{
+                                        py: 1.5,
+                                        fontWeight: 800,
+                                        color: isDark ? '#60a5fa' : '#1e40af',
+                                        fontSize: '1.25rem',
+                                    }}
+                                >
                                     ₦{format(compTotal)}
                                 </TableCell>
                                 <TableCell align="right" sx={{ py: 1.5 }}>
                                     <Button
                                         variant="contained"
                                         disabled={compTotal === 0}
-                                        // sx={{
-                                        //     bgcolor: isDark ? '#475569' : '#94a3b8',
-                                        //     color: 'white',
-                                        //     '&:hover': { bgcolor: isDark ? '#334155' : '#64748b' },
-                                        //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                                        //     textTransform: 'none',
-                                        //     fontWeight: 700,
-                                        //     borderRadius: 2,
-                                        //     px: 3,
-                                        //     py: 0.8,
-                                        // }}
                                     >
                                         Pay Now - ₦{format(compTotal)} &gt;
                                     </Button>
@@ -716,16 +1109,20 @@ const Invoice = () => {
                     borderLeftColor: '#3b82f6',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            flexWrap: 'wrap', 
-                            alignItems: 'center', 
-                            gap: { xs: 1.5, sm: 3 },
-                            width: { xs: '100%', sm: 'auto' },
-                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
-                        }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                gap: { xs: 1.5, sm: 3 },
+                                width: { xs: '100%', sm: 'auto' },
+                                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                            }}
+                        >
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                    Discount
+                                </Typography>
                                 <Switch
                                     size="small"
                                     checked={optDiscountGlobal}
@@ -741,7 +1138,9 @@ const Invoice = () => {
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Penalty</Typography>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                    Penalty
+                                </Typography>
                                 <Switch
                                     size="small"
                                     checked={optPenaltyGlobal}
@@ -768,6 +1167,45 @@ const Invoice = () => {
                                     },
                                 }}
                             />
+                            <FormControl size="small" sx={{ minWidth: 160 }}>
+                                <Select
+                                    value={selectedCategoryId}
+                                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                                    displayEmpty
+                                    sx={{
+                                        borderRadius: 2,
+                                        '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
+                                    }}
+                                >
+                                    {categories.length === 0 ? (
+                                        <MenuItem value="" disabled>
+                                            <em>No categories</em>
+                                        </MenuItem>
+                                    ) : (
+                                        <MenuItem value="">
+                                            <em>Select category</em>
+                                        </MenuItem>
+                                    )}
+                                    {categories.map((cat) => (
+                                        <MenuItem key={cat.id} value={String(cat.id)}>
+                                            {cat.category_name || cat.name || `Category #${cat.id}`}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<AddIcon />}
+                                onClick={handleOpenOptionalModal}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                Add Optional Pay.
+                            </Button>
                         </Box>
                     ),
                 })}
@@ -780,29 +1218,108 @@ const Invoice = () => {
                             borderRadius: 3,
                             mb: 4,
                             overflowX: 'auto',
-                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'
+                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
                         }}
                     >
-                        <Table sx={{ minWidth: 1000 }}>
-                            <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
+                        <Table sx={{ minWidth: 800 }}>
+                            <TableHead
+                                sx={{
+                                    bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                                }}
+                            >
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>#</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Pay Description</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Options</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Amount (NGN)</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Discount</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Penalty</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>Payable</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                                            <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
+                                    <TableCell
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        #
+                                    </TableCell>
+                                    <TableCell
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        Item
+                                    </TableCell>
+                                    <TableCell
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        Amount (NGN)
+                                    </TableCell>
+                                    <TableCell
+                                        align="center"
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        Discount
+                                    </TableCell>
+                                    <TableCell
+                                        align="center"
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        Penalty
+                                    </TableCell>
+                                    <TableCell
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        Payable
+                                    </TableCell>
+                                    <TableCell
+                                        align="right"
+                                        sx={{
+                                            fontWeight: 600,
+                                            color: isDark ? '#94a3b8' : '#475569',
+                                            py: 1.5,
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'flex-end',
+                                                gap: 1,
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="body2"
+                                                fontWeight={600}
+                                                color={isDark ? '#94a3b8' : '#475569'}
+                                            >
                                                 Mark
                                             </Typography>
                                             <Checkbox
                                                 size="small"
-                                                checked={optFees.length > 0 && optFees.every((f) => f.checked)}
-                                                indeterminate={optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)}
-                                                onChange={(e) => handleAllOptCheckChange(e.target.checked)}
+                                                checked={
+                                                    optFees.length > 0 &&
+                                                    optFees.every((f) => f.checked)
+                                                }
+                                                indeterminate={
+                                                    optFees.some((f) => f.checked) &&
+                                                    !optFees.every((f) => f.checked)
+                                                }
+                                                onChange={(e) =>
+                                                    handleAllOptCheckChange(e.target.checked)
+                                                }
                                                 sx={{ p: 0.5 }}
                                             />
                                         </Box>
@@ -811,55 +1328,128 @@ const Invoice = () => {
                             </TableHead>
                             <TableBody>
                                 {optFees.map((fee, idx) => {
-                                    const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                                    const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                                    const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                                    const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                                    const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
+                                    const discountRowEnabled = optDiscountGlobal
+                                        ? true
+                                        : !!fee.discountEnabled;
+                                    const penaltyRowEnabled = optPenaltyGlobal
+                                        ? true
+                                        : !!fee.penaltyEnabled;
+                                    const discountFieldEnabled = optDiscountGlobal
+                                        ? true
+                                        : !!fee.discountEnabled;
+                                    const penaltyFieldEnabled = optPenaltyGlobal
+                                        ? true
+                                        : !!fee.penaltyEnabled;
+                                    const payable = getPayable(
+                                        fee,
+                                        optDiscountGlobal,
+                                        optPenaltyGlobal
+                                    );
 
                                     return (
-                                        <TableRow key={fee.id} hover sx={{ bgcolor: isDark ? 'rgba(16, 185, 129, 0.08)' : '#f0fdf4', '&:last-child td, &:last-child th': { border: 0 } }}>
-                                            <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                                            <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>{fee.description}</TableCell>
-                                            <TableCell sx={{ py: 1.5 }}>
-                                                <FormControl size="small" sx={{ minWidth: 120, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
-                                                    <Select
-                                                        value={fee.selectedOption}
-                                                        onChange={(e) => handleOptOptionChange(fee.id, e.target.value)}
-                                                        sx={{
-                                                            borderRadius: 2,
-                                                            '& .MuiSelect-select': { py: 0.5, fontSize: '0.875rem' }
-                                                        }}
-                                                    >
-                                                        {fee.options.map((opt) => (
-                                                            <MenuItem key={opt} value={opt}>
-                                                                {opt}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
+                                        <TableRow
+                                            key={fee.id}
+                                            hover
+                                            sx={{
+                                                bgcolor: isDark
+                                                    ? 'rgba(16, 185, 129, 0.08)'
+                                                    : '#f0fdf4',
+                                                '&:last-child td, &:last-child th': {
+                                                    border: 0,
+                                                },
+                                            }}
+                                        >
+                                            <TableCell
+                                                sx={{ py: 1.5, color: 'text.secondary' }}
+                                            >
+                                                {idx + 1}
                                             </TableCell>
-                                            <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                                            <TableCell sx={{ py: 1.5 }}>
+                                                <Typography
+                                                    variant="body2"
+                                                    fontWeight={600}
+                                                    color="text.primary"
+                                                    sx={{ mb: 0.5 }}
+                                                >
+                                                    {fee.description}
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: 0.5,
+                                                    }}
+                                                >
+                                                    {(fee.selectedOptions || []).map(
+                                                        (opt, oi) => (
+                                                            <Chip
+                                                                key={opt.option_id || oi}
+                                                                label={`${opt.option_name}: ₦${format(
+                                                                    opt.amount
+                                                                )}`}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="primary"
+                                                                sx={{
+                                                                    fontWeight: 600,
+                                                                    fontSize: '0.75rem',
+                                                                }}
+                                                            />
+                                                        )
+                                                    )}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    py: 1.5,
+                                                    fontWeight: 700,
+                                                    color: 'text.primary',
+                                                    fontSize: '1rem',
+                                                }}
+                                            >
                                                 ₦{format(fee.amount)}
                                             </TableCell>
 
                                             {/* DISCOUNT */}
                                             <TableCell align="center" sx={{ py: 1.5 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        justifyContent: 'center',
+                                                    }}
+                                                >
                                                     <Switch
                                                         size="small"
                                                         checked={discountRowEnabled}
                                                         disabled={optDiscountGlobal}
-                                                        onChange={(e) => handleDiscountSwitchChange('opt', fee.id, e.target.checked)}
-                                                        
+                                                        onChange={(e) =>
+                                                            handleDiscountSwitchChange(
+                                                                'opt',
+                                                                fee.id,
+                                                                e.target.checked
+                                                            )
+                                                        }
                                                     />
                                                     <TextField
                                                         size="small"
                                                         type="number"
-                                                        sx={{ width: 80, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                                        sx={{
+                                                            width: 80,
+                                                            bgcolor: isDark
+                                                                ? 'rgba(0,0,0,0.1)'
+                                                                : 'white',
+                                                        }}
                                                         disabled={!discountFieldEnabled}
                                                         value={fee.discount}
-                                                        onChange={(e) => handleDiscountValueChange('opt', fee.id, e.target.value)}
+                                                        onChange={(e) =>
+                                                            handleDiscountValueChange(
+                                                                'opt',
+                                                                fee.id,
+                                                                e.target.value
+                                                            )
+                                                        }
                                                         inputProps={{ min: 0 }}
                                                     />
                                                 </Box>
@@ -867,27 +1457,57 @@ const Invoice = () => {
 
                                             {/* PENALTY */}
                                             <TableCell align="center" sx={{ py: 1.5 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        justifyContent: 'center',
+                                                    }}
+                                                >
                                                     <Switch
                                                         size="small"
                                                         checked={penaltyRowEnabled}
                                                         disabled={optPenaltyGlobal}
-                                                        onChange={(e) => handlePenaltySwitchChange('opt', fee.id, e.target.checked)}
-                                                       
+                                                        onChange={(e) =>
+                                                            handlePenaltySwitchChange(
+                                                                'opt',
+                                                                fee.id,
+                                                                e.target.checked
+                                                            )
+                                                        }
                                                     />
                                                     <TextField
                                                         size="small"
                                                         type="number"
-                                                        sx={{ width: 80, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                                        sx={{
+                                                            width: 80,
+                                                            bgcolor: isDark
+                                                                ? 'rgba(0,0,0,0.1)'
+                                                                : 'white',
+                                                        }}
                                                         disabled={!penaltyFieldEnabled}
                                                         value={fee.penalty}
-                                                        onChange={(e) => handlePenaltyValueChange('opt', fee.id, e.target.value)}
+                                                        onChange={(e) =>
+                                                            handlePenaltyValueChange(
+                                                                'opt',
+                                                                fee.id,
+                                                                e.target.value
+                                                            )
+                                                        }
                                                         inputProps={{ min: 0 }}
                                                     />
                                                 </Box>
                                             </TableCell>
 
-                                            <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                                            <TableCell
+                                                sx={{
+                                                    py: 1.5,
+                                                    fontWeight: 700,
+                                                    color: 'text.primary',
+                                                    fontSize: '1rem',
+                                                }}
+                                            >
                                                 ₦{format(payable)}
                                             </TableCell>
 
@@ -895,7 +1515,12 @@ const Invoice = () => {
                                                 <Checkbox
                                                     size="small"
                                                     checked={fee.checked}
-                                                    onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
+                                                    onChange={(e) =>
+                                                        handleOptCheckChange(
+                                                            fee.id,
+                                                            e.target.checked
+                                                        )
+                                                    }
                                                 />
                                             </TableCell>
                                         </TableRow>
@@ -903,9 +1528,30 @@ const Invoice = () => {
                                 })}
 
                                 {/* OPTIONAL TABLE FOOTER ROW */}
-                                <TableRow sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }}>
-                                    <TableCell colSpan={6} sx={{ py: 1.5 }} />
-                                    <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#94a3b8' : '#64748b', fontSize: '1.25rem' }}>
+                                <TableRow
+                                    sx={{
+                                        bgcolor: isDark
+                                            ? 'rgba(255,255,255,0.05)'
+                                            : '#f1f5f9',
+                                    }}
+                                >
+                                    <TableCell colSpan={5} sx={{ py: 1.5 }}>
+                                        <Typography
+                                            variant="body2"
+                                            fontWeight={700}
+                                            color="text.secondary"
+                                        >
+                                            Total Optional
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell
+                                        sx={{
+                                            py: 1.5,
+                                            fontWeight: 800,
+                                            color: isDark ? '#94a3b8' : '#64748b',
+                                            fontSize: '1.25rem',
+                                        }}
+                                    >
                                         ₦{format(optTotal)}
                                     </TableCell>
                                     <TableCell sx={{ py: 1.5 }} />
@@ -913,7 +1559,7 @@ const Invoice = () => {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                ) : optionalEnabled && (
+                ) : optionalEnabled ? (
                     <Paper
                         elevation={0}
                         sx={{
@@ -929,7 +1575,7 @@ const Invoice = () => {
                             No optional payment set for this student.
                         </Typography>
                     </Paper>
-                )}
+                ) : null}
 
                 {/* STICKY BOTTOM ACTION SHEET */}
                 <Paper
@@ -950,118 +1596,291 @@ const Invoice = () => {
                         alignItems: { xs: 'stretch', md: 'center' },
                         justifyContent: 'space-between',
                         gap: 2,
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
+                        boxShadow:
+                            '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
                     }}
                 >
                     {/* LEFT - Legends */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: { xs: 'row', sm: 'column', md: 'column' }, 
-                        justifyContent: { xs: 'space-between', sm: 'flex-start' },
-                        gap: { xs: 2, sm: 0.5 } 
-                    }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'row', sm: 'column', md: 'column' },
+                            justifyContent: { xs: 'space-between', sm: 'flex-start' },
+                            gap: { xs: 2, sm: 0.5 },
+                        }}
+                    >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Checkbox
                                 size="small"
-                                checked={compFees.length > 0 && compFees.every(f => f.checked)}
-                                indeterminate={compFees.some(f => f.checked) && !compFees.every(f => f.checked)}
+                                checked={
+                                    compFees.length > 0 && compFees.every((f) => f.checked)
+                                }
+                                indeterminate={
+                                    compFees.some((f) => f.checked) &&
+                                    !compFees.every((f) => f.checked)
+                                }
                                 onChange={(e) => handleAllCompCheckChange(e.target.checked)}
                                 sx={{
                                     color: '#10b981',
                                     '&.Mui-checked': { color: '#10b981' },
                                     '&.MuiCheckbox-indeterminate': { color: '#10b981' },
-                                    p: 0.5
+                                    p: 0.5,
                                 }}
                             />
-                            <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
+                            <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color={isDark ? '#cbd5e1' : '#374151'}
+                            >
                                 Compulsory Payment
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Checkbox
                                 size="small"
-                                checked={optionalEnabled && optFees.length > 0 && optFees.every(f => f.checked)}
-                                indeterminate={optionalEnabled && optFees.some(f => f.checked) && !optFees.every(f => f.checked)}
+                                checked={
+                                    optionalEnabled &&
+                                    optFees.length > 0 &&
+                                    optFees.every((f) => f.checked)
+                                }
+                                indeterminate={
+                                    optionalEnabled &&
+                                    optFees.some((f) => f.checked) &&
+                                    !optFees.every((f) => f.checked)
+                                }
                                 disabled={!optionalEnabled}
                                 onChange={(e) => handleAllOptCheckChange(e.target.checked)}
                                 sx={{
                                     color: '#84cc16',
                                     '&.Mui-checked': { color: '#84cc16' },
                                     '&.MuiCheckbox-indeterminate': { color: '#84cc16' },
-                                    p: 0.5
+                                    p: 0.5,
                                 }}
                             />
-                            <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
+                            <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color={isDark ? '#cbd5e1' : '#374151'}
+                            >
                                 Optional Payment
                             </Typography>
                         </Box>
-                    </Box>
-
-                    {/* MIDDLE - Global Installment Dropdown */}
-                    <Box sx={{ 
-                        flexGrow: 1, 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: { xs: '100%', md: 'auto' } 
-                    }}>
-                        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 0.5 }}>
-                            Select Installment Plan
-                        </Typography>
-                        <FormControl size="small" sx={{ minWidth: 220, width: { xs: '100%', sm: 220, md: 220 }, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
-                            <Select
-                                value={globalInstallment}
-                                onChange={(e) => setGlobalInstallment(e.target.value)}
-                                sx={{
-                                    borderRadius: 2,
-                                    '& .MuiSelect-select': { py: 1, fontSize: '0.875rem' }
-                                }}
-                            >
-                                <MenuItem value="Select Installment">Select Installment</MenuItem>
-                                {installments.map((inst) => (
-                                    <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
-                                        {inst.inst1}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
                     </Box>
 
                     {/* RIGHT - Sticky Pay Button */}
                     <Button
                         variant="contained"
                         disabled={grandTotal === 0}
-                        // sx={{
-                        //     bgcolor: '#84cc16',
-                        //     color: 'white',
-                        //     '&:hover': { bgcolor: '#65a30d' },
-                        //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                        //     textTransform: 'none',
-                        //     fontWeight: 700,
-                        //     fontSize: '1rem',
-                        //     borderRadius: 3,
-                        //     px: 4,
-                        //     py: 1.2,
-                        //     width: { xs: '100%', md: 'auto' },
-                        //     display: 'flex',
-                        //     alignItems: 'center',
-                        //     justifyContent: 'center',
-                        //     gap: 1.5,
-                        //     boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.4)',
-                        // }}
                     >
                         Pay Now - ₦{format(grandTotal)} &gt;
                     </Button>
                 </Paper>
             </Box>
 
-                {/* ── Print Invoice Modal ── */}
-                <PrintInvoiceModal
-                    open={printModalOpen}
-                    onClose={() => setPrintModalOpen(false)}
-                    student={{ user_id: studentInfo?.user_id || user_id, name: studentName }}
-                />
+            {/* ── Optional Payment Modal ── */}
+            <Dialog
+                open={optionalModalOpen}
+                onClose={handleCloseOptionalModal}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontWeight: 700,
+                    }}
+                >
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>
+                            Add Optional Payments
+                        </Typography>
+                        {studentInfo && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                {studentInfo.name} ({studentInfo.user_id})
+                            </Typography>
+                        )}
+                    </Box>
+                    <IconButton onClick={handleCloseOptionalModal} size="small">
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+
+                <Divider />
+
+                <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+                    {loadingOptionalPayments ? (
+                        <Box
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            minHeight={200}
+                        >
+                            <CircularProgress />
+                        </Box>
+                    ) : optionalPaymentList.length === 0 ? (
+                        <Alert severity="info" sx={{ mt: 2 }}>
+                            No optional payments available for this class/category.
+                        </Alert>
+                    ) : (
+                        <Stack spacing={1} sx={{ mt: 1 }}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    mb: 1,
+                                }}
+                            >
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={allOptionalSelected}
+                                            indeterminate={
+                                                selectedOptionalIds.size > 0 && !allOptionalSelected
+                                            }
+                                            onChange={handleToggleAllOptional}
+                                            color="primary"
+                                        />
+                                    }
+                                    label={
+                                        <Typography variant="body2" fontWeight={600}>
+                                            {allOptionalSelected ? 'Unmark All' : 'Mark All'}
+                                        </Typography>
+                                    }
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                    {selectedOptionalIds.size} of {allOptionalItems.length}{' '}
+                                    selected
+                                </Typography>
+                            </Box>
+
+                            <Divider />
+
+                            {optionalPaymentList.map((group) => (
+                                <Box key={group.payment_name_id} sx={{ mt: 1 }}>
+                                    <Typography
+                                        variant="subtitle2"
+                                        fontWeight={700}
+                                        color="primary.main"
+                                        gutterBottom
+                                    >
+                                        {group.payment_name}
+                                    </Typography>
+                                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                                        {group.options.map((opt) => (
+                                            <FormControlLabel
+                                                key={opt.option_id}
+                                                control={
+                                                    <Checkbox
+                                                        checked={selectedOptionalIds.has(
+                                                            opt.option_id
+                                                        )}
+                                                        onChange={() =>
+                                                            handleToggleOptionalItem(opt.option_id)
+                                                        }
+                                                        size="small"
+                                                        color="primary"
+                                                    />
+                                                }
+                                                label={
+                                                    <Box
+                                                        display="flex"
+                                                        justifyContent="space-between"
+                                                        alignItems="center"
+                                                        width="100%"
+                                                        sx={{
+                                                            minWidth: { xs: 180, sm: 250 },
+                                                        }}
+                                                    >
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                fontSize: {
+                                                                    xs: '0.75rem',
+                                                                    sm: '0.875rem',
+                                                                },
+                                                                mr: 1,
+                                                            }}
+                                                        >
+                                                            {opt.option_name}
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="body2"
+                                                            fontWeight={700}
+                                                            color="text.secondary"
+                                                            sx={{
+                                                                fontSize: {
+                                                                    xs: '0.75rem',
+                                                                    sm: '0.875rem',
+                                                                },
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                        >
+                                                            ₦
+                                                            {(
+                                                                Number(opt.amount) || 0
+                                                            ).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                }
+                                                sx={{
+                                                    mx: 0,
+                                                    '& .MuiFormControlLabel-label': {
+                                                        width: '100%',
+                                                    },
+                                                }}
+                                            />
+                                        ))}
+                                    </Stack>
+                                </Box>
+                            ))}
+                        </Stack>
+                    )}
+                </DialogContent>
+
+                <Divider />
+
+                {!loadingOptionalPayments && optionalPaymentList.length > 0 && (
+                    <Box
+                        sx={{
+                            px: { xs: 2, sm: 3 },
+                            py: 1.5,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            bgcolor: 'grey.50',
+                        }}
+                    >
+                        <Typography variant="body2" fontWeight={600}>
+                            Selected Total:
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="primary.main">
+                            ₦{totalSelectedOptionalAmount.toLocaleString()}
+                        </Typography>
+                    </Box>
+                )}
+
+                <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
+                    <Button onClick={handleCloseOptionalModal}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAddOptionalPayments}
+                        disabled={selectedOptionalIds.size === 0}
+                        sx={{ fontWeight: 600 }}
+                    >
+                        Add
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* ── Print Invoice Modal ── */}
+            <PrintInvoiceModal
+                open={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                student={{ user_id: studentInfo?.user_id || user_id, name: studentName }}
+            />
         </PageContainer>
     );
 };

@@ -355,7 +355,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'class-ledger/:user_id/cash-post',
+        path: 'class-ledger/:invoiceId/:user_id/cash-post',
         element: (
           <TenantProtectedRoute permission="bursary_manager.ledger.index">
             <CashPost />

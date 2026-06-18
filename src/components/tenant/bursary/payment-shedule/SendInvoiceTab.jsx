@@ -324,6 +324,16 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     setSelectedParents([]);
   };
 
+  const dynamicStats = {
+    total_parents: selectedParents.length,
+    sent: parentsList
+      .filter((p) => selectedParents.includes(p.guardian_user_id))
+      .filter((p) => (deliveryTab === 0 ? p.sms_status === 'sent' : p.email_status === 'sent')).length,
+    not_sent: parentsList
+      .filter((p) => selectedParents.includes(p.guardian_user_id))
+      .filter((p) => (deliveryTab === 0 ? p.sms_status !== 'sent' : p.email_status !== 'sent')).length,
+  };
+
   const renderSmsMailContent = () => (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
@@ -471,7 +481,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.total_parents}
+                  {dynamicStats.total_parents}
                 </Box>
                 <Typography variant="caption" fontWeight={600}>
                   Parent Attached
@@ -489,7 +499,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.sent}
+                  {dynamicStats.sent}
                 </Box>
                 <Typography variant="caption" fontWeight={600}>
                   Sent
@@ -510,7 +520,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.not_sent}
+                  {dynamicStats.not_sent}
                 </Box>
               </Box>
             </Box>
@@ -590,7 +600,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.total_parents}
+              {dynamicStats.total_parents}
             </Box>
             <Typography variant="caption" fontWeight={600}>
               Parent Attached
@@ -608,7 +618,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.sent}
+              {dynamicStats.sent}
             </Box>
             <Typography variant="caption" fontWeight={600}>
               Invoice Generate
@@ -629,7 +639,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.not_sent}
+              {dynamicStats.not_sent}
             </Box>
           </Box>
           <Chip

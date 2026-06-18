@@ -170,7 +170,7 @@ const CashPost = () => {
     }
   }, [user_id]);
 
-  // Fetch active categories on mount
+  // Load categories on mount
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -190,8 +190,8 @@ const CashPost = () => {
     loadCategories();
   }, []);
 
-  // Fetch active session/term on mount, then load cashpost data.
-  // Waits for categories to load first so we don't do a double-fetch.
+  // Initial load: fetch session/term once categories are ready.
+  // Does NOT re-fetch when category changes — only the Fetch button does that.
   useEffect(() => {
     if (categoriesLoading || categories.length === 0) return;
 
@@ -208,8 +208,6 @@ const CashPost = () => {
             session: active.sesname || '',
             term: active.term_name || '',
           });
-
-          await fetchData(active.session_id, active.term_id, selectedCategoryId);
         } else {
           setLoading(false);
           setError('No active session/term found. Please configure bursary settings first.');
@@ -222,7 +220,7 @@ const CashPost = () => {
     };
 
     init();
-  }, [fetchData, selectedCategoryId, categories, categoriesLoading]);
+  }, [categories, categoriesLoading]);
 
   /* SECTION HEADER BLOCK */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
@@ -471,14 +469,13 @@ const CashPost = () => {
     <PageContainer title="Cash Posting">
       <Breadcrumb title="Cash Posting" items={BCrumbLive} />
       <Box>
-        {/* HEADER - Student Info */}
+        {/* HEADER - Student Info & Filters */}
         <Box
           sx={{
-            position: 'relative',
             display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'center',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
             gap: 2,
             mb: 3,
             mt: 2,
@@ -488,103 +485,99 @@ const CashPost = () => {
             borderRadius: '12px',
           }}
         >
+          {/* LEFT - Student Details */}
           <Box
             sx={{
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              textAlign: 'center',
-              width: '100%',
-              py: 1,
+              gap: 2,
             }}
           >
             <Avatar
               sx={{
-                width: 72,
-                height: 72,
+                width: 56,
+                height: 56,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                mb: 1.5,
               }}
             >
-              <PersonOutlineIcon sx={{ fontSize: 40 }} />
+              <PersonOutlineIcon sx={{ fontSize: 36 }} />
             </Avatar>
-
-            <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
-              {studentName}
-            </Typography>
-
-            <Typography variant="body1" fontWeight={600} color="text.secondary" sx={{ mt: 0.5 }}>
-              <strong>Learner ID:</strong> {studentLearnerId}
-            </Typography>
-
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Class:</strong> {studentClassName}
-            </Typography>
-
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
-            </Typography>
+            <Box>
+              <Typography variant="h5" fontWeight={800} color="text.primary">
+                {studentName}
+              </Typography>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                {studentLearnerId} • {studentClassName}
+              </Typography>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                {sessionLabel} {termLabel}
+              </Typography>
+            </Box>
           </Box>
 
-          {/* BACK BUTTON */}
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => navigate('/class-ledger')}
+          {/* RIGHT - Back link, Category Filter & Fetch */}
+          <Box
             sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              textTransform: 'none',
-              fontWeight: 600,
-              color: isDark ? '#94a3b8' : '#64748b',
-              '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-              },
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              flexWrap: 'wrap',
+              justifyContent: { xs: 'flex-start', sm: 'flex-end' },
             }}
           >
-            ← Go To Class Ledger
-          </Button>
-        </Box>
-
-        {/* CATEGORY FILTER */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            mb: 3,
-            mt: 2,
-            p: 2,
-            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-            borderRadius: '12px',
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 250 }}>
-            <InputLabel>Payment Category</InputLabel>
-            <Select
-              value={selectedCategoryId}
-              label="Payment Category"
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              disabled={categoriesLoading}
+            {/* <Button
+              variant="text"
+              size="small"
+              onClick={() => navigate('/class-ledger')}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                color: isDark ? '#94a3b8' : '#64748b',
+                whiteSpace: 'nowrap',
+                p: 0.5,
+                '&:hover': {
+                  bgcolor: 'transparent',
+                  color: isDark ? '#e2e8f0' : '#334155',
+                },
+              }}
             >
-              {categoriesLoading ? (
-                <MenuItem disabled>
-                  <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                </MenuItem>
-              ) : (
-                categories.map((cat) => (
-                  <MenuItem key={cat.id} value={String(cat.id)}>
-                    {cat.name}
+              ← Go To Class Ledger
+            </Button> */}
+
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180, md: 200 } }}>
+              <InputLabel>Payment Category</InputLabel>
+              <Select
+                value={selectedCategoryId}
+                label="Payment Category"
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                disabled={categoriesLoading}
+              >
+                {categoriesLoading ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
                   </MenuItem>
-                ))
-              )}
-            </Select>
-          </FormControl>
-          <Typography variant="body2" color="text.secondary">
-            Filter fee items by payment category
-          </Typography>
+                ) : (
+                  categories.map((cat) => (
+                    <MenuItem key={cat.id} value={String(cat.id)}>
+                      {cat.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                if (selectedSessionId && selectedTermId) {
+                  fetchData(selectedSessionId, selectedTermId, selectedCategoryId);
+                }
+              }}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Fetch
+            </Button>
+          </Box>
         </Box>
 
         {/* ERROR ALERT */}

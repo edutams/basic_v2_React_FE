@@ -67,11 +67,28 @@ export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
  * Send SMS invoice notifications to selected parents.
  * @param {Array<string>} parentIds
  * @param {number|string} sessionTermId
+ * @param {string} customMessage
  */
-export const sendInvoiceSms = async (parentIds, sessionTermId) => {
+export const sendInvoiceSms = async (parentIds, sessionTermId, customMessage) => {
     const res = await api.post('/bursary/send_invoice/send_sms', {
         parent_ids: parentIds,
         session_term_id: sessionTermId,
+        custom_message: customMessage,
+    });
+    return res.data;
+};
+
+/**
+ * Send Email invoice notifications to selected parents.
+ * @param {Array<string>} parentIds
+ * @param {number|string} sessionTermId
+ * @param {string} customMessage
+ */
+export const sendInvoiceEmail = async (parentIds, sessionTermId, customMessage) => {
+    const res = await api.post('/bursary/send_invoice/send_email', {
+        parent_ids: parentIds,
+        session_term_id: sessionTermId,
+        custom_message: customMessage,
     });
     return res.data;
 };

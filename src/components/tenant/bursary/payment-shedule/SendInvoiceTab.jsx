@@ -48,6 +48,7 @@ import {
   fetchSendInvoiceStats,
   updateParentPhoneNumberOrEmail,
   sendInvoiceSms,
+  sendInvoiceEmail,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
@@ -84,6 +85,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
   const [sendingInvoice, setSendingInvoice] = useState(false);
+  const [messageContent, setMessageContent] = useState(
+    `<p>Dear Parent,</p><br><p>The invoice for <strong>{student_name}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready.</p><br><p>View Here: <a href="{invoice_url}">{invoice_url}</a></p><br><p>Best Regards,<br><strong>{school_name}</strong></p>`
+  );
 
   // Debounce ref for search
   const searchTimerRef = useRef(null);
@@ -99,25 +103,29 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       return;
     }
     
-    if (deliveryTab === 0) {
+    if (deliveryTab === 0 || deliveryTab === 1) {
       try {
         setSendingInvoice(true);
-        const res = await sendInvoiceSms(selectedParents, selectedSessionTermId);
+        const action = deliveryTab === 0 ? sendInvoiceSms : sendInvoiceEmail;
+        const successMessage = deliveryTab === 0 ? 'SMS messages' : 'emails';
+        
+        const res = await action(selectedParents, selectedSessionTermId, messageContent);
+        
         if (res?.success) {
-          showSnackbar?.(`Successfully sent ${res.sent_count} SMS messages!`, 'success');
+          showSnackbar?.(`Successfully sent ${res.sent_count} ${successMessage}!`, 'success');
           setSelectedParents([]);
           loadParents();
           loadStats();
         } else {
-          showSnackbar?.(res?.message || 'Failed to send SMS', 'error');
+          showSnackbar?.(res?.message || 'Failed to send messages', 'error');
         }
       } catch (err) {
-        showSnackbar?.(err?.response?.data?.message || 'Something went wrong while sending SMS', 'error');
+        showSnackbar?.(err?.response?.data?.message || 'Something went wrong while sending', 'error');
       } finally {
         setSendingInvoice(false);
       }
     } else {
-      showSnackbar?.('Email sending is not yet fully implemented', 'info');
+      showSnackbar?.('This delivery method is not yet implemented', 'info');
     }
   };
 
@@ -324,6 +332,20 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     setSelectedParents([]);
   };
 
+  const dynamicStats = {
+    total_parents: selectedParents.length,
+    sent: parentsList
+      .filter((p) => selectedParents.includes(p.guardian_user_id))
+      .filter((p) => (deliveryTab === 0 ? p.sms_status === 'sent' : p.email_status === 'sent')).length,
+    not_sent: parentsList
+      .filter((p) => selectedParents.includes(p.guardian_user_id))
+      .filter((p) => (deliveryTab === 0 ? p.sms_status !== 'sent' : p.email_status !== 'sent')).length,
+  };
+
+  const handleEditorUpdate = useCallback(({ editor }) => {
+    setMessageContent(editor.getHTML());
+  }, []);
+
   const renderSmsMailContent = () => (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
@@ -471,7 +493,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.total_parents}
+                  {dynamicStats.total_parents}
                 </Box>
                 <Typography variant="caption" fontWeight={600}>
                   Parent Attached
@@ -489,7 +511,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.sent}
+                  {dynamicStats.sent}
                 </Box>
                 <Typography variant="caption" fontWeight={600}>
                   Sent
@@ -510,7 +532,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     fontWeight: 700,
                   }}
                 >
-                  {stats.not_sent}
+                  {dynamicStats.not_sent}
                 </Box>
               </Box>
             </Box>
@@ -529,7 +551,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           </Box>
 
           <Box sx={{ mb: 5, overflow: 'hidden' }}>
-            <TiptapEdit />
+            <TiptapEdit 
+              initialContent={messageContent} 
+              onUpdate={handleEditorUpdate} 
+            />
           </Box>
 
           <Box display="flex" justifyContent="flex-end">
@@ -590,7 +615,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.total_parents}
+              {dynamicStats.total_parents}
             </Box>
             <Typography variant="caption" fontWeight={600}>
               Parent Attached
@@ -608,7 +633,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.sent}
+              {dynamicStats.sent}
             </Box>
             <Typography variant="caption" fontWeight={600}>
               Invoice Generate
@@ -629,7 +654,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 fontWeight: 700,
               }}
             >
-              {stats.not_sent}
+              {dynamicStats.not_sent}
             </Box>
           </Box>
           <Chip

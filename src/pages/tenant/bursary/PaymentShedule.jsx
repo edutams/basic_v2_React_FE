@@ -47,6 +47,7 @@ import {
   fetchTermsBySessionTerm,
   importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchSendInvoiceStats } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -360,14 +361,49 @@ const PaymentShedule = () => {
     loadInvoiceStats();
   }, [selectedSessionTerm, actionTab, selectedClass]);
 
+  const [sendInvoiceStatsData, setSendInvoiceStatsData] = useState({
+    total_sent: 0,
+    sent_by_mail: 0,
+    sent_by_sms: 0,
+    excel_generated: 0,
+  });
+  const [loadingSendInvoiceStats, setLoadingSendInvoiceStats] = useState(false);
+
+  // Fetch send invoice stats
+  useEffect(() => {
+    if (!selectedSessionTerm || actionTab !== 2) return;
+    const loadSendInvoiceStats = async () => {
+      try {
+        setLoadingSendInvoiceStats(true);
+        const res = await fetchSendInvoiceStats({
+          sessionTermId: selectedSessionTerm, 
+          classId: selectedClass || undefined
+        });
+        if (res?.success && res.data) {
+          setSendInvoiceStatsData({
+            total_sent: res.data.total_sent || 0,
+            sent_by_mail: res.data.sent_by_mail || 0,
+            sent_by_sms: res.data.sent_by_sms || 0,
+            excel_generated: 0, // Hardcoded for now per user request
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load send invoice stats:', err);
+      } finally {
+        setLoadingSendInvoiceStats(false);
+      }
+    };
+    loadSendInvoiceStats();
+  }, [selectedSessionTerm, actionTab, selectedClass]);
+
   const formatCurrency = (value) =>
     `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const sendInvoiceStats = [
-    { label: 'Total Invoice Sent', value: 522, icon: MessageIcon },
-    { label: 'Invoice Sent by Mail', value: 522, icon: EmailIcon },
-    { label: 'Invoice Sent by SMS', value: 522, icon: EmailIcon },
-    { label: 'Excel Generated', value: 522, icon: ArticleIcon },
+    { label: 'Total Invoice Sent', value: sendInvoiceStatsData.total_sent, icon: MessageIcon },
+    { label: 'Invoice Sent by Mail', value: sendInvoiceStatsData.sent_by_mail, icon: EmailIcon },
+    { label: 'Invoice Sent by SMS', value: sendInvoiceStatsData.sent_by_sms, icon: EmailIcon },
+    { label: 'Excel Generated', value: sendInvoiceStatsData.excel_generated, icon: ArticleIcon },
   ];
 
   return (

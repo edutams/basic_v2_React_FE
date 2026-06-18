@@ -17,10 +17,14 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Print as PrintIcon, ArrowBack as ArrowBackIcon, DescriptionOutlined as InvoiceIcon } from '@mui/icons-material';
+import {
+  Print as PrintIcon,
+  ArrowBack as ArrowBackIcon,
+  DescriptionOutlined as InvoiceIcon,
+} from '@mui/icons-material';
 
 const PrintInvoicePage = () => {
-  const { session_term_id, class_id, user_id } = useParams();
+  const { session_term_id, class_id, id } = useParams();
   const navigate = useNavigate();
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const printRef = useRef(null);
@@ -38,7 +42,7 @@ const PrintInvoicePage = () => {
   const issuerTitle = tenantInfo?.issuer_title || 'Bursary Officer';
 
   useEffect(() => {
-    if (!session_term_id || !class_id || !user_id) return;
+    if (!session_term_id || !class_id || !id) return;
 
     const loadInvoice = async () => {
       try {
@@ -47,7 +51,7 @@ const PrintInvoicePage = () => {
         const res = await fetchStudentPrintInvoice({
           sessionTermId: session_term_id,
           classId: class_id,
-          userId: user_id,
+          userId: id,
         });
         if (res?.success) {
           if (res?.success && res?.data && !Array.isArray(res.data)) {
@@ -66,7 +70,7 @@ const PrintInvoicePage = () => {
     };
 
     loadInvoice();
-  }, [session_term_id, class_id, user_id]);
+  }, [session_term_id, class_id, id]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -305,7 +309,11 @@ const PrintInvoicePage = () => {
 
           {/* ── ISSUED BY ── */}
           <Box sx={{ px: 2, pt: 3, pb: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+            >
               Issued By
             </Typography>
             <Box

@@ -94,7 +94,7 @@ const ClassLedger = () => {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
   const [meta, setMeta] = useState(null);
 
   const notify = useNotification();

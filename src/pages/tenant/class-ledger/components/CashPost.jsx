@@ -74,24 +74,15 @@ const CashPost = () => {
   const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
   const [globalModalValue, setGlobalModalValue] = useState('');
 
-  /* SELECTION */
-  const [selectedIds, setSelectedIds] = useState(new Set());
-
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  /* CHECKBOX HANDLERS */
+  const handleCheckChange = (type, id, checked) => {
+    const setter = type === 'comp' ? setCompFees : setOptFees;
+    setter((prev) => prev.map((f) => (f.id === id ? { ...f, checked } : f)));
   };
 
-  const toggleSelectAll = (ids) => {
-    if (selectedIds.size === ids.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(ids));
-    }
+  const handleAllCheckChange = (type, checked) => {
+    const setter = type === 'comp' ? setCompFees : setOptFees;
+    setter((prev) => prev.map((f) => ({ ...f, checked })));
   };
 
   /* POST CASH */
@@ -153,7 +144,7 @@ const CashPost = () => {
 
     const buildItems = (fees) =>
       fees
-        .filter((f) => !f.has_cashpost && selectedIds.has(f.id))
+        .filter((f) => !f.has_cashpost && f.checked)
         .map((f) => ({
           id: f.id,
           bursary_schedule_id: f.bursary_schedule_id,
@@ -229,8 +220,6 @@ const CashPost = () => {
         return match || null;
       };
 
-      setSelectedIds(new Set());
-
       // Map compulsory data: add editable fields
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const inst = findInstallment(item);
@@ -252,6 +241,7 @@ const CashPost = () => {
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
+          checked: false,
         };
       });
       setCompFees(mappedComp);
@@ -277,6 +267,7 @@ const CashPost = () => {
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
+          checked: false,
         };
       });
       setOptFees(mappedOpt);
@@ -375,13 +366,6 @@ const CashPost = () => {
         <Table>
           <TableHead sx={{ bgcolor: isDark ? '#222' : '#fafafa' }}>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  indeterminate={selectedIds.size > 0 && selectedIds.size < data.filter((f) => !f.has_cashpost).length}
-                  checked={data.filter((f) => !f.has_cashpost).length > 0 && selectedIds.size === data.filter((f) => !f.has_cashpost).length}
-                  onChange={() => toggleSelectAll(data.filter((f) => !f.has_cashpost).map((f) => f.id))}
-                />
-              </TableCell>
               <TableCell>#</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount (NGN)</TableCell>
@@ -394,6 +378,20 @@ const CashPost = () => {
               <TableCell align="right">Paid</TableCell>
               <TableCell align="right">Balance</TableCell>
               <TableCell align="right">Payable</TableCell>
+              <TableCell align="right">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                  <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
+                    Mark All
+                  </Typography>
+                  <Checkbox
+                    size="small"
+                    checked={data.length > 0 && data.every((f) => f.checked)}
+                    indeterminate={data.some((f) => f.checked) && !data.every((f) => f.checked)}
+                    onChange={(e) => handleAllCheckChange(type, e.target.checked)}
+                    sx={{ p: 0.5 }}
+                  />
+                </Box>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -414,13 +412,6 @@ const CashPost = () => {
                       : 'inherit',
                   }}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedIds.has(fee.id)}
-                      onChange={() => toggleSelect(fee.id)}
-                      disabled={fee.has_cashpost}
-                    />
-                  </TableCell>
                   <TableCell>{String(i + 1).padStart(2, '0')}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
@@ -555,6 +546,14 @@ const CashPost = () => {
                     <Typography variant="body2" fontWeight={700}>
                       {format(payable)}
                     </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Checkbox
+                      size="small"
+                      checked={fee.checked}
+                      onChange={(e) => handleCheckChange(type, fee.id, e.target.checked)}
+                      disabled={fee.has_cashpost}
+                    />
                   </TableCell>
                 </TableRow>
               );

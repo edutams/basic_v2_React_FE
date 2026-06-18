@@ -188,7 +188,7 @@ const Invoice = () => {
       const installmentPct = Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || 0, fee.amount);
+      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
     }
 
     return Math.max(0, baseAmount - discount + penalty);
@@ -434,6 +434,7 @@ const Invoice = () => {
           checked: false,
           discountEnabled: !!item.discount_enabled,
           penaltyEnabled: !!item.penalty_enabled,
+          custom_amount: item.amount,
         }));
         setOptFees(mappedOpt);
 
@@ -792,7 +793,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Discount
+                  Discount(NGN)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -802,7 +803,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Penalty
+                  Penalty(NGN)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -812,7 +813,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount'}
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -821,7 +822,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Payable
+                  Payable(NGN)
                 </TableCell>
                 <TableCell
                   align="right"
@@ -844,7 +845,7 @@ const Invoice = () => {
                       fontWeight={600}
                       color={isDark ? '#94a3b8' : '#475569'}
                     >
-                      Mark All
+                      Select All
                     </Typography>
                     <Checkbox
                       size="small"
@@ -1217,7 +1218,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Discount
+                    Discount(NGN)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1227,7 +1228,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Penalty
+                    Penalty(NGN)
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1236,7 +1237,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Payable
+                    Payable(NGN)
                   </TableCell>
                   <TableCell
                     align="right"
@@ -1259,7 +1260,7 @@ const Invoice = () => {
                         fontWeight={600}
                         color={isDark ? '#94a3b8' : '#475569'}
                       >
-                        Mark 
+                        Select All 
                       </Typography>
                       <Checkbox
                         size="small"
@@ -1608,7 +1609,7 @@ const Invoice = () => {
                   }
                   label={
                     <Typography variant="body2" fontWeight={600}>
-                      {allOptionalSelected ? 'Unmark All' : 'Mark All'}
+                      {allOptionalSelected ? 'Deselect All' : 'Select All'}
                     </Typography>
                   }
                 />

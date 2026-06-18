@@ -24,6 +24,17 @@ export const fetchInvoiceByNumber = async ({ sessionId, termId, userId, invoiceN
     return res.data;
 };
 
+export const fetchCashPostData = async ({ sessionId, termId, userId, categoryId } = {}) => {
+    const params = {
+        session_id: sessionId,
+        term_id: termId,
+        user_id: userId,
+    };
+    if (categoryId) params.category_id = categoryId;
+    const res = await api.get('/bursary/payment_schedule/fetch_cash_post_data', { params });
+    return res.data;
+};
+
 
 export const generateClassLedgerExcel = async (payload) => {
     const res = await api.post('/bursary/class_ledger/generate_excel', { payload }, {

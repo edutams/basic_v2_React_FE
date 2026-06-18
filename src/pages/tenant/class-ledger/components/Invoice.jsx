@@ -258,6 +258,8 @@ const Invoice = () => {
         });
     };
 
+    
+
     const handleAddOptionalPayments = async () => {
         if (!invoiceId || !user_id) return;
 

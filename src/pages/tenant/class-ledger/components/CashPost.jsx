@@ -116,7 +116,7 @@ const CashPost = () => {
       const installmentPct = Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || 0, fee.amount);
+      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
     }
     return Math.max(0, baseAmount - discount + penalty);
   };

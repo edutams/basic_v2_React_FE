@@ -333,8 +333,8 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
                       bgcolor: isSelected
                         ? 'primary.main'
                         : hasInvoiceGenerated
-                        ? 'primary.light'
-                        : 'white',
+                          ? 'primary.light'
+                          : 'white',
                       color: isSelected ? 'white' : hasInvoiceGenerated ? 'primary.main' : 'text.primary',
                       fontWeight: 600,
                       border: '1px solid',

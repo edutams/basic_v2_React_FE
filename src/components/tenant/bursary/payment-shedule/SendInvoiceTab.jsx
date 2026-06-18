@@ -47,6 +47,7 @@ import {
   fetchParentsForInvoice,
   fetchSendInvoiceStats,
   updateParentPhoneNumberOrEmail,
+  sendInvoiceSms,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
@@ -82,6 +83,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [editValue, setEditValue] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
+  const [sendingInvoice, setSendingInvoice] = useState(false);
 
   // Debounce ref for search
   const searchTimerRef = useRef(null);
@@ -90,6 +92,34 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     classes.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     '';
+
+  const handleSendInvoice = async () => {
+    if (selectedParents.length === 0) {
+      showSnackbar?.('Please select at least one parent', 'warning');
+      return;
+    }
+    
+    if (deliveryTab === 0) {
+      try {
+        setSendingInvoice(true);
+        const res = await sendInvoiceSms(selectedParents, selectedSessionTermId);
+        if (res?.success) {
+          showSnackbar?.(`Successfully sent ${res.sent_count} SMS messages!`, 'success');
+          setSelectedParents([]);
+          loadParents();
+          loadStats();
+        } else {
+          showSnackbar?.(res?.message || 'Failed to send SMS', 'error');
+        }
+      } catch (err) {
+        showSnackbar?.(err?.response?.data?.message || 'Something went wrong while sending SMS', 'error');
+      } finally {
+        setSendingInvoice(false);
+      }
+    } else {
+      showSnackbar?.('Email sending is not yet fully implemented', 'info');
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -168,36 +198,35 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     }
   }, [selectedSessionTermId, selectedClassId, selectedProgrammeId, searchQuery, showSnackbar]);
 
-  useEffect(() => {
-    loadParents();
-  }, [loadParents]);
-
-  useEffect(() => {
+  const loadStats = useCallback(async () => {
     if (!selectedSessionTermId) return;
-    const load = async () => {
-      try {
-        const res = await fetchSendInvoiceStats({
-          sessionTermId: selectedSessionTermId,
-          classId: selectedClassId || undefined,
-          programmeId: selectedProgrammeId || undefined,
-        });
-        if (res?.success && res.data) {
-          setStats(res.data);
-        }
-      } catch (err) {
-        console.error('Failed to load stats', err);
+    try {
+      const res = await fetchSendInvoiceStats({
+        sessionTermId: selectedSessionTermId,
+        classId: selectedClassId || undefined,
+        programmeId: selectedProgrammeId || undefined,
+      });
+      if (res?.success && res.data) {
+        setStats(res.data);
       }
-    };
-    load();
+    } catch (err) {
+      console.error('Failed to load stats', err);
+    }
   }, [selectedSessionTermId, selectedClassId, selectedProgrammeId]);
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
+  const handleSearch = () => {
+    if (!selectedSessionTermId) {
+      showSnackbar?.('Please select a session term.', 'warning');
+      return;
+    }
     setPage(0);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      setSearchQuery(value);
-    }, 400);
+    setSelectedParents([]);
+    loadParents();
+    loadStats();
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -507,8 +536,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             <Button
               size="small"
               color="primary"
-              onClick={() => showSnackbar?.('Invoice sent successfully!', 'success')}
+              onClick={handleSendInvoice}
+              disabled={sendingInvoice || selectedParents.length === 0}
             >
+              {sendingInvoice ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
               Send Invoice to Parent
             </Button>
           </Box>
@@ -612,7 +643,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               borderRadius: 5,
               cursor: 'pointer',
             }}
-            // onClick={() => showSnackbar?.('Regenerating...', 'info')}
+          // onClick={() => showSnackbar?.('Regenerating...', 'info')}
           />
         </Box>
       </Box>
@@ -904,6 +935,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           <TextField
             size="small"
             placeholder="Search parents..."
+            value={searchQuery}
             onChange={handleSearchChange}
             sx={{ flexGrow: 1 }}
             slotProps={{
@@ -916,6 +948,15 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               },
             }}
           />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            size="small"
+          >
+            Search
+          </Button>
         </Box>
 
         {deliveryTab === 2 && (

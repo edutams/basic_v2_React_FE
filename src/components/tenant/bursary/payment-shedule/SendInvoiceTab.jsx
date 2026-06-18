@@ -88,6 +88,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [messageContent, setMessageContent] = useState(
     `<p>Dear Parent,</p><br><p>The invoice for <strong>{student_name}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready.</p><br><p>View Here: <a href="{invoice_url}">{invoice_url}</a></p><br><p>Best Regards,<br><strong>{school_name}</strong></p>`
   );
+  const [studentStats, setStudentStats] = useState(null);
 
   // Debounce ref for search
   const searchTimerRef = useRef(null);
@@ -102,85 +103,94 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       showSnackbar?.('Please select at least one parent', 'warning');
       return;
     }
-    
+
     if (deliveryTab === 0 || deliveryTab === 1) {
       try {
         setSendingInvoice(true);
         const action = deliveryTab === 0 ? sendInvoiceSms : sendInvoiceEmail;
         const successMessage = deliveryTab === 0 ? 'SMS messages' : 'emails';
-        
-        const res = await action(selectedParents, selectedSessionTermId, messageContent);
-        
+
+        const res = await action({
+          sessionTermId: selectedSessionTermId,
+          parentIds: selectedParents,
+          customMessage: messageContent,
+        });
+
         if (res?.success) {
-          showSnackbar?.(`Successfully sent ${res.sent_count} ${successMessage}!`, 'success');
-          setSelectedParents([]);
+          showSnackbar?.(`Successfully queued ${res.sent_count} ${successMessage}.`, 'success');
+          // Reload to refresh statuses
           loadParents();
           loadStats();
         } else {
-          showSnackbar?.(res?.message || 'Failed to send messages', 'error');
+          showSnackbar?.(res?.message || 'Failed to send invoice.', 'error');
         }
       } catch (err) {
-        showSnackbar?.(err?.response?.data?.message || 'Something went wrong while sending', 'error');
+        console.error('Send invoice error:', err);
+        showSnackbar?.(err.response?.data?.message || 'Failed to send invoice.', 'error');
       } finally {
         setSendingInvoice(false);
       }
-    } else {
-      showSnackbar?.('This delivery method is not yet implemented', 'info');
     }
   };
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoadingFilters(true);
-        const res = await fetchSendInvoiceFilterOptions();
-        if (res?.success && res.data) {
-          const { session_terms, programmes: progs, classes: cls } = res.data;
+  const loadFilterOptions = useCallback(async () => {
+    try {
+      setLoadingFilters(true);
+      const res = await fetchSendInvoiceFilterOptions();
+      if (res?.success && res.data) {
+        const { session_terms, programmes: progs, classes: cls } = res.data;
 
-          setSessionTerms(session_terms || []);
-          setProgrammes(progs || []);
-          setClasses(cls || []);
+        setSessionTerms(session_terms || []);
+        setProgrammes(progs || []);
+        setClasses(cls || []);
 
-          if (session_terms?.length > 0) {
-            setSelectedSessionTermId(session_terms[0].id);
-          }
-          if (progs?.length > 0) {
-            setSelectedProgrammeId(String(progs[0].id));
-          }
-          if (cls?.length > 0) {
-            setSelectedClassId(String(cls[0].id));
-          }
+        if (session_terms?.length > 0 && !selectedSessionTermId) {
+          setSelectedSessionTermId(session_terms[0].id);
         }
-      } catch (err) {
-        console.error('Failed to load filter options', err);
-        showSnackbar?.('Failed to load filter options', 'error');
-      } finally {
-        setLoadingFilters(false);
+        if (progs?.length > 0 && !selectedProgrammeId) {
+          setSelectedProgrammeId(String(progs[0].id));
+        }
+        if (cls?.length > 0 && !selectedClassId) {
+          setSelectedClassId(String(cls[0].id));
+        }
       }
-    };
-    load();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingFilters(false);
+    }
   }, []);
 
-  // --- Load classes when programme changes ---
-  useEffect(() => {
-    if (!selectedProgrammeId) return;
-
-    const load = async () => {
-      try {
-        setLoadingProgrammeClasses(true);
-        const res = await fetchClassesByProgramme(selectedProgrammeId);
-        if (res?.success && res.data) {
-          setProgrammeClasses(res.data);
-          if (res.data.length > 0) {
-            setSelectedClassId(String(res.data[0].id));
-          }
+  const loadClassesByProgramme = useCallback(async () => {
+    if (!selectedProgrammeId) {
+      setProgrammeClasses([]);
+      return;
+    }
+    try {
+      setLoadingProgrammeClasses(true);
+      const res = await fetchClassesByProgramme(selectedProgrammeId);
+      if (res?.success && res.data) {
+        setProgrammeClasses(res.data || []);
+        if (res.data.length > 0) {
+          setSelectedClassId(String(res.data[0].id));
         }
-      } catch (err) {
-        console.error('Failed to load programme classes', err);
-        showSnackbar?.('Failed to load classes', 'error');
-      } finally {
-        setLoadingProgrammeClasses(false);
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingProgrammeClasses(false);
+    }
+  }, [selectedProgrammeId]);
+
+  useEffect(() => {
+    loadFilterOptions();
+  }, [loadFilterOptions]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingProgrammeClasses(true);
+      await loadClassesByProgramme();
+      setLoadingProgrammeClasses(false);
     };
     load();
   }, [selectedProgrammeId]);
@@ -197,6 +207,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       });
       if (res?.success) {
         setParentsList(res.data || []);
+        if (res.stats) {
+          setStudentStats(res.stats);
+        }
       }
     } catch (err) {
       console.error('Failed to load parents', err);
@@ -362,6 +375,53 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               />
             )}
           </Box>
+
+          {studentStats && (
+            <Box
+              sx={{
+                bgcolor: "info.light",
+                p: 1.2,
+                borderRadius: 2,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                mb: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="body2" sx={{ m: 0 }}>
+                  Total Wards:{" "}
+                  <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
+                    {studentStats.total_students}
+                  </Box>
+                </Typography>
+
+                <Typography variant="body2" sx={{ m: 0 }}>
+                  Unlinked Wards:{" "}
+                  <Box component="span" sx={{ color: "error.main", fontWeight: 600 }}>
+                    {studentStats.unlinked_students}
+                  </Box>
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  lineHeight: 1.2,
+                }}
+              >
+                Students must be linked to a parent for their parent to receive an invoice.
+              </Typography>
+            </Box>
+          )}
 
           <TableContainer
             component={Paper}
@@ -551,9 +611,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           </Box>
 
           <Box sx={{ mb: 5, overflow: 'hidden' }}>
-            <TiptapEdit 
-              initialContent={messageContent} 
-              onUpdate={handleEditorUpdate} 
+            <TiptapEdit
+              initialContent={messageContent}
+              onUpdate={handleEditorUpdate}
             />
           </Box>
 

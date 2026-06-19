@@ -12,11 +12,9 @@ export const fetchClassesByProgramme = async (programmeId) => {
     return res.data;
 };
 
-/**
- * Fetch parents/guardians for a session term + class with optional search.
- */
+
 export const fetchParentsForInvoice = async ({
-    sessionTermId, 
+    sessionTermId,
     classId,
     programmeId,
     search = '',
@@ -31,9 +29,7 @@ export const fetchParentsForInvoice = async ({
     return res.data;
 };
 
-/**
- * Fetch stats for the send invoice stats bar.
- */
+
 export const fetchSendInvoiceStats = async ({
     sessionTermId,
     classId,
@@ -48,12 +44,7 @@ export const fetchSendInvoiceStats = async ({
     return res.data;
 };
 
-/**
- * Update a guardian's phone or email.
- * @param {string} userId  - guardian user id
- * @param {'phone'|'email'} field
- * @param {string} value
- */
+
 export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
     const res = await api.put('/bursary/send_invoice/update_parent_contact', {
         user_id: userId,
@@ -63,13 +54,17 @@ export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
     return res.data;
 };
 
-/**
- * Send SMS invoice notifications to selected parents.
- * @param {Array<string>} parentIds
- * @param {number|string} sessionTermId
- * @param {string} customMessage
- */
-export const sendInvoiceSms = async (parentIds, sessionTermId, customMessage) => {
+
+export const generateInvoiceExcel = async (params) => {
+    const res = await api.get('/bursary/send_invoice/generate_excel', {
+        params,
+        responseType: 'blob',
+    });
+    return res.data;
+};
+
+
+export const sendInvoiceSms = async ({ parentIds, sessionTermId, customMessage } = {}) => {
     const res = await api.post('/bursary/send_invoice/send_sms', {
         parent_ids: parentIds,
         session_term_id: sessionTermId,
@@ -78,13 +73,8 @@ export const sendInvoiceSms = async (parentIds, sessionTermId, customMessage) =>
     return res.data;
 };
 
-/**
- * Send Email invoice notifications to selected parents.
- * @param {Array<string>} parentIds
- * @param {number|string} sessionTermId
- * @param {string} customMessage
- */
-export const sendInvoiceEmail = async (parentIds, sessionTermId, customMessage) => {
+
+export const sendInvoiceEmail = async ({ parentIds, sessionTermId, customMessage } = {}) => {
     const res = await api.post('/bursary/send_invoice/send_email', {
         parent_ids: parentIds,
         session_term_id: sessionTermId,

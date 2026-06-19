@@ -384,7 +384,7 @@ const PaymentShedule = () => {
             total_sent: res.data.total_sent || 0,
             sent_by_mail: res.data.sent_by_mail || 0,
             sent_by_sms: res.data.sent_by_sms || 0,
-            excel_generated: 0, // Hardcoded for now per user request
+            excel_generated: res.data.excel_generated || 0,
           });
         }
       } catch (err) {

@@ -157,6 +157,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         const url = window.URL.createObjectURL(new Blob([res]));
         setExcelBlobUrl(url);
         showSnackbar?.('Excel invoice generated successfully. You can now download it.', 'success');
+        loadParents();
+        loadStats();
       }
     } catch (err) {
       showSnackbar?.('Failed to generate Excel invoice.', 'error');
@@ -381,10 +383,18 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     total_parents: selectedParents.length,
     sent: parentsList
       .filter((p) => selectedParents.includes(p.guardian_user_id))
-      .filter((p) => (deliveryTab === 0 ? p.sms_status === 'sent' : p.email_status === 'sent')).length,
+      .filter((p) => {
+        if (deliveryTab === 0) return p.sms_status === 'sent';
+        if (deliveryTab === 1) return p.email_status === 'sent';
+        return p.excel_status === 'generated';
+      }).length,
     not_sent: parentsList
       .filter((p) => selectedParents.includes(p.guardian_user_id))
-      .filter((p) => (deliveryTab === 0 ? p.sms_status !== 'sent' : p.email_status !== 'sent')).length,
+      .filter((p) => {
+        if (deliveryTab === 0) return p.sms_status !== 'sent';
+        if (deliveryTab === 1) return p.email_status !== 'sent';
+        return p.excel_status !== 'generated';
+      }).length,
   };
 
   const handleEditorUpdate = useCallback(({ editor }) => {

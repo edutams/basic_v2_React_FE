@@ -116,7 +116,7 @@ const CashPost = () => {
       const installmentPct = Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || 0, fee.amount);
+      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
     }
     return Math.max(0, baseAmount - discount + penalty);
   };
@@ -369,19 +369,18 @@ const CashPost = () => {
               <TableCell>#</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount (NGN)</TableCell>
-              <TableCell align="center">Amount to Pay</TableCell>
-              <TableCell align="center">Discount</TableCell>
-              <TableCell align="center">Penalty</TableCell>
+              <TableCell align="center">Discount (NGN)</TableCell>
+              <TableCell align="center">Penalty (NGN)</TableCell>
               <TableCell align="center">
-                {installmentalSetting === 'percentage' ? 'Installment' : 'Amount'}
+                {installmentalSetting === 'percentage' ? 'Installment' : 'Choice Amount (NGN)'} 
               </TableCell>
-              <TableCell align="right">Paid</TableCell>
-              <TableCell align="right">Balance</TableCell>
-              <TableCell align="right">Payable</TableCell>
+              <TableCell align="right">Paid(NGN)</TableCell>
+              <TableCell align="right">Balance(NGN)</TableCell>
+              <TableCell align="right">Payable(NGN)</TableCell>
               <TableCell align="right">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
                   <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
-                    Mark All
+                    Select All
                   </Typography>
                   <Checkbox
                     size="small"
@@ -424,19 +423,6 @@ const CashPost = () => {
                     )}
                   </TableCell>
                   <TableCell align="right">{format(fee.amount)}</TableCell>
-
-                  {/* AMOUNT TO PAY */}
-                  <TableCell align="center">
-                    <TextField
-                      size="small"
-                      type="number"
-                      sx={{ width: 110 }}
-                      disabled={fee.has_cashpost}
-                      value={fee.amountToPay}
-                      onChange={(e) => updateFee(type, fee.id, 'amountToPay', e.target.value)}
-                      inputProps={{ min: 0 }}
-                    />
-                  </TableCell>
 
                   {/* DISCOUNT */}
                   <TableCell align="center">

@@ -52,7 +52,7 @@ import {
   generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
-const SendInvoiceTab = ({ showSnackbar }) => {
+const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [deliveryTab, setDeliveryTab] = useState(0);
 
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -125,13 +125,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           // Reload to refresh statuses
           loadParents();
           loadStats();
+          refreshStats?.();
         } else {
           showSnackbar?.(res?.message || 'Failed to send invoice.', 'error');
         }
         setSelectedParents([]);
-        fetchParents();
-        fetchStats();
       } catch (err) {
+        console.error('Send invoice exact error:', err);
         showSnackbar?.(err?.response?.data?.message || 'Failed to send invoices.', 'error');
       } finally {
         setSendingInvoice(false);
@@ -159,6 +159,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         showSnackbar?.('Excel invoice generated successfully. You can now download it.', 'success');
         loadParents();
         loadStats();
+        refreshStats?.();
       }
     } catch (err) {
       showSnackbar?.('Failed to generate Excel invoice.', 'error');
@@ -760,7 +761,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </Box>
           </Box>
           {/* <Chip
-            label="Regenerate"
+            label="Regenerate"CompulsoryScheduleTab
             size="small"
             icon={<RefreshIcon fontSize="small" sx={{ color: 'inherit !important' }} />}
             sx={{

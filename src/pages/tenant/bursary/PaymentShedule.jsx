@@ -368,6 +368,11 @@ const PaymentShedule = () => {
     excel_generated: 0,
   });
   const [loadingSendInvoiceStats, setLoadingSendInvoiceStats] = useState(false);
+  const [sendInvoiceRefreshKey, setSendInvoiceRefreshKey] = useState(0);
+
+  const refreshSendInvoiceStats = () => {
+    setSendInvoiceRefreshKey((prev) => prev + 1);
+  };
 
   // Fetch send invoice stats
   useEffect(() => {
@@ -394,7 +399,7 @@ const PaymentShedule = () => {
       }
     };
     loadSendInvoiceStats();
-  }, [selectedSessionTerm, actionTab, selectedClass]);
+  }, [selectedSessionTerm, actionTab, selectedClass, sendInvoiceRefreshKey]);
 
   const formatCurrency = (value) =>
     `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -1004,7 +1009,12 @@ const PaymentShedule = () => {
               setSelectedClass={setSelectedClass}
             />
           )}
-          {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}
+          {actionTab === 2 && (
+            <SendInvoiceTab 
+              showSnackbar={showSnackbar} 
+              refreshStats={refreshSendInvoiceStats}
+            />
+          )}
         </Box>
       </Paper>
 

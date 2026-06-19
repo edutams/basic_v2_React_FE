@@ -759,7 +759,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               {dynamicStats.not_sent}
             </Box>
           </Box>
-          <Chip
+          {/* <Chip
             label="Regenerate"
             size="small"
             icon={<RefreshIcon fontSize="small" sx={{ color: 'inherit !important' }} />}
@@ -770,12 +770,12 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               borderRadius: 5,
               cursor: 'pointer',
             }}
-          // onClick={() => showSnackbar?.('Regenerating...', 'info')}
-          />
+          onClick={() => showSnackbar?.('Regenerating...', 'info')}
+          /> */}
         </Box>
       </Box>
 
-      {studentStats && (
+      {/* {studentStats && (
         <Box
           sx={{
             bgcolor: "info.light",
@@ -820,7 +820,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             Students must be linked to a parent for their parent to receive an invoice.
           </Typography>
         </Box>
-      )}
+      )} */}
 
 
       <TableContainer
@@ -831,7 +831,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         <Table size="medium">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
+              {/* <TableCell padding="checkbox">
                 <Checkbox
                   indeterminate={
                     selectedParents.length > 0 && selectedParents.length < parentsList.length
@@ -839,11 +839,12 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   checked={parentsList.length > 0 && selectedParents.length === parentsList.length}
                   onChange={handleSelectAll}
                 />
-              </TableCell>
+              </TableCell> */}
+              <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>S/N</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Phone No</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Status</TableCell>
-              <TableCell
+              {/* <TableCell
                 sx={{
                   fontWeight: 600,
                   color: 'text.secondary',
@@ -852,7 +853,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 }}
               >
                 Action
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -869,37 +870,39 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedParentsList.map((row) => (
+              paginatedParentsList.map((row, index) => (
                 <TableRow
                   key={row.guardian_user_id}
                   hover
                   selected={selectedParents.includes(row.guardian_user_id)}
                 >
-                  <TableCell padding="checkbox">
+                  {/* <TableCell padding="checkbox">
                     <Checkbox
                       checked={selectedParents.includes(row.guardian_user_id)}
                       onChange={() => handleSelectParent(row.guardian_user_id)}
                     />
-                  </TableCell>
+                  </TableCell> */}
+                  <TableCell sx={{ fontWeight: 700 }}>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     {row.guardian_phone}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label="Generate"
+                      label={row.excel_status === 'generated' ? 'Generated' : 'Pending'}
                       size="small"
                       sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
+                        bgcolor: row.excel_status === 'generated' ? 'success.light' : 'warning.light',
+                        color: row.excel_status === 'generated' ? 'success.main' : 'warning.main',
+                        fontWeight: 600,
                       }}
                     />
                   </TableCell>
-                  <TableCell align="center">
+                  {/* <TableCell align="center">
                     <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                       <MoreVertIcon />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             )}

@@ -733,6 +733,54 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         </Box>
       </Box>
 
+      {studentStats && (
+        <Box
+          sx={{
+            bgcolor: "info.light",
+            p: 1.2,
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="body2" sx={{ m: 0 }}>
+              Total Wards:{" "}
+              <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
+                {studentStats.total_students}
+              </Box>
+            </Typography>
+
+            <Typography variant="body2" sx={{ m: 0 }}>
+              Unlinked Wards:{" "}
+              <Box component="span" sx={{ color: "error.main", fontWeight: 600 }}>
+                {studentStats.unlinked_students}
+              </Box>
+            </Typography>
+          </Box>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              lineHeight: 1.2,
+            }}
+          >
+            Students must be linked to a parent for their parent to receive an invoice.
+          </Typography>
+        </Box>
+      )}
+
+
       <TableContainer
         component={Paper}
         variant="outlined"

@@ -32,6 +32,7 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
+  InputLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
@@ -41,9 +42,14 @@ import CloseIcon from '@mui/icons-material/Close';
 import { fetchInvoiceByNumber } from '@/api/tenant/bursary/classLedger';
 import {
   fetchActiveSessionTerm,
+  fetchBursarySessionTerms,
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  fetchSessions,
+  fetchSessionTermsBySession,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 
 const BCrumb = [
@@ -52,6 +58,12 @@ const BCrumb = [
   { to: '/class-ledger', title: 'Class Ledger' },
   { title: 'Invoice' },
 ];
+
+const extractList = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
+};
 
 /* ================= COMPONENT ================= */
 const Invoice = () => {
@@ -95,17 +107,77 @@ const Invoice = () => {
   const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
   const [globalModalValue, setGlobalModalValue] = useState('');
 
+  const [allSessionTerms, setAllSessionTerms] = useState([]);
+  const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
+
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
+  const loadSessionsAndTerms = async () => {
+    setLoadingSessions(true);
+    try {
+      const res = await fetchSessions();
+      const sessionsList = extractList(res);
+      let combinedTerms = [];
+
+      for (const session of sessionsList) {
+        const termsRes = await fetchSessionTermsBySession(session.id);
+        const terms = extractList(termsRes);
+
+        const formatted = terms.map((term) => ({
+          ...term,
+          displayLabel: `${term.session?.sesname || session.sesname} - ${term.display_term?.display_name}`,
+        }));
+
+        combinedTerms = [...combinedTerms, ...formatted];
+      }
+
+      setAllSessionTerms(combinedTerms);
+
+      // Auto select first one
+      if (combinedTerms.length > 0) {
+        const firstTerm = combinedTerms[0];
+        setSelectedSessionTermId(firstTerm.id);
+        setSessionTermId(firstTerm.id);
+
+        await fetchInvoiceData(firstTerm.session?.id || firstTerm.session_id, firstTerm.id);
+      }
+    } catch (err) {
+      console.error('Failed to load sessions and terms', err);
+      setError('Failed to load session terms');
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  const handleSessionTermChange = async (e) => {
+    const termId = Number(e.target.value);
+    setSelectedSessionTermId(termId);
+
+    const selectedTerm = allSessionTerms.find((t) => t.id === termId);
+    if (selectedTerm) {
+      setSessionTermId(termId);
+      await fetchInvoiceData(selectedTerm.session?.id || selectedTerm.session_id, termId);
+    }
+  };
+
+  useEffect(() => {
+    loadSessionsAndTerms();
+  }, []);
+
   const handleGlobalModalConfirm = () => {
     const value = Number(globalModalValue) || 0;
     const { type, field } = globalModal;
     const setter = type === 'comp' ? setCompFees : setOptFees;
-    const setGlobal = type === 'comp'
-      ? (field === 'discount' ? setCompDiscountGlobal : setCompPenaltyGlobal)
-      : (field === 'discount' ? setOptDiscountGlobal : setOptPenaltyGlobal);
+    const setGlobal =
+      type === 'comp'
+        ? field === 'discount'
+          ? setCompDiscountGlobal
+          : setCompPenaltyGlobal
+        : field === 'discount'
+          ? setOptDiscountGlobal
+          : setOptPenaltyGlobal;
 
-    setter((prev) =>
-      prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true }))
-    );
+    setter((prev) => prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true })));
     setGlobal(true);
     setGlobalModal({ ...globalModal, open: false });
   };
@@ -668,6 +740,33 @@ const Invoice = () => {
           </Alert>
         )}
 
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <FormControl size="small">
+            <InputLabel>Session Term</InputLabel>
+            <Select
+              value={selectedSessionTermId || ''}
+              label="Session Term"
+              onChange={handleSessionTermChange}
+              disabled={loadingSessions}
+            >
+              {allSessionTerms.map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.displayLabel}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
         {/* COMPULSORY PAYMENT */}
         {renderHeaderBlock({
           title: 'Compulsory Payment',
@@ -697,7 +796,7 @@ const Invoice = () => {
                       setGlobalModalValue('');
                     } else {
                       setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
                       );
                       setCompDiscountGlobal(false);
                     }
@@ -725,7 +824,7 @@ const Invoice = () => {
                       setGlobalModalValue('');
                     } else {
                       setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
                       );
                       setCompPenaltyGlobal(false);
                     }
@@ -844,7 +943,7 @@ const Invoice = () => {
                       fontWeight={600}
                       color={isDark ? '#94a3b8' : '#475569'}
                     >
-                      Mark All
+                      Select All
                     </Typography>
                     <Checkbox
                       size="small"
@@ -1092,7 +1191,7 @@ const Invoice = () => {
                       setGlobalModalValue('');
                     } else {
                       setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
                       );
                       setOptDiscountGlobal(false);
                     }
@@ -1120,7 +1219,7 @@ const Invoice = () => {
                       setGlobalModalValue('');
                     } else {
                       setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
                       );
                       setOptPenaltyGlobal(false);
                     }
@@ -1259,7 +1358,7 @@ const Invoice = () => {
                         fontWeight={600}
                         color={isDark ? '#94a3b8' : '#475569'}
                       >
-                        Mark 
+                        Select
                       </Typography>
                       <Checkbox
                         size="small"
@@ -1608,7 +1707,7 @@ const Invoice = () => {
                   }
                   label={
                     <Typography variant="body2" fontWeight={600}>
-                      {allOptionalSelected ? 'Unmark All' : 'Mark All'}
+                      {allOptionalSelected ? 'Unselect All' : 'Select All'}
                     </Typography>
                   }
                 />
@@ -1743,7 +1842,9 @@ const Invoice = () => {
           <TextField
             autoFocus
             margin="dense"
-            label={globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'}
+            label={
+              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
+            }
             type="number"
             fullWidth
             variant="outlined"
@@ -1753,9 +1854,7 @@ const Invoice = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>
-            Cancel
-          </Button>
+          <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
           <Button variant="contained" onClick={handleGlobalModalConfirm}>
             Apply
           </Button>

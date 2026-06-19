@@ -50,7 +50,7 @@ import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
 import {
-  fetchClassesByProgramme,
+  fetchClassAndArmsByProgramme,
   fetchProgrammes,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import {
@@ -102,7 +102,7 @@ const ClassLedger = () => {
   const handleFilterChange = React.useCallback(async (key, val) => {
     if (key === 'programme') {
       try {
-        const classesRes = await fetchClassesByProgramme(val);
+        const classesRes = await fetchClassAndArmsByProgramme(val);
         setClasses(
           classesRes.data.map((c) => ({
             value: c.class_arm_id,
@@ -353,7 +353,7 @@ const ClassLedger = () => {
       // handleFilterChange('programme', firstProg);
 
       // Fetch classes for first programme, then auto-select first class
-      fetchClassesByProgramme(firstProg)
+      fetchClassAndArmsByProgramme(firstProg)
         .then((classesRes) => {
           const mapped = classesRes.data.map((c) => ({
             value: c.class_arm_id,

@@ -129,6 +129,10 @@ export const fetchClassesByProgramme = async (programmeId) => {
   const response = await api.get(`/curriculum/classes-by-programme/${programmeId}`);
   return response.data;
 };
+export const fetchClassAndArmsByProgramme = async (programmeId) => {
+  const response = await api.get(`/curriculum/classes-and-arms-by-programme/${programmeId}`);
+  return response.data;
+};
 
 // Fetch class arms by programme
 export const fetchClassArmsByProgramme = async (programmeId, params = {}) => {

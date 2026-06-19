@@ -49,6 +49,7 @@ import {
   updateParentPhoneNumberOrEmail,
   sendInvoiceSms,
   sendInvoiceEmail,
+  generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
@@ -90,6 +91,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   );
   const [studentStats, setStudentStats] = useState(null);
 
+  const [generatingExcel, setGeneratingExcel] = useState(false);
+  const [excelBlobUrl, setExcelBlobUrl] = useState(null);
+
   // Debounce ref for search
   const searchTimerRef = useRef(null);
 
@@ -124,12 +128,40 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         } else {
           showSnackbar?.(res?.message || 'Failed to send invoice.', 'error');
         }
+        setSelectedParents([]);
+        fetchParents();
+        fetchStats();
       } catch (err) {
-        console.error('Send invoice error:', err);
-        showSnackbar?.(err.response?.data?.message || 'Failed to send invoice.', 'error');
+        showSnackbar?.(err?.response?.data?.message || 'Failed to send invoices.', 'error');
       } finally {
         setSendingInvoice(false);
       }
+    }
+  };
+
+  const handleGenerateExcelInvoice = async () => {
+    if (!selectedSessionTermId || !selectedClassId) {
+      showSnackbar?.('Please select a session term and a class.', 'warning');
+      return;
+    }
+
+    try {
+      setGeneratingExcel(true);
+      const res = await generateInvoiceExcel({
+        session_term_id: selectedSessionTermId,
+        class_id: selectedClassId,
+        programme_id: selectedProgrammeId || undefined,
+      });
+
+      if (res) {
+        const url = window.URL.createObjectURL(new Blob([res]));
+        setExcelBlobUrl(url);
+        showSnackbar?.('Excel invoice generated successfully. You can now download it.', 'success');
+      }
+    } catch (err) {
+      showSnackbar?.('Failed to generate Excel invoice.', 'error');
+    } finally {
+      setGeneratingExcel(false);
     }
   };
 
@@ -1094,8 +1126,25 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-            <Button size="small">Generate</Button>
-            <Button endIcon={<DownloadIcon />}>Downloaded</Button>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleGenerateExcelInvoice}
+              disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}
+            >
+              {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
+            </Button>
+            {excelBlobUrl && (
+              <Button
+                endIcon={<DownloadIcon />}
+                variant="outlined"
+                component="a"
+                href={excelBlobUrl}
+                download={`Invoices_${selectedClassName || 'Class'}.xlsx`}
+              >
+                Downloaded
+              </Button>
+            )}
           </Box>
         )}
       </Box>

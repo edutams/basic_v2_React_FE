@@ -64,6 +64,17 @@ export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
 };
 
 /**
+ * Generate invoice excel.
+ */
+export const generateInvoiceExcel = async (params) => {
+    const res = await api.get('/bursary/send_invoice/generate_excel', {
+        params,
+        responseType: 'blob',
+    });
+    return res.data;
+};
+
+/**
  * Send SMS invoice notifications to selected parents.
  */
 export const sendInvoiceSms = async ({ parentIds, sessionTermId, customMessage } = {}) => {

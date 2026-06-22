@@ -32,7 +32,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
     gateway_private_key: '',
     bank: '',
     account_number: '',
-    currency: 'NGN',
+    currency: '₦',
   });
 
   const selectedGateway = gateways.find((g) => g.id === formData.gateway_id);
@@ -50,7 +50,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
         gateway_private_key: '',
         bank: '',
         account_number: '',
-        currency: 'NGN',
+        currency: '₦',
       });
     }
   }, [open]);
@@ -264,7 +264,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
             value={formData.currency}
             onChange={handleChange('currency')}
           >
-            <MenuItem value="NGN">NGN</MenuItem>
+            <MenuItem value="₦">₦</MenuItem>
             <MenuItem value="USD">USD</MenuItem>
           </TextField>
         )}

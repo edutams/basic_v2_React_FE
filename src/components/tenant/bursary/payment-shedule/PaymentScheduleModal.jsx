@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Button, TextField, Stack, Typography, Box, CircularProgress, Alert } from '@mui/material';
+import {
+  Button,
+  TextField,
+  Stack,
+  Typography,
+  Box,
+  CircularProgress,
+  Alert,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
   createPaymentSchedule,
   updatePaymentSchedule,
+  fetchInstallments,
+  getBursaryInstalmentSetting,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const PaymentScheduleModal = ({
@@ -19,22 +33,43 @@ const PaymentScheduleModal = ({
 }) => {
   const [formData, setFormData] = useState({
     amount: '',
+    bursary_installment_id: '',
   });
 
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [installments, setInstallments] = useState([]);
+  const [instalmentCheck, setInstalmentCheck] = useState(null);
+  const [loadingInstallments, setLoadingInstallments] = useState(false);
 
   useEffect(() => {
-    if (payment && isEdit) {
+    if (open) {
       setFormData({
-        amount: payment.amount || '',
+        amount: payment?.amount || '',
+        bursary_installment_id: payment?.bursary_installment_id || '',
       });
-    } else {
-      setFormData({
-        amount: '',
-      });
+      setErrors({});
+
+      const loadInstallments = async () => {
+        try {
+          setLoadingInstallments(true);
+          const settingRes = await getBursaryInstalmentSetting();
+          setInstalmentCheck(settingRes);
+
+          if (settingRes === 'percentage') {
+            const res = await fetchInstallments();
+            const list = Array.isArray(res?.data) ? res.data : [];
+            setInstallments(list);
+          }
+        } catch (err) {
+          console.error('Failed to load installments', err);
+          setInstallments([]);
+        } finally {
+          setLoadingInstallments(false);
+        }
+      };
+      loadInstallments();
     }
-    setErrors({});
   }, [payment, isEdit, open]);
 
   const handleChange = (event) => {
@@ -74,6 +109,10 @@ const PaymentScheduleModal = ({
           const payload = {
             amount: parseFloat(formData.amount),
           };
+
+          if (formData.bursary_installment_id) {
+            payload.bursary_installment_id = formData.bursary_installment_id;
+          }
 
           console.log('Updating payment schedule:', payment.scheduleId, payload);
 
@@ -149,7 +188,7 @@ const PaymentScheduleModal = ({
         </Alert>
 
         <TextField
-          label="Amount (NGN)"
+          label="Amount (₦)"
           fullWidth
           value={formData.amount}
           onChange={handleChange}
@@ -165,6 +204,30 @@ const PaymentScheduleModal = ({
             },
           }}
         />
+
+        {instalmentCheck === 'percentage' && (
+          <FormControl fullWidth size="small" disabled={saving || loadingInstallments}>
+            <InputLabel id="installment-label">Installment (Optional)</InputLabel>
+            <Select
+              labelId="installment-label"
+              label="Installment (Optional)"
+              value={formData.bursary_installment_id}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bursary_installment_id: e.target.value }))
+              }
+              displayEmpty
+            >
+              <MenuItem value="">
+                <em>-- No Installment --</em>
+              </MenuItem>
+              {installments.map((inst) => (
+                <MenuItem key={inst.id} value={inst.id}>
+                  {inst.inst1} : {inst.inst2}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         {errors.submit && <Alert severity="error">{errors.submit}</Alert>}
 

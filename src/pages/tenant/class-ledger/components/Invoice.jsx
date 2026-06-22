@@ -39,7 +39,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { fetchInvoiceByNumber } from '@/api/tenant/bursary/classLedger';
+import { getStudentSchedule } from '@/api/tenant/bursary/classLedger';
 import {
   fetchActiveSessionTerm,
   fetchBursarySessionTerms,
@@ -109,8 +109,8 @@ const Invoice = () => {
 
   const [allSessionTerms, setAllSessionTerms] = useState([]);
   const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
-
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [owingInfo, setOwingInfo] = useState(null);
 
   const loadSessionsAndTerms = async () => {
     setLoadingSessions(true);
@@ -139,7 +139,7 @@ const Invoice = () => {
         setSelectedSessionTermId(firstTerm.id);
         setSessionTermId(firstTerm.id);
 
-        await fetchInvoiceData(firstTerm.session?.id || firstTerm.session_id, firstTerm.id);
+        await fetchInvoiceData();
       }
     } catch (err) {
       console.error('Failed to load sessions and terms', err);
@@ -150,13 +150,16 @@ const Invoice = () => {
   };
 
   const handleSessionTermChange = async (e) => {
+    if (owingInfo?.owing_status === 'owing') {
+      return; // blocked
+    }
     const termId = Number(e.target.value);
     setSelectedSessionTermId(termId);
 
     const selectedTerm = allSessionTerms.find((t) => t.id === termId);
     if (selectedTerm) {
       setSessionTermId(termId);
-      await fetchInvoiceData(selectedTerm.session?.id || selectedTerm.session_id, termId);
+      await fetchInvoiceData();
     }
   };
 
@@ -377,11 +380,7 @@ const Invoice = () => {
       if (res?.success) {
         // Refetch invoice data to show the saved optional payments
         if (sessionInfo) {
-          await fetchInvoiceData(
-            sessionInfo.session_id,
-            sessionInfo.term_id,
-            selectedCategoryId || undefined,
-          );
+          await fetchInvoiceData();
         }
       } else {
         setError(res?.message || 'Failed to save optional payments.');
@@ -405,24 +404,20 @@ const Invoice = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchInvoiceData = useCallback(
-    async (sessionId, termId, categoryId) => {
-      if (!invoiceId) return;
+    async (forcedSessionTermId = null) => {
+      if (!invoiceId || !user_id) return;
 
       setLoading(true);
       setError('');
 
       try {
-        const res = await fetchInvoiceByNumber({
-          sessionId,
-          termId,
+        const res = await getStudentSchedule({
           invoiceNumber: invoiceId,
           userId: user_id,
-          categoryId: categoryId || undefined,
         });
 
         if (!res.success || !res.data) {
           setError(res.message || 'Failed to load invoice data');
-          setLoading(false);
           return;
         }
 
@@ -431,97 +426,70 @@ const Invoice = () => {
         setStudentInfo(data.student_info);
         setSessionInfo(data.session_info);
         setInvoiceInfo(data.invoice_info);
-
-        // Store IDs needed for optional payments modal
-        if (data.session_info?.session_term_id) {
-          setSessionTermId(data.session_info.session_term_id);
-        }
-        if (data.student_info?.class_id) {
-          setClassId(data.student_info.class_id);
-        }
-
-        // Set category from invoice_info
-        if (data.invoice_info?.bursary_payment_category_id) {
-          setSelectedCategoryId(String(data.invoice_info.bursary_payment_category_id));
-        }
-
-        // Store installments and installmental setting
+        setOwingInfo(data.owing_info || null);
         setInstallments(data.installments || []);
         setInstallmentalSetting(data.installmental_setting || 'percentage');
 
-        const installmentsList = data.installments || [];
+        // === CRITICAL: RESPECT OWING LOGIC ===
+        const targetSessionTermId =
+          data.owing_info?.owing_status === 'owing'
+            ? data.owing_info.owing_session_term_id
+            : data.session_info.session_term_id;
 
-        // Helper to find installment data from installment_id
-        const findInstallment = (item) => {
-          const match = installmentsList.find(
-            (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name,
-          );
-          return match || null;
-        };
+        setSessionTermId(targetSessionTermId);
 
-        // Map compulsory data
-        const mappedComp = (data.compulsory_data || []).map((item) => {
-          const inst = findInstallment(item);
-          return {
-            id: item.id,
-            description: item.description,
-            schedule_amount: item.schedule_amount,
-            amount: item.amount,
-            discount: item.discount,
-            discount_enabled: item.discount_enabled,
-            penalty: item.penalty,
-            penalty_enabled: item.penalty_enabled,
-            paid_amount: item.paid_amount,
-            balance: item.balance,
-            status: item.status,
-            checked: false,
-            discountEnabled: !!item.discount_enabled,
-            penaltyEnabled: !!item.penalty_enabled,
-            installment_id: item.installment_id || null,
-            installment_inst1: inst ? String(inst.inst1) : '',
-            installment_inst2: inst ? String(inst.inst2) : '',
-            custom_amount: item.amount,
-          };
-        });
+        // Store class and category
+        setClassId(data.student_info?.class_id);
+        setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
+
+        // Map compulsory fees
+        const mappedComp = (data.compulsory_data || []).map((item) => ({
+          id: item.id,
+          description: item.description,
+          amount: item.amount,
+          paid_amount: item.paid_amount,
+          balance: item.balance,
+          discount: item.discount || 0,
+          discountEnabled: !!item.discount_enabled,
+          penalty: item.penalty || 0,
+          penaltyEnabled: !!item.penalty_enabled,
+          checked: false,
+          installment_id: null,
+          installment_inst1: '',
+          installment_inst2: '',
+          custom_amount: item.amount,
+        }));
         setCompFees(mappedComp);
 
-        // Map optional data — use selected_options for chip display & amount calculation
+        // Map optional fees
         const mappedOpt = (data.optional_data || []).map((item) => ({
           id: item.id,
           description: item.description,
-          schedule_amount: item.schedule_amount,
-          // Calculate amount as the SUM of all selected option amounts
           amount: (item.selected_options || []).reduce(
-            (sum, opt) => sum + (Number(opt.amount) || 0),
+            (sum, opt) => sum + Number(opt.amount || 0),
             0,
           ),
           selectedOptions: item.selected_options || [],
-          discount: item.discount,
-          discount_enabled: item.discount_enabled,
-          penalty: item.penalty,
-          penalty_enabled: item.penalty_enabled,
+          discount: item.discount || 0,
+          discountEnabled: !!item.discount_enabled,
+          penalty: item.penalty || 0,
+          penaltyEnabled: !!item.penalty_enabled,
           paid_amount: item.paid_amount,
           balance: item.balance,
-          status: item.status,
           checked: false,
-          discountEnabled: !!item.discount_enabled,
-          penaltyEnabled: !!item.penalty_enabled,
-          custom_amount: item.amount,
         }));
         setOptFees(mappedOpt);
 
         setDataLoaded(true);
-        dataLoadedRef.current = true;
       } catch (err) {
-        console.error('Failed to fetch invoice data:', err);
-        setError(err?.response?.data?.message || err.message || 'Failed to load invoice data');
+        console.error(err);
+        setError('Failed to load invoice data');
       } finally {
         setLoading(false);
       }
     },
     [invoiceId, user_id],
   );
-
   // Fetch active session/term on mount, then load invoice data
   useEffect(() => {
     const init = async () => {
@@ -537,7 +505,7 @@ const Invoice = () => {
           });
 
           // Fetch invoice using session_id, term_id (no category initially)
-          await fetchInvoiceData(active.session_id, active.term_id);
+          await fetchInvoiceData();
         } else {
           setLoading(false);
           setError('No active session/term found. Please configure bursary settings first.');
@@ -711,6 +679,15 @@ const Invoice = () => {
             <Typography variant="body1" fontWeight={600} color="text.secondary">
               <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
             </Typography>
+            {owingInfo?.owing_status === 'owing' && (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Currently viewing invoice for{' '}
+                <strong>
+                  {sessionInfo?.session} {sessionInfo?.term}
+                </strong>
+                (owing term)
+              </Alert>
+            )}
           </Box>
 
           {/* BACK BUTTON */}
@@ -757,7 +734,6 @@ const Invoice = () => {
               value={selectedSessionTermId || ''}
               label="Session Term"
               onChange={handleSessionTermChange}
-              disabled={loadingSessions}
             >
               {allSessionTerms.map((item) => (
                 <MenuItem key={item.id} value={item.id}>
@@ -767,6 +743,16 @@ const Invoice = () => {
             </Select>
           </FormControl>
         </Box>
+
+        {/* OWING WARNING BANNER */}
+        {owingInfo?.owing_status === 'owing' ? (
+          <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
+            <strong>Outstanding Balance Detected</strong>
+            <br />
+            This student must first clear <strong>{owingInfo.owing_session_label}</strong> before
+            paying for any later term.
+          </Alert>
+        ) : null}
 
         {/* COMPULSORY PAYMENT */}
         {renderHeaderBlock({

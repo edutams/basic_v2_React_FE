@@ -56,6 +56,7 @@ import {
   fetchResultPaymentSettings,
   saveResultPaymentSettings,
 } from '@/api/tenant/bursary/bursaryResultSettingsApi';
+import useNotification from '@/hooks/useNotification';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -84,6 +85,8 @@ const BursarySetupTab = ({
   onStatsChange,
   showSnackbar,
 }) => {
+  const notify = useNotification();
+
   const [collectionMethod, setCollectionMethod] = useState('single');
   const [instalmentStyle, setInstalmentStyle] = useState('percentage');
   const [gatewayPayer, setGatewayPayer] = useState('parent');
@@ -132,7 +135,6 @@ const BursarySetupTab = ({
   const loadResultSettings = async () => {
     try {
       const res = await fetchResultPaymentSettings();
-      // console.log(res, 77);
 
       if (res.status) {
         setResultSettings({
@@ -143,10 +145,10 @@ const BursarySetupTab = ({
           optional_pay_method: res.data.optional_pay_method || '',
         });
       } else {
-        showSnackbar(res.message || 'Failed to load result settings', 'error');
+        notify.info(res.message);
       }
     } catch (err) {
-      showSnackbar(err?.response?.data?.message || 'Network error', 'error');
+      notify.info(err?.response?.data?.message);
     }
   };
 

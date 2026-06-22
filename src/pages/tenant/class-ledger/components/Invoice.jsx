@@ -407,7 +407,7 @@ const Invoice = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchInvoiceData = useCallback(
-    async (forcedSessionTermId = null) => {
+    async (invoiceId, user_id) => {
       if (!invoiceId || !user_id) return;
 
       setLoading(true);
@@ -433,6 +433,8 @@ const Invoice = () => {
         setInstallments(data.installments || []);
         setInstallmentalSetting(data.installmental_setting || 'percentage');
 
+        const installmentsList = data.installments || [];
+
         // === CRITICAL: RESPECT OWING LOGIC ===
         const targetSessionTermId =
           data.owing_info?.owing_status === 'owing'
@@ -440,6 +442,7 @@ const Invoice = () => {
             : data.session_info.session_term_id;
 
         setSessionTermId(targetSessionTermId);
+
         // Helper to find installment data from installment_id
         const findInstallment = (item) => {
           const match = installmentsList.find(
@@ -456,22 +459,29 @@ const Invoice = () => {
         setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
         // Map compulsory fees
-        const mappedComp = (data.compulsory_data || []).map((item) => ({
-          id: item.id,
-          description: item.description,
-          amount: item.amount,
-          paid_amount: item.paid_amount,
-          balance: item.balance,
-          discount: item.discount || 0,
-          discountEnabled: !!item.discount_enabled,
-          penalty: item.penalty || 0,
-          penaltyEnabled: !!item.penalty_enabled,
-          checked: false,
-          installment_id: null,
-          installment_inst1: '',
-          installment_inst2: '',
-          custom_amount: item.amount,
-        }));
+        const mappedComp = (data.compulsory_data || []).map((item) => {
+          const inst = findInstallment(item);
+          return {
+            id: item.id,
+            description: item.description,
+            schedule_amount: item.schedule_amount,
+            amount: item.amount,
+            discount: item.discount,
+            discount_enabled: item.discount_enabled,
+            penalty: item.penalty,
+            penalty_enabled: item.penalty_enabled,
+            paid_amount: item.paid_amount,
+            balance: item.balance,
+            status: item.status,
+            checked: false,
+            discountEnabled: !!item.discount_enabled,
+            penaltyEnabled: !!item.penalty_enabled,
+            installment_id: item.installment_id || null,
+            installment_inst1: inst ? String(inst.inst1) : '',
+            installment_inst2: inst ? String(inst.inst2) : '',
+            custom_amount: item.amount,
+          };
+        });
         setCompFees(mappedComp);
 
         // Map optional fees

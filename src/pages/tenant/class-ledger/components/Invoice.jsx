@@ -260,10 +260,7 @@ const Invoice = () => {
 
     let baseAmount;
     if (installmentalSetting === 'percentage') {
-      const hasPayment = Number(fee.paid_amount) > 0;
-      const installmentPct = hasPayment
-        ? Number(fee.installment_inst2) || 0
-        : Number(fee.installment_inst1) || 100;
+      const installmentPct = Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
       baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
@@ -407,7 +404,7 @@ const Invoice = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchInvoiceData = useCallback(
-    async (invoiceId, user_id) => {
+    async (forcedSessionTermId = null) => {
       if (!invoiceId || !user_id) return;
 
       setLoading(true);
@@ -433,8 +430,6 @@ const Invoice = () => {
         setInstallments(data.installments || []);
         setInstallmentalSetting(data.installmental_setting || 'percentage');
 
-        const installmentsList = data.installments || [];
-
         // === CRITICAL: RESPECT OWING LOGIC ===
         const targetSessionTermId =
           data.owing_info?.owing_status === 'owing'
@@ -443,45 +438,27 @@ const Invoice = () => {
 
         setSessionTermId(targetSessionTermId);
 
-        // Helper to find installment data from installment_id
-        const findInstallment = (item) => {
-          const match = installmentsList.find(
-            (inst) =>
-              inst.id === item.installment_id ||
-              inst.inst1 === item.installment_name ||
-              inst.inst2 === item.installment_name,
-          );
-          return match || null;
-        };
-
         // Store class and category
         setClassId(data.student_info?.class_id);
         setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
         // Map compulsory fees
-        const mappedComp = (data.compulsory_data || []).map((item) => {
-          const inst = findInstallment(item);
-          return {
-            id: item.id,
-            description: item.description,
-            schedule_amount: item.schedule_amount,
-            amount: item.amount,
-            discount: item.discount,
-            discount_enabled: item.discount_enabled,
-            penalty: item.penalty,
-            penalty_enabled: item.penalty_enabled,
-            paid_amount: item.paid_amount,
-            balance: item.balance,
-            status: item.status,
-            checked: false,
-            discountEnabled: !!item.discount_enabled,
-            penaltyEnabled: !!item.penalty_enabled,
-            installment_id: item.installment_id || null,
-            installment_inst1: inst ? String(inst.inst1) : '',
-            installment_inst2: inst ? String(inst.inst2) : '',
-            custom_amount: item.amount,
-          };
-        });
+        const mappedComp = (data.compulsory_data || []).map((item) => ({
+          id: item.id,
+          description: item.description,
+          amount: item.amount,
+          paid_amount: item.paid_amount,
+          balance: item.balance,
+          discount: item.discount || 0,
+          discountEnabled: !!item.discount_enabled,
+          penalty: item.penalty || 0,
+          penaltyEnabled: !!item.penalty_enabled,
+          checked: false,
+          installment_id: null,
+          installment_inst1: '',
+          installment_inst2: '',
+          custom_amount: item.amount,
+        }));
         setCompFees(mappedComp);
 
         // Map optional fees
@@ -891,7 +868,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Amount (₦)
+                  Amount (NGN)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -901,7 +878,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Discount(₦)
+                  Discount(NGN)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -911,7 +888,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Penalty(₦)
+                  Penalty(NGN)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -921,7 +898,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -930,7 +907,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Payable(₦)
+                  Payable(NGN)
                 </TableCell>
                 <TableCell
                   align="right"
@@ -1101,7 +1078,7 @@ const Invoice = () => {
                             </MenuItem>
                             {installments.map((inst) => (
                               <MenuItem key={inst.id} value={inst.id}>
-                                {Number(fee.paid_amount) > 0 ? inst.inst2 : inst.inst1}
+                                {inst.inst1}:{inst.inst2}
                               </MenuItem>
                             ))}
                           </Select>
@@ -1316,7 +1293,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Amount (₦)
+                    Amount (NGN)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1326,7 +1303,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Discount(₦)
+                    Discount(NGN)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1336,7 +1313,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Penalty(₦)
+                    Penalty(NGN)
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1345,7 +1322,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Payable(₦)
+                    Payable(NGN)
                   </TableCell>
                   <TableCell
                     align="right"
@@ -1852,7 +1829,9 @@ const Invoice = () => {
           <TextField
             autoFocus
             margin="dense"
-            label={globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'}
+            label={
+              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
+            }
             type="number"
             fullWidth
             variant="outlined"

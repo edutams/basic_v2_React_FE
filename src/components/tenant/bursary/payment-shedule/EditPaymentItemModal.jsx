@@ -26,6 +26,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -58,6 +60,7 @@ const EditPaymentItemModal = ({
     selectedClasses: [],
     classAmounts: {},
     classInstallments: {}, // Store installment selections per class
+    classInstallmentEnabled: {}, // Per-class toggle for installment
     classScheduleIds: {}, // Store schedule IDs for existing schedules
   });
 
@@ -140,8 +143,8 @@ const EditPaymentItemModal = ({
       const amounts = {};
       const selected = [];
       const installmentSelections = {};
+      const installmentEnabled = {};
       const scheduleIds = {};
-      console.log(schedule.classes, 6666);
 
       if (schedule.classes) {
         schedule.classes.forEach((cls) => {
@@ -152,6 +155,7 @@ const EditPaymentItemModal = ({
           // Pre-populate installment if exists
           if (cls.bursary_installment_id) {
             installmentSelections[cls.id] = cls.bursary_installment_id;
+            installmentEnabled[cls.id] = true;
           }
           // Store schedule_id for existing schedules
           if (cls.schedule_id) {
@@ -166,8 +170,10 @@ const EditPaymentItemModal = ({
         selectedClasses: selected,
         classAmounts: amounts,
         classInstallments: installmentSelections,
+        classInstallmentEnabled: installmentEnabled,
         classScheduleIds: scheduleIds,
       });
+
       setErrors({});
     }
   }, [open, schedule]);
@@ -185,6 +191,16 @@ const EditPaymentItemModal = ({
     if (errors.selectedClasses) {
       setErrors((prev) => ({ ...prev, selectedClasses: '' }));
     }
+  };
+
+  const handleInstallmentToggle = (classId) => {
+    setFormData((prev) => ({
+      ...prev,
+      classInstallmentEnabled: {
+        ...prev.classInstallmentEnabled,
+        [classId]: !prev.classInstallmentEnabled[classId],
+      },
+    }));
   };
 
   const handleInstallmentChange = (classId, installmentId) => {
@@ -340,10 +356,11 @@ const EditPaymentItemModal = ({
             ...(formData.classScheduleIds[classId] && {
               schedule_id: formData.classScheduleIds[classId],
             }),
-            ...(instalmentCheck === 'percentage' &&
-              formData.classInstallments[classId] && {
-                bursary_installment_id: formData.classInstallments[classId],
-              }),
+            ...(instalmentCheck === 'percentage' && {
+              bursary_installment_id: formData.classInstallmentEnabled[classId]
+                ? formData.classInstallments[classId] || null
+                : null,
+            }),
           }));
 
         if (classesData.length === 0) {
@@ -506,23 +523,39 @@ const EditPaymentItemModal = ({
 
                           {instalmentCheck === 'percentage' && (
                             <TableCell sx={{ opacity: isSelected ? 1 : 0.5 }}>
-                              <FormControl size="small" fullWidth sx={{ maxWidth: 250 }}>
-                                <Select
-                                  value={selectedInstallment}
-                                  onChange={(e) => handleInstallmentChange(cls.id, e.target.value)}
-                                  disabled={!isSelected}
-                                  displayEmpty
-                                >
-                                  <MenuItem value="">
-                                    <em>--Choose Installment--</em>
-                                  </MenuItem>
-                                  {installments.map((inst) => (
-                                    <MenuItem key={inst.id} value={inst.id}>
-                                      {inst.inst1} : {inst.inst2}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      size="small"
+                                      checked={!!formData.classInstallmentEnabled[cls.id]}
+                                      onChange={() => handleInstallmentToggle(cls.id)}
+                                      disabled={!isSelected}
+                                    />
+                                  }
+                                  label=""
+                                  sx={{ m: 0 }}
+                                />
+                                {formData.classInstallmentEnabled[cls.id] && (
+                                  <FormControl size="small" sx={{ minWidth: 180 }}>
+                                    <Select
+                                      value={selectedInstallment}
+                                      onChange={(e) => handleInstallmentChange(cls.id, e.target.value)}
+                                      disabled={!isSelected}
+                                      displayEmpty
+                                    >
+                                      <MenuItem value="">
+                                        <em>--Choose Installment--</em>
+                                      </MenuItem>
+                                      {installments.map((inst) => (
+                                        <MenuItem key={inst.id} value={inst.id}>
+                                          {inst.inst1} : {inst.inst2}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                )}
+                              </Box>
                             </TableCell>
                           )}
 

@@ -101,10 +101,14 @@ const InvoiceStudentsView = () => {
           // URL param is valid — keep it
           setSelectedStudentCategory(urlCategoryId);
         } else if (cats.length > 0) {
-          // Fall back to first category
+          // Fall back to first category, preserve existing params
           const firstCatId = String(cats[0].id);
           setSelectedStudentCategory(firstCatId);
-          setSearchParams({ category_id: firstCatId }, { replace: true });
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.set('category_id', firstCatId);
+            return next;
+          }, { replace: true });
         }
       } catch (err) {
         console.error('Failed to load categories', err);
@@ -154,10 +158,12 @@ const InvoiceStudentsView = () => {
   const fetchAndSetStudentData = async () => {
     setError(null);
 
+    const pendingParam = searchParams.get('pending');
     const response = await fetchStudentForInvoiceData({
       sessionTermId: session_term_id,
       classId: class_id,
       categoryId: selectedCategoryId,
+      ...(pendingParam && Number(pendingParam) > 0 ? { pending: '1' } : {}),
     });
     const d = response?.data || {};
     const students = Array.isArray(d.students) ? d.students : [];
@@ -559,6 +565,14 @@ const InvoiceStudentsView = () => {
           </Box>
         }
       >
+        {searchParams.get('pending') && Number(searchParams.get('pending')) > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight={600}>
+              {searchParams.get('pending')} student(s) still need invoices generated. Please select them below and click &quot;Generate Invoice&quot; to create their invoices.
+            </Typography>
+          </Alert>
+        )}
+
         <Box
           display="flex"
           flexDirection={{ xs: 'column', sm: 'row' }}
@@ -621,9 +635,17 @@ const InvoiceStudentsView = () => {
                   const val = e.target.value;
                   setSelectedStudentCategory(val);
                   if (val && val !== 'all') {
-                    setSearchParams({ category_id: val });
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set('category_id', val);
+                      return next;
+                    });
                   } else {
-                    setSearchParams({});
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.delete('category_id');
+                      return next;
+                    });
                   }
                 }}
                 sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}

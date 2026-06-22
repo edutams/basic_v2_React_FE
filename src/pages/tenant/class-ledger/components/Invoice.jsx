@@ -257,7 +257,10 @@ const Invoice = () => {
 
     let baseAmount;
     if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_inst1) || 100;
+      const hasPayment = Number(fee.paid_amount) > 0;
+      const installmentPct = hasPayment
+        ? (Number(fee.installment_inst2) || 0)
+        : (Number(fee.installment_inst1) || 100);
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
       baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
@@ -454,7 +457,7 @@ const Invoice = () => {
         // Helper to find installment data from installment_id
         const findInstallment = (item) => {
           const match = installmentsList.find(
-            (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name,
+            (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name || inst.inst2 === item.installment_name,
           );
           return match || null;
         };
@@ -1092,7 +1095,7 @@ const Invoice = () => {
                             </MenuItem>
                             {installments.map((inst) => (
                               <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}:{inst.inst2}
+                                {Number(fee.paid_amount) > 0 ? inst.inst2 : inst.inst1}
                               </MenuItem>
                             ))}
                           </Select>

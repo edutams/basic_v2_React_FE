@@ -159,6 +159,7 @@ const InvoiceStudentsView = () => {
     setError(null);
 
     const pendingParam = forcePending ?? searchParams.get('pending');
+    const isPendingFilter = pendingParam && Number(pendingParam) > 0;
     const response = await fetchStudentForInvoiceData({
       sessionTermId: session_term_id,
       classId: class_id,
@@ -171,6 +172,20 @@ const InvoiceStudentsView = () => {
     setSessionLabel(d.session_label || '');
     setTermLabel(d.term_label || '');
     setClassName(d.class_name || '');
+
+    // If not using pending filter and no pending students remain, clean up URL
+    if (!isPendingFilter && searchParams.get('pending')) {
+      const hasPending = students.some(
+        (s) => !s.compulsory_invoice_generated || Number(s.compulsory_invoice_generated) === 0,
+      );
+      if (!hasPending) {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('pending');
+          return next;
+        }, { replace: true });
+      }
+    }
 
     // ── Populate existing optional payment selections from backend ──
     const optionIdsMap = {};

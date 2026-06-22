@@ -435,7 +435,7 @@ const EditPaymentItemModal = ({
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
                     <TableCell sx={{ fontWeight: 600 }}>Class</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Amount (NGN)</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Amount (₦)</TableCell>
                     {instalmentCheck === 'percentage' && (
                       <TableCell sx={{ fontWeight: 600 }}>Installment</TableCell>
                     )}

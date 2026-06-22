@@ -302,7 +302,7 @@ const CompulsoryScheduleTab = ({
   };
 
   // const handleClassClick = (schedule, cls) => {
-  //   const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
+  //   const isEdit = cls.name.includes('₦'); // Has amount if name contains ₦
 
   //   setConfirmDialog({
   //     open: true,
@@ -339,7 +339,7 @@ const CompulsoryScheduleTab = ({
       const { className, paymentName } = paymentModal.payment || {};
 
       showSnackbar?.(
-        `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
+        `Payment ${action} successfully: ${formData.amount} ₦ for ${className} in ${paymentName}`,
       );
 
       // Reload schedules after saving
@@ -600,7 +600,7 @@ const CompulsoryScheduleTab = ({
                             <Tooltip title="Click to set or edit payment amount">
                             <Chip
                               key={cls.id}
-                              label={hasAmount ? `${cls.name} - [${cls.amount} NGN]` : cls.name}
+                              label={hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
                               size="small"
                               onClick={(e) => {
                                 // Prevent bubbling if clicking on delete icon

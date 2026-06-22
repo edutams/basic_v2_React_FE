@@ -368,15 +368,15 @@ const CashPost = () => {
             <TableRow>
               <TableCell>#</TableCell>
               <TableCell>Description</TableCell>
-              <TableCell align="right">Amount (NGN)</TableCell>
-              <TableCell align="center">Discount (NGN)</TableCell>
-              <TableCell align="center">Penalty (NGN)</TableCell>
+              <TableCell align="right">Amount (₦)</TableCell>
+              <TableCell align="center">Discount (₦)</TableCell>
+              <TableCell align="center">Penalty (₦)</TableCell>
               <TableCell align="center">
-                {installmentalSetting === 'percentage' ? 'Installment' : 'Choice Amount (NGN)'} 
+                {installmentalSetting === 'percentage' ? 'Installment' : 'Choice Amount (₦)'} 
               </TableCell>
-              <TableCell align="right">Paid(NGN)</TableCell>
-              <TableCell align="right">Balance(NGN)</TableCell>
-              <TableCell align="right">Payable(NGN)</TableCell>
+              <TableCell align="right">Paid(₦)</TableCell>
+              <TableCell align="right">Balance(₦)</TableCell>
+              <TableCell align="right">Payable(₦)</TableCell>
               <TableCell align="right">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
                   <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
@@ -875,7 +875,7 @@ const CashPost = () => {
             <TextField
               autoFocus
               margin="dense"
-              label={globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'}
+              label={globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'}
               type="number"
               fullWidth
               variant="outlined"

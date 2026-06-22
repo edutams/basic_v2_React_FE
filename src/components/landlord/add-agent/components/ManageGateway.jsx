@@ -19,7 +19,7 @@ import gatewayApi from '@/api/landlord/gateway/gatewayApi';
 import { fetchSkoolPayBanks } from '@/api/landlord/bank-service/bankService';
 
 const availableCurrencies = [
-  { code: 'NGN', name: 'Nigerian Naira (₦)', symbol: '₦' },
+  { code: '₦', name: 'Nigerian Naira (₦)', symbol: '₦' },
   { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
 ];
 
@@ -84,7 +84,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
       gateway: selectedAgent?.gateway || '',
       bank: selectedAgent?.bank || '',
       accountNumber: selectedAgent?.accountNumber || '',
-      currency: selectedAgent?.currency || 'NGN',
+      currency: selectedAgent?.currency || '₦',
     },
     validationSchema: gatewayValidationSchema,
     enableReinitialize: true,

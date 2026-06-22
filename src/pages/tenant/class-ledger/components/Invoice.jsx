@@ -882,7 +882,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Amount (NGN)
+                  Amount (₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -892,7 +892,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Discount(NGN)
+                  Discount(₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -902,7 +902,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Penalty(NGN)
+                  Penalty(₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -912,7 +912,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -921,7 +921,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Payable(NGN)
+                  Payable(₦)
                 </TableCell>
                 <TableCell
                   align="right"
@@ -1307,7 +1307,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Amount (NGN)
+                    Amount (₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1317,7 +1317,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Discount(NGN)
+                    Discount(₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1327,7 +1327,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Penalty(NGN)
+                    Penalty(₦)
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1336,7 +1336,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Payable(NGN)
+                    Payable(₦)
                   </TableCell>
                   <TableCell
                     align="right"
@@ -1844,7 +1844,7 @@ const Invoice = () => {
             autoFocus
             margin="dense"
             label={
-              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
+              globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'
             }
             type="number"
             fullWidth

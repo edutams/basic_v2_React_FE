@@ -188,7 +188,7 @@ const PaymentScheduleModal = ({
         </Alert>
 
         <TextField
-          label="Amount (NGN)"
+          label="Amount (₦)"
           fullWidth
           value={formData.amount}
           onChange={handleChange}

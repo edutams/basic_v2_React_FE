@@ -155,10 +155,10 @@ const InvoiceStudentsView = () => {
   }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
 
   // ── Refetchable helper to load student data from backend ──
-  const fetchAndSetStudentData = async () => {
+  const fetchAndSetStudentData = async (forcePending) => {
     setError(null);
 
-    const pendingParam = searchParams.get('pending');
+    const pendingParam = forcePending ?? searchParams.get('pending');
     const response = await fetchStudentForInvoiceData({
       sessionTermId: session_term_id,
       classId: class_id,
@@ -364,9 +364,16 @@ const InvoiceStudentsView = () => {
       const res = await generateStudentInvoice(payload);
 
       if (res?.success) {
-        // Refetch student data so the table shows the new invoice status
+        // Remove pending param from URL
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('pending');
+          return next;
+        }, { replace: true });
+
+        // Refetch all student data (no pending filter)
         try {
-          await fetchAndSetStudentData();
+          await fetchAndSetStudentData(false);
         } catch (refetchErr) {
           console.error('Failed to refresh student data after generation', refetchErr);
         }

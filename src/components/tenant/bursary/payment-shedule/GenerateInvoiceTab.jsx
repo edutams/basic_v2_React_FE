@@ -5,6 +5,7 @@ import {
   fetchClasses,
   fetchGenerateInvoiceData,
   fetchGenerateInvoiceStats,
+  fetchInvoiceStudentCounts,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
@@ -56,6 +57,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
   const [loadingScheduleData, setLoadingScheduleData] = useState(false);
   const [errorScheduleData, setErrorScheduleData] = useState(null);
   const [tableCategories, setTableCategories] = useState([]);
+
+  const [studentCounts, setStudentCounts] = useState({ total: 0, generated: 0, pending: 0 });
+  const [loadingCounts, setLoadingCounts] = useState(false);
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
@@ -192,6 +196,34 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
         return sum + (typeof value === 'number' ? value : 0);
       }, 0)
       .toLocaleString();
+  };
+
+  useEffect(() => {
+    const loadCounts = async () => {
+      if (!selectedSessionTermId || !selectedClass) return;
+      try {
+        setLoadingCounts(true);
+        const res = await fetchInvoiceStudentCounts(selectedSessionTermId, selectedClass);
+        const d = res?.data || {};
+        setStudentCounts({
+          total: Number(d.total_students) || 0,
+          generated: Number(d.generated_count) || 0,
+          pending: Number(d.pending_count) || 0,
+        });
+      } catch (err) {
+        console.error('Failed to load student counts', err);
+        setStudentCounts({ total: 0, generated: 0, pending: 0 });
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+    loadCounts();
+  }, [selectedSessionTermId, selectedClass]);
+
+  const handleGenerateForPending = () => {
+    if (!selectedSessionTermId || !selectedClass) return;
+    const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}?pending=${studentCounts.pending}`;
+    window.open(url, '_blank');
   };
 
   const handleFetch = () => {
@@ -360,7 +392,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
             gap: 2,
           }}
         >
-          <Alert severity="info">
+          <Alert severity="info" sx={{ flex: 1 }}>
             Payment Schedule for {selectedSessionLabel} - {selectedClassName}
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
@@ -369,7 +401,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
               size="small"
               onClick={() => {
                 const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-                window.open(url, '_blank'); // opens new tab
+                window.open(url, '_blank');
               }}
               sx={{ fontWeight: 600 }}
             >
@@ -377,6 +409,82 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
             </Button>
           </Stack>
         </Box>
+
+        {selectedClass && (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
+                mb: 1,
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Students
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700}>
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.total}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Invoice Generated
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} color="success.main">
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.generated}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Pending
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} color="error.main">
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.pending}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+
+            {studentCounts.pending > 0 && (
+              <Alert
+                severity="warning"
+                action={
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    onClick={handleGenerateForPending}
+                    sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}
+                  >
+                    Generate Now
+                  </Button>
+                }
+                sx={{ mb: 2, alignItems: 'center' }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {studentCounts.pending} student(s) still need invoice generation. Click &quot;Generate Now&quot; to go to the invoice page and generate for pending students.
+                </Typography>
+              </Alert>
+            )}
+
+            {studentCounts.total > 0 && studentCounts.pending === 0 && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  All {studentCounts.total} student(s) have invoices generated successfully.
+                </Typography>
+              </Alert>
+            )}
+          </>
+        )}
 
         {/* Payment Schedule Table */}
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
@@ -458,6 +566,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
           />
         </TableContainer>
       </Box>
+
     </Stack>
   );
 };

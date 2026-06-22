@@ -10,6 +10,7 @@ import {
   Tab,
   Table,
   TableBody,
+  Switch,
   TableCell,
   TableContainer,
   TableHead,
@@ -26,6 +27,7 @@ import {
   Alert,
   TableFooter,
   TablePagination,
+  Tooltip
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -300,7 +302,7 @@ const CompulsoryScheduleTab = ({
   };
 
   // const handleClassClick = (schedule, cls) => {
-  //   const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
+  //   const isEdit = cls.name.includes('₦'); // Has amount if name contains ₦
 
   //   setConfirmDialog({
   //     open: true,
@@ -337,7 +339,7 @@ const CompulsoryScheduleTab = ({
       const { className, paymentName } = paymentModal.payment || {};
 
       showSnackbar?.(
-        `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
+        `Payment ${action} successfully: ${formData.amount} ₦ for ${className} in ${paymentName}`,
       );
 
       // Reload schedules after saving
@@ -540,7 +542,7 @@ const CompulsoryScheduleTab = ({
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  bgcolor: 'primary.main',
+                  bgcolor: '#5CB979',
                 }}
               />
               <Typography variant="caption">Active Payment Schedules</Typography>
@@ -595,9 +597,10 @@ const CompulsoryScheduleTab = ({
 
                           const hasAmount = !!cls.amount && cls.amount > 0;
                           return (
+                            <Tooltip title="Click to set or edit payment amount">
                             <Chip
                               key={cls.id}
-                              label={hasAmount ? `${cls.name} - [${cls.amount} NGN]` : cls.name}
+                              label={hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
                               size="small"
                               onClick={(e) => {
                                 // Prevent bubbling if clicking on delete icon
@@ -615,6 +618,7 @@ const CompulsoryScheduleTab = ({
                                     bursaryPaymentNameId: schedule.payment_name.id,
                                     scheduleId: cls.schedule_id,
                                     amount: cls.amount || '',
+                                    bursary_installment_id: cls.bursary_installment_id || '',
                                   },
                                   isEdit: hasAmount,
                                 });
@@ -622,35 +626,51 @@ const CompulsoryScheduleTab = ({
                               onDelete={
                                 hasAmount
                                   ? (e) => {
-                                      e.stopPropagation();
-                                      handleClassActionClick(schedule, cls, 'delete');
-                                    }
+                                    e.stopPropagation();
+                                    handleClassActionClick(schedule, cls, 'delete');
+                                  }
                                   : undefined
                               }
                               deleteIcon={
                                 hasAmount ? (
-                                  <Box display="flex" alignItems="center" gap={0.5}>
-                                    <ShieldIcon
-                                      sx={{
-                                        fontSize: 16,
-                                        cursor: 'pointer',
-                                      }}
-                                      onClick={(e) => {
+                                  <Box
+                                    onClick={(e) => e.stopPropagation()}
+                                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                  >
+                                    <Tooltip title={cls.status === 'active' ? 'Deactivate' : 'Activate'}>
+                                    <Switch
+                                      size="small"
+                                      checked={cls.status === 'active'}
+                                      onChange={(e) => {
                                         e.stopPropagation();
                                         handleClassActionClick(schedule, cls, 'toggle');
                                       }}
+                                      sx={{
+                                        color: hasAmount
+                                          ? schedule.status === 'inactive'
+                                            ? 'white'
+                                            : '#5CB979'
+                                          : 'grey.300',
+
+                                      }}
+
                                     />
+                                    </Tooltip>
+                                    <Tooltip title="Delete class schedule">
                                     <DeleteIcon sx={{ fontSize: 14 }} />
+                                    </Tooltip>
                                   </Box>
                                 ) : (
+                                   <Tooltip title="Add payment for this class">
                                   <AddIcon sx={{ fontSize: 14 }} />
+                                  </Tooltip>
                                 )
                               }
                               sx={{
                                 bgcolor: hasAmount
                                   ? cls.status === 'inactive'
                                     ? 'error.main'
-                                    : 'primary.main'
+                                    : '#5CB979'
                                   : 'grey.300',
 
                                 color: hasAmount ? 'white' : 'text.secondary',
@@ -665,7 +685,7 @@ const CompulsoryScheduleTab = ({
                                   backgroundColor: hasAmount
                                     ? cls.status === 'inactive'
                                       ? 'error.dark'
-                                      : 'primary.dark'
+                                      : '#5CB979'
                                     : 'grey.400',
                                 },
 
@@ -674,6 +694,7 @@ const CompulsoryScheduleTab = ({
                                 },
                               }}
                             />
+                            </Tooltip>
                           );
                         })
                       ) : (

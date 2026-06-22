@@ -260,7 +260,10 @@ const Invoice = () => {
 
     let baseAmount;
     if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_inst1) || 100;
+      const hasPayment = Number(fee.paid_amount) > 0;
+      const installmentPct = hasPayment
+        ? Number(fee.installment_inst2) || 0
+        : Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
       baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
@@ -437,6 +440,16 @@ const Invoice = () => {
             : data.session_info.session_term_id;
 
         setSessionTermId(targetSessionTermId);
+        // Helper to find installment data from installment_id
+        const findInstallment = (item) => {
+          const match = installmentsList.find(
+            (inst) =>
+              inst.id === item.installment_id ||
+              inst.inst1 === item.installment_name ||
+              inst.inst2 === item.installment_name,
+          );
+          return match || null;
+        };
 
         // Store class and category
         setClassId(data.student_info?.class_id);
@@ -868,7 +881,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Amount (NGN)
+                  Amount (₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -878,7 +891,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Discount(NGN)
+                  Discount(₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -888,7 +901,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Penalty(NGN)
+                  Penalty(₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -898,7 +911,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -907,7 +920,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Payable(NGN)
+                  Payable(₦)
                 </TableCell>
                 <TableCell
                   align="right"
@@ -1078,7 +1091,7 @@ const Invoice = () => {
                             </MenuItem>
                             {installments.map((inst) => (
                               <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}:{inst.inst2}
+                                {Number(fee.paid_amount) > 0 ? inst.inst2 : inst.inst1}
                               </MenuItem>
                             ))}
                           </Select>
@@ -1293,7 +1306,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Amount (NGN)
+                    Amount (₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1303,7 +1316,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Discount(NGN)
+                    Discount(₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1313,7 +1326,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Penalty(NGN)
+                    Penalty(₦)
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1322,7 +1335,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Payable(NGN)
+                    Payable(₦)
                   </TableCell>
                   <TableCell
                     align="right"
@@ -1829,9 +1842,7 @@ const Invoice = () => {
           <TextField
             autoFocus
             margin="dense"
-            label={
-              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
-            }
+            label={globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'}
             type="number"
             fullWidth
             variant="outlined"

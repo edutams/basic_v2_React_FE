@@ -101,10 +101,14 @@ const InvoiceStudentsView = () => {
           // URL param is valid — keep it
           setSelectedStudentCategory(urlCategoryId);
         } else if (cats.length > 0) {
-          // Fall back to first category
+          // Fall back to first category, preserve existing params
           const firstCatId = String(cats[0].id);
           setSelectedStudentCategory(firstCatId);
-          setSearchParams({ category_id: firstCatId }, { replace: true });
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.set('category_id', firstCatId);
+            return next;
+          }, { replace: true });
         }
       } catch (err) {
         console.error('Failed to load categories', err);
@@ -151,13 +155,16 @@ const InvoiceStudentsView = () => {
   }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
 
   // ── Refetchable helper to load student data from backend ──
-  const fetchAndSetStudentData = async () => {
+  const fetchAndSetStudentData = async (forcePending) => {
     setError(null);
 
+    const pendingParam = forcePending ?? searchParams.get('pending');
+    const isPendingFilter = pendingParam && Number(pendingParam) > 0;
     const response = await fetchStudentForInvoiceData({
       sessionTermId: session_term_id,
       classId: class_id,
       categoryId: selectedCategoryId,
+      ...(pendingParam && Number(pendingParam) > 0 ? { pending: '1' } : {}),
     });
     const d = response?.data || {};
     const students = Array.isArray(d.students) ? d.students : [];
@@ -165,6 +172,20 @@ const InvoiceStudentsView = () => {
     setSessionLabel(d.session_label || '');
     setTermLabel(d.term_label || '');
     setClassName(d.class_name || '');
+
+    // If not using pending filter and no pending students remain, clean up URL
+    if (!isPendingFilter && searchParams.get('pending')) {
+      const hasPending = students.some(
+        (s) => !s.compulsory_invoice_generated || Number(s.compulsory_invoice_generated) === 0,
+      );
+      if (!hasPending) {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('pending');
+          return next;
+        }, { replace: true });
+      }
+    }
 
     // ── Populate existing optional payment selections from backend ──
     const optionIdsMap = {};
@@ -358,9 +379,16 @@ const InvoiceStudentsView = () => {
       const res = await generateStudentInvoice(payload);
 
       if (res?.success) {
-        // Refetch student data so the table shows the new invoice status
+        // Remove pending param from URL
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('pending');
+          return next;
+        }, { replace: true });
+
+        // Refetch all student data (no pending filter)
         try {
-          await fetchAndSetStudentData();
+          await fetchAndSetStudentData(false);
         } catch (refetchErr) {
           console.error('Failed to refresh student data after generation', refetchErr);
         }
@@ -559,6 +587,14 @@ const InvoiceStudentsView = () => {
           </Box>
         }
       >
+        {searchParams.get('pending') && Number(searchParams.get('pending')) > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight={600}>
+              {searchParams.get('pending')} student(s) still need invoices generated. Please select them below and click &quot;Generate Invoice&quot; to create their invoices.
+            </Typography>
+          </Alert>
+        )}
+
         <Box
           display="flex"
           flexDirection={{ xs: 'column', sm: 'row' }}
@@ -621,9 +657,17 @@ const InvoiceStudentsView = () => {
                   const val = e.target.value;
                   setSelectedStudentCategory(val);
                   if (val && val !== 'all') {
-                    setSearchParams({ category_id: val });
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set('category_id', val);
+                      return next;
+                    });
                   } else {
-                    setSearchParams({});
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.delete('category_id');
+                      return next;
+                    });
                   }
                 }}
                 sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}

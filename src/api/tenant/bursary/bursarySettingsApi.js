@@ -132,12 +132,19 @@ export const fetchGenerateInvoiceStats = async (sessionTermId, classId) => {
     const res = await api.get('/bursary/payment_schedule/generate_invoice_stats', { params });
     return res.data;
 };
+
+export const fetchInvoiceStudentCounts = async (sessionTermId, classId) => {
+    const params = { session_term_id: sessionTermId, class_id: classId };
+    const res = await api.get('/bursary/payment_schedule/invoice_student_counts', { params });
+    return res.data;
+};
     
-export const fetchStudentForInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
+export const fetchStudentForInvoiceData = async ({ sessionTermId, classId, categoryId, pending } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
     if (classId) params.class_id = classId;
     if (categoryId) params.category_id = categoryId;
+    if (pending) params.pending = pending;
     const res = await api.get('/bursary/payment_schedule/fetch_student_for_invoice_data', { params });
     return res.data;
 };

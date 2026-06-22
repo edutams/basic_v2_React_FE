@@ -460,17 +460,27 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
         <ParentCard>
-          <Box display="flex" alignItems="center" mb={2} gap={1}>
-            <Typography variant="subtitle1" fontWeight={700}>
-              Parents in
-            </Typography>
-            {selectedClassName && (
-              <Chip
-                label={selectedClassName}
-                size="small"
-                sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
-              />
-            )}
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Parents in
+              </Typography>
+              {selectedClassName && (
+                <Chip
+                  label={selectedClassName}
+                  size="small"
+                  sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
+                />
+              )}
+            </Box>
+            <Checkbox
+              size="small"
+              indeterminate={
+                selectedParents.length > 0 && selectedParents.length < parentsList.length
+              }
+              checked={parentsList.length > 0 && selectedParents.length === parentsList.length}
+              onChange={handleSelectAll}
+            />
           </Box>
 
           {loadingParents ? (
@@ -481,7 +491,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             <Alert severity="info">No parents found</Alert>
           ) : (
             <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
-              {groupedByStudent.map((group) => (
+              {groupedByStudent.map((group) => {
+                const allGroupSelected = group.parents.every((p) =>
+                  selectedParents.includes(p.guardian_user_id)
+                );
+                return (
                 <Box
                   key={group.student_user_id}
                   sx={{
@@ -493,29 +507,40 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
                     borderColor: 'divider',
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={1} mb={1}>
-                    <Box
-                      sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      {group.student_name.charAt(0).toUpperCase()}
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Box
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {group.student_name.charAt(0).toUpperCase()}
+                      </Box>
+                      <Typography variant="body2" fontWeight={700}>
+                        {group.student_name}
+                      </Typography>
                     </Box>
-                    <Typography variant="body2" fontWeight={700}>
-                      {group.student_name}
-                    </Typography>
+                    <Checkbox
+                      size="small"
+                      checked={allGroupSelected}
+                      indeterminate={
+                        !allGroupSelected &&
+                        group.parents.some((p) => selectedParents.includes(p.guardian_user_id))
+                      }
+                      onClick={() => handleSelectStudentParents(group)}
+                    />
                   </Box>
 
-                  <Stack spacing={0.5}>
+                  <Stack spacing={0.5} sx={{ maxHeight: group.parents.length > 5 ? 200 : 'none', overflowY: group.parents.length > 5 ? 'auto' : 'visible' }}>
                     {group.parents.map((parent) => (
                       <Paper
                         key={parent.guardian_user_id}
@@ -567,7 +592,8 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
                     ))}
                   </Stack>
                 </Box>
-              ))}
+                );
+              })}
             </Box>
           )}
 

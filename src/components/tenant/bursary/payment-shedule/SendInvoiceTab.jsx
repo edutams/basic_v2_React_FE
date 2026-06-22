@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -30,6 +30,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -51,6 +53,20 @@ import {
   sendInvoiceEmail,
   generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
+
+const INVOICE_PLACEHOLDER_FIELDS = [
+  { label: "Student's First Name", value: '{student_fname}' },
+  { label: "Student's Last Name", value: '{student_lname}' },
+  { label: "Student's Middle Name", value: '{student_mname}' },
+  { label: "Student's Parent First Name", value: '{student_parent_fname}' },
+  { label: "Student's Parent Last Name", value: '{student_parent_lname}' },
+  { label: "Student's Parent Middle Name", value: '{student_parent_mname}' },
+  { label: "Student's Parent Email", value: '{student_parent_email}' },
+  { label: 'Term Name', value: '{term_name}' },
+  { label: 'Session Name', value: '{session_name}' },
+  { label: 'Invoice URL', value: '{invoice_url}' },
+  { label: 'School Name', value: '{school_name}' },
+];
 
 const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [deliveryTab, setDeliveryTab] = useState(0);
@@ -96,6 +112,13 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
 
   // Debounce ref for search
   const searchTimerRef = useRef(null);
+  const tiptapEditorRef = useRef(null);
+
+  const handleInsertPlaceholder = (value) => {
+    if (tiptapEditorRef.current) {
+      tiptapEditorRef.current.chain().focus().insertContent(value).run();
+    }
+  };
 
   const selectedClassName =
     programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
@@ -313,6 +336,20 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
     );
   };
 
+  const handleSelectStudentParents = (group) => {
+    const groupIds = group.parents.map((p) => p.guardian_user_id);
+    const allSelected = groupIds.every((id) => selectedParents.includes(id));
+    if (allSelected) {
+      setSelectedParents((prev) => prev.filter((id) => !groupIds.includes(id)));
+    } else {
+      setSelectedParents((prev) => {
+        const existing = new Set(prev);
+        groupIds.forEach((id) => existing.add(id));
+        return [...existing];
+      });
+    }
+  };
+
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
     setMenuParent(row);
@@ -380,6 +417,22 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
     setSelectedParents([]);
   };
 
+  const groupedByStudent = useMemo(() => {
+    const map = {};
+    parentsList.forEach((p) => {
+      const key = p.student_user_id;
+      if (!map[key]) {
+        map[key] = {
+          student_user_id: p.student_user_id,
+          student_name: p.student_name || 'Unknown Student',
+          parents: [],
+        };
+      }
+      map[key].parents.push(p);
+    });
+    return Object.values(map);
+  }, [parentsList]);
+
   const dynamicStats = {
     total_parents: selectedParents.length,
     sent: parentsList
@@ -399,6 +452,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   };
 
   const handleEditorUpdate = useCallback(({ editor }) => {
+    tiptapEditorRef.current = editor;
     setMessageContent(editor.getHTML());
   }, []);
 
@@ -408,7 +462,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         <ParentCard>
           <Box display="flex" alignItems="center" mb={2} gap={1}>
             <Typography variant="subtitle1" fontWeight={700}>
-              List of Parent in
+              Parents in
             </Typography>
             {selectedClassName && (
               <Chip
@@ -419,131 +473,103 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             )}
           </Box>
 
-          {studentStats && (
-            <Box
-              sx={{
-                bgcolor: "info.light",
-                p: 1.2,
-                borderRadius: 2,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                mb: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 2,
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="body2" sx={{ m: 0 }}>
-                  Total Wards:{" "}
-                  <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
-                    {studentStats.total_students}
+          {loadingParents ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : groupedByStudent.length === 0 ? (
+            <Alert severity="info">No parents found</Alert>
+          ) : (
+            <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
+              {groupedByStudent.map((group) => (
+                <Box
+                  key={group.student_user_id}
+                  sx={{
+                    mb: 2,
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'grey.50',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Box
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {group.student_name.charAt(0).toUpperCase()}
+                    </Box>
+                    <Typography variant="body2" fontWeight={700}>
+                      {group.student_name}
+                    </Typography>
                   </Box>
-                </Typography>
 
-                <Typography variant="body2" sx={{ m: 0 }}>
-                  Unlinked Wards:{" "}
-                  <Box component="span" sx={{ color: "error.main", fontWeight: 600 }}>
-                    {studentStats.unlinked_students}
-                  </Box>
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  lineHeight: 1.2,
-                }}
-              >
-                Students must be linked to a parent for their parent to receive an invoice.
-              </Typography>
+                  <Stack spacing={0.5}>
+                    {group.parents.map((parent) => (
+                      <Paper
+                        key={parent.guardian_user_id}
+                        variant="outlined"
+                        sx={{
+                          p: 1,
+                          borderRadius: 1.5,
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1,
+                          bgcolor: selectedParents.includes(parent.guardian_user_id)
+                            ? 'primary.light'
+                            : 'background.paper',
+                          borderColor: selectedParents.includes(parent.guardian_user_id)
+                            ? 'primary.main'
+                            : 'divider',
+                          cursor: 'pointer',
+                          '&:hover': { borderColor: 'primary.main' },
+                        }}
+                        onClick={() => handleSelectParent(parent.guardian_user_id)}
+                      >
+                        <Checkbox
+                          size="small"
+                          checked={selectedParents.includes(parent.guardian_user_id)}
+                          sx={{ mt: -0.5, ml: -0.5 }}
+                        />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {parent.guardian_name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', wordBreak: 'break-all' }}
+                          >
+                            {deliveryTab === 0 ? parent.guardian_phone : parent.guardian_email}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMenuClick(e, parent);
+                          }}
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Box>
+              ))}
             </Box>
           )}
-
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ borderRadius: 2, borderColor: 'grey.200' }}
-          >
-            <Table size="medium">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      indeterminate={
-                        selectedParents.length > 0 && selectedParents.length < parentsList.length
-                      }
-                      checked={
-                        parentsList.length > 0 && selectedParents.length === parentsList.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                    {deliveryTab === 0 ? 'Phone No.' : 'Email'}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textAlign: 'center' }}>
-                    Action
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingParents ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedParentsList.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                      <Alert severity="info">No parents found</Alert>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedParentsList.map((row) => (
-                    <TableRow
-                      key={row.guardian_user_id}
-                      hover
-                      selected={selectedParents.includes(row.guardian_user_id)}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedParents.includes(row.guardian_user_id)}
-                          onChange={() => handleSelectParent(row.guardian_user_id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
-                      <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                        {deliveryTab === 0 ? row.guardian_phone : row.guardian_email}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={parentsList.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[5, 10, 25]}
-            />
-          </TableContainer>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
             <MenuItem onClick={() => handleOpenEditDialog(deliveryTab === 0 ? 'phone' : 'email')}>
@@ -653,14 +679,48 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             />
           </Box>
 
-          <Box sx={{ mb: 5, overflow: 'hidden' }}>
-            <TiptapEdit
-              initialContent={messageContent}
-              onUpdate={handleEditorUpdate}
-            />
-          </Box>
+          <Grid container spacing={2} sx={{ flex: 1 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                display="block"
+                mb={1}
+              >
+                Placeholders
+              </Typography>
+              <Stack spacing={0.75}>
+                {INVOICE_PLACEHOLDER_FIELDS.map((field) => (
+                  <Button
+                    key={field.value}
+                    size="small"
+                    fullWidth
+                    onClick={() => handleInsertPlaceholder(field.value)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    {field.label}
+                  </Button>
+                ))}
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 9 }}>
+              <Box sx={{ overflow: 'hidden' }}>
+                <TiptapEdit
+                  initialContent={messageContent}
+                  onUpdate={handleEditorUpdate}
+                />
+              </Box>
+            </Grid>
+          </Grid>
 
-          <Box display="flex" justifyContent="flex-end">
+          <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button
               size="small"
               color="primary"

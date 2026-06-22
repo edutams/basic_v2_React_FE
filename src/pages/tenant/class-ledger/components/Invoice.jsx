@@ -454,6 +454,10 @@ const Invoice = () => {
 
         const installmentsList = data.installments || [];
 
+
+
+        
+
         // Helper to find installment data from installment_id
         const findInstallment = (item) => {
           const match = installmentsList.find(

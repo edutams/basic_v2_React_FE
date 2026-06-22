@@ -113,7 +113,7 @@ const CashPost = () => {
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
     let baseAmount;
     if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_inst1) || 100;
+      const installmentPct = Number(fee.installment_pct) || Number(fee.installment_inst1) || 100;
       baseAmount = fee.amount * (installmentPct / 100);
     } else {
       baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
@@ -215,7 +215,7 @@ const CashPost = () => {
       // Helper to find installment data from installment_id
       const findInstallment = (item) => {
         const match = installmentsList.find(
-          (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name
+          (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name || inst.inst2 === item.installment_name
         );
         return match || null;
       };
@@ -238,6 +238,8 @@ const CashPost = () => {
           installment_id: item.installment_id || null,
           installment_inst1: inst ? String(inst.inst1) : '',
           installment_inst2: inst ? String(inst.inst2) : '',
+          installment_pct: item.installment_pct !== undefined ? Number(item.installment_pct) : (inst ? Number(inst.inst1) : 100),
+          installment_part: item.installment_part || 'inst1',
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
@@ -264,6 +266,8 @@ const CashPost = () => {
           installment_id: item.installment_id || null,
           installment_inst1: inst ? String(inst.inst1) : '',
           installment_inst2: inst ? String(inst.inst2) : '',
+          installment_pct: item.installment_pct !== undefined ? Number(item.installment_pct) : (inst ? Number(inst.inst1) : 100),
+          installment_part: item.installment_part || 'inst1',
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
@@ -479,6 +483,10 @@ const CashPost = () => {
                             updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
                             updateFee(type, fee.id, 'installment_inst1', selectedInst ? String(selectedInst.inst1) : '');
                             updateFee(type, fee.id, 'installment_inst2', selectedInst ? String(selectedInst.inst2) : '');
+                            const newPct = selectedInst
+                              ? (fee.has_cashpost ? Number(selectedInst.inst2) : Number(selectedInst.inst1))
+                              : 100;
+                            updateFee(type, fee.id, 'installment_pct', newPct);
                           }}
                           displayEmpty
                           disabled={fee.has_cashpost}
@@ -488,7 +496,7 @@ const CashPost = () => {
                           </MenuItem>
                           {installments.map((inst) => (
                             <MenuItem key={inst.id} value={inst.id}>
-                              {inst.inst1}:{inst.inst2}
+                              {fee.has_cashpost ? inst.inst2 : inst.inst1}
                             </MenuItem>
                           ))}
                         </Select>

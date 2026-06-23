@@ -78,7 +78,6 @@ const Invoice = () => {
   const [invoiceInfo, setInvoiceInfo] = useState(null);
   const [compFees, setCompFees] = useState([]);
   const [optFees, setOptFees] = useState([]);
-  const [installments, setInstallments] = useState([]);
   const [installmentalSetting, setInstallmentalSetting] = useState('percentage');
 
   /* SESSION / CLASS / CATEGORY IDs (for optional payments modal) */
@@ -226,18 +225,17 @@ const Invoice = () => {
 
   /* INSTALLMENT CHANGE HANDLER */
   const handleInstallmentChange = (feeId, value) => {
-    const selectedInst = installments.find((inst) => inst.id === Number(value));
     setCompFees((prev) =>
-      prev.map((f) =>
-        f.id === feeId
-          ? {
-              ...f,
-              installment_id: selectedInst?.id || null,
-              installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
-              installment_inst2: selectedInst ? String(selectedInst.inst2) : '',
-            }
-          : f,
-      ),
+      prev.map((f) => {
+        if (f.id !== feeId) return f;
+        const selectedInst = (f.installments || []).find((inst) => inst.id === Number(value));
+        return {
+          ...f,
+          installment_id: selectedInst?.id || null,
+          installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
+          installment_inst2: selectedInst ? String(selectedInst.inst2) : '',
+        };
+      }),
     );
   };
 
@@ -429,7 +427,6 @@ const Invoice = () => {
         setActiveSessionInfo(data.active_session_info ?? data.session_info);
         setInvoiceInfo(data.invoice_info);
         setOwingInfo(data.owing_info || null);
-        setInstallments(data.installments || []);
         setInstallmentalSetting(data.installmental_setting || 'percentage');
 
         // === CRITICAL: RESPECT OWING LOGIC ===
@@ -456,9 +453,12 @@ const Invoice = () => {
           penalty: item.penalty || 0,
           penaltyEnabled: !!item.penalty_enabled,
           checked: false,
-          installment_id: null,
-          installment_inst1: '',
-          installment_inst2: '',
+          installment_id: item.installment_id || null,
+          installment_inst1: item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
+          installment_inst2: item.installment_inst2 !== undefined ? String(item.installment_inst2) : '',
+          installment_pct: item.installment_pct || null,
+          installment_part: item.installment_part || '',
+          installments: item.installments || [],
           custom_amount: item.amount,
         }));
         setCompFees(mappedComp);
@@ -1069,9 +1069,9 @@ const Invoice = () => {
                             <MenuItem value="">
                               <em>Select</em>
                             </MenuItem>
-                            {installments.map((inst) => (
+                            {(fee.installments || []).map((inst) => (
                               <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}:{inst.inst2}
+                                {inst.inst1}{inst.inst2 ? `:${inst.inst2}` : ''}
                               </MenuItem>
                             ))}
                           </Select>

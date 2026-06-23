@@ -111,6 +111,7 @@ const Invoice = () => {
   const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [owingInfo, setOwingInfo] = useState(null);
+  const [activeSessionInfo, setActiveSessionInfo] = useState({ session: '', term: '' });
 
   const loadSessionsAndTerms = async () => {
     setLoadingSessions(true);
@@ -425,6 +426,7 @@ const Invoice = () => {
 
         setStudentInfo(data.student_info);
         setSessionInfo(data.session_info);
+        setActiveSessionInfo(data.active_session_info ?? data.session_info);
         setInvoiceInfo(data.invoice_info);
         setOwingInfo(data.owing_info || null);
         setInstallments(data.installments || []);
@@ -465,10 +467,8 @@ const Invoice = () => {
         const mappedOpt = (data.optional_data || []).map((item) => ({
           id: item.id,
           description: item.description,
-          amount: (item.selected_options || []).reduce(
-            (sum, opt) => sum + Number(opt.amount || 0),
-            0,
-          ),
+          amount: Number(item.amount || 0),
+          optionsPool: item.options || [],
           selectedOptions: item.selected_options || [],
           discount: item.discount || 0,
           discountEnabled: !!item.discount_enabled,
@@ -677,17 +677,10 @@ const Invoice = () => {
             </Typography>
 
             <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
+              {/* <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel} */}
+              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
+              {activeSessionInfo.term}
             </Typography>
-            {owingInfo?.owing_status === 'owing' && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                Currently viewing invoice for{' '}
-                <strong>
-                  {sessionInfo?.session} {sessionInfo?.term}
-                </strong>
-                (owing term)
-              </Alert>
-            )}
           </Box>
 
           {/* BACK BUTTON */}
@@ -1233,19 +1226,21 @@ const Invoice = () => {
                   },
                 }}
               />
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={handleOpenOptionalModal}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Add Optional Pay.
-              </Button>
+              {owingInfo?.owing_status !== 'owing' && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenOptionalModal}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Add Optional Pay.
+                </Button>
+              )}
             </Box>
           ),
         })}

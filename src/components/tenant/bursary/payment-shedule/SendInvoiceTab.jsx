@@ -64,7 +64,7 @@ const INVOICE_PLACEHOLDER_FIELDS = [
   { label: "Student's Parent Email", value: '{student_parent_email}' },
   { label: 'Term Name', value: '{term_name}' },
   { label: 'Session Name', value: '{session_name}' },
-  { label: 'Invoice URL', value: '{invoice_url}' },
+  // { label: 'Invoice URL', value: '{invoice_url}' },
   { label: 'School Name', value: '{school_name}' },
 ];
 
@@ -103,7 +103,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [editError, setEditError] = useState('');
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [messageContent, setMessageContent] = useState(
-    `<p>Dear Parent,</p><br><p>The invoice for <strong>{student_name}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready.</p><br><p>View Here: <a href="{invoice_url}">{invoice_url}</a></p><br><p>Best Regards,<br><strong>{school_name}</strong></p>`
+    `<p>Dear Parent,</p><p>The invoice for <strong>{student_fname} {student_lname}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready. Please click the button below to view it.</p><p>Best Regards,<br><strong>{school_name}</strong></p>`,
   );
   const [studentStats, setStudentStats] = useState(null);
 
@@ -493,105 +493,111 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
               {groupedByStudent.map((group) => {
                 const allGroupSelected = group.parents.every((p) =>
-                  selectedParents.includes(p.guardian_user_id)
+                  selectedParents.includes(p.guardian_user_id),
                 );
                 return (
-                <Box
-                  key={group.student_user_id}
-                  sx={{
-                    mb: 2,
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor: 'grey.50',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Box
-                        sx={{
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          width: 28,
-                          height: 28,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {group.student_name.charAt(0).toUpperCase()}
-                      </Box>
-                      <Typography variant="body2" fontWeight={700}>
-                        {group.student_name}
-                      </Typography>
-                    </Box>
-                    <Checkbox
-                      size="small"
-                      checked={allGroupSelected}
-                      indeterminate={
-                        !allGroupSelected &&
-                        group.parents.some((p) => selectedParents.includes(p.guardian_user_id))
-                      }
-                      onClick={() => handleSelectStudentParents(group)}
-                    />
-                  </Box>
-
-                  <Stack spacing={0.5} sx={{ maxHeight: group.parents.length > 5 ? 200 : 'none', overflowY: group.parents.length > 5 ? 'auto' : 'visible' }}>
-                    {group.parents.map((parent) => (
-                      <Paper
-                        key={parent.guardian_user_id}
-                        variant="outlined"
-                        sx={{
-                          p: 1,
-                          borderRadius: 1.5,
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 1,
-                          bgcolor: selectedParents.includes(parent.guardian_user_id)
-                            ? 'primary.light'
-                            : 'background.paper',
-                          borderColor: selectedParents.includes(parent.guardian_user_id)
-                            ? 'primary.main'
-                            : 'divider',
-                          cursor: 'pointer',
-                          '&:hover': { borderColor: 'primary.main' },
-                        }}
-                        onClick={() => handleSelectParent(parent.guardian_user_id)}
-                      >
-                        <Checkbox
-                          size="small"
-                          checked={selectedParents.includes(parent.guardian_user_id)}
-                          sx={{ mt: -0.5, ml: -0.5 }}
-                        />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="body2" fontWeight={600}>
-                            {parent.guardian_name}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: 'block', wordBreak: 'break-all' }}
-                          >
-                            {deliveryTab === 0 ? parent.guardian_phone : parent.guardian_email}
-                          </Typography>
-                        </Box>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMenuClick(e, parent);
+                  <Box
+                    key={group.student_user_id}
+                    sx={{
+                      mb: 2,
+                      p: 1.5,
+                      borderRadius: 2,
+                      bgcolor: 'grey.50',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Box
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
                           }}
                         >
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </Paper>
-                    ))}
-                  </Stack>
-                </Box>
+                          {group.student_name.charAt(0).toUpperCase()}
+                        </Box>
+                        <Typography variant="body2" fontWeight={700}>
+                          {group.student_name}
+                        </Typography>
+                      </Box>
+                      <Checkbox
+                        size="small"
+                        checked={allGroupSelected}
+                        indeterminate={
+                          !allGroupSelected &&
+                          group.parents.some((p) => selectedParents.includes(p.guardian_user_id))
+                        }
+                        onClick={() => handleSelectStudentParents(group)}
+                      />
+                    </Box>
+
+                    <Stack
+                      spacing={0.5}
+                      sx={{
+                        maxHeight: group.parents.length > 5 ? 200 : 'none',
+                        overflowY: group.parents.length > 5 ? 'auto' : 'visible',
+                      }}
+                    >
+                      {group.parents.map((parent) => (
+                        <Paper
+                          key={parent.guardian_user_id}
+                          variant="outlined"
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 1,
+                            bgcolor: selectedParents.includes(parent.guardian_user_id)
+                              ? 'primary.light'
+                              : 'background.paper',
+                            borderColor: selectedParents.includes(parent.guardian_user_id)
+                              ? 'primary.main'
+                              : 'divider',
+                            cursor: 'pointer',
+                            '&:hover': { borderColor: 'primary.main' },
+                          }}
+                          onClick={() => handleSelectParent(parent.guardian_user_id)}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={selectedParents.includes(parent.guardian_user_id)}
+                            sx={{ mt: -0.5, ml: -0.5 }}
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {parent.guardian_name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: 'block', wordBreak: 'break-all' }}
+                            >
+                              {deliveryTab === 0 ? parent.guardian_phone : parent.guardian_email}
+                            </Typography>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMenuClick(e, parent);
+                            }}
+                          >
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </Box>
                 );
               })}
             </Box>
@@ -704,7 +710,10 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               }}
             />
           </Box>
-
+          <Alert severity="info" icon={false} sx={{ mb: 1.5, py: 0.5, fontSize: 12 }}>
+            An <strong>Invoice Button</strong> is automatically added to every email — no need to
+            add a link manually.
+          </Alert>
           <Grid container spacing={2} sx={{ flex: 1 }}>
             <Grid size={{ xs: 12, sm: 3 }}>
               <Typography
@@ -736,12 +745,10 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
                 ))}
               </Stack>
             </Grid>
+
             <Grid size={{ xs: 12, sm: 9 }}>
               <Box sx={{ overflow: 'hidden' }}>
-                <TiptapEdit
-                  initialContent={messageContent}
-                  onUpdate={handleEditorUpdate}
-                />
+                <TiptapEdit initialContent={messageContent} onUpdate={handleEditorUpdate} />
               </Box>
             </Grid>
           </Grid>
@@ -753,7 +760,9 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               onClick={handleSendInvoice}
               disabled={sendingInvoice || selectedParents.length === 0}
             >
-              {sendingInvoice ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
+              {sendingInvoice ? (
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              ) : null}
               Send Invoice to Parent
             </Button>
           </Box>
@@ -909,7 +918,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         </Box>
       )} */}
 
-
       <TableContainer
         component={Paper}
         variant="outlined"
@@ -979,7 +987,8 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
                       label={row.excel_status === 'generated' ? 'Generated' : 'Pending'}
                       size="small"
                       sx={{
-                        bgcolor: row.excel_status === 'generated' ? 'success.light' : 'warning.light',
+                        bgcolor:
+                          row.excel_status === 'generated' ? 'success.light' : 'warning.light',
                         color: row.excel_status === 'generated' ? 'success.main' : 'warning.main',
                         fontWeight: 600,
                       }}

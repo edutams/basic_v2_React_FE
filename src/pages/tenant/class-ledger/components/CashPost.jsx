@@ -52,7 +52,6 @@ const CashPost = () => {
   const [sessionInfo, setSessionInfo] = useState(null);
   const [compFees, setCompFees] = useState([]);
   const [optFees, setOptFees] = useState([]);
-  const [installments, setInstallments] = useState([]);
   const [installmentalSetting, setInstallmentalSetting] = useState('percentage');
 
   /* FILTER STATE */
@@ -208,21 +207,13 @@ const CashPost = () => {
 
       setStudentInfo(data.student_info);
       setSessionInfo(data.session_info);
-      const installmentsList = data.installments || [];
-      setInstallments(installmentsList);
       setInstallmentalSetting(data.installmental_setting || 'percentage');
-
-      // Helper to find installment data from installment_id
-      const findInstallment = (item) => {
-        const match = installmentsList.find(
-          (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name || inst.inst2 === item.installment_name
-        );
-        return match || null;
-      };
 
       // Map compulsory data: add editable fields
       const mappedComp = (data.compulsory_data || []).map((item) => {
-        const inst = findInstallment(item);
+        const inst = (item.installments || []).find(
+          (i) => i.id === item.installment_id || i.inst1 === item.installment_name
+        );
         return {
           id: item.id,
           bursary_schedule_id: item.bursary_schedule_id,
@@ -238,11 +229,12 @@ const CashPost = () => {
           installment_id: item.installment_id || null,
           installment_inst1: inst ? String(inst.inst1) : '',
           installment_inst2: inst ? String(inst.inst2) : '',
-          installment_pct: item.installment_pct !== undefined ? Number(item.installment_pct) : (inst ? Number(inst.inst1) : 100),
-          installment_part: item.installment_part || 'inst1',
+          installment_pct: inst ? Number(inst.inst1) : 100,
+          installment_part: 'inst1',
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
+          installments: item.installments || [],
           checked: false,
         };
       });
@@ -250,7 +242,9 @@ const CashPost = () => {
 
       // Map optional data: add editable fields
       const mappedOpt = (data.optional_data || []).map((item) => {
-        const inst = findInstallment(item);
+        const inst = (item.installments || []).find(
+          (i) => i.id === item.installment_id || i.inst1 === item.installment_name
+        );
         return {
           id: item.id,
           bursary_schedule_id: item.bursary_schedule_id,
@@ -266,11 +260,12 @@ const CashPost = () => {
           installment_id: item.installment_id || null,
           installment_inst1: inst ? String(inst.inst1) : '',
           installment_inst2: inst ? String(inst.inst2) : '',
-          installment_pct: item.installment_pct !== undefined ? Number(item.installment_pct) : (inst ? Number(inst.inst1) : 100),
-          installment_part: item.installment_part || 'inst1',
+          installment_pct: inst ? Number(inst.inst1) : 100,
+          installment_part: 'inst1',
           has_cashpost: !!item.has_cashpost,
           amountToPay: item.balance || item.amount,
           custom_amount: item.amount,
+          installments: item.installments || [],
           checked: false,
         };
       });
@@ -474,31 +469,31 @@ const CashPost = () => {
                   <TableCell align="center">
                     {installmentalSetting === 'percentage' ? (
                       <FormControl size="small" sx={{ minWidth: 130 }}>
-                        <Select
-                          value={fee.installment_id || ''}
-                          onChange={(e) => {
-                            const selectedInst = installments.find(
-                              (inst) => inst.id === Number(e.target.value)
-                            );
-                            updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
-                            updateFee(type, fee.id, 'installment_inst1', selectedInst ? String(selectedInst.inst1) : '');
-                            updateFee(type, fee.id, 'installment_inst2', selectedInst ? String(selectedInst.inst2) : '');
-                            const newPct = selectedInst
-                              ? (fee.has_cashpost ? Number(selectedInst.inst2) : Number(selectedInst.inst1))
-                              : 100;
-                            updateFee(type, fee.id, 'installment_pct', newPct);
-                          }}
-                          displayEmpty
-                          disabled={fee.has_cashpost}
-                        >
-                          <MenuItem value="">
-                            <em>Select</em>
-                          </MenuItem>
-                          {installments.map((inst) => (
-                            <MenuItem key={inst.id} value={inst.id}>
-                              {fee.has_cashpost ? inst.inst2 : inst.inst1}
+                          <Select
+                            value={fee.installment_id || ''}
+                            onChange={(e) => {
+                              const selectedInst = (fee.installments || []).find(
+                                (inst) => inst.id === Number(e.target.value)
+                              );
+                              updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
+                              updateFee(type, fee.id, 'installment_inst1', selectedInst ? String(selectedInst.inst1) : '');
+                              updateFee(type, fee.id, 'installment_inst2', selectedInst ? String(selectedInst.inst2) : '');
+                              const newPct = selectedInst
+                                ? (fee.has_cashpost ? Number(selectedInst.inst2) : Number(selectedInst.inst1))
+                                : 100;
+                              updateFee(type, fee.id, 'installment_pct', newPct);
+                            }}
+                            displayEmpty
+                            disabled={fee.has_cashpost}
+                          >
+                            <MenuItem value="">
+                              <em>Select</em>
                             </MenuItem>
-                          ))}
+                            {(fee.installments || []).map((inst) => (
+                              <MenuItem key={inst.id} value={inst.id}>
+                                {inst.inst1}{inst.inst2 ? `:${inst.inst2}` : ''}
+                              </MenuItem>
+                            ))}
                         </Select>
                       </FormControl>
                     ) : (

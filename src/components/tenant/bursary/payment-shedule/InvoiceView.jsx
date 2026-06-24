@@ -225,9 +225,16 @@ const InvoiceView = () => {
           const optional = student.optional_invoice || [];
           const dueBalance = Number(student.due_balance || 0);
 
+          const compulsoryPayable = compulsory.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0);
+          const compulsoryPaid = compulsory.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0);
           const compulsoryTotal = compulsory.reduce((sum, i) => sum + Number(i.balance || 0), 0);
+
+          const optionalPayable = optional.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0);
+          const optionalPaid = optional.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0);
           const optionalTotal = optional.reduce((sum, i) => sum + Number(i.balance || 0), 0);
 
+          const currentTermPayable = compulsoryPayable + optionalPayable;
+          const currentTermPaid = compulsoryPaid + optionalPaid;
           const currentTermTotal = compulsoryTotal + optionalTotal;
 
           // Compute overall balance for the outstanding banner
@@ -427,8 +434,14 @@ const InvoiceView = () => {
                     ))}
                     {compulsory.length > 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                        <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
                           COMPULSORY TOTAL
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 900 }}>
+                          ₦{fmt(compulsoryPayable)}
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 900 }}>
+                          ₦{fmt(compulsoryPaid)}
                         </TableCell>
                         <TableCell align="center" sx={{ fontWeight: 900 }}>
                           ₦{fmt(compulsoryTotal)}
@@ -456,8 +469,14 @@ const InvoiceView = () => {
                     ))}
                     {optional.length > 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                        <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
                           OPTIONAL TOTAL
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 900 }}>
+                          ₦{fmt(optionalPayable)}
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 900 }}>
+                          ₦{fmt(optionalPaid)}
                         </TableCell>
                         <TableCell align="center" sx={{ fontWeight: 900 }}>
                           ₦{fmt(optionalTotal)}
@@ -467,8 +486,14 @@ const InvoiceView = () => {
 
                     {/* ── TOTAL ROW ── */}
                     <TableRow>
-                      <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                      <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
                         TOTAL DUE
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(currentTermPayable)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(currentTermPaid)}
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 900 }}>
                         ₦{fmt(currentTermTotal)}

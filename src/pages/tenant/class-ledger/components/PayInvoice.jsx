@@ -32,7 +32,6 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  InputLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
@@ -46,10 +45,7 @@ import {
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
-import {
-  fetchSessions,
-  fetchSessionTermsBySession,
-} from '@/api/tenant/curriculum/tenantCurriculumApi';
+
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import { usePermissions } from '@/context/TenantContext/permissions';
 import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
@@ -112,9 +108,6 @@ const PayInvoice = () => {
   const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
   const [globalModalValue, setGlobalModalValue] = useState('');
 
-  const [allSessionTerms, setAllSessionTerms] = useState([]);
-  const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
-  const [loadingSessions, setLoadingSessions] = useState(false);
   const [owingInfo, setOwingInfo] = useState(null);
   const [activeSessionInfo, setActiveSessionInfo] = useState({ session: '', term: '' });
 
@@ -124,60 +117,6 @@ const PayInvoice = () => {
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
 
-  const loadSessionsAndTerms = async () => {
-    setLoadingSessions(true);
-    try {
-      const res = await fetchSessions();
-      const sessionsList = extractList(res);
-      let combinedTerms = [];
-
-      for (const session of sessionsList) {
-        const termsRes = await fetchSessionTermsBySession(session.id);
-        const terms = extractList(termsRes);
-
-        const formatted = terms.map((term) => ({
-          ...term,
-          displayLabel: `${term.session?.sesname || session.sesname} - ${term.display_term?.display_name}`,
-        }));
-
-        combinedTerms = [...combinedTerms, ...formatted];
-      }
-
-      setAllSessionTerms(combinedTerms);
-
-      // Auto select first one
-      if (combinedTerms.length > 0) {
-        const firstTerm = combinedTerms[0];
-        setSelectedSessionTermId(firstTerm.id);
-        setSessionTermId(firstTerm.id);
-
-        await fetchInvoiceData();
-      }
-    } catch (err) {
-      console.error('Failed to load sessions and terms', err);
-      setError('Failed to load session terms');
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
-
-  const handleSessionTermChange = async (e) => {
-    if (owingInfo?.owing_status === 'owing') {
-      return; // blocked
-    }
-    const termId = Number(e.target.value);
-    setSelectedSessionTermId(termId);
-
-    const selectedTerm = allSessionTerms.find((t) => t.id === termId);
-    if (selectedTerm) {
-      setSessionTermId(termId);
-      await fetchInvoiceData();
-    }
-  };
-
-  useEffect(() => {
-    loadSessionsAndTerms();
-  }, []);
 
   const handleGlobalModalConfirm = () => {
     const value = Number(globalModalValue) || 0;
@@ -800,32 +739,6 @@ const PayInvoice = () => {
             <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.{' '}
           </Alert>
         ) : null}
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <FormControl size="small">
-            <InputLabel>Session Term</InputLabel>
-            <Select
-              value={selectedSessionTermId || ''}
-              label="Session Term"
-              onChange={handleSessionTermChange}
-            >
-              {allSessionTerms.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.displayLabel}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
 
         {/* COMPULSORY PAYMENT */}
         {renderHeaderBlock({

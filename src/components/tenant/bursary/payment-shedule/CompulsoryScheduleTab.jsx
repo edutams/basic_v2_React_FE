@@ -597,10 +597,13 @@ const CompulsoryScheduleTab = ({
 
                           const hasAmount = !!cls.amount && cls.amount > 0;
                           return (
-                            <Tooltip title="Click to set or edit payment amount">
                             <Chip
                               key={cls.id}
-                              label={hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
+                              label={
+                                <Tooltip title="Click to set or edit payment amount">
+                                  <span>{hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}</span>
+                                </Tooltip>
+                              }
                               size="small"
                               onClick={(e) => {
                                 // Prevent bubbling if clicking on delete icon
@@ -694,7 +697,6 @@ const CompulsoryScheduleTab = ({
                                 },
                               }}
                             />
-                            </Tooltip>
                           );
                         })
                       ) : (

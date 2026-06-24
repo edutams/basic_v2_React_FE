@@ -52,6 +52,8 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import { usePermissions } from '@/context/TenantContext/permissions';
+import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
+import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -69,6 +71,7 @@ const extractList = (res) => {
 /* ================= COMPONENT ================= */
 const Invoice = () => {
   const { can } = usePermissions();
+  const notify = useNotification();
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -114,6 +117,12 @@ const Invoice = () => {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [owingInfo, setOwingInfo] = useState(null);
   const [activeSessionInfo, setActiveSessionInfo] = useState({ session: '', term: '' });
+
+  /* ── Optional Payment Modal State ── */
+  const [optionalModalOpen, setOptionalModalOpen] = useState(false);
+  const [optionalPaymentList, setOptionalPaymentList] = useState([]);
+  const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
+  const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
 
   const loadSessionsAndTerms = async () => {
     setLoadingSessions(true);
@@ -187,12 +196,6 @@ const Invoice = () => {
     setGlobal(true);
     setGlobalModal({ ...globalModal, open: false });
   };
-
-  /* ── Optional Payment Modal State ── */
-  const [optionalModalOpen, setOptionalModalOpen] = useState(false);
-  const [optionalPaymentList, setOptionalPaymentList] = useState([]);
-  const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
-  const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -446,6 +449,7 @@ const Invoice = () => {
       // Map compulsory fees
       const mappedComp = (data.compulsory_data || []).map((item) => ({
         id: item.id,
+        bursary_schedule_id: item.bursary_schedule_id,
         description: item.description,
         amount: item.amount,
         paid_amount: item.paid_amount,
@@ -470,6 +474,7 @@ const Invoice = () => {
       // Map optional fees
       const mappedOpt = (data.optional_data || []).map((item) => ({
         id: item.id,
+        bursary_schedule_id: item.bursary_schedule_id,
         description: item.description,
         amount: Number(item.amount || 0),
         optionsPool: item.options || [],
@@ -521,6 +526,80 @@ const Invoice = () => {
 
     init();
   }, [fetchInvoiceData]);
+
+  const handlePayNow = async () => {
+    if (grandTotal <= 0) {
+      notify.error('Please select at least one item to pay');
+      return;
+    }
+
+    const payload = [];
+
+    // Compulsory Fees
+    compFees.forEach((fee) => {
+      if (fee.checked) {
+        const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
+        if (payable > 0) {
+          payload.push({
+            bursary_schedule_id: fee.bursary_schedule_id || fee.id, // schedule id
+            user_id: user_id,
+            session_term_id: sessionInfo?.session_term_id, // Important: Use the term from backend
+            amount: fee.amount,
+            instValue: payable, // amount to pay now
+            paymentname: { name: fee.description || fee.payment_name },
+            checked: true,
+            orderid: Date.now() + Math.floor(Math.random() * 1000),
+            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
+            fname: studentInfo?.name?.split(' ')[0] || '',
+            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
+            payment_type: 'card', // or 'cash' depending on flow
+          });
+        }
+      }
+    });
+
+    // Optional Fees
+    optFees.forEach((fee) => {
+      if (fee.checked) {
+        const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
+        if (payable > 0) {
+          payload.push({
+            bursary_schedule_id: fee.bursary_schedule_id || fee.id,
+            user_id: user_id,
+            session_term_id: sessionInfo?.session_term_id,
+            amount: fee.amount,
+            instValue: payable,
+            paymentname: { name: fee.description || fee.payment_name },
+            checked: true,
+            orderid: Date.now() + Math.floor(Math.random() * 1000),
+            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
+            fname: studentInfo?.name?.split(' ')[0] || '',
+            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
+            payment_type: 'card',
+          });
+        }
+      }
+    });
+
+    if (payload.length === 0) {
+      notify.info('No valid items selected for payment');
+      return;
+    }
+
+    try {
+      // Call your pending payment endpoint
+      const res = await createPendingPayment(payload);
+
+      if (res.data.success || res.data.data) {
+        notify.success('Payment initiated successfully!');
+        // Optionally redirect to payment gateway or refresh data
+        fetchInvoiceData();
+      }
+    } catch (err) {
+      console.error(err);
+      notify.error(err.response?.data?.message || 'Payment initiation failed');
+    }
+  };
 
   /* SECTION HEADER BLOCK */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
@@ -1663,7 +1742,7 @@ const Invoice = () => {
           </Box>
 
           {/* RIGHT - Sticky Pay Button */}
-          <Button variant="contained" disabled={grandTotal === 0}>
+          <Button variant="contained" disabled={grandTotal === 0} onClick={handlePayNow}>
             Pay Now - ₦{format(grandTotal)} &gt;
           </Button>
         </Paper>

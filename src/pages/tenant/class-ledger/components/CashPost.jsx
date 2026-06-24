@@ -779,8 +779,8 @@ const CashPost = () => {
           <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
             <strong>Outstanding Balance Detected</strong>
             <br />
-            This student must first clear <strong>{owingInfo.owing_session_label}</strong> before
-            paying for any later term.
+            You need to pay for the previous term you owe{' '}
+            <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.{' '}
           </Alert>
         )}
 

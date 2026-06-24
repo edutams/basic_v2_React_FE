@@ -72,6 +72,7 @@ const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/Tran
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
 const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
+const PayInvoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')));
 
 const TenantRoutes = [
   {
@@ -132,6 +133,15 @@ const TenantRoutes = [
     path: '/auth/404',
     element: <BlankLayout />,
     children: [{ index: true, element: <Error /> }],
+  },
+  {
+    path: '/class-ledger/:invoiceId/:user_id/pay-invoice',
+    element: (
+      <TenantProtectedRoute>
+        <SchoolLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <PayInvoice /> }],
   },
   {
     path: '/complete-setup',
@@ -381,7 +391,6 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
-
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },
 

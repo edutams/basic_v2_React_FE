@@ -591,7 +591,7 @@ const Invoice = () => {
       const res = await createPendingPayment(payload);
 
       if (res.data.success || res.data.data) {
-        notify.success('Payment initiated successfully!');
+        notify.success(res.data?.message || 'Payment initiated successfully');
         // Optionally redirect to payment gateway or refresh data
         fetchInvoiceData();
       }

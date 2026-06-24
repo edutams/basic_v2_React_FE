@@ -795,7 +795,7 @@ const Invoice = () => {
                   />
                 </Box>
               )}
-              {can('bursary_manager.ledger.create_invoice_discount') && (
+              {can('bursary_manager.ledger.create_invoice_penalty') && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body2" color="text.secondary" fontWeight={500}>
                     Penalty
@@ -1241,18 +1241,20 @@ const Invoice = () => {
                   </>
                 )}
               </Box>
-              <Switch
-                checked={optionalEnabled}
-                onChange={(e) => setOptionalEnabled(e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#8338ec',
-                    '& + .MuiSwitch-track': {
-                      backgroundColor: '#8338ec',
+              {can('bursary_manager.ledger.create_invoice_discount') && (
+                <Switch
+                  checked={optionalEnabled}
+                  onChange={(e) => setOptionalEnabled(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#8338ec',
+                      '& + .MuiSwitch-track': {
+                        backgroundColor: '#8338ec',
+                      },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              )}
               {owingInfo?.owing_status !== 'owing' && (
                 <Button
                   variant="outlined"

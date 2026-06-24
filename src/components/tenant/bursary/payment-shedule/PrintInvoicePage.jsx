@@ -300,7 +300,7 @@ const PrintInvoicePage = () => {
                     TOTAL DUE
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 900 }}>
-                    ₦{fmt(invoiceData.due_balance)}
+                    ₦{fmt(invoiceData.total_balance)}
                   </TableCell>
                 </TableRow>
               </TableBody>

@@ -217,7 +217,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                   <TableCell sx={{ fontWeight: 700 }}>Pay Option</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Settlement Account</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Fee Bearer</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Modules</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 700 }}>Modules</TableCell> */}
                   <TableCell align="center" sx={{ fontWeight: 700 }}>
                     Status
                   </TableCell>
@@ -304,7 +304,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       </TableCell>
 
                       {/* Modules */}
-                      <TableCell>
+                      {/* <TableCell>
                         <Chip
                           label={
                             payment.modules
@@ -319,7 +319,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                             fontSize: 10,
                           }}
                         />
-                      </TableCell>
+                      </TableCell> */}
 
                       {/* Status */}
                       <TableCell align="center">

@@ -51,6 +51,7 @@ import {
   fetchSessionTermsBySession,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -67,6 +68,8 @@ const extractList = (res) => {
 
 /* ================= COMPONENT ================= */
 const Invoice = () => {
+  const { can } = usePermissions();
+
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { invoiceId, user_id } = useParams();
@@ -402,94 +405,93 @@ const Invoice = () => {
   /* ───────────────────────────────────────────── */
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
-  const fetchInvoiceData = useCallback(
-    async (forcedSessionTermId = null) => {
-      if (!invoiceId || !user_id) return;
+  const fetchInvoiceData = useCallback(async () => {
+    if (!invoiceId || !user_id) return;
 
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
-      try {
-        const res = await getStudentSchedule({
-          invoiceNumber: invoiceId,
-          userId: user_id,
-        });
+    try {
+      const res = await getStudentSchedule({
+        invoiceNumber: invoiceId,
+        userId: user_id,
+      });
 
-        if (!res.success || !res.data) {
-          setError(res.message || 'Failed to load invoice data');
-          return;
-        }
-
-        const { data } = res;
-
-        setStudentInfo(data.student_info);
-        setSessionInfo(data.session_info);
-        setActiveSessionInfo(data.active_session_info ?? data.session_info);
-        setInvoiceInfo(data.invoice_info);
-        setOwingInfo(data.owing_info || null);
-        setInstallmentalSetting(data.installmental_setting || 'percentage');
-
-        // === CRITICAL: RESPECT OWING LOGIC ===
-        const targetSessionTermId =
-          data.owing_info?.owing_status === 'owing'
-            ? data.owing_info.owing_session_term_id
-            : data.session_info.session_term_id;
-
-        setSessionTermId(targetSessionTermId);
-
-        // Store class and category
-        setClassId(data.student_info?.class_id);
-        setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
-
-        // Map compulsory fees
-        const mappedComp = (data.compulsory_data || []).map((item) => ({
-          id: item.id,
-          description: item.description,
-          amount: item.amount,
-          paid_amount: item.paid_amount,
-          balance: item.balance,
-          discount: item.discount || 0,
-          discountEnabled: !!item.discount_enabled,
-          penalty: item.penalty || 0,
-          penaltyEnabled: !!item.penalty_enabled,
-          checked: false,
-          installment_id: item.installment_id || null,
-          installment_inst1: item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
-          installment_inst2: item.installment_inst2 !== undefined ? String(item.installment_inst2) : '',
-          installment_pct: item.installment_pct || null,
-          installment_part: item.installment_part || '',
-          installments: item.installments || [],
-          custom_amount: item.amount,
-        }));
-        setCompFees(mappedComp);
-
-        // Map optional fees
-        const mappedOpt = (data.optional_data || []).map((item) => ({
-          id: item.id,
-          description: item.description,
-          amount: Number(item.amount || 0),
-          optionsPool: item.options || [],
-          selectedOptions: item.selected_options || [],
-          discount: item.discount || 0,
-          discountEnabled: !!item.discount_enabled,
-          penalty: item.penalty || 0,
-          penaltyEnabled: !!item.penalty_enabled,
-          paid_amount: item.paid_amount,
-          balance: item.balance,
-          checked: false,
-        }));
-        setOptFees(mappedOpt);
-
-        setDataLoaded(true);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load invoice data');
-      } finally {
-        setLoading(false);
+      if (!res.success || !res.data) {
+        setError(res.message || 'Failed to load invoice data');
+        return;
       }
-    },
-    [invoiceId, user_id],
-  );
+
+      const { data } = res;
+
+      setStudentInfo(data.student_info);
+      setSessionInfo(data.session_info);
+      setActiveSessionInfo(data.active_session_info ?? data.session_info);
+      setInvoiceInfo(data.invoice_info);
+      setOwingInfo(data.owing_info || null);
+      setInstallmentalSetting(data.installmental_setting || 'percentage');
+
+      // === CRITICAL: RESPECT OWING LOGIC ===
+      const targetSessionTermId =
+        data.owing_info?.owing_status === 'owing'
+          ? data.owing_info.owing_session_term_id
+          : data.session_info.session_term_id;
+
+      setSessionTermId(targetSessionTermId);
+
+      // Store class and category
+      setClassId(data.student_info?.class_id);
+      setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
+
+      // Map compulsory fees
+      const mappedComp = (data.compulsory_data || []).map((item) => ({
+        id: item.id,
+        description: item.description,
+        amount: item.amount,
+        paid_amount: item.paid_amount,
+        balance: item.balance,
+        discount: item.discount || 0,
+        discountEnabled: !!item.discount_enabled,
+        penalty: item.penalty || 0,
+        penaltyEnabled: !!item.penalty_enabled,
+        checked: false,
+        installment_id: item.installment_id || null,
+        installment_inst1:
+          item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
+        installment_inst2:
+          item.installment_inst2 !== undefined ? String(item.installment_inst2) : '',
+        installment_pct: item.installment_pct || null,
+        installment_part: item.installment_part || '',
+        installments: item.installments || [],
+        custom_amount: item.amount,
+      }));
+      setCompFees(mappedComp);
+
+      // Map optional fees
+      const mappedOpt = (data.optional_data || []).map((item) => ({
+        id: item.id,
+        description: item.description,
+        amount: Number(item.amount || 0),
+        optionsPool: item.options || [],
+        selectedOptions: item.selected_options || [],
+        discount: item.discount || 0,
+        discountEnabled: !!item.discount_enabled,
+        penalty: item.penalty || 0,
+        penaltyEnabled: !!item.penalty_enabled,
+        paid_amount: item.paid_amount,
+        balance: item.balance,
+        checked: false,
+      }));
+      setOptFees(mappedOpt);
+
+      setDataLoaded(true);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load invoice data');
+    } finally {
+      setLoading(false);
+    }
+  }, [invoiceId, user_id]);
   // Fetch active session/term on mount, then load invoice data
   useEffect(() => {
     const init = async () => {
@@ -742,8 +744,8 @@ const Invoice = () => {
           <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
             <strong>Outstanding Balance Detected</strong>
             <br />
-            This student must first clear <strong>{owingInfo.owing_session_label}</strong> before
-            paying for any later term.
+            You need to pay for the previous term you owe{' '}
+            <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.{' '}
           </Alert>
         ) : null}
 
@@ -763,62 +765,66 @@ const Invoice = () => {
                 justifyContent: { xs: 'flex-start', sm: 'flex-end' },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Discount
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={compDiscountGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'comp', field: 'discount' });
-                      setGlobalModalValue('');
-                    } else {
-                      setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                      );
-                      setCompDiscountGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
+              {can('bursary_manager.ledger.create_invoice_discount') && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                    Discount
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={compDiscountGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'comp', field: 'discount' });
+                        setGlobalModalValue('');
+                      } else {
+                        setCompFees((prev) =>
+                          prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
+                        );
+                        setCompDiscountGlobal(false);
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
                       },
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Penalty
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={compPenaltyGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
-                      setGlobalModalValue('');
-                    } else {
-                      setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                      );
-                      setCompPenaltyGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
+                    }}
+                  />
+                </Box>
+              )}
+              {can('bursary_manager.ledger.create_invoice_penalty') && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                    Penalty
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={compPenaltyGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
+                        setGlobalModalValue('');
+                      } else {
+                        setCompFees((prev) =>
+                          prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
+                        );
+                        setCompPenaltyGlobal(false);
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
                       },
-                    },
-                  }}
-                />
-              </Box>
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
           ),
         })}
@@ -970,6 +976,7 @@ const Invoice = () => {
                     </TableCell>
 
                     {/* DISCOUNT */}
+
                     <TableCell align="center" sx={{ py: 1.5 }}>
                       <Box
                         sx={{
@@ -979,36 +986,40 @@ const Invoice = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Switch
-                          size="small"
-                          checked={discountRowEnabled}
-                          disabled={compDiscountGlobal}
-                          onChange={(e) =>
-                            handleDiscountSwitchChange('comp', fee.id, e.target.checked)
-                          }
-                          sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                              color: '#8338ec',
-                              '& + .MuiSwitch-track': {
-                                backgroundColor: '#8338ec',
-                              },
-                            },
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          type="number"
-                          sx={{
-                            width: 80,
-                            bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                          }}
-                          disabled={!discountFieldEnabled}
-                          value={fee.discount}
-                          onChange={(e) =>
-                            handleDiscountValueChange('comp', fee.id, e.target.value)
-                          }
-                          inputProps={{ min: 0 }}
-                        />
+                        {can('bursary_manager.ledger.create_invoice_discount') && (
+                          <>
+                            <Switch
+                              size="small"
+                              checked={discountRowEnabled}
+                              disabled={compDiscountGlobal}
+                              onChange={(e) =>
+                                handleDiscountSwitchChange('comp', fee.id, e.target.checked)
+                              }
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#8338ec',
+                                  '& + .MuiSwitch-track': {
+                                    backgroundColor: '#8338ec',
+                                  },
+                                },
+                              }}
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{
+                                width: 80,
+                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
+                              }}
+                              disabled={!discountFieldEnabled}
+                              value={fee.discount}
+                              onChange={(e) =>
+                                handleDiscountValueChange('comp', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </>
+                        )}
                       </Box>
                     </TableCell>
 
@@ -1022,34 +1033,40 @@ const Invoice = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Switch
-                          size="small"
-                          checked={penaltyRowEnabled}
-                          disabled={compPenaltyGlobal}
-                          onChange={(e) =>
-                            handlePenaltySwitchChange('comp', fee.id, e.target.checked)
-                          }
-                          sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                              color: '#8338ec',
-                              '& + .MuiSwitch-track': {
-                                backgroundColor: '#8338ec',
-                              },
-                            },
-                          }}
-                        />
-                        <TextField
-                          size="small"
-                          type="number"
-                          sx={{
-                            width: 80,
-                            bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                          }}
-                          disabled={!penaltyFieldEnabled}
-                          value={fee.penalty}
-                          onChange={(e) => handlePenaltyValueChange('comp', fee.id, e.target.value)}
-                          inputProps={{ min: 0 }}
-                        />
+                        {can('bursary_manager.ledger.create_invoice_penalty') && (
+                          <>
+                            <Switch
+                              size="small"
+                              checked={penaltyRowEnabled}
+                              disabled={compPenaltyGlobal}
+                              onChange={(e) =>
+                                handlePenaltySwitchChange('comp', fee.id, e.target.checked)
+                              }
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#8338ec',
+                                  '& + .MuiSwitch-track': {
+                                    backgroundColor: '#8338ec',
+                                  },
+                                },
+                              }}
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{
+                                width: 80,
+                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
+                              }}
+                              disabled={!penaltyFieldEnabled}
+                              value={fee.penalty}
+                              onChange={(e) =>
+                                handlePenaltyValueChange('comp', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </>
+                        )}
                       </Box>
                     </TableCell>
 
@@ -1071,7 +1088,8 @@ const Invoice = () => {
                             </MenuItem>
                             {(fee.installments || []).map((inst) => (
                               <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}{inst.inst2 ? `:${inst.inst2}` : ''}
+                                {inst.inst1}
+                                {inst.inst2 ? `:${inst.inst2}` : ''}
                               </MenuItem>
                             ))}
                           </Select>
@@ -1159,51 +1177,74 @@ const Invoice = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Discount
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={optDiscountGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'opt', field: 'discount' });
-                      setGlobalModalValue('');
-                    } else {
-                      setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                      );
-                      setOptDiscountGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
-                    },
-                  }}
-                />
+                {can('bursary_manager.ledger.create_invoice_discount') && (
+                  <>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                      Discount
+                    </Typography>
+                    <Switch
+                      size="small"
+                      checked={optDiscountGlobal}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setGlobalModal({ open: true, type: 'opt', field: 'discount' });
+                          setGlobalModalValue('');
+                        } else {
+                          setOptFees((prev) =>
+                            prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
+                          );
+                          setOptDiscountGlobal(false);
+                        }
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#8338ec',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#8338ec',
+                          },
+                        },
+                      }}
+                    />
+                  </>
+                )}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Penalty
-                </Typography>
+                {can('bursary_manager.ledger.create_invoice_penalty') && (
+                  <>
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                      Penalty
+                    </Typography>
+
+                    <Switch
+                      size="small"
+                      checked={optPenaltyGlobal}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
+                          setGlobalModalValue('');
+                        } else {
+                          setOptFees((prev) =>
+                            prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
+                          );
+                          setOptPenaltyGlobal(false);
+                        }
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#8338ec',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#8338ec',
+                          },
+                        },
+                      }}
+                    />
+                  </>
+                )}
+              </Box>
+              {can('bursary_manager.ledger.create_invoice_discount') && (
                 <Switch
-                  size="small"
-                  checked={optPenaltyGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
-                      setGlobalModalValue('');
-                    } else {
-                      setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                      );
-                      setOptPenaltyGlobal(false);
-                    }
-                  }}
+                  checked={optionalEnabled}
+                  onChange={(e) => setOptionalEnabled(e.target.checked)}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -1213,19 +1254,7 @@ const Invoice = () => {
                     },
                   }}
                 />
-              </Box>
-              <Switch
-                checked={optionalEnabled}
-                onChange={(e) => setOptionalEnabled(e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#8338ec',
-                    '& + .MuiSwitch-track': {
-                      backgroundColor: '#8338ec',
-                    },
-                  },
-                }}
-              />
+              )}
               {owingInfo?.owing_status !== 'owing' && (
                 <Button
                   variant="outlined"
@@ -1427,28 +1456,32 @@ const Invoice = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <Switch
-                            size="small"
-                            checked={discountRowEnabled}
-                            disabled={optDiscountGlobal}
-                            onChange={(e) =>
-                              handleDiscountSwitchChange('opt', fee.id, e.target.checked)
-                            }
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{
-                              width: 80,
-                              bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                            }}
-                            disabled={!discountFieldEnabled}
-                            value={fee.discount}
-                            onChange={(e) =>
-                              handleDiscountValueChange('opt', fee.id, e.target.value)
-                            }
-                            inputProps={{ min: 0 }}
-                          />
+                          {can('bursary_manager.ledger.create_invoice_discount') && (
+                            <>
+                              <Switch
+                                size="small"
+                                checked={discountRowEnabled}
+                                disabled={optDiscountGlobal}
+                                onChange={(e) =>
+                                  handleDiscountSwitchChange('opt', fee.id, e.target.checked)
+                                }
+                              />
+                              <TextField
+                                size="small"
+                                type="number"
+                                sx={{
+                                  width: 80,
+                                  bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
+                                }}
+                                disabled={!discountFieldEnabled}
+                                value={fee.discount}
+                                onChange={(e) =>
+                                  handleDiscountValueChange('opt', fee.id, e.target.value)
+                                }
+                                inputProps={{ min: 0 }}
+                              />
+                            </>
+                          )}
                         </Box>
                       </TableCell>
 
@@ -1462,28 +1495,32 @@ const Invoice = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <Switch
-                            size="small"
-                            checked={penaltyRowEnabled}
-                            disabled={optPenaltyGlobal}
-                            onChange={(e) =>
-                              handlePenaltySwitchChange('opt', fee.id, e.target.checked)
-                            }
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{
-                              width: 80,
-                              bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                            }}
-                            disabled={!penaltyFieldEnabled}
-                            value={fee.penalty}
-                            onChange={(e) =>
-                              handlePenaltyValueChange('opt', fee.id, e.target.value)
-                            }
-                            inputProps={{ min: 0 }}
-                          />
+                          {can('bursary_manager.ledger.create_invoice_penalty') && (
+                            <>
+                              <Switch
+                                size="small"
+                                checked={penaltyRowEnabled}
+                                disabled={optPenaltyGlobal}
+                                onChange={(e) =>
+                                  handlePenaltySwitchChange('opt', fee.id, e.target.checked)
+                                }
+                              />
+                              <TextField
+                                size="small"
+                                type="number"
+                                sx={{
+                                  width: 80,
+                                  bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
+                                }}
+                                disabled={!penaltyFieldEnabled}
+                                value={fee.penalty}
+                                onChange={(e) =>
+                                  handlePenaltyValueChange('opt', fee.id, e.target.value)
+                                }
+                                inputProps={{ min: 0 }}
+                              />
+                            </>
+                          )}
                         </Box>
                       </TableCell>
 

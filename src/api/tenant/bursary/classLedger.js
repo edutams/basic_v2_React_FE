@@ -44,3 +44,8 @@ export const postCashData = async (payload) => {
     const res = await api.post('/bursary/payment_schedule/post_cash_data', payload);
     return res.data;
 };
+
+export const updateStudentInvoice = async (payload) => {
+    const res = await api.post('/bursary/payment_schedule/update_student_invoice', payload);
+    return res.data;
+};

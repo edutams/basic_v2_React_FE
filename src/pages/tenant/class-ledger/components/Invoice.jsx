@@ -32,26 +32,19 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  InputLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { getStudentSchedule } from '@/api/tenant/bursary/classLedger';
+import { getStudentSchedule, updateStudentInvoice } from '@/api/tenant/bursary/classLedger';
 import {
   fetchActiveSessionTerm,
-  fetchBursarySessionTerms,
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
-import {
-  fetchSessions,
-  fetchSessionTermsBySession,
-} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
-import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
 import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [
@@ -93,9 +86,12 @@ const Invoice = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
 
   const [optionalEnabled, setOptionalEnabled] = useState(true);
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   /* Refs */
   const dataLoadedRef = useRef(false);
@@ -110,9 +106,6 @@ const Invoice = () => {
   const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
   const [globalModalValue, setGlobalModalValue] = useState('');
 
-  const [allSessionTerms, setAllSessionTerms] = useState([]);
-  const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
-  const [loadingSessions, setLoadingSessions] = useState(false);
   const [owingInfo, setOwingInfo] = useState(null);
   const [activeSessionInfo, setActiveSessionInfo] = useState({ session: '', term: '' });
 
@@ -121,61 +114,6 @@ const Invoice = () => {
   const [optionalPaymentList, setOptionalPaymentList] = useState([]);
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
-
-  const loadSessionsAndTerms = async () => {
-    setLoadingSessions(true);
-    try {
-      const res = await fetchSessions();
-      const sessionsList = extractList(res);
-      let combinedTerms = [];
-
-      for (const session of sessionsList) {
-        const termsRes = await fetchSessionTermsBySession(session.id);
-        const terms = extractList(termsRes);
-
-        const formatted = terms.map((term) => ({
-          ...term,
-          displayLabel: `${term.session?.sesname || session.sesname} - ${term.display_term?.display_name}`,
-        }));
-
-        combinedTerms = [...combinedTerms, ...formatted];
-      }
-
-      setAllSessionTerms(combinedTerms);
-
-      // Auto select first one
-      if (combinedTerms.length > 0) {
-        const firstTerm = combinedTerms[0];
-        setSelectedSessionTermId(firstTerm.id);
-        setSessionTermId(firstTerm.id);
-
-        await fetchInvoiceData();
-      }
-    } catch (err) {
-      console.error('Failed to load sessions and terms', err);
-      setError('Failed to load session terms');
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
-
-  const handleSessionTermChange = async (e) => {
-    if (owingInfo?.owing_status === 'owing') {
-      return; // blocked
-    }
-    const termId = Number(e.target.value);
-    setSelectedSessionTermId(termId);
-
-    const selectedTerm = allSessionTerms.find((t) => t.id === termId);
-    if (selectedTerm) {
-      setSessionTermId(termId);
-      await fetchInvoiceData();
-    }
-  };
-
-  useEffect(() => {
-    loadSessionsAndTerms();
-  }, []);
 
   const handleGlobalModalConfirm = () => {
     const value = Number(globalModalValue) || 0;
@@ -227,22 +165,6 @@ const Invoice = () => {
     );
   };
 
-  /* INSTALLMENT CHANGE HANDLER */
-  const handleInstallmentChange = (feeId, value) => {
-    setCompFees((prev) =>
-      prev.map((f) => {
-        if (f.id !== feeId) return f;
-        const selectedInst = (f.installments || []).find((inst) => inst.id === Number(value));
-        return {
-          ...f,
-          installment_id: selectedInst?.id || null,
-          installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
-          installment_inst2: selectedInst ? String(selectedInst.inst2) : '',
-        };
-      }),
-    );
-  };
-
   const handleDiscountSwitchChange = (type, id, checked) => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
     setter((prev) => prev.map((f) => (f.id === id ? { ...f, discountEnabled: checked } : f)));
@@ -261,13 +183,8 @@ const Invoice = () => {
     const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
 
-    let baseAmount;
-    if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_inst1) || 100;
-      baseAmount = fee.amount * (installmentPct / 100);
-    } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
-    }
+    // Use balance as the base amount (what's still owed), fallback to amount
+    const baseAmount = Number(fee.balance || fee.amount || 0);
 
     return Math.max(0, baseAmount - discount + penalty);
   };
@@ -452,10 +369,11 @@ const Invoice = () => {
         amount: item.amount,
         paid_amount: item.paid_amount,
         balance: item.balance,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
+        payable: item.payable,
+        discount: Number(item.discount_amount || item.discount || 0),
+        discountEnabled: Number(item.discount_amount || item.discount || 0) > 0,
+        penalty: Number(item.penalty_amount || item.penalty || 0),
+        penaltyEnabled: Number(item.penalty_amount || item.penalty || 0) > 0,
         checked: false,
         installment_id: item.installment_id || null,
         installment_inst1:
@@ -477,12 +395,13 @@ const Invoice = () => {
         amount: Number(item.amount || 0),
         optionsPool: item.options || [],
         selectedOptions: item.selected_options || [],
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
+        discount: Number(item.discount_amount || item.discount || 0),
+        discountEnabled: Number(item.discount_amount || item.discount || 0) > 0,
+        penalty: Number(item.penalty_amount || item.penalty || 0),
+        penaltyEnabled: Number(item.penalty_amount || item.penalty || 0) > 0,
         paid_amount: item.paid_amount,
         balance: item.balance,
+        payable: item.payable,
         checked: false,
       }));
       setOptFees(mappedOpt);
@@ -525,77 +444,46 @@ const Invoice = () => {
     init();
   }, [fetchInvoiceData]);
 
-  const handlePayNow = async () => {
-    if (grandTotal <= 0) {
-      notify.error('Please select at least one item to pay');
-      return;
-    }
-
-    const payload = [];
-
-    // Compulsory Fees
-    compFees.forEach((fee) => {
-      if (fee.checked) {
-        const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
-        if (payable > 0) {
-          payload.push({
-            bursary_schedule_id: fee.bursary_schedule_id || fee.id, // schedule id
-            user_id: user_id,
-            session_term_id: sessionInfo?.session_term_id, // Important: Use the term from backend
-            amount: fee.amount,
-            instValue: payable, // amount to pay now
-            paymentname: { name: fee.description || fee.payment_name },
-            checked: true,
-            orderid: Date.now() + Math.floor(Math.random() * 1000),
-            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
-            fname: studentInfo?.name?.split(' ')[0] || '',
-            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-            payment_type: 'card', // or 'cash' depending on flow
-          });
-        }
-      }
-    });
-
-    // Optional Fees
-    optFees.forEach((fee) => {
-      if (fee.checked) {
-        const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
-        if (payable > 0) {
-          payload.push({
-            bursary_schedule_id: fee.bursary_schedule_id || fee.id,
-            user_id: user_id,
-            session_term_id: sessionInfo?.session_term_id,
-            amount: fee.amount,
-            instValue: payable,
-            paymentname: { name: fee.description || fee.payment_name },
-            checked: true,
-            orderid: Date.now() + Math.floor(Math.random() * 1000),
-            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
-            fname: studentInfo?.name?.split(' ')[0] || '',
-            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-            payment_type: 'card',
-          });
-        }
-      }
-    });
-
-    if (payload.length === 0) {
-      notify.info('No valid items selected for payment');
-      return;
-    }
-
+  /* ── UPDATE INVOICE ── */
+  const handleUpdateInvoice = async () => {
     try {
-      // Call your pending payment endpoint
-      const res = await createPendingPayment(payload);
+      setUpdating(true);
 
-      if (res.data.success || res.data.data) {
-        notify.success(res.data?.message || 'Payment initiated successfully');
-        // Optionally redirect to payment gateway or refresh data
-        fetchInvoiceData();
+      const payload = {
+        invoice_number: Number(invoiceId),
+        user_id,
+        compulsory_items: compFees.map((fee) => ({
+          bursary_schedule_id: fee.bursary_schedule_id,
+          id: fee.id,
+          discount: fee.discountEnabled ? Number(fee.discount || 0) : 0,
+          discountEnabled: !!fee.discountEnabled,
+          penalty: fee.penaltyEnabled ? Number(fee.penalty || 0) : 0,
+          penaltyEnabled: !!fee.penaltyEnabled,
+
+        })),
+        optional_items: optFees.map((fee) => ({
+          bursary_schedule_id: fee.bursary_schedule_id,
+          id: fee.id,
+          discount: fee.discountEnabled ? Number(fee.discount || 0) : 0,
+          discountEnabled: !!fee.discountEnabled,
+          penalty: fee.penaltyEnabled ? Number(fee.penalty || 0) : 0,
+          penaltyEnabled: !!fee.penaltyEnabled,
+        })),
+      };
+
+      const res = await updateStudentInvoice(payload);
+
+      if (res?.success) {
+        notify.success(res.message || 'Invoice updated successfully');
+        await fetchInvoiceData();
+      } else {
+        notify.error(res?.message || 'Failed to update invoice');
       }
     } catch (err) {
-      console.error(err);
-      notify.error(err.response?.data?.message || 'Payment initiation failed');
+      console.error('Failed to update invoice:', err);
+      notify.error(err?.response?.data?.message || 'An error occurred while updating invoice');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -790,32 +678,6 @@ const Invoice = () => {
           </Alert>
         )}
 
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <FormControl size="small">
-            <InputLabel>Session Term</InputLabel>
-            <Select
-              value={selectedSessionTermId || ''}
-              label="Session Term"
-              onChange={handleSessionTermChange}
-            >
-              {allSessionTerms.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.displayLabel}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
         {/* COMPULSORY PAYMENT */}
         {renderHeaderBlock({
           title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
@@ -930,7 +792,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Amount (NGN)
+                  Amount To Pay (₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -940,7 +802,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Discount(NGN)
+                  Balance (₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -950,7 +812,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Penalty(NGN)
+                  Discount(₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -960,8 +822,18 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
+                  Penalty(₦)
                 </TableCell>
+                {/* <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: 600,
+                    color: isDark ? '#94a3b8' : '#475569',
+                    py: 1.5,
+                  }}
+                >
+                  —
+                </TableCell> */}
                 <TableCell
                   sx={{
                     fontWeight: 600,
@@ -969,7 +841,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Payable(NGN)
+                  Payable(₦)
                 </TableCell>
                 <TableCell
                   align="right"
@@ -1036,6 +908,11 @@ const Invoice = () => {
                       }}
                     >
                       ₦{format(fee.amount)}
+                    </TableCell>
+
+                    {/* BALANCE */}
+                    <TableCell align="center" sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}>
+                      ₦{format(fee.balance)}
                     </TableCell>
 
                     {/* DISCOUNT */}
@@ -1129,8 +1006,8 @@ const Invoice = () => {
                       </Box>
                     </TableCell>
 
-                    {/* INSTALLMENT / CUSTOM AMOUNT */}
-                    <TableCell align="center" sx={{ py: 1.5 }}>
+                    {/* INSTALLMENT / CUSTOM AMOUNT - commented out, no longer needed */}
+                    {/* <TableCell align="center" sx={{ py: 1.5 }}>
                       {installmentalSetting === 'percentage' ? (
                         <FormControl size="small" sx={{ minWidth: 130 }}>
                           <Select
@@ -1168,7 +1045,12 @@ const Invoice = () => {
                           inputProps={{ min: 0, max: fee.amount }}
                         />
                       )}
-                    </TableCell>
+                    </TableCell> */}
+                    {/* <TableCell align="center" sx={{ py: 1.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        —
+                      </Typography>
+                    </TableCell> */}
 
                     <TableCell
                       sx={{
@@ -1198,7 +1080,7 @@ const Invoice = () => {
                   bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe',
                 }}
               >
-                <TableCell colSpan={6} sx={{ py: 1.5 }}>
+                <TableCell colSpan={7} sx={{ py: 1.5 }}>
                   <Typography variant="body2" fontWeight={700} color="text.secondary">
                     Total Compulsory
                   </Typography>
@@ -1364,7 +1246,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Amount (NGN)
+                    Amount To Pay(₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1374,7 +1256,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Discount(NGN)
+                    Balance (₦)
                   </TableCell>
                   <TableCell
                     align="center"
@@ -1384,7 +1266,17 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Penalty(NGN)
+                    Discount(₦)
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 600,
+                      color: isDark ? '#94a3b8' : '#475569',
+                      py: 1.5,
+                    }}
+                  >
+                    Penalty(₦)
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1393,7 +1285,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Payable(NGN)
+                    Payable(₦)
                   </TableCell>
                   <TableCell
                     align="right"
@@ -1491,6 +1383,11 @@ const Invoice = () => {
                         }}
                       >
                         ₦{format(fee.amount)}
+                      </TableCell>
+
+                      {/* BALANCE */}
+                      <TableCell align="center" sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}>
+                        ₦{format(fee.balance)}
                       </TableCell>
 
                       {/* DISCOUNT */}
@@ -1595,7 +1492,7 @@ const Invoice = () => {
                     bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
                   }}
                 >
-                  <TableCell colSpan={5} sx={{ py: 1.5 }}>
+                  <TableCell colSpan={6} sx={{ py: 1.5 }}>
                     <Typography variant="body2" fontWeight={700} color="text.secondary">
                       Total Optional
                     </Typography>
@@ -1633,83 +1530,26 @@ const Invoice = () => {
           </Paper>
         ) : null}
 
-        {/* STICKY BOTTOM ACTION SHEET */}
-        <Paper
-          elevation={3}
-          sx={{
-            position: 'sticky',
-            bottom: 16,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            p: 2,
-            mt: 4,
-            bgcolor: isDark ? 'rgba(234, 179, 8, 0.15)' : '#fef9c3',
-            border: `1px solid ${isDark ? 'rgba(234, 179, 8, 0.3)' : '#fef08a'}`,
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'space-between',
-            gap: 2,
-            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
-          }}
-        >
-          {/* LEFT - Legends */}
-          <Box
+        {/* UPDATE INVOICE BUTTON */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => setConfirmDialogOpen(true)}
+            disabled={loading || updating}
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'row', sm: 'column', md: 'column' },
-              justifyContent: { xs: 'space-between', sm: 'flex-start' },
-              gap: { xs: 2, sm: 0.5 },
+              px: 6,
+              py: 1.5,
+              fontWeight: 700,
+              textTransform: 'none',
+              fontSize: '1.1rem',
+              borderRadius: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Checkbox
-                size="small"
-                checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
-                onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-                sx={{
-                  color: '#10b981',
-                  '&.Mui-checked': { color: '#10b981' },
-                  '&.MuiCheckbox-indeterminate': { color: '#10b981' },
-                  p: 0.5,
-                }}
-              />
-              <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
-                Compulsory Payment
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Checkbox
-                size="small"
-                checked={optionalEnabled && optFees.length > 0 && optFees.every((f) => f.checked)}
-                indeterminate={
-                  optionalEnabled &&
-                  optFees.some((f) => f.checked) &&
-                  !optFees.every((f) => f.checked)
-                }
-                disabled={!optionalEnabled}
-                onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-                sx={{
-                  color: '#84cc16',
-                  '&.Mui-checked': { color: '#84cc16' },
-                  '&.MuiCheckbox-indeterminate': { color: '#84cc16' },
-                  p: 0.5,
-                }}
-              />
-              <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
-                Optional Payment
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* RIGHT - Sticky Pay Button */}
-          <Button variant="contained" disabled={grandTotal === 0} onClick={handlePayNow}>
-            Pay Now - ₦{format(grandTotal)} &gt;
+            {updating ? <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} /> : null}
+            Update Invoice
           </Button>
-        </Paper>
+        </Box>
       </Box>
 
       {/* ── Optional Payment Modal ── */}
@@ -1890,6 +1730,41 @@ const Invoice = () => {
         </DialogActions>
       </Dialog>
 
+      {/* ── Confirm Update Invoice Dialog ── */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Update Invoice
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to Update the Invoice
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            color="inherit"
+            onClick={() => setConfirmDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              handleUpdateInvoice();
+            }}
+            sx={{ fontWeight: 600 }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* GLOBAL VALUE MODAL */}
       <Dialog
         open={globalModal.open}
@@ -1905,7 +1780,7 @@ const Invoice = () => {
             autoFocus
             margin="dense"
             label={
-              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
+              globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'
             }
             type="number"
             fullWidth

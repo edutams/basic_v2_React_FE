@@ -7,7 +7,7 @@ import NavGroup from '../../../landlord/vertical/sidebar/NavGroup/NavGroup';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useAuth } from 'src/hooks/useAuth';
 import tenantApi from '@/api/tenant/tenant_api';
-import { PermissionProvider, usePermissions } from '../../../../context/TenantContext/permissions';
+import { usePermissions } from '@/context/TenantContext/permissions';
 import {
   IconChartPie,
   IconUsers,
@@ -20,20 +20,31 @@ import {
   IconPoint,
   IconCircle,
   IconListCheck,
+  IconWallet,
+  IconCurrencyDollar,
+  IconBuildingBank,
+  IconCreditCard,
+  IconSchool,
+  IconBox,
+  // Add more icons as needed
 } from '@tabler/icons-react';
 
 const iconMapper = {
-  ChartPie: IconChartPie,
-  Users: IconUsers,
+  Wallet: IconWallet,
+  Cash: IconCurrencyDollar,
+  CurrencyDollar: IconCurrencyDollar,
   Settings: IconSettings,
-  Timeline: IconTimeline,
-  AppWindow: IconAppWindow,
-  UserCircle: IconUserCircle,
-  Book: IconBook,
-  ClipboardList: IconClipboardList,
-  Point: IconPoint,
-  Circle: IconCircle,
-  ListCheck: IconListCheck,
+  School: IconSchool,
+  Users: IconUsers,
+  BuildingBank: IconBuildingBank,
+  CreditCard: IconCreditCard,
+  ReportAnalytics: IconChartPie,
+  ChartBar: IconChartPie,
+  FileInvoice: IconClipboardList,
+  UsersPay: IconUsers,
+  Package: IconBox,
+  Report: IconChartPie,
+  // Add more mappings here when needed
 };
 
 const SchoolSidebarItems = () => {
@@ -51,29 +62,34 @@ const SchoolSidebarItems = () => {
   const { canAny } = usePermissions();
   const [menuItems, setMenuItems] = useState([]);
 
+  // Recursive function to handle multiple levels of nesting
+  const processNestedModules = (subModules) => {
+    if (!subModules || subModules.length === 0) return null;
+
+    return subModules.map((sub) => ({
+      id: sub.title,
+      title: sub.title,
+      icon: iconMapper[sub.icon] || IconPoint,
+      href: sub.href || '#',
+      children:
+        sub.subModules && sub.subModules.length > 0 ? processNestedModules(sub.subModules) : null,
+    }));
+  };
+
   useEffect(() => {
     const fetchModules = async () => {
       try {
         const response = await tenantApi.get('/tenant-sidebar-modules');
-        const packages = response.data?.data; // array of packages
+        const packages = response.data?.data || [];
 
-        // Flatten all modules from all packages into one list
         const allModules = packages.flatMap((pkg) => pkg.modules);
 
         const formattedMenu = allModules.map((mod) => ({
-          id: mod.title, // use title as id since API doesn't return module id
+          id: mod.title,
           title: mod.title,
           icon: iconMapper[mod.icon] || IconCircle,
           href: mod.href || '#',
-          children:
-            mod.subModules?.length > 0
-              ? mod.subModules.map((sub) => ({
-                  id: sub.title,
-                  title: sub.title,
-                  icon: IconPoint,
-                  href: sub.href || '#',
-                }))
-              : null,
+          children: processNestedModules(mod.subModules),
         }));
 
         setMenuItems([{ navlabel: true, subheader: 'Modules' }, ...formattedMenu]);
@@ -97,7 +113,7 @@ const SchoolSidebarItems = () => {
           .map((item) => {
             if (item.subheader) {
               return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
-            } else if (item.children) {
+            } else if (item.children && item.children.length > 0) {
               return (
                 <NavCollapse
                   menu={item}

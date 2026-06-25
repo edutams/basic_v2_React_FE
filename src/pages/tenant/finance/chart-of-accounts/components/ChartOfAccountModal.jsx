@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,44 +11,51 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  code: Yup.string().required('Account Code is required'),
+  name: Yup.string().required('Account Name is required'),
+  category: Yup.string().required('Category is required'),
+  linkedBank: Yup.string(),
+});
 
 const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    code: '',
-    name: '',
-    category: '',
-    linkedBank: '',
+  const formik = useFormik({
+    initialValues: {
+      code: '',
+      name: '',
+      category: '',
+      linkedBank: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      onSubmit(values);
+      onClose();
+    },
   });
 
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && selectedRow) {
-        setFormData({
+        formik.setValues({
           code: selectedRow.code || '',
           name: selectedRow.name || '',
           category: selectedRow.category || '',
           linkedBank: selectedRow.linkedBank !== '—' ? selectedRow.linkedBank : '',
         });
       } else {
-        setFormData({ code: '', name: '', category: '', linkedBank: '' });
+        formik.resetForm();
       }
     }
   }, [open, mode, selectedRow]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-    onClose();
-  };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={formik.handleSubmit}>
         <DialogTitle>{mode === 'create' ? 'Create Chart of Account' : 'Edit Chart of Account'}</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -57,9 +64,11 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
                 fullWidth
                 label="Account Code"
                 name="code"
-                value={formData.code}
-                onChange={handleChange}
-                required
+                value={formik.values.code}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.code && Boolean(formik.errors.code)}
+                helperText={formik.touched.code && formik.errors.code}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -67,19 +76,22 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
                 fullWidth
                 label="Account Name"
                 name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.name && Boolean(formik.errors.name)}
+                helperText={formik.touched.name && formik.errors.name}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth error={formik.touched.category && Boolean(formik.errors.category)}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   label="Category"
                   name="category"
-                  value={formData.category}
-                  onChange={handleChange}
+                  value={formik.values.category}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                 >
                   <MenuItem value="Asset">Asset</MenuItem>
                   <MenuItem value="Liability">Liability</MenuItem>
@@ -87,6 +99,9 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
                   <MenuItem value="Revenue">Revenue</MenuItem>
                   <MenuItem value="Expense">Expense</MenuItem>
                 </Select>
+                {formik.touched.category && formik.errors.category && (
+                  <FormHelperText>{formik.errors.category}</FormHelperText>
+                )}
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -95,8 +110,9 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
                 <Select
                   label="Linked Bank"
                   name="linkedBank"
-                  value={formData.linkedBank}
-                  onChange={handleChange}
+                  value={formik.values.linkedBank}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                 >
                   <MenuItem value=""><em>None</em></MenuItem>
                   <MenuItem value="Zenith Bank">Zenith Bank</MenuItem>

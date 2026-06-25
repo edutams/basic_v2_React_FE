@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,41 +8,49 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  bank: Yup.string().required('Bank Name is required'),
+  accountName: Yup.string().required('Account Name is required'),
+  accountNo: Yup.string()
+    .matches(/^[0-9]+$/, 'Account Number must contain only digits')
+    .min(10, 'Account Number must be at least 10 digits')
+    .required('Account Number is required'),
+});
 
 const BankAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    bank: '',
-    accountName: '',
-    accountNo: '',
+  const formik = useFormik({
+    initialValues: {
+      bank: '',
+      accountName: '',
+      accountNo: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      onSubmit(values);
+      onClose();
+    },
   });
 
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && selectedRow) {
-        setFormData({
+        formik.setValues({
           bank: selectedRow.bank || '',
           accountName: selectedRow.accountName || '',
           accountNo: selectedRow.accountNo || '',
         });
       } else {
-        setFormData({ bank: '', accountName: '', accountNo: '' });
+        formik.resetForm();
       }
     }
   }, [open, mode, selectedRow]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-    onClose();
-  };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={formik.handleSubmit}>
         <DialogTitle>{mode === 'create' ? 'Register Bank' : 'Edit Bank'}</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -51,9 +59,11 @@ const BankAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
                 fullWidth
                 label="Bank Name"
                 name="bank"
-                value={formData.bank}
-                onChange={handleChange}
-                required
+                value={formik.values.bank}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.bank && Boolean(formik.errors.bank)}
+                helperText={formik.touched.bank && formik.errors.bank}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -61,9 +71,11 @@ const BankAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
                 fullWidth
                 label="Account Name"
                 name="accountName"
-                value={formData.accountName}
-                onChange={handleChange}
-                required
+                value={formik.values.accountName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.accountName && Boolean(formik.errors.accountName)}
+                helperText={formik.touched.accountName && formik.errors.accountName}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -71,9 +83,11 @@ const BankAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
                 fullWidth
                 label="Account Number"
                 name="accountNo"
-                value={formData.accountNo}
-                onChange={handleChange}
-                required
+                value={formik.values.accountNo}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.accountNo && Boolean(formik.errors.accountNo)}
+                helperText={formik.touched.accountNo && formik.errors.accountNo}
               />
             </Grid>
           </Grid>

@@ -41,7 +41,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { getStudentSchedule } from '@/api/tenant/bursary/classLedger';
 import {
   fetchActiveSessionTerm,
-  fetchBursarySessionTerms,
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
@@ -57,12 +56,6 @@ const BCrumb = [
   { to: '/class-ledger', title: 'Class Ledger' },
   { title: 'Invoice' },
 ];
-
-const extractList = (res) => {
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res?.data)) return res.data;
-  return [];
-};
 
 /* ================= COMPONENT ================= */
 const PayInvoice = () => {
@@ -95,19 +88,6 @@ const PayInvoice = () => {
   const [optionalEnabled, setOptionalEnabled] = useState(true);
   const [printModalOpen, setPrintModalOpen] = useState(false);
 
-  /* Refs */
-  const dataLoadedRef = useRef(false);
-
-  /* GLOBAL SWITCHES */
-  const [compDiscountGlobal, setCompDiscountGlobal] = useState(false);
-  const [compPenaltyGlobal, setCompPenaltyGlobal] = useState(false);
-  const [optDiscountGlobal, setOptDiscountGlobal] = useState(false);
-  const [optPenaltyGlobal, setOptPenaltyGlobal] = useState(false);
-
-  /* GLOBAL VALUE MODAL */
-  const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
-  const [globalModalValue, setGlobalModalValue] = useState('');
-
   const [owingInfo, setOwingInfo] = useState(null);
   const [activeSessionInfo, setActiveSessionInfo] = useState({ session: '', term: '' });
 
@@ -116,25 +96,6 @@ const PayInvoice = () => {
   const [optionalPaymentList, setOptionalPaymentList] = useState([]);
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
-
-
-  const handleGlobalModalConfirm = () => {
-    const value = Number(globalModalValue) || 0;
-    const { type, field } = globalModal;
-    const setter = type === 'comp' ? setCompFees : setOptFees;
-    const setGlobal =
-      type === 'comp'
-        ? field === 'discount'
-          ? setCompDiscountGlobal
-          : setCompPenaltyGlobal
-        : field === 'discount'
-          ? setOptDiscountGlobal
-          : setOptPenaltyGlobal;
-
-    setter((prev) => prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true })));
-    setGlobal(true);
-    setGlobalModal({ ...globalModal, open: false });
-  };
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -153,88 +114,58 @@ const PayInvoice = () => {
     setOptFees((prev) => prev.map((f) => ({ ...f, checked })));
   };
 
-  /* DISCOUNT / PENALTY UPDATE ACTIONS */
-  const handleDiscountValueChange = (type, id, val) => {
-    const setter = type === 'comp' ? setCompFees : setOptFees;
-    setter((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, discount: Math.max(0, Number(val || 0)) } : f)),
-    );
-  };
-
-  const handlePenaltyValueChange = (type, id, val) => {
-    const setter = type === 'comp' ? setCompFees : setOptFees;
-    setter((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, penalty: Math.max(0, Number(val || 0)) } : f)),
-    );
-  };
-
-  /* INSTALLMENT CHANGE HANDLER */
+  /* INSTALLMENT CHANGE HANDLER — triggers payable recalculation */
   const handleInstallmentChange = (feeId, value) => {
     setCompFees((prev) =>
       prev.map((f) => {
         if (f.id !== feeId) return f;
         const selectedInst = (f.installments || []).find((inst) => inst.id === Number(value));
+        const installmentPct = selectedInst ? Number(selectedInst.inst1) || 100 : 100;
+        const base = Number(f.balance || f.amount || 0);
+        const discount = Number(f.discount_amount || 0);
+        const penalty = Number(f.penalty_amount || 0);
+        const payable = Math.max(0, base * (installmentPct / 100) - discount + penalty);
+
         return {
           ...f,
           installment_id: selectedInst?.id || null,
           installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
-          installment_inst2: selectedInst ? String(selectedInst.inst2) : '',
+          installment_inst2: selectedInst ? String(selectedInst.inst2 ?? '') : '',
+          payable,
         };
       }),
     );
   };
 
-  const handleDiscountSwitchChange = (type, id, checked) => {
+  /* CUSTOM AMOUNT CHANGE HANDLER — triggers payable recalculation */
+  const handleCustomAmountChange = (feeId, rawVal, type = 'comp') => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
-    setter((prev) => prev.map((f) => (f.id === id ? { ...f, discountEnabled: checked } : f)));
+    setter((prev) =>
+      prev.map((f) => {
+        if (f.id !== feeId) return f;
+        const max = Number(f.balance || f.amount || 0);
+        const custom = Math.min(Number(rawVal) || 0, max);
+        const discount = Number(f.discount_amount || 0);
+        const penalty = Number(f.penalty_amount || 0);
+        const payable = Math.max(0, custom - discount + penalty);
+        return { ...f, custom_amount: custom, payable };
+      }),
+    );
   };
 
-  const handlePenaltySwitchChange = (type, id, checked) => {
-    const setter = type === 'comp' ? setCompFees : setOptFees;
-    setter((prev) => prev.map((f) => (f.id === id ? { ...f, penaltyEnabled: checked } : f)));
-  };
-
-  /* DYNAMIC PAYABLE CALCULATION */
-  const getPayable = (fee, discountGlobal, penaltyGlobal) => {
-    const discountRowEnabled = discountGlobal ? true : !!fee.discountEnabled;
-    const penaltyRowEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
-
-    const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
-    const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
-
-    let baseAmount;
-    if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_inst1) || 100;
-      baseAmount = fee.amount * (installmentPct / 100);
-    } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
-    }
-
-    return Math.max(0, baseAmount - discount + penalty);
-  };
-
-  /* COMPUTATIONS */
-  const compTotal = compFees.reduce((acc, f) => {
-    return f.checked ? acc + getPayable(f, compDiscountGlobal, compPenaltyGlobal) : acc;
-  }, 0);
-
+  /* COMPUTATIONS — use the stored payable from each fee row */
+  const compTotal = compFees.reduce((acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc), 0);
   const optTotal = optionalEnabled
-    ? optFees.reduce((acc, f) => {
-        return f.checked ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal) : acc;
-      }, 0)
+    ? optFees.reduce((acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc), 0)
     : 0;
-
   const grandTotal = compTotal + optTotal;
 
   const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
 
   /* ── Optional Payment Modal Handlers ── */
   const handleOpenOptionalModal = async () => {
-    // Guard: check required IDs are loaded
     if (!sessionTermId || !classId || !selectedCategoryId) {
-      setError(
-        'Session/term, class, or category information not loaded yet. Please refresh the page.',
-      );
+      setError('Session/term, class, or category information not loaded yet. Please refresh the page.');
       return;
     }
 
@@ -250,22 +181,15 @@ const PayInvoice = () => {
       const list = Array.isArray(res?.data) ? res.data : [];
       setOptionalPaymentList(list);
 
-      // Pre-select existing optional payments that the student already has
       const preSelected = new Set();
-
       optFees.forEach((fee) => {
-        // Check selectedOptions array
-        if (fee.selectedOptions && fee.selectedOptions.length > 0) {
+        if (fee.selectedOptions?.length > 0) {
           fee.selectedOptions.forEach((opt) => {
             if (opt.option_id) preSelected.add(opt.option_id);
           });
         }
-        // Fallback for direct selected_option_id
-        if (fee.selected_option_id) {
-          preSelected.add(fee.selected_option_id);
-        }
+        if (fee.selected_option_id) preSelected.add(fee.selected_option_id);
       });
-
       setSelectedOptionalIds(preSelected);
     } catch (err) {
       console.error('Failed to load optional payments', err);
@@ -284,11 +208,7 @@ const PayInvoice = () => {
   const handleToggleOptionalItem = (optionId) => {
     setSelectedOptionalIds((prev) => {
       const next = new Set(prev);
-      if (next.has(optionId)) {
-        next.delete(optionId);
-      } else {
-        next.add(optionId);
-      }
+      next.has(optionId) ? next.delete(optionId) : next.add(optionId);
       return next;
     });
   };
@@ -298,7 +218,6 @@ const PayInvoice = () => {
     optionalPaymentList.forEach((group) => {
       group.options.forEach((opt) => allIds.add(opt.option_id));
     });
-
     setSelectedOptionalIds((prev) => {
       const isAllSelected = prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
       return isAllSelected ? new Set() : allIds;
@@ -307,11 +226,7 @@ const PayInvoice = () => {
 
   const handleAddOptionalPayments = async () => {
     if (!invoiceId || !user_id) return;
-
-    // Capture selected IDs before closing modal (state resets on close)
     const optionPaymentIds = [...selectedOptionalIds];
-
-    // Close the modal
     handleCloseOptionalModal();
 
     try {
@@ -320,12 +235,8 @@ const PayInvoice = () => {
         user_id,
         option_payment_ids: optionPaymentIds,
       });
-
       if (res?.success) {
-        // Refetch invoice data to show the saved optional payments
-        if (sessionInfo) {
-          await fetchInvoiceData();
-        }
+        await fetchInvoiceData();
       } else {
         setError(res?.message || 'Failed to save optional payments.');
       }
@@ -354,10 +265,7 @@ const PayInvoice = () => {
     setError('');
 
     try {
-      const res = await getStudentSchedule({
-        invoiceNumber: invoiceId,
-        userId: user_id,
-      });
+      const res = await getStudentSchedule({ invoiceNumber: invoiceId, userId: user_id });
 
       if (!res.success || !res.data) {
         setError(res.message || 'Failed to load invoice data');
@@ -373,58 +281,68 @@ const PayInvoice = () => {
       setOwingInfo(data.owing_info || null);
       setInstallmentalSetting(data.installmental_setting || 'percentage');
 
-      // === CRITICAL: RESPECT OWING LOGIC ===
       const targetSessionTermId =
         data.owing_info?.owing_status === 'owing'
           ? data.owing_info.owing_session_term_id
           : data.session_info.session_term_id;
 
       setSessionTermId(targetSessionTermId);
-
-      // Store class and category
       setClassId(data.student_info?.class_id);
       setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
-      // Map compulsory fees
-      const mappedComp = (data.compulsory_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: item.amount,
-        paid_amount: item.paid_amount,
-        balance: item.balance,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        checked: false,
-        installment_id: item.installment_id || null,
-        installment_inst1:
-          item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
-        installment_inst2:
-          item.installment_inst2 !== undefined ? String(item.installment_inst2) : '',
-        installment_pct: item.installment_pct || null,
-        installment_part: item.installment_part || '',
-        installments: item.installments || [],
-        custom_amount: item.amount,
-      }));
+      /* Map compulsory fees — all values come straight from API; payable pre-set from API */
+      const mappedComp = (data.compulsory_data || []).map((item) => {
+        const instList = item.installments || [];
+        /* Auto-preselect the first installment if none is already set */
+        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const instId = item.installment_id || defaultInst?.id || null;
+        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
+        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+
+        /* Recalculate payable based on the preselected installment percentage */
+        const balance = Number(item.balance || 0);
+        const discount = Number(item.discount_amount || 0);
+        const penalty = Number(item.penalty_amount || 0);
+        const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
+        const calculatedPayable = Math.max(0, balance * (installmentPct / 100) - discount + penalty);
+
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: Number(item.amount || 0),
+          paid_amount: Number(item.paid_amount || 0),
+          balance,
+          /* Use calculated payable when preselecting an installment, otherwise API value */
+          payable: defaultInst ? calculatedPayable : Number(item.payable || 0),
+          discount_amount: Number(item.discount_amount || 0),
+          penalty_amount: Number(item.penalty_amount || 0),
+          checked: false,
+          installment_id: instId,
+          installment_inst1: inst1,
+          installment_inst2: inst2,
+          installments: instList,
+          /* custom_amount defaults to balance for the custom-amount mode */
+          custom_amount: Number(item.balance || item.amount || 0),
+        };
+      });
       setCompFees(mappedComp);
 
-      // Map optional fees
+      /* Map optional fees */
       const mappedOpt = (data.optional_data || []).map((item) => ({
         id: item.id,
         bursary_schedule_id: item.bursary_schedule_id,
         description: item.description,
         amount: Number(item.amount || 0),
+        paid_amount: Number(item.paid_amount || 0),
+        balance: Number(item.balance || 0),
+        payable: Number(item.payable || 0),
+        discount_amount: Number(item.discount_amount || 0),
+        penalty_amount: Number(item.penalty_amount || 0),
         optionsPool: item.options || [],
         selectedOptions: item.selected_options || [],
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        paid_amount: item.paid_amount,
-        balance: item.balance,
         checked: false,
+        custom_amount: Number(item.balance || item.amount || 0),
       }));
       setOptFees(mappedOpt);
 
@@ -436,7 +354,7 @@ const PayInvoice = () => {
       setLoading(false);
     }
   }, [invoiceId, user_id]);
-  // Fetch active session/term on mount, then load invoice data
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -449,8 +367,6 @@ const PayInvoice = () => {
             session: active.sesname || '',
             term: active.term_name || '',
           });
-
-          // Fetch invoice using session_id, term_id (no category initially)
           await fetchInvoiceData();
         } else {
           setLoading(false);
@@ -462,10 +378,10 @@ const PayInvoice = () => {
         setLoading(false);
       }
     };
-
     init();
   }, [fetchInvoiceData]);
 
+  /* ── Pay Now ── */
   const handlePayNow = async () => {
     if (grandTotal <= 0) {
       notify.error('Please select at least one item to pay');
@@ -474,49 +390,41 @@ const PayInvoice = () => {
 
     const payload = [];
 
-    // Compulsory Fees
     compFees.forEach((fee) => {
-      if (fee.checked) {
-        const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
-        if (payable > 0) {
-          payload.push({
-            bursary_schedule_id: fee.bursary_schedule_id || fee.id, // schedule id
-            user_id: user_id,
-            session_term_id: sessionInfo?.session_term_id, // Important: Use the term from backend
-            amount: fee.amount,
-            instValue: payable, // amount to pay now
-            paymentname: { name: fee.description || fee.payment_name },
-            checked: true,
-            orderid: Date.now() + Math.floor(Math.random() * 1000),
-            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
-            fname: studentInfo?.name?.split(' ')[0] || '',
-            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-            payment_type: 'card', // or 'cash' depending on flow
-          });
-        }
+      if (fee.checked && Number(fee.payable || 0) > 0) {
+        payload.push({
+          bursary_schedule_id: fee.bursary_schedule_id || fee.id,
+          user_id,
+          session_term_id: sessionInfo?.session_term_id,
+          amount: fee.amount,
+          instValue: fee.payable,
+          paymentname: { name: fee.description || fee.payment_name },
+          checked: true,
+          orderid: Date.now() + Math.floor(Math.random() * 1000),
+          bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
+          fname: studentInfo?.name?.split(' ')[0] || '',
+          lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
+          payment_type: 'card',
+        });
       }
     });
 
-    // Optional Fees
     optFees.forEach((fee) => {
-      if (fee.checked) {
-        const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
-        if (payable > 0) {
-          payload.push({
-            bursary_schedule_id: fee.bursary_schedule_id || fee.id,
-            user_id: user_id,
-            session_term_id: sessionInfo?.session_term_id,
-            amount: fee.amount,
-            instValue: payable,
-            paymentname: { name: fee.description || fee.payment_name },
-            checked: true,
-            orderid: Date.now() + Math.floor(Math.random() * 1000),
-            bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
-            fname: studentInfo?.name?.split(' ')[0] || '',
-            lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-            payment_type: 'card',
-          });
-        }
+      if (fee.checked && Number(fee.payable || 0) > 0) {
+        payload.push({
+          bursary_schedule_id: fee.bursary_schedule_id || fee.id,
+          user_id,
+          session_term_id: sessionInfo?.session_term_id,
+          amount: fee.amount,
+          instValue: fee.payable,
+          paymentname: { name: fee.description || fee.payment_name },
+          checked: true,
+          orderid: Date.now() + Math.floor(Math.random() * 1000),
+          bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
+          fname: studentInfo?.name?.split(' ')[0] || '',
+          lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
+          payment_type: 'card',
+        });
       }
     });
 
@@ -526,12 +434,9 @@ const PayInvoice = () => {
     }
 
     try {
-      // Call your pending payment endpoint
       const res = await createPendingPayment(payload);
-
       if (res.data.success || res.data.data) {
         notify.success('Payment initiated successfully!');
-        // Optionally redirect to payment gateway or refresh data
         fetchInvoiceData();
       }
     } catch (err) {
@@ -541,47 +446,52 @@ const PayInvoice = () => {
   };
 
   /* SECTION HEADER BLOCK */
-  const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
-    return (
-      <Paper
-        elevation={0}
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          justifyContent: 'space-between',
-          p: 2,
-          mb: 2,
-          gap: { xs: 2, sm: 0 },
-          bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
-          borderLeft: `5px solid ${borderLeftColor}`,
-          borderRadius: '8px',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 38,
-              height: 38,
-              borderRadius: '8px',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-              color: isDark ? '#cbd5e1' : '#64748b',
-            }}
-          >
-            {icon}
-          </Box>
-          <Typography variant="subtitle1" fontWeight={700} color={isDark ? '#f1f5f9' : '#334155'}>
-            {title}
-          </Typography>
+  const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => (
+    <Paper
+      elevation={0}
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'stretch', sm: 'center' },
+        justifyContent: 'space-between',
+        p: 2,
+        mb: 2,
+        gap: { xs: 2, sm: 0 },
+        bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+        borderLeft: `5px solid ${borderLeftColor}`,
+        borderRadius: '8px',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 38,
+            height: 38,
+            borderRadius: '8px',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+            color: isDark ? '#cbd5e1' : '#64748b',
+          }}
+        >
+          {icon}
         </Box>
-        <Box>{action}</Box>
-      </Paper>
-    );
+        <Typography variant="subtitle1" fontWeight={700} color={isDark ? '#f1f5f9' : '#334155'}>
+          {title}
+        </Typography>
+      </Box>
+      <Box>{action}</Box>
+    </Paper>
+  );
+
+  /* ── Shared read-only cell style ── */
+  const roCell = {
+    py: 1.5,
+    fontWeight: 600,
+    color: 'text.primary',
   };
 
   /* ───────────────────────────────────────────── */
@@ -591,14 +501,7 @@ const PayInvoice = () => {
     return (
       <PageContainer title="Pay Invoice">
         <Breadcrumb title="Pay Invoice" items={BCrumb} />
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 400,
-          }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
           <CircularProgress size={40} />
         </Box>
       </PageContainer>
@@ -609,17 +512,8 @@ const PayInvoice = () => {
     return (
       <PageContainer title="Pay Invoice">
         <Breadcrumb title="Pay Invoice" items={BCrumb} />
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: 400,
-          }}
-        >
-          <Alert severity="error" sx={{ maxWidth: 500 }}>
-            {error}
-          </Alert>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          <Alert severity="error" sx={{ maxWidth: 500 }}>{error}</Alert>
         </Box>
       </PageContainer>
     );
@@ -628,10 +522,7 @@ const PayInvoice = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
-  const termLabel = sessionInfo?.term || '';
-  const sessionLabel = sessionInfo?.session || '';
   const invoiceNumber = invoiceInfo?.invoice_number || '';
-
   const breadcrumbTitle = `Pay Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
 
   const BCrumbLive = [
@@ -641,11 +532,20 @@ const PayInvoice = () => {
     { title: breadcrumbTitle },
   ];
 
+  /* Shared table head cell style */
+  const thCell = {
+    fontWeight: 600,
+    color: isDark ? '#94a3b8' : '#475569',
+    py: 1.5,
+    whiteSpace: 'nowrap',
+  };
+
   return (
     <PageContainer title={breadcrumbTitle}>
       <Breadcrumb title={breadcrumbTitle} items={BCrumbLive} />
       <Box sx={{ pb: 8 }}>
-        {/* HEADER - Student Info & Filters */}
+
+        {/* HEADER — Student Info */}
         <Box
           sx={{
             position: 'relative',
@@ -662,47 +562,24 @@ const PayInvoice = () => {
             borderRadius: '12px',
           }}
         >
-          {/* Student details */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              width: '100%',
-              py: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 72,
-                height: 72,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                mb: 1.5,
-              }}
-            >
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', py: 1 }}>
+            <Avatar sx={{ width: 72, height: 72, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', mb: 1.5 }}>
               <PersonOutlineIcon sx={{ fontSize: 40 }} />
             </Avatar>
-
             <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
               {studentName}
             </Typography>
-
             <Typography variant="body1" fontWeight={600} color="text.secondary" sx={{ mt: 0.5 }}>
               <strong>Learner ID:</strong> {studentLearnerId}
             </Typography>
-
             <Typography variant="body1" fontWeight={600} color="text.secondary">
               <strong>Class:</strong> {studentClassName}
             </Typography>
-
             <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
-              {activeSessionInfo.term}
+              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session} {activeSessionInfo.term}
             </Typography>
           </Box>
 
-          {/* BACK BUTTON */}
           <Button
             variant="text"
             size="small"
@@ -714,9 +591,7 @@ const PayInvoice = () => {
               textTransform: 'none',
               fontWeight: 600,
               color: isDark ? '#94a3b8' : '#64748b',
-              '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-              },
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' },
             }}
           >
             ← Go To Class Ledger
@@ -725,100 +600,27 @@ const PayInvoice = () => {
 
         {/* ERROR ALERT */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>
         )}
 
-        {/* OWING WARNING BANNER */}
-        {owingInfo?.owing_status === 'owing' ? (
+        {/* OWING WARNING */}
+        {owingInfo?.owing_status === 'owing' && (
           <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
             <strong>Outstanding Balance Detected</strong>
             <br />
             You need to pay for the previous term you owe{' '}
-            <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.{' '}
+            <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.
           </Alert>
-        ) : null}
+        )}
 
-        {/* COMPULSORY PAYMENT */}
+        {/* ══════════════════════════════════════════════ */}
+        {/* COMPULSORY PAYMENT                           */}
+        {/* ══════════════════════════════════════════════ */}
         {renderHeaderBlock({
           title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-
           borderLeftColor: '#10b981',
           icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              {can('bursary_manager.ledger.create_invoice_discount') && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                    Discount
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={compDiscountGlobal}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setGlobalModal({ open: true, type: 'comp', field: 'discount' });
-                        setGlobalModalValue('');
-                      } else {
-                        setCompFees((prev) =>
-                          prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                        );
-                        setCompDiscountGlobal(false);
-                      }
-                    }}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8338ec',
-                        '& + .MuiSwitch-track': {
-                          backgroundColor: '#8338ec',
-                        },
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-              {can('bursary_manager.ledger.create_invoice_penalty') && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                    Penalty
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={compPenaltyGlobal}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
-                        setGlobalModalValue('');
-                      } else {
-                        setCompFees((prev) =>
-                          prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                        );
-                        setCompPenaltyGlobal(false);
-                      }
-                    }}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8338ec',
-                        '& + .MuiSwitch-track': {
-                          backgroundColor: '#8338ec',
-                        },
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-            </Box>
-          ),
+          action: null,
         })}
 
         <TableContainer
@@ -834,101 +636,26 @@ const PayInvoice = () => {
           <Table sx={{ minWidth: 800 }}>
             <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
               <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  #
+                <TableCell sx={thCell}>#</TableCell>
+                <TableCell sx={thCell}>Pay Description</TableCell>
+                <TableCell sx={thCell}>Original Amount (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>Penalty (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
                 </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Pay Description
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Amount (NGN)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Discount(NGN)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Penalty(NGN)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (NGN)'}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Payable(NGN)
-                </TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={isDark ? '#94a3b8' : '#475569'}
-                    >
+                <TableCell sx={thCell}>Payable (₦)</TableCell>
+                <TableCell align="right" sx={thCell}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                    <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
                       Select All
                     </Typography>
                     <Checkbox
                       size="small"
                       checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                      indeterminate={
-                        compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)
-                      }
+                      indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
                       onChange={(e) => handleAllCompCheckChange(e.target.checked)}
                       sx={{ p: 0.5 }}
                     />
@@ -936,214 +663,105 @@ const PayInvoice = () => {
                 </TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {compFees.map((fee, idx) => {
-                const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
+              {compFees.map((fee, idx) => (
+                <TableRow
+                  key={fee.id}
+                  hover
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                >
+                  <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
 
-                return (
-                  <TableRow
-                    key={fee.id}
-                    hover
-                    sx={{
-                      '&:last-child td, &:last-child th': { border: 0 },
-                    }}
-                  >
-                    <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                    <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>
-                      {fee.description}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        py: 1.5,
-                        fontWeight: 700,
-                        color: 'text.primary',
-                        fontSize: '1rem',
-                      }}
-                    >
-                      ₦{format(fee.amount)}
-                    </TableCell>
+                  {/* Description */}
+                  <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>
+                    {fee.description}
+                  </TableCell>
 
-                    {/* DISCOUNT */}
+                  {/* Amount — read-only */}
+                  <TableCell sx={{ ...roCell, fontWeight: 700, fontSize: '1rem' }}>
+                    ₦{format(fee.amount)}
+                  </TableCell>
 
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'center',
-                        }}
-                      >
-                        {can('bursary_manager.ledger.create_invoice_discount') && (
-                          <>
-                            <Switch
-                              size="small"
-                              checked={discountRowEnabled}
-                              disabled={compDiscountGlobal}
-                              onChange={(e) =>
-                                handleDiscountSwitchChange('comp', fee.id, e.target.checked)
-                              }
-                              sx={{
-                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                  color: '#8338ec',
-                                  '& + .MuiSwitch-track': {
-                                    backgroundColor: '#8338ec',
-                                  },
-                                },
-                              }}
-                            />
-                            <TextField
-                              size="small"
-                              type="number"
-                              sx={{
-                                width: 80,
-                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                              }}
-                              disabled={!discountFieldEnabled}
-                              value={fee.discount}
-                              onChange={(e) =>
-                                handleDiscountValueChange('comp', fee.id, e.target.value)
-                              }
-                              inputProps={{ min: 0 }}
-                            />
-                          </>
-                        )}
-                      </Box>
-                    </TableCell>
+                  {/* Paid — read-only */}
+                  <TableCell align="center" sx={roCell}>
+                    ₦{format(fee.paid_amount)}
+                  </TableCell>
 
-                    {/* PENALTY */}
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'center',
-                        }}
-                      >
-                        {can('bursary_manager.ledger.create_invoice_penalty') && (
-                          <>
-                            <Switch
-                              size="small"
-                              checked={penaltyRowEnabled}
-                              disabled={compPenaltyGlobal}
-                              onChange={(e) =>
-                                handlePenaltySwitchChange('comp', fee.id, e.target.checked)
-                              }
-                              sx={{
-                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                  color: '#8338ec',
-                                  '& + .MuiSwitch-track': {
-                                    backgroundColor: '#8338ec',
-                                  },
-                                },
-                              }}
-                            />
-                            <TextField
-                              size="small"
-                              type="number"
-                              sx={{
-                                width: 80,
-                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                              }}
-                              disabled={!penaltyFieldEnabled}
-                              value={fee.penalty}
-                              onChange={(e) =>
-                                handlePenaltyValueChange('comp', fee.id, e.target.value)
-                              }
-                              inputProps={{ min: 0 }}
-                            />
-                          </>
-                        )}
-                      </Box>
-                    </TableCell>
+                  {/* Balance — read-only */}
+                  <TableCell align="center" sx={roCell}>
+                    ₦{format(fee.balance)}
+                  </TableCell>
 
-                    {/* INSTALLMENT / CUSTOM AMOUNT */}
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      {installmentalSetting === 'percentage' ? (
-                        <FormControl size="small" sx={{ minWidth: 130 }}>
-                          <Select
-                            value={fee.installment_id || ''}
-                            onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
-                            displayEmpty
-                            sx={{
-                              borderRadius: 2,
-                              '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
-                            }}
-                          >
-                            <MenuItem value="">
-                              <em>Select</em>
-                            </MenuItem>
-                            {(fee.installments || []).map((inst) => (
-                              <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}
-                                {inst.inst2 ? `:${inst.inst2}` : ''}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        <TextField
-                          size="small"
-                          type="number"
-                          sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                          value={fee.custom_amount}
-                          onChange={(e) => {
-                            const val = Math.min(Number(e.target.value) || 0, fee.amount);
-                            setCompFees((prev) =>
-                              prev.map((f) => (f.id === fee.id ? { ...f, custom_amount: val } : f)),
-                            );
+                  {/* Discount — read-only */}
+                  <TableCell align="center" sx={roCell}>
+                    ₦{format(fee.discount_amount)}
+                  </TableCell>
+
+                  {/* Penalty — read-only */}
+                  <TableCell align="center" sx={roCell}>
+                    ₦{format(fee.penalty_amount)}
+                  </TableCell>
+
+                  {/* Installment dropdown (percentage) OR custom amount input — INTERACTIVE */}
+                  <TableCell align="center" sx={{ py: 1.5 }}>
+                    {installmentalSetting === 'percentage' ? (
+                      <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <Select
+                          value={fee.installment_id || ''}
+                          onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
+                          displayEmpty
+                          sx={{
+                            borderRadius: 2,
+                            '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
                           }}
-                          inputProps={{ min: 0, max: fee.amount }}
-                        />
-                      )}
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        py: 1.5,
-                        fontWeight: 700,
-                        color: 'text.primary',
-                        fontSize: '1rem',
-                      }}
-                    >
-                      ₦{format(payable)}
-                    </TableCell>
-
-                    <TableCell align="right" sx={{ py: 1.5 }}>
-                      <Checkbox
+                        >
+                          <MenuItem value="">
+                            <em>Select</em>
+                          </MenuItem>
+                          {(fee.installments || []).map((inst) => (
+                            <MenuItem key={inst.id} value={inst.id}>
+                              {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <TextField
                         size="small"
-                        checked={fee.checked}
-                        onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
+                        type="number"
+                        sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                        value={fee.custom_amount}
+                        onChange={(e) => handleCustomAmountChange(fee.id, e.target.value, 'comp')}
+                        inputProps={{ min: 0, max: fee.balance }}
                       />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                    )}
+                  </TableCell>
 
-              {/* COMPULSORY TABLE FOOTER ROW */}
-              <TableRow
-                sx={{
-                  bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe',
-                }}
-              >
-                <TableCell colSpan={6} sx={{ py: 1.5 }}>
+                  {/* Payable — recalculates on installment/amount change */}
+                  <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                    ₦{format(fee.payable)}
+                  </TableCell>
+
+                  {/* Checkbox */}
+                  <TableCell align="right" sx={{ py: 1.5 }}>
+                    <Checkbox
+                      size="small"
+                      checked={fee.checked}
+                      onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {/* Footer */}
+              <TableRow sx={{ bgcolor: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe' }}>
+                <TableCell colSpan={8} sx={{ py: 1.5 }}>
                   <Typography variant="body2" fontWeight={700} color="text.secondary">
                     Total Compulsory
                   </Typography>
                 </TableCell>
-                <TableCell
-                  sx={{
-                    py: 1.5,
-                    fontWeight: 800,
-                    color: isDark ? '#60a5fa' : '#1e40af',
-                    fontSize: '1.25rem',
-                  }}
-                >
+                <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#60a5fa' : '#1e40af', fontSize: '1.25rem' }}>
                   ₦{format(compTotal)}
                 </TableCell>
                 <TableCell sx={{ py: 1.5 }} />
@@ -1152,88 +770,16 @@ const PayInvoice = () => {
           </Table>
         </TableContainer>
 
-        {/* OPTIONAL PAYMENT */}
+        {/* ══════════════════════════════════════════════ */}
+        {/* OPTIONAL PAYMENT                             */}
+        {/* ══════════════════════════════════════════════ */}
         {renderHeaderBlock({
           title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-
           borderLeftColor: '#3b82f6',
           icon: <ReceiptLongOutlinedIcon fontSize="small" />,
           action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {can('bursary_manager.ledger.create_invoice_discount') && (
-                  <>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      Discount
-                    </Typography>
-                    <Switch
-                      size="small"
-                      checked={optDiscountGlobal}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setGlobalModal({ open: true, type: 'opt', field: 'discount' });
-                          setGlobalModalValue('');
-                        } else {
-                          setOptFees((prev) =>
-                            prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                          );
-                          setOptDiscountGlobal(false);
-                        }
-                      }}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#8338ec',
-                          '& + .MuiSwitch-track': {
-                            backgroundColor: '#8338ec',
-                          },
-                        },
-                      }}
-                    />
-                  </>
-                )}
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {can('bursary_manager.ledger.create_invoice_penalty') && (
-                  <>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      Penalty
-                    </Typography>
-
-                    <Switch
-                      size="small"
-                      checked={optPenaltyGlobal}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
-                          setGlobalModalValue('');
-                        } else {
-                          setOptFees((prev) =>
-                            prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                          );
-                          setOptPenaltyGlobal(false);
-                        }
-                      }}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#8338ec',
-                          '& + .MuiSwitch-track': {
-                            backgroundColor: '#8338ec',
-                          },
-                        },
-                      }}
-                    />
-                  </>
-                )}
-              </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+              {/* Enable / disable optional section */}
               {can('bursary_manager.ledger.create_invoice_discount') && (
                 <Switch
                   checked={optionalEnabled}
@@ -1241,9 +787,7 @@ const PayInvoice = () => {
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
+                      '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
                     },
                   }}
                 />
@@ -1254,11 +798,7 @@ const PayInvoice = () => {
                   size="small"
                   startIcon={<AddIcon />}
                   onClick={handleOpenOptionalModal}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}
+                  sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
                   Add Optional Pay.
                 </Button>
@@ -1271,105 +811,28 @@ const PayInvoice = () => {
           <TableContainer
             component={Paper}
             variant="outlined"
-            sx={{
-              borderRadius: 3,
-              mb: 4,
-              overflowX: 'auto',
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-            }}
+            sx={{ borderRadius: 3, mb: 4, overflowX: 'auto', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0' }}
           >
             <Table sx={{ minWidth: 800 }}>
-              <TableHead
-                sx={{
-                  bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-                }}
-              >
+              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
                 <TableRow>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    #
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Item
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Amount (NGN)
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Discount(NGN)
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Penalty(NGN)
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Payable(NGN)
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={isDark ? '#94a3b8' : '#475569'}
-                      >
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Item</TableCell>
+                  <TableCell sx={thCell}>Original Amount (₦)</TableCell>
+                  <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
+                  <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
+                  <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>
+                  <TableCell align="center" sx={thCell}>Penalty (₦)</TableCell>
+                  <TableCell sx={thCell}>Payable (₦)</TableCell>
+                  <TableCell align="right" sx={thCell}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                      <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
                         Select All
                       </Typography>
                       <Checkbox
                         size="small"
                         checked={optFees.length > 0 && optFees.every((f) => f.checked)}
-                        indeterminate={
-                          optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
-                        }
+                        indeterminate={optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)}
                         onChange={(e) => handleAllOptCheckChange(e.target.checked)}
                         sx={{ p: 0.5 }}
                       />
@@ -1377,187 +840,87 @@ const PayInvoice = () => {
                   </TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
-                {optFees.map((fee, idx) => {
-                  const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                  const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                  const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                  const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                  const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
+                {optFees.map((fee, idx) => (
+                  <TableRow
+                    key={fee.id}
+                    hover
+                    sx={{
+                      bgcolor: isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4',
+                      '&:last-child td, &:last-child th': { border: 0 },
+                    }}
+                  >
+                    <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
 
-                  return (
-                    <TableRow
-                      key={fee.id}
-                      hover
-                      sx={{
-                        bgcolor: isDark ? 'rgba(16, 185, 129, 0.08)' : '#f0fdf4',
-                        '&:last-child td, &:last-child th': {
-                          border: 0,
-                        },
-                      }}
-                    >
-                      <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="text.primary"
-                          sx={{ mb: 0.5 }}
-                        >
-                          {fee.description}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                          }}
-                        >
-                          {(fee.selectedOptions || []).map((opt, oi) => (
-                            <Chip
-                              key={opt.option_id || oi}
-                              label={`${opt.option_name}: ₦${format(opt.amount)}`}
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: '0.75rem',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          py: 1.5,
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ₦{format(fee.amount)}
-                      </TableCell>
+                    {/* Item name + selected option chips */}
+                    <TableCell sx={{ py: 1.5 }}>
+                      <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mb: 0.5 }}>
+                        {fee.description}
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(fee.selectedOptions || []).map((opt, oi) => (
+                          <Chip
+                            key={opt.option_id || oi}
+                            label={`${opt.option_name}: ₦${format(opt.amount)}`}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                          />
+                        ))}
+                      </Box>
+                    </TableCell>
 
-                      {/* DISCOUNT */}
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {can('bursary_manager.ledger.create_invoice_discount') && (
-                            <>
-                              <Switch
-                                size="small"
-                                checked={discountRowEnabled}
-                                disabled={optDiscountGlobal}
-                                onChange={(e) =>
-                                  handleDiscountSwitchChange('opt', fee.id, e.target.checked)
-                                }
-                              />
-                              <TextField
-                                size="small"
-                                type="number"
-                                sx={{
-                                  width: 80,
-                                  bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                                }}
-                                disabled={!discountFieldEnabled}
-                                value={fee.discount}
-                                onChange={(e) =>
-                                  handleDiscountValueChange('opt', fee.id, e.target.value)
-                                }
-                                inputProps={{ min: 0 }}
-                              />
-                            </>
-                          )}
-                        </Box>
-                      </TableCell>
+                    {/* Amount — read-only */}
+                    <TableCell sx={{ ...roCell, fontWeight: 700, fontSize: '1rem' }}>
+                      ₦{format(fee.amount)}
+                    </TableCell>
 
-                      {/* PENALTY */}
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {can('bursary_manager.ledger.create_invoice_penalty') && (
-                            <>
-                              <Switch
-                                size="small"
-                                checked={penaltyRowEnabled}
-                                disabled={optPenaltyGlobal}
-                                onChange={(e) =>
-                                  handlePenaltySwitchChange('opt', fee.id, e.target.checked)
-                                }
-                              />
-                              <TextField
-                                size="small"
-                                type="number"
-                                sx={{
-                                  width: 80,
-                                  bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                                }}
-                                disabled={!penaltyFieldEnabled}
-                                value={fee.penalty}
-                                onChange={(e) =>
-                                  handlePenaltyValueChange('opt', fee.id, e.target.value)
-                                }
-                                inputProps={{ min: 0 }}
-                              />
-                            </>
-                          )}
-                        </Box>
-                      </TableCell>
+                    {/* Paid — read-only */}
+                    <TableCell align="center" sx={roCell}>
+                      ₦{format(fee.paid_amount)}
+                    </TableCell>
 
-                      <TableCell
-                        sx={{
-                          py: 1.5,
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ₦{format(payable)}
-                      </TableCell>
+                    {/* Balance — read-only */}
+                    <TableCell align="center" sx={roCell}>
+                      ₦{format(fee.balance)}
+                    </TableCell>
 
-                      <TableCell align="right" sx={{ py: 1.5 }}>
-                        <Checkbox
-                          size="small"
-                          checked={fee.checked}
-                          onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                    {/* Discount — read-only */}
+                    <TableCell align="center" sx={roCell}>
+                      ₦{format(fee.discount_amount)}
+                    </TableCell>
 
-                {/* OPTIONAL TABLE FOOTER ROW */}
-                <TableRow
-                  sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
-                  }}
-                >
-                  <TableCell colSpan={5} sx={{ py: 1.5 }}>
+                    {/* Penalty — read-only */}
+                    <TableCell align="center" sx={roCell}>
+                      ₦{format(fee.penalty_amount)}
+                    </TableCell>
+
+                    {/* Payable — from API (optional fees have no installment control here) */}
+                    <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                      ₦{format(fee.payable)}
+                    </TableCell>
+
+                    {/* Checkbox */}
+                    <TableCell align="right" sx={{ py: 1.5 }}>
+                      <Checkbox
+                        size="small"
+                        checked={fee.checked}
+                        onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+                {/* Footer */}
+                <TableRow sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }}>
+                  <TableCell colSpan={7} sx={{ py: 1.5 }}>
                     <Typography variant="body2" fontWeight={700} color="text.secondary">
                       Total Optional
                     </Typography>
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      py: 1.5,
-                      fontWeight: 800,
-                      color: isDark ? '#94a3b8' : '#64748b',
-                      fontSize: '1.25rem',
-                    }}
-                  >
+                  <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#94a3b8' : '#64748b', fontSize: '1.25rem' }}>
                     ₦{format(optTotal)}
                   </TableCell>
                   <TableCell sx={{ py: 1.5 }} />
@@ -1583,7 +946,9 @@ const PayInvoice = () => {
           </Paper>
         ) : null}
 
-        {/* STICKY BOTTOM ACTION SHEET */}
+        {/* ══════════════════════════════════════════════ */}
+        {/* STICKY BOTTOM ACTION SHEET                   */}
+        {/* ══════════════════════════════════════════════ */}
         <Paper
           elevation={3}
           sx={{
@@ -1594,8 +959,8 @@ const PayInvoice = () => {
             zIndex: 10,
             p: 2,
             mt: 4,
-            bgcolor: isDark ? 'rgba(234, 179, 8, 0.15)' : '#fef9c3',
-            border: `1px solid ${isDark ? 'rgba(234, 179, 8, 0.3)' : '#fef08a'}`,
+            bgcolor: isDark ? 'rgba(234,179,8,0.15)' : '#fef9c3',
+            border: `1px solid ${isDark ? 'rgba(234,179,8,0.3)' : '#fef08a'}`,
             borderRadius: 3,
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
@@ -1605,7 +970,7 @@ const PayInvoice = () => {
             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
           }}
         >
-          {/* LEFT - Legends */}
+          {/* Left — legends with bulk-select checkboxes */}
           <Box
             sx={{
               display: 'flex',
@@ -1620,12 +985,7 @@ const PayInvoice = () => {
                 checked={compFees.length > 0 && compFees.every((f) => f.checked)}
                 indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
                 onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-                sx={{
-                  color: '#10b981',
-                  '&.Mui-checked': { color: '#10b981' },
-                  '&.MuiCheckbox-indeterminate': { color: '#10b981' },
-                  p: 0.5,
-                }}
+                sx={{ color: '#10b981', '&.Mui-checked': { color: '#10b981' }, '&.MuiCheckbox-indeterminate': { color: '#10b981' }, p: 0.5 }}
               />
               <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
                 Compulsory Payment
@@ -1635,19 +995,10 @@ const PayInvoice = () => {
               <Checkbox
                 size="small"
                 checked={optionalEnabled && optFees.length > 0 && optFees.every((f) => f.checked)}
-                indeterminate={
-                  optionalEnabled &&
-                  optFees.some((f) => f.checked) &&
-                  !optFees.every((f) => f.checked)
-                }
+                indeterminate={optionalEnabled && optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)}
                 disabled={!optionalEnabled}
                 onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-                sx={{
-                  color: '#84cc16',
-                  '&.Mui-checked': { color: '#84cc16' },
-                  '&.MuiCheckbox-indeterminate': { color: '#84cc16' },
-                  p: 0.5,
-                }}
+                sx={{ color: '#84cc16', '&.Mui-checked': { color: '#84cc16' }, '&.MuiCheckbox-indeterminate': { color: '#84cc16' }, p: 0.5 }}
               />
               <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
                 Optional Payment
@@ -1655,27 +1006,20 @@ const PayInvoice = () => {
             </Box>
           </Box>
 
-          {/* RIGHT - Sticky Pay Button */}
+          {/* Right — Pay button */}
           <Button variant="contained" disabled={grandTotal === 0} onClick={handlePayNow}>
-            Pay Now - ₦{format(grandTotal)} &gt;
+            Pay Now — ₦{format(grandTotal)} &gt;
           </Button>
         </Paper>
       </Box>
 
-      {/* ── Optional Payment Modal ── */}
+      {/* ══════════════════════════════════════════════ */}
+      {/* OPTIONAL PAYMENT MODAL                       */}
+      {/* ══════════════════════════════════════════════ */}
       <Dialog open={optionalModalOpen} onClose={handleCloseOptionalModal} maxWidth="sm" fullWidth>
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontWeight: 700,
-          }}
-        >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700 }}>
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Add Optional Payments
-            </Typography>
+            <Typography variant="h6" fontWeight={700}>Add Optional Payments</Typography>
             {studentInfo && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {studentInfo.name} ({studentInfo.user_id})
@@ -1700,14 +1044,7 @@ const PayInvoice = () => {
             </Alert>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 1,
-                }}
-              >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -1732,12 +1069,7 @@ const PayInvoice = () => {
 
               {optionalPaymentList.map((group) => (
                 <Box key={group.payment_name_id} sx={{ mt: 1 }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight={700}
-                    color="primary.main"
-                    gutterBottom
-                  >
+                  <Typography variant="subtitle2" fontWeight={700} color="primary.main" gutterBottom>
                     {group.payment_name}
                   </Typography>
                   <Stack spacing={0.5} sx={{ pl: 1 }}>
@@ -1753,49 +1085,16 @@ const PayInvoice = () => {
                           />
                         }
                         label={
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            width="100%"
-                            sx={{
-                              minWidth: { xs: 180, sm: 250 },
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontSize: {
-                                  xs: '0.75rem',
-                                  sm: '0.875rem',
-                                },
-                                mr: 1,
-                              }}
-                            >
+                          <Box display="flex" justifyContent="space-between" alignItems="center" width="100%" sx={{ minWidth: { xs: 180, sm: 250 } }}>
+                            <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}>
                               {opt.option_name}
                             </Typography>
-                            <Typography
-                              variant="body2"
-                              fontWeight={700}
-                              color="text.secondary"
-                              sx={{
-                                fontSize: {
-                                  xs: '0.75rem',
-                                  sm: '0.875rem',
-                                },
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
+                            <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>
                               ₦{(Number(opt.amount) || 0).toLocaleString()}
                             </Typography>
                           </Box>
                         }
-                        sx={{
-                          mx: 0,
-                          '& .MuiFormControlLabel-label': {
-                            width: '100%',
-                          },
-                        }}
+                        sx={{ mx: 0, '& .MuiFormControlLabel-label': { width: '100%' } }}
                       />
                     ))}
                   </Stack>
@@ -1808,19 +1107,8 @@ const PayInvoice = () => {
         <Divider />
 
         {!loadingOptionalPayments && optionalPaymentList.length > 0 && (
-          <Box
-            sx={{
-              px: { xs: 2, sm: 3 },
-              py: 1.5,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              bgcolor: 'grey.50',
-            }}
-          >
-            <Typography variant="body2" fontWeight={600}>
-              Selected Total:
-            </Typography>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'grey.50' }}>
+            <Typography variant="body2" fontWeight={600}>Selected Total:</Typography>
             <Typography variant="h6" fontWeight={700} color="primary.main">
               ₦{totalSelectedOptionalAmount.toLocaleString()}
             </Typography>
@@ -1836,39 +1124,6 @@ const PayInvoice = () => {
             sx={{ fontWeight: 600 }}
           >
             Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* GLOBAL VALUE MODAL */}
-      <Dialog
-        open={globalModal.open}
-        onClose={() => setGlobalModal({ ...globalModal, open: false })}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>
-          Set {globalModal.field === 'discount' ? 'Discount' : 'Penalty'} Amount
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label={
-              globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'
-            }
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={globalModalValue}
-            onChange={(e) => setGlobalModalValue(e.target.value)}
-            inputProps={{ min: 0 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
-          <Button variant="contained" onClick={handleGlobalModalConfirm}>
-            Apply
           </Button>
         </DialogActions>
       </Dialog>

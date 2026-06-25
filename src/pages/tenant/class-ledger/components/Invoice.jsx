@@ -230,16 +230,13 @@ const Invoice = () => {
       const preSelected = new Set();
 
       optFees.forEach((fee) => {
-        // Check selectedOptions array
-        if (fee.selectedOptions && fee.selectedOptions.length > 0) {
-          fee.selectedOptions.forEach((opt) => {
-            if (opt.option_id) preSelected.add(opt.option_id);
-          });
-        }
-        // Fallback for direct selected_option_id
-        if (fee.selected_option_id) {
-          preSelected.add(fee.selected_option_id);
-        }
+        (fee.selectedOptions || []).forEach((opt) => {
+          const id = typeof opt === 'object' ? opt.option_id : opt;
+          if (id != null) preSelected.add(id);
+        });
+        (fee.optionsPool || []).forEach((opt) => {
+          if (opt.selected) preSelected.add(opt.option_id);
+        });
       });
 
       setSelectedOptionalIds(preSelected);
@@ -405,6 +402,7 @@ const Invoice = () => {
         checked: false,
       }));
       setOptFees(mappedOpt);
+      console.log(mappedOpt,222)
 
       setDataLoaded(true);
     } catch (err) {
@@ -1352,7 +1350,7 @@ const Invoice = () => {
                         >
                           {fee.description}
                         </Typography>
-                        <Box
+                        {/* <Box
                           sx={{
                             display: 'flex',
                             flexWrap: 'wrap',
@@ -1372,7 +1370,7 @@ const Invoice = () => {
                               }}
                             />
                           ))}
-                        </Box>
+                        </Box> */}
                       </TableCell>
                       <TableCell
                         sx={{

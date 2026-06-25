@@ -74,6 +74,8 @@ const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/compone
 const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
 const PayInvoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')));
 
+const ChartOfAccounts = Loadable(lazy(() => import('@/pages/tenant/chart-of-accounts/ChartOfAccounts')));
+
 const TenantRoutes = [
   {
     path: '/setup-welcome',
@@ -356,6 +358,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="bursary_manager.transactions.index">
             <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'chart-of-accounts',
+        element: (
+          <TenantProtectedRoute permission="chart_of_accounts.index">
+            <ChartOfAccounts />
           </TenantProtectedRoute>
         ),
       },

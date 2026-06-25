@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -29,8 +29,12 @@ import {
   Select,
   InputAdornment,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 
 import {
   Search as SearchIcon,
@@ -66,8 +70,8 @@ const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'clas
 
 const ClassLedger = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
+  const { impersonateStudent } = useContext(TenantAuthContext);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState('');
   const [chartType, setChartType] = useState('bar');
@@ -78,6 +82,9 @@ const ClassLedger = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+
+  const [payForStudentConfirmOpen, setPayForStudentConfirmOpen] = useState(false);
+  const [studentToPayFor, setStudentToPayFor] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -811,7 +818,13 @@ const ClassLedger = () => {
             Student Ledger
           </MenuItem>
 
-          <MenuItem>
+          <MenuItem
+            onClick={() => {
+              setStudentToPayFor(activeRow);
+              setPayForStudentConfirmOpen(true);
+              setAnchorEl(null);
+            }}
+          >
             <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Pay for Student
           </MenuItem>
@@ -870,6 +883,66 @@ const ClassLedger = () => {
           onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
+
+      {/* ── Pay for Student (Login As) Confirmation Dialog ── */}
+      <Dialog
+        open={payForStudentConfirmOpen}
+        onClose={() => {
+          setPayForStudentConfirmOpen(false);
+          setStudentToPayFor(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Pay for Student</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You will be logged in as{' '}
+            <strong>
+              {studentToPayFor?.users?.full_name ||
+                studentToPayFor?.user?.full_name ||
+                'this student'}
+            </strong>{' '}
+            to process the payment. You can return to your account at any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            color="inherit"
+            onClick={() => {
+              setPayForStudentConfirmOpen(false);
+              setStudentToPayFor(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              if (!studentToPayFor) return;
+
+              const studentUserId =
+                studentToPayFor?.users?.id ||
+                studentToPayFor?.user?.id ||
+                studentToPayFor?.user_id;
+
+              const result = await impersonateStudent(studentUserId);
+
+              if (result.success) {
+                notify.success('Now logged in as student');
+                window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
+              } else {
+                notify.error(result.error);
+              }
+
+              setPayForStudentConfirmOpen(false);
+              setStudentToPayFor(null);
+            }}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
+            Yes, Login As
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

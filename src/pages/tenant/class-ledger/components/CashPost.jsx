@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
@@ -18,25 +18,14 @@ import {
   FormControl,
   Select,
   MenuItem,
-  Switch,
   useTheme,
   Alert,
   CircularProgress,
   Checkbox,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  InputLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import { getStudentSchedule, postCashData } from '@/api/tenant/bursary/classLedger';
-import {
-  fetchSessions,
-  fetchSessionTermsBySession,
-} from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { usePermissions } from '@/context/TenantContext/permissions';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -45,24 +34,11 @@ const BCrumb = [
   { title: 'Cash Posting' },
 ];
 
-const extractList = (res) => {
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res?.data)) return res.data;
-  return [];
-};
-
 /* ================= COMPONENT ================= */
 const CashPost = () => {
-  const { can } = usePermissions();
-
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user_id, invoiceId } = useParams();
-  const navigate = useNavigate();
-
-  const [allSessionTerms, setAllSessionTerms] = useState([]);
-  const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
-  const [loadingSessions, setLoadingSessions] = useState(false);
 
   /* DATA STATE */
   const [studentInfo, setStudentInfo] = useState(null);
@@ -84,50 +60,8 @@ const CashPost = () => {
   const [error, setError] = useState('');
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  /* GLOBAL SWITCHES */
-  const [compDiscountGlobal, setCompDiscountGlobal] = useState(false);
-  const [compPenaltyGlobal, setCompPenaltyGlobal] = useState(false);
-  const [optDiscountGlobal, setOptDiscountGlobal] = useState(false);
-  const [optPenaltyGlobal, setOptPenaltyGlobal] = useState(false);
-
-  /* GLOBAL VALUE MODAL */
-  const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
-  const [globalModalValue, setGlobalModalValue] = useState('');
-
   /* POST CASH */
   const [posting, setPosting] = useState(false);
-
-  const loadSessionsAndTerms = async () => {
-    setLoadingSessions(true);
-    try {
-      const res = await fetchSessions();
-      const sessionsList = extractList(res);
-      let combinedTerms = [];
-
-      for (const session of sessionsList) {
-        const termsRes = await fetchSessionTermsBySession(session.id);
-        const terms = extractList(termsRes);
-        const formatted = terms.map((term) => ({
-          ...term,
-          displayLabel: `${term.session?.sesname || session.sesname} - ${term.display_term?.display_name}`,
-        }));
-        combinedTerms = [...combinedTerms, ...formatted];
-      }
-
-      setAllSessionTerms(combinedTerms);
-    } catch (err) {
-      console.error('Failed to load sessions and terms', err);
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
-
-  const handleSessionTermChange = async (e) => {
-    if (owingInfo?.owing_status === 'owing') return; // blocked when owing
-    const termId = Number(e.target.value);
-    setSelectedSessionTermId(termId);
-    // fetchData is triggered via the useEffect below
-  };
 
   /* CHECKBOX HANDLERS */
   const handleCheckChange = (type, id, checked) => {
@@ -140,57 +74,49 @@ const CashPost = () => {
     setter((prev) => prev.map((f) => ({ ...f, checked })));
   };
 
-  /* UPDATE FIELD — local editing only (discount/penalty values) */
-  const updateFee = (type, id, key, value) => {
+  const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
+
+  /* ── INSTALLMENT CHANGE HANDLER (same logic as PayInvoice) ── */
+  const handleInstallmentChange = (type, feeId, value) => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
     setter((prev) =>
       prev.map((f) => {
-        if (f.id !== id) return f;
-        const updated = { ...f, [key]: value };
-        // Prevent negative values for discount and penalty
-        updated.discount = Math.max(0, Number(updated.discount || 0));
-        updated.penalty = Math.max(0, Number(updated.penalty || 0));
-        return updated;
+        if (f.id !== feeId) return f;
+        const selectedInst = (f.installments || []).find((inst) => inst.id === Number(value));
+        const installmentPct = selectedInst ? Number(selectedInst.inst1) || 100 : 100;
+        const base = Number(f.balance || f.amount || 0);
+        const discount = Number(f.discount_amount || 0);
+        const penalty = Number(f.penalty_amount || 0);
+        const payable = Math.max(0, base * (installmentPct / 100) - discount + penalty);
+        return {
+          ...f,
+          installment_id: selectedInst?.id || null,
+          installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
+          installment_inst2: selectedInst ? String(selectedInst.inst2 ?? '') : '',
+          payable,
+        };
       }),
     );
   };
 
-  const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
-
-  /* DYNAMIC PAYABLE CALCULATION — factors in installment percentage */
-  const getPayable = (fee, discountGlobal, penaltyGlobal) => {
-    const discountRowEnabled = discountGlobal ? true : !!fee.discountEnabled;
-    const penaltyRowEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
-    const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
-    const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
-    let baseAmount;
-    if (installmentalSetting === 'percentage') {
-      const installmentPct = Number(fee.installment_pct) || Number(fee.installment_inst1) || 100;
-      baseAmount = fee.amount * (installmentPct / 100);
-    } else {
-      baseAmount = Math.min(Number(fee.custom_amount) || fee.amount, fee.amount);
-    }
-    return Math.max(0, baseAmount - discount + penalty);
-  };
-
-  /* GLOBAL MODAL CONFIRM */
-  const handleGlobalModalConfirm = () => {
-    const value = Number(globalModalValue) || 0;
-    const { type, field } = globalModal;
+  /* ── CUSTOM AMOUNT CHANGE HANDLER (same logic as PayInvoice) ── */
+  const handleCustomAmountChange = (type, feeId, rawVal) => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
-    const setGlobal =
-      type === 'comp'
-        ? field === 'discount'
-          ? setCompDiscountGlobal
-          : setCompPenaltyGlobal
-        : field === 'discount'
-          ? setOptDiscountGlobal
-          : setOptPenaltyGlobal;
-
-    setter((prev) => prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true })));
-    setGlobal(true);
-    setGlobalModal({ ...globalModal, open: false });
+    setter((prev) =>
+      prev.map((f) => {
+        if (f.id !== feeId) return f;
+        const max = Number(f.balance || f.amount || 0);
+        const custom = Math.min(Number(rawVal) || 0, max);
+        const discount = Number(f.discount_amount || 0);
+        const penalty = Number(f.penalty_amount || 0);
+        const payable = Math.max(0, custom - discount + penalty);
+        return { ...f, custom_amount: custom, payable };
+      }),
+    );
   };
+
+  /* DYNAMIC PAYABLE — reads from stored payable on fee (like PayInvoice) */
+  const getPayable = (fee) => Number(fee.payable || 0);
 
   /* POST CASH */
   const handlePostCash = async () => {
@@ -203,9 +129,9 @@ const CashPost = () => {
         .map((f) => ({
           id: f.id,
           bursary_schedule_id: f.bursary_schedule_id,
-          amount_to_pay: Number(f.amountToPay) || 0,
-          discount: Number(f.discount) || 0,
-          penalty: Number(f.penalty) || 0,
+          amount_to_pay: Number(f.payable || 0),
+          discount: Number(f.discount_amount || 0),
+          penalty: Number(f.penalty_amount || 0),
           installment_id: f.installment_id || null,
           installment_inst1: f.installment_inst1 || '',
           installment_inst2: f.installment_inst2 || '',
@@ -268,58 +194,76 @@ const CashPost = () => {
           : data.session_info.session_term_id;
 
       setTargetSessionTermId(resolvedSTId);
-      setSelectedSessionTermId(resolvedSTId);
 
-      // Map compulsory data: add editable fields
-      const mappedComp = (data.compulsory_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: item.amount,
-        schedule_amount: item.amount,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        paid_amount: item.paid_amount || 0,
-        balance: item.balance || item.amount,
-        installment_id: item.installment_id || null,
-        installment_inst1: item.installment_inst1 ?? '',
-        installment_inst2: item.installment_inst2 ?? '',
-        installment_pct: item.installment_pct ?? 100,
-        installment_part: item.installment_part || 'inst1',
-        has_cashpost: item.status === 'paid', // paid = already posted
-        amountToPay: item.balance || item.amount,
-        custom_amount: item.amount,
-        installments: item.installments || [],
-        checked: false,
-      }));
+      // Map compulsory data: values from API; payable recalculated with installment
+      const mappedComp = (data.compulsory_data || []).map((item) => {
+        const instList = item.installments || [];
+        /* Auto-preselect the first installment if none is already set */
+        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const instId = item.installment_id || defaultInst?.id || null;
+        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
+        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+
+        const balance = Number(item.balance || 0);
+        const discount_amount = Number(item.discount_amount || 0);
+        const penalty_amount = Number(item.penalty_amount || 0);
+        const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
+        const payable = Math.max(0, balance * (installmentPct / 100) - discount_amount + penalty_amount);
+
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: Number(item.amount || 0),
+          paid_amount: Number(item.paid_amount || 0),
+          balance,
+          discount_amount,
+          penalty_amount,
+          payable,
+          installment_id: instId,
+          installment_inst1: inst1,
+          installment_inst2: inst2,
+          installments: instList,
+          has_cashpost: item.status === 'paid',
+          custom_amount: Number(item.balance || item.amount || 0),
+          checked: false,
+        };
+      });
       setCompFees(mappedComp);
 
-      // Map optional data: add editable fields
-      const mappedOpt = (data.optional_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: item.amount,
-        schedule_amount: item.amount,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        paid_amount: item.paid_amount || 0,
-        balance: item.balance || item.amount,
-        installment_id: item.installment_id || null,
-        installment_inst1: item.installment_inst1 ?? '',
-        installment_inst2: item.installment_inst2 ?? '',
-        installment_pct: item.installment_pct ?? 100,
-        installment_part: item.installment_part || 'inst1',
-        has_cashpost: item.status === 'paid',
-        amountToPay: item.balance || item.amount,
-        custom_amount: item.amount,
-        installments: item.installments || [],
-        checked: false,
-      }));
+      // Map optional data: values from API
+      const mappedOpt = (data.optional_data || []).map((item) => {
+        const instList = item.installments || [];
+        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const instId = item.installment_id || defaultInst?.id || null;
+        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
+        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+
+        const balance = Number(item.balance || 0);
+        const discount_amount = Number(item.discount_amount || 0);
+        const penalty_amount = Number(item.penalty_amount || 0);
+        const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
+        const payable = Math.max(0, balance * (installmentPct / 100) - discount_amount + penalty_amount);
+
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: Number(item.amount || 0),
+          paid_amount: Number(item.paid_amount || 0),
+          balance,
+          discount_amount,
+          penalty_amount,
+          payable,
+          installment_id: instId,
+          installment_inst1: inst1,
+          installment_inst2: inst2,
+          installments: instList,
+          has_cashpost: item.status === 'paid',
+          custom_amount: Number(item.balance || item.amount || 0),
+          checked: false,
+        };
+      });
       setOptFees(mappedOpt);
 
       setDataLoaded(true);
@@ -331,9 +275,8 @@ const CashPost = () => {
     }
   }, [user_id, invoiceId]);
 
-  // Initial load: fetch session/term AND cashpost data on mount
+  // Initial load: fetch cashpost data on mount
   useEffect(() => {
-    loadSessionsAndTerms();
     fetchData();
   }, []);
 
@@ -381,11 +324,8 @@ const CashPost = () => {
     );
   };
 
-  /* RENDER TABLE */
+  /* RENDER TABLE — read-only discount/penalty from API, interactive installment (like PayInvoice) */
   const renderTable = (type, data) => {
-    const discountGlobal = type === 'comp' ? compDiscountGlobal : optDiscountGlobal;
-    const penaltyGlobal = type === 'comp' ? compPenaltyGlobal : optPenaltyGlobal;
-
     return (
       <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
         <Table>
@@ -394,14 +334,14 @@ const CashPost = () => {
               <TableCell>#</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount (₦)</TableCell>
+              <TableCell align="right">Paid (₦)</TableCell>
+              <TableCell align="right">Balance (₦)</TableCell>
               <TableCell align="center">Discount (₦)</TableCell>
               <TableCell align="center">Penalty (₦)</TableCell>
               <TableCell align="center">
-                {installmentalSetting === 'percentage' ? 'Installment' : 'Choice Amount (₦)'}
+                {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
               </TableCell>
-              <TableCell align="right">Paid(₦)</TableCell>
-              <TableCell align="right">Balance(₦)</TableCell>
-              <TableCell align="right">Payable(₦)</TableCell>
+              <TableCell align="right">Payable (₦)</TableCell>
               <TableCell align="right">
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}
@@ -426,11 +366,7 @@ const CashPost = () => {
           </TableHead>
           <TableBody>
             {data.map((fee, i) => {
-              const discountRowEnabled = discountGlobal ? true : !!fee.discountEnabled;
-              const penaltyRowEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
-              const discountFieldEnabled = discountGlobal ? true : !!fee.discountEnabled;
-              const penaltyFieldEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
-              const payable = getPayable(fee, discountGlobal, penaltyGlobal);
+              const payable = getPayable(fee);
 
               return (
                 <TableRow
@@ -455,106 +391,47 @@ const CashPost = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell align="right">{format(fee.amount)}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>{format(fee.amount)}</TableCell>
 
-                  {/* DISCOUNT */}
-                  <TableCell align="center">
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {can('bursary_manager.ledger.create_invoice_discount') && (
-                        <>
-                          <Switch
-                            size="small"
-                            checked={discountRowEnabled}
-                            disabled={discountGlobal}
-                            onChange={(e) =>
-                              updateFee(type, fee.id, 'discountEnabled', e.target.checked)
-                            }
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{ width: 80 }}
-                            disabled={!discountFieldEnabled}
-                            value={fee.discount}
-                            onChange={(e) => updateFee(type, fee.id, 'discount', e.target.value)}
-                            inputProps={{ min: 0 }}
-                          />
-                        </>
-                      )}
-                    </Box>
+                  {/* PAID — read-only */}
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={600} color="success.main">
+                      {format(fee.paid_amount)}
+                    </Typography>
                   </TableCell>
 
-                  {/* PENALTY */}
-                  <TableCell align="center">
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        justifyContent: 'center',
-                      }}
+                  {/* BALANCE — read-only */}
+                  <TableCell align="right">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={(fee.balance || fee.amount) > 0 ? 'error.main' : 'text.secondary'}
                     >
-                      {can('bursary_manager.ledger.create_invoice_penalty') && (
-                        <>
-                          <Switch
-                            size="small"
-                            checked={penaltyRowEnabled}
-                            disabled={penaltyGlobal}
-                            onChange={(e) =>
-                              updateFee(type, fee.id, 'penaltyEnabled', e.target.checked)
-                            }
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{ width: 80 }}
-                            disabled={!penaltyFieldEnabled}
-                            value={fee.penalty}
-                            onChange={(e) => updateFee(type, fee.id, 'penalty', e.target.value)}
-                            inputProps={{ min: 0 }}
-                          />
-                        </>
-                      )}
-                    </Box>
+                      {format(fee.balance || fee.amount)}
+                    </Typography>
                   </TableCell>
 
-                  {/* INSTALLMENT / CUSTOM AMOUNT */}
+                  {/* DISCOUNT — read-only from API */}
+                  <TableCell align="center">
+                    <Typography variant="body2" fontWeight={600}>
+                      {format(fee.discount_amount)}
+                    </Typography>
+                  </TableCell>
+
+                  {/* PENALTY — read-only from API */}
+                  <TableCell align="center">
+                    <Typography variant="body2" fontWeight={600}>
+                      {format(fee.penalty_amount)}
+                    </Typography>
+                  </TableCell>
+
+                  {/* INSTALLMENT / CUSTOM AMOUNT — interactive (same logic as PayInvoice) */}
                   <TableCell align="center">
                     {installmentalSetting === 'percentage' ? (
                       <FormControl size="small" sx={{ minWidth: 130 }}>
                         <Select
                           value={fee.installment_id || ''}
-                          onChange={(e) => {
-                            const selectedInst = (fee.installments || []).find(
-                              (inst) => inst.id === Number(e.target.value),
-                            );
-                            updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
-                            updateFee(
-                              type,
-                              fee.id,
-                              'installment_inst1',
-                              selectedInst ? String(selectedInst.inst1) : '',
-                            );
-                            updateFee(
-                              type,
-                              fee.id,
-                              'installment_inst2',
-                              selectedInst ? String(selectedInst.inst2) : '',
-                            );
-                            const newPct = selectedInst
-                              ? fee.has_cashpost
-                                ? Number(selectedInst.inst2)
-                                : Number(selectedInst.inst1)
-                              : 100;
-                            updateFee(type, fee.id, 'installment_pct', newPct);
-                          }}
+                          onChange={(e) => handleInstallmentChange(type, fee.id, e.target.value)}
                           displayEmpty
                           disabled={fee.has_cashpost}
                         >
@@ -563,8 +440,7 @@ const CashPost = () => {
                           </MenuItem>
                           {(fee.installments || []).map((inst) => (
                             <MenuItem key={inst.id} value={inst.id}>
-                              {inst.inst1}
-                              {inst.inst2 ? `:${inst.inst2}` : ''}
+                              {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
                             </MenuItem>
                           ))}
                         </Select>
@@ -576,34 +452,13 @@ const CashPost = () => {
                         sx={{ width: 110 }}
                         disabled={fee.has_cashpost}
                         value={fee.custom_amount}
-                        onChange={(e) => {
-                          const val = Math.min(Number(e.target.value) || 0, fee.amount);
-                          updateFee(type, fee.id, 'custom_amount', val);
-                        }}
-                        inputProps={{ min: 0, max: fee.amount }}
+                        onChange={(e) => handleCustomAmountChange(type, fee.id, e.target.value)}
+                        inputProps={{ min: 0, max: fee.balance || fee.amount }}
                       />
                     )}
                   </TableCell>
 
-                  {/* PAID */}
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={600} color="success.main">
-                      {format(fee.paid_amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* BALANCE */}
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={(fee.balance || fee.amount) > 0 ? 'error.main' : 'text.secondary'}
-                    >
-                      {format(fee.balance || fee.amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* PAYABLE */}
+                  {/* PAYABLE — recalculated on installment/amount change */}
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight={700}>
                       {format(payable)}
@@ -660,9 +515,6 @@ const CashPost = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
-  const termLabel = sessionInfo?.term || '';
-  const sessionLabel = sessionInfo?.session || '';
-
   const BCrumbLive = [
     { to: '/', title: 'Home' },
     { title: 'Bursary' },
@@ -746,34 +598,6 @@ const CashPost = () => {
           */}
         </Box>
 
-        {/* SESSION TERM DROPDOWN */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Session Term</InputLabel>
-            <Select
-              value={selectedSessionTermId || ''}
-              label="Session Term"
-              onChange={handleSessionTermChange}
-              disabled={owingInfo?.owing_status === 'owing' || loadingSessions}
-            >
-              {allSessionTerms.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.displayLabel}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
         {/* OWING WARNING BANNER */}
         {owingInfo?.owing_status === 'owing' && (
           <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
@@ -793,80 +617,12 @@ const CashPost = () => {
           </Alert>
         )}
 
-        {/* COMPULSORY PAYMENT */}
+        {/* COMPULSORY PAYMENT — no discount/penalty toggles, values come from API */}
         {renderHeaderBlock({
           title: 'Compulsory Payment',
           borderLeftColor: '#10b981',
           icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              {can('bursary_manager.ledger.create_invoice_discount') && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                    Discount
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={compDiscountGlobal}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setGlobalModal({ open: true, type: 'comp', field: 'discount' });
-                        setGlobalModalValue('');
-                      } else {
-                        setCompFees((prev) =>
-                          prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                        );
-                        setCompDiscountGlobal(false);
-                      }
-                    }}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8338ec',
-                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-              {can('bursary_manager.ledger.create_invoice_penalty') && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                    Penalty
-                  </Typography>
-                  <Switch
-                    size="small"
-                    checked={compPenaltyGlobal}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
-                        setGlobalModalValue('');
-                      } else {
-                        setCompFees((prev) =>
-                          prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                        );
-                        setCompPenaltyGlobal(false);
-                      }
-                    }}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#8338ec',
-                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-            </Box>
-          ),
+          action: null,
         })}
 
         {compFees.length > 0 ? (
@@ -889,84 +645,12 @@ const CashPost = () => {
           </Paper>
         )}
 
-        {/* OPTIONAL PAYMENT */}
+        {/* OPTIONAL PAYMENT — no discount/penalty toggles, values come from API */}
         {renderHeaderBlock({
           title: 'Optional Payment',
           borderLeftColor: '#3b82f6',
           icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {can('bursary_manager.ledger.create_invoice_discount') && (
-                  <>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      Discount
-                    </Typography>
-                    <Switch
-                      size="small"
-                      checked={optDiscountGlobal}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setGlobalModal({ open: true, type: 'opt', field: 'discount' });
-                          setGlobalModalValue('');
-                        } else {
-                          setOptFees((prev) =>
-                            prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                          );
-                          setOptDiscountGlobal(false);
-                        }
-                      }}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#8338ec',
-                          '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                        },
-                      }}
-                    />
-                  </>
-                )}
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {can('bursary_manager.ledger.create_invoice_penalty') && (
-                  <>
-                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                      Penalty
-                    </Typography>
-                    <Switch
-                      size="small"
-                      checked={optPenaltyGlobal}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
-                          setGlobalModalValue('');
-                        } else {
-                          setOptFees((prev) =>
-                            prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                          );
-                          setOptPenaltyGlobal(false);
-                        }
-                      }}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: '#8338ec',
-                          '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                        },
-                      }}
-                    />
-                  </>
-                )}
-              </Box>
-            </Box>
-          ),
+          action: null,
         })}
 
         {optFees.length > 0 ? (
@@ -1004,48 +688,10 @@ const CashPost = () => {
               : `Post All Cash — ₦${format(
                   [...compFees, ...optFees]
                     .filter((f) => f.checked)
-                    .reduce((sum, f) => {
-                      const g = compFees.includes(f)
-                        ? { d: compDiscountGlobal, p: compPenaltyGlobal }
-                        : { d: optDiscountGlobal, p: optPenaltyGlobal };
-                      return sum + getPayable(f, g.d, g.p);
-                    }, 0),
+                    .reduce((sum, f) => sum + getPayable(f), 0),
                 )}`}
           </Button>
         </Box>
-
-        {/* GLOBAL VALUE MODAL */}
-        <Dialog
-          open={globalModal.open}
-          onClose={() => setGlobalModal({ ...globalModal, open: false })}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>
-            Set {globalModal.field === 'discount' ? 'Discount' : 'Penalty'} Amount
-          </DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label={
-                globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'
-              }
-              type="number"
-              fullWidth
-              variant="outlined"
-              value={globalModalValue}
-              onChange={(e) => setGlobalModalValue(e.target.value)}
-              inputProps={{ min: 0 }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
-            <Button variant="contained" onClick={handleGlobalModalConfirm}>
-              Apply
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </PageContainer>
   );

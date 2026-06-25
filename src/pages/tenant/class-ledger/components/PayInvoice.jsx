@@ -638,7 +638,7 @@ const PayInvoice = () => {
               <TableRow>
                 <TableCell sx={thCell}>#</TableCell>
                 <TableCell sx={thCell}>Pay Description</TableCell>
-                <TableCell sx={thCell}>Amount (₦)</TableCell>
+                <TableCell sx={thCell}>Original Amount (₦)</TableCell>
                 <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
                 <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
                 <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>
@@ -818,7 +818,7 @@ const PayInvoice = () => {
                 <TableRow>
                   <TableCell sx={thCell}>#</TableCell>
                   <TableCell sx={thCell}>Item</TableCell>
-                  <TableCell sx={thCell}>Amount (₦)</TableCell>
+                  <TableCell sx={thCell}>Original Amount (₦)</TableCell>
                   <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
                   <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
                   <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>

@@ -792,7 +792,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Amount To Pay (₦)
+                  Original Amount (₦)
                 </TableCell>
                 <TableCell
                   align="center"
@@ -1246,7 +1246,7 @@ const Invoice = () => {
                       py: 1.5,
                     }}
                   >
-                    Amount To Pay(₦)
+                    Original Amount(₦)
                   </TableCell>
                   <TableCell
                     align="center"

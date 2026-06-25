@@ -362,7 +362,6 @@ const ChartOfAccounts = () => {
                   }}
                 />
                 <Button
-                  variant="contained"
                   color="primary"
                   onClick={handleOpenAdd}
                   startIcon={<IconPlus size={18} />}

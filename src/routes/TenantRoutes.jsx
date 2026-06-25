@@ -56,8 +56,8 @@ const CreateAdmissionBatch = Loadable(
   lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
 );
 
-const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
-const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
+const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/finance/bursary/BursarySetup')));
+const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/finance/bursary/PaymentShedule')));
 const PrintInvoicePage = Loadable(
   lazy(() => import('@/components/tenant/bursary/payment-shedule/PrintInvoicePage')),
 );
@@ -73,6 +73,8 @@ const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/Clas
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
 const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
 const PayInvoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')));
+
+const ChartOfAccounts = Loadable(lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')));
 
 const TenantRoutes = [
   {
@@ -356,6 +358,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="bursary_manager.transactions.index">
             <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'chart-of-accounts',
+        element: (
+          <TenantProtectedRoute permission="chart_of_accounts.index">
+            <ChartOfAccounts />
           </TenantProtectedRoute>
         ),
       },

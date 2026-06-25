@@ -24,6 +24,11 @@ import {
   Paper,
   TablePagination,
   TableFooter,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -41,6 +46,8 @@ import {
   IconTrash,
 } from '@tabler/icons';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import BankAccountModal from './components/BankAccountModal';
+import ChartOfAccountModal from './components/ChartOfAccountModal';
 
 const BCrumb = [
   {
@@ -127,6 +134,12 @@ const ChartOfAccounts = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
+  // Modals state
+  const [openBankModal, setOpenBankModal] = useState(false);
+  const [openAccountModal, setOpenAccountModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
+
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
     setPage(0); // Reset page when tab changes
@@ -139,6 +152,49 @@ const ChartOfAccounts = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleOpenAdd = () => {
+    setModalMode('create');
+    setSelectedRow(null);
+    if (tabIndex === 0) {
+      setOpenBankModal(true);
+    } else {
+      setOpenAccountModal(true);
+    }
+  };
+
+  const handleOpenEdit = () => {
+    setModalMode('edit');
+    if (tabIndex === 0) {
+      setOpenBankModal(true);
+    } else {
+      setOpenAccountModal(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleOpenDelete = () => {
+    setOpenDeleteModal(true);
+    handleMenuClose();
+  };
+
+  const getCategoryColor = (category) => {
+    const cat = category?.toLowerCase();
+    switch (cat) {
+      case 'asset':
+        return { bg: theme.palette.primary.light, text: theme.palette.primary.main };
+      case 'liability':
+        return { bg: theme.palette.error.light, text: theme.palette.error.main };
+      case 'equity':
+        return { bg: theme.palette.warning.light, text: theme.palette.warning.dark };
+      case 'revenue':
+        return { bg: theme.palette.success.light, text: theme.palette.success.main };
+      case 'expense':
+        return { bg: theme.palette.secondary.light, text: theme.palette.secondary.main };
+      default:
+        return { bg: theme.palette.action.selected, text: theme.palette.text.primary };
+    }
   };
 
   // Filter Data
@@ -241,11 +297,11 @@ const ChartOfAccounts = () => {
             >
               <Box>
                 <Typography variant="h5">
-                  Bank Account
+                  {tabIndex === 0 ? 'Bank Account' : 'Chart of Accounts'}
                 </Typography>
 
                 <Typography variant="body2">
-                  Bank Account Available for Posting
+                  {tabIndex === 0 ? 'Bank Account Available for Posting' : 'Chart of Accounts Available for Posting'}
                 </Typography>
               </Box>
 
@@ -281,6 +337,7 @@ const ChartOfAccounts = () => {
                 <Button
                   variant="contained"
                   color="primary"
+                  onClick={handleOpenAdd}
                   startIcon={<IconPlus size={18} />}
                   sx={{
                     borderRadius: '8px',
@@ -291,7 +348,7 @@ const ChartOfAccounts = () => {
                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
                   }}
                 >
-                  {tabIndex === 0 ? 'Add Bank' : 'Add Account'}
+                  {tabIndex === 0 ? 'Create Bank Account' : 'New Chart of Account'}
                 </Button>
               </Box>
             </Box>
@@ -331,83 +388,85 @@ const ChartOfAccounts = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedData.length > 0 ? (
-                    paginatedData.map((row, index) => (
-                      <TableRow
-                        key={row.id}
-                        hover
-                      >
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        {tabIndex === 0 ? (
-                          <>
-                            <TableCell sx={{ fontWeight: 600 }}>{row.bank}</TableCell>
-                            <TableCell>{row.accountName}</TableCell>
-                            <TableCell sx={{ color: theme.palette.text.secondary }}>
-                              {row.accountNo}
-                            </TableCell>
-                          </>
-                        ) : (
-                          <>
-                            <TableCell
-                              sx={{ fontWeight: 500, color: theme.palette.text.secondary }}
+                    paginatedData.map((row, index) => {
+                      const catColor = tabIndex === 1 ? getCategoryColor(row.category) : {};
+                      return (
+                        <TableRow
+                          key={row.id}
+                          hover
+                        >
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          {tabIndex === 0 ? (
+                            <>
+                              <TableCell sx={{ fontWeight: 600 }}>{row.bank}</TableCell>
+                              <TableCell>{row.accountName}</TableCell>
+                              <TableCell sx={{ color: theme.palette.text.secondary }}>
+                                {row.accountNo}
+                              </TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell
+                                sx={{ fontWeight: 500, color: theme.palette.text.secondary }}
+                              >
+                                {row.code}
+                              </TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={row.category}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: catColor.bg,
+                                    color: catColor.text,
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>{row.linkedBank}</TableCell>
+                            </>
+                          )}
+
+                          <TableCell align="center">
+                            <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                              <MoreVertIcon />
+                            </IconButton>
+
+                            <Menu
+                              anchorEl={anchorEl}
+                              open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                              onClose={handleMenuClose}
                             >
-                              {row.code}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={row.category}
-                                size="small"
-                                variant="outlined"
-                                sx={{ fontWeight: 600, borderRadius: '6px' }}
-                              />
-                            </TableCell>
-                            <TableCell>{row.linkedBank}</TableCell>
-                          </>
-                        )}
-
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                            onClose={handleMenuClose}
-                          >
-                            <MenuItem onClick={handleMenuClose}>
-                              <IconEdit size={18} style={{ marginRight: 8 }} />
-                              Edit
-                            </MenuItem>
-                            <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
-                              <IconTrash size={18} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                              <MenuItem onClick={handleOpenEdit}>
+                                <IconEdit size={18} style={{ marginRight: 8 }} />
+                                Edit
+                              </MenuItem>
+                              <MenuItem onClick={handleOpenDelete} sx={{ color: 'error.main' }}>
+                                <IconTrash size={18} style={{ marginRight: 8 }} />
+                                Delete
+                              </MenuItem>
+                            </Menu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={tabIndex === 0 ? 5 : 6} align="center" sx={{ py: 5 }}>
-                        <Box
-                          display="flex"
-                          flexDirection="column"
-                          alignItems="center"
-                          justifyContent="center"
+                      <TableCell colSpan={tabIndex === 0 ? 5 : 6} align="center">
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': { mr: 1.5 },
+                          }}
                         >
-                          <IconCoin
-                            size={48}
-                            color={theme.palette.text.disabled}
-                            style={{ marginBottom: 16 }}
-                          />
-                          <Typography variant="h6" color="textSecondary">
-                            No Records Found
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Try adjusting your search query.
-                          </Typography>
-                        </Box>
+                          {searchQuery
+                            ? 'No records match the current search.'
+                            : `No ${tabIndex === 0 ? 'banks' : 'accounts'} found. Add one to get started.`}
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}
@@ -433,6 +492,38 @@ const ChartOfAccounts = () => {
           </Paper>
         </ParentCard>
       </Box>
+
+      <BankAccountModal
+        open={openBankModal}
+        onClose={() => setOpenBankModal(false)}
+        mode={modalMode}
+        selectedRow={selectedRow}
+      />
+
+      <ChartOfAccountModal
+        open={openAccountModal}
+        onClose={() => setOpenAccountModal(false)}
+        mode={modalMode}
+        selectedRow={selectedRow}
+      />
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Dialog open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this {tabIndex === 0 ? 'bank' : 'account'}? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteModal(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button variant="contained" color="error" onClick={() => setOpenDeleteModal(false)}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

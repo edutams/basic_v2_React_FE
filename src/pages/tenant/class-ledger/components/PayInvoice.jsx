@@ -291,25 +291,41 @@ const PayInvoice = () => {
       setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
       /* Map compulsory fees — all values come straight from API; payable pre-set from API */
-      const mappedComp = (data.compulsory_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: Number(item.amount || 0),
-        paid_amount: Number(item.paid_amount || 0),
-        balance: Number(item.balance || 0),
-        /* API payable is the source of truth until installment/custom-amount is changed */
-        payable: Number(item.payable || 0),
-        discount_amount: Number(item.discount_amount || 0),
-        penalty_amount: Number(item.penalty_amount || 0),
-        checked: false,
-        installment_id: item.installment_id || null,
-        installment_inst1: item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
-        installment_inst2: item.installment_inst2 !== undefined ? String(item.installment_inst2) : '',
-        installments: item.installments || [],
-        /* custom_amount defaults to balance for the custom-amount mode */
-        custom_amount: Number(item.balance || item.amount || 0),
-      }));
+      const mappedComp = (data.compulsory_data || []).map((item) => {
+        const instList = item.installments || [];
+        /* Auto-preselect the first installment if none is already set */
+        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const instId = item.installment_id || defaultInst?.id || null;
+        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
+        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+
+        /* Recalculate payable based on the preselected installment percentage */
+        const balance = Number(item.balance || 0);
+        const discount = Number(item.discount_amount || 0);
+        const penalty = Number(item.penalty_amount || 0);
+        const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
+        const calculatedPayable = Math.max(0, balance * (installmentPct / 100) - discount + penalty);
+
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: Number(item.amount || 0),
+          paid_amount: Number(item.paid_amount || 0),
+          balance,
+          /* Use calculated payable when preselecting an installment, otherwise API value */
+          payable: defaultInst ? calculatedPayable : Number(item.payable || 0),
+          discount_amount: Number(item.discount_amount || 0),
+          penalty_amount: Number(item.penalty_amount || 0),
+          checked: false,
+          installment_id: instId,
+          installment_inst1: inst1,
+          installment_inst2: inst2,
+          installments: instList,
+          /* custom_amount defaults to balance for the custom-amount mode */
+          custom_amount: Number(item.balance || item.amount || 0),
+        };
+      });
       setCompFees(mappedComp);
 
       /* Map optional fees */

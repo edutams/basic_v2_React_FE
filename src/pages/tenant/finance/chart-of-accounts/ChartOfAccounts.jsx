@@ -197,7 +197,6 @@ const ChartOfAccounts = () => {
     }
   };
 
-  // Filter Data
   const currentData = tabIndex === 0 ? mockBanks : mockAccounts;
 
   const filteredData = currentData.filter((item) => {
@@ -345,7 +344,6 @@ const ChartOfAccounts = () => {
                     py: 1,
                     textTransform: 'none',
                     fontWeight: 600,
-                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
                   }}
                 >
                   {tabIndex === 0 ? 'Create Bank Account' : 'New Chart of Account'}
@@ -358,12 +356,12 @@ const ChartOfAccounts = () => {
             <TableContainer>
               <Table sx={{ minWidth: 800 }}>
                 <TableHead
-                  sx={{
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? alpha(theme.palette.primary.main, 0.1)
-                        : alpha(theme.palette.primary.main, 0.04),
-                  }}
+                // sx={{
+                //   backgroundColor:
+                //     theme.palette.mode === 'dark'
+                //       ? alpha(theme.palette.primary.main, 0.1)
+                //       : alpha(theme.palette.primary.main, 0.04),
+                // }}
                 >
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>

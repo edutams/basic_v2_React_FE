@@ -124,6 +124,9 @@ const accountTypes = ['Register Bank', 'Create Chart of Account'];
 const ChartOfAccounts = () => {
   const theme = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
+
+  const [banksData, setBanksData] = useState(mockBanks);
+  const [accountsData, setAccountsData] = useState(mockAccounts);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Pagination
@@ -179,6 +182,31 @@ const ChartOfAccounts = () => {
     handleMenuClose();
   };
 
+  const handleBankSubmit = (data) => {
+    if (modalMode === 'create') {
+      setBanksData([{ ...data, id: `b${Date.now()}`, status: 'Active' }, ...banksData]);
+    } else {
+      setBanksData(banksData.map((item) => (item.id === selectedRow.id ? { ...item, ...data } : item)));
+    }
+  };
+
+  const handleAccountSubmit = (data) => {
+    if (modalMode === 'create') {
+      setAccountsData([{ ...data, id: `${Date.now()}`, status: 'Active', linkedBank: data.linkedBank || '—' }, ...accountsData]);
+    } else {
+      setAccountsData(accountsData.map((item) => (item.id === selectedRow.id ? { ...item, ...data, linkedBank: data.linkedBank || '—' } : item)));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (tabIndex === 0) {
+      setBanksData(banksData.filter((item) => item.id !== selectedRow.id));
+    } else {
+      setAccountsData(accountsData.filter((item) => item.id !== selectedRow.id));
+    }
+    setOpenDeleteModal(false);
+  };
+
   const getCategoryColor = (category) => {
     const cat = category?.toLowerCase();
     switch (cat) {
@@ -197,7 +225,7 @@ const ChartOfAccounts = () => {
     }
   };
 
-  const currentData = tabIndex === 0 ? mockBanks : mockAccounts;
+  const currentData = tabIndex === 0 ? banksData : accountsData;
 
   const filteredData = currentData.filter((item) => {
     if (tabIndex === 0) {
@@ -496,6 +524,7 @@ const ChartOfAccounts = () => {
         onClose={() => setOpenBankModal(false)}
         mode={modalMode}
         selectedRow={selectedRow}
+        onSubmit={handleBankSubmit}
       />
 
       <ChartOfAccountModal
@@ -503,6 +532,7 @@ const ChartOfAccounts = () => {
         onClose={() => setOpenAccountModal(false)}
         mode={modalMode}
         selectedRow={selectedRow}
+        onSubmit={handleAccountSubmit}
       />
 
       {/* DELETE CONFIRMATION MODAL */}
@@ -517,7 +547,7 @@ const ChartOfAccounts = () => {
           <Button onClick={() => setOpenDeleteModal(false)} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" color="error" onClick={() => setOpenDeleteModal(false)}>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

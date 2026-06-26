@@ -48,7 +48,8 @@ import {
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import { usePermissions } from '@/context/TenantContext/permissions';
 import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
+import { makePayment } from '@/utils/paymentGateway';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -97,6 +98,8 @@ const PayInvoice = () => {
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
   const [savedOptionalIds, setSavedOptionalIds] = useState(new Set());
+
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -160,7 +163,10 @@ const PayInvoice = () => {
     0,
   );
   const optTotal = optionalEnabled
-    ? optFees.reduce((acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc), 0)
+    ? optFees.reduce((acc, f) => {
+        if (!f.checked) return acc;
+        return acc + Number(f.payable || f.balance || f.amount || 0);
+      }, 0)
     : 0;
   const grandTotal = compTotal + optTotal;
 
@@ -329,6 +335,8 @@ const PayInvoice = () => {
           payable: defaultInst ? calculatedPayable : Number(item.payable || 0),
           discount_amount: Number(item.discount_amount || 0),
           penalty_amount: Number(item.penalty_amount || 0),
+          rev_code: item.rev_code,
+          fee_bearer: item.fee_bearer,
           checked: false,
           installment_id: instId,
           installment_inst1: inst1,
@@ -348,11 +356,13 @@ const PayInvoice = () => {
         amount: Number(item.amount || 0),
         paid_amount: Number(item.paid_amount || 0),
         balance: Number(item.balance || 0),
-        payable: Number(item.payable || 0),
+        payable: Number(item.payable || item.balance || 0),
         discount_amount: Number(item.discount_amount || 0),
         penalty_amount: Number(item.penalty_amount || 0),
         optionsPool: item.options || [],
         selectedOptions: item.selected_options || [],
+        rev_code: item.rev_code,
+        fee_bearer: item.fee_bearer,
         checked: false,
         custom_amount: Number(item.balance || item.amount || 0),
       }));
@@ -419,7 +429,11 @@ const PayInvoice = () => {
           session_term_id: sessionInfo?.session_term_id,
           amount: fee.amount,
           instValue: fee.payable,
-          paymentname: { name: fee.description || fee.payment_name },
+          paymentname: {
+            name: fee.description || fee.payment_name,
+            rev_code: fee.rev_code,
+          },
+          fee_bearer: fee.fee_bearer,
           checked: true,
           fname: studentInfo?.name?.split(' ')[0] || '',
           lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
@@ -436,7 +450,11 @@ const PayInvoice = () => {
           session_term_id: sessionInfo?.session_term_id,
           amount: fee.amount,
           instValue: fee.payable,
-          paymentname: { name: fee.description || fee.payment_name },
+          paymentname: {
+            name: fee.description || fee.payment_name,
+            rev_code: fee.rev_code,
+          },
+          fee_bearer: fee.fee_bearer,
           checked: true,
           fname: studentInfo?.name?.split(' ')[0] || '',
           lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
@@ -451,10 +469,27 @@ const PayInvoice = () => {
     }
 
     try {
-      const res = await createPendingPayment({ payload: payload });
-      if (res.data.success || res.data.data) {
+      const res = await createPendingPayment({ schedules: payload });
+      // console.log('Full API response:', res?.success);
+      // console.log('SkoolPay on window:', window.SkoolPay);
+      if (res?.success) {
         notify.success('Payment initiated successfully!');
-        fetchInvoiceData();
+
+        // Trigger Payment Gateway Directly ===
+        const paymentData = res?.data;
+        const hash = res.xpress;
+        const gatewayCode = res.gateway_code;
+        const pubKey = res.pub_key;
+
+        const data = paymentData.map((item) => ({
+          ...item,
+          gateway_code: gatewayCode,
+          pub_key: pubKey,
+          hash: hash,
+        }));
+
+        makePayment(data, hash);
+        // fetchInvoiceData();
       }
     } catch (err) {
       console.error(err);
@@ -964,16 +999,23 @@ const PayInvoice = () => {
                         {fee.description}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(fee.selectedOptions || []).map((opt, oi) => (
-                          <Chip
-                            key={opt.option_id || oi}
-                            label={`${opt.option_name}: ₦${format(opt.amount)}`}
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-                          />
-                        ))}
+                        {(fee.selectedOptions || []).map((opt, oi) => {
+                          const optionData =
+                            typeof opt === 'number'
+                              ? fee.optionsPool?.find((o) => o.option_id === opt)
+                              : opt;
+
+                          return (
+                            <Chip
+                              key={optionData?.option_id || oi}
+                              label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                            />
+                          );
+                        })}
                       </Box>
                     </TableCell>
 
@@ -1135,11 +1177,93 @@ const PayInvoice = () => {
           </Box>
 
           {/* Right — Pay button */}
-          <Button variant="contained" disabled={grandTotal === 0} onClick={handlePayNow}>
+          <Button
+            variant="contained"
+            disabled={grandTotal === 0}
+            onClick={() => {
+              if (grandTotal <= 0) {
+                notify.error('Please select at least one item to pay');
+                return;
+              }
+              setConfirmModalOpen(true);
+            }}
+          >
             Pay Now — ₦{format(grandTotal)} &gt;
           </Button>
         </Paper>
       </Box>
+
+      {/* ══════════════════════════════════════════════ */}
+      {/* PAYMENT CONFIRMATION MODAL                   */}
+      {/* ══════════════════════════════════════════════ */}
+      <Dialog
+        open={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Confirm Payment</DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="body1" color="text.secondary">
+              You are about to make a payment for:
+            </Typography>
+            <Box
+              sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc', borderRadius: 2, p: 2 }}
+            >
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                Student
+              </Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {studentName}
+              </Typography>
+            </Box>
+            {compTotal > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Compulsory
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  ₦{format(compTotal)}
+                </Typography>
+              </Box>
+            )}
+            {optTotal > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Optional
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  ₦{format(optTotal)}
+                </Typography>
+              </Box>
+            )}
+            <Divider />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Total
+              </Typography>
+              <Typography variant="h6" fontWeight={800} color="primary.main">
+                ₦{format(grandTotal)}
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setConfirmModalOpen(false);
+              handlePayNow();
+            }}
+            sx={{ fontWeight: 600 }}
+          >
+            Confirm & Pay
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ══════════════════════════════════════════════ */}
       {/* OPTIONAL PAYMENT MODAL                       */}

@@ -571,7 +571,7 @@ const BursarySetupTab = ({
                           label={
                             <Box>
                               <Typography variant="body2" fontWeight={600}>
-                                {opt.value === 'parent' ? 'Parent / Student' : 'School'}
+                                {opt.value === 'client' ? 'Parent / Student' : 'School'}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {opt.text}

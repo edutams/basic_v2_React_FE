@@ -96,6 +96,7 @@ const PayInvoice = () => {
   const [optionalPaymentList, setOptionalPaymentList] = useState([]);
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
+  const [savedOptionalIds, setSavedOptionalIds] = useState(new Set());
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -186,15 +187,8 @@ const PayInvoice = () => {
       const list = Array.isArray(res?.data) ? res.data : [];
       setOptionalPaymentList(list);
 
-      const preSelected = new Set();
-      optFees.forEach((fee) => {
-        if (fee.selectedOptions?.length > 0) {
-          fee.selectedOptions.forEach((opt) => {
-            if (opt.option_id) preSelected.add(opt.option_id);
-          });
-        }
-        if (fee.selected_option_id) preSelected.add(fee.selected_option_id);
-      });
+      /* Use persisted savedOptionalIds as the source of truth for pre-selection */
+      const preSelected = new Set([...savedOptionalIds]);
       setSelectedOptionalIds(preSelected);
     } catch (err) {
       console.error('Failed to load optional payments', err);
@@ -241,6 +235,8 @@ const PayInvoice = () => {
         option_payment_ids: optionPaymentIds,
       });
       if (res?.success) {
+        /* Immediately persist the saved IDs so they show checked on modal reopen */
+        setSavedOptionalIds((prev) => new Set([...prev, ...optionPaymentIds]));
         await fetchInvoiceData();
       } else {
         setError(res?.message || 'Failed to save optional payments.');
@@ -361,6 +357,15 @@ const PayInvoice = () => {
         custom_amount: Number(item.balance || item.amount || 0),
       }));
       setOptFees(mappedOpt);
+
+      /* Sync savedOptionalIds from API response so pre-selection persists */
+      const selectedIds = new Set();
+      mappedOpt.forEach((fee) => {
+        (fee.selectedOptions || []).forEach((opt) => {
+          if (opt.option_id) selectedIds.add(opt.option_id);
+        });
+      });
+      setSavedOptionalIds(selectedIds);
 
       setDataLoaded(true);
     } catch (err) {

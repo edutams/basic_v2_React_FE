@@ -154,7 +154,10 @@ const PayInvoice = () => {
   };
 
   /* COMPUTATIONS — use the stored payable from each fee row */
-  const compTotal = compFees.reduce((acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc), 0);
+  const compTotal = compFees.reduce(
+    (acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc),
+    0,
+  );
   const optTotal = optionalEnabled
     ? optFees.reduce((acc, f) => (f.checked ? acc + Number(f.payable || 0) : acc), 0)
     : 0;
@@ -165,7 +168,9 @@ const PayInvoice = () => {
   /* ── Optional Payment Modal Handlers ── */
   const handleOpenOptionalModal = async () => {
     if (!sessionTermId || !classId || !selectedCategoryId) {
-      setError('Session/term, class, or category information not loaded yet. Please refresh the page.');
+      setError(
+        'Session/term, class, or category information not loaded yet. Please refresh the page.',
+      );
       return;
     }
 
@@ -294,17 +299,28 @@ const PayInvoice = () => {
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const instList = item.installments || [];
         /* Auto-preselect the first installment if none is already set */
-        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const defaultInst = !item.installment_id && instList.length > 0 ? instList[0] : null;
         const instId = item.installment_id || defaultInst?.id || null;
-        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
-        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+        const inst1 = defaultInst
+          ? String(defaultInst.inst1)
+          : item.installment_inst1 !== undefined
+            ? String(item.installment_inst1)
+            : '';
+        const inst2 = defaultInst
+          ? String(defaultInst.inst2 ?? '')
+          : item.installment_inst2 !== undefined
+            ? String(item.installment_inst2)
+            : '';
 
         /* Recalculate payable based on the preselected installment percentage */
         const balance = Number(item.balance || 0);
         const discount = Number(item.discount_amount || 0);
         const penalty = Number(item.penalty_amount || 0);
         const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
-        const calculatedPayable = Math.max(0, balance * (installmentPct / 100) - discount + penalty);
+        const calculatedPayable = Math.max(
+          0,
+          balance * (installmentPct / 100) - discount + penalty,
+        );
 
         return {
           id: item.id,
@@ -400,11 +416,9 @@ const PayInvoice = () => {
           instValue: fee.payable,
           paymentname: { name: fee.description || fee.payment_name },
           checked: true,
-          orderid: Date.now() + Math.floor(Math.random() * 1000),
-          bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
           fname: studentInfo?.name?.split(' ')[0] || '',
           lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-          payment_type: 'card',
+          payment_type: 'ONLINE',
         });
       }
     });
@@ -419,11 +433,9 @@ const PayInvoice = () => {
           instValue: fee.payable,
           paymentname: { name: fee.description || fee.payment_name },
           checked: true,
-          orderid: Date.now() + Math.floor(Math.random() * 1000),
-          bulk_orderid: Date.now() + Math.floor(Math.random() * 1000) + 1,
           fname: studentInfo?.name?.split(' ')[0] || '',
           lname: studentInfo?.name?.split(' ').slice(1).join(' ') || '',
-          payment_type: 'card',
+          payment_type: 'ONLINE',
         });
       }
     });
@@ -434,7 +446,7 @@ const PayInvoice = () => {
     }
 
     try {
-      const res = await createPendingPayment(payload);
+      const res = await createPendingPayment({ payload: payload });
       if (res.data.success || res.data.data) {
         notify.success('Payment initiated successfully!');
         fetchInvoiceData();
@@ -501,7 +513,9 @@ const PayInvoice = () => {
     return (
       <PageContainer title="Pay Invoice">
         <Breadcrumb title="Pay Invoice" items={BCrumb} />
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        >
           <CircularProgress size={40} />
         </Box>
       </PageContainer>
@@ -512,8 +526,12 @@ const PayInvoice = () => {
     return (
       <PageContainer title="Pay Invoice">
         <Breadcrumb title="Pay Invoice" items={BCrumb} />
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-          <Alert severity="error" sx={{ maxWidth: 500 }}>{error}</Alert>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 500 }}>
+            {error}
+          </Alert>
         </Box>
       </PageContainer>
     );
@@ -544,7 +562,6 @@ const PayInvoice = () => {
     <PageContainer title={breadcrumbTitle}>
       <Breadcrumb title={breadcrumbTitle} items={BCrumbLive} />
       <Box sx={{ pb: 8 }}>
-
         {/* HEADER — Student Info */}
         <Box
           sx={{
@@ -562,8 +579,19 @@ const PayInvoice = () => {
             borderRadius: '12px',
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', py: 1 }}>
-            <Avatar sx={{ width: 72, height: 72, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', mb: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              width: '100%',
+              py: 1,
+            }}
+          >
+            <Avatar
+              sx={{ width: 72, height: 72, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', mb: 1.5 }}
+            >
               <PersonOutlineIcon sx={{ fontSize: 40 }} />
             </Avatar>
             <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
@@ -576,7 +604,8 @@ const PayInvoice = () => {
               <strong>Class:</strong> {studentClassName}
             </Typography>
             <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session} {activeSessionInfo.term}
+              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
+              {activeSessionInfo.term}
             </Typography>
           </Box>
 
@@ -600,7 +629,9 @@ const PayInvoice = () => {
 
         {/* ERROR ALERT */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+            {error}
+          </Alert>
         )}
 
         {/* OWING WARNING */}
@@ -639,23 +670,44 @@ const PayInvoice = () => {
                 <TableCell sx={thCell}>#</TableCell>
                 <TableCell sx={thCell}>Pay Description</TableCell>
                 <TableCell sx={thCell}>Original Amount (₦)</TableCell>
-                <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
-                <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
-                <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>
-                <TableCell align="center" sx={thCell}>Penalty (₦)</TableCell>
+                <TableCell align="center" sx={thCell}>
+                  Paid (₦)
+                </TableCell>
+                <TableCell align="center" sx={thCell}>
+                  Balance (₦)
+                </TableCell>
+                <TableCell align="center" sx={thCell}>
+                  Discount (₦)
+                </TableCell>
+                <TableCell align="center" sx={thCell}>
+                  Penalty (₦)
+                </TableCell>
                 <TableCell align="center" sx={thCell}>
                   {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
                 </TableCell>
                 <TableCell sx={thCell}>Payable (₦)</TableCell>
                 <TableCell align="right" sx={thCell}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                    <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={isDark ? '#94a3b8' : '#475569'}
+                    >
                       Select All
                     </Typography>
                     <Checkbox
                       size="small"
                       checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                      indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
+                      indeterminate={
+                        compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)
+                      }
                       onChange={(e) => handleAllCompCheckChange(e.target.checked)}
                       sx={{ p: 0.5 }}
                     />
@@ -739,7 +791,9 @@ const PayInvoice = () => {
                   </TableCell>
 
                   {/* Payable — recalculates on installment/amount change */}
-                  <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                  <TableCell
+                    sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}
+                  >
                     ₦{format(fee.payable)}
                   </TableCell>
 
@@ -761,7 +815,14 @@ const PayInvoice = () => {
                     Total Compulsory
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#60a5fa' : '#1e40af', fontSize: '1.25rem' }}>
+                <TableCell
+                  sx={{
+                    py: 1.5,
+                    fontWeight: 800,
+                    color: isDark ? '#60a5fa' : '#1e40af',
+                    fontSize: '1.25rem',
+                  }}
+                >
                   ₦{format(compTotal)}
                 </TableCell>
                 <TableCell sx={{ py: 1.5 }} />
@@ -778,7 +839,15 @@ const PayInvoice = () => {
           borderLeftColor: '#3b82f6',
           icon: <ReceiptLongOutlinedIcon fontSize="small" />,
           action: (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: { xs: 1.5, sm: 2 },
+                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+              }}
+            >
               {/* Enable / disable optional section */}
               {can('bursary_manager.ledger.create_invoice_discount') && (
                 <Switch
@@ -811,7 +880,12 @@ const PayInvoice = () => {
           <TableContainer
             component={Paper}
             variant="outlined"
-            sx={{ borderRadius: 3, mb: 4, overflowX: 'auto', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0' }}
+            sx={{
+              borderRadius: 3,
+              mb: 4,
+              overflowX: 'auto',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+            }}
           >
             <Table sx={{ minWidth: 800 }}>
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
@@ -819,20 +893,41 @@ const PayInvoice = () => {
                   <TableCell sx={thCell}>#</TableCell>
                   <TableCell sx={thCell}>Item</TableCell>
                   <TableCell sx={thCell}>Original Amount (₦)</TableCell>
-                  <TableCell align="center" sx={thCell}>Paid (₦)</TableCell>
-                  <TableCell align="center" sx={thCell}>Balance (₦)</TableCell>
-                  <TableCell align="center" sx={thCell}>Discount (₦)</TableCell>
-                  <TableCell align="center" sx={thCell}>Penalty (₦)</TableCell>
+                  <TableCell align="center" sx={thCell}>
+                    Paid (₦)
+                  </TableCell>
+                  <TableCell align="center" sx={thCell}>
+                    Balance (₦)
+                  </TableCell>
+                  <TableCell align="center" sx={thCell}>
+                    Discount (₦)
+                  </TableCell>
+                  <TableCell align="center" sx={thCell}>
+                    Penalty (₦)
+                  </TableCell>
                   <TableCell sx={thCell}>Payable (₦)</TableCell>
                   <TableCell align="right" sx={thCell}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                      <Typography variant="body2" fontWeight={600} color={isDark ? '#94a3b8' : '#475569'}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color={isDark ? '#94a3b8' : '#475569'}
+                      >
                         Select All
                       </Typography>
                       <Checkbox
                         size="small"
                         checked={optFees.length > 0 && optFees.every((f) => f.checked)}
-                        indeterminate={optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)}
+                        indeterminate={
+                          optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
+                        }
                         onChange={(e) => handleAllOptCheckChange(e.target.checked)}
                         sx={{ p: 0.5 }}
                       />
@@ -855,7 +950,12 @@ const PayInvoice = () => {
 
                     {/* Item name + selected option chips */}
                     <TableCell sx={{ py: 1.5 }}>
-                      <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mb: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color="text.primary"
+                        sx={{ mb: 0.5 }}
+                      >
                         {fee.description}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -898,7 +998,9 @@ const PayInvoice = () => {
                     </TableCell>
 
                     {/* Payable — from API (optional fees have no installment control here) */}
-                    <TableCell sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
+                    <TableCell
+                      sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}
+                    >
                       ₦{format(fee.payable)}
                     </TableCell>
 
@@ -920,7 +1022,14 @@ const PayInvoice = () => {
                       Total Optional
                     </Typography>
                   </TableCell>
-                  <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#94a3b8' : '#64748b', fontSize: '1.25rem' }}>
+                  <TableCell
+                    sx={{
+                      py: 1.5,
+                      fontWeight: 800,
+                      color: isDark ? '#94a3b8' : '#64748b',
+                      fontSize: '1.25rem',
+                    }}
+                  >
                     ₦{format(optTotal)}
                   </TableCell>
                   <TableCell sx={{ py: 1.5 }} />
@@ -985,7 +1094,12 @@ const PayInvoice = () => {
                 checked={compFees.length > 0 && compFees.every((f) => f.checked)}
                 indeterminate={compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)}
                 onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-                sx={{ color: '#10b981', '&.Mui-checked': { color: '#10b981' }, '&.MuiCheckbox-indeterminate': { color: '#10b981' }, p: 0.5 }}
+                sx={{
+                  color: '#10b981',
+                  '&.Mui-checked': { color: '#10b981' },
+                  '&.MuiCheckbox-indeterminate': { color: '#10b981' },
+                  p: 0.5,
+                }}
               />
               <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
                 Compulsory Payment
@@ -995,10 +1109,19 @@ const PayInvoice = () => {
               <Checkbox
                 size="small"
                 checked={optionalEnabled && optFees.length > 0 && optFees.every((f) => f.checked)}
-                indeterminate={optionalEnabled && optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)}
+                indeterminate={
+                  optionalEnabled &&
+                  optFees.some((f) => f.checked) &&
+                  !optFees.every((f) => f.checked)
+                }
                 disabled={!optionalEnabled}
                 onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-                sx={{ color: '#84cc16', '&.Mui-checked': { color: '#84cc16' }, '&.MuiCheckbox-indeterminate': { color: '#84cc16' }, p: 0.5 }}
+                sx={{
+                  color: '#84cc16',
+                  '&.Mui-checked': { color: '#84cc16' },
+                  '&.MuiCheckbox-indeterminate': { color: '#84cc16' },
+                  p: 0.5,
+                }}
               />
               <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
                 Optional Payment
@@ -1017,9 +1140,18 @@ const PayInvoice = () => {
       {/* OPTIONAL PAYMENT MODAL                       */}
       {/* ══════════════════════════════════════════════ */}
       <Dialog open={optionalModalOpen} onClose={handleCloseOptionalModal} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700 }}>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 700,
+          }}
+        >
           <Box>
-            <Typography variant="h6" fontWeight={700}>Add Optional Payments</Typography>
+            <Typography variant="h6" fontWeight={700}>
+              Add Optional Payments
+            </Typography>
             {studentInfo && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {studentInfo.name} ({studentInfo.user_id})
@@ -1044,7 +1176,14 @@ const PayInvoice = () => {
             </Alert>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -1069,7 +1208,12 @@ const PayInvoice = () => {
 
               {optionalPaymentList.map((group) => (
                 <Box key={group.payment_name_id} sx={{ mt: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={700} color="primary.main" gutterBottom>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={700}
+                    color="primary.main"
+                    gutterBottom
+                  >
                     {group.payment_name}
                   </Typography>
                   <Stack spacing={0.5} sx={{ pl: 1 }}>
@@ -1085,11 +1229,28 @@ const PayInvoice = () => {
                           />
                         }
                         label={
-                          <Box display="flex" justifyContent="space-between" alignItems="center" width="100%" sx={{ minWidth: { xs: 180, sm: 250 } }}>
-                            <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            width="100%"
+                            sx={{ minWidth: { xs: 180, sm: 250 } }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}
+                            >
                               {opt.option_name}
                             </Typography>
-                            <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.secondary"
+                              sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
                               ₦{(Number(opt.amount) || 0).toLocaleString()}
                             </Typography>
                           </Box>
@@ -1107,8 +1268,19 @@ const PayInvoice = () => {
         <Divider />
 
         {!loadingOptionalPayments && optionalPaymentList.length > 0 && (
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'grey.50' }}>
-            <Typography variant="body2" fontWeight={600}>Selected Total:</Typography>
+          <Box
+            sx={{
+              px: { xs: 2, sm: 3 },
+              py: 1.5,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              bgcolor: 'grey.50',
+            }}
+          >
+            <Typography variant="body2" fontWeight={600}>
+              Selected Total:
+            </Typography>
             <Typography variant="h6" fontWeight={700} color="primary.main">
               ₦{totalSelectedOptionalAmount.toLocaleString()}
             </Typography>

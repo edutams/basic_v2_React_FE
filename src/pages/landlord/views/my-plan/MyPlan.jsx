@@ -406,7 +406,6 @@ const MyPlan = () => {
               {parseFloat(selectedPlan?.price || 0).toLocaleString()})
             </Typography>
             <Button
-              variant="text"
               color="primary"
               sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }}
               onClick={() => setShowModules((prev) => !prev)}

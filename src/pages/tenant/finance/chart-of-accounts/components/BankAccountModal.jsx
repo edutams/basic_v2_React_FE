@@ -96,9 +96,7 @@ const BankAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => {
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button type="submit" variant="contained">
-            {mode === 'create' ? 'Submit' : 'Save Changes'}
-          </Button>
+          <Button type="submit">{mode === 'create' ? 'Submit' : 'Save Changes'}</Button>
         </DialogActions>
       </form>
     </Dialog>

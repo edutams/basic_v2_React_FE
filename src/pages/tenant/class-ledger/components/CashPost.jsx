@@ -199,16 +199,27 @@ const CashPost = () => {
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const instList = item.installments || [];
         /* Auto-preselect the first installment if none is already set */
-        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const defaultInst = !item.installment_id && instList.length > 0 ? instList[0] : null;
         const instId = item.installment_id || defaultInst?.id || null;
-        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
-        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+        const inst1 = defaultInst
+          ? String(defaultInst.inst1)
+          : item.installment_inst1 !== undefined
+            ? String(item.installment_inst1)
+            : '';
+        const inst2 = defaultInst
+          ? String(defaultInst.inst2 ?? '')
+          : item.installment_inst2 !== undefined
+            ? String(item.installment_inst2)
+            : '';
 
         const balance = Number(item.balance || 0);
         const discount_amount = Number(item.discount_amount || 0);
         const penalty_amount = Number(item.penalty_amount || 0);
         const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
-        const payable = Math.max(0, balance * (installmentPct / 100) - discount_amount + penalty_amount);
+        const payable = Math.max(
+          0,
+          balance * (installmentPct / 100) - discount_amount + penalty_amount,
+        );
 
         return {
           id: item.id,
@@ -234,16 +245,27 @@ const CashPost = () => {
       // Map optional data: values from API
       const mappedOpt = (data.optional_data || []).map((item) => {
         const instList = item.installments || [];
-        const defaultInst = (!item.installment_id && instList.length > 0) ? instList[0] : null;
+        const defaultInst = !item.installment_id && instList.length > 0 ? instList[0] : null;
         const instId = item.installment_id || defaultInst?.id || null;
-        const inst1 = defaultInst ? String(defaultInst.inst1) : (item.installment_inst1 !== undefined ? String(item.installment_inst1) : '');
-        const inst2 = defaultInst ? String(defaultInst.inst2 ?? '') : (item.installment_inst2 !== undefined ? String(item.installment_inst2) : '');
+        const inst1 = defaultInst
+          ? String(defaultInst.inst1)
+          : item.installment_inst1 !== undefined
+            ? String(item.installment_inst1)
+            : '';
+        const inst2 = defaultInst
+          ? String(defaultInst.inst2 ?? '')
+          : item.installment_inst2 !== undefined
+            ? String(item.installment_inst2)
+            : '';
 
         const balance = Number(item.balance || 0);
         const discount_amount = Number(item.discount_amount || 0);
         const penalty_amount = Number(item.penalty_amount || 0);
         const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
-        const payable = Math.max(0, balance * (installmentPct / 100) - discount_amount + penalty_amount);
+        const payable = Math.max(
+          0,
+          balance * (installmentPct / 100) - discount_amount + penalty_amount,
+        );
 
         return {
           id: item.id,
@@ -391,7 +413,9 @@ const CashPost = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>{format(fee.amount)}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {format(fee.amount)}
+                  </TableCell>
 
                   {/* PAID — read-only */}
                   <TableCell align="right">
@@ -583,7 +607,7 @@ const CashPost = () => {
             }}
           >
             <Button
-              variant="contained"
+             
               size="small"
               onClick={() => {
                 if (selectedSessionId && selectedTermId) {
@@ -676,7 +700,6 @@ const CashPost = () => {
         {/* POST CASH BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
           <Button
-            variant="contained"
             size="large"
             onClick={handlePostCash}
             disabled={posting}

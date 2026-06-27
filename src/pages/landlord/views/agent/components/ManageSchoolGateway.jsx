@@ -274,7 +274,6 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleSubmit}
             disabled={saving || gatewaysLoading}
             sx={{ fontWeight: 600 }}

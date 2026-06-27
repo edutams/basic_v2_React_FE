@@ -202,7 +202,6 @@ const FilterSideDrawer = ({
           </Button>
           <Button
             fullWidth
-            variant="contained"
             onClick={handleApply}
             sx={{
               textTransform: 'none',

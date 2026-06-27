@@ -44,9 +44,7 @@ const SecurityTab = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ ml: 'auto !important' }}>
-                  <Button variant="text" color="primary">
-                    Setup
-                  </Button>
+                  <Button color="primary">Setup</Button>
                 </Box>
               </Stack>
               <Divider />
@@ -59,9 +57,7 @@ const SecurityTab = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ ml: 'auto !important' }}>
-                  <Button variant="text" color="primary">
-                    Setup
-                  </Button>
+                  <Button color="primary">Setup</Button>
                 </Box>
               </Stack>
               <Divider />
@@ -74,9 +70,7 @@ const SecurityTab = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ ml: 'auto !important' }}>
-                  <Button variant="text" color="primary">
-                    Setup
-                  </Button>
+                  <Button color="primary">Setup</Button>
                 </Box>
               </Stack>
             </CardContent>
@@ -134,9 +128,7 @@ const SecurityTab = () => {
                 </Box>
               </Stack>
               <Stack>
-                <Button variant="text" color="primary">
-                  Need Help ?
-                </Button>
+                <Button color="primary">Need Help ?</Button>
               </Stack>
             </CardContent>
           </BlankCard>
@@ -147,7 +139,7 @@ const SecurityTab = () => {
         <Button size="large" color="primary">
           Save
         </Button>
-        <Button size="large" variant="text" color="error">
+        <Button size="large" color="error">
           Cancel
         </Button>
       </Stack>

@@ -125,7 +125,6 @@ const PrintInvoicePage = () => {
           Back
         </Button>
         <Button
-          variant="contained"
           startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={!invoiceData}

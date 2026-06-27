@@ -27,7 +27,7 @@ import {
   Alert,
   TableFooter,
   TablePagination,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -520,7 +520,7 @@ const CompulsoryScheduleTab = ({
               }}
               sx={{ width: 300 }}
             />
-            <Button variant="contained" size="small" onClick={handleSearch}>
+            <Button size="small" onClick={handleSearch}>
               Search
             </Button>
           </Box>
@@ -601,7 +601,9 @@ const CompulsoryScheduleTab = ({
                               key={cls.id}
                               label={
                                 <Tooltip title="Click to set or edit payment amount">
-                                  <span>{hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}</span>
+                                  <span>
+                                    {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
+                                  </span>
                                 </Tooltip>
                               }
                               size="small"
@@ -629,9 +631,9 @@ const CompulsoryScheduleTab = ({
                               onDelete={
                                 hasAmount
                                   ? (e) => {
-                                    e.stopPropagation();
-                                    handleClassActionClick(schedule, cls, 'delete');
-                                  }
+                                      e.stopPropagation();
+                                      handleClassActionClick(schedule, cls, 'delete');
+                                    }
                                   : undefined
                               }
                               deleteIcon={
@@ -640,32 +642,32 @@ const CompulsoryScheduleTab = ({
                                     onClick={(e) => e.stopPropagation()}
                                     sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                                   >
-                                    <Tooltip title={cls.status === 'active' ? 'Deactivate' : 'Activate'}>
-                                    <Switch
-                                      size="small"
-                                      checked={cls.status === 'active'}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        handleClassActionClick(schedule, cls, 'toggle');
-                                      }}
-                                      sx={{
-                                        color: hasAmount
-                                          ? schedule.status === 'inactive'
-                                            ? 'white'
-                                            : '#5CB979'
-                                          : 'grey.300',
-
-                                      }}
-
-                                    />
+                                    <Tooltip
+                                      title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    >
+                                      <Switch
+                                        size="small"
+                                        checked={cls.status === 'active'}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          handleClassActionClick(schedule, cls, 'toggle');
+                                        }}
+                                        sx={{
+                                          color: hasAmount
+                                            ? schedule.status === 'inactive'
+                                              ? 'white'
+                                              : '#5CB979'
+                                            : 'grey.300',
+                                        }}
+                                      />
                                     </Tooltip>
                                     <Tooltip title="Delete class schedule">
-                                    <DeleteIcon sx={{ fontSize: 14 }} />
+                                      <DeleteIcon sx={{ fontSize: 14 }} />
                                     </Tooltip>
                                   </Box>
                                 ) : (
-                                   <Tooltip title="Add payment for this class">
-                                  <AddIcon sx={{ fontSize: 14 }} />
+                                  <Tooltip title="Add payment for this class">
+                                    <AddIcon sx={{ fontSize: 14 }} />
                                   </Tooltip>
                                 )
                               }
@@ -753,7 +755,7 @@ const CompulsoryScheduleTab = ({
           <Button color="inherit" onClick={handleConfirmDialogClose}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
+          <Button onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
             Confirm
           </Button>
         </DialogActions>
@@ -822,12 +824,7 @@ const CompulsoryScheduleTab = ({
           <Button color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleConfirmDelete}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button color="error" onClick={handleConfirmDelete} sx={{ fontWeight: 600 }}>
             Delete Item
           </Button>
         </DialogActions>
@@ -878,7 +875,6 @@ const CompulsoryScheduleTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
             onClick={handleConfirmClassAction}
             disabled={processingAction}

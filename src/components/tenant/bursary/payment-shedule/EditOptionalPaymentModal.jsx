@@ -37,15 +37,15 @@ import {
   deletePaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const EditOptionalPaymentModal = ({ 
-  open, 
-  onClose, 
-  onSave, 
-  schedule, 
-  sessionId, 
-  termId, 
-  categoryId, 
-  onRefresh 
+const EditOptionalPaymentModal = ({
+  open,
+  onClose,
+  onSave,
+  schedule,
+  sessionId,
+  termId,
+  categoryId,
+  onRefresh,
 }) => {
   const [formData, setFormData] = useState({
     paymentName: '',
@@ -109,7 +109,7 @@ const EditOptionalPaymentModal = ({
         schedule.payschedules.forEach((sched) => {
           const classId = sched.class_id;
           selected.push(classId);
-          
+
           // Store schedule ID
           if (sched.id) {
             scheduleIds[classId] = sched.id;
@@ -117,7 +117,7 @@ const EditOptionalPaymentModal = ({
 
           // Extract options for this class
           if (sched.options && sched.options.length > 0) {
-            options[classId] = sched.options.map(opt => ({
+            options[classId] = sched.options.map((opt) => ({
               option_name: opt.option_name,
               amount: opt.amount,
             }));
@@ -140,15 +140,16 @@ const EditOptionalPaymentModal = ({
 
   const handleClassToggle = (classId) => {
     const isSelected = formData.selectedClasses.includes(classId);
-    
+
     // If trying to deactivate (remove), check if there are options
     if (isSelected) {
       const options = formData.classOptions[classId] || [];
-      const hasValidOptions = options.length > 0 && options.some(opt => opt.option_name || opt.amount);
-      
+      const hasValidOptions =
+        options.length > 0 && options.some((opt) => opt.option_name || opt.amount);
+
       if (hasValidOptions) {
         // Show confirmation dialog
-        const className = classes.find(c => c.id === classId)?.name || `Class ${classId}`;
+        const className = classes.find((c) => c.id === classId)?.name || `Class ${classId}`;
         setDeactivateDialog({
           open: true,
           classData: { id: classId, name: className, options },
@@ -156,7 +157,7 @@ const EditOptionalPaymentModal = ({
         return;
       }
     }
-    
+
     // Proceed with toggle (activation or deactivation without options)
     performClassToggle(classId);
   };
@@ -167,7 +168,7 @@ const EditOptionalPaymentModal = ({
       const newSelected = isSelected
         ? prev.selectedClasses.filter((id) => id !== classId)
         : [...prev.selectedClasses, classId];
-      
+
       // Initialize options array for newly selected class
       const newOptions = { ...prev.classOptions };
       if (!isSelected && !newOptions[classId]) {
@@ -189,7 +190,7 @@ const EditOptionalPaymentModal = ({
     if (deactivateDialog.classData) {
       const classId = deactivateDialog.classData.id;
       const scheduleId = formData.classScheduleIds[classId];
-      
+
       // If there's a schedule_id, delete it from the backend
       if (scheduleId) {
         try {
@@ -198,7 +199,7 @@ const EditOptionalPaymentModal = ({
             // Successfully deleted from backend
             performClassToggle(classId);
             setDeactivateDialog({ open: false, classData: null });
-            
+
             // Trigger refresh in parent component
             if (onRefresh) {
               onRefresh();
@@ -225,10 +226,7 @@ const EditOptionalPaymentModal = ({
       ...prev,
       classOptions: {
         ...prev.classOptions,
-        [classId]: [
-          ...(prev.classOptions[classId] || []),
-          { option_name: '', amount: '' }
-        ],
+        [classId]: [...(prev.classOptions[classId] || []), { option_name: '', amount: '' }],
       },
     }));
   };
@@ -249,7 +247,7 @@ const EditOptionalPaymentModal = ({
       classOptions: {
         ...prev.classOptions,
         [classId]: prev.classOptions[classId].map((opt, idx) =>
-          idx === optionIndex ? { ...opt, [field]: value } : opt
+          idx === optionIndex ? { ...opt, [field]: value } : opt,
         ),
       },
     }));
@@ -274,7 +272,7 @@ const EditOptionalPaymentModal = ({
   const handleToggleClick = () => {
     const classId = selectedRowClass?.id;
     if (!classId) return;
-    
+
     handleRowMenuClose();
     handleClassToggle(classId);
   };
@@ -302,7 +300,7 @@ const EditOptionalPaymentModal = ({
         setFormData((prev) => ({
           ...prev,
           selectedClasses: prev.selectedClasses.filter(
-            (id) => id !== deleteDialog.classSchedule.id
+            (id) => id !== deleteDialog.classSchedule.id,
           ),
           classOptions: {
             ...prev.classOptions,
@@ -343,7 +341,7 @@ const EditOptionalPaymentModal = ({
     // Validate that all activated classes have at least one option with valid data
     formData.selectedClasses.forEach((classId) => {
       const options = formData.classOptions[classId] || [];
-      
+
       if (options.length === 0) {
         newErrors[`class_${classId}`] = 'At least one option is required';
       } else {
@@ -372,7 +370,7 @@ const EditOptionalPaymentModal = ({
         const classesData = formData.selectedClasses
           .filter((classId) => {
             const options = formData.classOptions[classId] || [];
-            return options.length > 0 && options.every(opt => opt.option_name && opt.amount > 0);
+            return options.length > 0 && options.every((opt) => opt.option_name && opt.amount > 0);
           })
           .map((classId) => {
             const options = formData.classOptions[classId] || [];
@@ -385,7 +383,7 @@ const EditOptionalPaymentModal = ({
               ...(formData.classScheduleIds[classId] && {
                 schedule_id: formData.classScheduleIds[classId],
               }),
-              options: options.map(opt => ({
+              options: options.map((opt) => ({
                 option_name: opt.option_name,
                 amount: parseFloat(opt.amount),
               })),
@@ -441,8 +439,8 @@ const EditOptionalPaymentModal = ({
     >
       <Stack spacing={3}>
         <Alert severity="info">
-          Edit payment options for each class. Each class can have multiple pricing options
-          (e.g., different bag types, sizes, etc.).
+          Edit payment options for each class. Each class can have multiple pricing options (e.g.,
+          different bag types, sizes, etc.).
         </Alert>
 
         {formData.selectedClasses.length === 0 && (
@@ -465,7 +463,9 @@ const EditOptionalPaymentModal = ({
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
                     <TableCell sx={{ fontWeight: 600 }}>Class</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Options</TableCell>
-                    <TableCell sx={{ fontWeight: 600, textAlign: 'center', width: 80 }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 600, textAlign: 'center', width: 80 }}>
+                      Action
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -474,7 +474,11 @@ const EditOptionalPaymentModal = ({
                       const isSelected = formData.selectedClasses.includes(cls.id);
                       const options = formData.classOptions[cls.id] || [];
                       const classScheduleData = formData.classScheduleIds[cls.id]
-                        ? { id: cls.id, name: cls.name, schedule_id: formData.classScheduleIds[cls.id] }
+                        ? {
+                            id: cls.id,
+                            name: cls.name,
+                            schedule_id: formData.classScheduleIds[cls.id],
+                          }
                         : null;
 
                       return (
@@ -493,9 +497,9 @@ const EditOptionalPaymentModal = ({
                               color={isSelected ? 'primary' : 'default'}
                               variant={isSelected ? 'filled' : 'outlined'}
                               onClick={() => handleClassToggle(cls.id)}
-                            //   onDelete={isSelected ? () => handleClassToggle(cls.id) : undefined}
-                              sx={{ 
-                                fontWeight: 600, 
+                              //   onDelete={isSelected ? () => handleClassToggle(cls.id) : undefined}
+                              sx={{
+                                fontWeight: 600,
                                 cursor: 'pointer',
                                 '&:hover': {
                                   opacity: 0.8,
@@ -503,12 +507,20 @@ const EditOptionalPaymentModal = ({
                               }}
                             />
                             {!isSelected && (
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', mt: 0.5 }}
+                              >
                                 Click to activate
                               </Typography>
                             )}
                             {errors[`class_${cls.id}`] && (
-                              <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                color="error.main"
+                                sx={{ display: 'block', mt: 0.5 }}
+                              >
                                 {errors[`class_${cls.id}`]}
                               </Typography>
                             )}
@@ -524,7 +536,12 @@ const EditOptionalPaymentModal = ({
                                       placeholder="Option name (e.g., Large Bag)"
                                       value={option.option_name}
                                       onChange={(e) =>
-                                        handleOptionChange(cls.id, idx, 'option_name', e.target.value)
+                                        handleOptionChange(
+                                          cls.id,
+                                          idx,
+                                          'option_name',
+                                          e.target.value,
+                                        )
                                       }
                                       error={!!errors[`${cls.id}_${idx}_option_name`]}
                                       helperText={errors[`${cls.id}_${idx}_option_name`]}
@@ -614,7 +631,6 @@ const EditOptionalPaymentModal = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleSubmit}
             sx={{ fontWeight: 600 }}
             disabled={loadingClasses || saving}
@@ -659,8 +675,8 @@ const EditOptionalPaymentModal = ({
           </Alert>
           <Typography variant="body2">
             Are you sure you want to delete the payment schedule for{' '}
-            <strong>{deleteDialog.classSchedule?.name}</strong>? All payment options for this
-            class will be permanently removed.
+            <strong>{deleteDialog.classSchedule?.name}</strong>? All payment options for this class
+            will be permanently removed.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -672,7 +688,6 @@ const EditOptionalPaymentModal = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             color="error"
             onClick={handleDeleteConfirm}
             disabled={deleting}
@@ -698,7 +713,7 @@ const EditOptionalPaymentModal = ({
           <Typography variant="body2" sx={{ mb: 2 }}>
             Are you sure you want to deactivate <strong>{deactivateDialog.classData?.name}</strong>?
           </Typography>
-          
+
           {deactivateDialog.classData?.options && deactivateDialog.classData.options.length > 0 && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
@@ -706,19 +721,17 @@ const EditOptionalPaymentModal = ({
               </Typography>
               <Stack spacing={0.5} mt={1}>
                 {deactivateDialog.classData.options.map((opt, idx) => (
-                  <Box 
-                    key={idx} 
-                    sx={{ 
-                      display: 'flex', 
+                  <Box
+                    key={idx}
+                    sx={{
+                      display: 'flex',
                       justifyContent: 'space-between',
                       p: 1,
                       bgcolor: 'grey.50',
                       borderRadius: 1,
                     }}
                   >
-                    <Typography variant="body2">
-                      {opt.option_name || '(Unnamed option)'}
-                    </Typography>
+                    <Typography variant="body2">{opt.option_name || '(Unnamed option)'}</Typography>
                     <Typography variant="body2" fontWeight={600}>
                       ₦{opt.amount ? parseFloat(opt.amount).toLocaleString() : '0'}
                     </Typography>
@@ -727,7 +740,7 @@ const EditOptionalPaymentModal = ({
               </Stack>
             </Box>
           )}
-          
+
           <Typography variant="body2" color="text.secondary">
             You can reactivate this class later, but you'll need to re-enter all the options.
           </Typography>
@@ -739,12 +752,7 @@ const EditOptionalPaymentModal = ({
           >
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={handleDeactivateConfirm}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button color="warning" onClick={handleDeactivateConfirm} sx={{ fontWeight: 600 }}>
             Deactivate Class
           </Button>
         </DialogActions>

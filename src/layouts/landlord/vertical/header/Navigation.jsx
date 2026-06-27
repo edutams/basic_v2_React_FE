@@ -27,7 +27,6 @@ const AppDD = () => {
         <Button
           aria-label="show 11 new notifications"
           color="inherit"
-          variant="text"
           aria-controls="msgs-menu"
           aria-haspopup="true"
           sx={{
@@ -114,7 +113,6 @@ const AppDD = () => {
       <Button
         color="inherit"
         sx={{ color: (theme) => theme.palette.text.primary }}
-        variant="text"
         to="/"
         component={Link}
       >
@@ -123,7 +121,6 @@ const AppDD = () => {
       <Button
         color="inherit"
         sx={{ color: (theme) => theme.palette.text.primary }}
-        variant="text"
         to="/"
         component={Link}
       >
@@ -132,7 +129,6 @@ const AppDD = () => {
       <Button
         color="inherit"
         sx={{ color: (theme) => theme.palette.text.primary }}
-        variant="text"
         to="/"
         component={Link}
       >

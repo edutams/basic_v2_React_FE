@@ -417,7 +417,6 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                   Cancel
                 </Button>
                 <Button
-                  variant="contained"
                   color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'}
                   onClick={handleToggleStatus}
                   disabled={actionLoading}

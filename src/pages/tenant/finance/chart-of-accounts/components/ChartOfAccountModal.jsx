@@ -56,7 +56,9 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form onSubmit={formik.handleSubmit}>
-        <DialogTitle>{mode === 'create' ? 'Create Chart of Account' : 'Edit Chart of Account'}</DialogTitle>
+        <DialogTitle>
+          {mode === 'create' ? 'Create Chart of Account' : 'Edit Chart of Account'}
+        </DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12 }}>
@@ -84,7 +86,10 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth error={formik.touched.category && Boolean(formik.errors.category)}>
+              <FormControl
+                fullWidth
+                error={formik.touched.category && Boolean(formik.errors.category)}
+              >
                 <InputLabel>Category</InputLabel>
                 <Select
                   label="Category"
@@ -114,7 +119,9 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                 >
-                  <MenuItem value=""><em>None</em></MenuItem>
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
                   <MenuItem value="Zenith Bank">Zenith Bank</MenuItem>
                   <MenuItem value="GTBank">GTBank</MenuItem>
                 </Select>
@@ -126,9 +133,7 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button type="submit" variant="contained">
-            {mode === 'create' ? 'Submit' : 'Save Changes'}
-          </Button>
+          <Button type="submit">{mode === 'create' ? 'Submit' : 'Save Changes'}</Button>
         </DialogActions>
       </form>
     </Dialog>

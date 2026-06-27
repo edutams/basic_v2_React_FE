@@ -88,7 +88,6 @@ const Invoice = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-
   const [optionalEnabled, setOptionalEnabled] = useState(true);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -402,7 +401,7 @@ const Invoice = () => {
         checked: false,
       }));
       setOptFees(mappedOpt);
-      console.log(mappedOpt,222)
+      console.log(mappedOpt, 222);
 
       setDataLoaded(true);
     } catch (err) {
@@ -457,7 +456,6 @@ const Invoice = () => {
           discountEnabled: !!fee.discountEnabled,
           penalty: fee.penaltyEnabled ? Number(fee.penalty || 0) : 0,
           penaltyEnabled: !!fee.penaltyEnabled,
-
         })),
         optional_items: optFees.map((fee) => ({
           bursary_schedule_id: fee.bursary_schedule_id,
@@ -650,7 +648,6 @@ const Invoice = () => {
 
           {/* BACK BUTTON */}
           <Button
-            variant="text"
             size="small"
             onClick={() => navigate('/class-ledger')}
             sx={{
@@ -659,10 +656,6 @@ const Invoice = () => {
               right: 12,
               textTransform: 'none',
               fontWeight: 600,
-              color: isDark ? '#94a3b8' : '#64748b',
-              '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-              },
             }}
           >
             ← Go To Class Ledger
@@ -909,7 +902,10 @@ const Invoice = () => {
                     </TableCell>
 
                     {/* BALANCE */}
-                    <TableCell align="center" sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}>
+                    <TableCell
+                      align="center"
+                      sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}
+                    >
                       ₦{format(fee.balance)}
                     </TableCell>
 
@@ -1184,19 +1180,19 @@ const Invoice = () => {
                   },
                 }}
               />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenOptionalModal}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Add Optional Pay.
-                </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleOpenOptionalModal}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Add Optional Pay.
+              </Button>
             </Box>
           ),
         })}
@@ -1384,7 +1380,10 @@ const Invoice = () => {
                       </TableCell>
 
                       {/* BALANCE */}
-                      <TableCell align="center" sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}>
+                      <TableCell
+                        align="center"
+                        sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}
+                      >
                         ₦{format(fee.balance)}
                       </TableCell>
 
@@ -1531,7 +1530,6 @@ const Invoice = () => {
         {/* UPDATE INVOICE BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
-            variant="contained"
             size="large"
             onClick={() => setConfirmDialogOpen(true)}
             disabled={loading || updating}
@@ -1718,7 +1716,6 @@ const Invoice = () => {
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button onClick={handleCloseOptionalModal}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}
             sx={{ fontWeight: 600 }}
@@ -1735,23 +1732,15 @@ const Invoice = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          Update Invoice
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Update Invoice</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">
-            Are you sure you want to Update the Invoice
-          </Typography>
+          <Typography variant="body1">Are you sure you want to Update the Invoice</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setConfirmDialogOpen(false)}
-          >
+          <Button color="inherit" onClick={() => setConfirmDialogOpen(false)}>
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={() => {
               setConfirmDialogOpen(false);
               handleUpdateInvoice();
@@ -1777,9 +1766,7 @@ const Invoice = () => {
           <TextField
             autoFocus
             margin="dense"
-            label={
-              globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'
-            }
+            label={globalModal.field === 'discount' ? 'Discount Amount (₦)' : 'Penalty Amount (₦)'}
             type="number"
             fullWidth
             variant="outlined"
@@ -1790,9 +1777,7 @@ const Invoice = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
-          <Button variant="contained" onClick={handleGlobalModalConfirm}>
-            Apply
-          </Button>
+          <Button onClick={handleGlobalModalConfirm}>Apply</Button>
         </DialogActions>
       </Dialog>
 

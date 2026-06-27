@@ -686,7 +686,6 @@ const ClassLedger = () => {
 
           <Grid size={{ xs: 12, md: 1 }}>
             <Button
-              variant="contained"
               fullWidth
               sx={{ height: '40px' }}
               onClick={fetchClassLedgerData}
@@ -921,9 +920,7 @@ const ClassLedger = () => {
               if (!studentToPayFor) return;
 
               const studentUserId =
-                studentToPayFor?.users?.id ||
-                studentToPayFor?.user?.id ||
-                studentToPayFor?.user_id;
+                studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
 
               const result = await impersonateStudent(studentUserId);
 

@@ -1016,7 +1016,6 @@ const BursarySetupTab = ({
               {/* Save button */}
               <Box display="flex" justifyContent="flex-end">
                 <Button
-                  variant="contained"
                   disabled={
                     savingResultSettings ||
                     !resultSettings.pay_type ||
@@ -1143,7 +1142,6 @@ const BursarySetupTab = ({
               Cancel
             </Button>
             <Button
-              variant="contained"
               color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'}
               onClick={handleToggleCategoryStatus}
               disabled={categoryActionLoading}
@@ -1190,7 +1188,6 @@ const BursarySetupTab = ({
               Cancel
             </Button>
             <Button
-              variant="contained"
               color={
                 confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'
               }

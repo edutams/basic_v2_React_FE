@@ -36,7 +36,12 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 
-const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUpdateCategory }) => {
+const GenerateInvoiceTab = ({
+  showSnackbar,
+  selectedClass,
+  setSelectedClass,
+  onUpdateCategory,
+}) => {
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -311,11 +316,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
               sx={{ width: 250 }}
             />
 
-            <Button
-              variant="contained"
-              onClick={handleFetch}
-              sx={{ fontWeight: 600, minWidth: 100 }}
-            >
+            <Button onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
               Fetch
             </Button>
           </Stack>
@@ -367,12 +368,24 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
                         : hasInvoiceGenerated
                           ? 'primary.light'
                           : 'white',
-                      color: isSelected ? 'white' : hasInvoiceGenerated ? 'primary.main' : 'text.primary',
+                      color: isSelected
+                        ? 'white'
+                        : hasInvoiceGenerated
+                          ? 'primary.main'
+                          : 'text.primary',
                       fontWeight: 600,
                       border: '1px solid',
-                      borderColor: isSelected ? 'primary.main' : hasInvoiceGenerated ? 'primary.main' : 'divider',
+                      borderColor: isSelected
+                        ? 'primary.main'
+                        : hasInvoiceGenerated
+                          ? 'primary.main'
+                          : 'divider',
                       '&:hover': {
-                        bgcolor: isSelected ? 'primary.dark' : hasInvoiceGenerated ? 'primary.main' : 'grey.100',
+                        bgcolor: isSelected
+                          ? 'primary.dark'
+                          : hasInvoiceGenerated
+                            ? 'primary.main'
+                            : 'grey.100',
                       },
                     }}
                   />
@@ -397,7 +410,6 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Button
-              variant="contained"
               size="small"
               onClick={() => {
                 const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
@@ -459,7 +471,6 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
                 severity="warning"
                 action={
                   <Button
-                    variant="contained"
                     color="warning"
                     size="small"
                     onClick={handleGenerateForPending}
@@ -471,7 +482,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
                 sx={{ mb: 2, alignItems: 'center' }}
               >
                 <Typography variant="body2" fontWeight={600}>
-                  {studentCounts.pending} student(s) still need invoice generation. Click &quot;Generate Now&quot; to go to the invoice page and generate for pending students.
+                  {studentCounts.pending} student(s) still need invoice generation. Click
+                  &quot;Generate Now&quot; to go to the invoice page and generate for pending
+                  students.
                 </Typography>
               </Alert>
             )}
@@ -566,7 +579,6 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
           />
         </TableContainer>
       </Box>
-
     </Stack>
   );
 };

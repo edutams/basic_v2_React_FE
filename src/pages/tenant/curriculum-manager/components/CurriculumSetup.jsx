@@ -93,7 +93,6 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                   />
                   <Button
                     size="small"
-                    variant="text"
                     onClick={() => onViewSchemes(subject)}
                     disabled={!subject.schemes || Object.keys(subject.schemes).length === 0}
                   >

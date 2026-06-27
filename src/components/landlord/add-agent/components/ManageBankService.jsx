@@ -122,7 +122,6 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleSubmit}
             disabled={loading || servicesLoading || !selectedService}
             sx={{ fontWeight: 600 }}

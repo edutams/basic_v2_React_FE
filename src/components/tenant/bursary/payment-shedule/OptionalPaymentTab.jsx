@@ -375,7 +375,7 @@ const OptionalPaymentTab = ({
               sx={{ width: 300 }}
             />
 
-            <Button variant="contained" size="small" onClick={handleSearch}>
+            <Button size="small" onClick={handleSearch}>
               Search
             </Button>
           </Box>
@@ -398,7 +398,7 @@ const OptionalPaymentTab = ({
           </Box>
 
           {/* <Button
-          variant="contained"
+         
           startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
           sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
@@ -677,7 +677,6 @@ const OptionalPaymentTab = ({
           </Button>
 
           <Button
-            variant="contained"
             onClick={() => {
               handleDetailsDialogClose();
               handleEditSchedule();
@@ -727,7 +726,6 @@ const OptionalPaymentTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={confirmDialog.onConfirm}
             sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }}
             fullWidth={{ xs: true, sm: false }}

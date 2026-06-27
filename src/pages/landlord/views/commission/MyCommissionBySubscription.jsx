@@ -68,7 +68,6 @@ const MyCommissionBySubscription = () => {
       >
         <Breadcrumb title="My Commission by Subscription" items={BCrumb} />
         <Button
-          variant="text"
           startIcon={<IconArrowLeft size={18} />}
           onClick={() => navigate('/organization/commissions')}
           sx={{

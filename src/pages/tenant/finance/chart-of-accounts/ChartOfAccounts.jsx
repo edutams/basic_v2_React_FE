@@ -186,15 +186,26 @@ const ChartOfAccounts = () => {
     if (modalMode === 'create') {
       setBanksData([{ ...data, id: `b${Date.now()}`, status: 'Active' }, ...banksData]);
     } else {
-      setBanksData(banksData.map((item) => (item.id === selectedRow.id ? { ...item, ...data } : item)));
+      setBanksData(
+        banksData.map((item) => (item.id === selectedRow.id ? { ...item, ...data } : item)),
+      );
     }
   };
 
   const handleAccountSubmit = (data) => {
     if (modalMode === 'create') {
-      setAccountsData([{ ...data, id: `${Date.now()}`, status: 'Active', linkedBank: data.linkedBank || '—' }, ...accountsData]);
+      setAccountsData([
+        { ...data, id: `${Date.now()}`, status: 'Active', linkedBank: data.linkedBank || '—' },
+        ...accountsData,
+      ]);
     } else {
-      setAccountsData(accountsData.map((item) => (item.id === selectedRow.id ? { ...item, ...data, linkedBank: data.linkedBank || '—' } : item)));
+      setAccountsData(
+        accountsData.map((item) =>
+          item.id === selectedRow.id
+            ? { ...item, ...data, linkedBank: data.linkedBank || '—' }
+            : item,
+        ),
+      );
     }
   };
 
@@ -328,7 +339,9 @@ const ChartOfAccounts = () => {
                 </Typography>
 
                 <Typography variant="body2">
-                  {tabIndex === 0 ? 'Bank Account Available for Posting' : 'Chart of Accounts Available for Posting'}
+                  {tabIndex === 0
+                    ? 'Bank Account Available for Posting'
+                    : 'Chart of Accounts Available for Posting'}
                 </Typography>
               </Box>
 
@@ -416,10 +429,7 @@ const ChartOfAccounts = () => {
                     paginatedData.map((row, index) => {
                       const catColor = tabIndex === 1 ? getCategoryColor(row.category) : {};
                       return (
-                        <TableRow
-                          key={row.id}
-                          hover
-                        >
+                        <TableRow key={row.id} hover>
                           <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                           {tabIndex === 0 ? (
                             <>
@@ -535,18 +545,24 @@ const ChartOfAccounts = () => {
       />
 
       {/* DELETE CONFIRMATION MODAL */}
-      <Dialog open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this {tabIndex === 0 ? 'bank' : 'account'}? This action cannot be undone.
+            Are you sure you want to delete this {tabIndex === 0 ? 'bank' : 'account'}? This action
+            cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteModal(false)} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+          <Button color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

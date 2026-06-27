@@ -379,7 +379,6 @@ const TenantLogin = () => {
 
                 <Box mt={3}>
                   <Button
-                    variant="text"
                     fullWidth
                     onClick={handleBackToLogin}
                     sx={{ color: 'text.secondary', textTransform: 'none' }}
@@ -425,7 +424,6 @@ const TenantLogin = () => {
 
                 <Box mt={3}>
                   <Button
-                    variant="text"
                     fullWidth
                     onClick={handleBackToLogin}
                     sx={{ color: 'text.secondary', textTransform: 'none' }}

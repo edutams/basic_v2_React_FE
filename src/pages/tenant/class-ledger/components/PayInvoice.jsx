@@ -650,7 +650,6 @@ const PayInvoice = () => {
           </Box>
 
           <Button
-            variant="text"
             size="small"
             onClick={() => navigate('/class-ledger')}
             sx={{
@@ -659,8 +658,6 @@ const PayInvoice = () => {
               right: 12,
               textTransform: 'none',
               fontWeight: 600,
-              color: isDark ? '#94a3b8' : '#64748b',
-              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' },
             }}
           >
             ← Go To Class Ledger
@@ -1178,7 +1175,6 @@ const PayInvoice = () => {
 
           {/* Right — Pay button */}
           <Button
-            variant="contained"
             disabled={grandTotal === 0}
             onClick={() => {
               if (grandTotal <= 0) {
@@ -1253,7 +1249,6 @@ const PayInvoice = () => {
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();
@@ -1419,7 +1414,6 @@ const PayInvoice = () => {
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button onClick={handleCloseOptionalModal}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}
             sx={{ fontWeight: 600 }}

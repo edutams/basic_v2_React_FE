@@ -104,11 +104,14 @@ const InvoiceStudentsView = () => {
           // Fall back to first category, preserve existing params
           const firstCatId = String(cats[0].id);
           setSelectedStudentCategory(firstCatId);
-          setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            next.set('category_id', firstCatId);
-            return next;
-          }, { replace: true });
+          setSearchParams(
+            (prev) => {
+              const next = new URLSearchParams(prev);
+              next.set('category_id', firstCatId);
+              return next;
+            },
+            { replace: true },
+          );
         }
       } catch (err) {
         console.error('Failed to load categories', err);
@@ -179,11 +182,14 @@ const InvoiceStudentsView = () => {
         (s) => !s.compulsory_invoice_generated || Number(s.compulsory_invoice_generated) === 0,
       );
       if (!hasPending) {
-        setSearchParams((prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete('pending');
-          return next;
-        }, { replace: true });
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('pending');
+            return next;
+          },
+          { replace: true },
+        );
       }
     }
 
@@ -380,11 +386,14 @@ const InvoiceStudentsView = () => {
 
       if (res?.success) {
         // Remove pending param from URL
-        setSearchParams((prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete('pending');
-          return next;
-        }, { replace: true });
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('pending');
+            return next;
+          },
+          { replace: true },
+        );
 
         // Refetch all student data (no pending filter)
         try {
@@ -590,7 +599,8 @@ const InvoiceStudentsView = () => {
         {searchParams.get('pending') && Number(searchParams.get('pending')) > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             <Typography variant="body2" fontWeight={600}>
-              {searchParams.get('pending')} student(s) still need invoices generated. Please select them below and click &quot;Generate Invoice&quot; to create their invoices.
+              {searchParams.get('pending')} student(s) still need invoices generated. Please select
+              them below and click &quot;Generate Invoice&quot; to create their invoices.
             </Typography>
           </Alert>
         )}
@@ -618,7 +628,6 @@ const InvoiceStudentsView = () => {
           >
             <Button
               size="small"
-              variant="contained"
               disabled={selectedStudents.length === 0 || generatingInvoice}
               onClick={handleGenerateInvoiceClick}
               startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
@@ -1112,7 +1121,6 @@ const InvoiceStudentsView = () => {
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button onClick={handleCloseOptionalModal}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}
             sx={{ fontWeight: 600 }}
@@ -1199,7 +1207,6 @@ const InvoiceStudentsView = () => {
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={handleConfirmGenerateInvoice}
             sx={{ fontWeight: 600 }}
             startIcon={<DescriptionIcon />}
@@ -1290,7 +1297,6 @@ const InvoiceStudentsView = () => {
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button onClick={handleCloseRegenerateConfirm}>Cancel</Button>
           <Button
-            variant="contained"
             onClick={handleConfirmRegenerateInvoice}
             sx={{ fontWeight: 600 }}
             startIcon={<DescriptionIcon />}
@@ -1326,9 +1332,7 @@ const InvoiceStudentsView = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-          <Button variant="contained" onClick={handleCloseInvoiceResult}>
-            OK
-          </Button>
+          <Button onClick={handleCloseInvoiceResult}>OK</Button>
         </DialogActions>
       </Dialog>
     </>

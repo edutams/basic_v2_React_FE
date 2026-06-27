@@ -134,7 +134,6 @@ const ImageUpload = ({
 
             {hasCustomImage && (
               <Button
-                variant="text"
                 color="error"
                 size="small"
                 onClick={handleClear}

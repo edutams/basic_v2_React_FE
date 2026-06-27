@@ -1222,13 +1222,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               },
             }}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-            startIcon={<SearchIcon />}
-            size="small"
-          >
+          <Button color="primary" onClick={handleSearch} startIcon={<SearchIcon />} size="small">
             Search
           </Button>
         </Box>
@@ -1237,7 +1231,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
             <Button
               size="small"
-              variant="contained"
               onClick={handleGenerateExcelInvoice}
               disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}
             >
@@ -1294,7 +1287,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleSaveEdit}
             disabled={savingEdit}
             startIcon={savingEdit ? <CircularProgress size={14} /> : null}

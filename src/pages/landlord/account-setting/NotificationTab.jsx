@@ -231,7 +231,7 @@ const NotificationTab = () => {
         <Button size="large" color="primary">
           Save
         </Button>
-        <Button size="large" variant="text" color="error">
+        <Button size="large" color="error">
           Cancel
         </Button>
       </Stack>

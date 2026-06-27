@@ -540,7 +540,9 @@ const EditPaymentItemModal = ({
                                   <FormControl size="small" sx={{ minWidth: 180 }}>
                                     <Select
                                       value={selectedInstallment}
-                                      onChange={(e) => handleInstallmentChange(cls.id, e.target.value)}
+                                      onChange={(e) =>
+                                        handleInstallmentChange(cls.id, e.target.value)
+                                      }
                                       disabled={!isSelected}
                                       displayEmpty
                                     >
@@ -602,7 +604,6 @@ const EditPaymentItemModal = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleSubmit}
             sx={{ fontWeight: 600 }}
             disabled={loadingClasses || saving}
@@ -664,12 +665,7 @@ const EditPaymentItemModal = ({
           >
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleToggleConfirm}
-            disabled={toggling}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button onClick={handleToggleConfirm} disabled={toggling} sx={{ fontWeight: 600 }}>
             {toggling ? 'Processing...' : 'Confirm'}
           </Button>
         </DialogActions>
@@ -702,7 +698,6 @@ const EditPaymentItemModal = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             color="error"
             onClick={handleDeleteConfirm}
             disabled={deleting}

@@ -160,7 +160,6 @@ const InvoiceView = () => {
           </Typography>
 
           <Button
-            variant="contained"
             onClick={handleBack}
             startIcon={<ArrowBackIcon />}
             sx={{ fontWeight: 600, px: 4 }}
@@ -194,7 +193,6 @@ const InvoiceView = () => {
         </Box>
         <Box display="flex" gap={1}>
           <Button
-            variant="contained"
             size="small"
             startIcon={<PrintIcon />}
             onClick={handlePrintAll}
@@ -225,11 +223,17 @@ const InvoiceView = () => {
           const optional = student.optional_invoice || [];
           const dueBalance = Number(student.due_balance || 0);
 
-          const compulsoryPayable = compulsory.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0);
+          const compulsoryPayable = compulsory.reduce(
+            (sum, i) => sum + Number(i.schedule_amount || 0),
+            0,
+          );
           const compulsoryPaid = compulsory.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0);
           const compulsoryTotal = compulsory.reduce((sum, i) => sum + Number(i.balance || 0), 0);
 
-          const optionalPayable = optional.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0);
+          const optionalPayable = optional.reduce(
+            (sum, i) => sum + Number(i.schedule_amount || 0),
+            0,
+          );
           const optionalPaid = optional.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0);
           const optionalTotal = optional.reduce((sum, i) => sum + Number(i.balance || 0), 0);
 
@@ -346,9 +350,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button size="small" variant="contained">
-                  Proceed to Pay
-                </Button>
+                <Button size="small">Proceed to Pay</Button>
                 <Button
                   size="small"
                   variant="outlined"
@@ -547,9 +549,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button size="small" variant="contained">
-                  Proceed to Pay
-                </Button>
+                <Button size="small">Proceed to Pay</Button>
                 <Button
                   size="small"
                   variant="outlined"

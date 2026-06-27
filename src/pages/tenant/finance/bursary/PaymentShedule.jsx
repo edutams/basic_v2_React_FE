@@ -381,8 +381,8 @@ const PaymentShedule = () => {
       try {
         setLoadingSendInvoiceStats(true);
         const res = await fetchSendInvoiceStats({
-          sessionTermId: selectedSessionTerm, 
-          classId: selectedClass || undefined
+          sessionTermId: selectedSessionTerm,
+          classId: selectedClass || undefined,
         });
         if (res?.success && res.data) {
           setSendInvoiceStatsData({
@@ -443,7 +443,12 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={90} height={48} />
                   ) : (
-                    <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
+                    <Typography
+                      variant="h2"
+                      fontWeight={700}
+                      color="primary"
+                      sx={{ lineHeight: 1 }}
+                    >
                       {stats.schedule.total}
                     </Typography>
                   )}
@@ -951,7 +956,6 @@ const PaymentShedule = () => {
               </Box>
               {canImportSchedule && (
                 <Button
-                  variant="contained"
                   startIcon={
                     importing ? <CircularProgress size={18} color="inherit" /> : <UploadIcon />
                   }
@@ -1010,10 +1014,7 @@ const PaymentShedule = () => {
             />
           )}
           {actionTab === 2 && (
-            <SendInvoiceTab 
-              showSnackbar={showSnackbar} 
-              refreshStats={refreshSendInvoiceStats}
-            />
+            <SendInvoiceTab showSnackbar={showSnackbar} refreshStats={refreshSendInvoiceStats} />
           )}
         </Box>
       </Paper>
@@ -1051,7 +1052,6 @@ const PaymentShedule = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleConfirmImportSchedule}
             disabled={importing}
             startIcon={importing ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}

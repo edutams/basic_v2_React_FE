@@ -290,13 +290,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       {/* Fee Bearer */}
                       <TableCell>
                         <Chip
-                          label={payment.fee_bearer?.toUpperCase() || 'N/A'}
+                          label={(payment.fee_bearer === 'client'
+                            ? 'Parent'
+                            : 'School'
+                          ).toUpperCase()}
                           size="small"
                           sx={{
                             bgcolor:
-                              payment.fee_bearer === 'parent' ? 'success.light' : 'warning.light',
+                              payment.fee_bearer === 'client' ? 'success.light' : 'warning.light',
                             color:
-                              payment.fee_bearer === 'parent' ? 'success.dark' : 'warning.dark',
+                              payment.fee_bearer === 'client' ? 'success.dark' : 'warning.dark',
                             fontWeight: 600,
                             fontSize: 10,
                           }}

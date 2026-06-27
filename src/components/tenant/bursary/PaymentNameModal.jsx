@@ -40,7 +40,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           pay_option: paymentName.pay_option?.toLowerCase() || 'compulsory',
           bank: paymentName.bank_code ? `${paymentName.bank_code}, ${paymentName.bank_name}` : '',
           account_number: paymentName.account_number || '',
-          fee_bearer: paymentName.fee_bearer?.toLowerCase() || 'parent',
+          fee_bearer: paymentName.fee_bearer?.toLowerCase() || 'client',
           modules: paymentName.modules ? JSON.parse(paymentName.modules) : [],
           status: paymentName.status || 'active',
         });
@@ -50,7 +50,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           pay_option: 'compulsory',
           bank: '',
           account_number: '',
-          fee_bearer: 'parent',
+          fee_bearer: 'client',
           modules: [],
           status: 'active',
         });
@@ -177,9 +177,9 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 <MenuItem disabled>Loading banks...</MenuItem>
               ) : (
                 banks.map((bank, i) => (
-                  <MenuItem key={i} value={`${bank.bankCode}, ${bank.bankName}`}>
+                  <MenuItem key={i} value={`${bank.bank_code}, ${bank.bank_name}`}>
                     {' '}
-                    {bank.bankName}
+                    {bank.bank_name}
                   </MenuItem>
                 ))
               )}
@@ -229,8 +229,8 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               onChange={handleChange('fee_bearer')}
               helperText="Who pays the gateway charges"
             >
-              <MenuItem value="parent">Parent</MenuItem>
-              <MenuItem value="school">School</MenuItem>
+              <MenuItem value="client">Parent</MenuItem>
+              <MenuItem value="merchant">School</MenuItem>
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>

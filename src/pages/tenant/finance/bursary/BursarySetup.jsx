@@ -260,7 +260,7 @@ const BursarySetup = () => {
                     Parent
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.fee_bearer?.parent || 0}
+                    {paymentNameStats.fee_bearer?.client || 0}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
@@ -268,16 +268,16 @@ const BursarySetup = () => {
                     School
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.fee_bearer?.school || 0}
+                    {paymentNameStats.fee_bearer?.merchant || 0}
                   </Typography>
                 </Grid>
               </Grid>
               <Box display="flex" alignItems="center" gap={1}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
                 <Typography variant="caption" color="textSecondary">
-                  {paymentNameStats.fee_bearer?.school > 0
+                  {paymentNameStats.fee_bearer?.merchant > 0
                     ? 'School absorbs some gateway charges'
-                    : 'All charges currently borne by client'}
+                    : 'All charges currently borne by parent'}
                 </Typography>
               </Box>
             </Paper>

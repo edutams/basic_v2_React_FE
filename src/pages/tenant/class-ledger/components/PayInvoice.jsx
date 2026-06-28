@@ -410,7 +410,9 @@ const PayInvoice = () => {
       }
     };
     init();
+  }, [fetchInvoiceData]);
 
+  useEffect(() => {
     const handler = () => {
       notify.success('Payment successful and confirmed!');
       fetchInvoiceData();

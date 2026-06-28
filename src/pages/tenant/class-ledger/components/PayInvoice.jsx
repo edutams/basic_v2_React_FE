@@ -410,6 +410,13 @@ const PayInvoice = () => {
       }
     };
     init();
+
+    const handler = () => {
+      notify.success('Payment successful and confirmed!');
+      fetchInvoiceData();
+    };
+    window.addEventListener('paymentCompleted', handler);
+    return () => window.removeEventListener('paymentCompleted', handler);
   }, [fetchInvoiceData]);
 
   /* ── Pay Now ── */

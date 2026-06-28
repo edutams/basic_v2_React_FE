@@ -28,7 +28,7 @@ const skoolpay = (data) => {
     });
 
     const options = {
-        transaction_id: data[0].bulk_orderid,
+        transaction_id: data[0].bulk_order_id,
         public_key: data[0].pub_key,
         merchant_code: data[0].merchant_id,
         fee_bearer: data[0].fee_bearer,
@@ -44,10 +44,20 @@ const skoolpay = (data) => {
         hash_type: "sha256",
         hash: data[0].hash,
         callback_url: "https://my_callback_url.test",
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
             console.log("SkoolPay Success:", response);
-            // You can call your confirmation endpoint here if needed
-            window.location.href = `/bursary/confirm/cardpay?transref=${response.data.transactionReference}&user_id=${data[0].user_id}`;
+            try {
+                const transref = response?.data?.transactionReference;
+                const { confirmCardPayment } = await import('@/api/tenant/bursary/bursaryPayment');
+
+                await confirmCardPayment(transref, data[0].user_id);
+                window.dispatchEvent(new CustomEvent('paymentCompleted', {
+                    detail: { user_id: data[0].user_id }
+                }));
+            } catch (err) {
+                console.error('Payment confirmation failed:', err);
+            }
+            // window.location.href = `/bursary/payment_schedule/confirm_card_payment?transref=${response.data.transactionReference}&user_id=${data[0].user_id}`;
         },
         onClose: () => console.log("SkoolPay closed"),
         onError: (error) => console.error("SkoolPay Error:", error),
@@ -65,7 +75,7 @@ const skoolpay = (data) => {
 const xpress_pay = (data, hash) => {
     const body = {
         publicKey: data[0].pub_key,
-        transactionId: data[0].bulk_orderid || data[0].bulk_order_id,
+        transactionId: data[0].bulk_order_id,
         amount: data[0].instValue,
         currency: "NGN",
         country: "NG",
@@ -74,7 +84,7 @@ const xpress_pay = (data, hash) => {
         firstName: data[0].fname,
         lastName: data[0].lname,
         hash: hash,
-        callbackUrl: `${window.location.origin}/bursary/confirm/cardpay?transref=${data[0].bulk_orderid}&user_id=${data[0].user_id}`,
+        callbackUrl: `${window.location.origin}/bursary/confirm/cardpay?transref=${data[0].bulk_order_id}&user_id=${data[0].user_id}`,
     };
 
     if (window.xpressPayonlineSetup) {

@@ -702,8 +702,8 @@ const ClassLedger = () => {
               <TableRow>
                 <TableCell>#</TableCell>
                 <TableCell>Student Name</TableCell>
-                <TableCell> Compulsory Bill</TableCell>
-                <TableCell>Optional Bill</TableCell>
+                <TableCell>Total Compulsory Bill</TableCell>
+                <TableCell>Total Optional Bill</TableCell>
                 <TableCell>Total Payable</TableCell>
                 <TableCell>Total Paid</TableCell>
                 <TableCell>Penalty</TableCell>

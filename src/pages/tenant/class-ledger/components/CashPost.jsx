@@ -25,7 +25,9 @@ import {
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import { getStudentSchedule, postCashData } from '@/api/tenant/bursary/classLedger';
+import { postCashData } from '@/api/tenant/bursary/bursaryPayment';
+import { getStudentSchedule } from '@/api/tenant/bursary/classLedger';
+import { useNotification } from '@/hooks/useNotification';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -39,6 +41,7 @@ const CashPost = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user_id, invoiceId } = useParams();
+  const notify = useNotification();
 
   /* DATA STATE */
   const [studentInfo, setStudentInfo] = useState(null);
@@ -50,6 +53,7 @@ const CashPost = () => {
   const [installmentalSetting, setInstallmentalSetting] = useState('percentage');
 
   const [targetSessionTermId, setTargetSessionTermId] = useState(null);
+  const [paymentType, setPaymentType] = useState('CASH');
 
   /* FILTER STATE */
   // const [selectedTermId, setSelectedTermId] = useState('');
@@ -142,6 +146,7 @@ const CashPost = () => {
       user_id,
       session_term_id: targetSessionTermId,
       invoice_id: invoiceId || null,
+      payment_type: paymentType,
       items: [...buildItems(compFees), ...buildItems(optFees)],
     };
 
@@ -151,6 +156,8 @@ const CashPost = () => {
         await fetchData();
       } else {
         setError(res.message || 'Failed to post cash');
+        setPosting(false);
+        notify.error(res.message || 'Failed to post cash');
       }
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to post cash');
@@ -697,12 +704,19 @@ const CashPost = () => {
           </Paper>
         )}
 
+        <FormControl size="small" sx={{ minWidth: 180, mb: 2 }}>
+          <Select value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+            <MenuItem value="CASH">Cash</MenuItem>
+            <MenuItem value="BANK_TELLER">Bank Teller</MenuItem>
+          </Select>
+        </FormControl>
+
         {/* POST CASH BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
           <Button
             size="large"
             onClick={handlePostCash}
-            disabled={posting}
+            disabled={posting || [...compFees, ...optFees].filter((f) => f.checked).length === 0}
             sx={{ px: 6, py: 1.5, fontSize: '1rem', fontWeight: 700 }}
           >
             {posting ? <CircularProgress size={22} sx={{ mr: 1 }} /> : null}

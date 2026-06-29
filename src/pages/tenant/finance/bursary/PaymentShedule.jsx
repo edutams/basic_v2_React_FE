@@ -660,17 +660,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     {loadingInvoiceStats ? (
-                      <Skeleton width={72} height={32} />
+                      <Skeleton width={120} height={32} />
                     ) : (
                       <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {item.count}
-                      </Typography>
-                    )}
-                    {loadingInvoiceStats ? (
-                      <Skeleton width={100} height={28} />
-                    ) : (
-                      <Typography variant="body2" fontWeight={600} mb={0.5}>
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.amount)} ({item.count})
                       </Typography>
                     )}
                     <Typography variant="caption" color="text.secondary" display="block">
@@ -718,17 +711,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     {loadingInvoiceStats ? (
-                      <Skeleton width={72} height={32} />
+                      <Skeleton width={120} height={32} />
                     ) : (
                       <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {item.count}
-                      </Typography>
-                    )}
-                    {loadingInvoiceStats ? (
-                      <Skeleton width={100} height={28} />
-                    ) : (
-                      <Typography variant="body2" fontWeight={600} mb={0.5}>
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.amount)}  ({item.count})
                       </Typography>
                     )}
                     <Typography variant="caption" color="text.secondary" display="block">
@@ -955,10 +941,9 @@ const PaymentShedule = () => {
                 </Tabs>
               </Box>
               {canImportSchedule && (
-                <Button variant="contained" size="small" startIcon={ importing ? <CircularProgress color="inherit" /> : <UploadIcon />
-                  }
+                <Button variant="contained" size="small" startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />
+                }
                   onClick={handleImportSchedule}
-                  size="medium"
                   disabled={importing}
                   sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
@@ -1021,7 +1006,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        // fullWidth
+      // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

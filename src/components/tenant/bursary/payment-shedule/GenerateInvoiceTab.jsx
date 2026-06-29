@@ -354,12 +354,7 @@ const GenerateInvoiceTab = ({
                     onClick={() => setSelectedClass(cls.id)}
                     icon={
                       hasInvoiceGenerated ? (
-                        <CheckCircleIcon
-                          sx={{
-                            fontSize: 18,
-                            color: isSelected ? 'white !important' : 'primary.main !important',
-                          }}
-                        />
+                        <CheckCircleIcon sx={{ fontSize: 18 }} />
                       ) : undefined
                     }
                     sx={{
@@ -384,9 +379,10 @@ const GenerateInvoiceTab = ({
                       '&:hover': {
                         bgcolor: isSelected
                           ? 'primary.dark'
-                          : hasInvoiceGenerated
-                            ? 'text.main'
-                            : 'grey.100',
+                          : 'primary.light',
+                      },
+                      '& .MuiChip-icon': {
+                        color: isSelected ? 'white' : 'primary.main',
                       },
                     }}
                   />

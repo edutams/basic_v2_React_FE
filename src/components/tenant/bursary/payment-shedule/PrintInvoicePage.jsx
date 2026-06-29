@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import { fetchStudentPrintInvoice } from '@/api/tenant/bursary/bursarySettingsApi';
 import { useReactToPrint } from 'react-to-print';
@@ -26,6 +26,7 @@ import {
 const PrintInvoicePage = () => {
   const { session_term_id, class_id, id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const printRef = useRef(null);
 
@@ -103,7 +104,11 @@ const PrintInvoicePage = () => {
   const currentTermTotal = compulsoryTotal + optionalTotal;
 
   const handleGoBack = () => {
-    if (window.history.length > 1) {
+    const source = searchParams.get('source');
+    
+    if (source === 'class-ledger') {
+      navigate('/class-ledger');
+    } else if (window.history.length > 1 && !source) {
       navigate(-1);
     } else {
       navigate(`/payment-schedule/invoice/${session_term_id}/${class_id}`);

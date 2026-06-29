@@ -852,7 +852,7 @@ const ClassLedger = () => {
                 const selectedClassObj = classes.find((c) => c.value === classLevel);
                 const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
                 window.open(
-                  `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}`,
+                  `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
                   '_blank'
                 );
               }

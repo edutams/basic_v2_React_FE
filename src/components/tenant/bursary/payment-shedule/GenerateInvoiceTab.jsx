@@ -382,7 +382,7 @@ const GenerateInvoiceTab = ({
                           : 'primary.light',
                       },
                       '& .MuiChip-icon': {
-                        color: isSelected ? 'white' : 'primary.main',
+                        color: isSelected ? 'white' : 'success.dark',
                       },
                     }}
                   />
@@ -407,9 +407,9 @@ const GenerateInvoiceTab = ({
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Button variant="contained" size="small" onClick={() => {
-                const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-                window.open(url, '_blank');
-              }}
+              const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
+              window.open(url, '_blank');
+            }}
               sx={{ fontWeight: 600 }}
             >
               Generate Invoice / {selectedClassName}

@@ -688,6 +688,7 @@ const ClassLedger = () => {
 
           <Grid size={{ xs: 12, md: 1 }}>
             <Button
+              variant="contained"
               fullWidth
               sx={{ height: '40px' }}
               onClick={fetchClassLedgerData}

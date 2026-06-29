@@ -63,11 +63,11 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu, o
         pathname.includes(menu.href) || open
           ? theme.palette.primary.main
           : theme.palette.primary.light,
-      color: pathname.includes(menu.href) || open ? 'white' : theme.palette.primary.main,
+      color: pathname.includes(menu.href) || open ? theme.palette.primary.contrastText : theme.palette.primary.main,
     },
     color:
       open && level < 2
-        ? 'white'
+        ? theme.palette.primary.contrastText
         : level > 1 && open
           ? theme.palette.primary.main
           : theme.palette.text.primary,

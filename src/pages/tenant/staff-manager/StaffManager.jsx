@@ -522,22 +522,22 @@ const StaffManager = () => {
       title: 'Teaching Staff',
       value: stats.teaching,
       icon: <IconUserCheck size={24} />,
-      bgColor: 'success.light',
-      iconColor: 'success.main',
+      bgColor: 'primary.light',
+      iconColor: 'primary.main',
     },
     {
       title: 'Non-Teaching Staff',
       value: stats.nonTeaching,
       icon: <IconUserX size={24} />,
-      bgColor: 'info.light',
-      iconColor: 'info.main',
+      bgColor: 'primary.light',
+      iconColor: 'primary.main',
     },
     {
       title: 'On Leave',
       value: stats.onLeave,
       icon: <IconCalendarOff size={24} />,
-      bgColor: 'warning.light',
-      iconColor: 'warning.main',
+      bgColor: 'primary.light',
+      iconColor: 'primary.main',
     },
   ];
 

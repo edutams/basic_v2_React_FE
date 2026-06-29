@@ -32,6 +32,7 @@ import {
   DialogActions,
   CircularProgress,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -67,6 +68,7 @@ const BCrumb = [
 ];
 
 const SchemeOfWork = () => {
+  const theme = useTheme();
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -221,8 +223,8 @@ const SchemeOfWork = () => {
     } catch (error) {
       notify.error(
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Failed to fetch scheme of work',
+        error.response?.data?.message ||
+        'Failed to fetch scheme of work',
       );
     } finally {
       setLoading(false);
@@ -357,7 +359,7 @@ const SchemeOfWork = () => {
     } catch (e) {
       notify.error(
         e.response?.data?.message ||
-          'Upload failed. Check that the file matches the selected filters.',
+        'Upload failed. Check that the file matches the selected filters.',
       );
     } finally {
       setUploading(false);
@@ -565,22 +567,22 @@ const SchemeOfWork = () => {
     {
       title: 'Topics',
       value: analytics.total_topics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFolder color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
     {
       title: 'Sub Topics',
       value: analytics.total_subtopics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFolder color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
     {
       title: 'Lesson Content',
       value: '0',
-      icon: <IconFileDescription color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFileDescription color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
-    { title: 'Video Content', value: '0', icon: <IconVideo color="#39b65a" />, bgColor: '#eaf7ee' },
+    { title: 'Video Content', value: '0', icon: <IconVideo color={theme.palette.primary.main} />, bgColor: theme.palette.primary.light },
   ];
 
   const drawerFilters = [
@@ -1502,8 +1504,8 @@ const SchemeOfWork = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={ uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
-            }
+          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1610,11 +1612,11 @@ const SchemeOfWork = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={ downloading ? ( <CircularProgress color="inherit" />
-              ) : (
-                <IconDownload size={16} />
-              )
-            }
+          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          ) : (
+            <IconDownload size={16} />
+          )
+          }
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}

@@ -364,7 +364,6 @@ const ParentManagement = () => {
               </Button>
               <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 onClick={handleDownloadTemplate}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Download Template
@@ -372,7 +371,6 @@ const ParentManagement = () => {
 
               <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 onClick={() => setUploadModalOpen(true)}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Upload Template
@@ -637,7 +635,13 @@ const ParentManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" // color={parentToToggle?.status === 'active' ? 'warning' : 'success'} onClick={handleConfirmToggle} autoFocus>
+          <Button
+            variant="contained"
+            size="small"
+            /* color={parentToToggle?.status === 'active' ? 'warning' : 'success'} */
+            onClick={handleConfirmToggle}
+            autoFocus
+          >
             {parentToToggle?.status === 'active' ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>
@@ -664,9 +668,9 @@ const ParentManagement = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setImpersonateGuardianConfirmOpen(false);
-              setGuardianToImpersonate(null);
-            }}
+            setImpersonateGuardianConfirmOpen(false);
+            setGuardianToImpersonate(null);
+          }}
           >
             Cancel
           </Button>

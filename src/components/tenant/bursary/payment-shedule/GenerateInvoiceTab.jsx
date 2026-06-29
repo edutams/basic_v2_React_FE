@@ -384,7 +384,7 @@ const GenerateInvoiceTab = ({
                         bgcolor: isSelected
                           ? 'primary.dark'
                           : hasInvoiceGenerated
-                            ? 'primary.main'
+                            ? 'text.main'
                             : 'grey.100',
                       },
                     }}

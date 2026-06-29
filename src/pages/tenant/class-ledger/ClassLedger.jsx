@@ -57,6 +57,7 @@ import {
   fetchClassAndArmsByProgramme,
   fetchProgrammes,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { VisibilityOutlined as VisibilityOutlinedIcon } from '@mui/icons-material';
 import {
   fetchClassLedgerAnalytics,
   fetchDrilldownStudents,
@@ -115,6 +116,7 @@ const ClassLedger = () => {
             value: c.class_arm_id,
             label: c.class_code,
             arm_names: c.arm_names,
+            class_id: c.class_id,
           })),
         );
         setClassLevel(''); // reset class when programme changes
@@ -841,6 +843,23 @@ const ClassLedger = () => {
           >
             <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Update Invoice
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                const selectedClassObj = classes.find((c) => c.value === classLevel);
+                const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
+                window.open(
+                  `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}`,
+                  '_blank'
+                );
+              }
+            }}
+          >
+            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+            View Invoice
           </MenuItem>
 
           <MenuItem

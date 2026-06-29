@@ -363,11 +363,14 @@ const GenerateInvoiceTab = ({
                       ) : undefined
                     }
                     sx={{
+                      // bgcolor: isSelected
+                      //   ? 'primary.main'
+                      //   : hasInvoiceGenerated
+                      //     ? 'primary.light'
+                      //     : 'white',
                       bgcolor: isSelected
                         ? 'primary.main'
-                        : hasInvoiceGenerated
-                          ? 'primary.light'
-                          : 'white',
+                        : 'white',
                       color: isSelected
                         ? 'white'
                         : hasInvoiceGenerated

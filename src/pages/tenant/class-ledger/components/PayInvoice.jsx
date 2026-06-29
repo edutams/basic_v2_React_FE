@@ -653,7 +653,10 @@ const PayInvoice = () => {
             </Typography>
           </Box>
 
-          <Button variant="contained" size="small" onClick={() => navigate('/class-ledger')}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate('/class-ledger')}
             sx={{
               position: 'absolute',
               top: 12,
@@ -859,7 +862,7 @@ const PayInvoice = () => {
                     py: 1.5,
                     fontWeight: 800,
                     color: isDark ? '#60a5fa' : '#1e40af',
-                    fontSize: '1.25rem',
+                    fontSize: '1.5rem',
                   }}
                 >
                   ₦{format(compTotal)}
@@ -901,7 +904,10 @@ const PayInvoice = () => {
                 />
               )}
               {owingInfo?.owing_status !== 'owing' && (
-                <Button variant="contained" size="small" startIcon={<AddIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
                   onClick={handleOpenOptionalModal}
                   sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
@@ -1069,8 +1075,8 @@ const PayInvoice = () => {
                     sx={{
                       py: 1.5,
                       fontWeight: 800,
-                      color: isDark ? '#94a3b8' : '#64748b',
-                      fontSize: '1.25rem',
+                      color: isDark ? '#60a5fa' : '#1e40af',
+                      fontSize: '1.5rem',
                     }}
                   >
                     ₦{format(optTotal)}
@@ -1173,16 +1179,32 @@ const PayInvoice = () => {
           </Box>
 
           {/* Right — Pay button */}
-          <Button variant="contained" size="small" disabled={grandTotal === 0} onClick={() => {
-              if (grandTotal <= 0) {
-                notify.error('Please select at least one item to pay');
-                return;
-              }
-              setConfirmModalOpen(true);
-            }}
-          >
-            Pay Now — ₦{format(grandTotal)} &gt;
-          </Button>
+          {/* Right side - Amount bigger + button under it */}
+          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+            <Typography variant="h4" fontWeight={800} color="primary.main" sx={{ mb: 1 }}>
+              ₦{format(grandTotal)}
+            </Typography>
+
+            <Button
+              variant="contained"
+              disabled={grandTotal === 0}
+              onClick={() => {
+                if (grandTotal <= 0) {
+                  notify.error('Please select at least one item to pay');
+                  return;
+                }
+                setConfirmModalOpen(true);
+              }}
+              sx={{
+                px: 4,
+                py: 1.2,
+                fontSize: '1.05rem',
+                fontWeight: 700,
+              }}
+            >
+              Pay Now
+            </Button>
+          </Box>
         </Paper>
       </Box>
 
@@ -1244,8 +1266,13 @@ const PayInvoice = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={() => {
+          <Button variant="contained" size="small" onClick={() => setConfirmModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();
             }}
@@ -1408,8 +1435,16 @@ const PayInvoice = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleAddOptionalPayments}
+            disabled={selectedOptionalIds.size === 0}
+            sx={{ fontWeight: 600 }}
+          >
             Add
           </Button>
         </DialogActions>

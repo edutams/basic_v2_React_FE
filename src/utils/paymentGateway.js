@@ -62,10 +62,10 @@ const skoolpay = (data) => {
         onClose: () => console.log("SkoolPay closed"),
         onError: (error) => console.error("SkoolPay Error:", error),
     };
+    const skoolPay = new window.SkoolPay(options);
 
-    // Assuming SkoolPay script is loaded globally
-    if (window.SkoolPay) {
-        const skoolPay = new window.SkoolPay(options);
+    //Assuming SkoolPay script is loaded globally
+    if (skoolPay) {
         skoolPay.init();
     } else {
         console.error("SkoolPay SDK not loaded");

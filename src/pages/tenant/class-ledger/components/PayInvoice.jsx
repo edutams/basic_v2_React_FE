@@ -653,9 +653,7 @@ const PayInvoice = () => {
             </Typography>
           </Box>
 
-          <Button
-            size="small"
-            onClick={() => navigate('/class-ledger')}
+          <Button variant="contained" size="small" onClick={() => navigate('/class-ledger')}
             sx={{
               position: 'absolute',
               top: 12,
@@ -903,10 +901,7 @@ const PayInvoice = () => {
                 />
               )}
               {owingInfo?.owing_status !== 'owing' && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<AddIcon />}
+                <Button variant="contained" size="small" startIcon={<AddIcon />}
                   onClick={handleOpenOptionalModal}
                   sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
@@ -1178,9 +1173,7 @@ const PayInvoice = () => {
           </Box>
 
           {/* Right — Pay button */}
-          <Button
-            disabled={grandTotal === 0}
-            onClick={() => {
+          <Button variant="contained" size="small" disabled={grandTotal === 0} onClick={() => {
               if (grandTotal <= 0) {
                 notify.error('Please select at least one item to pay');
                 return;
@@ -1251,9 +1244,8 @@ const PayInvoice = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
+          <Button variant="contained" size="small" onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();
             }}
@@ -1416,12 +1408,8 @@ const PayInvoice = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button
-            onClick={handleAddOptionalPayments}
-            disabled={selectedOptionalIds.size === 0}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
             Add
           </Button>
         </DialogActions>

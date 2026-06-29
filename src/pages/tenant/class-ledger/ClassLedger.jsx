@@ -590,9 +590,7 @@ const ClassLedger = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handleDownloadExcel}
@@ -600,9 +598,7 @@ const ClassLedger = () => {
                 View In CSV Format
               </Button>
 
-              <Button
-                variant="outlined"
-                startIcon={<UploadIcon />}
+              <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handlePrintPaymentList}
@@ -687,13 +683,7 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ height: '40px' }}
-              onClick={fetchClassLedgerData}
-              disabled={!programme || !classLevel}
-            >
+            <Button variant="contained" size="small" fullWidth onClick={fetchClassLedgerData} disabled={!programme || !classLevel}>
               Fetch
             </Button>
           </Grid>
@@ -926,17 +916,14 @@ const ClassLedger = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => {
+          <Button variant="contained" size="small" color="inherit" onClick={() => {
               setPayForStudentConfirmOpen(false);
               setStudentToPayFor(null);
             }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={async () => {
+          <Button variant="contained" size="small" onClick={async () => {
               if (!studentToPayFor) return;
 
               const studentUserId =

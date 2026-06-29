@@ -295,8 +295,7 @@ const AdmissionLetter = () => {
         mb={3}
       >
         <Box>
-          <Button
-            startIcon={<ArrowBackIcon />}
+          <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
             sx={{ color: 'text.secondary', fontWeight: 500, mb: 0.5 }}
           >
@@ -312,18 +311,16 @@ const AdmissionLetter = () => {
         </Box>
 
         <Box display="flex" gap={1} flexWrap="wrap">
-          {/* <Button
-            
-            startIcon={<PrintIcon />}
+          {/* <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ fontWeight: 600 }}
           >
             Print
           </Button> */}
-          {/* <Button  startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
+          {/* <Button variant="contained" size="small" startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
             Share
           </Button> */}
-          <Button startIcon={<DownloadIcon />} onClick={handleDownload} sx={{ fontWeight: 700 }}>
+          <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handleDownload} sx={{ fontWeight: 700 }}>
             Download PDF
           </Button>
         </Box>

@@ -26,12 +26,7 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
       <Typography align="center" variant="h4" mb={4}>
         {message}
       </Typography>
-      <Button
-        color="primary"
-        component={Link}
-        to={isTenantSubdomain ? '/dashboard' : '/agent'}
-        disableElevation
-      >
+      <Button variant="contained" size="small" color="primary" component={Link} to={isTenantSubdomain ? '/dashboard' : '/agent'} disableElevation>
         Go Back
       </Button>
     </Container>

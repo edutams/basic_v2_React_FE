@@ -577,9 +577,7 @@ const EditOptionalPaymentModal = ({
                                     </IconButton>
                                   </Box>
                                 ))}
-                                <Button
-                                  size="small"
-                                  startIcon={<AddIcon />}
+                                <Button variant="contained" size="small" startIcon={<AddIcon />}
                                   onClick={() => handleAddOption(cls.id)}
                                   variant="outlined"
                                   sx={{ alignSelf: 'flex-start' }}
@@ -627,14 +625,10 @@ const EditOptionalPaymentModal = ({
         )}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined" disabled={saving}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            sx={{ fontWeight: 600 }}
-            disabled={loadingClasses || saving}
-          >
+          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
             {saving ? 'Saving...' : 'Update Payment Schedule'}
           </Button>
         </Stack>
@@ -680,19 +674,12 @@ const EditOptionalPaymentModal = ({
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setDeleteDialog({ open: false, classSchedule: null })}
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeleteDialog({ open: false, classSchedule: null })}
             disabled={deleting}
           >
             Cancel
           </Button>
-          <Button
-            color="error"
-            onClick={handleDeleteConfirm}
-            disabled={deleting}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
             {deleting ? 'Deleting...' : 'Delete Schedule'}
           </Button>
         </DialogActions>
@@ -746,13 +733,11 @@ const EditOptionalPaymentModal = ({
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setDeactivateDialog({ open: false, classData: null })}
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeactivateDialog({ open: false, classData: null })}
           >
             Cancel
           </Button>
-          <Button color="warning" onClick={handleDeactivateConfirm} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" color="warning" onClick={handleDeactivateConfirm} sx={{ fontWeight: 600 }}>
             Deactivate Class
           </Button>
         </DialogActions>

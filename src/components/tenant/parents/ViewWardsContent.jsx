@@ -173,7 +173,7 @@ const ViewWardsContent = ({ guardian, onClose }) => {
       </TableContainer>
 
       <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button size="small" onClick={onClose}>
+        <Button variant="contained" size="small" onClick={onClose}>
           Close
         </Button>
       </Box>

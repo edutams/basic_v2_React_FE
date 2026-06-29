@@ -84,9 +84,7 @@ const EnrolledWardCard = ({ ward, onViewDetails }) => (
       </Box>
     </Box>
 
-    <Button
-      size="small"
-      endIcon={<ArrowForwardIcon />}
+    <Button variant="contained" size="small" endIcon={<ArrowForwardIcon />}
       onClick={() => onViewDetails?.(ward)}
       sx={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.75rem' }}
     >

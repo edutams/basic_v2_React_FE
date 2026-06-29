@@ -727,11 +727,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               </Typography>
               <Stack spacing={0.75}>
                 {INVOICE_PLACEHOLDER_FIELDS.map((field) => (
-                  <Button
-                    key={field.value}
-                    size="small"
-                    fullWidth
-                    onClick={() => handleInsertPlaceholder(field.value)}
+                  <Button variant="contained" size="small" key={field.value} fullWidth onClick={() => handleInsertPlaceholder(field.value)}
                     sx={{
                       justifyContent: 'flex-start',
                       textTransform: 'none',
@@ -754,12 +750,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           </Grid>
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              size="small"
-              color="primary"
-              onClick={handleSendInvoice}
-              disabled={sendingInvoice || selectedParents.length === 0}
-            >
+            <Button variant="contained" size="small" color="primary" onClick={handleSendInvoice} disabled={sendingInvoice || selectedParents.length === 0}>
               {sendingInvoice ? (
                 <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               ) : null}
@@ -1222,23 +1213,18 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               },
             }}
           />
-          <Button color="primary" onClick={handleSearch} startIcon={<SearchIcon />} size="small">
+          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} size="small">
             Search
           </Button>
         </Box>
 
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-            <Button
-              size="small"
-              onClick={handleGenerateExcelInvoice}
-              disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}
-            >
+            <Button variant="contained" size="small" onClick={handleGenerateExcelInvoice} disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}>
               {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
             </Button>
             {excelBlobUrl && (
-              <Button
-                endIcon={<DownloadIcon />}
+              <Button variant="contained" size="small" endIcon={<DownloadIcon />}
                 variant="outlined"
                 component="a"
                 href={excelBlobUrl}
@@ -1283,13 +1269,10 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEditDialog} disabled={savingEdit}>
+          <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSaveEdit}
-            disabled={savingEdit}
-            startIcon={savingEdit ? <CircularProgress size={14} /> : null}
+          <Button variant="contained" size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
           >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>

@@ -183,7 +183,7 @@ const ApplicationTracker = () => {
           <Typography variant="h6" gutterBottom>
             Admission not found
           </Typography>
-          <Button onClick={() => navigate('/my-applications')} sx={{ mt: 2 }}>
+          <Button variant="contained" size="small" onClick={() => navigate('/my-applications')} sx={{ mt: 2 }}>
             Back to Applications
           </Button>
         </Paper>
@@ -227,8 +227,7 @@ const ApplicationTracker = () => {
         <Typography variant="h5" fontWeight={800}>
           Application Tracker
         </Typography>
-        <Button
-          startIcon={<ArrowBackIcon />}
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/admission_manager/my_applications')}
           sx={{ color: 'text.secondary', fontWeight: 500 }}
         >
@@ -293,10 +292,10 @@ const ApplicationTracker = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} disabled={editLoading}>
+          <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)} disabled={editLoading}>
             No
           </Button>
-          <Button onClick={confirmEditForm} disabled={editLoading}>
+          <Button variant="contained" size="small" onClick={confirmEditForm} disabled={editLoading}>
             Yes
           </Button>
         </DialogActions>

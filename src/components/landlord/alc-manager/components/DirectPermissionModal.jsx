@@ -211,8 +211,8 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} color="primary">
+        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={handleSave} color="primary">
           Save Permissions
         </Button>
       </DialogActions>

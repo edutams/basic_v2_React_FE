@@ -955,9 +955,7 @@ const PaymentShedule = () => {
                 </Tabs>
               </Box>
               {canImportSchedule && (
-                <Button
-                  startIcon={
-                    importing ? <CircularProgress size={18} color="inherit" /> : <UploadIcon />
+                <Button variant="contained" size="small" startIcon={ importing ? <CircularProgress color="inherit" /> : <UploadIcon />
                   }
                   onClick={handleImportSchedule}
                   size="medium"
@@ -1048,13 +1046,10 @@ const PaymentShedule = () => {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setImportDialogOpen(false)} disabled={importing}>
+          <Button variant="contained" size="small" onClick={() => setImportDialogOpen(false)} disabled={importing}>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmImportSchedule}
-            disabled={importing}
-            startIcon={importing ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
+          <Button variant="contained" size="small" onClick={handleConfirmImportSchedule} disabled={importing} startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
           >
             {importing ? 'Importing...' : 'Import Schedule'}
           </Button>

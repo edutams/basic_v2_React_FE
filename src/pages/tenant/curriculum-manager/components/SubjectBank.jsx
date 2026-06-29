@@ -702,11 +702,7 @@ const SubjectBank = () => {
                   />
                 </Box>
 
-                <Button
-                  size="small"
-                  onClick={handleOpenAddSubjectModal}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
-                >
+                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   Add Subject
                 </Button>
               </Box>
@@ -851,11 +847,7 @@ const SubjectBank = () => {
                     </Select>
                   </FormControl>
 
-                  <Button
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 'auto' } }}
-                    onClick={handleOpenCreateSubjectGroupModal}
-                  >
+                  <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={handleOpenCreateSubjectGroupModal}>
                     Create Group
                   </Button>
                 </Box>
@@ -1121,19 +1113,11 @@ const SubjectBank = () => {
           </DialogContent>
 
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseAddSubjectModal}
-              disabled={loadingCreateSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseAddSubjectModal} disabled={loadingCreateSubject}>
               Cancel
             </Button>
 
-            <Button
-              size="small"
-              onClick={handleCreateSubject}
-              disabled={loadingCreateSubject}
-              startIcon={loadingCreateSubject ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" onClick={handleCreateSubject} disabled={loadingCreateSubject} startIcon={loadingCreateSubject ? <CircularProgress /> : null}
             >
               {loadingCreateSubject ? 'Adding...' : 'Add Subject'}
             </Button>
@@ -1276,18 +1260,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseEditSubjectModal}
-              disabled={loadingUpdateSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal} disabled={loadingUpdateSubject}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleUpdateSubject}
-              disabled={loadingUpdateSubject}
-              startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" onClick={handleUpdateSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
             >
               {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
             </Button>
@@ -1309,19 +1285,10 @@ const SubjectBank = () => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseDeleteSubjectModal}
-              disabled={loadingDeleteSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseDeleteSubjectModal} disabled={loadingDeleteSubject}>
               Cancel
             </Button>
-            <Button
-              color="error"
-              size="small"
-              onClick={handleDeleteSubject}
-              disabled={loadingDeleteSubject}
-              startIcon={loadingDeleteSubject ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" color="error" onClick={handleDeleteSubject} disabled={loadingDeleteSubject} startIcon={loadingDeleteSubject ? <CircularProgress /> : null}
             >
               {loadingDeleteSubject ? 'Deleting...' : 'Delete'}
             </Button>
@@ -1531,18 +1498,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseCreateSubjectGroupModal}
-              disabled={loadingCreateGroup}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseCreateSubjectGroupModal} disabled={loadingCreateGroup}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleCreateSubjectGroup}
-              disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2}
-              startIcon={loadingCreateGroup ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" onClick={handleCreateSubjectGroup} disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingCreateGroup ? <CircularProgress /> : null}
             >
               {loadingCreateGroup ? 'Creating...' : 'Create Group'}
             </Button>
@@ -1752,18 +1711,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseEditSubjectGroupModal}
-              disabled={loadingUpdateGroup}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseEditSubjectGroupModal} disabled={loadingUpdateGroup}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleUpdateSubjectGroup}
-              disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2}
-              startIcon={loadingUpdateGroup ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" onClick={handleUpdateSubjectGroup} disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingUpdateGroup ? <CircularProgress /> : null}
             >
               {loadingUpdateGroup ? 'Updating...' : 'Update Group'}
             </Button>

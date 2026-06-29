@@ -834,7 +834,7 @@ const StaffManager = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button variant="contained" size="small" onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
             Close
           </Button>
         </DialogActions>
@@ -860,20 +860,14 @@ const StaffManager = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => {
+          <Button variant="contained" size="small" color="inherit" onClick={() => {
               setImpersonateConfirmOpen(false);
               setStaffToImpersonate(null);
             }}
           >
             Cancel
           </Button>
-          <Button
-            color="inherit"
-            onClick={handleConfirmedImpersonateStaff}
-            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}
-          >
+          <Button variant="contained" size="small" color="inherit" onClick={handleConfirmedImpersonateStaff} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}>
             Yes, Login As
           </Button>
         </DialogActions>

@@ -123,9 +123,7 @@ const SubmitStep = ({
         )}
 
         <Box display="flex" sx={{ mt: 1, mb: 2 }}>
-          <Button
-            color="inherit"
-            startIcon={<ArrowBackIcon />}
+          <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />}
             onClick={onBack}
             disabled={isLoading}
           >

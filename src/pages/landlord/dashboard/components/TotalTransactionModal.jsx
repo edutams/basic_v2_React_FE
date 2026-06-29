@@ -298,16 +298,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
               </Select>
             </Box>
 
-            <Button
-              sx={{
-                height: 40,
-                px: 3,
-                borderRadius: '6px',
-                bgcolor: 'primary.main',
-                color: '#fff',
-                '&:hover': { bgcolor: 'primary.dark' },
-              }}
-            >
+            <Button variant="contained" size="small" sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.dark' }, }}>
               Filter
             </Button>
           </Stack>

@@ -38,10 +38,10 @@ const SubjectForm = ({ initialValues = {}, onSubmit, onCancel, submitText, isLoa
         </FormControl>
 
         <Box display="flex" justifyContent="flex-end">
-          <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
+          <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button variant="contained" size="small" type="submit" disabled={isLoading}>
             {submitText}
           </Button>
         </Box>

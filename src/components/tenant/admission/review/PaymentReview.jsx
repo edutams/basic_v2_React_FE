@@ -130,9 +130,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
           </Box>
         </Box>
         <Box display="flex" gap={1}>
-          <Button
-            size="small"
-            startIcon={<PrintIcon />}
+          <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{
               fontSize: 11,
@@ -143,9 +141,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
           >
             Print
           </Button>
-          <Button
-            size="small"
-            startIcon={<DownloadIcon />}
+          <Button variant="contained" size="small" startIcon={<DownloadIcon />}
             onClick={handleDownload}
             sx={{
               fontSize: 11,

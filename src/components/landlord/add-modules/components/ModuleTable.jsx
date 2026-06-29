@@ -166,8 +166,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
           gap={1}
         >
           <Typography variant="h5">Manage Modules</Typography>
-          <Button
-            startIcon={<IconFilter size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconFilter />}
             onClick={() => setFilterDrawerOpen(true)}
             size="small"
             sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}

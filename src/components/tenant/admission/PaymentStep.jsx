@@ -170,20 +170,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false }) => {
           Have you made the Bank Transfer
         </Typography>
 
-        <Button
-          fullWidth
-          onClick={onNext}
-          disabled={isLoading}
-          sx={{
-            bgcolor: '#8B0000',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '1rem',
-            py: 1.5,
-            maxWidth: 480,
-            '&:hover': { bgcolor: '#6B0000' },
-          }}
-        >
+        <Button variant="contained" size="small" fullWidth onClick={onNext} disabled={isLoading} sx={{ bgcolor: '#8B0000', color: '#fff', fontWeight: 700, fontSize: '1rem', py: 1.5, maxWidth: 480, '&:hover': { bgcolor: '#6B0000' }, }}>
           Confirm Bank Transfer
         </Button>
 
@@ -202,7 +189,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false }) => {
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-        <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
+        <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
       </Box>

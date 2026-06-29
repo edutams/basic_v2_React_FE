@@ -134,24 +134,21 @@ const TeachingStaffTab = ({
                 width: { xs: '100%', sm: 'auto' },
               }}
             >
-              <Button
-                fullWidth={{ xs: true, sm: false }}
-                startIcon={<IconPlus size={18} />}
+              <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<IconPlus />}
                 onClick={handleAddStaff}
               >
                 Add Teaching Staff
               </Button>
 
               <ButtonGroup fullWidth={{ xs: true, sm: false }}>
-                <Button
-                  startIcon={<IconPlus size={18} />}
+                <Button variant="contained" size="small" startIcon={<IconPlus />}
                   sx={{ textTransform: 'none' }}
                   onClick={handleUploadStaff}
                 >
                   Multiple Teachers Upload
                 </Button>
 
-                <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
+                <Button variant="contained" size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
                   <IconChevronDown size={16} />
                 </Button>
               </ButtonGroup>

@@ -498,10 +498,10 @@ const AcademicInfoForm = ({
 
       {/* Footer — matches ParentForm action row */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-        <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
+        <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button type="submit" disabled={!isFormValid || isLoading}>
+        <Button variant="contained" size="small" type="submit" disabled={!isFormValid || isLoading}>
           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>

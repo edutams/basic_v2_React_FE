@@ -248,10 +248,10 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
         </Grid>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} disabled={loading}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${paymentName ? 'Update' : 'Add'} Payment Name`}
           </Button>
         </Stack>

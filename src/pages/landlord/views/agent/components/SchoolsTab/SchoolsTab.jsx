@@ -391,28 +391,21 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             Only Level 1 organizations can approve or reject applications
           </Typography>
         )}
-        <Button
-          onClick={onClose}
-          color="inherit"
-          sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}
-        >
+        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}>
           Close
         </Button>
         {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
               <>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Reject
                 </Button>
-                <Button
-                  startIcon={<CheckCircleOutlineIcon />}
+                <Button variant="contained" size="small" startIcon={<CheckCircleOutlineIcon />}
                   onClick={() => onApprove(prospect.id)}
                   disabled={loading}
                   sx={{
@@ -425,17 +418,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </>
             ) : (
               <>
-                <Button
-                  color="inherit"
-                  onClick={() => setShowRejectInput(false)}
+                <Button variant="contained" size="small" color="inherit" onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setOpenConfirmReject(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -1084,8 +1073,7 @@ const SchoolsTab = ({
             <Box />
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
               {activeTab === 0 && can('landlord.school.create') && (
-                <Button
-                  startIcon={<IconUserPlus size={18} />}
+                <Button variant="contained" size="small" startIcon={<IconUserPlus />}
                   onClick={() => setOpenAddModal(true)}
                   sx={{
                     textTransform: 'none',
@@ -1096,8 +1084,7 @@ const SchoolsTab = ({
                   Add New School
                 </Button>
               )}
-              <Button
-                startIcon={<IconAdjustmentsHorizontal size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
                   textTransform: 'none',

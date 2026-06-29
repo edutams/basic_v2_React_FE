@@ -171,7 +171,7 @@ const SchoolsView = ({ selectedAgent }) => {
           }}
         />
 
-        <Button onClick={handleSearch} sx={{ height: 40 }}>
+        <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
           Search
         </Button>
       </Box>

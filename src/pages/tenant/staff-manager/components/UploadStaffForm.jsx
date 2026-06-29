@@ -43,8 +43,7 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
       </Typography>
 
       {onDownloadTemplate && (
-        <Button
-          startIcon={<IconDownload size={16} />}
+        <Button variant="contained" size="small" startIcon={<IconDownload />}
           onClick={onDownloadTemplate}
           fullWidth
           sx={{ mb: 2, textTransform: 'none' }}
@@ -89,11 +88,10 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={uploading}>
+        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={uploading}>
           {result?.severity === 'success' ? 'Close' : 'Cancel'}
         </Button>
-        <Button
-          startIcon={<IconUpload size={16} />}
+        <Button variant="contained" size="small" startIcon={<IconUpload />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
         >

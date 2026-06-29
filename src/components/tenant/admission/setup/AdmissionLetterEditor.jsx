@@ -136,11 +136,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                 placement="right"
               >
                 <span>
-                  <Button
-                    size="small"
-                    fullWidth
-                    disabled={readOnly}
-                    onClick={() => handleInsertPlaceholder(field.value)}
+                  <Button variant="contained" size="small" fullWidth disabled={readOnly} onClick={() => handleInsertPlaceholder(field.value)}
                     sx={{
                       justifyContent: 'flex-start',
                       textTransform: 'none',
@@ -222,17 +218,11 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
               Admission Letter
             </Typography>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant={activeTab === 'editor' ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setActiveTab('editor')}
+              <Button variant="contained" size="small" onClick={() => setActiveTab('editor')}
               >
                 Letter Editor
               </Button>
-              <Button
-                variant={activeTab === 'preview' ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setActiveTab('preview')}
+              <Button variant="contained" size="small" onClick={() => setActiveTab('preview')}
               >
                 Live Preview
               </Button>
@@ -314,44 +304,14 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
               alignItems="center"
             >
               <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
-                <Button
-                  
-                  size="small"
-                  sx={{
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    fontSize: { xs: 10, sm: 11, md: 12 },
-                    px: { xs: 1, sm: 1.5, md: 2 },
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <Button variant="contained" size="small" sx={{ fontWeight: 600, textTransform: 'none', fontSize: { xs: 10, sm: 11, md: 12 }, px: { xs: 1, sm: 1.5, md: 2 }, whiteSpace: 'nowrap', }}>
                   Save Template
                 </Button>
-                <Button
-                  
-                  size="small"
-                  sx={{
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    fontSize: { xs: 10, sm: 11, md: 12 },
-                    px: { xs: 1, sm: 1.5, md: 2 },
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <Button variant="contained" size="small" sx={{ fontWeight: 600, textTransform: 'none', fontSize: { xs: 10, sm: 11, md: 12 }, px: { xs: 1, sm: 1.5, md: 2 }, whiteSpace: 'nowrap', }}>
                   Send Test Email
                 </Button>
               </Stack>
-              <Button
-                
-                size="small"
-                sx={{
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  fontSize: { xs: 10, sm: 11, md: 12 },
-                  px: { xs: 1, sm: 1.5, md: 2 },
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <Button variant="contained" size="small" sx={{ fontWeight: 700, textTransform: 'none', fontSize: { xs: 10, sm: 11, md: 12 }, px: { xs: 1, sm: 1.5, md: 2 }, whiteSpace: 'nowrap', }}>
                 Save & Preview
               </Button>
             </Stack>

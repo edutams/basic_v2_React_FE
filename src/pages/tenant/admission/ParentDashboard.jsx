@@ -293,16 +293,7 @@ const ParentDashboard = () => {
                 </Typography>
               </Box>
             </Box>
-            <Button
-              sx={{
-                bgcolor: '#DFFF7D',
-                color: '#1a1a1a',
-                fontWeight: 700,
-                borderRadius: 2,
-                '&:hover': { bgcolor: '#cdf84e' },
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <Button variant="contained" size="small" sx={{ bgcolor: '#DFFF7D', color: '#1a1a1a', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#cdf84e' }, whiteSpace: 'nowrap', }}>
               Access
             </Button>
           </Paper>

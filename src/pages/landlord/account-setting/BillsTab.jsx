@@ -114,8 +114,8 @@ const BillsTab = () => {
               </Stack>
 
               <Stack direction="row" spacing={2}>
-                <Button color="primary">Change Plan</Button>
-                <Button color="error">Reset Plan</Button>
+                <Button variant="contained" size="small" color="primary">Change Plan</Button>
+                <Button variant="contained" size="small" color="error">Reset Plan</Button>
               </Stack>
             </CardContent>
           </BlankCard>
@@ -157,17 +157,17 @@ const BillsTab = () => {
                 If you updated your payment method, it will only be dislpayed here after your next
                 billing cycle.
               </Typography>
-              <Button color="error">Cancel Subscription</Button>
+              <Button variant="contained" size="small" color="error">Cancel Subscription</Button>
             </CardContent>
           </BlankCard>
         </Grid>
       </Grid>
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={3}>
-        <Button size="large" color="primary">
+        <Button variant="contained" size="small" color="primary">
           Save
         </Button>
-        <Button size="large" color="error">
+        <Button variant="contained" size="small" color="error">
           Cancel
         </Button>
       </Stack>

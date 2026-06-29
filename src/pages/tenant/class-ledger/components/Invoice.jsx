@@ -647,9 +647,7 @@ const Invoice = () => {
           </Box>
 
           {/* BACK BUTTON */}
-          <Button
-            size="small"
-            onClick={() => navigate('/class-ledger')}
+          <Button variant="contained" size="small" onClick={() => navigate('/class-ledger')}
             sx={{
               position: 'absolute',
               top: 12,
@@ -1180,10 +1178,7 @@ const Invoice = () => {
                   },
                 }}
               />
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddIcon />}
+              <Button variant="contained" size="small" startIcon={<AddIcon />}
                 onClick={handleOpenOptionalModal}
                 sx={{
                   textTransform: 'none',
@@ -1529,9 +1524,7 @@ const Invoice = () => {
 
         {/* UPDATE INVOICE BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Button
-            size="large"
-            onClick={() => setConfirmDialogOpen(true)}
+          <Button variant="contained" size="small" onClick={() => setConfirmDialogOpen(true)}
             disabled={loading || updating}
             sx={{
               px: 6,
@@ -1714,12 +1707,8 @@ const Invoice = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button
-            onClick={handleAddOptionalPayments}
-            disabled={selectedOptionalIds.size === 0}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
             Add
           </Button>
         </DialogActions>
@@ -1737,11 +1726,10 @@ const Invoice = () => {
           <Typography variant="body1">Are you sure you want to Update the Invoice</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={() => setConfirmDialogOpen(false)}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmDialogOpen(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
+          <Button variant="contained" size="small" onClick={() => {
               setConfirmDialogOpen(false);
               handleUpdateInvoice();
             }}
@@ -1776,8 +1764,8 @@ const Invoice = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
-          <Button onClick={handleGlobalModalConfirm}>Apply</Button>
+          <Button variant="contained" size="small" onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleGlobalModalConfirm}>Apply</Button>
         </DialogActions>
       </Dialog>
 

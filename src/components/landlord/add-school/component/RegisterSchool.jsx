@@ -714,14 +714,10 @@ const RegisterSchoolForm = ({
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        <Button onClick={onCancel} disabled={loading}>
+        <Button variant="contained" size="small" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          color="primary"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+        <Button variant="contained" size="small" type="submit" color="primary" disabled={loading} startIcon={loading ? <CircularProgress color="inherit" /> : null}
         >
           {loading
             ? 'Processing...'

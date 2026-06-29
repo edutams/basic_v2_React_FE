@@ -1153,8 +1153,7 @@ const Agent = () => {
                   </Box>
                   <Typography variant="h5">List of Organizations</Typography>
                 </Stack>
-                <Button
-                  startIcon={<AddIcon />}
+                <Button variant="contained" size="small" startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{
                     fontSize: {
@@ -1185,8 +1184,7 @@ const Agent = () => {
                 justifyContent: 'flex-end',
               }}
             >
-              <Button
-                startIcon={<IconAdjustmentsHorizontal size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
                   textTransform: 'none',
@@ -1573,16 +1571,14 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button
-              color="inherit"
-              onClick={() => {
+            <Button variant="contained" size="small" color="inherit" onClick={() => {
                 setImpersonateConfirmOpen(false);
                 setAgentToImpersonate(null);
               }}
             >
               Cancel
             </Button>
-            <Button onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
+            <Button variant="contained" size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
           </DialogActions>
         </Dialog>
 
@@ -1597,10 +1593,10 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button color="inherit" onClick={handleCancelDelete}>
+            <Button variant="contained" size="small" color="inherit" onClick={handleCancelDelete}>
               Cancel
             </Button>
-            <Button color="error" onClick={handleConfirmDelete}>
+            <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
               Yes, Delete
             </Button>
           </DialogActions>
@@ -1623,10 +1619,10 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button color="inherit" onClick={handleCancelDeleteOrganization}>
+            <Button variant="contained" size="small" color="inherit" onClick={handleCancelDeleteOrganization}>
               Cancel
             </Button>
-            <Button color="error" onClick={handleConfirmDeleteOrganization}>
+            <Button variant="contained" size="small" color="error" onClick={handleConfirmDeleteOrganization}>
               Yes, Delete
             </Button>
           </DialogActions>

@@ -404,8 +404,7 @@ const HolidaySection = ({ refreshKey }) => {
         title={
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h5">Holidays</Typography>
-            <Button
-              startIcon={<IconPlus size={16} />}
+            <Button variant="contained" size="small" startIcon={<IconPlus />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
               size="small"
@@ -550,7 +549,7 @@ const HolidaySection = ({ refreshKey }) => {
               </Alert>
             )}
             <Box display="flex" justifyContent="flex-end">
-              <Button startIcon={<IconPlus size={16} />} onClick={handleAddRow} size="small">
+              <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={handleAddRow} size="small">
                 Add More
               </Button>
             </Box>
@@ -625,10 +624,10 @@ const HolidaySection = ({ refreshKey }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={handleCloseModal}>
+          <Button variant="contained" size="small" onClick={handleCloseModal}>
             Cancel
           </Button>
-          <Button size="small" onClick={handleSaveHolidays} disabled={saving}>
+          <Button variant="contained" size="small" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>
@@ -641,8 +640,8 @@ const HolidaySection = ({ refreshKey }) => {
           <Typography>Are you sure you want to delete this holiday?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDelete({ open: false, id: null })}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmDelete}>
+          <Button variant="contained" size="small" onClick={() => setConfirmDelete({ open: false, id: null })}>Cancel</Button>
+          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

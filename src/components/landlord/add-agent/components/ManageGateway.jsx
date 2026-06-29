@@ -304,13 +304,10 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onClose} color="inherit">
+          <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}
-          >
+          <Button variant="contained" size="small" type="submit" disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}>
             {formik.isSubmitting ? 'Saving...' : 'Create Payment Gateway'}
           </Button>
         </Box>

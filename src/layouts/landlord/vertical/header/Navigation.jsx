@@ -24,14 +24,7 @@ const AppDD = () => {
   return (
     <>
       <Box>
-        <Button
-          aria-label="show 11 new notifications"
-          color="inherit"
-          aria-controls="msgs-menu"
-          aria-haspopup="true"
-          sx={{
-            bgcolor: anchorEl2 ? 'primary.light' : '',
-            color: anchorEl2 ? 'primary.main' : (theme) => theme.palette.text.primary,
+        <Button variant="contained" size="small" aria-label="show 11 new notifications" color="inherit" aria-controls="msgs-menu" aria-haspopup="true" sx={{ bgcolor: anchorEl2 ? 'primary.light' : '', color: anchorEl2 ? 'primary.main' : (theme) => theme.palette.text.primary,
           }}
           onClick={handleClick2}
           endIcon={<IconChevronDown size="15" />}
@@ -93,7 +86,7 @@ const AppDD = () => {
                       Frequently Asked Questions
                     </Typography>
                   </Link>
-                  <Button color="primary">Check</Button>
+                  <Button variant="contained" size="small" color="primary">Check</Button>
                 </Box>
               </Box>
               <Divider orientation="vertical" />
@@ -110,25 +103,19 @@ const AppDD = () => {
           </Grid>
         </Menu>
       </Box>
-      <Button
-        color="inherit"
-        sx={{ color: (theme) => theme.palette.text.primary }}
+      <Button variant="contained" size="small" color="inherit" sx={{ color: (theme) => theme.palette.text.primary }}
         to="/"
         component={Link}
       >
         Chat
       </Button>
-      <Button
-        color="inherit"
-        sx={{ color: (theme) => theme.palette.text.primary }}
+      <Button variant="contained" size="small" color="inherit" sx={{ color: (theme) => theme.palette.text.primary }}
         to="/"
         component={Link}
       >
         Calendar
       </Button>
-      <Button
-        color="inherit"
-        sx={{ color: (theme) => theme.palette.text.primary }}
+      <Button variant="contained" size="small" color="inherit" sx={{ color: (theme) => theme.palette.text.primary }}
         to="/"
         component={Link}
       >

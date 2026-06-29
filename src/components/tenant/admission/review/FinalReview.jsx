@@ -84,12 +84,7 @@ const FinalReview = ({
           </Typography>
         </Box>
 
-        <Button
-          fullWidth
-          onClick={handleSubmitClick}
-          disabled={isLoading}
-          sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, fontSize: '0.95rem' }}
-        >
+        <Button variant="contained" size="small" fullWidth onClick={handleSubmitClick} disabled={isLoading} sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, fontSize: '0.95rem' }}>
           {isLoading ? 'Submitting...' : 'Submit Application'}
         </Button>
       </ReviewSection>
@@ -104,10 +99,10 @@ const FinalReview = ({
           <DialogContentText>Are you sure you want to submit this application?</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} disabled={isLoading}>
+          <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)} disabled={isLoading}>
             No
           </Button>
-          <Button onClick={handleConfirmSubmit} disabled={isLoading}>
+          <Button variant="contained" size="small" onClick={handleConfirmSubmit} disabled={isLoading}>
             Yes
           </Button>
         </DialogActions>

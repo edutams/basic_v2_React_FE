@@ -416,15 +416,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
       <Divider />
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
+        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
           Close
         </Button>
         {prospect.status === 'pending' && (
           <>
             {!showRejectInput ? (
-              <Button
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
+              <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                 onClick={() => setShowRejectInput(true)}
                 disabled={loading}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -433,18 +431,14 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </Button>
             ) : (
               <>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => onReject(prospect.id, rejectReason)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -453,9 +447,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 </Button>
               </>
             )}
-            <Button
-              color="success"
-              startIcon={<CheckCircleOutlineIcon />}
+            <Button variant="contained" size="small" color="success" startIcon={<CheckCircleOutlineIcon />}
               onClick={() => onApprove(prospect.id)}
               disabled={loading || showRejectInput}
               sx={{
@@ -577,9 +569,7 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
       </TableCell>
       <TableCell align="right">
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button
-            size="small"
-            startIcon={<IconEye size={14} />}
+          <Button variant="contained" size="small" startIcon={<IconEye />}
             onClick={() => onReview(row)}
             sx={{
               textTransform: 'none',
@@ -593,10 +583,7 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
             {row.status?.toLowerCase() === 'approved' ? 'View' : 'Review'}
           </Button>
           {showDelete && (
-            <Button
-              size="small"
-              color="error"
-              onClick={() => onDelete(row)}
+            <Button variant="contained" size="small" color="error" onClick={() => onDelete(row)}
               sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px' }}
             >
               Delete
@@ -1165,9 +1152,7 @@ const SchoolDashboard = () => {
               sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
             {/* {activeTab === 0 && (
-              <Button
-                
-                startIcon={<IconUserPlus size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconUserPlus />}
                 onClick={() => setOpenRegisterModal(true)}
                 sx={{
                   bgcolor: '#3949ab',

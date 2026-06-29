@@ -316,11 +316,7 @@ const GenerateInvoiceTab = ({
               sx={{ width: 250 }}
             />
 
-            <Button
-              onClick={handleFetch}
-              sx={{ fontWeight: 600, minWidth: 100 }}
-              variant="contained"
-            >
+            <Button variant="contained" size="small" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
               Fetch
             </Button>
           </Stack>
@@ -414,9 +410,7 @@ const GenerateInvoiceTab = ({
             Payment Schedule for {selectedSessionLabel} - {selectedClassName}
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button
-              size="small"
-              onClick={() => {
+            <Button variant="contained" size="small" onClick={() => {
                 const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
                 window.open(url, '_blank');
               }}
@@ -475,12 +469,7 @@ const GenerateInvoiceTab = ({
               <Alert
                 severity="warning"
                 action={
-                  <Button
-                    color="warning"
-                    size="small"
-                    onClick={handleGenerateForPending}
-                    sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}
-                  >
+                  <Button variant="contained" size="small" color="warning" onClick={handleGenerateForPending} sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}>
                     Generate Now
                   </Button>
                 }

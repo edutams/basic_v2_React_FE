@@ -160,8 +160,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       NOW OPEN
                     </Typography>
-                    <Button
-                      onClick={() => setView('apply')}
+                    <Button variant="contained" size="small" onClick={() => setView('apply')}
                       sx={[
                         buttonStyle,
                         {
@@ -189,7 +188,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       IS OUT
                     </Typography>
-                    <Button sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
+                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
                       Check Result
                     </Button>
                   </Box>
@@ -206,7 +205,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       STATUS
                     </Typography>
-                    <Button sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
+                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
                       Check Admission
                     </Button>
                   </Box>
@@ -378,11 +377,7 @@ const TenantLogin = () => {
                 />
 
                 <Box mt={3}>
-                  <Button
-                    fullWidth
-                    onClick={handleBackToLogin}
-                    sx={{ color: 'text.secondary', textTransform: 'none' }}
-                  >
+                  <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                     ← Back to Login
                   </Button>
                 </Box>
@@ -423,11 +418,7 @@ const TenantLogin = () => {
                 />
 
                 <Box mt={3}>
-                  <Button
-                    fullWidth
-                    onClick={handleBackToLogin}
-                    sx={{ color: 'text.secondary', textTransform: 'none' }}
-                  >
+                  <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                     ← Back to Login
                   </Button>
                 </Box>

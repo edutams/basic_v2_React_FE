@@ -58,30 +58,11 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
       sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}
     >
       {onEditForm && (
-        <Button
-          size="small"
-          onClick={onEditForm}
-          sx={{
-            fontWeight: 600,
-            borderRadius: 2,
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <Button variant="contained" size="small" onClick={onEditForm} sx={{ fontWeight: 600, borderRadius: 2, flexShrink: 0, whiteSpace: 'nowrap', }}>
           Edit Form
         </Button>
       )}
-      <Button
-        variant={onEditForm ? 'outlined' : 'contained'}
-        size="small"
-        onClick={onViewDetails}
-        sx={{
-          fontWeight: 600,
-          borderRadius: 2,
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <Button variant="contained" size="small" onClick={onViewDetails} sx={{ fontWeight: 600, borderRadius: 2, flexShrink: 0, whiteSpace: 'nowrap', }}>
         View Form Details
       </Button>
     </Box>
@@ -208,10 +189,10 @@ const CurrentStageCard = ({
 
     {showActions && (
       <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
-        <Button onClick={onStart} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
+        <Button variant="contained" size="small" onClick={onStart} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
           Start {stageTitle}
         </Button>
-        <Button onClick={onPractice} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
+        <Button variant="contained" size="small" onClick={onPractice} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
           Practice Test
         </Button>
       </Box>
@@ -274,17 +255,7 @@ const NextStepCard = ({ title, description, actionLabel, actionDisabled, onActio
         </Box>
       </Box>
 
-      <Button
-        disabled={actionDisabled}
-        onClick={onAction}
-        sx={{
-          fontWeight: 700,
-          borderRadius: 2,
-          flexShrink: 0,
-          alignSelf: { xs: 'flex-end', sm: 'center' },
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <Button variant="contained" size="small" disabled={actionDisabled} onClick={onAction} sx={{ fontWeight: 700, borderRadius: 2, flexShrink: 0, alignSelf: { xs: 'flex-end', sm: 'center' }, whiteSpace: 'nowrap', }}>
         {actionLabel}
       </Button>
     </Box>

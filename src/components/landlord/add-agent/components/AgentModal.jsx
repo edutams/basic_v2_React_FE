@@ -349,8 +349,8 @@ const AgentModal = ({
               Are you sure you want to delete this organization?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-              <Button color="error" onClick={handleDeleteOrganization} disabled={loading}>
+              <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+              <Button variant="contained" size="small" color="error" onClick={handleDeleteOrganization} disabled={loading}>
                 {loading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
                 Delete Organization
               </Button>
@@ -364,8 +364,8 @@ const AgentModal = ({
             <Typography>Are you sure you want to delete this organization?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button onClick={handleDeleteOrganization} color="error">
+            <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+            <Button variant="contained" size="small" onClick={handleDeleteOrganization} color="error">
               Delete
             </Button>
           </DialogActions>

@@ -98,8 +98,7 @@ const NonTeachingStaffTab = ({
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            startIcon={<IconPlus size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconPlus />}
             onClick={handleAddStaff}
             size="small"
             sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -107,15 +106,14 @@ const NonTeachingStaffTab = ({
             Add Non-Teaching Staff
           </Button>
           <ButtonGroup sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Button
-              startIcon={<IconPlus size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconPlus />}
               sx={{ textTransform: 'none', flex: 1 }}
               onClick={handleUploadStaff}
               size="small"
             >
               Multiple Non-Teaching Staff Upload
             </Button>
-            <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
+            <Button variant="contained" size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />
             </Button>
           </ButtonGroup>

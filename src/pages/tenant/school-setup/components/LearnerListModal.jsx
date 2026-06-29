@@ -163,7 +163,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
             }}
           />
 
-          <Button onClick={handleSearch} size="small" disabled={loading}>
+          <Button variant="contained" size="small" onClick={handleSearch} disabled={loading}>
             Search
           </Button>
         </Box>
@@ -243,7 +243,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose} size="small">
+        <Button variant="contained" size="small" onClick={handleClose}>
           Close
         </Button>
       </DialogActions>

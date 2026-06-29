@@ -30,7 +30,7 @@ const ColorSelector = ({ label, value, onChange }) => (
       <Typography variant="subtitle2" gutterBottom>
         {label}
       </Typography>
-      <Button size="small" sx={{ mb: 2 }} onClick={() => onChange('')}>
+      <Button variant="contained" size="small" sx={{ mb: 2 }} onClick={() => onChange('')}>
         Default
       </Button>
       <Box

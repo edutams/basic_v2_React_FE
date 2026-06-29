@@ -118,14 +118,10 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
         </TextField>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button onClick={onClose} disabled={loading}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || servicesLoading || !selectedService}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading || servicesLoading || !selectedService} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : 'Save'}
           </Button>
         </Stack>

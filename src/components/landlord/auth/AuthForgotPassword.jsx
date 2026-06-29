@@ -80,22 +80,13 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess
           sx={{ mb: 3 }}
         />
 
-        <Button
-          fullWidth
-          type="submit"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : null}
+        <Button variant="contained" size="small" fullWidth type="submit" disabled={loading} startIcon={loading ? <CircularProgress /> : null}
         >
           {loading ? 'Sending...' : 'Send Reset Link'}
         </Button>
 
         <Box mt={2} textAlign="center">
-          <Button
-            {...(onBackToLogin
-              ? { onClick: onBackToLogin }
-              : { component: Link, to: resolvedLoginPath })}
-            fullWidth
-          >
+          <Button variant="contained" size="small" {...(onBackToLogin ? { onClick: onBackToLogin } : { component: Link, to: resolvedLoginPath })} fullWidth>
             Back to Login
           </Button>
         </Box>

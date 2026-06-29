@@ -571,7 +571,7 @@ const InvoiceStudentsView = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => navigate('/payment-schedule')}>
+        <Button variant="contained" size="small" sx={{ mt: 2 }} onClick={() => navigate('/payment-schedule')}>
           Back to Payment Schedule
         </Button>
       </Box>
@@ -613,10 +613,7 @@ const InvoiceStudentsView = () => {
           gap={1.5}
           mb={2}
         >
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => navigate('/payment-schedule')}
+          <Button variant="contained" size="small" onClick={() => navigate('/payment-schedule')}
             sx={{ alignSelf: { xs: 'flex-start', sm: 'auto' } }}
           >
             Back
@@ -626,11 +623,7 @@ const InvoiceStudentsView = () => {
             spacing={1}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            <Button
-              size="small"
-              disabled={selectedStudents.length === 0 || generatingInvoice}
-              onClick={handleGenerateInvoiceClick}
-              startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
+            <Button variant="contained" size="small" disabled={selectedStudents.length === 0 || generatingInvoice} onClick={handleGenerateInvoiceClick} startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
               sx={{
                 width: { xs: '100%', sm: 'auto' },
                 whiteSpace: 'nowrap',
@@ -641,16 +634,7 @@ const InvoiceStudentsView = () => {
               ) : null}
               Generate Invoice
             </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handlePrintInvoiceForAll}
-              disabled={filteredStudents.length === 0}
-              sx={{
-                width: { xs: '100%', sm: 'auto' },
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <Button variant="contained" size="small" onClick={handlePrintInvoiceForAll} disabled={filteredStudents.length === 0} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap', }}>
               View Invoice for All
             </Button>
           </Stack>
@@ -884,10 +868,7 @@ const InvoiceStudentsView = () => {
                                 -
                               </Typography>
                             )}
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<AddIcon fontSize="small" />}
+                            <Button variant="contained" size="small" startIcon={<AddIcon fontSize="small" />}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenOptionalModal(student);
@@ -1118,12 +1099,8 @@ const InvoiceStudentsView = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button
-            onClick={handleAddOptionalPayments}
-            disabled={selectedOptionalIds.size === 0}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
             Add
           </Button>
         </DialogActions>
@@ -1204,11 +1181,8 @@ const InvoiceStudentsView = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleConfirmGenerateInvoice}
-            sx={{ fontWeight: 600 }}
-            startIcon={<DescriptionIcon />}
+          <Button variant="contained" size="small" onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleConfirmGenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Generate
           </Button>
@@ -1294,11 +1268,8 @@ const InvoiceStudentsView = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseRegenerateConfirm}>Cancel</Button>
-          <Button
-            onClick={handleConfirmRegenerateInvoice}
-            sx={{ fontWeight: 600 }}
-            startIcon={<DescriptionIcon />}
+          <Button variant="contained" size="small" onClick={handleCloseRegenerateConfirm}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleConfirmRegenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Regenerate
           </Button>
@@ -1331,7 +1302,7 @@ const InvoiceStudentsView = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-          <Button onClick={handleCloseInvoiceResult}>OK</Button>
+          <Button variant="contained" size="small" onClick={handleCloseInvoiceResult}>OK</Button>
         </DialogActions>
       </Dialog>
     </>

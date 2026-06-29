@@ -86,10 +86,10 @@ const StimulationModal = ({
               Are you sure you want to delete "{selectedSimulation?.title}"?
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
+              <Button variant="contained" size="small" onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
                 Cancel
               </Button>
-              <Button color="error" onClick={handleDelete} disabled={isLoading}>
+              <Button variant="contained" size="small" color="error" onClick={handleDelete} disabled={isLoading}>
                 {isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </Box>

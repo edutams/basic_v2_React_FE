@@ -20,7 +20,7 @@ const AuthTwoSteps = () => (
           <CustomTextField id="code" fullWidth />
         </Stack>
       </Stack>
-      <Button color="primary" size="large" fullWidth component={Link} to="/">
+      <Button variant="contained" size="small" color="primary" fullWidth component={Link} to="/">
         Verify My Account
       </Button>
 

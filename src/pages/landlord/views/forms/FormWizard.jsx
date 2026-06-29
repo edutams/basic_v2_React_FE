@@ -136,7 +136,7 @@ const FormWizard = () => {
                 </Alert>
 
                 <Box textAlign="right">
-                  <Button onClick={handleReset} color="error">
+                  <Button variant="contained" size="small" onClick={handleReset} color="error">
                     Reset
                   </Button>
                 </Box>
@@ -147,25 +147,17 @@ const FormWizard = () => {
               <Box>{handleSteps(activeStep)}</Box>
 
               <Box display="flex" flexDirection="row" mt={3}>
-                <Button
-                  color="inherit"
-                  disabled={activeStep === 0}
-                  onClick={handleBack}
-                  sx={{ mr: 1 }}
-                >
+                <Button variant="contained" size="small" color="inherit" disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>
                   Back
                 </Button>
                 <Box flex="1 1 auto" />
                 {isStepOptional(activeStep) && (
-                  <Button color="inherit" onClick={handleSkip} sx={{ mr: 1 }}>
+                  <Button variant="contained" size="small" color="inherit" onClick={handleSkip} sx={{ mr: 1 }}>
                     Skip
                   </Button>
                 )}
 
-                <Button
-                  onClick={handleNext}
-                  color={activeStep === steps.length - 1 ? 'success' : 'secondary'}
-                >
+                <Button variant="contained" size="small" onClick={handleNext} color={activeStep === steps.length - 1 ? 'success' : 'secondary'}>
                   {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                 </Button>
               </Box>

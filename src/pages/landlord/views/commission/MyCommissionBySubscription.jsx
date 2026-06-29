@@ -67,8 +67,7 @@ const MyCommissionBySubscription = () => {
         }}
       >
         <Breadcrumb title="My Commission by Subscription" items={BCrumb} />
-        <Button
-          startIcon={<IconArrowLeft size={18} />}
+        <Button variant="contained" size="small" startIcon={<IconArrowLeft />}
           onClick={() => navigate('/organization/commissions')}
           sx={{
             textTransform: 'none',
@@ -108,8 +107,7 @@ const MyCommissionBySubscription = () => {
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                 Subscription Commission Details
               </Typography>
-              <Button
-                startIcon={<IconDownload size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconDownload />}
                 size="small"
                 sx={{
                   bgcolor: '#3949ab',
@@ -159,16 +157,7 @@ const MyCommissionBySubscription = () => {
                   />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Button
-                    onClick={handleFilter}
-                    fullWidth
-                    sx={{
-                      bgcolor: '#3949ab',
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      '&:hover': { bgcolor: '#303f9f' },
-                    }}
-                  >
+                  <Button variant="contained" size="small" onClick={handleFilter} fullWidth sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' }, }}>
                     Filter
                   </Button>
                 </Grid>

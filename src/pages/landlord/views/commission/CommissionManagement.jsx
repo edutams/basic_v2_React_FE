@@ -197,9 +197,7 @@ const CommissionManagement = () => {
             )}
 
             {(value === '3' || value === '4') && (
-              <Button
-                size="small"
-                startIcon={<IconLayoutDashboard size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconLayoutDashboard />}
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }

@@ -628,10 +628,7 @@ const CashPost = () => {
               justifyContent: { xs: 'flex-start', sm: 'flex-end' },
             }}
           >
-            <Button
-             
-              size="small"
-              onClick={() => {
+            <Button variant="contained" size="small" onClick={() => {
                 if (selectedSessionId && selectedTermId) {
                   fetchData(selectedSessionId, selectedTermId, '');
                 }
@@ -704,10 +701,7 @@ const CashPost = () => {
 
         {/* POST CASH BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
-          <Button
-            size="large"
-            onClick={handlePostCash}
-            disabled={posting || [...compFees, ...optFees].filter((f) => f.checked).length === 0}
+          <Button variant="contained" size="small" onClick={handlePostCash} disabled={posting || [...compFees, ...optFees].filter((f) => f.checked).length === 0}
             sx={{ px: 6, py: 1.5, fontSize: '1rem', fontWeight: 700 }}
           >
             {posting ? <CircularProgress size={22} sx={{ mr: 1 }} /> : null}

@@ -60,8 +60,7 @@ const AdmissionBanner = ({ session, onApply, hasOpenBatches }) => {
       </Box>
 
       {hasOpenBatches && (
-        <Button
-          endIcon={<ArrowForwardIcon />}
+        <Button variant="contained" size="small" endIcon={<ArrowForwardIcon />}
           onClick={onApply}
           sx={{
             bgcolor: '#fff',

@@ -143,7 +143,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
               ),
             }}
           />
-          <Button size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
+          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
             Search
           </Button>
         </Box>
@@ -245,7 +245,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} size="small">
+        <Button variant="contained" size="small" onClick={handleClose}>
           Close
         </Button>
       </DialogActions>

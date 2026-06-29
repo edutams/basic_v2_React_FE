@@ -153,9 +153,7 @@ const DocRow = ({ label, file, required, onView }) => {
                 fontSize: 11,
               }}
             />
-            <Button
-              size="small"
-              startIcon={<VisibilityIcon />}
+            <Button variant="contained" size="small" startIcon={<VisibilityIcon />}
               onClick={onView}
               sx={{ fontSize: 11, whiteSpace: 'nowrap' }}
             >

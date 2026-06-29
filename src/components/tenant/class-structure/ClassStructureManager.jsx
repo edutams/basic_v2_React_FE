@@ -48,12 +48,7 @@ const ClassStructureManager = () => {
 
         {/* Save button — full width on xs, right-aligned on sm+ */}
         <Box sx={{ display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: 2 }}>
-          <Button
-            size="small"
-            onClick={handleSave}
-            disabled={saving}
-            sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}
-          >
+          <Button variant="contained" size="small" onClick={handleSave} disabled={saving} sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}>
             {saving ? <CircularProgress size={16} color="inherit" /> : 'Save Changes'}
           </Button>
         </Box>

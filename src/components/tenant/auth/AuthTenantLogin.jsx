@@ -202,28 +202,14 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
           </Stack>
         </Stack>
         <Box mt={2}>
-          <Button
-            color="primary"
-            size="large"
-            fullWidth
-            type="submit"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+          <Button variant="contained" size="small" color="primary" fullWidth type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
           >
             {isLoading ? 'Signing In...' : 'Login to Dashboard'}
           </Button>
         </Box>
 
         <Box mt={1.5}>
-          <Button
-            {...(onCreateAccount
-              ? { onClick: onCreateAccount }
-              : { component: Link, to: '/admission/apply' })}
-            size="large"
-            fullWidth
-            color="primary"
-            disabled={isLoading}
-          >
+          <Button variant="contained" size="small" {...(onCreateAccount ? { onClick: onCreateAccount } : { component: Link, to: '/admission/apply' })} fullWidth color="primary" disabled={isLoading}>
             Create Parent Account
           </Button>
         </Box>

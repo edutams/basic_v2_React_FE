@@ -689,20 +689,13 @@ const CreateAdmissionBatch = () => {
           />
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              size="large"
-              onClick={() => navigate('/admission-setup')}
+            <Button variant="contained" size="small" onClick={() => navigate('/admission-setup')}
               sx={{ fontWeight: 700, px: 3, mr: 2 }}
               disabled={submitting}
             >
               Cancel
             </Button>
-            <Button
-              size="large"
-              onClick={handleSubmit}
-              disabled={submitting}
-              sx={{ fontWeight: 700, px: 4 }}
-              startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+            <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting} sx={{ fontWeight: 700, px: 4 }} startIcon={submitting ? <CircularProgress color="inherit" /> : null}
             >
               {submitting
                 ? isEdit

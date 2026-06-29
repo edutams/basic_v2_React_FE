@@ -191,10 +191,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             Export to Excel
           </PrimaryButton> */}
 
-          <Button
-            color="primary"
-            // onClick={handleOpen}modal
-            startIcon={<GetAppIcon size={18} />}
+          <Button variant="contained" size="small" color="primary" // onClick={handleOpen}modal startIcon={<GetAppIcon />}
           >
             Export to Excel
           </Button>

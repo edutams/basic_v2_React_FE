@@ -494,11 +494,7 @@ const ParentForm = ({
                 }}
               />
 
-              <Button
-                onClick={handleWardSearch}
-                disabled={wardSearching}
-                sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
-              >
+              <Button variant="contained" size="small" onClick={handleWardSearch} disabled={wardSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
                 {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
               </Button>
             </Box>
@@ -586,10 +582,10 @@ const ParentForm = ({
       {beforeActions && <Box sx={{ mt: 3 }}>{beforeActions}</Box>}
 
       <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button type="submit" disabled={isLoading || !formik.isValid}>
+        <Button variant="contained" size="small" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : submitText || (isEdit ? 'Save Changes' : 'Add Parent')}
         </Button>
       </Box>

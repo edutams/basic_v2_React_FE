@@ -123,8 +123,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
         >
           <Typography variant="h5">All Packages</Typography>
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
-            <Button
-              startIcon={<IconFilter size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               size="small"
               sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -139,8 +138,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                 />
               )}
             </Button>
-            <Button
-              startIcon={<AddIcon />}
+            <Button variant="contained" size="small" startIcon={<AddIcon />}
               onClick={() => onPackageAction('create')}
               size="small"
               sx={{ width: { xs: '100%', sm: 'auto' } }}

@@ -40,7 +40,7 @@ const ViewPermissionModal = ({ open, onClose, selectedRow, permissionsToView }) 
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button variant="contained" size="small" onClick={onClose} color="primary">
           Close
         </Button>
       </DialogActions>

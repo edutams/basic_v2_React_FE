@@ -24,11 +24,11 @@ const SchoolNavItem = ({ item, level, pathDirect, onClick }) => {
       color: theme.palette.primary.main,
     },
     '&.Mui-selected': {
-      color: 'white',
+      color: theme.palette.primary.contrastText,
       backgroundColor: theme.palette.primary.main,
       '&:hover': {
         backgroundColor: theme.palette.primary.main,
-        color: 'white',
+        color: theme.palette.primary.contrastText,
       },
     },
   }));

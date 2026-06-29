@@ -529,7 +529,7 @@ const AgentCurriculumManager = () => {
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="h5">Curriculum</Typography>
-                      <Button size="small" onClick={handleOpenCreateModal}>
+                      <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
                         Create Curriculum
                       </Button>
                     </Box>
@@ -638,7 +638,7 @@ const AgentCurriculumManager = () => {
                           </strong>
                         </Typography>
 
-                        <Button size="small" onClick={handleOpenAddSubjectModal}>
+                        <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal}>
                           Add Subject
                         </Button>
                       </Box>
@@ -889,8 +889,8 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCreateModal}>Cancel</Button>
-          <Button onClick={handleCreateCurriculum} disabled={loadingMutation}>
+          <Button variant="contained" size="small" onClick={handleCloseCreateModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCreateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Create'}
           </Button>
         </DialogActions>
@@ -923,8 +923,8 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditModal}>Cancel</Button>
-          <Button onClick={handleUpdateCurriculum} disabled={loadingMutation}>
+          <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleUpdateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Update'}
           </Button>
         </DialogActions>
@@ -940,15 +940,10 @@ const AgentCurriculumManager = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={handleCloseDeleteDialog}>
+          <Button variant="contained" size="small" onClick={handleCloseDeleteDialog}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            onClick={handleDeleteCurriculum}
-            color="error"
-            disabled={loadingMutation}
-          >
+          <Button variant="contained" size="small" onClick={handleDeleteCurriculum} color="error" disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>
         </DialogActions>
@@ -1093,8 +1088,8 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseAddSubjectModal}>Cancel</Button>
-          <Button onClick={handleCreateSubject} disabled={loadingMutation}>
+          <Button variant="contained" size="small" onClick={handleCloseAddSubjectModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCreateSubject} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
           </Button>
         </DialogActions>
@@ -1236,8 +1231,8 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditSubjectModal}>Cancel</Button>
-          <Button onClick={handleUpdateSubject} disabled={loadingMutation}>
+          <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleUpdateSubject} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Update Subject'}
           </Button>
         </DialogActions>
@@ -1258,8 +1253,8 @@ const AgentCurriculumManager = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
-          <Button onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
+          <Button variant="contained" size="small" onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>
         </DialogActions>

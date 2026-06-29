@@ -432,16 +432,14 @@ const LearnerManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                startIcon={<AddIcon />}
+              <Button variant="contained" size="small" startIcon={<AddIcon />}
                 fullWidth={false}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setAddLearnerOpen(true)}
               >
                 Add Learner
               </Button>
-              <Button
-                startIcon={<DownloadIcon />}
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
@@ -452,8 +450,7 @@ const LearnerManagement = () => {
                 Download Template
               </Button>
 
-              <Button
-                startIcon={<UploadIcon />}
+              <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setUploadLearnerOpen(true)}
@@ -506,7 +503,7 @@ const LearnerManagement = () => {
           </FormControl>
 
           {hasFilters && (
-            <Button size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
@@ -707,8 +704,8 @@ const LearnerManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
           </Button>
         </DialogActions>
@@ -734,19 +731,14 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => {
+          <Button variant="contained" size="small" color="inherit" onClick={() => {
               setImpersonateStudentConfirmOpen(false);
               setStudentToImpersonate(null);
             }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmedImpersonateStudent}
-            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
-          >
+          <Button variant="contained" size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
             Yes, Login As
           </Button>
         </DialogActions>
@@ -800,8 +792,8 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>

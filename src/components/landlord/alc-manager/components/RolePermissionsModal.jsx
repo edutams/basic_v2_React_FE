@@ -138,7 +138,7 @@ const RolePermissionsModal = ({ open, onClose, roleId }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} size="small">
+        <Button variant="contained" size="small" onClick={handleClose}>
           Close
         </Button>
       </DialogActions>

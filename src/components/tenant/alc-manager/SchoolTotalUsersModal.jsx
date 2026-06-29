@@ -149,7 +149,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
               ),
             }}
           />
-          <Button size="small" onClick={handleSearch}>
+          <Button variant="contained" size="small" onClick={handleSearch}>
             Search
           </Button>
         </Box>
@@ -253,7 +253,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} size="small">
+        <Button variant="contained" size="small" onClick={handleClose}>
           Close
         </Button>
       </DialogActions>

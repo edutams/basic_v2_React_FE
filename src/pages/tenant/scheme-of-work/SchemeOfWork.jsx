@@ -32,6 +32,7 @@ import {
   DialogActions,
   CircularProgress,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -67,6 +68,7 @@ const BCrumb = [
 ];
 
 const SchemeOfWork = () => {
+  const theme = useTheme();
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -221,8 +223,8 @@ const SchemeOfWork = () => {
     } catch (error) {
       notify.error(
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Failed to fetch scheme of work',
+        error.response?.data?.message ||
+        'Failed to fetch scheme of work',
       );
     } finally {
       setLoading(false);
@@ -357,7 +359,7 @@ const SchemeOfWork = () => {
     } catch (e) {
       notify.error(
         e.response?.data?.message ||
-          'Upload failed. Check that the file matches the selected filters.',
+        'Upload failed. Check that the file matches the selected filters.',
       );
     } finally {
       setUploading(false);
@@ -565,22 +567,22 @@ const SchemeOfWork = () => {
     {
       title: 'Topics',
       value: analytics.total_topics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFolder color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
     {
       title: 'Sub Topics',
       value: analytics.total_subtopics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFolder color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
     {
       title: 'Lesson Content',
       value: '0',
-      icon: <IconFileDescription color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconFileDescription color={theme.palette.primary.main} />,
+      bgColor: theme.palette.primary.light,
     },
-    { title: 'Video Content', value: '0', icon: <IconVideo color="#39b65a" />, bgColor: '#eaf7ee' },
+    { title: 'Video Content', value: '0', icon: <IconVideo color={theme.palette.primary.main} />, bgColor: theme.palette.primary.light },
   ];
 
   const drawerFilters = [
@@ -637,9 +639,7 @@ const SchemeOfWork = () => {
 
       {/* Action Buttons */}
       {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        <Button
-          
-          onClick={() => setDlSchemeOpen(true)}
+        <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(true)}
           startIcon={<IconDownload size={18} />}
           sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
         >
@@ -647,9 +647,7 @@ const SchemeOfWork = () => {
         </Button>
       </Box> */}
       {/* <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            
-            startIcon={<IconUpload size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconUpload />}
             onClick={() => setUploadOpen(true)}
             sx={{
               textTransform: 'none',
@@ -663,10 +661,7 @@ const SchemeOfWork = () => {
           >
             Upload Scheme Template
           </Button>
-          <Button
-            
-            color="success"
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" color="success" startIcon={<IconDownload />}
             onClick={() => setDlTemplateOpen(true)}
             sx={{
               textTransform: 'none',
@@ -772,12 +767,7 @@ const SchemeOfWork = () => {
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 1.5 }}>
-              <Button
-                onClick={handleFetch}
-                disabled={!programme || !classLevel || !subject}
-                fullWidth
-                sx={{ height: '40px' }}
-              >
+              <Button variant="contained" size="small" onClick={handleFetch} disabled={!programme || !classLevel || !subject} fullWidth sx={{ height: '40px' }}>
                 Fetch
               </Button>
             </Grid>
@@ -1047,7 +1037,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingTopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingTopic}>
             {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
@@ -1093,7 +1083,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingSubtopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
             {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
@@ -1198,7 +1188,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth>
+          <Button variant="contained" size="small" type="submit" fullWidth>
             Save Objective
           </Button>
         </Box>
@@ -1369,12 +1359,10 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadTemplate}
-            startIcon={<IconDownload size={16} />}
+          <Button variant="contained" size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             Download Template
@@ -1510,19 +1498,14 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setUploadOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setUploadOpen(false)}
             disabled={uploading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleUploadTemplate}
-            disabled={uploading}
-            startIcon={
-              uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />
-            }
+          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1623,23 +1606,17 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDlSchemeOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(false)}
             disabled={downloading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadScheme}
-            disabled={downloading}
-            startIcon={
-              downloading ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <IconDownload size={16} />
-              )
-            }
+          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          ) : (
+            <IconDownload size={16} />
+          )
+          }
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}
@@ -1675,9 +1652,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
-          <Button
-            onClick={handlePrint}
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" onClick={handlePrint} startIcon={<IconDownload />}
             sx={{ textTransform: 'none' }}
           >
             Print
@@ -1972,8 +1947,7 @@ const SchemeOfWork = () => {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setViewDetailsModalOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setViewDetailsModalOpen(false)}
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

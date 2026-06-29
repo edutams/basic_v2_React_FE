@@ -365,15 +365,7 @@ const ApplicationCard = ({ app }) => {
             pb: { xs: 1.5, sm: 2 },
           }}
         >
-          <Button
-            size="small"
-            fullWidth
-            endIcon={
-              <ArrowBackIcon
-                sx={{
-                  transform: 'rotate(180deg)',
-                }}
-              />
+          <Button variant="contained" size="small" fullWidth endIcon={ <ArrowBackIcon sx={{ transform: 'rotate(180deg)', }} />
             }
             onClick={() =>
               navigate('/admission/new-application', {
@@ -402,10 +394,7 @@ const ApplicationCard = ({ app }) => {
             pb: { xs: 1.5, sm: 2 },
           }}
         >
-          <Button
-            size="small"
-            fullWidth
-            onClick={(e) => {
+          <Button variant="contained" size="small" fullWidth onClick={(e) => {
               e.stopPropagation();
 
               navigate(`/admission-letter/${app.id}`);

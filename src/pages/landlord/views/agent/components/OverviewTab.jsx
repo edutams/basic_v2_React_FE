@@ -325,16 +325,7 @@ const OverviewTab = ({ data }) => {
             <MenuItem value="2025">2025</MenuItem>
           </Select>
         </Box>
-        <Button
-          size="small"
-          sx={{
-            height: 40,
-            px: 3,
-            borderRadius: '6px',
-            textTransform: 'none',
-            fontWeight: 600,
-          }}
-        >
+        <Button variant="contained" size="small" sx={{ height: 40, px: 3, borderRadius: '6px', textTransform: 'none', fontWeight: 600, }}>
           Filter
         </Button>
       </Stack>
@@ -356,9 +347,7 @@ const OverviewTab = ({ data }) => {
               <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
                 Transaction
               </Typography>
-              <Button
-                size="small"
-                startIcon={<IconFilter size={16} />}
+              <Button variant="contained" size="small" startIcon={<IconFilter />}
                 sx={{
                   borderRadius: '8px',
                   textTransform: 'none',

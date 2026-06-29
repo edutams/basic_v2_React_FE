@@ -232,10 +232,10 @@ const PaymentScheduleModal = ({
         {errors.submit && <Alert severity="error">{errors.submit}</Alert>}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined" disabled={saving}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={saving}>
+          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Save'}
           </Button>
         </Stack>

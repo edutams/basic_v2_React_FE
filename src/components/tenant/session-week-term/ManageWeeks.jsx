@@ -156,12 +156,10 @@ const ManageWeeks = ({ sessionTermId }) => {
           size="small"
           sx={{ minWidth: 200 }}
         />
-        <Button color="primary" onClick={handleGenerateWeeks} size="small" disabled={loading}>
+        <Button variant="contained" size="small" color="primary" onClick={handleGenerateWeeks} disabled={loading}>
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Generate Weeks'}
         </Button>
-        <Button
-          color="success"
-          startIcon={<AddIcon />}
+        <Button variant="contained" size="small" color="success" startIcon={<AddIcon />}
           onClick={handleAddWeek}
           size="small"
           disabled={loading}
@@ -232,7 +230,7 @@ const ManageWeeks = ({ sessionTermId }) => {
         </TableContainer>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          <Button onClick={handleSaveAll} disabled={loading || weeks.length === 0}>
+          <Button variant="contained" size="small" onClick={handleSaveAll} disabled={loading || weeks.length === 0}>
             {loading ? <CircularProgress size={20} color="inherit" /> : 'Save All'}
           </Button>
         </Box>
@@ -248,8 +246,8 @@ const ManageWeeks = ({ sessionTermId }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ open: false, week: null })}>Cancel</Button>
-          <Button onClick={handleDeleteWeek} color="error">
+          <Button variant="contained" size="small" onClick={() => setDeleteDialog({ open: false, week: null })}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleDeleteWeek} color="error">
             Delete
           </Button>
         </DialogActions>

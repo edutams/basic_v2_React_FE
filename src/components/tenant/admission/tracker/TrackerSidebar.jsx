@@ -157,17 +157,7 @@ const TrackerSidebar = ({ admission }) => {
           </Box>
         </Box>
 
-        <Button
-          fullWidth
-          sx={{
-            fontWeight: 600,
-            borderRadius: 2,
-            borderColor: 'grey.400',
-            color: 'text.primary',
-            bgcolor: '#fff',
-            '&:hover': { borderColor: 'primary.main', bgcolor: '#fff' },
-          }}
-        >
+        <Button variant="contained" size="small" fullWidth sx={{ fontWeight: 600, borderRadius: 2, borderColor: 'grey.400', color: 'text.primary', bgcolor: '#fff', '&:hover': { borderColor: 'primary.main', bgcolor: '#fff' }, }}>
           Contact Support
         </Button>
       </Paper>

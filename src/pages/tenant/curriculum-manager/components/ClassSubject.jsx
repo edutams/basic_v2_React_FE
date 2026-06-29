@@ -492,7 +492,7 @@ const ClassSubject = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Class Subjects
               </Typography>
-              <Button size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+              <Button variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
                 Add Subject to Class
               </Button>
             </Box>
@@ -704,18 +704,10 @@ const ClassSubject = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-            size="small"
-            onClick={handleCloseAddSubjectToClassModal}
-            disabled={loadingAddSubject}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseAddSubjectToClassModal} disabled={loadingAddSubject}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            onClick={handleAddSubjectToClass}
-            disabled={loadingAddSubject || loadingAvailableSubjects}
-            startIcon={loadingAddSubject ? <CircularProgress size={16} /> : null}
+          <Button variant="contained" size="small" onClick={handleAddSubjectToClass} disabled={loadingAddSubject || loadingAvailableSubjects} startIcon={loadingAddSubject ? <CircularProgress /> : null}
           >
             {loadingAddSubject
               ? 'Adding...'
@@ -821,18 +813,10 @@ const ClassSubject = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-            size="small"
-            onClick={handleCloseEditClassSubjectModal}
-            disabled={loadingUpdateSubject}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseEditClassSubjectModal} disabled={loadingUpdateSubject}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            onClick={handleUpdateClassSubject}
-            disabled={loadingUpdateSubject}
-            startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
+          <Button variant="contained" size="small" onClick={handleUpdateClassSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
           >
             {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
           </Button>

@@ -173,9 +173,7 @@ const Header = () => {
             >
               Logged in as Agent
             </Typography>
-            <Button
-              size="small"
-              onClick={() => setConfirmOpen(true)}
+            <Button variant="contained" size="small" onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',
                 fontSize: { xs: '10px', sm: '13px' },
@@ -256,13 +254,10 @@ const Header = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={() => setConfirmOpen(false)}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleStopImpersonation}
-            sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}
-          >
+          <Button variant="contained" size="small" onClick={handleStopImpersonation} sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}>
             Yes, return to my account
           </Button>
         </DialogActions>

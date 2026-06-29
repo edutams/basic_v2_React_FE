@@ -291,7 +291,7 @@ const Plan = () => {
                     sx={{ m: 0 }}
                   />
                 )}
-                <Button color="primary" onClick={() => handleOpen('create')} sx={{ minWidth: 120 }}>
+                <Button variant="contained" size="small" color="primary" onClick={() => handleOpen('create')} sx={{ minWidth: 120 }}>
                   Add New Plan
                 </Button>
               </Box>

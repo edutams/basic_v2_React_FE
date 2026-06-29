@@ -56,8 +56,7 @@ const MyCommissionByTransaction = () => {
         }}
       >
         <Breadcrumb title="My Commission by Transaction" items={BCrumb} />
-        <Button
-          startIcon={<IconArrowLeft size={18} />}
+        <Button variant="contained" size="small" startIcon={<IconArrowLeft />}
           onClick={() => navigate('/organization/commissions')}
           sx={{
             textTransform: 'none',
@@ -91,8 +90,7 @@ const MyCommissionByTransaction = () => {
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                 Transaction Commission Details
               </Typography>
-              <Button
-                startIcon={<IconDownload size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconDownload />}
                 sx={{
                   bgcolor: '#3949ab',
                   textTransform: 'none',
@@ -140,15 +138,7 @@ const MyCommissionByTransaction = () => {
                   />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Button
-                    onClick={handleFilter}
-                    sx={{
-                      bgcolor: '#3949ab',
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      '&:hover': { bgcolor: '#303f9f' },
-                    }}
-                  >
+                  <Button variant="contained" size="small" onClick={handleFilter} sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' }, }}>
                     Filter
                   </Button>
                 </Grid>

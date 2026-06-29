@@ -123,16 +123,10 @@ const PackageForm = ({
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end">
-            <Button
-              onClick={onCancel}
-              sx={{ mr: 1 }}
-              color="inherit"
-              type="button"
-              disabled={isLoading}
-            >
+            <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} color="inherit" type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+            <Button variant="contained" size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
           </Box>
         </Grid>
       </Grid>

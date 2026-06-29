@@ -150,33 +150,19 @@ const CompleteSetup = () => {
 
         <Box sx={{ display: 'flex', gap: 2 }}>
           {!isApproved && (
-            <Button
-              onClick={handleBack}
-              startIcon={<IconArrowLeft />}
+            <Button variant="contained" size="small" onClick={handleBack} startIcon={<IconArrowLeft />}
               sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}
             >
               Review / Edit Setup
             </Button>
           )}
 
-          <Button
-            onClick={handleContinue}
-            sx={{
-              bgcolor: '#fff',
-              color: 'primary.main',
-              fontWeight: 700,
-              px: 4,
-              py: 1.25,
-              borderRadius: '10px !important',
-            }}
-          >
+          <Button variant="contained" size="small" onClick={handleContinue} sx={{ bgcolor: '#fff', color: 'primary.main', fontWeight: 700, px: 4, py: 1.25, borderRadius: '10px !important', }}>
             {isApproved ? 'Continue to Dashboard' : 'Waiting for Approval'}
           </Button>
         </Box>
 
-        <Button
-          onClick={handleLogout}
-          startIcon={<IconLogout size={16} />}
+        <Button variant="contained" size="small" onClick={handleLogout} startIcon={<IconLogout />}
           sx={{
             mt: 3,
             color: 'rgba(41, 99, 110, 0.7)',

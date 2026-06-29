@@ -85,10 +85,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
 
       {/* Action buttons */}
       <Stack spacing={1.5} direction={{ xs: 'column', sm: 'row' }}>
-        <Button
-          fullWidth
-          onClick={onManageSchools}
-          startIcon={<IconBuildingStore size={18} />}
+        <Button variant="contained" size="small" fullWidth onClick={onManageSchools} startIcon={<IconBuildingStore />}
           sx={{
             bgcolor: 'white',
             borderColor: 'rgba(255,255,255,0.5)',
@@ -105,10 +102,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
         >
           Manage Schools
         </Button>
-        <Button
-          fullWidth
-          onClick={onManageAgent}
-          startIcon={<IconUsers size={18} />}
+        <Button variant="contained" size="small" fullWidth onClick={onManageAgent} startIcon={<IconUsers />}
           sx={{
             bgcolor: 'white',
             color: theme.palette.primary.main,

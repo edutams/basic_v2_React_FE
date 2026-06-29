@@ -44,7 +44,7 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu })
     gap: '10px',
     borderRadius: `${isBorderRadius}px`,
     whiteSpace: 'nowrap',
-    color: open || pathname.includes(menu.href) || level < 1 ? 'white' : theme.palette.text.primary,
+    color: open || pathname.includes(menu.href) || level < 1 ? theme.palette.primary.contrastText : theme.palette.text.primary,
     backgroundColor: open || pathname.includes(menu.href) ? theme.palette.primary.main : '',
 
     '&:hover': {

@@ -222,9 +222,7 @@ const DocumentRow = ({
           </IconButton>
         </Box>
       ) : (
-        <Button
-          size="small"
-          onClick={(e) => {
+        <Button variant="contained" size="small" onClick={(e) => {
             e.stopPropagation();
             inputRef.current?.click();
           }}
@@ -427,14 +425,10 @@ const DocumentsStep = ({
 
       <Divider sx={{ mt: 4, mb: 2 }} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
+        <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading || !allRequiredOk}
-          sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}
-        >
+        <Button variant="contained" size="small" onClick={handleSubmit} disabled={isLoading || !allRequiredOk} sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}>
           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>

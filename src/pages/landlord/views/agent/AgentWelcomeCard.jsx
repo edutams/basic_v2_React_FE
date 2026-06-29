@@ -86,7 +86,7 @@ const AgentWelcomeCard = ({ agent }) => {
             <Typography variant="subtitle2" color="textSecondary">
               Total Schools Reached
             </Typography>
-            <Button color="secondary" sx={{ mt: 2 }}>
+            <Button variant="contained" size="small" color="secondary" sx={{ mt: 2 }}>
               View Performance
             </Button>
           </Box>

@@ -258,7 +258,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                 <MenuItem value="2025">2025</MenuItem>
               </Select>
             </Box>
-            <Button variant="primary" sx={{ height: '36px', px: 4 }}>
+            <Button variant="contained" size="small" sx={{ height: '36px', px: 4 }}>
               Filter
             </Button>
           </Box>

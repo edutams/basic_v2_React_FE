@@ -600,14 +600,10 @@ const EditPaymentItemModal = ({
         )}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined" disabled={saving}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            sx={{ fontWeight: 600 }}
-            disabled={loadingClasses || saving}
-          >
+          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
             {saving ? 'Saving...' : 'Update Payment Schedule'}
           </Button>
         </Stack>
@@ -658,14 +654,12 @@ const EditPaymentItemModal = ({
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setToggleDialog({ open: false, classData: null })}
+          <Button variant="contained" size="small" color="inherit" onClick={() => setToggleDialog({ open: false, classData: null })}
             disabled={toggling}
           >
             Cancel
           </Button>
-          <Button onClick={handleToggleConfirm} disabled={toggling} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={handleToggleConfirm} disabled={toggling} sx={{ fontWeight: 600 }}>
             {toggling ? 'Processing...' : 'Confirm'}
           </Button>
         </DialogActions>
@@ -690,19 +684,12 @@ const EditPaymentItemModal = ({
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setDeleteDialog({ open: false, classSchedule: null })}
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeleteDialog({ open: false, classSchedule: null })}
             disabled={deleting}
           >
             Cancel
           </Button>
-          <Button
-            color="error"
-            onClick={handleDeleteConfirm}
-            disabled={deleting}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
             {deleting ? 'Deleting...' : 'Delete Schedule'}
           </Button>
         </DialogActions>

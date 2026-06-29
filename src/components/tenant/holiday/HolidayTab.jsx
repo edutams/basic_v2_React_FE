@@ -260,7 +260,7 @@ const HolidayTab = ({ handleRefresh }) => {
             </Select>
           </FormControl>
 
-          <Button sx={{ ml: 2 }} color="primary" onClick={handleSetHolidayClick}>
+          <Button variant="contained" size="small" sx={{ ml: 2 }} color="primary" onClick={handleSetHolidayClick}>
             Set Holiday
           </Button>
         </Box>
@@ -268,7 +268,7 @@ const HolidayTab = ({ handleRefresh }) => {
         <HolidayTable holidays={filteredHolidays} onHolidayAction={handleHolidayAction} />
 
         {/* <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-          <Button  onClick={handleSave}>
+          <Button variant="contained" size="small" onClick={handleSave}>
             Save
           </Button>
         </Box> */}

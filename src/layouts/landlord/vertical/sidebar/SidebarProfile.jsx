@@ -12,7 +12,7 @@ const SidebarProfile = () => {
           <Typography variant="h5" fontWeight={600} mb={2} color="textPrimary">
             Unlimited <br /> Access
           </Typography>
-          <Button href="/auth/login" color="primary" component={Link}>
+          <Button variant="contained" size="small" href="/auth/login" color="primary" component={Link}>
             Upgrade
           </Button>
         </Box>

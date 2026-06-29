@@ -118,11 +118,7 @@ const Login = () => {
                 }}
               />
               <Box mt={3}>
-                <Button
-                  fullWidth
-                  onClick={handleBackToLogin}
-                  sx={{ color: 'text.secondary', textTransform: 'none' }}
-                >
+                <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                   ← Back to Login
                 </Button>
               </Box>
@@ -145,11 +141,7 @@ const Login = () => {
                 }}
               />
               <Box mt={3}>
-                <Button
-                  fullWidth
-                  onClick={handleBackToLogin}
-                  sx={{ color: 'text.secondary', textTransform: 'none' }}
-                >
+                <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                   ← Back to Login
                 </Button>
               </Box>

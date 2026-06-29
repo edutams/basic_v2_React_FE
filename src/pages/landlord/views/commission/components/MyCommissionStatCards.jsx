@@ -91,8 +91,7 @@ const MyCommissionStatCards = () => {
               // mt: 2,
             }}
           >
-            <Button
-              startIcon={<IconAdjustments size={14} />}
+            <Button variant="contained" size="small" startIcon={<IconAdjustments />}
               onClick={() => setIsRegisterModalOpen(true)}
               sx={{
                 borderColor: '#2ca87f',
@@ -106,9 +105,7 @@ const MyCommissionStatCards = () => {
               View Details
             </Button>
 
-            <Button
-              //
-              startIcon={<IconCash size={14} />}
+            <Button variant="contained" size="small" // startIcon={<IconCash />}
               onClick={() => setIsRegisterModalOpen(true)}
               sx={{
                 backgroundColor: '#2ca87f',

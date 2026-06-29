@@ -407,7 +407,7 @@ const TeamTab = ({
           </Typography>
         </Stack>
         {!isViewingProfile && (
-          <Button startIcon={<IconUsers size={16} />} onClick={onAddAgent}>
+          <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
             Add New Organization
           </Button>
         )}
@@ -454,7 +454,7 @@ const TeamTab = ({
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 2 }}>
-          <Button fullWidth size="small" onClick={handleSearch}>
+          <Button variant="contained" size="small" fullWidth onClick={handleSearch}>
             Search
           </Button>
         </Grid>
@@ -767,8 +767,8 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error">
+          <Button variant="contained" size="small" onClick={handleCancelDelete}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleConfirmDelete} color="error">
             Delete
           </Button>
         </DialogActions>

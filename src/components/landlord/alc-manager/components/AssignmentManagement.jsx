@@ -411,11 +411,7 @@ const AssignmentManagement = () => {
 
         {/* 👇 key change */}
         <Grid size="auto">
-          <Button
-            size="small"
-            onClick={handleSearch}
-            sx={{ height: 40 }} // match input height
-          >
+          <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }} // match input height>
             Search
           </Button>
         </Grid>

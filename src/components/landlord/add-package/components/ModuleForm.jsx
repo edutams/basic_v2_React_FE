@@ -129,10 +129,10 @@ const ModuleForm = ({
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-            <Button onClick={onCancel} type="button" disabled={isLoading}>
+            <Button variant="contained" size="small" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !formik.isValid}>
+            <Button variant="contained" size="small" type="submit" disabled={isLoading || !formik.isValid}>
               {isLoading ? 'Saving...' : submitText}
             </Button>
           </Box>

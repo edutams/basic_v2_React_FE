@@ -590,20 +590,14 @@ const ClassLedger = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handleDownloadExcel}
               >
                 View In CSV Format
               </Button>
 
-              <Button
-                variant="outlined"
-                startIcon={<UploadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handlePrintPaymentList}
               >
@@ -687,12 +681,7 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button
-              fullWidth
-              sx={{ height: '40px' }}
-              onClick={fetchClassLedgerData}
-              disabled={!programme || !classLevel}
-            >
+            <Button variant="contained" size="small" fullWidth onClick={fetchClassLedgerData} disabled={!programme || !classLevel}>
               Fetch
             </Button>
           </Grid>
@@ -925,34 +914,31 @@ const ClassLedger = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => {
-              setPayForStudentConfirmOpen(false);
-              setStudentToPayFor(null);
-            }}
+          <Button variant="contained" size="small" color="inherit" onClick={() => {
+            setPayForStudentConfirmOpen(false);
+            setStudentToPayFor(null);
+          }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={async () => {
-              if (!studentToPayFor) return;
+          <Button variant="contained" size="small" onClick={async () => {
+            if (!studentToPayFor) return;
 
-              const studentUserId =
-                studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
+            const studentUserId =
+              studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
 
-              const result = await impersonateStudent(studentUserId);
+            const result = await impersonateStudent(studentUserId);
 
-              if (result.success) {
-                notify.success('Now logged in as student');
-                window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
-              } else {
-                notify.error(result.error);
-              }
+            if (result.success) {
+              notify.success('Now logged in as student');
+              window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
+            } else {
+              notify.error(result.error);
+            }
 
-              setPayForStudentConfirmOpen(false);
-              setStudentToPayFor(null);
-            }}
+            setPayForStudentConfirmOpen(false);
+            setStudentToPayFor(null);
+          }}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
           >
             Yes, Login As

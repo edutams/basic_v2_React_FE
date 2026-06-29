@@ -101,7 +101,7 @@ const SchoolViewRoleModal = ({ open, onClose, currentAgent }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

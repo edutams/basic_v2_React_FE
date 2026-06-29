@@ -316,7 +316,11 @@ const GenerateInvoiceTab = ({
               sx={{ width: 250 }}
             />
 
-            <Button onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
+            <Button
+              onClick={handleFetch}
+              sx={{ fontWeight: 600, minWidth: 100 }}
+              variant="contained"
+            >
               Fetch
             </Button>
           </Stack>
@@ -368,9 +372,7 @@ const GenerateInvoiceTab = ({
                       //   : hasInvoiceGenerated
                       //     ? 'primary.light'
                       //     : 'white',
-                      bgcolor: isSelected
-                        ? 'primary.main'
-                        : 'white',
+                      bgcolor: isSelected ? 'primary.main' : 'white',
                       color: isSelected
                         ? 'white'
                         : hasInvoiceGenerated

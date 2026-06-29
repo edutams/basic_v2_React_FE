@@ -125,10 +125,10 @@ const PayInvoice = () => {
         if (f.id !== feeId) return f;
         const selectedInst = (f.installments || []).find((inst) => inst.id === Number(value));
         const installmentPct = selectedInst ? Number(selectedInst.inst1) || 100 : 100;
-        const base = Number(f.balance || f.amount || 0);
-        const discount = Number(f.discount_amount || 0);
-        const penalty = Number(f.penalty_amount || 0);
-        const payable = Math.max(0, base * (installmentPct / 100) - discount + penalty);
+
+        // Apply installment % to the API payable (already has discount/penalty)
+        const basePayable = Number(f.balance || 0); // balance already = amount - discount + penalty
+        const payable = Math.max(0, basePayable * (installmentPct / 100));
 
         return {
           ...f,
@@ -316,13 +316,8 @@ const PayInvoice = () => {
 
         /* Recalculate payable based on the preselected installment percentage */
         const balance = Number(item.balance || 0);
-        const discount = Number(item.discount_amount || 0);
-        const penalty = Number(item.penalty_amount || 0);
         const installmentPct = defaultInst ? Number(defaultInst.inst1) || 100 : 100;
-        const calculatedPayable = Math.max(
-          0,
-          balance * (installmentPct / 100) - discount + penalty,
-        );
+        const calculatedPayable = Math.max(0, balance * (installmentPct / 100));
 
         return {
           id: item.id,

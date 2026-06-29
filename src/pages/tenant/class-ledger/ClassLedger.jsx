@@ -754,8 +754,10 @@ const ClassLedger = () => {
                       <TableCell>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
                       <TableCell>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
                       <TableCell>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
-                      <TableCell>₦0</TableCell> {/* Penalty - add if available later */}
-                      <TableCell>₦0</TableCell> {/* Discount - add if available later */}
+                      <TableCell>₦{(student.total_penalty || 0).toLocaleString()}</TableCell>{' '}
+                      {/* Penalty - add if available later */}
+                      <TableCell>₦{(student.total_discount || 0).toLocaleString()}</TableCell>{' '}
+                      {/* Discount - add if available later */}
                       <TableCell
                         sx={{
                           color: (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
@@ -853,7 +855,7 @@ const ClassLedger = () => {
                 const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
                 window.open(
                   `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
-                  '_blank'
+                  '_blank',
                 );
               }
             }}

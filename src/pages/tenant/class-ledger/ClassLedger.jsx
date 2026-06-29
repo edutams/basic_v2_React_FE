@@ -591,7 +591,6 @@ const ClassLedger = () => {
               }}
             >
               <Button variant="contained" size="small" startIcon={<DownloadIcon />}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handleDownloadExcel}
               >
@@ -599,7 +598,6 @@ const ClassLedger = () => {
               </Button>
 
               <Button variant="contained" size="small" startIcon={<UploadIcon />}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handlePrintPaymentList}
               >
@@ -917,30 +915,30 @@ const ClassLedger = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setPayForStudentConfirmOpen(false);
-              setStudentToPayFor(null);
-            }}
+            setPayForStudentConfirmOpen(false);
+            setStudentToPayFor(null);
+          }}
           >
             Cancel
           </Button>
           <Button variant="contained" size="small" onClick={async () => {
-              if (!studentToPayFor) return;
+            if (!studentToPayFor) return;
 
-              const studentUserId =
-                studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
+            const studentUserId =
+              studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
 
-              const result = await impersonateStudent(studentUserId);
+            const result = await impersonateStudent(studentUserId);
 
-              if (result.success) {
-                notify.success('Now logged in as student');
-                window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
-              } else {
-                notify.error(result.error);
-              }
+            if (result.success) {
+              notify.success('Now logged in as student');
+              window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
+            } else {
+              notify.error(result.error);
+            }
 
-              setPayForStudentConfirmOpen(false);
-              setStudentToPayFor(null);
-            }}
+            setPayForStudentConfirmOpen(false);
+            setStudentToPayFor(null);
+          }}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
           >
             Yes, Login As

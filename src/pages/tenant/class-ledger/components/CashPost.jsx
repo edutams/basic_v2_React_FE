@@ -367,9 +367,10 @@ const CashPost = () => {
               <TableCell align="right">Balance (₦)</TableCell>
               <TableCell align="center">Discount (₦)</TableCell>
               <TableCell align="center">Penalty (₦)</TableCell>
-              <TableCell align="center">
+              {/* <TableCell align="center">
                 {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
-              </TableCell>
+              </TableCell> */}
+              <TableCell align="center">Amount to Post (₦)</TableCell>
               <TableCell align="right">Payable (₦)</TableCell>
               <TableCell align="right">
                 <Box
@@ -457,7 +458,7 @@ const CashPost = () => {
                   </TableCell>
 
                   {/* INSTALLMENT / CUSTOM AMOUNT — interactive (same logic as PayInvoice) */}
-                  <TableCell align="center">
+                  {/* <TableCell align="center">
                     {installmentalSetting === 'percentage' ? (
                       <FormControl size="small" sx={{ minWidth: 130 }}>
                         <Select
@@ -487,6 +488,20 @@ const CashPost = () => {
                         inputProps={{ min: 0, max: fee.balance || fee.amount }}
                       />
                     )}
+                  </TableCell> */}
+
+                  <TableCell align="center">
+                    <TextField
+                      size="small"
+                      type="number"
+                      sx={{ width: 120 }}
+                      disabled={fee.has_cashpost}
+                      value={fee.custom_amount}
+                      onChange={(e) => handleCustomAmountChange(type, fee.id, e.target.value)}
+                      inputProps={{ min: 0, max: fee.balance || fee.amount }}
+                      placeholder="0"
+                      helperText={`Max: ₦${format(fee.balance)}`}
+                    />
                   </TableCell>
 
                   {/* PAYABLE — recalculated on installment/amount change */}
@@ -659,21 +674,9 @@ const CashPost = () => {
         {compFees.length > 0 ? (
           renderTable('comp', compFees)
         ) : (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              textAlign: 'center',
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-              borderRadius: 3,
-            }}
-          >
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              No compulsory payment schedules found for this student.
-            </Typography>
-          </Paper>
+          <Alert severity="info" sx={{ mb: 4 }}>
+            No outstanding compulsory payments for this student.
+          </Alert>
         )}
 
         {/* OPTIONAL PAYMENT — no discount/penalty toggles, values come from API */}
@@ -687,21 +690,9 @@ const CashPost = () => {
         {optFees.length > 0 ? (
           renderTable('opt', optFees)
         ) : (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              textAlign: 'center',
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-              borderRadius: 3,
-            }}
-          >
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              No optional payment schedules found for this student.
-            </Typography>
-          </Paper>
+          <Alert severity="info" sx={{ mb: 4 }}>
+            No outstanding optional payments for this student.
+          </Alert>
         )}
 
         <FormControl size="small" sx={{ minWidth: 180, mb: 2 }}>

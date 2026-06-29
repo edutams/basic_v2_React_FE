@@ -909,7 +909,6 @@ const InvoiceStudentsView = () => {
                         <TableCell>
                           <Box
                             sx={{
-                              bgcolor: 'primary.light',
                               px: { xs: 1, sm: 1.5 },
                               py: 0.25,
                               borderRadius: 1,

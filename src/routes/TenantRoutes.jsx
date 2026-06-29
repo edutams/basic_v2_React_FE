@@ -362,7 +362,7 @@ const TenantRoutes = [
       {
         path: 'transactions',
         element: (
-          <TenantProtectedRoute permission="bursary_manager.transactions.index">
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
             <Transactions />
           </TenantProtectedRoute>
         ),

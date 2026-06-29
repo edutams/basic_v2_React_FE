@@ -90,6 +90,18 @@ const PrintInvoicePage = () => {
     );
   }
 
+  const compulsoryPayable = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
+  const compulsoryPaid = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const compulsoryTotal = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+
+  const optionalPayable = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
+  const optionalPaid = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const optionalTotal = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+
+  const currentTermPayable = compulsoryPayable + optionalPayable;
+  const currentTermPaid = compulsoryPaid + optionalPaid;
+  const currentTermTotal = compulsoryTotal + optionalTotal;
+
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -272,6 +284,23 @@ const PrintInvoicePage = () => {
                   </TableRow>
                 )}
 
+                {invoiceData.compulsory_invoice?.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
+                      COMPULSORY TOTAL
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryPayable)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryPaid)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryTotal)}
+                    </TableCell>
+                  </TableRow>
+                )}
+
                 {invoiceData.optional_invoice?.length > 0 && (
                   <>
                     {invoiceData.optional_invoice.map((item, i) => (
@@ -291,15 +320,35 @@ const PrintInvoicePage = () => {
                         <TableCell align="center">₦{fmt(item.balance)}</TableCell>
                       </TableRow>
                     ))}
+                    <TableRow>
+                      <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
+                        OPTIONAL TOTAL
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalPayable)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalPaid)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalTotal)}
+                      </TableCell>
+                    </TableRow>
                   </>
                 )}
 
                 <TableRow>
-                  <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                  <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
                     TOTAL DUE
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 900 }}>
-                    ₦{fmt(invoiceData.total_balance)}
+                    ₦{fmt(currentTermPayable)}
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 900 }}>
+                    ₦{fmt(currentTermPaid)}
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 900 }}>
+                    ₦{fmt(currentTermTotal)}
                   </TableCell>
                 </TableRow>
               </TableBody>

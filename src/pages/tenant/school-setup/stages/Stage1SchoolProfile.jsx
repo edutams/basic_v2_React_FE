@@ -271,9 +271,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 )}
               </Box>
 
-              <Button
-                size="small"
-                onClick={() => setLogoModalOpen(true)}
+              <Button variant="contained" size="small" onClick={() => setLogoModalOpen(true)}
                 sx={{
                   width: '100%',
                   mt: 1.5,

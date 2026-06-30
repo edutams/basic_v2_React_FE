@@ -405,11 +405,7 @@ const AddLearnerModal = ({
                       },
                     }}
                   />
-                  <Button
-                    onClick={handleParentSearch}
-                    disabled={parentSearching}
-                    sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
-                  >
+                  <Button variant="contained" size="small" onClick={handleParentSearch} disabled={parentSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
                     {parentSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
                   </Button>
                 </Box>
@@ -504,10 +500,10 @@ const AddLearnerModal = ({
           )}
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-            <Button onClick={onClose} disabled={isLoading}>
+            <Button variant="contained" size="small" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !isValid}>
+            <Button variant="contained" size="small" type="submit" disabled={isLoading || !isValid}>
               {isLoading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save'}
             </Button>
           </Box>

@@ -115,7 +115,7 @@ const SchoolPermissionBased = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button size="small" onClick={handleSearch} sx={{ height: 35 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 35 }}>
               Search
             </Button>
           </Grid>

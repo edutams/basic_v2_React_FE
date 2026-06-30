@@ -246,10 +246,10 @@ const SubcriptionFormLink = ({
         <MenuItem value="inactive">Inactive</MenuItem>
       </TextField>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-        <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" color="primary" disabled={isLoading}>
+        <Button variant="contained" size="small" type="submit" color="primary" disabled={isLoading}>
           {isLoading ? 'Submitting...' : submitText}
         </Button>
       </Box>

@@ -35,14 +35,11 @@ const AgentForm = ({
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit" disabled={loading}>
+        <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} color="inherit" disabled={loading}>
           Cancel
         </Button>
         {actionType !== 'viewSchools' && (
-          <Button
-            type="submit"
-            disabled={loading || !formik.isValid}
-            onClick={(e) => {
+          <Button variant="contained" size="small" type="submit" disabled={loading || !formik.isValid} onClick={(e) => {
               if (!loading && formik.isValid) {
                 handleSubmit(e);
               }

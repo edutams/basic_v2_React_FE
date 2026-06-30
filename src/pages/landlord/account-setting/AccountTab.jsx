@@ -169,7 +169,7 @@ const AccountTab = () => {
                   />
                   {!isTenantSubdomain && (
                     <Stack direction="row" justifyContent="center" spacing={2} my={3}>
-                      <Button color="primary" component="label">
+                      <Button variant="contained" size="small" color="primary" component="label">
                         Upload
                         <input
                           hidden
@@ -179,7 +179,7 @@ const AccountTab = () => {
                           onChange={handleImageChange}
                         />
                       </Button>
-                      <Button color="error" onClick={handleResetImage}>
+                      <Button variant="contained" size="small" color="error" onClick={handleResetImage}>
                         Reset
                       </Button>
                     </Stack>
@@ -261,19 +261,14 @@ const AccountTab = () => {
               {!isTenantSubdomain && (
                 <Stack direction="row" spacing={2} mt={3}>
                   <Box>
-                    <Button
-                      color="primary"
-                      type="submit"
-                      disabled={isProfileLoading}
-                      startIcon={
-                        isProfileLoading ? <CircularProgress size={20} color="inherit" /> : null
+                    <Button variant="contained" size="small" color="primary" type="submit" disabled={isProfileLoading} startIcon={ isProfileLoading ? <CircularProgress color="inherit" /> : null
                       }
                     >
                       {isProfileLoading ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </Box>
                   <Box>
-                    <Button color="error" disabled={isProfileLoading}>
+                    <Button variant="contained" size="small" color="error" disabled={isProfileLoading}>
                       Cancel
                     </Button>
                   </Box>
@@ -324,17 +319,12 @@ const AccountTab = () => {
                 />
 
                 <Stack direction="row" spacing={2} mt={3}>
-                  <Button
-                    color="primary"
-                    type="submit"
-                    disabled={isPasswordLoading}
-                    startIcon={
-                      isPasswordLoading ? <CircularProgress size={20} color="inherit" /> : null
+                  <Button variant="contained" size="small" color="primary" type="submit" disabled={isPasswordLoading} startIcon={ isPasswordLoading ? <CircularProgress color="inherit" /> : null
                     }
                   >
                     {isPasswordLoading ? 'Changing...' : 'Change Password'}
                   </Button>
-                  <Button color="error" disabled={isPasswordLoading}>
+                  <Button variant="contained" size="small" color="error" disabled={isPasswordLoading}>
                     Cancel
                   </Button>
                 </Stack>

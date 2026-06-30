@@ -570,13 +570,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       slotProps={{ inputLabel: { shrink: true } }}
                     />
                     {/* generateBtnRef targets this button exactly */}
-                    <Button
-                      ref={generateBtnRef}
-                      onClick={handleAutoGenerate}
-                      disabled={loading || !activeSessionTermId}
-                      size="small"
-                      sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
-                    >
+                    <Button variant="contained" size="small" ref={generateBtnRef} onClick={handleAutoGenerate} disabled={loading || !activeSessionTermId} sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
                       Generate
                     </Button>
                   </Box>
@@ -705,12 +699,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditModal}>Cancel</Button>
-          <Button
-            onClick={handleSaveDisplayName}
-            disabled={loading || !displayName.trim()}
-            size="small"
-          >
+          <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleSaveDisplayName} disabled={loading || !displayName.trim()}>
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
@@ -730,10 +720,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
+          <Button variant="contained" size="small" onClick={() => setConfirmSubscribe({ open: false, term: null })}>
             No, Cancel
           </Button>
-          <Button onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
+          <Button variant="contained" size="small" onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>
         </DialogActions>
@@ -762,15 +752,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
+          <Button variant="contained" size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmToggleStatus}
-            color="primary"
-            disabled={loading}
-            size="small"
-          >
+          <Button variant="contained" size="small" onClick={handleConfirmToggleStatus} color="primary" disabled={loading}>
             Confirm
           </Button>
         </DialogActions>
@@ -786,14 +771,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={() => setConfirmDeleteWeek(false)}>
+          <Button variant="contained" size="small" onClick={() => setConfirmDeleteWeek(false)}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            color="error"
-            disabled={loading}
-            onClick={() => {
+          <Button variant="contained" size="small" color="error" disabled={loading} onClick={() => {
               setConfirmDeleteWeek(false);
               handleDeleteLastWeek();
             }}

@@ -161,7 +161,7 @@ const ModuleManagement = ({
           </Box>
 
           {currentPackage && onAttachModule && (
-            <Button startIcon={<AddIcon />} onClick={onAttachModule} size="small">
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={onAttachModule} size="small">
               Manage Module
             </Button>
           )}

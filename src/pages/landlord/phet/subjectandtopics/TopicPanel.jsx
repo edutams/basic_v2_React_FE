@@ -84,7 +84,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
             )}
           </Typography>
           {selectedSubject && (
-            <Button startIcon={<AddIcon />} onClick={() => onAction('create')}>
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')}>
               Add New Topic
             </Button>
           )}
@@ -120,7 +120,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
               }}
             />
             {hasActiveFilters && (
-              <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
+              <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
                 Clear Filters
               </Button>
             )}

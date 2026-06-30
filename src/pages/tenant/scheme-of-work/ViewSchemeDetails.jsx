@@ -57,7 +57,7 @@ const ViewSchemeDetails = ({ api }) => {
     return (
       <Box sx={{ textAlign: 'center', py: 10 }}>
         <Typography variant="h6">Scheme of Work entry not found</Typography>
-        <Button onClick={() => navigate(-1)}>Go Back</Button>
+        <Button variant="contained" size="small" onClick={() => navigate(-1)}>Go Back</Button>
       </Box>
     );
   }
@@ -127,9 +127,7 @@ const ViewSchemeDetails = ({ api }) => {
               Scheme of Work - {data.week?.week_name} ({data.subject?.subject_name})
             </Typography>
           </Box>
-          <Button
-            onClick={handleDownload}
-            startIcon={<IconPrinter size={18} />}
+          <Button variant="contained" size="small" onClick={handleDownload} startIcon={<IconPrinter />}
             sx={{ textTransform: 'none' }}
           >
             Print
@@ -199,8 +197,7 @@ const ViewSchemeDetails = ({ api }) => {
         <Box
           sx={{ p: 3, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #eee' }}
         >
-          <Button
-            onClick={() => navigate(-1)}
+          <Button variant="contained" size="small" onClick={() => navigate(-1)}
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

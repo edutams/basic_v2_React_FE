@@ -127,7 +127,7 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
       <Divider />
 
       <DialogActions sx={{ p: 2.5 }}>
-        <Button onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

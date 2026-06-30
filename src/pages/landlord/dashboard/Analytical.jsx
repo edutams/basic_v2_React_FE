@@ -540,8 +540,7 @@ export default function Dashboard() {
                     </Box>
                     <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
-                  <Button
-                    onClick={() => navigate('/agent/organization')}
+                  <Button variant="contained" size="small" onClick={() => navigate('/agent/organization')}
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',
@@ -621,14 +620,7 @@ export default function Dashboard() {
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
                   </Select>
-                  <Button
-                    sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      px: 3,
-                      boxShadow: 'none',
-                    }}
-                  >
+                  <Button variant="contained" size="small" sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none', }}>
                     Filter
                   </Button>
                 </Stack>

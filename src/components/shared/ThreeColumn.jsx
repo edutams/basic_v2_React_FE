@@ -61,10 +61,7 @@ const ThreeColumn = ({ leftChild, middleChild, rightChild }) => {
           ''
         ) : (
           <Box sx={{ p: 3 }}>
-            <Button
-              color="primary"
-              size="small"
-              onClick={() => setRightSidebarOpen(false)}
+            <Button variant="contained" size="small" color="primary" onClick={() => setRightSidebarOpen(false)}
               sx={{ mb: 3, display: { xs: 'block', md: 'none', lg: 'none' } }}
             >
               Back{' '}

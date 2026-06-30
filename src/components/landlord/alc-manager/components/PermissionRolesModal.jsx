@@ -157,12 +157,11 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
               ),
             }}
           />
-          <Button onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
+          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
             Search
           </Button>
           {search && (
-            <Button
-              onClick={() => {
+            <Button variant="contained" size="small" onClick={() => {
                 setSearch('');
                 setSearchInput('');
                 setPage(0);
@@ -261,7 +260,7 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} size="small">
+        <Button variant="contained" size="small" onClick={handleClose}>
           Close
         </Button>
       </DialogActions>

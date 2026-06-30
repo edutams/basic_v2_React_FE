@@ -34,72 +34,7 @@ const PrimaryButton = ({ children, sx = {}, variant = 'primary', ...props }) => 
         : (isDarkMode ? 'white' : '#1E293B');
 
     return (
-        <Button
-            variant={isPrimary ? "contained" : "outlined"}
-            sx={{
-                bgcolor: isPrimary
-                    ? primaryBg
-                    : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'white'),
-
-                color: textColor,
-
-                fontWeight: 700,
-                textTransform: 'none',
-                px: 4,
-                py: 1.2,
-                borderRadius: '12px',
-                fontSize: '14px',
-
-                border: isPrimary
-                    ? 'none'
-                    : `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#E2E8F0'}`,
-
-                boxShadow: isPrimary
-                    ? '0px 2px 4px rgba(0, 0, 0, 0.05)'
-                    : 'none',
-
-                transition: 'all 0.2s ease-in-out',
-
-                '&:hover': {
-                    bgcolor: isPrimary
-                        ? primaryHover
-                        : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#F8FAFC'),
-
-                    border: isPrimary
-                        ? 'none'
-                        : `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#CBD5E1'}`,
-
-                    color: textColor,
-
-                    boxShadow: isPrimary
-                        ? '0px 4px 6px rgba(0, 0, 0, 0.1)'
-                        : 'none',
-                },
-
-                '&:active': {
-                    color: textColor,
-                },
-
-                '&:focus': {
-                    color: textColor,
-                },
-
-                '&.Mui-disabled': {
-                    bgcolor: isDarkMode
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : '#F1F5F9',
-
-                    color: isDarkMode
-                        ? 'rgba(255, 255, 255, 0.3)'
-                        : '#94A3B8',
-
-                    border: 'none',
-                },
-
-                ...sx
-            }}
-            {...props}
-        >
+        <Button variant="contained" size="small" sx={{ bgcolor: isPrimary ? primaryBg : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'white'), color: textColor, fontWeight: 700, textTransform: 'none', px: 4, py: 1.2, borderRadius: '12px', fontSize: '14px', border: isPrimary ? 'none' : `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#E2E8F0'}`, boxShadow: isPrimary ? '0px 2px 4px rgba(0, 0, 0, 0.05)' : 'none', transition: 'all 0.2s ease-in-out', '&:hover': { bgcolor: isPrimary ? primaryHover : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#F8FAFC'), border: isPrimary ? 'none' : `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#CBD5E1'}`, color: textColor, boxShadow: isPrimary ? '0px 4px 6px rgba(0, 0, 0, 0.1)' : 'none', }, '&:active': { color: textColor, }, '&:focus': { color: textColor, }, '&.Mui-disabled': { bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#F1F5F9', color: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#94A3B8', border: 'none', }, ...sx }} {...props}>
             {children}
         </Button>
     );

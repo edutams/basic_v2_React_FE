@@ -358,13 +358,13 @@ const FormCustom = () => {
               mt={2}
             >
               <Stack spacing={1} direction="row">
-                <Button color="primary">Add New</Button>
+                <Button variant="contained" size="small" color="primary">Add New</Button>
                 <CustomDisabledButton disabled>Add New</CustomDisabledButton>
                 <CustomOutlinedButton>Add New</CustomOutlinedButton>
               </Stack>
               <Stack direction="row" spacing={1}>
-                <Button color="secondary">Add New</Button>
-                <Button color="success">Add New</Button>
+                <Button variant="contained" size="small" color="secondary">Add New</Button>
+                <Button variant="contained" size="small" color="success">Add New</Button>
               </Stack>
             </Stack>
           </Grid>

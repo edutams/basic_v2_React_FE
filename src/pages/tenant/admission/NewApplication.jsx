@@ -176,9 +176,7 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
     {activeStep !== 3 && (
       <>
         <Divider sx={{ mb: 2 }} />
-        <Button
-          fullWidth
-          startIcon={<VisibilityIcon />}
+        <Button variant="contained" size="small" fullWidth startIcon={<VisibilityIcon />}
           onClick={onChangeBatch}
           sx={{
             borderRadius: 2,
@@ -537,8 +535,7 @@ const NewApplication = () => {
             </Box>
           </Box>
 
-          <Button
-            startIcon={<ArrowBackIcon />}
+          <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/dashboard')}
             sx={{ color: 'text.secondary', fontWeight: 500 }}
           >

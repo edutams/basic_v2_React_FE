@@ -247,12 +247,7 @@ const ManageSubscriptionList = () => {
             gap={1}
           >
             <Typography variant="h5">Manage Subcription</Typography>
-            <Button
-              color="primary"
-              size="small"
-              onClick={handleAddClick}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
+            <Button variant="contained" size="small" color="primary" onClick={handleAddClick} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Add New Subcription
             </Button>
           </Box>

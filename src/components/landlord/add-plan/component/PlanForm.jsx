@@ -161,13 +161,10 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
         {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
       </FormControl>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-        <Button onClick={onCancel} color="inherit" disabled={loading}>
+        <Button variant="contained" size="small" onClick={onCancel} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          color="primary"
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+        <Button variant="contained" size="small" type="submit" color="primary" startIcon={loading ? <CircularProgress color="inherit" /> : null}
         >
           {actionType === 'create' ? 'Add Plan' : 'Update Plan'}
         </Button>

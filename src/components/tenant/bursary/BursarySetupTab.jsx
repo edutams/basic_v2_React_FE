@@ -623,9 +623,7 @@ const BursarySetupTab = ({
                       </Typography>
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    startIcon={<IconPlus size={18} />}
+                  <Button variant="contained" size="small" startIcon={<IconPlus />}
                     onClick={handleAddCategory}
                     sx={{ fontWeight: 600 }}
                   >
@@ -703,17 +701,11 @@ const BursarySetupTab = ({
                       ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
                       : ''}
                   </Typography>
-                  <Button
-                    size="small"
-                    disabled={!categoryMeta.prev_page_url}
-                    onClick={() => setCategoryPage((p) => p - 1)}
+                  <Button variant="contained" size="small" disabled={!categoryMeta.prev_page_url} onClick={() => setCategoryPage((p) => p - 1)}
                   >
                     Prev
                   </Button>
-                  <Button
-                    size="small"
-                    disabled={!categoryMeta.next_page_url}
-                    onClick={() => setCategoryPage((p) => p + 1)}
+                  <Button variant="contained" size="small" disabled={!categoryMeta.next_page_url} onClick={() => setCategoryPage((p) => p + 1)}
                   >
                     Next
                   </Button>
@@ -748,9 +740,7 @@ const BursarySetupTab = ({
                       </Typography>
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    startIcon={<IconPlus size={18} />}
+                  <Button variant="contained" size="small" startIcon={<IconPlus />}
                     onClick={handleAddInstalment}
                     sx={{ fontWeight: 600 }}
                   >
@@ -826,17 +816,11 @@ const BursarySetupTab = ({
                       ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
                       : ''}
                   </Typography>
-                  <Button
-                    size="small"
-                    disabled={!instalmentMeta.prev_page_url}
-                    onClick={() => setInstalmentPage((p) => p - 1)}
+                  <Button variant="contained" size="small" disabled={!instalmentMeta.prev_page_url} onClick={() => setInstalmentPage((p) => p - 1)}
                   >
                     Prev
                   </Button>
-                  <Button
-                    size="small"
-                    disabled={!instalmentMeta.next_page_url}
-                    onClick={() => setInstalmentPage((p) => p + 1)}
+                  <Button variant="contained" size="small" disabled={!instalmentMeta.next_page_url} onClick={() => setInstalmentPage((p) => p + 1)}
                   >
                     Next
                   </Button>
@@ -1015,16 +999,7 @@ const BursarySetupTab = ({
 
               {/* Save button */}
               <Box display="flex" justifyContent="flex-end">
-                <Button
-                  disabled={
-                    savingResultSettings ||
-                    !resultSettings.pay_type ||
-                    (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) ||
-                    (resultSettings.pay_type === 'both' &&
-                      (!resultSettings.compulsory_pay_method ||
-                        !resultSettings.optional_pay_method))
-                  }
-                  onClick={() => handleSaveResultSettings(resultSettings)}
+                <Button variant="contained" size="small" disabled={ savingResultSettings || !resultSettings.pay_type || (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) || (resultSettings.pay_type === 'both' && (!resultSettings.compulsory_pay_method || !resultSettings.optional_pay_method)) } onClick={() => handleSaveResultSettings(resultSettings)}
                   sx={{ fontWeight: 600 }}
                 >
                   {savingResultSettings ? 'Saving...' : 'Save Settings'}
@@ -1135,17 +1110,12 @@ const BursarySetupTab = ({
             the category <strong>"{confirmStatusModal.category?.name}"</strong>?
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button
-              onClick={() => setConfirmStatusModal({ open: false, category: null })}
+            <Button variant="contained" size="small" onClick={() => setConfirmStatusModal({ open: false, category: null })}
               disabled={categoryActionLoading}
             >
               Cancel
             </Button>
-            <Button
-              color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'}
-              onClick={handleToggleCategoryStatus}
-              disabled={categoryActionLoading}
-            >
+            <Button variant="contained" size="small" color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'} onClick={handleToggleCategoryStatus} disabled={categoryActionLoading}>
               {categoryActionLoading
                 ? 'Updating...'
                 : confirmStatusModal.category?.status === 'active'
@@ -1181,19 +1151,12 @@ const BursarySetupTab = ({
             <strong>"{confirmInstalmentStatusModal.instalment?.options}"</strong>?
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button
-              onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+            <Button variant="contained" size="small" onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
               disabled={instalmentActionLoading}
             >
               Cancel
             </Button>
-            <Button
-              color={
-                confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'
-              }
-              onClick={handleToggleInstalmentStatus}
-              disabled={instalmentActionLoading}
-            >
+            <Button variant="contained" size="small" color={ confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success' } onClick={handleToggleInstalmentStatus} disabled={instalmentActionLoading}>
               {instalmentActionLoading
                 ? 'Updating...'
                 : confirmInstalmentStatusModal.instalment?.status === 'active'

@@ -187,11 +187,11 @@ const PermissionBased = () => {
               ),
             }}
           />
-          <Button onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
+          <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
             Search
           </Button>
           {/* {hasFilters && (
-            <Button  onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
+            <Button variant="contained" size="small" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
             </Button>
           )} */}

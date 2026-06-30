@@ -374,10 +374,7 @@ const ChartOfAccounts = () => {
                     },
                   }}
                 />
-                <Button
-                  color="primary"
-                  onClick={handleOpenAdd}
-                  startIcon={<IconPlus size={18} />}
+                <Button variant="contained" size="small" color="primary" onClick={handleOpenAdd} startIcon={<IconPlus />}
                   sx={{
                     borderRadius: '8px',
                     px: 3,
@@ -559,10 +556,10 @@ const ChartOfAccounts = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteModal(false)} color="inherit">
+          <Button variant="contained" size="small" onClick={() => setOpenDeleteModal(false)} color="inherit">
             Cancel
           </Button>
-          <Button color="error" onClick={handleConfirmDelete}>
+          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

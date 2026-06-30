@@ -263,9 +263,7 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
               </Box>
             </Box>
 
-            <Button
-              size="small"
-              onClick={(e) => {
+            <Button variant="contained" size="small" onClick={(e) => {
                 e.stopPropagation();
                 onViewDetails?.(ward);
               }}

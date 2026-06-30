@@ -136,10 +136,10 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button onClick={onCancel} color="inherit" sx={{ fontWeight: 600 }}>
+        <Button variant="contained" size="small" onClick={onCancel} color="inherit" sx={{ fontWeight: 600 }}>
           Cancel
         </Button>
-        <Button onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
+        <Button variant="contained" size="small" onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
           Yes, Apply Now
         </Button>
       </DialogActions>
@@ -292,9 +292,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       )}
 
                       <TableCell align="center">
-                        <Button
-                          size="small"
-                          onClick={(e) => {
+                        <Button variant="contained" size="small" onClick={(e) => {
                             e.stopPropagation();
                             setConfirmBatch(batch);
                           }}

@@ -154,9 +154,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                   Every fee items a parent can pay for
                 </Typography>
               </Box>
-              <Button
-                size="small"
-                startIcon={<IconPlus size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconPlus />}
                 onClick={handleAddPayment}
                 sx={{ fontWeight: 600 }}
               >
@@ -191,18 +189,11 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 ),
               }}
             />
-            <Button
-              onClick={handleSearch}
-              sx={{ minWidth: 100, width: { xs: '100%', sm: 'auto' } }}
-            >
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: 100, width: { xs: '100%', sm: 'auto' } }}>
               Search
             </Button>
             {hasFilters && (
-              <Button
-                size="small"
-                onClick={resetFilters}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-              >
+              <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 Clear Filters
               </Button>
             )}
@@ -410,17 +401,12 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 <strong>"{confirmStatusModal.payment?.name}"</strong>?
               </Typography>
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button
-                  onClick={() => setConfirmStatusModal({ open: false, payment: null })}
+                <Button variant="contained" size="small" onClick={() => setConfirmStatusModal({ open: false, payment: null })}
                   disabled={actionLoading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'}
-                  onClick={handleToggleStatus}
-                  disabled={actionLoading}
-                >
+                <Button variant="contained" size="small" color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleStatus} disabled={actionLoading}>
                   {actionLoading
                     ? 'Updating...'
                     : confirmStatusModal.payment?.status === 'active'

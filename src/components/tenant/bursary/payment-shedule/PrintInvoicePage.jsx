@@ -119,7 +119,7 @@ const PrintInvoicePage = () => {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error}</Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mt: 2 }}>
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mt: 2 }}>
           Go Back
         </Button>
       </Box>
@@ -138,11 +138,10 @@ const PrintInvoicePage = () => {
           gap: 2,
         }}
       >
-        <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
           Back
         </Button>
-        <Button
-          startIcon={<PrintIcon />}
+        <Button variant="contained" size="small" startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={!invoiceData}
           sx={{ fontWeight: 600 }}

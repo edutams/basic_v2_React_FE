@@ -293,9 +293,7 @@ const SettlementReconcillation = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
@@ -364,7 +362,7 @@ const SettlementReconcillation = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button fullWidth sx={{ height: '40px' }}>
+            <Button variant="contained" size="small" fullWidth sx={{ height: '40px' }}>
               Fetch
             </Button>
           </Grid>

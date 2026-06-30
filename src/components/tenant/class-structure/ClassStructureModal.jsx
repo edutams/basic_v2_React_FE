@@ -248,12 +248,8 @@ const ClassStructureModal = ({ open, onClose, onSave, editingStructure }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={
-            !formData.class_name.trim() ||
-            formData.arms.filter((arm) => arm.trim() !== '').length === 0
+        <Button variant="contained" size="small" onClick={handleClose}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={handleSubmit} disabled={ !formData.class_name.trim() || formData.arms.filter((arm) => arm.trim() !== '').length === 0
           }
         >
           {editingStructure ? 'Update' : 'Create'}

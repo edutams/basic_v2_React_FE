@@ -160,11 +160,7 @@ const LinkParentForm = ({ learner, onSave, onCancel }) => {
             },
           }}
         />
-        <Button
-          onClick={handleSearch}
-          disabled={searching}
-          sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
-        >
+        <Button variant="contained" size="small" onClick={handleSearch} disabled={searching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
           {searching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
         </Button>
       </Box>
@@ -243,10 +239,10 @@ const LinkParentForm = ({ learner, onSave, onCancel }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={saving}>
+        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button variant="contained" size="small" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </Box>

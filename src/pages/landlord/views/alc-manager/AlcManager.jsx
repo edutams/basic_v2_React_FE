@@ -289,9 +289,7 @@ const AlcManager = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Typography variant="h5">Manage Roles</Typography>
 
-              <Button
-                color="primary"
-                onClick={() => {
+              <Button variant="contained" size="small" color="primary" onClick={() => {
                   setIsEditing(false);
                   setNewRoleForm({ roleName: '', description: '' });
                   setNewRoleModalOpen(true);
@@ -311,8 +309,7 @@ const AlcManager = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Button
-              startIcon={<IconAdjustmentsHorizontal size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
                 textTransform: 'none',

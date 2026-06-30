@@ -103,12 +103,7 @@ const AuthResetPassword = ({ emailProp, tokenProp, onSuccess }) => {
         sx={{ mb: 3 }}
       />
 
-      <Button
-        fullWidth
-        color="primary"
-        type="submit"
-        disabled={loading}
-        startIcon={loading ? <CircularProgress size={20} /> : null}
+      <Button variant="contained" size="small" fullWidth color="primary" type="submit" disabled={loading} startIcon={loading ? <CircularProgress /> : null}
       >
         {loading ? 'Resetting...' : 'Reset Password'}
       </Button>

@@ -99,7 +99,7 @@ const InvoiceView = () => {
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
         <Box display="flex" justifyContent="center" mt={2}>
-          <Button variant="outlined" onClick={handleBack}>
+          <Button variant="contained" size="small" onClick={handleBack}>
             Back to Invoice List
           </Button>
         </Box>
@@ -159,9 +159,7 @@ const InvoiceView = () => {
             and generate invoices for the selected students before viewing them here.
           </Typography>
 
-          <Button
-            onClick={handleBack}
-            startIcon={<ArrowBackIcon />}
+          <Button variant="contained" size="small" onClick={handleBack} startIcon={<ArrowBackIcon />}
             sx={{ fontWeight: 600, px: 4 }}
           >
             Back to Invoice List
@@ -192,16 +190,14 @@ const InvoiceView = () => {
           </Typography>
         </Box>
         <Box display="flex" gap={1}>
-          <Button
-            size="small"
-            startIcon={<PrintIcon />}
+          <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrintAll}
             disabled={studentsData.length === 0}
             sx={{ fontWeight: 600 }}
           >
             Print All
           </Button>
-          <Button variant="outlined" size="small" onClick={handleBack}>
+          <Button variant="contained" size="small" onClick={handleBack}>
             Back
           </Button>
         </Box>
@@ -350,11 +346,8 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button size="small">Proceed to Pay</Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => handleUpdateInvoice(student)}
+                <Button variant="contained" size="small">Proceed to Pay</Button>
+                <Button variant="contained" size="small" onClick={() => handleUpdateInvoice(student)}
                 >
                   Update Invoice
                 </Button>
@@ -549,11 +542,8 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button size="small">Proceed to Pay</Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => handleUpdateInvoice(student)}
+                <Button variant="contained" size="small">Proceed to Pay</Button>
+                <Button variant="contained" size="small" onClick={() => handleUpdateInvoice(student)}
                 >
                   Update Invoice
                 </Button>

@@ -270,14 +270,10 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
         )}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button onClick={onClose} disabled={saving}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={saving || gatewaysLoading}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleSubmit} disabled={saving || gatewaysLoading} sx={{ fontWeight: 600 }}>
             {saving ? 'Saving...' : mode === 'existing' ? 'Save' : 'Create Payment Gateway Account'}
           </Button>
         </Stack>

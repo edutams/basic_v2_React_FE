@@ -520,7 +520,7 @@ const CompulsoryScheduleTab = ({
               }}
               sx={{ width: 300 }}
             />
-            <Button size="small" onClick={handleSearch}>
+            <Button variant="contained" size="small" onClick={handleSearch}>
               Search
             </Button>
           </Box>
@@ -752,10 +752,10 @@ const CompulsoryScheduleTab = ({
           <Typography variant="body2">{confirmDialog.message}</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={handleConfirmDialogClose}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleConfirmDialogClose}>
             Cancel
           </Button>
-          <Button onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
             Confirm
           </Button>
         </DialogActions>
@@ -821,10 +821,10 @@ const CompulsoryScheduleTab = ({
           )} */}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
             Cancel
           </Button>
-          <Button color="error" onClick={handleConfirmDelete} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} sx={{ fontWeight: 600 }}>
             Delete Item
           </Button>
         </DialogActions>
@@ -865,21 +865,14 @@ const CompulsoryScheduleTab = ({
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() =>
+          <Button variant="contained" size="small" color="inherit" onClick={() =>
               setClassActionDialog({ open: false, action: null, schedule: null, classData: null })
             }
             disabled={processingAction}
           >
             Cancel
           </Button>
-          <Button
-            color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
-            onClick={handleConfirmClassAction}
-            disabled={processingAction}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" color={classActionDialog.action === 'delete' ? 'error' : 'primary'} onClick={handleConfirmClassAction} disabled={processingAction} sx={{ fontWeight: 600 }}>
             {processingAction
               ? 'Processing...'
               : classActionDialog.action === 'delete'

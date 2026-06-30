@@ -649,10 +649,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            
-            color="success"
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" color="success" startIcon={<IconDownload />}
             onClick={() => setDlSchemeOpen(true)}
             sx={{
               textTransform: 'none',
@@ -666,9 +663,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Button>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            
-            startIcon={<IconUpload size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconUpload />}
             onClick={() => setUploadOpen(true)}
             sx={{
               textTransform: 'none',
@@ -682,10 +677,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Upload Scheme Template
           </Button>
-          <Button
-            
-            color="success"
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" color="success" startIcon={<IconDownload />}
             onClick={() => setDlTemplateOpen(true)}
             sx={{
               textTransform: 'none',
@@ -726,9 +718,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             ))}
           </Tabs>
         </Box>
-        {/* <Button
-          
-          startIcon={<IconFilter size={18} />}
+        {/* <Button variant="contained" size="small" startIcon={<IconFilter />}
           onClick={() => setFilterDrawerOpen(true)}
           sx={{
             textTransform: 'none',
@@ -836,11 +826,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
-              <Button
-                fullWidth
-                onClick={handleFetch}
-                sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
-              >
+              <Button variant="contained" size="small" fullWidth onClick={handleFetch} sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}>
                 Fetch
               </Button>
             </Grid>
@@ -1119,7 +1105,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingTopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingTopic}>
             {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
@@ -1165,7 +1151,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingSubtopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
             {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
@@ -1270,7 +1256,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth>
+          <Button variant="contained" size="small" type="submit" fullWidth>
             Save Objective
           </Button>
         </Box>
@@ -1442,12 +1428,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadTemplate}
-            startIcon={<IconDownload size={16} />}
+          <Button variant="contained" size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             Download Template
@@ -1583,18 +1567,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setUploadOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setUploadOpen(false)}
             disabled={uploading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleUploadTemplate}
-            disabled={uploading}
-            startIcon={
-              uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />
+          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={ uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
             }
             sx={{ textTransform: 'none' }}
           >
@@ -1696,19 +1675,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDlSchemeOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(false)}
             disabled={downloading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadScheme}
-            disabled={downloading}
-            startIcon={
-              downloading ? (
-                <CircularProgress size={16} color="inherit" />
+          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={ downloading ? ( <CircularProgress color="inherit" />
               ) : (
                 <IconDownload size={16} />
               )
@@ -1736,9 +1709,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           }}
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
-          <Button
-            onClick={handlePrint}
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" onClick={handlePrint} startIcon={<IconDownload />}
             sx={{ textTransform: 'none' }}
           >
             Print
@@ -2038,8 +2009,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setViewDetailsModalOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setViewDetailsModalOpen(false)}
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

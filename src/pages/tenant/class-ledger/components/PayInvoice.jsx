@@ -654,6 +654,7 @@ const PayInvoice = () => {
           </Box>
 
           <Button
+            variant="contained"
             size="small"
             onClick={() => navigate('/class-ledger')}
             sx={{
@@ -904,7 +905,7 @@ const PayInvoice = () => {
               )}
               {owingInfo?.owing_status !== 'owing' && (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   size="small"
                   startIcon={<AddIcon />}
                   onClick={handleOpenOptionalModal}
@@ -1265,8 +1266,12 @@ const PayInvoice = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setConfirmModalOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setConfirmModalOpen(false)}>
+            Cancel
+          </Button>
           <Button
+            variant="contained"
+            size="small"
             onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();
@@ -1430,8 +1435,12 @@ const PayInvoice = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>
+            Cancel
+          </Button>
           <Button
+            variant="contained"
+            size="small"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}
             sx={{ fontWeight: 600 }}

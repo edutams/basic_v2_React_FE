@@ -216,11 +216,7 @@ const AgentSubscriptionList = ({ status }) => {
                       <TableCell align="center">
                         <Box display="flex" justifyContent="center" alignItems="center">
                           {row.status === 'pending' && (
-                            <Button
-                              size="small"
-                              color="success"
-                              sx={{ mr: 1 }}
-                              onClick={() => handleApproveConfirm(row)}
+                            <Button variant="contained" size="small" color="success" sx={{ mr: 1 }} onClick={() => handleApproveConfirm(row)}
                             >
                               Approve
                             </Button>

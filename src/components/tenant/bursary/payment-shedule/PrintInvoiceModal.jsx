@@ -106,18 +106,14 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
           )}
         </Box>
         <Box display="flex" gap={1}>
-          <Button
-            startIcon={<PrintIcon />}
+          <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrint}
             disabled={loading || !invoiceData}
             sx={{ fontWeight: 600 }}
           >
             {loading ? 'Loading...' : 'Print'}
           </Button>
-          <Button
-            variant="outlined"
-            onClick={onClose}
-            startIcon={<CloseIcon />}
+          <Button variant="contained" size="small" onClick={onClose} startIcon={<CloseIcon />}
             sx={{ minWidth: 'auto' }}
           >
             Close
@@ -408,9 +404,8 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button onClick={onClose}>Close</Button>
-        <Button
-          startIcon={<PrintIcon />}
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={loading || !invoiceData}
           sx={{ fontWeight: 600 }}

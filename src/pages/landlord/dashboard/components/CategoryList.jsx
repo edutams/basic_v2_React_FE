@@ -126,8 +126,7 @@ const CategoryList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ maxWidth: { xs: '100%', sm: 300 } }}
         />
-        <Button
-          startIcon={<AddIcon />}
+        <Button variant="contained" size="small" startIcon={<AddIcon />}
           onClick={() => handleOpenModal()}
           sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
         >
@@ -247,8 +246,8 @@ const CategoryList = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button onClick={handleSubmit}>Save</Button>
+          <Button variant="contained" size="small" onClick={handleCloseModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleSubmit}>Save</Button>
         </DialogActions>
       </Dialog>
 

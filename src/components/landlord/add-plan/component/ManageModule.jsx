@@ -250,13 +250,10 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button onClick={onCancel} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
+            <Button variant="contained" size="small" onClick={onCancel} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges || isSaving}
-              startIcon={isSaving ? <CircularProgress size={16} /> : null}
+            <Button variant="contained" size="small" onClick={handleSave} disabled={!hasChanges || isSaving} startIcon={isSaving ? <CircularProgress /> : null}
               sx={{
                 px: 4,
                 borderRadius: '8px',

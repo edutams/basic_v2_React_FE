@@ -48,7 +48,7 @@ const SchoolViewPermissionModal = ({ open, onClose, selectedRow, permissionsToVi
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

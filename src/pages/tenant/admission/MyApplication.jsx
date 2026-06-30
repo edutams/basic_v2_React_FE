@@ -150,15 +150,14 @@ const MyApplication = () => {
             </Select>
           </FormControl>
 
-          <Button onClick={() => setBatchModalOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
+          <Button variant="contained" size="small" onClick={() => setBatchModalOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
             New Application
           </Button>
         </Box>
       </Box>
 
       <Box mb={3}>
-        <Button
-          startIcon={<ArrowBackIcon />}
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/dashboard')}
           sx={{
             color: '#262292',
@@ -211,7 +210,7 @@ const MyApplication = () => {
               application to get your ward enrolled.
             </Typography>
           </Box>
-          <Button onClick={() => setBatchModalOpen(true)}>New Application</Button>
+          <Button variant="contained" size="small" onClick={() => setBatchModalOpen(true)}>New Application</Button>
         </Paper>
       ) : (
         <Grid container spacing={3} alignItems="flex-start">

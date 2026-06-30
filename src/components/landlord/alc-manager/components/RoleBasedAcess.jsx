@@ -125,7 +125,7 @@ const RoleBasedAcess = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button size="small" onClick={handleSearch} sx={{ height: 40 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
               Search
             </Button>
           </Grid>

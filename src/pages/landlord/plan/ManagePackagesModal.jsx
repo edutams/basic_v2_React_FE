@@ -265,11 +265,9 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
       <Divider sx={{ my: 4 }} />
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pb: 1 }}>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
 
-        <Button
-          onClick={handleSave}
-          startIcon={saving && <CircularProgress size={20} color="inherit" />}
+        <Button variant="contained" size="small" onClick={handleSave} startIcon={saving && <CircularProgress color="inherit" />}
           disabled={saving}
           size="small"
         >

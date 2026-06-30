@@ -70,7 +70,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">Manage Subjects</Typography>
-          <Button onClick={onAddSubject}>Add New Subject</Button>
+          <Button variant="contained" size="small" onClick={onAddSubject}>Add New Subject</Button>
         </Box>
       }
     >
@@ -94,7 +94,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
             }}
           />
           {hasActiveFilters && (
-            <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
+            <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
               Clear Filters
             </Button>
           )}

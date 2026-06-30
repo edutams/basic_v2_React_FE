@@ -478,10 +478,7 @@ const AdmissionSetup = () => {
                     </>
                   )}
                 </Typography>
-                <Button
-                  //
-                  size="small"
-                  startIcon={<AddIcon />}
+                <Button variant="contained" size="small" // startIcon={<AddIcon />}
                   disabled={!selectedSessionTermId}
                   onClick={handleCreateBatch}
                   sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: { xs: 0, sm: 2 } }}
@@ -689,14 +686,10 @@ const AdmissionSetup = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={() => setConfirmToggleBatch({ open: false, batch: null })}>
+          <Button variant="contained" size="small" onClick={() => setConfirmToggleBatch({ open: false, batch: null })}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'}
-            onClick={handleToggleBatchStatus}
-          >
+          <Button variant="contained" size="small" color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'} onClick={handleToggleBatchStatus}>
             Confirm
           </Button>
         </DialogActions>
@@ -739,11 +732,11 @@ const AdmissionSetup = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setLetterEditorOpen(false)} color="inherit">
+          <Button variant="contained" size="small" onClick={() => setLetterEditorOpen(false)} color="inherit">
             {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
           {!letterEditorReadOnly && (
-            <Button onClick={handleSaveAdmissionLetter} sx={{ fontWeight: 700 }}>
+            <Button variant="contained" size="small" onClick={handleSaveAdmissionLetter} sx={{ fontWeight: 700 }}>
               Save Letter
             </Button>
           )}

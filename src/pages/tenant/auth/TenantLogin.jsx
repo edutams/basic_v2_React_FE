@@ -173,10 +173,10 @@ const TenantLogin = () => {
                       sx={[
                         buttonStyle,
                         {
-                          bgcolor: 'primary.dark',
-                          color: '#fff',
+                          bgcolor: '#fff',
+                          color: 'primary.main',
                           '&:hover': {
-                            bgcolor: 'primary.light',
+                            bgcolor: 'grey.100',
                           },
                         },
                       ]}

@@ -23,7 +23,7 @@ const Logo = () => {
 
   if (activeDir === 'ltr') {
     return (
-      <LinkStyle
+      <LinkStyled
         to="/"
         style={{
           display: 'flex',

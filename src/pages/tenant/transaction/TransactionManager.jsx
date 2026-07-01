@@ -43,7 +43,11 @@ const TransactionManager = () => {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    fetchTransactionValues().then(setStats).catch(console.error);
+    fetchTransactionValues()
+      .then((res) => {
+        setStats(res.data);
+      })
+      .catch(console.error);
   }, []);
 
   const handleTabChange = (event, newValue) => {

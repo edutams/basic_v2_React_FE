@@ -1,17 +1,9 @@
 import { useContext } from 'react';
 
 import { Link } from 'react-router-dom';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { ReactComponent as LogoDark } from 'src/assets/images/logos/logo-dark.svg';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/rtl-logo-dark.svg';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { ReactComponent as LogoLight } from 'src/assets/images/logos/logo-white.svg';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/rtl-logo-white.svg';
 import { styled } from '@mui/material';
 import config from 'src/context/config';

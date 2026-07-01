@@ -778,10 +778,18 @@ const AgentCurriculumManager = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={7} align="center">
-                                <Typography color="textSecondary">
+                              <TableCell colSpan={7} sx={{ p: 0 }}>
+                                <Alert
+                                  severity="info"
+                                  sx={{
+                                    my: 2,
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    textAlign: 'center',
+                                  }}
+                                >
                                   No subjects found. Please add a subject.
-                                </Typography>
+                                </Alert>
                               </TableCell>
                             </TableRow>
                           )}

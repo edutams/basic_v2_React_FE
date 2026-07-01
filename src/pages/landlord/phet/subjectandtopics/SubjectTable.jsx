@@ -19,6 +19,7 @@ import {
   Menu,
   MenuItem,
   InputAdornment,
+  Alert
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -172,9 +173,9 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} align="center">
-                      <Typography variant="body1" color="textSecondary">
+                      <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
                         No subjects found
-                      </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}

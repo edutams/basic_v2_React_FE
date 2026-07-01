@@ -18,6 +18,7 @@ import {
   MenuItem,
   InputAdornment,
   Button,
+  Alert
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
@@ -188,7 +189,7 @@ const ManagePhETLinks = () => {
                   ),
                 },
               }}
-              // sx={{ flexGrow: 1, minWidth: 200 }}
+            // sx={{ flexGrow: 1, minWidth: 200 }}
             />
             {hasActiveFilters && (
               <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
@@ -267,9 +268,9 @@ const ManagePhETLinks = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        <Typography variant="body2" color="textSecondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
                           No records found
-                        </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}

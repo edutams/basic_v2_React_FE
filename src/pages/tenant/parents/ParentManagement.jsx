@@ -398,7 +398,14 @@ const ParentManagement = () => {
                 ),
               },
             }}
-            sx={{ flex: 1, minWidth: { xs: '100%', sm: 220 } }}
+            sx={{
+              width: {
+                xs: "100%",
+                sm: 300,
+                md: 350,
+              },
+            }}
+
           />
 
           {hasFilters && (

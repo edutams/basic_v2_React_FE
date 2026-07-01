@@ -80,7 +80,7 @@ const generatePrimaryPalette = (primaryColor) => {
   // The threshold where contrast with white equals contrast with black is ~0.179
   // const isDark = luminance <= 0.179;
 
-  const isDark = luminance <= 0.35;
+  const isDark = luminance <= 0.5;
 
   // Convert to hex for consistency
   const toHex = (value) => {

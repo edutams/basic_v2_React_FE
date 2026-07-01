@@ -7,7 +7,11 @@ import { IconWallet } from '@tabler/icons';
 import Overview from './components/AllTransaction/Overview';
 import Revenue from './components/TransactionByRevenue/Revenue';
 import SettlementReconcillation from './components/TransactionSettlementReconcillation/SettlementReconcillation';
-import { fetchTransactionValues } from '@/api/tenant/bursary/transactionApi';
+import {
+  fetchTransactionValues,
+  fetchRevenueTransactionValues,
+} from '@/api/tenant/bursary/transactionApi';
+import { set } from 'lodash';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -42,13 +46,26 @@ const TransactionManager = () => {
   const [tab, setTab] = useState(0);
   const [stats, setStats] = useState(null);
 
+  const loadStats = async () => {
+    try {
+      let res;
+      if (tab === 0) {
+        // Overview Tab
+        res = await fetchTransactionValues();
+      } else if (tab === 1) {
+        // Revenue Tab
+        res = await fetchRevenueTransactionValues();
+      }
+      setStats(res?.data || res);
+    } catch (err) {
+      console.error('Failed to load stats', err);
+      setStats(null);
+    }
+  };
+
   useEffect(() => {
-    fetchTransactionValues()
-      .then((res) => {
-        setStats(res.data);
-      })
-      .catch(console.error);
-  }, []);
+    loadStats();
+  }, [tab]);
 
   const handleTabChange = (event, newValue) => {
     setTab(newValue);

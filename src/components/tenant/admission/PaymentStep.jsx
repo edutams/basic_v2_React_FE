@@ -64,6 +64,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
   const isPaymentDataLoading = !selectedBatch || 
     (selectedBatch.require_payment && selectedBatch.pre_application_payments === undefined) ||
     checkingPayment;
+    console.log(selectedBatch,333)
 
   if (isPaymentDataLoading) {
     return (

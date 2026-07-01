@@ -99,8 +99,19 @@ export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
 };
 
 // Admission Payment
+export const checkAdmissionPaymentStatus = async (admissionId) => {
+  const response = await api.get(`/admission/payments/status/${admissionId}`);
+  return response.data;
+};
+
 export const initiateAdmissionPayment = async (data) => {
   const response = await api.post('/admission/payments/initiate', data);
+  return response.data;
+};
+
+// Get admission payment receipt
+export const getAdmissionPaymentReceipt = async (admissionId) => {
+  const response = await api.get(`/admission/payments/receipt/${admissionId}`);
   return response.data;
 };
 

@@ -106,26 +106,63 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
           </Stack>
 
           {batch?.require_payment && <Divider sx={{ my: 1.5 }} />}
-          {batch?.require_payment && batch?.acceptance_fee != '0.00' && (
-            <Box display="flex" justifyContent="space-between" mb={0.75}>
-              <Typography variant="body2" color="text.secondary">
-                Pre-Application Fee
+          {batch?.require_payment && (
+            <>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.75 }}
+              >
+                Pre-Application Payment Breakdown
               </Typography>
-              <Typography variant="body2" fontWeight={700}>
-                ₦{batch.acceptance_fee.toLocaleString()}
-              </Typography>
-            </Box>
-          )}
-
-          {batch?.require_payment && batch?.application_fee != '0.00' && (
-            <Box display="flex" justifyContent="space-between">
-              <Typography variant="body2" color="text.secondary">
-                Post-Admission Fee
-              </Typography>
-              <Typography variant="body2" fontWeight={700}>
-                ₦{batch.application_fee.toLocaleString()}
-              </Typography>
-            </Box>
+              {batch?.pre_application_payments && batch.pre_application_payments.length > 0 ? (
+                <Stack spacing={0.75} mb={1}>
+                  {batch.pre_application_payments.map((payment) => (
+                    <Box
+                      key={payment.id}
+                      display="flex"
+                      justifyContent="space-between"
+                      sx={{
+                        py: 0.5,
+                        px: 1,
+                        bgcolor: 'grey.50',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {payment.name}
+                      </Typography>
+                      <Typography variant="caption" fontWeight={700}>
+                        ₦{payment.amount.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    sx={{
+                      pt: 0.75,
+                      borderTop: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={700}>
+                      Total Pre-Application Fee
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700} color="primary.main">
+                      ₦
+                      {batch.pre_application_payments
+                        .reduce((sum, p) => sum + (p.amount || 0), 0)
+                        .toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Stack>
+              ) : (
+                <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                  No pre-application payments configured
+                </Typography>
+              )}
+            </>
           )}
         </Paper>
 
@@ -254,29 +291,21 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       </TableCell>
                       {batch?.require_payment ? (
                         <TableCell>
-                          <Typography
-                            variant="caption"
-                            color="primary.main"
-                            display="block"
-                            fontWeight={600}
-                          >
-                            Pre-Application :{' '}
-                            <strong style={{ color: '#000', fontWeight: 600 }}>
-                              ₦ {batch.acceptance_fee.toLocaleString()}
-                            </strong>
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="primary.main"
-                            display="block"
-                            fontWeight={600}
-                            mt={0.3}
-                          >
-                            Post-Admission :{' '}
-                            <strong style={{ color: '#000', fontWeight: 600 }}>
-                              ₦ {batch.application_fee.toLocaleString()}
-                            </strong>
-                          </Typography>
+                          {batch?.pre_application_payments && batch.pre_application_payments.length > 0 ? (
+                            <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
+                              Pre-Application:{' '}
+                              <strong style={{ color: '#000', fontWeight: 600 }}>
+                                ₦
+                                {batch.pre_application_payments
+                                  .reduce((sum, p) => sum + (p.amount || 0), 0)
+                                  .toLocaleString()}
+                              </strong>
+                            </Typography>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary" fontStyle="italic" fontSize={10}>
+                              No payments configured
+                            </Typography>
+                          )}
                         </TableCell>
                       ) : (
                         <TableCell>

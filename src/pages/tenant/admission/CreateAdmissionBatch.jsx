@@ -120,8 +120,9 @@ const CreateAdmissionBatch = () => {
   const [programmeId, setProgrammeId] = useState(existingBatch?.programme_id ?? '');
   const [selectedClassIds, setSelectedClassIds] = useState(existingBatch?.class_ids ?? []);
 
+  // Initialize with a value, never undefined - prevents controlled/uncontrolled warning
   const [entrySessionTermId, setEntrySessionTermId] = useState(
-    existingBatch?.entry_session_term_id ?? sessionTermId ?? '',
+    existingBatch?.entry_session_term_id || sessionTermId || '',
   );
 
   const [closingDate, setClosingDate] = useState(
@@ -183,10 +184,11 @@ const CreateAdmissionBatch = () => {
     }
 
     if (enablePayment) {
-      if (!preAppFee || Number(preAppFee) < 0)
-        newErrors.preAppFee = 'Pre-application fee must be 0 or greater';
-      if (!postAppFee || Number(postAppFee) < 0)
-        newErrors.postAppFee = 'Post-application fee must be 0 or greater';
+      // Validate that at least one payment is selected for pre-application
+      if (preAppPayments.length === 0) {
+        newErrors.preAppPayments = 'Please add at least one pre-application payment';
+      }
+      // Post-application payments are optional, no validation needed
     }
 
     setErrors(newErrors);
@@ -270,6 +272,10 @@ const CreateAdmissionBatch = () => {
     if (currentPaymentType === 'pre-application') {
       setPreAppPayments(selectedPayments);
       setPreAppFee(selectedPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
+      // Clear error if payments are added
+      if (selectedPayments.length > 0 && errors.preAppPayments) {
+        setErrors((prev) => ({ ...prev, preAppPayments: '' }));
+      }
     } else {
       setPostAppPayments(selectedPayments);
       setPostAppFee(selectedPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
@@ -617,15 +623,19 @@ const CreateAdmissionBatch = () => {
                         sx={{
                           p: 2,
                           border: '1px dashed',
-                          borderColor: 'divider',
+                          borderColor: errors.preAppPayments ? 'error.main' : 'divider',
                           borderRadius: 1,
                           textAlign: 'center',
-                          bgcolor: 'grey.50',
+                          bgcolor: errors.preAppPayments ? 'error.lighter' : 'grey.50',
                           mb: 2,
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary" fontStyle="italic">
-                          No Options set yet
+                        <Typography 
+                          variant="caption" 
+                          color={errors.preAppPayments ? 'error.main' : 'text.secondary'} 
+                          fontStyle="italic"
+                        >
+                          {errors.preAppPayments || 'No Options set yet'}
                         </Typography>
                       </Box>
                     ) : (

@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Box, Grid, Typography, Chip, Divider, Button } from '@mui/material';
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { Box, Grid, Typography, Chip, Divider, Button, CircularProgress } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Print as PrintIcon,
@@ -7,26 +7,14 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import ReviewSection from './ReviewSection';
+import { format } from 'date-fns';
+import { getAdmissionPaymentReceipt } from '@/api/tenant/admission/admissionApi';
+import { useNotification } from '@/hooks/useNotification';
 
-const FEE_ITEMS = [
-  { label: 'Application Form Fee', amount: '₦15,000' },
-  { label: 'Registration Fee', amount: '₦500' },
-  { label: 'Processing Fee', amount: '₦5,000' },
-  { label: 'Entrance Examination Fee', amount: '₦1,000' },
-  { label: 'Administrative Charges', amount: '₦1,000' },
-  { label: 'ICT/Portal Access Fee', amount: '₦2,000' },
-  { label: 'Bank Charge', amount: '₦500' },
-];
-
-const RECEIPT_META = [
-  { label: 'RECEIPT NO', value: 'SKRC-2025-00491' },
-  { label: 'DATE PAID', value: '04 May 2025, 11:24 AM' },
-  { label: 'REFERENCE', value: 'TRX-29273645' },
-  { label: 'PAYER', value: 'Mrs. Adetola Ademola' },
-  { label: 'METHOD', value: 'Bank Transfer - Globus Bank' },
-];
-
-const buildReceiptHtml = (totalPaid) => `
+const buildReceiptHtml = (paymentData) => {
+  const { receiptMeta, feeItems, totalPaid } = paymentData;
+  
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -52,7 +40,7 @@ const buildReceiptHtml = (totalPaid) => `
   <h2>Payment Receipt</h2>
   <p style="color:#555;margin:0 0 16px">Admission Application Payment Breakdown</p>
   <div class="meta-grid">
-    ${RECEIPT_META.map(
+    ${receiptMeta.map(
       ({ label, value }) => `
       <div>
         <div class="meta-label">${label}</div>
@@ -68,13 +56,14 @@ const buildReceiptHtml = (totalPaid) => `
   <table>
     <thead><tr><th>DESCRIPTION</th><th>AMOUNT</th></tr></thead>
     <tbody>
-      ${FEE_ITEMS.map(({ label, amount }) => `<tr><td>${label}</td><td>${amount}</td></tr>`).join('')}
-      <tr class="total-row"><td>Total Paid</td><td>${totalPaid}</td></tr>
+      ${feeItems.map(({ label, amount }) => `<tr><td>${label}</td><td>₦${amount.toLocaleString()}</td></tr>`).join('')}
+      <tr class="total-row"><td>Total Paid</td><td>₦${totalPaid.toLocaleString()}</td></tr>
     </tbody>
   </table>
   <p class="footer">Powered by Skoolpay · This is a computer generated receipt</p>
 </body>
 </html>`;
+};
 
 const triggerPrintViaIframe = (html) => {
   const existing = document.getElementById('__receipt_iframe__');
@@ -98,11 +87,120 @@ const triggerPrintViaIframe = (html) => {
   }, 300);
 };
 
-const PaymentReview = ({ totalPaid = '₦25,500' }) => {
+const PaymentReview = ({ 
+  admissionId = null,
+}) => {
   const receiptRef = useRef(null);
+  const notify = useNotification();
+  const [paymentData, setPaymentData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handlePrint = () => triggerPrintViaIframe(buildReceiptHtml(totalPaid));
-  const handleDownload = () => triggerPrintViaIframe(buildReceiptHtml(totalPaid));
+  // Fetch payment receipt data on mount
+  useEffect(() => {
+    const fetchReceipt = async () => {
+      if (!admissionId) return;
+      
+      setLoading(true);
+      try {
+        const response = await getAdmissionPaymentReceipt(admissionId);
+        if (response?.status && response?.data) {
+          setPaymentData(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment receipt:', error);
+        notify.error('Failed to load payment receipt');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReceipt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admissionId]);
+
+  // Build receipt data from fetched payment data
+  const receiptData = useMemo(() => {
+    if (!paymentData) {
+      return null;
+    }
+
+    // Extract payment items
+    const feeItems = (paymentData.payment_items || []).map(payment => ({
+      label: payment.name,
+      amount: Number(payment.amount || 0),
+    }));
+
+    const totalPaid = paymentData.total_paid || feeItems.reduce((sum, item) => sum + item.amount, 0);
+
+    // Build receipt metadata
+    const receiptMeta = [
+      { 
+        label: 'Order Id', 
+        value: paymentData.bulk_order_id || 'N/A' 
+      },
+      { 
+        label: 'DATE PAID', 
+        value: paymentData.payment_date 
+          ? format(new Date(paymentData.payment_date), 'dd MMM yyyy, hh:mm a')
+          : 'Pending'
+      },
+      { 
+        label: 'PAYER', 
+        value: paymentData.payer_name || 'N/A'
+      },
+      { 
+        label: 'METHOD', 
+        value: paymentData.payment_method || 'Online Payment' 
+      },
+    ];
+
+    return {
+      receiptMeta,
+      feeItems,
+      totalPaid,
+      status: paymentData.status || 'pending',
+    };
+  }, [paymentData]);
+
+  if (loading) {
+    return (
+      <ReviewSection
+        number={3}
+        title="Payment Receipt"
+        subtitle="Confirmation of admission application payment"
+        id="section-payment"
+      >
+        <Box p={3} textAlign="center">
+          <CircularProgress size={40} />
+          <Typography variant="body2" color="text.secondary" mt={2}>
+            Loading payment receipt...
+          </Typography>
+        </Box>
+      </ReviewSection>
+    );
+  }
+
+  if (!receiptData) {
+    return (
+      <ReviewSection
+        number={3}
+        title="Payment Receipt"
+        subtitle="Confirmation of admission application payment"
+        id="section-payment"
+      >
+        <Box p={3} textAlign="center">
+          <Typography variant="body2" color="text.secondary">
+            No payment information available
+          </Typography>
+        </Box>
+      </ReviewSection>
+    );
+  }
+
+  const { receiptMeta, feeItems, totalPaid, status } = receiptData;
+
+  const handlePrint = () => triggerPrintViaIframe(buildReceiptHtml(receiptData));
+  const handleDownload = () => triggerPrintViaIframe(buildReceiptHtml(receiptData));
 
   return (
     <ReviewSection
@@ -130,7 +228,10 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
           </Box>
         </Box>
         <Box display="flex" gap={1}>
-          <Button variant="contained" size="small" startIcon={<PrintIcon />}
+          <Button 
+            variant="contained" 
+            size="small" 
+            startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{
               fontSize: 11,
@@ -141,7 +242,10 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
           >
             Print
           </Button>
-          <Button variant="contained" size="small" startIcon={<DownloadIcon />}
+          <Button 
+            variant="contained" 
+            size="small" 
+            startIcon={<DownloadIcon />}
             onClick={handleDownload}
             sx={{
               fontSize: 11,
@@ -157,7 +261,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
 
       <Box ref={receiptRef} sx={{ p: 2, bgcolor: '#f2fcf7' }}>
         <Grid container spacing={1.5} sx={{ mb: 2 }}>
-          {RECEIPT_META.map(({ label, value }) => (
+          {receiptMeta.map(({ label, value }) => (
             <Grid key={label} size={{ xs: 6, sm: 4 }}>
               <Typography variant="caption" color="text.secondary" display="block">
                 {label}
@@ -172,9 +276,14 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
               STATUS
             </Typography>
             <Chip
-              label="Successful"
+              label={status === 'successful' ? 'Successful' : 'Pending'}
               size="small"
-              sx={{ bgcolor: '#E8F5E9', color: 'success.dark', fontWeight: 600, fontSize: 11 }}
+              sx={{ 
+                bgcolor: status === 'successful' ? '#E8F5E9' : '#FFF9C4', 
+                color: status === 'successful' ? 'success.dark' : 'warning.dark', 
+                fontWeight: 600, 
+                fontSize: 11 
+              }}
             />
           </Grid>
         </Grid>
@@ -190,7 +299,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
           </Typography>
         </Box>
 
-        {FEE_ITEMS.map(({ label, amount }) => (
+        {feeItems.map(({ label, amount }) => (
           <Box
             key={label}
             display="flex"
@@ -201,7 +310,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
               {label}
             </Typography>
             <Typography variant="body2" fontWeight={500}>
-              {amount}
+              ₦{amount.toLocaleString()}
             </Typography>
           </Box>
         ))}
@@ -211,7 +320,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
             Total Paid
           </Typography>
           <Typography variant="body2" fontWeight={700}>
-            {totalPaid}
+            ₦{totalPaid.toLocaleString()}
           </Typography>
         </Box>
 
@@ -230,7 +339,7 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
 };
 
 PaymentReview.propTypes = {
-  totalPaid: PropTypes.string,
+  admissionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default PaymentReview;

@@ -98,6 +98,7 @@ const ApplicationTracker = () => {
         medical_record: admission.medical_record,
       },
       selectedBatch: admission.admission_batch,
+      admissionId: admission.id,
       viewMode: true,
     };
 
@@ -192,7 +193,7 @@ const ApplicationTracker = () => {
   }
 
   const applicantName =
-    `${admission.surname.toUpperCase() || ''} ${admission.first_name.toUpperCase() || ''} ${admission.other_name.toUpperCase() || ''}`.trim();
+    `${admission.surname?.toUpperCase() || ''} ${admission.first_name?.toUpperCase() || ''} ${admission.other_name?.toUpperCase() || ''}`.trim();
   const intendingClass =
     admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A';
   const gender = admission.gender ? admission.gender.toUpperCase() : 'N/A';

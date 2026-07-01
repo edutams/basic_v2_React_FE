@@ -98,6 +98,12 @@ export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
   return response.data;
 };
 
+// Admission Payment
+export const initiateAdmissionPayment = async (data) => {
+  const response = await api.post('/admission/payments/initiate', data);
+  return response.data;
+};
+
 // States and LGAs
 export const getAllStates = async () => {
   try {

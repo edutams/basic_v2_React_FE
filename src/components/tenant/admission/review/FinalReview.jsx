@@ -66,9 +66,9 @@ const FinalReview = ({
           <Grid size={{ xs: 12, sm: 6 }}>
             <SummaryField label="Admission Batch" value={admissionBatch || 'N/A'} />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          {/* <Grid size={{ xs: 12, sm: 6 }}>
             <SummaryField label="Total Paid" value={totalPaid || '₦0'} />
-          </Grid>
+          </Grid> */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <SummaryField
               label="Documents"

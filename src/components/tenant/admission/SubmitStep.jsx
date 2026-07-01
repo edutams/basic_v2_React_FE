@@ -64,6 +64,7 @@ const SubmitStep = ({
   isLoading = false,
   viewMode = false,
   hasPreviousSchool = false,
+  admissionId = null,
 }) => {
   // Build applicant name from ward data
   const applicantName = wardData
@@ -104,7 +105,9 @@ const SubmitStep = ({
           selectedBatch={selectedBatch}
         />
         {selectedBatch?.require_payment && (
-          <PaymentReview totalPaid={totalPaid} selectedBatch={selectedBatch} />
+          <PaymentReview 
+            admissionId={admissionId}
+          />
         )}
         <DocumentsReview
           documentsData={documentsData}
@@ -149,6 +152,7 @@ SubmitStep.propTypes = {
   isLoading: PropTypes.bool,
   viewMode: PropTypes.bool,
   hasPreviousSchool: PropTypes.bool,
+  admissionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default SubmitStep;

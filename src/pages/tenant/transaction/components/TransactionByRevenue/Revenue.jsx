@@ -87,7 +87,7 @@ const Revenue = () => {
   const loadTable = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchRevenueChartData({ filters: buildFilters() });
+      const res = await fetchRevenueTransactionAnalytics({ filters: buildFilters() });
       if (res.success) {
         setTableData(res.data);
         setLastPage(res.last_page);
@@ -102,7 +102,7 @@ const Revenue = () => {
 
   const loadAnalytics = useCallback(async () => {
     try {
-      const res = await fetchRevenueTransactionAnalytics({
+      const res = await fetchRevenueChartData({
         filters: {
           from: fromDate || null,
           to: toDate || null,
@@ -354,14 +354,14 @@ const Revenue = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableData.length === 0 ? (
+                {tableData?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                       No revenue records found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  tableData.map((row, index) => (
+                  tableData?.map((row, index) => (
                     <TableRow key={row.bursary_payment_id} hover>
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
                       <TableCell>{row.revenue_code}</TableCell>
@@ -396,7 +396,7 @@ const Revenue = () => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Showing {tableData.length} of {totalCount} revenue lines
+            Showing {tableData?.length} of {totalCount} revenue lines
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

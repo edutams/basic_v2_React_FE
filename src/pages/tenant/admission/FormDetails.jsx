@@ -58,7 +58,7 @@ const FormDetails = () => {
     );
   }
 
-  const { wardData, academicData, documentsData, selectedBatch } = formData;
+  const { wardData, academicData, documentsData, selectedBatch, admissionId } = formData;
 
   return (
     <PageContainer title="Application Form Details" description="View your submitted application">
@@ -100,6 +100,7 @@ const FormDetails = () => {
             academicData={academicData}
             documentsData={documentsData}
             selectedBatch={selectedBatch}
+            admissionId={admissionId}
             onBack={handleBack}
             onSubmit={() => {}}
             viewMode={true}

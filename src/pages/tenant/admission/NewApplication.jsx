@@ -108,50 +108,44 @@ const StepperBar = ({ activeStep, steps }) => {
   );
 };
 
-const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
-  <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
-    <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
-      Selected Admission Batch Detail
-    </Typography>
+const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => {
+  if (!batch) {
+    return (
+      <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
+        <Typography variant="body2" color="text.secondary">
+          Loading batch details...
+        </Typography>
+      </Paper>
+    );
+  }
 
-    <Typography variant="h5" fontWeight={800} mb={2}>
-      Session: {batch?.session_term?.session?.sesname}{' '}
-      {batch?.session_term?.display_term?.display_name}
-      {' • '}
-      Admission Batch: {batch?.batch_name ?? '2'}
-    </Typography>
+  return (
+    <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
+        Selected Admission Batch Detail
+      </Typography>
 
-    <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
-      {(batch?.classes || []).map((cls) => (
-        <Chip
-          key={cls.id}
-          label={cls.class_code}
-          size="small"
-          sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700, fontSize: 11 }}
-        />
-      ))}
-    </Stack>
-    {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
+      <Typography variant="h5" fontWeight={800} mb={2}>
+        Session: {batch?.session_term?.session?.sesname}{' '}
+        {batch?.session_term?.display_term?.display_name}
+        {' • '}
+        Admission Batch: {batch?.batch_name ?? '2'}
+      </Typography>
 
-    {[
-      batch?.require_payment && batch?.acceptance_fee !== '0.00'
-        ? {
-            label: 'Pre-Application Payment',
-            value: batch?.acceptance_fee,
-          }
-        : null,
+      <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
+        {(batch?.classes || []).map((cls) => (
+          <Chip
+            key={cls.id}
+            label={cls.class_code}
+            size="small"
+            sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700, fontSize: 11 }}
+          />
+        ))}
+      </Stack>
+      {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
 
-      batch?.require_payment && batch?.application_fee !== '0.00'
-        ? {
-            label: 'Post-Admission Payment',
-            value: batch?.application_fee,
-          }
-        : null,
-    ]
-      .filter(Boolean)
-      .map(({ label, value }) => (
+      {batch?.require_payment && batch?.pre_application_payments && batch.pre_application_payments.length > 0 && (
         <Box
-          key={label}
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -164,35 +158,36 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
           }}
         >
           <Typography variant="body2" color="error.dark" fontWeight={500}>
-            {label}
+            Pre-Application Payment
           </Typography>
 
           <Typography variant="body2" color="error.dark" fontWeight={700}>
-            ₦{Number(value).toLocaleString()}
+            ₦{batch.pre_application_payments.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()}
           </Typography>
         </Box>
-      ))}
+      )}
 
-    {activeStep !== 3 && (
-      <>
-        <Divider sx={{ mb: 2 }} />
-        <Button variant="contained" size="small" fullWidth startIcon={<VisibilityIcon />}
-          onClick={onChangeBatch}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 600,
-            textTransform: 'none',
-            borderColor: 'grey.300',
-            color: 'text.primary',
-            '&:hover': { borderColor: 'primary.main', color: '#FFFF' },
-          }}
-        >
-          Change your Admission Batch
-        </Button>
-      </>
-    )}
-  </Paper>
-);
+      {activeStep !== 3 && (
+        <>
+          <Divider sx={{ mb: 2 }} />
+          <Button variant="contained" size="small" fullWidth startIcon={<VisibilityIcon />}
+            onClick={onChangeBatch}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 600,
+              textTransform: 'none',
+              borderColor: 'grey.300',
+              color: 'text.primary',
+              '&:hover': { borderColor: 'primary.main', color: '#FFFF' },
+            }}
+          >
+            Change your Admission Batch
+          </Button>
+        </>
+      )}
+    </Paper>
+  );
+};
 
 // ── Main Page
 const NewApplication = () => {
@@ -207,7 +202,7 @@ const NewApplication = () => {
   const queryStep = searchParams.get('step');
   const parsedQueryStep = queryStep ? Number(queryStep) - 1 : null;
 
-  const [selectedBatch, setSelectedBatch] = useState(existingWard?.admission_batch ?? batch);
+  const [selectedBatch, setSelectedBatch] = useState(null); // Initialize as null
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [batchLoaded, setBatchLoaded] = useState(false);
   const [userChangedBatch, setUserChangedBatch] = useState(false); // Track when user manually changes batch
@@ -224,31 +219,77 @@ const NewApplication = () => {
     submitApplication,
   } = useAdmissionForm(selectedBatch, existingWard);
 
+  // Load batch details on mount or when batch/existingWard changes
   useEffect(() => {
     const loadBatchDetails = async () => {
+      // Priority 1: If we have a saved admission batch from formData
       if (formData?.admission_batch?.id && !batchLoaded) {
         try {
-          console.log('Loading batch details for ID:', formData.admission_batch.id);
+          console.log('Loading batch details from formData:', formData.admission_batch.id);
           const response = await getOpenBatches();
           const batches = response?.data?.data || response?.data || [];
           const fullBatch = batches.find((b) => b.id === formData.admission_batch.id);
           if (fullBatch) {
-            console.log('Loaded full batch data:', fullBatch);
+            console.log('Loaded full batch data from formData:', fullBatch);
             setSelectedBatch(fullBatch);
+            setBatchLoaded(true);
           }
-          setBatchLoaded(true);
         } catch (error) {
           console.error('Failed to load batch details:', error);
           setBatchLoaded(true);
         }
-      } else if (batch?.id && !formData?.admission_batch && !batchLoaded) {
-        setSelectedBatch(batch);
-        setBatchLoaded(true);
+      }
+      // Priority 2: If we have a batch from location.state (Apply Now from modal)
+      else if (batch?.id && !batchLoaded && !formData?.admission_batch) {
+        try {
+          console.log('Loading batch details from location.state:', batch.id);
+          // Check if batch already has payment arrays
+          if (batch.pre_application_payments !== undefined) {
+            console.log('Batch already has payment data:', batch);
+            setSelectedBatch(batch);
+            setBatchLoaded(true);
+          } else {
+            // Fetch full batch data with payments
+            console.log('Fetching full batch data for:', batch.id);
+            const response = await getOpenBatches();
+            const batches = response?.data?.data || response?.data || [];
+            const fullBatch = batches.find((b) => b.id === batch.id);
+            if (fullBatch) {
+              console.log('Loaded full batch data:', fullBatch);
+              setSelectedBatch(fullBatch);
+            } else {
+              // Fallback to the batch from state if not found
+              setSelectedBatch(batch);
+            }
+            setBatchLoaded(true);
+          }
+        } catch (error) {
+          console.error('Failed to load batch details:', error);
+          setSelectedBatch(batch);
+          setBatchLoaded(true);
+        }
+      }
+      // Priority 3: If we have existingWard with admission_batch
+      else if (existingWard?.admission_batch?.id && !batchLoaded && !formData?.admission_batch && !batch?.id) {
+        try {
+          console.log('Loading batch details from existingWard:', existingWard.admission_batch.id);
+          const response = await getOpenBatches();
+          const batches = response?.data?.data || response?.data || [];
+          const fullBatch = batches.find((b) => b.id === existingWard.admission_batch.id);
+          if (fullBatch) {
+            console.log('Loaded full batch data from existingWard:', fullBatch);
+            setSelectedBatch(fullBatch);
+            setBatchLoaded(true);
+          }
+        } catch (error) {
+          console.error('Failed to load batch details:', error);
+          setBatchLoaded(true);
+        }
       }
     };
 
     loadBatchDetails();
-  }, [formData?.admission_batch?.id, batch?.id, batchLoaded, batch, formData?.admission_batch]);
+  }, [formData?.admission_batch?.id, batch?.id, existingWard?.admission_batch?.id, batchLoaded, batch, formData?.admission_batch, existingWard?.admission_batch]);
 
   useEffect(() => {
     if (userChangedBatch) {
@@ -320,8 +361,15 @@ const NewApplication = () => {
     const result = await saveStepData(0, dataWithBatch);
     if (result.success) {
       // Update selectedBatch if the backend returned updated admission_batch
+      // But preserve payment arrays if they're not in the response
       if (result.data?.admission_batch) {
-        setSelectedBatch(result.data.admission_batch);
+        const updatedBatch = result.data.admission_batch;
+        // Merge with existing batch to preserve payment arrays
+        setSelectedBatch((prev) => ({
+          ...updatedBatch,
+          pre_application_payments: updatedBatch.pre_application_payments ?? prev?.pre_application_payments,
+          post_application_payments: updatedBatch.post_application_payments ?? prev?.post_application_payments,
+        }));
         setBatchLoaded(true);
       }
       // Reset the userChangedBatch flag since we've now saved the batch change
@@ -342,8 +390,15 @@ const NewApplication = () => {
     const result = await saveStepData(1, dataWithBatch);
     if (result.success) {
       // Update selectedBatch if the backend returned updated admission_batch
+      // But preserve payment arrays if they're not in the response
       if (result.data?.admission_batch) {
-        setSelectedBatch(result.data.admission_batch);
+        const updatedBatch = result.data.admission_batch;
+        // Merge with existing batch to preserve payment arrays
+        setSelectedBatch((prev) => ({
+          ...updatedBatch,
+          pre_application_payments: updatedBatch.pre_application_payments ?? prev?.pre_application_payments,
+          post_application_payments: updatedBatch.post_application_payments ?? prev?.post_application_payments,
+        }));
         setBatchLoaded(true);
       }
       // Reset the userChangedBatch flag since we've now saved the batch change

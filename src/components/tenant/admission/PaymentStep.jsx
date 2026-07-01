@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, Paper, Button, Divider, Dialog,
-  DialogTitle, DialogContent, DialogActions, Stack,
+  DialogTitle, DialogContent, DialogActions, Stack, Alert,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-import { initiateAdmissionPayment } from '@/api/tenant/admission/admissionApi';
+import { initiateAdmissionPayment, checkAdmissionPaymentStatus } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
 
@@ -14,15 +14,42 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
   const notify = useNotification();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [checkingPayment, setCheckingPayment] = useState(true);
 
-  const applicationFee = Number(selectedBatch?.application_fee || 0);
-  const acceptanceFee = Number(selectedBatch?.acceptance_fee || 0);
-
-  const feeItems = [];
-  if (applicationFee > 0) feeItems.push({ label: 'Application Fee', amount: applicationFee });
-  if (acceptanceFee > 0) feeItems.push({ label: 'Acceptance Fee', amount: acceptanceFee });
+  // Use pre-application payments from the batch
+  const preAppPayments = selectedBatch?.pre_application_payments || [];
+  
+  const feeItems = preAppPayments.map((payment) => ({
+    label: payment.name,
+    amount: Number(payment.amount || 0),
+    fee_type: 'application_fee', // All pre-application payments treated as application fees
+  }));
 
   const totalPayable = feeItems.reduce((sum, f) => sum + f.amount, 0);
+
+  // Check payment status on mount
+  useEffect(() => {
+    const checkPayment = async () => {
+      if (!admissionId) {
+        setCheckingPayment(false);
+        return;
+      }
+
+      try {
+        const response = await checkAdmissionPaymentStatus(admissionId);
+        if (response?.status && response?.data) {
+          setPaymentStatus(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to check payment status:', error);
+      } finally {
+        setCheckingPayment(false);
+      }
+    };
+
+    checkPayment();
+  }, [admissionId]);
 
   useEffect(() => {
     const handler = () => {
@@ -32,6 +59,122 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
     window.addEventListener('paymentCompleted', handler);
     return () => window.removeEventListener('paymentCompleted', handler);
   }, [onNext, notify]);
+
+
+  const isPaymentDataLoading = !selectedBatch || 
+    (selectedBatch.require_payment && selectedBatch.pre_application_payments === undefined) ||
+    checkingPayment;
+
+  if (isPaymentDataLoading) {
+    return (
+      <Box>
+        <Typography variant="h6" fontWeight={700} mb={0.5}>
+          Pre-Application Payment Breakdown
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+        <Paper sx={{ borderRadius: 2, p: 3, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            {checkingPayment ? 'Checking payment status...' : 'Loading payment details...'}
+          </Typography>
+        </Paper>
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+          >
+            Back
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  // If payment has already been made, show a continue button
+  const hasAlreadyPaid = paymentStatus?.has_paid === true;
+
+  if (hasAlreadyPaid) {
+    return (
+      <Box>
+        <Typography variant="h6" fontWeight={700} mb={0.5}>
+          Pre-Application Payment
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+
+        <Alert 
+          severity="success" 
+          icon={<CheckCircleIcon />}
+          sx={{ mb: 3 }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            Payment Already Completed
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            You have already paid for this admission application. Click continue to proceed with your application.
+          </Typography>
+        </Alert>
+
+        <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
+          {feeItems.map((fee, i) => (
+            <Box
+              key={fee.label}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: 2.5,
+                py: 1.5,
+                borderBottom: i < feeItems.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                {fee.label}
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                ₦{fee.amount.toLocaleString()}
+              </Typography>
+            </Box>
+          ))}
+        </Paper>
+
+        <Paper sx={{ borderRadius: 2, px: 2.5, py: 2, bgcolor: '#FAFAFA' }}>
+          <Box display="flex" justifyContent="space-between">
+            <Typography variant="body2" fontWeight={700} color="success.main">
+              Total Paid
+            </Typography>
+            <Typography variant="h6" fontWeight={800} color="success.main">
+              ₦ {totalPayable.toLocaleString()}
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+            disabled={isLoading}
+          >
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={onNext}
+            disabled={isLoading}
+            sx={{ fontWeight: 600 }}
+          >
+            Continue
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   const handlePayNow = async () => {
     if (totalPayable <= 0) {
@@ -49,7 +192,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
       const payload = {
         admission_id: admissionId,
         fee_items: feeItems.map((f) => ({
-          fee_type: f.label.toLowerCase().replace(' ', '_'),
+          fee_type: f.fee_type,
           amount: f.amount,
         })),
       };
@@ -85,7 +228,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
   return (
     <Box>
       <Typography variant="h6" fontWeight={700} mb={0.5}>
-        Admission Payment Breakdown
+        Pre-Application Payment Breakdown
       </Typography>
       <Divider sx={{ mb: 3 }} />
 

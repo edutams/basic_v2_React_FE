@@ -19,6 +19,7 @@ import {
   Button,
   TextField,
   InputAdornment,
+  Alert
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -92,10 +93,10 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
       }
     >
       {!selectedSubject ? (
-        <Box sx={{ p: 3, bgcolor: 'info.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="textSecondary">
+        <Box>
+          <Alert severity="info" sx={{ my: 2, width: '100%', justifyContent: 'center', textAlign: 'center' }}>
             You need to select a subject on the left to view its topics.
-          </Typography>
+          </Alert>
         </Box>
       ) : isLoading ? (
         <Typography sx={{ p: 2 }}>Loading...</Typography>

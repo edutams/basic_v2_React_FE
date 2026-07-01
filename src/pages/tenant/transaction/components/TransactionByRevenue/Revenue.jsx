@@ -271,7 +271,6 @@ const Revenue = () => {
               }}
             >
               <Button variant="contained" size="small" startIcon={<DownloadIcon />}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Download CSV Format

@@ -579,7 +579,6 @@ const EditOptionalPaymentModal = ({
                                 ))}
                                 <Button variant="contained" size="small" startIcon={<AddIcon />}
                                   onClick={() => handleAddOption(cls.id)}
-                                  variant="outlined"
                                   sx={{ alignSelf: 'flex-start' }}
                                 >
                                   Add Option

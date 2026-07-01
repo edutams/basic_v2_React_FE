@@ -185,24 +185,34 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper}>
-                <Table>
+              <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+                <Table sx={{ tableLayout: "fixed", width: "100%" }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
+                      <TableCell sx={{ width: "10%" }}>
                         <Typography variant="h6">S/N</Typography>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell sx={{ width: "60%" }}>
                         <Typography variant="h6">Activity</Typography>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell sx={{ width: "15%" }}>
                         <Typography variant="h6">Date</Typography>
                       </TableCell>
-                      <TableCell align="right">
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          width: "15%",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         <Typography variant="h6">Action</Typography>
                       </TableCell>
                     </TableRow>
                   </TableHead>
+
                   <TableBody>
                     {logs.length === 0 ? (
                       <TableRow>
@@ -214,34 +224,59 @@ const ActivityLog = () => {
                       logs.map((log, idx) => (
                         <TableRow key={log.id}>
                           <TableCell>
-                            <Typography variant="body1">{idx + 1 + page * rowsPerPage}</Typography>
-                          </TableCell>
-                          <TableCell>
                             <Typography variant="body1">
+                              {idx + 1 + page * rowsPerPage}
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell>
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                wordBreak: "break-word",
+                              }}
+                            >
                               <a href="#" className="text-success">
                                 {log.causer?.fname && log.causer?.lname
                                   ? `${log.causer.fname} ${log.causer.lname}`
-                                  : log.causer?.name || 'System'}
-                              </a>{' '}
+                                  : log.causer?.name || "System"}
+                              </a>{" "}
                               {log.description}
                             </Typography>
                           </TableCell>
+
                           <TableCell>
-                            <Typography variant="body2" color="textSecondary">
+                            <Typography
+                              variant="body2"
+                              color="textSecondary"
+                              sx={{ whiteSpace: "nowrap" }}
+                            >
                               {log.my_updated_at}
                             </Typography>
                           </TableCell>
-                          <TableCell align="right">
-                            <Button variant="contained" size="small" startIcon={<IconEye />}
+
+                          <TableCell
+                            align="right"
+                            sx={{ whiteSpace: "nowrap" }}
+                          >
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<IconEye />}
                               onClick={() => handleOpenModal(log)}
-                              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                              sx={{
+                                display: { xs: "none", md: "inline-flex" },
+                              }}
                             >
                               View Details
                             </Button>
+
                             <IconButton
                               size="small"
                               onClick={() => handleOpenModal(log)}
-                              sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                              sx={{
+                                display: { xs: "inline-flex", md: "none" },
+                              }}
                             >
                               <IconEye size={18} />
                             </IconButton>

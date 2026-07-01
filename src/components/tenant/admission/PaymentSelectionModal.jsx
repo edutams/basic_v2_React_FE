@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,15 +25,23 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
   const [loading, setLoading] = useState(false);
   const [selections, setSelections] = useState({});
   const [errors, setErrors] = useState({});
+  
+  // Use ref to get the latest selectedPayments
+  const selectedPaymentsRef = useRef(selectedPayments);
+  
+  useEffect(() => {
+    selectedPaymentsRef.current = selectedPayments;
+  }, [selectedPayments]);
 
   useEffect(() => {
     if (open) {
       loadPaymentNames();
       
       // Initialize selections from existing selectedPayments or reset
-      if (selectedPayments.length > 0) {
+      const currentSelectedPayments = selectedPaymentsRef.current;
+      if (currentSelectedPayments.length > 0) {
         const initialSelections = {};
-        selectedPayments.forEach((payment) => {
+        currentSelectedPayments.forEach((payment) => {
           initialSelections[payment.id] = {
             checked: true,
             amount: payment.amount || 0,
@@ -45,8 +53,13 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
       }
       
       setErrors({});
+    } else {
+      // Reset when modal closes
+      setSelections({});
+      setErrors({});
     }
-  }, [open, applicationType, selectedPayments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, applicationType]);
 
   const loadPaymentNames = async () => {
     setLoading(true);

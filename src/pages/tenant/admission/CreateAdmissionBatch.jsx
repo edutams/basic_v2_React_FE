@@ -139,8 +139,8 @@ const CreateAdmissionBatch = () => {
   const [enablePayment, setEnablePayment] = useState(existingBatch?.require_payment ?? false);
   const [preAppFee, setPreAppFee] = useState(existingBatch?.application_fee ?? '');
   const [postAppFee, setPostAppFee] = useState(existingBatch?.acceptance_fee ?? '');
-  const [preAppPayments, setPreAppPayments] = useState([]);
-  const [postAppPayments, setPostAppPayments] = useState([]);
+  const [preAppPayments, setPreAppPayments] = useState(existingBatch?.pre_application_payments ?? []);
+  const [postAppPayments, setPostAppPayments] = useState(existingBatch?.post_application_payments ?? []);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [currentPaymentType, setCurrentPaymentType] = useState('pre-application');
 

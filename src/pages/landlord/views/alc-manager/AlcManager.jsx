@@ -272,7 +272,7 @@ const AlcManager = () => {
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
           variant="scrollable"
-          // scrollButtons="auto"
+        // scrollButtons="auto"
         >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />
@@ -290,10 +290,10 @@ const AlcManager = () => {
               <Typography variant="h5">Manage Roles</Typography>
 
               <Button variant="contained" size="small" color="primary" onClick={() => {
-                  setIsEditing(false);
-                  setNewRoleForm({ roleName: '', description: '' });
-                  setNewRoleModalOpen(true);
-                }}
+                setIsEditing(false);
+                setNewRoleForm({ roleName: '', description: '' });
+                setNewRoleModalOpen(true);
+              }}
               >
                 New Role
               </Button>
@@ -315,8 +315,8 @@ const AlcManager = () => {
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
+                // borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                // color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
                 '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}

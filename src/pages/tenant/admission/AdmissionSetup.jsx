@@ -98,26 +98,30 @@ const YesNoPill = ({ value }) => (
   />
 );
 
-const FeePills = ({ requirePayment, appFee, acceptanceFee }) => {
+const FeePills = ({ requirePayment, appFee, acceptanceFee, onViewPayments }) => {
   if (!requirePayment) return <YesNoPill value={false} />;
   return (
-    <Stack spacing={0.5}>
-      <YesNoPill value />
-      {appFee > 0 && (
-        <Chip
-          label={`Application Fee ₦${Number(appFee).toLocaleString()}`}
-          size="small"
-          sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 10 }}
-        />
-      )}
-      {acceptanceFee > 0 && (
-        <Chip
-          label={`Acceptance Fee ₦${Number(acceptanceFee).toLocaleString()}`}
-          size="small"
-          sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 10 }}
-        />
-      )}
-    </Stack>
+   <Stack direction="row" spacing={0.5} alignItems="center">
+  <YesNoPill value />
+
+  <Tooltip title="View payment breakdown">
+    <IconButton
+      size="small"
+      onClick={onViewPayments}
+      sx={{
+        bgcolor: 'info.light',
+        color: 'info.main',
+        borderRadius: 1,
+        '&:hover': {
+          bgcolor: 'info.main',
+          color: 'white',
+        },
+      }}
+    >
+      <IconEye size={12} />
+    </IconButton>
+  </Tooltip>
+</Stack>
   );
 };
 
@@ -180,6 +184,9 @@ const AdmissionSetup = () => {
   const [letterEditorBatch, setLetterEditorBatch] = useState(null);
   const [letterEditorReadOnly, setLetterEditorReadOnly] = useState(false);
   const [letterEditorContent, setLetterEditorContent] = useState('');
+
+  const [paymentViewOpen, setPaymentViewOpen] = useState(false);
+  const [paymentViewBatch, setPaymentViewBatch] = useState(null);
 
   useEffect(() => {
     loadSessions();
@@ -564,6 +571,10 @@ const AdmissionSetup = () => {
                               requirePayment={batch.require_payment}
                               appFee={batch.application_fee}
                               acceptanceFee={batch.acceptance_fee}
+                              onViewPayments={() => {
+                                setPaymentViewBatch(batch);
+                                setPaymentViewOpen(true);
+                              }}
                             />
                           </TableCell>
 
@@ -740,6 +751,203 @@ const AdmissionSetup = () => {
               Save Letter
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Payment View Modal */}
+      <Dialog
+        open={paymentViewOpen}
+        onClose={() => setPaymentViewOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>
+              Payment Breakdown —{' '}
+              <Box component="span" sx={{ color: 'primary.main' }}>
+                {paymentViewBatch?.batch_name ?? ''}
+              </Box>
+            </Typography>
+            {selectedSessionTermLabel && (
+              <Typography variant="caption" color="text.secondary">
+                {selectedSessionTermLabel}
+              </Typography>
+            )}
+          </Box>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {!paymentViewBatch?.require_payment ? (
+            <Alert severity="info">No payment required for this batch.</Alert>
+          ) : (
+            <Stack spacing={3}>
+              {/* Pre-Application Payments */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom color="primary.main">
+                  Pre-Application Payments
+                </Typography>
+                {!paymentViewBatch?.pre_application_payments ||
+                paymentViewBatch.pre_application_payments.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                    No pre-application payments set
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {paymentViewBatch.pre_application_payments.map((payment) => (
+                      <Box
+                        key={payment.id}
+                        sx={{
+                          p: 1.5,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {payment.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {payment.bank_name} - {payment.account_number}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" fontWeight={700} color="primary.main">
+                          ₦{payment.amount.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Box
+                      sx={{
+                        mt: 1,
+                        p: 1.5,
+                        bgcolor: 'primary.light',
+                        borderRadius: 1,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={700}>
+                        Pre-Application Total:
+                      </Typography>
+                      <Typography variant="body1" fontWeight={700} color="primary.main">
+                        ₦{paymentViewBatch.application_fee?.toLocaleString() ?? '0'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                )}
+              </Box>
+
+              {/* Post-Application Payments */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom color="success.main">
+                  Post-Application Payments
+                </Typography>
+                {!paymentViewBatch?.post_application_payments ||
+                paymentViewBatch.post_application_payments.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                    No post-application payments set
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {paymentViewBatch.post_application_payments.map((payment) => (
+                      <Box
+                        key={payment.id}
+                        sx={{
+                          p: 1.5,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {payment.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {payment.bank_name} - {payment.account_number}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" fontWeight={700} color="success.main">
+                          ₦{payment.amount.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Box
+                      sx={{
+                        mt: 1,
+                        p: 1.5,
+                        bgcolor: 'success.light',
+                        borderRadius: 1,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={700}>
+                        Post-Application Total:
+                      </Typography>
+                      <Typography variant="body1" fontWeight={700} color="success.main">
+                        ₦{paymentViewBatch.acceptance_fee?.toLocaleString() ?? '0'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                )}
+              </Box>
+
+              {/* Grand Total */}
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'grey.100',
+                  borderRadius: 1,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderTop: 2,
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="h6" fontWeight={700}>
+                  Grand Total:
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="text.primary">
+                  ₦
+                  {(
+                    (paymentViewBatch?.pre_application_payments || []).reduce(
+                      (sum, p) => sum + (p.amount || 0),
+                      0,
+                    ) +
+                    (paymentViewBatch?.post_application_payments || []).reduce(
+                      (sum, p) => sum + (p.amount || 0),
+                      0,
+                    )
+                  ).toLocaleString()}
+                </Typography>
+              </Box>
+            </Stack>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setPaymentViewOpen(false)}
+            color="inherit"
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 

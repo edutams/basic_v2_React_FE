@@ -407,7 +407,6 @@ const HolidaySection = ({ refreshKey }) => {
             <Button variant="contained" size="small" startIcon={<IconPlus />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
-              size="small"
             >
               Create Holiday
             </Button>
@@ -549,7 +548,7 @@ const HolidaySection = ({ refreshKey }) => {
               </Alert>
             )}
             <Box display="flex" justifyContent="flex-end">
-              <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={handleAddRow} size="small">
+              <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={handleAddRow}>
                 Add More
               </Button>
             </Box>

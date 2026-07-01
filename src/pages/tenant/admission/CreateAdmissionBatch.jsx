@@ -17,12 +17,16 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
+import PaymentSelectionModal from '@/components/tenant/admission/PaymentSelectionModal';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
@@ -135,6 +139,10 @@ const CreateAdmissionBatch = () => {
   const [enablePayment, setEnablePayment] = useState(existingBatch?.require_payment ?? false);
   const [preAppFee, setPreAppFee] = useState(existingBatch?.application_fee ?? '');
   const [postAppFee, setPostAppFee] = useState(existingBatch?.acceptance_fee ?? '');
+  const [preAppPayments, setPreAppPayments] = useState(existingBatch?.pre_application_payments ?? []);
+  const [postAppPayments, setPostAppPayments] = useState(existingBatch?.post_application_payments ?? []);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [currentPaymentType, setCurrentPaymentType] = useState('pre-application');
 
   const [enableLetter, setEnableLetter] = useState(existingBatch?.enable_letter ?? false);
   const [letterContent, setLetterContent] = useState(
@@ -249,6 +257,37 @@ const CreateAdmissionBatch = () => {
   // Derive selected class objects from IDs (for Autocomplete value)
   const selectedClassObjects = availableClasses.filter((c) => selectedClassIds.includes(c.id));
 
+  // Calculate totals
+  const preAppTotal = preAppPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const postAppTotal = postAppPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const handleOpenPaymentModal = (type) => {
+    setCurrentPaymentType(type);
+    setPaymentModalOpen(true);
+  };
+
+  const handleSavePayments = (selectedPayments) => {
+    if (currentPaymentType === 'pre-application') {
+      setPreAppPayments(selectedPayments);
+      setPreAppFee(selectedPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
+    } else {
+      setPostAppPayments(selectedPayments);
+      setPostAppFee(selectedPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
+    }
+  };
+
+  const handleRemovePayment = (type, paymentId) => {
+    if (type === 'pre-application') {
+      const updated = preAppPayments.filter((p) => p.id !== paymentId);
+      setPreAppPayments(updated);
+      setPreAppFee(updated.reduce((sum, p) => sum + (p.amount || 0), 0));
+    } else {
+      const updated = postAppPayments.filter((p) => p.id !== paymentId);
+      setPostAppPayments(updated);
+      setPostAppFee(updated.reduce((sum, p) => sum + (p.amount || 0), 0));
+    }
+  };
+
   // ─── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validateForm()) {
@@ -270,6 +309,8 @@ const CreateAdmissionBatch = () => {
       require_payment: enablePayment,
       application_fee: enablePayment ? Number(preAppFee) : 0,
       acceptance_fee: enablePayment ? Number(postAppFee) : 0,
+      pre_application_payments: enablePayment ? preAppPayments : [],
+      post_application_payments: enablePayment ? postAppPayments : [],
       admission_letter_template: letterContent ?? null,
       status: isOpen ? 'open' : 'close',
     };
@@ -556,113 +597,159 @@ const CreateAdmissionBatch = () => {
               {enablePayment && (
                 <Stack spacing={2} mt={-1}>
                   <Box>
-                    <Typography variant="caption" fontWeight={700} display="block" mb={0.75}>
-                      Pre-Application
-                    </Typography>
-                    <Stack direction="row" spacing={1} mb={1}>
-                      <Chip
-                        label="Application Form"
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          fontWeight: 600,
-                          fontSize: 11,
-                        }}
-                      />
-                      <Chip
-                        label="Registration Fee"
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          fontWeight: 600,
-                          fontSize: 11,
-                        }}
-                      />
-                    </Stack>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      placeholder="0"
-                      value={preAppFee}
-                      onChange={(e) => setPreAppFee(e.target.value)}
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">₦</InputAdornment>,
-                        },
-                      }}
-                      inputProps={{ min: 0 }}
-                      error={Boolean(errors.preAppFee)}
-                      helperText={errors.preAppFee}
-                    />
-                    {preAppFee > 0 && (
-                      <Typography
-                        variant="caption"
-                        color="error.main"
-                        fontWeight={600}
-                        mt={0.5}
-                        display="block"
-                      >
-                        Pre-Application : ₦{Number(preAppFee).toLocaleString()}
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                      <Typography variant="caption" fontWeight={700} display="block">
+                        Pre-Application
                       </Typography>
+                      <Tooltip title="Add payment items">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleOpenPaymentModal('pre-application')}
+                        >
+                          <IconPlus size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+
+                    {preAppPayments.length === 0 ? (
+                      <Box
+                        sx={{
+                          p: 2,
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          textAlign: 'center',
+                          bgcolor: 'grey.50',
+                          mb: 2,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                          No Options set yet
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Stack spacing={1} mb={2}>
+                        {preAppPayments.map((payment) => (
+                          <Box
+                            key={payment.id}
+                            sx={{
+                              p: 1.5,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="caption" fontWeight={600}>
+                                {payment.name}
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                ₦{payment.amount.toLocaleString()}
+                              </Typography>
+                            </Box>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemovePayment('pre-application', payment.id)}
+                            >
+                              <IconTrash size={16} />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
                     )}
+
+                    <Typography
+                      variant="caption"
+                      color="error.main"
+                      fontWeight={600}
+                      mt={0.5}
+                      display="block"
+                    >
+                      Pre-Application Total: ₦{preAppTotal.toLocaleString()}
+                    </Typography>
                   </Box>
 
                   <Box>
-                    <Typography variant="caption" fontWeight={700} display="block" mb={0.75}>
-                      Post-Application
-                    </Typography>
-                    <Stack direction="row" spacing={1} mb={1}>
-                      <Chip
-                        label="Application Form"
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          fontWeight: 600,
-                          fontSize: 11,
-                        }}
-                      />
-                      <Chip
-                        label="Registration Fee"
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          fontWeight: 600,
-                          fontSize: 11,
-                        }}
-                      />
-                    </Stack>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      placeholder="0"
-                      value={postAppFee}
-                      onChange={(e) => setPostAppFee(e.target.value)}
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">₦</InputAdornment>,
-                        },
-                      }}
-                      inputProps={{ min: 0 }}
-                      error={Boolean(errors.postAppFee)}
-                      helperText={errors.postAppFee}
-                    />
-                    {postAppFee > 0 && (
-                      <Typography
-                        variant="caption"
-                        color="error.main"
-                        fontWeight={600}
-                        mt={0.5}
-                        display="block"
-                      >
-                        Post-Application : ₦{Number(postAppFee).toLocaleString()}
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                      <Typography variant="caption" fontWeight={700} display="block">
+                        Post-Application
                       </Typography>
+                      <Tooltip title="Add payment items">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleOpenPaymentModal('post-application')}
+                        >
+                          <IconPlus size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+
+                    {postAppPayments.length === 0 ? (
+                      <Box
+                        sx={{
+                          p: 2,
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          textAlign: 'center',
+                          bgcolor: 'grey.50',
+                          mb: 2,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                          No Options set yet
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Stack spacing={1} mb={2}>
+                        {postAppPayments.map((payment) => (
+                          <Box
+                            key={payment.id}
+                            sx={{
+                              p: 1.5,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="caption" fontWeight={600}>
+                                {payment.name}
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                ₦{payment.amount.toLocaleString()}
+                              </Typography>
+                            </Box>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemovePayment('post-application', payment.id)}
+                            >
+                              <IconTrash size={16} />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
                     )}
+
+                    <Typography
+                      variant="caption"
+                      color="error.main"
+                      fontWeight={600}
+                      mt={0.5}
+                      display="block"
+                    >
+                      Post-Application Total: ₦{postAppTotal.toLocaleString()}
+                    </Typography>
                   </Box>
                 </Stack>
               )}
@@ -722,6 +809,16 @@ const CreateAdmissionBatch = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <PaymentSelectionModal
+        open={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        onSave={handleSavePayments}
+        applicationType={currentPaymentType}
+        selectedPayments={
+          currentPaymentType === 'pre-application' ? preAppPayments : postAppPayments
+        }
+      />
     </PageContainer>
   );
 };

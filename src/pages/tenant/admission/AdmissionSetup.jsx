@@ -924,8 +924,14 @@ const AdmissionSetup = () => {
                 <Typography variant="h6" fontWeight={700} color="text.primary">
                   ₦
                   {(
-                    (paymentViewBatch?.application_fee || 0) +
-                    (paymentViewBatch?.acceptance_fee || 0)
+                    (paymentViewBatch?.pre_application_payments || []).reduce(
+                      (sum, p) => sum + (p.amount || 0),
+                      0,
+                    ) +
+                    (paymentViewBatch?.post_application_payments || []).reduce(
+                      (sum, p) => sum + (p.amount || 0),
+                      0,
+                    )
                   ).toLocaleString()}
                 </Typography>
               </Box>

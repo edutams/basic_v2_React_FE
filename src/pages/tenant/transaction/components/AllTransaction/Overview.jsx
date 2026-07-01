@@ -38,6 +38,7 @@ import {
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
+import dayjs from 'dayjs';
 
 const Overview = () => {
   const theme = useTheme();
@@ -161,7 +162,7 @@ const Overview = () => {
   const handleDownloadCSV = async () => {
     try {
       const res = await tenantApi.post(
-        '/bursary/transactions/export_csv_online_transaction_analytics',
+        '/bursary/transactions/overview/export_csv_online_transaction_analytics',
         {
           filters: {
             from: fromDate || null,
@@ -431,7 +432,7 @@ const Overview = () => {
                       </TableCell>
                       <TableCell>{row.description}</TableCell>
                       <TableCell>{format(row.amount)}</TableCell>
-                      <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                       <TableCell>
                         <Chip
                           size="small"

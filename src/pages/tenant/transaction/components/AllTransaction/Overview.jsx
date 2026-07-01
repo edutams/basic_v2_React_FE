@@ -37,6 +37,7 @@ import {
   fetchOnlineTransactionAnalytics,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const Overview = () => {
   const theme = useTheme();
@@ -157,24 +158,32 @@ const Overview = () => {
     setPage(1);
   };
 
-  const handleDownloadCSV = () => {
-    const headers = ['Transaction ID', 'Paid By', 'Description', 'Amount', 'Date', 'Status'];
-    const rows = tableData.map((r) => [
-      r.transaction_id,
-      r.paid_by,
-      r.description,
-      r.amount,
-      r.date,
-      r.status,
-    ]);
-    const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownloadCSV = async () => {
+    try {
+      const res = await tenantApi.post(
+        '/bursary/transactions/export_csv_online_transaction_analytics',
+        {
+          filters: {
+            from: fromDate || null,
+            to: toDate || null,
+            session_id: sessionId || null,
+            term_id: termId || null,
+            search: search || null,
+            status: activeTab > 0 ? statusTabs[activeTab] : null,
+          },
+        },
+        { responseType: 'blob' },
+      );
+
+      const url = URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('CSV export failed', err);
+    }
   };
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
@@ -380,7 +389,7 @@ const Overview = () => {
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Transaction ID</TableCell>
+                  <TableCell width={20}>Transaction ID</TableCell>
                   <TableCell>Paid By</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Amount</TableCell>
@@ -403,7 +412,13 @@ const Overview = () => {
                       <TableCell>{row.transaction_id}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36 }}>{row.paid_by?.[0] || '?'}</Avatar>
+                          <Avatar
+                            sx={{ width: 36, height: 36 }}
+                            src={
+                              row.avatar ||
+                              'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848'
+                            }
+                          ></Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>
                               {row.paid_by}
@@ -419,12 +434,18 @@ const Overview = () => {
                       <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Chip
-                          label={row.status}
                           size="small"
+                          label={
+                            row.status === 'APPROVED'
+                              ? 'Successful'
+                              : row.status === 'PENDING'
+                                ? 'Pending'
+                                : 'Failed'
+                          }
                           color={
-                            row.status === 'Successful'
+                            row.status === 'APPROVED'
                               ? 'success'
-                              : row.status === 'Pending'
+                              : row.status === 'PENDING'
                                 ? 'warning'
                                 : 'error'
                           }

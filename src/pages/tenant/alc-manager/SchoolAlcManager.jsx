@@ -312,13 +312,9 @@ const SchoolAlcManager = () => {
             <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
-                textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
               Filters
@@ -348,7 +344,7 @@ const SchoolAlcManager = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>S/N</TableCell>
+                    <TableCell  sx={{ width: 70 }}>S/N</TableCell>
                     <TableCell>Role Name</TableCell>
                     {/* <TableCell>Guard Name</TableCell> */}
                     <TableCell>Description</TableCell>

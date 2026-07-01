@@ -161,7 +161,7 @@ const ModuleManagement = ({
           </Box>
 
           {currentPackage && onAttachModule && (
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={onAttachModule} size="small">
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={onAttachModule}>
               Manage Module
             </Button>
           )}
@@ -322,9 +322,8 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${
-          moduleToDelete?.module_name || moduleToDelete?.mod_name
-        }"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name
+          }"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

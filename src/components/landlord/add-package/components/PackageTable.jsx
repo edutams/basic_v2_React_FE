@@ -125,7 +125,6 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
             <Button variant="contained" size="small" startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
-              size="small"
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Filters
@@ -140,7 +139,6 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
             </Button>
             <Button variant="contained" size="small" startIcon={<AddIcon />}
               onClick={() => onPackageAction('create')}
-              size="small"
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Add New Package

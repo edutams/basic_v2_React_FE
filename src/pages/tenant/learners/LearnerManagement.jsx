@@ -440,7 +440,6 @@ const LearnerManagement = () => {
                 Add Learner
               </Button>
               <Button variant="contained" size="small" startIcon={<DownloadIcon />}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
                   setDownloadClassId('');
@@ -451,7 +450,6 @@ const LearnerManagement = () => {
               </Button>
 
               <Button variant="contained" size="small" startIcon={<UploadIcon />}
-                size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setUploadLearnerOpen(true)}
               >
@@ -480,7 +478,13 @@ const LearnerManagement = () => {
                 ),
               },
             }}
-            sx={{ flex: 1, minWidth: { xs: '100%', sm: 220 } }}
+            sx={{
+              width: {
+                xs: "100%",
+                sm: 300,
+                md: 350,
+              },
+            }}
           />
 
           <FormControl size="small" sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
@@ -732,9 +736,9 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setImpersonateStudentConfirmOpen(false);
-              setStudentToImpersonate(null);
-            }}
+            setImpersonateStudentConfirmOpen(false);
+            setStudentToImpersonate(null);
+          }}
           >
             Cancel
           </Button>

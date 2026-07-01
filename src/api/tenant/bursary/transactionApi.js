@@ -16,6 +16,16 @@ export const fetchOnlineTransactionAnalytics = async (payload) => {
 };
 
 export const fetchRevenueTransactionValues = async () => {
-    const res = await api.get('/bursary/transactions/revenue/get_online_transaction_values');
+    const res = await api.get('/bursary/transactions/revenue/get_revenue_transaction_values');
     return res.data;
 }
+
+export const fetchRevenueChartData = async (payload) => {
+    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_chart_data', payload);
+    return res.data;
+};
+
+export const fetchRevenueTransactionAnalytics = async (payload) => {
+    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_transaction_analytics', payload);
+    return res.data;
+};

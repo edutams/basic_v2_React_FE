@@ -101,26 +101,27 @@ const YesNoPill = ({ value }) => (
 const FeePills = ({ requirePayment, appFee, acceptanceFee, onViewPayments }) => {
   if (!requirePayment) return <YesNoPill value={false} />;
   return (
-    <Stack direction="row" spacing={0.5} align='center'>
-      <YesNoPill value />
-      <Tooltip title="View payment breakdown">
-        <IconButton
-          size="small"
-          onClick={onViewPayments}
-          sx={{
-            bgcolor: 'info.light',
-            color: 'info.main',
-            borderRadius: 1,
-            '&:hover': {
-              bgcolor: 'info.main',
-              color: 'white',
-            },
-          }}
-        >
-          <IconEye size={12} sx={{ color: 'primary.main' }}/>
-        </IconButton>
-      </Tooltip>
-    </Stack>
+   <Stack direction="row" spacing={0.5} alignItems="center">
+  <YesNoPill value />
+
+  <Tooltip title="View payment breakdown">
+    <IconButton
+      size="small"
+      onClick={onViewPayments}
+      sx={{
+        bgcolor: 'info.light',
+        color: 'info.main',
+        borderRadius: 1,
+        '&:hover': {
+          bgcolor: 'info.main',
+          color: 'white',
+        },
+      }}
+    >
+      <IconEye size={12} />
+    </IconButton>
+  </Tooltip>
+</Stack>
   );
 };
 

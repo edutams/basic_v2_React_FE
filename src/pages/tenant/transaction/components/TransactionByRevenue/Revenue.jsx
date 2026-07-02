@@ -35,7 +35,7 @@ import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOu
 import FeeChart from './FeeChart';
 import {
   fetchRevenueChartData,
-  fetchRevenueTransactionAnalytics,
+  revenueTransactionAmount,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
@@ -87,7 +87,7 @@ const Revenue = () => {
   const loadTable = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchRevenueTransactionAnalytics({ filters: buildFilters() });
+      const res = await revenueTransactionAmount({ filters: buildFilters() });
       if (res.success) {
         setTableData(res.data);
         setLastPage(res.last_page);

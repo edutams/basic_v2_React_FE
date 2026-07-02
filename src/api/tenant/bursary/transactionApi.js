@@ -25,7 +25,7 @@ export const fetchRevenueChartData = async (payload) => {
     return res.data;
 };
 
-export const fetchRevenueTransactionAnalytics = async (payload) => {
-    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_transaction_analytics', payload);
+export const revenueTransactionAmount = async (payload) => {
+    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_transaction_amount', payload);
     return res.data;
 };

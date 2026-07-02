@@ -10,6 +10,13 @@ const FeeChart = ({
   chartType = 'bar',
   onDurationChange,
   statusData,
+
+  sessions,
+  terms,
+  sessionId,
+  termId,
+  onSessionChange,
+  onTermChange,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -38,25 +45,50 @@ const FeeChart = ({
             <Typography variant="h6" fontWeight={600} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>
               {title || 'Transaction Chart'}
             </Typography>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={selectedDuration}
-                onChange={handleDurationChange}
-                sx={{
-                  bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: isDark ? '#444' : '#e0e0e0',
-                  },
-                }}
-              >
-                <MenuItem value="daily">Daily</MenuItem>
-                <MenuItem value="weekly">Weekly</MenuItem>
-                <MenuItem value="monthly">Monthly</MenuItem>
-                <MenuItem value="quarterly">Quarterly</MenuItem>
-                <MenuItem value="yearly">Yearly</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select
+                  value={selectedDuration}
+                  onChange={handleDurationChange}
+                  sx={{
+                    bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? '#444' : '#e0e0e0',
+                    },
+                  }}
+                >
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <Select value={sessionId} onChange={(e) => onSessionChange(e.target.value)}>
+                  <MenuItem value="">All Sessions</MenuItem>
+
+                  {sessions.map((session) => (
+                    <MenuItem key={session.id} value={session.id}>
+                      {session.sesname}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select value={termId} onChange={(e) => onTermChange(e.target.value)}>
+                  <MenuItem value="">All Terms</MenuItem>
+
+                  {terms.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.term_name || term.display_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
+
           <Chart options={chartOptions} series={chartSeries} type={chartType} height={320} />
         </Box>
       </Grid>

@@ -35,7 +35,7 @@ import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOu
 import FeeChart from './FeeChart';
 import {
   fetchRevenueChartData,
-  fetchRevenueTransactionAnalytics,
+  revenueTransactionAmount,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
@@ -87,7 +87,7 @@ const Revenue = () => {
   const loadTable = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchRevenueTransactionAnalytics({ filters: buildFilters() });
+      const res = await revenueTransactionAmount({ filters: buildFilters() });
       if (res.success) {
         setTableData(res.data);
         setLastPage(res.last_page);
@@ -129,8 +129,12 @@ const Revenue = () => {
   }, []);
 
   useEffect(() => {
-    if (duration) loadAnalytics();
-  }, [duration]);
+    loadAnalytics();
+  }, [duration, sessionId, termId]);
+
+  // useEffect(() => {
+  //   if (duration) loadAnalytics();
+  // }, [duration]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -220,6 +224,12 @@ const Revenue = () => {
         chartSeries={chartData?.series || []}
         statusData={statusData}
         onDurationChange={setDuration}
+        sessions={sessions}
+        terms={terms}
+        sessionId={sessionId}
+        termId={termId}
+        onSessionChange={setSessionId}
+        onTermChange={setTermId}
       />
 
       <ParentCard

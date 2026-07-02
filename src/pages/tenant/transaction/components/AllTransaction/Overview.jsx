@@ -35,6 +35,7 @@ import FeeChart from './FeeChart';
 import {
   fetchOnlineTransactions,
   fetchOnlineTransactionAnalytics,
+  checkTransactionStatus,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
@@ -70,6 +71,8 @@ const Overview = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [duration, setDuration] = useState('monthly');
+
+  const [checkingStatusId, setCheckingStatusId] = useState(null);
 
   const statusTabs = ['All', 'Successful', 'Pending', 'Declined'];
 
@@ -157,6 +160,44 @@ const Overview = () => {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setPage(1);
+  };
+
+  const handlePrintReceipt = (row) => {
+    const params = new URLSearchParams({
+      order_id: row.order_id,
+      user_id: row.user_id,
+      session_term_id: row.session_term_id,
+    });
+    window.open(
+      `/bursary/transactions/print_receipt?${params.toString()}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+
+  // const handleCheckStatus = async (row) => {
+  //   try {
+  //     await checkTransactionStatus(row.id);
+  //     await loadTable();
+  //     await loadAnalytics();
+  //   } catch (err) {
+  //     console.error('Failed to check status', err);
+  //   }
+  // };
+
+  const handleCheckStatus = async (row) => {
+    setCheckingStatusId(row.id);
+    try {
+      const res = await checkTransactionStatus(row.id);
+      setTableData((prev) =>
+        prev.map((t) => (t.id === row.id ? { ...t, status: res.transaction_status } : t)),
+      );
+      loadAnalytics();
+    } catch (err) {
+      console.error('Failed to check status', err);
+    } finally {
+      setCheckingStatusId(null);
+    }
   };
 
   const handleDownloadCSV = async () => {
@@ -410,7 +451,7 @@ const Overview = () => {
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.transaction_id}</TableCell>
+                      <TableCell>{row.order_id}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar
@@ -441,7 +482,7 @@ const Overview = () => {
                               ? 'Successful'
                               : row.status === 'PENDING'
                                 ? 'Pending'
-                                : 'Failed'
+                                : 'Declined'
                           }
                           color={
                             row.status === 'APPROVED'
@@ -455,12 +496,17 @@ const Overview = () => {
                       <TableCell align="right">
                         <IconButton
                           size="small"
+                          disabled={checkingStatusId === row.id}
                           onClick={(e) => {
                             setAnchorEl(e.currentTarget);
                             setActiveRow(row);
                           }}
                         >
-                          <IconDotsVertical size={18} />
+                          {checkingStatusId === row.id ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <IconDotsVertical size={18} />
+                          )}
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -489,12 +535,30 @@ const Overview = () => {
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={() => setAnchorEl(null)}
-          PaperProps={{ sx: { borderRadius: 2, minWidth: 190 } }}
+          PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
         >
-          <MenuItem onClick={() => setAnchorEl(null)}>
-            <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Check Status
-          </MenuItem>
+          {activeRow?.status === 'APPROVED' ? (
+            <MenuItem
+              onClick={() => {
+                handlePrintReceipt(activeRow);
+                setAnchorEl(null);
+              }}
+            >
+              <ReceiptLongOutlinedIcon sx={{ mr: 1.5, color: '#2e7d32' }} />
+              View / Print Receipt
+            </MenuItem>
+          ) : (
+            <MenuItem
+              disabled={checkingStatusId === activeRow?.id}
+              onClick={async () => {
+                setAnchorEl(null);
+                await handleCheckStatus(activeRow);
+              }}
+            >
+              <ReceiptLongOutlinedIcon sx={{ mr: 1.5, color: '#ed6c02' }} />
+              {checkingStatusId === activeRow?.id ? 'Checking...' : 'Check Status'}
+            </MenuItem>
+          )}
         </Menu>
       </ParentCard>
     </PageContainer>

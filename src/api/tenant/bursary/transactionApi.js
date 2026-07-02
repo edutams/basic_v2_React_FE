@@ -25,7 +25,21 @@ export const fetchRevenueChartData = async (payload) => {
     return res.data;
 };
 
-export const fetchRevenueTransactionAnalytics = async (payload) => {
-    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_transaction_analytics', payload);
+export const revenueTransactionAmount = async (payload) => {
+    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_transaction_amount', payload);
+    return res.data;
+};
+
+export const fetchPrintReceipt = async ({ order_id, user_id, session_term_id }) => {
+    const res = await api.get('/bursary/transactions/print_receipt', {
+        params: { order_id, user_id, session_term_id },
+    });
+    return res.data;
+};
+
+export const checkTransactionStatus = async (id) => {
+    const res = await api.get('/bursary/transactions/update_status', {
+        params: { id },
+    });
     return res.data;
 };

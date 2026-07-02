@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
+import PrintReceipt from '@/pages/tenant/finance/bursary/PrintReceipt';
 
 const SchoolLayout = Loadable(lazy(() => import('@/layouts/tenant/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
@@ -367,6 +368,15 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      {
+        path: '/bursary/transactions/print_receipt',
+        element: (
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
+            <PrintReceipt />
+          </TenantProtectedRoute>
+        ),
+      },
+
       {
         path: 'chart-of-accounts',
         element: (

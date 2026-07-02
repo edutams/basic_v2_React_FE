@@ -22,22 +22,20 @@ import {
   InputLabel,
   Menu,
   useTheme,
+  Link,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import { IconDotsVertical } from '@tabler/icons-react';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
 import FeeChart from './FeeChart';
 import {
   fetchRevenueChartData,
   revenueTransactionAmount,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import RevenueTransactionsModal from './RevenueTransactionsModal';
 
 const Revenue = () => {
   const theme = useTheme();
@@ -67,6 +65,8 @@ const Revenue = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
@@ -376,7 +376,18 @@ const Revenue = () => {
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
                       <TableCell>{row.revenue_code}</TableCell>
                       <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell>{row.no_of_trns}</TableCell>
+                      <TableCell>
+                        <Link
+                          component="button"
+                          underline="hover"
+                          onClick={() => {
+                            setActiveRow(row);
+                            setViewModalOpen(true);
+                          }}
+                        >
+                          {row.no_of_trns}
+                        </Link>
+                      </TableCell>{' '}
                       <TableCell>{format(row.amount)}</TableCell>
                       <TableCell>
                         <Chip
@@ -424,33 +435,23 @@ const Revenue = () => {
           onClose={() => setAnchorEl(null)}
           PaperProps={{ sx: { borderRadius: 2, minWidth: 190 } }}
         >
-          <MenuItem onClick={() => setAnchorEl(null)}>
-            <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Student Ledger
-          </MenuItem>
-          <MenuItem onClick={() => setAnchorEl(null)}>
-            <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Pay for Student
-          </MenuItem>
-          <MenuItem onClick={() => setAnchorEl(null)}>
-            <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Update Invoice
-          </MenuItem>
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
-              if (activeRow)
-                window.open(`/class-ledger/${activeRow.bursary_payment_id}/cash-post`, '_blank');
+              setViewModalOpen(true);
             }}
           >
-            <CurrencyExchangeOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Cash Posting
-          </MenuItem>
-          <MenuItem onClick={() => setAnchorEl(null)}>
-            <AccountBalanceWalletOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Wallet Transaction
+            <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+            View Transactions
           </MenuItem>
         </Menu>
+
+        <RevenueTransactionsModal
+          open={viewModalOpen}
+          onClose={() => setViewModalOpen(false)}
+          paymentId={activeRow?.bursary_payment_id}
+          revenueName={activeRow?.revenue_name}
+        />
       </ParentCard>
     </PageContainer>
   );

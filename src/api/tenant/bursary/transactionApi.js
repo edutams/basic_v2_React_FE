@@ -43,3 +43,8 @@ export const checkTransactionStatus = async (id) => {
     });
     return res.data;
 };
+
+export const fetchRevenueAmountDetails = async (payload) => {
+    const res = await api.post('/bursary/transactions/revenue/fetch_revenue_amount_details', payload);
+    return res.data;
+};

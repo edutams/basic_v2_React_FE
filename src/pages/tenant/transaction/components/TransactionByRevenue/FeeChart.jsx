@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Grid, Box, Typography, useTheme, FormControl, Select, MenuItem } from '@mui/material';
+import {
+  Grid,
+  Box,
+  Typography,
+  useTheme,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
+} from '@mui/material';
 import Chart from 'react-apexcharts';
 import StatusBreakdownCard from './StatusBreakdownCard';
 
@@ -65,7 +74,12 @@ const FeeChart = ({
                 </Select>
               </FormControl>
               <FormControl size="small" sx={{ minWidth: 160 }}>
-                <Select value={sessionId} onChange={(e) => onSessionChange(e.target.value)}>
+                <InputLabel>Session</InputLabel>
+                <Select
+                  label="Session"
+                  value={sessionId}
+                  onChange={(e) => onSessionChange(e.target.value)}
+                >
                   <MenuItem value="">All Sessions</MenuItem>
 
                   {sessions.map((session) => (
@@ -76,7 +90,8 @@ const FeeChart = ({
                 </Select>
               </FormControl>
               <FormControl size="small" sx={{ minWidth: 140 }}>
-                <Select value={termId} onChange={(e) => onTermChange(e.target.value)}>
+                <InputLabel>Term</InputLabel>
+                <Select label="Term" value={termId} onChange={(e) => onTermChange(e.target.value)}>
                   <MenuItem value="">All Terms</MenuItem>
 
                   {terms.map((term) => (

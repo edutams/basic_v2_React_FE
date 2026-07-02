@@ -129,8 +129,12 @@ const Revenue = () => {
   }, []);
 
   useEffect(() => {
-    if (duration) loadAnalytics();
-  }, [duration]);
+    loadAnalytics();
+  }, [duration, sessionId, termId]);
+
+  // useEffect(() => {
+  //   if (duration) loadAnalytics();
+  // }, [duration]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -220,6 +224,12 @@ const Revenue = () => {
         chartSeries={chartData?.series || []}
         statusData={statusData}
         onDurationChange={setDuration}
+        sessions={sessions}
+        terms={terms}
+        sessionId={sessionId}
+        termId={termId}
+        onSessionChange={setSessionId}
+        onTermChange={setTermId}
       />
 
       <ParentCard

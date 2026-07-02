@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Box, Grid, Typography, Paper, Button, Chip, Stack, Divider } from '@mui/material';
 import {
@@ -108,13 +108,18 @@ const StepperBar = ({ activeStep, steps }) => {
   );
 };
 
-const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => {
+const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep }) => {
   if (!batch) {
     return (
       <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
-        <Typography variant="body2" color="text.secondary">
-          Loading batch details...
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          {batchLoaded ? 'No admission batch selected. Please select a batch to continue.' : 'Loading batch details...'}
         </Typography>
+        {batchLoaded && (
+          <Button variant="contained" size="small" fullWidth onClick={onChangeBatch}>
+            Select Admission Batch
+          </Button>
+        )}
       </Paper>
     );
   }
@@ -195,9 +200,16 @@ const NewApplication = () => {
   const location = useLocation();
   const notify = useNotification();
 
-  const batch = location.state?.batch ?? null;
-  const existingWard = location.state?.ward ?? null;
-  const resumeApplication = location.state?.resumeApplication ?? false;
+  // Cache initial location.state so it survives manual URL edits which clear location.state
+  const locationStateRef = useRef({
+    batch: location.state?.batch ?? null,
+    ward: location.state?.ward ?? null,
+    resumeApplication: location.state?.resumeApplication ?? false,
+  });
+
+  const batch = locationStateRef.current?.batch ?? null;
+  const existingWard = locationStateRef.current?.ward ?? null;
+  const resumeApplication = locationStateRef.current?.resumeApplication ?? false;
   const searchParams = new URLSearchParams(location.search);
   const queryStep = searchParams.get('step');
   const parsedQueryStep = queryStep ? Number(queryStep) - 1 : null;
@@ -206,6 +218,33 @@ const NewApplication = () => {
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [batchLoaded, setBatchLoaded] = useState(false);
   const [userChangedBatch, setUserChangedBatch] = useState(false); // Track when user manually changes batch
+
+  // Persist selectedBatch to sessionStorage so it survives URL changes and page reloads within the same tab
+  useEffect(() => {
+    if (selectedBatch) {
+      try {
+        sessionStorage.setItem('selected_admission_batch', JSON.stringify(selectedBatch));
+      } catch (e) {
+        console.warn('Failed to persist batch to sessionStorage:', e);
+      }
+    }
+  }, [selectedBatch]);
+
+  // Restore batch from sessionStorage on mount (for URL edits that reload the page)
+  const restoreBatchFromSession = useCallback(() => {
+    try {
+      const saved = sessionStorage.getItem('selected_admission_batch');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.id) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to restore batch from sessionStorage:', e);
+    }
+    return null;
+  }, []);
 
   // Initialize the admission form hook
   const {
@@ -230,19 +269,28 @@ const NewApplication = () => {
         let targetBatchId = null;
         
         // Priority 1: If we have a saved admission batch from formData
-        if (formData?.admission_batch?.id && !batchLoaded) {
+        if (formData?.admission_batch?.id) {
           console.log('Loading batch details from formData:', formData.admission_batch.id);
           targetBatchId = formData.admission_batch.id;
         }
         // Priority 2: If we have a batch from location.state (Apply Now from modal)
-        else if (batch?.id && !batchLoaded && !formData?.admission_batch) {
+        else if (batch?.id && !formData?.admission_batch) {
           console.log('Loading batch details from location.state:', batch.id);
           targetBatchId = batch.id;
         }
         // Priority 3: If we have existingWard with admission_batch
-        else if (existingWard?.admission_batch?.id && !batchLoaded && !formData?.admission_batch && !batch?.id) {
+        else if (existingWard?.admission_batch?.id && !formData?.admission_batch && !batch?.id) {
           console.log('Loading batch details from existingWard:', existingWard.admission_batch.id);
           targetBatchId = existingWard.admission_batch.id;
+        }
+        
+        // Priority 4: Check sessionStorage (preserved across URL changes / page reloads within the same tab)
+        if (!targetBatchId) {
+          const sessionBatch = restoreBatchFromSession();
+          if (sessionBatch?.id) {
+            console.log('Loading batch from sessionStorage:', sessionBatch.id);
+            targetBatchId = sessionBatch.id;
+          }
         }
         
         // If we have a target batch ID, find it in the full batches list
@@ -259,10 +307,16 @@ const NewApplication = () => {
             }
             setSelectedBatch(fullBatch);
             setBatchLoaded(true);
+            // (sessionStorage is updated automatically by the selectedBatch watcher effect)
           } else {
             console.warn('Batch not found in open batches:', targetBatchId);
             setBatchLoaded(true);
           }
+        } else {
+          // No batch source found (no location.state, no formData) — mark as loaded
+          // so the UI doesn't show "Loading..." indefinitely
+          console.log('No target batch ID found — batch selection needed');
+          setBatchLoaded(true);
         }
       } catch (error) {
         console.error('Failed to load batch details:', error);
@@ -279,7 +333,7 @@ const NewApplication = () => {
     };
 
     loadBatchDetails();
-  }, [formData?.admission_batch?.id, batch?.id, existingWard?.admission_batch?.id, batchLoaded, batch, formData?.admission_batch, existingWard?.admission_batch]);
+  }, [formData?.admission_batch?.id, batch?.id, existingWard?.admission_batch?.id, batch, formData?.admission_batch, existingWard?.admission_batch]);
 
   useEffect(() => {
     if (userChangedBatch) {
@@ -321,21 +375,40 @@ const NewApplication = () => {
   }, [formData?.admission_batch, selectedBatch?.id, userChangedBatch]);
 
   // Build dynamic steps based on batch requirements
-  const ALL_STEPS = [
-    { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
-    { label: 'Academic info', icon: SchoolIcon, isTabler: false },
-    ...(selectedBatch?.require_payment
-      ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }]
-      : []),
-    { label: 'Documents', icon: DescriptionIcon, isTabler: false },
-    { label: 'Submit', icon: SendIcon, isTabler: false },
-  ];
+  // Only build steps once batch is loaded to prevent flickering
+  const ALL_STEPS = React.useMemo(() => {
+    // Always include all possible steps while batch is loading to prevent step removal
+    if (!batchLoaded || !selectedBatch) {
+      // Default to showing all steps including payment while loading
+      return [
+        { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
+        { label: 'Academic info', icon: SchoolIcon, isTabler: false },
+        { label: 'Payment', icon: CreditCardIcon, isTabler: false },
+        { label: 'Documents', icon: DescriptionIcon, isTabler: false },
+        { label: 'Submit', icon: SendIcon, isTabler: false },
+      ];
+    }
+    
+    // Once batch is loaded, build actual steps based on payment requirement
+    return [
+      { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
+      { label: 'Academic info', icon: SchoolIcon, isTabler: false },
+      ...(selectedBatch.require_payment
+        ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }]
+        : []),
+      { label: 'Documents', icon: DescriptionIcon, isTabler: false },
+      { label: 'Submit', icon: SendIcon, isTabler: false },
+    ];
+  }, [selectedBatch, batchLoaded]);
 
   const STEPS = ALL_STEPS;
 
   // Determine initial step - use currentStage from hook if resuming, otherwise start at 0
+  // Clamp to valid range [0, 4]; invalid/low values (e.g., ?step=0 → -1) default to 0
   const resumeStep =
-    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep) ? parsedQueryStep : 0;
+    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep) && parsedQueryStep >= 0
+      ? parsedQueryStep
+      : 0;
 
   const [activeStep, setActiveStep] = useState(resumeStep);
   const [maxAllowedStep, setMaxAllowedStep] = useState(0); // Track the maximum step user can access
@@ -419,16 +492,30 @@ const NewApplication = () => {
     }
   }, [currentStage, resumeApplication]);
 
-  // Sync URL with active step
+  // Watch for manual URL step changes (e.g., user edits step in browser address bar)
+  // This runs BEFORE the activeStep→URL sync so the URL change takes effect first
   useEffect(() => {
-    const currentQueryStep = new URLSearchParams(location.search).get('step');
-    if (currentQueryStep !== String(activeStep + 1)) {
+    const params = new URLSearchParams(location.search);
+    const stepParam = params.get('step');
+    if (stepParam) {
+      const step = Number(stepParam) - 1;
+      if (!Number.isNaN(step) && step >= 0 && step < 5 && step !== activeStep) {
+        setActiveStep(step);
+      }
+    }
+  }, [location.search]);
+
+  // Sync activeStep to URL (fires when user clicks Next/Back or step changes)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentStep = params.get('step');
+    if (currentStep !== String(activeStep + 1)) {
       navigate(`?step=${activeStep + 1}`, {
         replace: true,
-        state: location.state,
+        state: locationStateRef.current,
       });
     }
-  }, [activeStep, location.search, navigate, location.state]);
+  }, [activeStep, navigate]);
 
   const handleNext = () => setActiveStep((s) => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => {
@@ -577,6 +664,7 @@ const NewApplication = () => {
       // Clear any persisted form state from storage
       sessionStorage.removeItem('formDetailsData');
       sessionStorage.removeItem('admissionFormData');
+      sessionStorage.removeItem('selected_admission_batch');
       localStorage.removeItem('admissionFormData');
       navigate(`/application-tracker/${admissionId}`);
     } else {
@@ -758,6 +846,7 @@ const NewApplication = () => {
             <Grid size={{ xs: 12, lg: 4 }}>
               <BatchSummaryCard
                 batch={selectedBatch}
+                batchLoaded={batchLoaded}
                 onChangeBatch={() => setBatchModalOpen(true)}
                 activeStep={activeStep}
               />

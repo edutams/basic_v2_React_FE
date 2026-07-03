@@ -28,6 +28,7 @@ import {
   DialogActions,
   Switch,
   FormControlLabel,
+  Tooltip,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -53,6 +54,7 @@ const EditPaymentItemModal = ({
   termId,
   categoryId,
   onRefresh,
+  showSnackbar,
 }) => {
   const [formData, setFormData] = useState({
     paymentName: '',
@@ -83,6 +85,18 @@ const EditPaymentItemModal = ({
     classData: null,
   });
   const [toggling, setToggling] = useState(false);
+  const [inlineWarnings, setInlineWarnings] = useState({});
+
+  const showInlineWarning = (key, message) => {
+    setInlineWarnings((prev) => ({ ...prev, [key]: message }));
+    setTimeout(() => {
+      setInlineWarnings((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }, 4000);
+  };
 
   // Fetch classes from API when modal opens
   useEffect(() => {
@@ -94,9 +108,9 @@ const EditPaymentItemModal = ({
           if (response?.data) {
             const classList = Array.isArray(response.data)
               ? response.data.map((cls) => ({
-                  id: cls.id,
-                  name: cls.class_name,
-                }))
+                id: cls.id,
+                name: cls.class_name,
+              }))
               : [];
             setClasses(classList);
           }
@@ -453,6 +467,7 @@ const EditPaymentItemModal = ({
                       const classScheduleData = schedule?.classes?.find(
                         (schedClass) => schedClass.id === cls.id,
                       );
+                      const hasInvoices = classScheduleData?.invoices_count > 0;
 
                       return (
                         <TableRow
@@ -466,50 +481,89 @@ const EditPaymentItemModal = ({
                           }}
                         >
                           <TableCell sx={{ opacity: isSelected ? 1 : 0.5 }}>
-                            <Chip
-                              label={cls.name}
-                              color={isSelected ? 'primary' : 'default'}
-                              variant={isSelected ? 'filled' : 'outlined'}
-                              sx={{ fontWeight: 600 }}
-                            />
+                            <Box position="relative" display="inline-block">
+                              {hasInvoices && (
+                                <Box
+                                  position="absolute"
+                                  top={0} left={0} right={0} bottom={0}
+                                  zIndex={1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    showInlineWarning(`chip_${cls.id}`, 'Cannot remove: this class has attached invoices');
+                                  }}
+                                  sx={{ cursor: 'not-allowed' }}
+                                />
+                              )}
+                              <Chip
+                                label={cls.name}
+                                color={isSelected ? 'primary' : 'default'}
+                                variant={isSelected ? 'filled' : 'outlined'}
+                                sx={{ fontWeight: 600 }}
+                                onClick={hasInvoices ? undefined : () => handleClassToggle(cls.id)}
+                              />
+                            </Box>
+                            {inlineWarnings[`chip_${cls.id}`] && (
+                              <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5, fontWeight: 500 }}>
+                                {inlineWarnings[`chip_${cls.id}`]}
+                              </Typography>
+                            )}
                           </TableCell>
 
                           <TableCell sx={{ opacity: isSelected ? 1 : 0.5 }}>
-                            <TextField
-                              type="number"
-                              size="small"
-                              placeholder="Enter amount"
-                              value={amount}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  classAmounts: {
-                                    ...prev.classAmounts,
-                                    [cls.id]: val,
+                            <Box position="relative" width="100%" maxWidth={200}>
+                              {hasInvoices && (
+                                <Box
+                                  position="absolute"
+                                  top={0} left={0} right={0} bottom={0}
+                                  zIndex={1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    showInlineWarning(`amount_${cls.id}`, 'Cannot edit amount: this class has attached invoices');
+                                  }}
+                                  sx={{ cursor: 'not-allowed' }}
+                                />
+                              )}
+                              <TextField
+                                type="number"
+                                size="small"
+                                placeholder="Enter amount"
+                                value={amount}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    classAmounts: {
+                                      ...prev.classAmounts,
+                                      [cls.id]: val,
+                                    },
+                                    selectedClasses:
+                                      val && !isSelected
+                                        ? [...new Set([...prev.selectedClasses, cls.id])]
+                                        : prev.selectedClasses,
+                                  }));
+                                  // Clear error when user starts typing
+                                  if (errors.selectedClasses) {
+                                    setErrors((prev) => ({ ...prev, selectedClasses: '' }));
+                                  }
+                                }}
+                                disabled={!isSelected || hasInvoices}
+                                error={isSelected && (!amount || amount <= 0)}
+                                slotProps={{
+                                  htmlInput: { min: 0 },
+                                  input: {
+                                    startAdornment: (
+                                      <InputAdornment position="start">₦</InputAdornment>
+                                    ),
                                   },
-                                  selectedClasses:
-                                    val && !isSelected
-                                      ? [...new Set([...prev.selectedClasses, cls.id])]
-                                      : prev.selectedClasses,
-                                }));
-                                // Clear error when user starts typing
-                                if (errors.selectedClasses) {
-                                  setErrors((prev) => ({ ...prev, selectedClasses: '' }));
-                                }
-                              }}
-                              disabled={!isSelected}
-                              error={isSelected && (!amount || amount <= 0)}
-                              slotProps={{
-                                htmlInput: { min: 0 },
-                                input: {
-                                  startAdornment: (
-                                    <InputAdornment position="start">₦</InputAdornment>
-                                  ),
-                                },
-                              }}
-                              sx={{ width: '100%', maxWidth: 200 }}
-                            />
+                                }}
+                                sx={{ width: '100%' }}
+                              />
+                            </Box>
+                            {inlineWarnings[`amount_${cls.id}`] && (
+                              <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5, fontWeight: 500 }}>
+                                {inlineWarnings[`amount_${cls.id}`]}
+                              </Typography>
+                            )}
                             {isSelected && (!amount || amount <= 0) && (
                               <Typography
                                 variant="caption"
@@ -617,16 +671,36 @@ const EditPaymentItemModal = ({
 
       {/* Row Action Menu */}
       <Menu anchorEl={rowMenuAnchor} open={Boolean(rowMenuAnchor)} onClose={handleRowMenuClose}>
-        <MenuOption onClick={handleToggleClick}>
-          <ShieldIcon fontSize="small" sx={{ mr: 1 }} />
-          {selectedRowClass && formData.selectedClasses.includes(selectedRowClass.id)
-            ? 'Deactivate'
-            : 'Activate'}
-        </MenuOption>
-        <MenuOption onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          Delete Class Schedule
-        </MenuOption>
+        <Tooltip title={selectedRowClass?.scheduleData?.invoices_count > 0 ? "Cannot toggle: attached invoices exist" : ""} placement="left">
+          <Box onClickCapture={(e) => {
+            if (selectedRowClass?.scheduleData?.invoices_count > 0) {
+              e.stopPropagation();
+              handleRowMenuClose();
+              showSnackbar?.('Cannot deactivate class: attached invoices exist', 'warning');
+            }
+          }}>
+            <MenuOption onClick={handleToggleClick} disabled={selectedRowClass?.scheduleData?.invoices_count > 0}>
+              <ShieldIcon fontSize="small" sx={{ mr: 1 }} />
+              {selectedRowClass && formData.selectedClasses.includes(selectedRowClass.id)
+                ? 'Deactivate'
+                : 'Activate'}
+            </MenuOption>
+          </Box>
+        </Tooltip>
+        <Tooltip title={selectedRowClass?.scheduleData?.invoices_count > 0 ? "Cannot delete: attached invoices exist" : ""} placement="left">
+          <Box onClickCapture={(e) => {
+            if (selectedRowClass?.scheduleData?.invoices_count > 0) {
+              e.stopPropagation();
+              handleRowMenuClose();
+              showSnackbar?.('Cannot delete class schedule: attached invoices exist', 'warning');
+            }
+          }}>
+            <MenuOption onClick={handleDeleteClick} sx={{ color: selectedRowClass?.scheduleData?.invoices_count > 0 ? 'text.disabled' : 'error.main' }} disabled={selectedRowClass?.scheduleData?.invoices_count > 0}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Delete Class Schedule
+            </MenuOption>
+          </Box>
+        </Tooltip>
       </Menu>
 
       {/* Toggle Status Dialog */}
@@ -646,7 +720,7 @@ const EditPaymentItemModal = ({
             Are you sure you want to{' '}
             <strong>
               {toggleDialog.classData &&
-              formData.selectedClasses.includes(toggleDialog.classData.id)
+                formData.selectedClasses.includes(toggleDialog.classData.id)
                 ? 'deactivate'
                 : 'activate'}
             </strong>{' '}

@@ -28,6 +28,7 @@ import {
   Tab,
   Alert,
   Grid,
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -123,6 +124,7 @@ const OptionalPaymentTab = ({
             classes: Array.from(classesSet).join(', ') || 'All Classes',
             status: 'Active',
             payschedules: schedules,
+            hasInvoices: schedules.some(s => s.invoices_count > 0),
           };
         });
 
@@ -409,7 +411,7 @@ const OptionalPaymentTab = ({
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>Payment Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
@@ -534,7 +536,9 @@ const OptionalPaymentTab = ({
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
+        <MenuOption onClick={handleEditSchedule}>
+          Set/Edit Schedule
+        </MenuOption>
         {/* <MenuOption onClick={handleToggleStatus}>
           {selectedRow?.status === 'Active' ? 'Deactivate' : 'Activate'}
         </MenuOption> */}
@@ -693,7 +697,8 @@ const OptionalPaymentTab = ({
         sessionId={sessionId}
         termId={selectedTermId}
         categoryId={categoryId}
-        onRefresh={handleRefreshSchedules}
+        onRefresh={() => loadPaymentSchedules()}
+        showSnackbar={showSnackbar}
       />
 
       <Dialog

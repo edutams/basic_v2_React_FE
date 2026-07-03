@@ -492,7 +492,7 @@ const PaymentShedule = () => {
               <Box display="flex" gap={2}>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Minimum Schedule
+                    Has Minimum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -507,7 +507,7 @@ const PaymentShedule = () => {
                 </Box>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Maximum Schedule
+                    Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -547,7 +547,7 @@ const PaymentShedule = () => {
               <Box display="flex" gap={2}>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Minimum Schedule
+                    Has Minimum Schedule
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -562,7 +562,7 @@ const PaymentShedule = () => {
                 </Box>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Maximum Schedule
+                    Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />

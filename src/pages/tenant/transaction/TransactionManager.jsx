@@ -6,6 +6,7 @@ import StatCard from './components/StatCard';
 import { IconWallet } from '@tabler/icons';
 import Overview from './components/AllTransaction/Overview';
 import Revenue from './components/TransactionByRevenue/Revenue';
+import Settlement from './components/TransactionSettlement/Settlement';
 import SettlementReconcillation from './components/TransactionSettlementReconcillation/SettlementReconcillation';
 import {
   fetchTransactionValues,
@@ -145,6 +146,10 @@ const TransactionManager = () => {
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
+              label="Settlement"
+              sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+            />
+            <Tab
               label="Settlement Reconcillation"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
@@ -159,6 +164,10 @@ const TransactionManager = () => {
         </TabPanel>
 
         <TabPanel value={tab} index={2}>
+          <Settlement />
+        </TabPanel>
+
+        <TabPanel value={tab} index={3}>
           <SettlementReconcillation />
         </TabPanel>
       </Box>

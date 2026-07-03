@@ -88,7 +88,7 @@ const OptionalPaymentTab = ({
           let totalAmount = 0;
 
           schedules.forEach((schedule) => {
-            const className = schedule.my_class?.class_name || `Class ${schedule.class_id}`;
+            const className = schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`;
             classesSet.add(className);
 
             // If schedule has options, use them; otherwise create option from schedule amount

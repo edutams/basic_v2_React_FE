@@ -145,7 +145,7 @@ const CompulsoryScheduleTab = ({
           const classes =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.class_id,
-              name: schedule.my_class?.class_name || `Class ${schedule.class_id}`,
+              name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
               amount: schedule.amount || 0,
               schedule_id: schedule.id,
               bursary_installment_id: schedule.bursary_installment_id,
@@ -201,7 +201,6 @@ const CompulsoryScheduleTab = ({
     setAddItemModal(true);
   };
 
-  // Toggle active/inactive status for a class within a schedule
   const toggleClassStatus = (scheduleId, classId) => {
     setSchedules((prev) => ({
       ...prev,

@@ -147,11 +147,12 @@ const CompulsoryScheduleTab = ({
           const classes =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.class_id,
-              name: schedule.my_class?.class_name || `Class ${schedule.class_id}`,
+              name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
               amount: schedule.amount || 0,
               schedule_id: schedule.id,
               bursary_installment_id: schedule.bursary_installment_id,
               status: schedule.status,
+              invoices_count: schedule.invoices_count || 0,
             })) || [];
 
           return {
@@ -168,6 +169,7 @@ const CompulsoryScheduleTab = ({
             },
             classes: classes,
             missingCount: classes.filter((c) => !c.amount || c.amount === 0).length,
+            hasInvoices: classes.some((c) => c.invoices_count > 0),
           };
         });
 
@@ -203,7 +205,6 @@ const CompulsoryScheduleTab = ({
     setAddItemModal(true);
   };
 
-  // Toggle active/inactive status for a class within a schedule
   const toggleClassStatus = (scheduleId, classId) => {
     setSchedules((prev) => ({
       ...prev,
@@ -615,6 +616,11 @@ const CompulsoryScheduleTab = ({
                                   return;
                                 }
 
+                                if (cls.invoices_count > 0) {
+                                  showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                  return;
+                                }
+
                                 // Open modal to set/edit amount for this class
                                 setPaymentModal({
                                   open: true,
@@ -634,6 +640,10 @@ const CompulsoryScheduleTab = ({
                                 hasAmount
                                   ? (e) => {
                                       e.stopPropagation();
+                                      if (cls.invoices_count > 0) {
+                                        showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                        return;
+                                      }
                                       handleClassActionClick(schedule, cls, 'delete');
                                     }
                                   : undefined
@@ -741,10 +751,16 @@ const CompulsoryScheduleTab = ({
       </ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
-        <MenuOption onClick={handleDeleteSchedule} sx={{ color: 'error.main' }}>
-          Delete Schedule
+        <MenuOption onClick={handleEditSchedule}>
+          Set/Edit Schedule
         </MenuOption>
+        <Tooltip title={selectedRow?.hasInvoices ? "Cannot delete: one or more classes have attached invoices" : ""} placement="left">
+          <span>
+            <MenuOption onClick={handleDeleteSchedule} sx={{ color: selectedRow?.hasInvoices ? 'text.disabled' : 'error.main' }} disabled={selectedRow?.hasInvoices}>
+              Delete Schedule
+            </MenuOption>
+          </span>
+        </Tooltip>
       </Menu>
 
       {/* Confirmation Dialog */}
@@ -799,7 +815,8 @@ const CompulsoryScheduleTab = ({
         sessionId={sessionId}
         termId={selectedTermId}
         categoryId={categoryId}
-        onRefresh={handleRefreshSchedules}
+        onRefresh={() => loadPaymentSchedules()}
+        showSnackbar={showSnackbar}
       />
 
       {/* Delete Confirmation Dialog */}

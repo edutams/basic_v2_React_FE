@@ -494,7 +494,7 @@ const PaymentShedule = () => {
               <Box display="flex" gap={2}>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Minimum Schedule
+                    Has Minimum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -509,7 +509,7 @@ const PaymentShedule = () => {
                 </Box>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Maximum Schedule
+                    Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -549,7 +549,7 @@ const PaymentShedule = () => {
               <Box display="flex" gap={2}>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Minimum Schedule
+                    Has Minimum Schedule
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -564,7 +564,7 @@ const PaymentShedule = () => {
                 </Box>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    With Maximum Schedule
+                    Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -761,6 +761,93 @@ const PaymentShedule = () => {
       <Paper sx={{ borderRadius: 2 }}>
         {actionTab === 0 && (
           <>
+            <Box
+              sx={{
+                px: 3,
+                pt: 2,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
+              }}
+            >
+              {/* Schedule Type Tabs */}
+              <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
+                <Tabs
+                  value={scheduleTab}
+                  onChange={handleScheduleTabChange}
+                  sx={{
+                    minHeight: 40,
+                    '& .MuiTab-root': {
+                      minHeight: 40,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Compulsory"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        1
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                  <Tab
+                    label="Optional Payment"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        2
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                </Tabs>
+              </Box>
+              {canImportSchedule && (
+                <Button variant="contained" size="small" startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />
+                }
+                  onClick={handleImportSchedule}
+                  disabled={importing}
+                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Import schedule for current term
+                </Button>
+              )}
+            </Box>
+
             <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
               <Box
                 sx={{
@@ -847,22 +934,6 @@ const PaymentShedule = () => {
                       )}
                     </Select>
                   </FormControl>
-
-                  {/* <FormControlLabel
-                    control={
-                      <Switch
-                        checked={enableFullSession}
-                        onChange={(e) => setEnableFullSession(e.target.checked)}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Typography variant="body2" sx={{ whiteSpace: { sm: 'nowrap' } }}>
-                        Enable full-session payment
-                      </Typography>
-                    }
-                    sx={{ m: 0 }}
-                  /> */}
                 </Box>
               </Box>
             </Box>
@@ -1012,7 +1083,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        // fullWidth
+      // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

@@ -60,6 +60,7 @@ const CompulsoryScheduleTab = ({
   sessionLabel,
   categoryLabel,
   payOption = 'compulsory',
+  payType = 'bursary',
   onTermChange,
   refreshStats,
   scheduleRefreshKey = 0,
@@ -136,6 +137,7 @@ const CompulsoryScheduleTab = ({
         selectedTermId,
         categoryId,
         payOption,
+        payType,
         searchTerm,
       );
 
@@ -768,10 +770,20 @@ const CompulsoryScheduleTab = ({
           <Typography variant="body2">{confirmDialog.message}</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={handleConfirmDialogClose}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleConfirmDialogClose}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={confirmDialog.onConfirm}
+            sx={{ fontWeight: 600 }}
+          >
             Confirm
           </Button>
         </DialogActions>
@@ -838,10 +850,21 @@ const CompulsoryScheduleTab = ({
           )} */}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setDeleteDialog({ open: false, schedule: null })}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} sx={{ fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={handleConfirmDelete}
+            sx={{ fontWeight: 600 }}
+          >
             Delete Item
           </Button>
         </DialogActions>
@@ -882,14 +905,25 @@ const CompulsoryScheduleTab = ({
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() =>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() =>
               setClassActionDialog({ open: false, action: null, schedule: null, classData: null })
             }
             disabled={processingAction}
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color={classActionDialog.action === 'delete' ? 'error' : 'primary'} onClick={handleConfirmClassAction} disabled={processingAction} sx={{ fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
+            onClick={handleConfirmClassAction}
+            disabled={processingAction}
+            sx={{ fontWeight: 600 }}
+          >
             {processingAction
               ? 'Processing...'
               : classActionDialog.action === 'delete'

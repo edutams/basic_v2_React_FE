@@ -244,6 +244,7 @@ const PaymentShedule = () => {
     }
 
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const payType = 'bursary';
 
     try {
       setImporting(true);
@@ -252,6 +253,7 @@ const PaymentShedule = () => {
         term_id: activeSubTermId,
         bursary_payment_category_id: selectedCategory,
         pay_option: payOption,
+        pay_type: payType,
       });
 
       if (res?.success) {
@@ -714,7 +716,7 @@ const PaymentShedule = () => {
                       <Skeleton width={120} height={32} />
                     ) : (
                       <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {formatCurrency(item.amount)}  ({item.count})
+                        {formatCurrency(item.amount)} ({item.count})
                       </Typography>
                     )}
                     <Typography variant="caption" color="text.secondary" display="block">
@@ -935,6 +937,95 @@ const PaymentShedule = () => {
                 </Box>
               </Box>
             </Box>
+
+            <Box
+              sx={{
+                px: 3,
+                pt: 2,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
+              }}
+            >
+              {/* Schedule Type Tabs */}
+              <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
+                <Tabs
+                  value={scheduleTab}
+                  onChange={handleScheduleTabChange}
+                  sx={{
+                    minHeight: 40,
+                    '& .MuiTab-root': {
+                      minHeight: 40,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Compulsory"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        1
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                  <Tab
+                    label="Optional Payment"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        2
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                </Tabs>
+              </Box>
+              {canImportSchedule && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
+                  onClick={handleImportSchedule}
+                  disabled={importing}
+                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Import schedule for current term
+                </Button>
+              )}
+            </Box>
           </>
         )}
 
@@ -951,6 +1042,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="compulsory"
+                  payType="bursary"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
                   scheduleRefreshKey={scheduleRefreshKey}
@@ -965,6 +1057,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="optional"
+                  payType="bursary"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
                   scheduleRefreshKey={scheduleRefreshKey}
@@ -1015,10 +1108,20 @@ const PaymentShedule = () => {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setImportDialogOpen(false)} disabled={importing}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setImportDialogOpen(false)}
+            disabled={importing}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmImportSchedule} disabled={importing} startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmImportSchedule}
+            disabled={importing}
+            startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
           >
             {importing ? 'Importing...' : 'Import Schedule'}
           </Button>

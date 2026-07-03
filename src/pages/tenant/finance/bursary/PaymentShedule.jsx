@@ -549,7 +549,7 @@ const PaymentShedule = () => {
               <Box display="flex" gap={2}>
                 <Box flex={1}>
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                    Has Minimum Schedule
+                    Has Minimum Amount
                   </Typography>
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
@@ -837,8 +837,10 @@ const PaymentShedule = () => {
                 </Tabs>
               </Box>
               {canImportSchedule && (
-                <Button variant="contained" size="small" startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />
-                }
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
                   onClick={handleImportSchedule}
                   disabled={importing}
                   sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
@@ -1083,7 +1085,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-      // fullWidth
+        // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

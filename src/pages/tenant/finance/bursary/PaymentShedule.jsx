@@ -244,6 +244,7 @@ const PaymentShedule = () => {
     }
 
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const payType = 'bursary';
 
     try {
       setImporting(true);
@@ -252,6 +253,7 @@ const PaymentShedule = () => {
         term_id: activeSubTermId,
         bursary_payment_category_id: selectedCategory,
         pay_option: payOption,
+        pay_type: payType,
       });
 
       if (res?.success) {
@@ -714,7 +716,7 @@ const PaymentShedule = () => {
                       <Skeleton width={120} height={32} />
                     ) : (
                       <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {formatCurrency(item.amount)}  ({item.count})
+                        {formatCurrency(item.amount)} ({item.count})
                       </Typography>
                     )}
                     <Typography variant="caption" color="text.secondary" display="block">
@@ -941,8 +943,10 @@ const PaymentShedule = () => {
                 </Tabs>
               </Box>
               {canImportSchedule && (
-                <Button variant="contained" size="small" startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />
-                }
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
                   onClick={handleImportSchedule}
                   disabled={importing}
                   sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
@@ -967,6 +971,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="compulsory"
+                  payType="bursary"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
                   scheduleRefreshKey={scheduleRefreshKey}
@@ -981,6 +986,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="optional"
+                  payType="bursary"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
                   scheduleRefreshKey={scheduleRefreshKey}
@@ -1006,7 +1012,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-      // fullWidth
+        // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>
@@ -1031,10 +1037,20 @@ const PaymentShedule = () => {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setImportDialogOpen(false)} disabled={importing}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setImportDialogOpen(false)}
+            disabled={importing}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmImportSchedule} disabled={importing} startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmImportSchedule}
+            disabled={importing}
+            startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
           >
             {importing ? 'Importing...' : 'Import Schedule'}
           </Button>

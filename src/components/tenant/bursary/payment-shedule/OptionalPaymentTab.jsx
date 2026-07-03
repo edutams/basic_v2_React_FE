@@ -49,6 +49,7 @@ const OptionalPaymentTab = ({
   sessionLabel,
   categoryLabel,
   payOption = 'optional',
+  payType = 'bursary',
   onTermChange,
   refreshStats,
   scheduleRefreshKey = 0,
@@ -74,6 +75,7 @@ const OptionalPaymentTab = ({
         selectedTermId,
         categoryId,
         payOption,
+        payType,
         searchTerm,
       );
       console.log('Raw API response:', data);
@@ -670,11 +672,19 @@ const OptionalPaymentTab = ({
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={handleDetailsDialogClose} fullWidth={{ xs: true, sm: false }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleDetailsDialogClose}
+            fullWidth={{ xs: true, sm: false }}
+          >
             Close
           </Button>
 
-          <Button variant="contained" size="small" onClick={() => {
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
               handleDetailsDialogClose();
               handleEditSchedule();
             }}
@@ -714,10 +724,23 @@ const OptionalPaymentTab = ({
         <DialogActions
           sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}
         >
-          <Button variant="contained" size="small" color="inherit" onClick={handleConfirmDialogClose} fullWidth={{ xs: true, sm: false }} sx={{ order: { xs: 2, sm: 1 } }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleConfirmDialogClose}
+            fullWidth={{ xs: true, sm: false }}
+            sx={{ order: { xs: 2, sm: 1 } }}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }} fullWidth={{ xs: true, sm: false }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={confirmDialog.onConfirm}
+            sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }}
+            fullWidth={{ xs: true, sm: false }}
+          >
             Confirm
           </Button>
         </DialogActions>

@@ -39,13 +39,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
-import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
 import FeeChart from './FeeChart';
 const dummyData = [
   {
@@ -293,7 +287,10 @@ const SettlementReconcillation = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Download CSV Format

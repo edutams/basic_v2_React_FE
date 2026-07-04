@@ -48,3 +48,23 @@ export const fetchRevenueAmountDetails = async (payload) => {
     const res = await api.post('/bursary/transactions/revenue/fetch_revenue_amount_details', payload);
     return res.data;
 };
+
+export const fetchSettlementReconciliationData = async (payload) => {
+    const res = await api.post('/bursary/transactions/settlement_reconciliation/fetch_settlement_reconciliation_data', payload);
+    return res.data;
+}
+
+export const fetchSettlementReconciliationAnalytics = async (payload) => {
+    const res = await api.post('/bursary/transactions/settlement_reconciliation/fetch_settlement_reconciliation_analytics', payload);
+    return res.data;
+}
+
+export const fetchSettlementReconciliationDetails = async (payload) => {
+    const res = await api.post('/bursary/transactions/settlement_reconciliation/fetch_settlement_reconciliation_details', payload);
+    return res.data;
+}
+
+export const exportSettlementReconciliationCsv = async (payload) => {
+    const res = await api.post('/bursary/transactions/settlement_reconciliation/export_csv_settlement_reconciliation', payload);
+    return res.data;
+}

@@ -44,3 +44,8 @@ export const updateStudentInvoice = async (payload) => {
     const res = await api.post('/bursary/payment_schedule/update_student_invoice', payload);
     return res.data;
 };
+
+export const fetchStudentLedgerModalData = async (userId) => {
+    const res = await api.get('/bursary/class_ledger/fetch_modal_data', { params: { user_id: userId } });
+    return res.data;
+};

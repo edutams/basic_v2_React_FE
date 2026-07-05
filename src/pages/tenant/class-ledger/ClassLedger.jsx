@@ -66,6 +66,7 @@ import {
   printClassLedgerPaymentList,
 } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
+import StudentLedgerModal from './StudentLedgerModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -86,6 +87,9 @@ const ClassLedger = () => {
 
   const [payForStudentConfirmOpen, setPayForStudentConfirmOpen] = useState(false);
   const [studentToPayFor, setStudentToPayFor] = useState(null);
+
+  const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
+  const [selectedStudentForLedger, setSelectedStudentForLedger] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -802,6 +806,8 @@ const ClassLedger = () => {
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
+              setSelectedStudentForLedger(activeRow);
+              setIsLedgerModalOpen(true);
             }}
           >
             <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
@@ -945,6 +951,15 @@ const ClassLedger = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <StudentLedgerModal
+        open={isLedgerModalOpen}
+        onClose={() => {
+          setIsLedgerModalOpen(false);
+          setSelectedStudentForLedger(null);
+        }}
+        student={selectedStudentForLedger}
+      />
     </PageContainer>
   );
 };

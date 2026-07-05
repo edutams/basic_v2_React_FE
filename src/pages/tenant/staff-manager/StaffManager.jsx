@@ -47,7 +47,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
@@ -834,7 +834,12 @@ const StaffManager = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setViewModalOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
             Close
           </Button>
         </DialogActions>
@@ -860,14 +865,24 @@ const StaffManager = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => {
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => {
               setImpersonateConfirmOpen(false);
               setStaffToImpersonate(null);
             }}
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="inherit" onClick={handleConfirmedImpersonateStaff} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleConfirmedImpersonateStaff}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}
+          >
             Yes, Login As
           </Button>
         </DialogActions>

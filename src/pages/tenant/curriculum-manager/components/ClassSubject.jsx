@@ -707,7 +707,7 @@ const ClassSubject = () => {
           <Button variant="contained" size="small" onClick={handleCloseAddSubjectToClassModal} disabled={loadingAddSubject}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleAddSubjectToClass} disabled={loadingAddSubject || loadingAvailableSubjects} startIcon={loadingAddSubject ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleAddSubjectToClass} disabled={loadingAddSubject || loadingAvailableSubjects} startIcon={loadingAddSubject ? <CircularProgress /> : null}
           >
             {loadingAddSubject
               ? 'Adding...'
@@ -816,7 +816,7 @@ const ClassSubject = () => {
           <Button variant="contained" size="small" onClick={handleCloseEditClassSubjectModal} disabled={loadingUpdateSubject}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleUpdateClassSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleUpdateClassSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
           >
             {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
           </Button>

@@ -232,8 +232,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     } catch (error) {
       notify.error(
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Failed to fetch scheme of work',
+        error.response?.data?.message ||
+        'Failed to fetch scheme of work',
       );
     } finally {
       setLoading(false);
@@ -533,7 +533,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     } catch (e) {
       notify.error(
         e.response?.data?.message ||
-          'Upload failed. Check that the file matches the selected filters.',
+        'Upload failed. Check that the file matches the selected filters.',
       );
     } finally {
       setUploading(false);
@@ -1431,7 +1431,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
+          <Button size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             Download Template
@@ -1573,8 +1573,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={ uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
-            }
+          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1681,11 +1681,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={ downloading ? ( <CircularProgress color="inherit" />
-              ) : (
-                <IconDownload size={16} />
-              )
-            }
+          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          ) : (
+            <IconDownload size={16} />
+          )
+          }
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}

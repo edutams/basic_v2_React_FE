@@ -126,7 +126,7 @@ const PackageForm = ({
             <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} color="inherit" type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+            <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
           </Box>
         </Grid>
       </Grid>

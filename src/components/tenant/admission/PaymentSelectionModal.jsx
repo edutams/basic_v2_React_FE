@@ -25,10 +25,10 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
   const [loading, setLoading] = useState(false);
   const [selections, setSelections] = useState({});
   const [errors, setErrors] = useState({});
-  
+
   // Use ref to get the latest selectedPayments
   const selectedPaymentsRef = useRef(selectedPayments);
-  
+
   useEffect(() => {
     selectedPaymentsRef.current = selectedPayments;
   }, [selectedPayments]);
@@ -36,7 +36,7 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
   useEffect(() => {
     if (open) {
       loadPaymentNames();
-      
+
       // Initialize selections from existing selectedPayments or reset
       const currentSelectedPayments = selectedPaymentsRef.current;
       if (currentSelectedPayments.length > 0) {
@@ -51,7 +51,7 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
       } else {
         setSelections({});
       }
-      
+
       setErrors({});
     } else {
       // Reset when modal closes
@@ -106,7 +106,7 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
         amount: numValue,
       },
     }));
-    
+
     // Clear error when user starts typing
     if (errors[paymentId]) {
       setErrors((prev) => {
@@ -242,11 +242,10 @@ const PaymentSelectionModal = ({ open, onClose, onSave, applicationType, selecte
         )}
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" size="small" onClick={handleClose}>
+        <Button variant="contained" size="small" onClick={handleClose}>
           Cancel
         </Button>
         <Button
-          variant="contained"
           size="small"
           onClick={handleSave}
           disabled={loading || Object.keys(selections).filter((key) => selections[key]?.checked).length === 0}

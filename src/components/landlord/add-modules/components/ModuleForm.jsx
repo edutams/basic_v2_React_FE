@@ -136,7 +136,7 @@ const ModuleForm = ({
             <Button variant="contained" size="small" color="inherit" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" type="submit" disabled={isLoading || !formik.isValid} startIcon={isLoading ? <CircularProgress color="inherit" /> : null}
+            <Button size="small" type="submit" disabled={isLoading || !formik.isValid} startIcon={isLoading ? <CircularProgress color="inherit" /> : null}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

@@ -242,7 +242,7 @@ const LinkParentForm = ({ learner, onSave, onCancel }) => {
         <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" onClick={handleSave} disabled={saving}>
+        <Button size="small" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </Box>

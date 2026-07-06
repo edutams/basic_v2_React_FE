@@ -447,7 +447,7 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
               <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading} sx={{ textTransform: 'none', minWidth: 100 }}>
                 Cancel
               </Button>
-              <Button variant="contained" size="small" type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
+              <Button size="small" type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
                 sx={{ textTransform: 'none', minWidth: 100 }}
               >
                 {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Staff' : 'Save Staff'}

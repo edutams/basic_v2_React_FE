@@ -34,7 +34,7 @@ const ConfirmationDialog = ({
         onClick={handleConfirm}
         variant="primary"
         autoFocus
-        sx={{ 
+        sx={{
           bgcolor: severity === 'error' ? theme.palette.error.main : theme.palette.warning.main,
           '&:hover': {
             bgcolor: severity === 'error' ? theme.palette.error.dark : theme.palette.warning.dark,

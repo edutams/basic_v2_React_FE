@@ -1213,7 +1213,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               },
             }}
           />
-          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} size="small">
+          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} >
             Search
           </Button>
         </Box>
@@ -1224,8 +1224,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
             </Button>
             {excelBlobUrl && (
-              <Button variant="contained" size="small" endIcon={<DownloadIcon />}
-                variant="outlined"
+              <Button size="small" endIcon={<DownloadIcon />}
                 component="a"
                 href={excelBlobUrl}
                 download={`Invoices_${selectedClassName || 'Class'}.xlsx`}
@@ -1272,7 +1271,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
           >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>

@@ -24,12 +24,12 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
       headerBg="white"
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>
+          < PrimaryButton variant="primary" onClick={onClose}>
             Cancel
-          </PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>
+          </  PrimaryButton>
+          < PrimaryButton variant="secondary" onClick={onClose}>
             Save
-          </PrimaryButton>
+          </  PrimaryButton>
         </Stack>
       }
     >
@@ -44,7 +44,7 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          <PrimaryButton
+          < PrimaryButton
             variant="primary"
             startIcon={<GetAppIcon />}
             sx={{
@@ -55,7 +55,7 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
             }}
           >
             Export to Excel
-          </PrimaryButton>
+          </  PrimaryButton>
         </Box>
         <Box sx={{ p: 2 }}>
           <StandardDataTable

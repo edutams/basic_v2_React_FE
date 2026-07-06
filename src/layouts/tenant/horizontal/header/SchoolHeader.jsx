@@ -210,10 +210,10 @@ const SchoolHeader = () => {
             <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={() => {
-                setConfirmOpen(false);
-                stopImpersonation();
-              }}
+            <Button size="small" onClick={() => {
+              setConfirmOpen(false);
+              stopImpersonation();
+            }}
               sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}
             >
               Yes, return to my account

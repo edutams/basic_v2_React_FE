@@ -255,7 +255,7 @@ const AddPaymentItemModal = ({ open, onClose, onSave }) => {
           <Button variant="contained" size="small" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
             Add Payment Item
           </Button>
         </Stack>

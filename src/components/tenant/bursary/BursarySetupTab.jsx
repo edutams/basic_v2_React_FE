@@ -930,22 +930,22 @@ const BursarySetupTab = ({
               {/* Pay Method — shown when compulsory or optional */}
               {(resultSettings.pay_type === 'compulsory' ||
                 resultSettings.pay_type === 'optional') && (
-                <FormControl>
-                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                    Payment Method
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={resultSettings.pay_method}
-                    onChange={(e) =>
-                      setResultSettings((prev) => ({ ...prev, pay_method: e.target.value }))
-                    }
-                  >
-                    <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
-                    <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
-                  </RadioGroup>
-                </FormControl>
-              )}
+                  <FormControl>
+                    <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                      Payment Method
+                    </FormLabel>
+                    <RadioGroup
+                      row
+                      value={resultSettings.pay_method}
+                      onChange={(e) =>
+                        setResultSettings((prev) => ({ ...prev, pay_method: e.target.value }))
+                      }
+                    >
+                      <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
+                      <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
+                    </RadioGroup>
+                  </FormControl>
+                )}
 
               {/* Split method — shown when "both" */}
               {resultSettings.pay_type === 'both' && (
@@ -999,7 +999,7 @@ const BursarySetupTab = ({
 
               {/* Save button */}
               <Box display="flex" justifyContent="flex-end">
-                <Button variant="contained" size="small" disabled={ savingResultSettings || !resultSettings.pay_type || (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) || (resultSettings.pay_type === 'both' && (!resultSettings.compulsory_pay_method || !resultSettings.optional_pay_method)) } onClick={() => handleSaveResultSettings(resultSettings)}
+                <Button variant="contained" size="small" disabled={savingResultSettings || !resultSettings.pay_type || (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) || (resultSettings.pay_type === 'both' && (!resultSettings.compulsory_pay_method || !resultSettings.optional_pay_method))} onClick={() => handleSaveResultSettings(resultSettings)}
                   sx={{ fontWeight: 600 }}
                 >
                   {savingResultSettings ? 'Saving...' : 'Save Settings'}
@@ -1115,7 +1115,7 @@ const BursarySetupTab = ({
             >
               Cancel
             </Button>
-            <Button variant="contained" size="small" color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'} onClick={handleToggleCategoryStatus} disabled={categoryActionLoading}>
+            <Button size="small" color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'} onClick={handleToggleCategoryStatus} disabled={categoryActionLoading}>
               {categoryActionLoading
                 ? 'Updating...'
                 : confirmStatusModal.category?.status === 'active'
@@ -1156,7 +1156,7 @@ const BursarySetupTab = ({
             >
               Cancel
             </Button>
-            <Button variant="contained" size="small" color={ confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success' } onClick={handleToggleInstalmentStatus} disabled={instalmentActionLoading}>
+            <Button size="small" color={confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleInstalmentStatus} disabled={instalmentActionLoading}>
               {instalmentActionLoading
                 ? 'Updating...'
                 : confirmInstalmentStatusModal.instalment?.status === 'active'

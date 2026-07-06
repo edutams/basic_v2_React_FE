@@ -700,7 +700,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSaveDisplayName} disabled={loading || !displayName.trim()}>
+          <Button size="small" onClick={handleSaveDisplayName} disabled={loading || !displayName.trim()}>
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
@@ -723,7 +723,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button variant="contained" size="small" onClick={() => setConfirmSubscribe({ open: false, term: null })}>
             No, Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
+          <Button size="small" onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>
         </DialogActions>
@@ -755,7 +755,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button variant="contained" size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmToggleStatus} color="primary" disabled={loading}>
+          <Button size="small" onClick={handleConfirmToggleStatus} color="primary" disabled={loading}>
             Confirm
           </Button>
         </DialogActions>
@@ -774,10 +774,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button variant="contained" size="small" onClick={() => setConfirmDeleteWeek(false)}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" disabled={loading} onClick={() => {
-              setConfirmDeleteWeek(false);
-              handleDeleteLastWeek();
-            }}
+          <Button size="small" color="error" disabled={loading} onClick={() => {
+            setConfirmDeleteWeek(false);
+            handleDeleteLastWeek();
+          }}
           >
             Yes, Remove
           </Button>

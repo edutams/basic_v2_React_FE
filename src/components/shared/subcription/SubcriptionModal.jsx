@@ -89,7 +89,7 @@ const StimulationModal = ({
               <Button variant="contained" size="small" onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
                 Cancel
               </Button>
-              <Button variant="contained" size="small" color="error" onClick={handleDelete} disabled={isLoading}>
+              <Button size="small" color="error" onClick={handleDelete} disabled={isLoading}>
                 {isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </Box>

@@ -66,7 +66,7 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
       </DialogContent>
       <DialogActions>
         <Button variant="contained" size="small" onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" size="small" color="error" onClick={onConfirm}>
+        <Button size="small" color="error" onClick={onConfirm}>
           Yes, Proceed
         </Button>
       </DialogActions>
@@ -532,7 +532,7 @@ function SessionsPanel({ isLevel1 }) {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting}>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
             ) : editTarget ? (
@@ -570,7 +570,7 @@ function SessionsPanel({ isLevel1 }) {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
+          <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Update Status'}
           </Button>
         </DialogActions>
@@ -936,7 +936,7 @@ function TermsPanel({ isLevel1 }) {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting}>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
             ) : editTarget ? (
@@ -1287,7 +1287,7 @@ function MappingsPanel() {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting}>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
           </Button>
         </DialogActions>

@@ -117,7 +117,7 @@ const UploadLogoModal = ({ open, onClose, onUploaded }) => {
         <Button variant="contained" size="small" color="inherit" onClick={handleClose} disabled={uploading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" startIcon={<IconUpload />}
+        <Button size="small" startIcon={<IconUpload />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
         >

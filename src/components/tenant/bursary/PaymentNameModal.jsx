@@ -134,20 +134,20 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
       showDivider
     >
       <Stack spacing={3}>
-       <Alert severity="info" sx={{ fontSize: 14 }}>
-  <ol style={{ margin: 0, paddingLeft: "16px" }}>
-    <li>
-      Select the payment type you want to configure, either <strong>Bursary</strong> or <strong>Admission</strong>.
-    </li>
-    <li>
-      Ensure the settlement account details are correct. All payments made for the selected payment type will be credited to this account.
-    </li>
-  </ol>
-</Alert>
+        <Alert severity="info" sx={{ fontSize: 14 }}>
+          <ol style={{ margin: 0, paddingLeft: "16px" }}>
+            <li>
+              Select the payment type you want to configure, either <strong>Bursary</strong> or <strong>Admission</strong>.
+            </li>
+            <li>
+              Ensure the settlement account details are correct. All payments made for the selected payment type will be credited to this account.
+            </li>
+          </ol>
+        </Alert>
 
         {/* Name + Pay Option */}
         <Grid container spacing={2}>
-           <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               select
               label="Payment Type"
@@ -182,7 +182,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               placeholder="e.g., Acceptance Fee, Tuition Fee"
             />
           </Grid>
-         
+
         </Grid>
 
         {/* Conditional Pay Option or Application Stage */}
@@ -302,7 +302,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           <Button variant="contained" size="small" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${paymentName ? 'Update' : 'Add'} Payment Name`}
           </Button>
         </Stack>

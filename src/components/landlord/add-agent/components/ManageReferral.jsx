@@ -69,7 +69,7 @@ const ManageReferralModal = ({ selectedAgent, onSave, onClose }) => {
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button variant="contained" size="small" onClick={handleSubmit}>Set Referrer</Button>
+        <Button size="small" onClick={handleSubmit}>Set Referrer</Button>
       </Box>
     </Box>
   );

@@ -146,7 +146,8 @@ const TenantRoutes = [
   {
     path: '/class-ledger/:invoiceId/:user_id/pay-invoice',
     element: (
-      <TenantProtectedRoute permission="bursary_manager.ledger.pay_invoice">
+      <TenantProtectedRoute >
+        {/* permission="bursary_manager.ledger.pay_invoice" */}
         <SchoolLayout />
       </TenantProtectedRoute>
     ),

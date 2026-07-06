@@ -41,7 +41,7 @@ const SubjectForm = ({ initialValues = {}, onSubmit, onCancel, submitText, isLoa
           <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" type="submit" disabled={isLoading}>
+          <Button size="small" type="submit" disabled={isLoading}>
             {submitText}
           </Button>
         </Box>

@@ -121,7 +121,7 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
           <Button variant="contained" size="small" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading || servicesLoading || !selectedService} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading || servicesLoading || !selectedService} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : 'Save'}
           </Button>
         </Stack>

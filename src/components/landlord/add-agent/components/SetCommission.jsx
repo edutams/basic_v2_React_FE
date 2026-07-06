@@ -84,17 +84,17 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
       </FormControl>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-        <PrimaryButton variant="secondary" onClick={onClose} sx={{ minWidth: '100px' }}>
+        <Button variant="contained" onClick={onClose} sx={{ minWidth: '100px' }}>
           Cancel
-        </PrimaryButton>
-        <PrimaryButton
-          variant="primary"
+        </Button>
+        <Button
+          color="primary"
           onClick={formik.handleSubmit}
           disabled={!formik.isValid || loading}
           sx={{ minWidth: '100px' }}
         >
           {loading ? 'Saving...' : 'Save'}
-        </PrimaryButton>
+        </Button>
       </Box>
     </Box>
   );

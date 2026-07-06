@@ -253,7 +253,7 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
             <Button variant="contained" size="small" onClick={onCancel} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleSave} disabled={!hasChanges || isSaving} startIcon={isSaving ? <CircularProgress /> : null}
+            <Button size="small" onClick={handleSave} disabled={!hasChanges || isSaving} startIcon={isSaving ? <CircularProgress /> : null}
               sx={{
                 px: 4,
                 borderRadius: '8px',

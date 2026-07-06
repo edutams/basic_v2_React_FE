@@ -149,7 +149,7 @@ const RoleAttachmentModal = ({ open, onClose, currentUser, onRoleSelection }) =>
 
       <DialogActions>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button variant="contained" size="small" onClick={handleAttach}>Attach Roles</Button>
+        <Button size="small" onClick={handleAttach}>Attach Roles</Button>
       </DialogActions>
     </Dialog>
   );

@@ -639,13 +639,13 @@ const CompulsoryScheduleTab = ({
                               onDelete={
                                 hasAmount
                                   ? (e) => {
-                                      e.stopPropagation();
-                                      if (cls.invoices_count > 0) {
-                                        showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
-                                        return;
-                                      }
-                                      handleClassActionClick(schedule, cls, 'delete');
+                                    e.stopPropagation();
+                                    if (cls.invoices_count > 0) {
+                                      showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                      return;
                                     }
+                                    handleClassActionClick(schedule, cls, 'delete');
+                                  }
                                   : undefined
                               }
                               deleteIcon={
@@ -779,7 +779,6 @@ const CompulsoryScheduleTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={confirmDialog.onConfirm}
             sx={{ fontWeight: 600 }}
@@ -859,7 +858,6 @@ const CompulsoryScheduleTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             color="error"
             onClick={handleConfirmDelete}
@@ -917,7 +915,6 @@ const CompulsoryScheduleTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
             onClick={handleConfirmClassAction}

@@ -51,7 +51,7 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
       </DialogContent>
       <DialogActions>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button variant="contained" size="small" color="primary" onClick={onSave}>
+        <Button size="small" color="primary" onClick={onSave}>
           Create Role
         </Button>
       </DialogActions>

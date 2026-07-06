@@ -100,7 +100,7 @@ const ModuleModal = ({
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-              <Button variant="contained" size="small" color="success" onClick={() => handleStatusChange('active')}
+              <Button size="small" color="success" onClick={() => handleStatusChange('active')}
                 disabled={isLoading}
               >
                 {isLoading ? 'Activating...' : 'Activate'}
@@ -120,7 +120,7 @@ const ModuleModal = ({
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-              <Button variant="contained" size="small" color="warning" onClick={() => handleStatusChange('inactive')}
+              <Button size="small" color="warning" onClick={() => handleStatusChange('inactive')}
                 disabled={isLoading}
               >
                 {isLoading ? 'Deactivating...' : 'Deactivate'}

@@ -81,7 +81,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
       setModalOpen(false);
       setEditingPayment(null);
       setPage(0);
-      
+
       // Reload payment names for the appropriate tab
       await loadPaymentNames(1, searchQuery, rowsPerPage);
       onStatsRefresh?.();
@@ -123,11 +123,11 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
   const loadPaymentNames = async (pg = 1, search = '', per_page = 10) => {
     setLoading(true);
     try {
-      const res = await fetchPaymentNames({ 
-        page: pg, 
-        search, 
+      const res = await fetchPaymentNames({
+        page: pg,
+        search,
         per_page,
-        pay_type: currentTab 
+        pay_type: currentTab
       });
       setPaymentNames(res.data?.data || []);
       setMeta(res.data);
@@ -191,13 +191,13 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           {/* Tabs for Bursary and Admission */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
-              <Tab 
-                label="Bursary Payments" 
+              <Tab
+                label="Bursary Payments"
                 value="bursary"
                 sx={{ fontWeight: 600, textTransform: 'none' }}
               />
-              <Tab 
-                label="Admission Payments" 
+              <Tab
+                label="Admission Payments"
                 value="admission"
                 sx={{ fontWeight: 600, textTransform: 'none' }}
               />
@@ -453,7 +453,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 >
                   Cancel
                 </Button>
-                <Button variant="contained" size="small" color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleStatus} disabled={actionLoading}>
+                <Button size="small" color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleStatus} disabled={actionLoading}>
                   {actionLoading
                     ? 'Updating...'
                     : confirmStatusModal.payment?.status === 'active'

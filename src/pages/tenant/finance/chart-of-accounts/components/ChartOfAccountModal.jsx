@@ -133,7 +133,7 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit }) => 
           <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" size="small" type="submit">{mode === 'create' ? 'Submit' : 'Save Changes'}</Button>
+          <Button size="small" type="submit">{mode === 'create' ? 'Submit' : 'Save Changes'}</Button>
         </DialogActions>
       </form>
     </Dialog>

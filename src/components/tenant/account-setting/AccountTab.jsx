@@ -235,14 +235,14 @@ const AccountTab = () => {
               </Box>
               <Stack direction="row" spacing={2} mt={3}>
                 <Box>
-                  <Button variant="contained" size="small" color="primary" type="submit" disabled={isProfileLoading} startIcon={ isProfileLoading ? <CircularProgress color="inherit" /> : null
-                    }
+                  <Button variant="contained" size="small" color="primary" type="submit" disabled={isProfileLoading} startIcon={isProfileLoading ? <CircularProgress color="inherit" /> : null
+                  }
                   >
                     {isProfileLoading ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </Box>
                 <Box>
-                  <Button variant="contained" size="small" color="error" disabled={isProfileLoading}>
+                  <Button size="small" color="error" disabled={isProfileLoading}>
                     Cancel
                   </Button>
                 </Box>
@@ -291,8 +291,8 @@ const AccountTab = () => {
               />
 
               <Stack direction="row" spacing={2} mt={3}>
-                <Button variant="contained" size="small" color="primary" type="submit" disabled={isPasswordLoading} startIcon={ isPasswordLoading ? <CircularProgress color="inherit" /> : null
-                  }
+                <Button size="small" color="primary" type="submit" disabled={isPasswordLoading} startIcon={isPasswordLoading ? <CircularProgress color="inherit" /> : null
+                }
                 >
                   {isPasswordLoading ? 'Changing...' : 'Change Password'}
                 </Button>

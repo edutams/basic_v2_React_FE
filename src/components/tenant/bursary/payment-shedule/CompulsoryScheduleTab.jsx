@@ -852,7 +852,7 @@ const CompulsoryScheduleTab = ({
           <Button
             variant="contained"
             size="small"
-            // color="inherit"
+            color="inherit"
             onClick={() => setDeleteDialog({ open: false, schedule: null })}
           >
             Cancel

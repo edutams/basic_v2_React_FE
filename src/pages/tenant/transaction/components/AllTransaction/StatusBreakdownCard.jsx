@@ -1,18 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Box,
-  Typography,
-  LinearProgress,
-  Divider,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, LinearProgress, Divider, useTheme } from '@mui/material';
 
-const StatusBreakdownCard = ({
-  title = 'Distribution',
-  items = [],
-  metrics = [],
-}) => {
+const StatusBreakdownCard = ({ title = 'Distribution', items = [], metrics = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -30,51 +20,24 @@ const StatusBreakdownCard = ({
         STATUS BREAKDOWN
       </Typography>
 
-     
-
       {items.map((item) => (
         <Box key={item.label} sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              mb: 1,
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  bgcolor: item.color,
-                }}
-              />
-
-              <Typography
-                sx={{
-                  fontWeight: 500,
-                  color: isDark ? '#fff' : '#111827',
-                }}
-              >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
+              <Typography sx={{ fontWeight: 500, color: isDark ? '#fff' : '#111827' }}>
                 {item.label}
               </Typography>
             </Box>
 
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: '#6B7280',
-              }}
-            >
-              {item.value}%
-            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>{item.value}%</Typography>
+              <Typography
+                sx={{ fontWeight: 700, color: item.color, minWidth: 90, textAlign: 'right' }}
+              >
+                ₦{Number(item.amount || 0).toLocaleString()}
+              </Typography>
+            </Box>
           </Box>
 
           <LinearProgress
@@ -84,7 +47,6 @@ const StatusBreakdownCard = ({
               height: 10,
               borderRadius: 10,
               bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
-
               '& .MuiLinearProgress-bar': {
                 borderRadius: 10,
                 background: `linear-gradient(90deg, ${item.color}, ${item.color}CC)`,
@@ -93,7 +55,6 @@ const StatusBreakdownCard = ({
           />
         </Box>
       ))}
-
       <Divider sx={{ my: 3 }} />
 
       <Box

@@ -61,7 +61,7 @@ const Revenue = () => {
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
   const [search, setSearch] = useState('');
-  const [duration, setDuration] = useState('monthly');
+  // const [duration, setDuration] = useState('monthly');
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -108,7 +108,7 @@ const Revenue = () => {
           to: toDate || null,
           session_id: sessionId || null,
           term_id: termId || null,
-          duration,
+          // duration,
         },
       });
       if (res.success) {
@@ -118,7 +118,7 @@ const Revenue = () => {
     } catch (err) {
       console.error('Failed to fetch revenue analytics', err);
     }
-  }, [fromDate, toDate, sessionId, termId, duration]);
+  }, [fromDate, toDate, sessionId, termId]);
 
   useEffect(() => {
     fetchSessions()
@@ -130,7 +130,7 @@ const Revenue = () => {
 
   useEffect(() => {
     loadAnalytics();
-  }, [duration, sessionId, termId]);
+  }, [sessionId, termId]);
 
   // useEffect(() => {
   //   if (duration) loadAnalytics();
@@ -223,7 +223,7 @@ const Revenue = () => {
         chartOptions={buildChartOptions(chartData?.categories || [])}
         chartSeries={chartData?.series || []}
         statusData={statusData}
-        onDurationChange={setDuration}
+        // onDurationChange={setDuration}
         sessions={sessions}
         terms={terms}
         sessionId={sessionId}

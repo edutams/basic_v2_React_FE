@@ -34,6 +34,7 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -100,6 +101,14 @@ const PayInvoice = () => {
   const [savedOptionalIds, setSavedOptionalIds] = useState(new Set());
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState('');
+
+  // Dummy wallet balances for UI representation
+  const availableWallets = [
+    { id: 'father', name: "Father's Wallet", balance: 150000, themeMain: 'primary.main', themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff', themeBorder: isDark ? 'rgba(25,118,210,0.2)' : '#dbeafe', themeHoverBg: isDark ? 'rgba(25,118,210,0.1)' : '#e0e7ff', themeSelectedBg: isDark ? 'rgba(25,118,210,0.2)' : '#e0e7ff' },
+    { id: 'mother', name: "Mother's Wallet", balance: 85000, themeMain: '#0288d1', themeBg: isDark ? 'rgba(2,136,209,0.05)' : '#e1f5fe', themeBorder: isDark ? 'rgba(2,136,209,0.2)' : '#b3e5fc', themeHoverBg: isDark ? 'rgba(2,136,209,0.1)' : '#b3e5fc', themeSelectedBg: isDark ? 'rgba(2,136,209,0.2)' : '#81d4fa' },
+    { id: 'child', name: "Child's Wallet", balance: 25000, themeMain: 'secondary.main', themeBg: isDark ? 'rgba(156,39,176,0.05)' : '#fdf4ff', themeBorder: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff', themeHoverBg: isDark ? 'rgba(156,39,176,0.1)' : '#f3e8ff', themeSelectedBg: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff' }
+  ];
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -164,9 +173,9 @@ const PayInvoice = () => {
   );
   const optTotal = optionalEnabled
     ? optFees.reduce((acc, f) => {
-        if (!f.checked) return acc;
-        return acc + Number(f.payable || f.balance || f.amount || 0);
-      }, 0)
+      if (!f.checked) return acc;
+      return acc + Number(f.payable || f.balance || f.amount || 0);
+    }, 0)
     : 0;
   const grandTotal = compTotal + optTotal;
 
@@ -606,67 +615,139 @@ const PayInvoice = () => {
     <PageContainer title={breadcrumbTitle}>
       <Breadcrumb title={breadcrumbTitle} items={BCrumbLive} />
       <Box sx={{ pb: 8 }}>
-        {/* HEADER — Student Info */}
-        <Box
-          sx={{
-            position: 'relative',
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'center',
-            gap: 2,
-            mb: 3,
-            mt: 2,
-            p: 2.5,
-            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-            borderRadius: '12px',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              width: '100%',
-              py: 1,
-            }}
-          >
-            <Avatar
-              sx={{ width: 72, height: 72, boxShadow: '0 4px 12px rgba(0,0,0,0.12)', mb: 1.5 }}
-            >
-              <PersonOutlineIcon sx={{ fontSize: 40 }} />
-            </Avatar>
-            <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
-              {studentName}
-            </Typography>
-            <Typography variant="body1" fontWeight={600} color="text.secondary" sx={{ mt: 0.5 }}>
-              <strong>Learner ID:</strong> {studentLearnerId}
-            </Typography>
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Class:</strong> {studentClassName}
-            </Typography>
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
-              {activeSessionInfo.term}
-            </Typography>
-          </Box>
-
+        {/* HEADER — Student Info & Wallets */}
+        <Box sx={{ mb: 3, mt: 2 }}>
           <Button
-            variant="contained"
-            size="small"
+            variant="text"
+            color="primary"
             onClick={() => navigate('/class-ledger')}
             sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
+              mb: 1.5,
               textTransform: 'none',
               fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
             }}
           >
-            ← Go To Class Ledger
+            ← Back to Class Ledger
           </Button>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              display: 'flex',
+              flexDirection: { xs: 'column', lg: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', lg: 'center' },
+              gap: 4,
+              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+              borderRadius: '16px',
+              boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            }}
+          >
+            {/* LEFT: Student Profile Row */}
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', width: '100%' }}>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                }}
+              >
+                <PersonOutlineIcon sx={{ fontSize: 40 }} />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" fontWeight={800} color="text.primary" mb={0.5}>
+                  {studentName}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, sm: 4 }, mt: 1 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Learner ID
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {studentLearnerId}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Class
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {studentClassName}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Session & Term
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {activeSessionInfo.session} • {activeSessionInfo.term}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* RIGHT: Wallet Balances */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: { xs: 'flex-start', lg: 'flex-end' },
+                gap: 1.5,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <AccountBalanceWalletOutlinedIcon color="primary" fontSize="small" />
+                <Typography variant="subtitle2" fontWeight={800} color="primary.main" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}>
+                  Select Payment Wallet:
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  flexWrap: 'nowrap',
+                  pb: { xs: 1, lg: 0 },
+                }}
+              >
+                {availableWallets.map((wallet) => (
+                  <Box
+                    key={wallet.id}
+                    onClick={() => setSelectedWallet(wallet.id)}
+                    sx={{
+                      p: 2,
+                      minWidth: 140,
+                      borderRadius: 3,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg,
+                      border: '2px solid',
+                      borderColor: selectedWallet === wallet.id ? wallet.themeMain : wallet.themeBorder,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      '&:hover': {
+                        borderColor: wallet.themeMain,
+                        bgcolor: wallet.themeHoverBg,
+                      }
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                      {wallet.name} {selectedWallet === wallet.id && '✓'}
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} color={wallet.themeMain}>
+                      ₦{format(wallet.balance)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Paper>
         </Box>
 
         {/* ERROR ALERT */}
@@ -1263,17 +1344,60 @@ const PayInvoice = () => {
                 ₦{format(grandTotal)}
               </Typography>
             </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Select Payment Source
+            </Typography>
+            <Stack spacing={2}>
+              {availableWallets.map((wallet) => (
+                <Box
+                  key={wallet.id}
+                  onClick={() => setSelectedWallet(wallet.id)}
+                  sx={{
+                    p: 2,
+                    border: '2px solid',
+                    borderColor: selectedWallet === wallet.id ? wallet.themeMain : 'divider',
+                    borderRadius: 2,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : 'background.paper',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeHoverBg,
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <PersonOutlineIcon sx={{ color: selectedWallet === wallet.id ? wallet.themeMain : 'action.active' }} />
+                    <Typography variant="body1" fontWeight={600}>
+                      {wallet.name}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" fontWeight={700} sx={{ color: selectedWallet === wallet.id ? wallet.themeMain : 'text.primary' }}>
+                    ₦{format(wallet.balance)}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={() => setConfirmModalOpen(false)}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmModalOpen(false)}>
             Cancel
           </Button>
           <Button
             variant="contained"
             size="small"
+            disabled={!selectedWallet}
             onClick={() => {
               setConfirmModalOpen(false);
+              // Pass selectedWallet to handlePayNow if needed
+              // e.g. handlePayNow(selectedWallet)
               handlePayNow();
             }}
             sx={{ fontWeight: 600 }}

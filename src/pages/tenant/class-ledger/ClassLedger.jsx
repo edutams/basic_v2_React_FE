@@ -66,6 +66,7 @@ import {
   printClassLedgerPaymentList,
 } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
+import StudentLedgerModal from './StudentLedgerModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -86,6 +87,10 @@ const ClassLedger = () => {
 
   const [payForStudentConfirmOpen, setPayForStudentConfirmOpen] = useState(false);
   const [studentToPayFor, setStudentToPayFor] = useState(null);
+  const [selectedWallet, setSelectedWallet] = useState(null);
+
+  const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
+  const [selectedStudentForLedger, setSelectedStudentForLedger] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -802,6 +807,8 @@ const ClassLedger = () => {
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
+              setSelectedStudentForLedger(activeRow);
+              setIsLedgerModalOpen(true);
             }}
           >
             <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
@@ -810,9 +817,14 @@ const ClassLedger = () => {
 
           <MenuItem
             onClick={() => {
-              setStudentToPayFor(activeRow);
-              setPayForStudentConfirmOpen(true);
               setAnchorEl(null);
+              if (activeRow) {
+                const sUserId = activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
+                window.open(
+                  `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
+                  '_blank'
+                );
+              }
             }}
           >
             <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
@@ -891,60 +903,16 @@ const ClassLedger = () => {
         />
       </ParentCard>
 
-      {/* ── Pay for Student (Login As) Confirmation Dialog ── */}
-      <Dialog
-        open={payForStudentConfirmOpen}
+
+
+      <StudentLedgerModal
+        open={isLedgerModalOpen}
         onClose={() => {
-          setPayForStudentConfirmOpen(false);
-          setStudentToPayFor(null);
+          setIsLedgerModalOpen(false);
+          setSelectedStudentForLedger(null);
         }}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>Pay for Student</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            You will be logged in as{' '}
-            <strong>
-              {studentToPayFor?.users?.full_name ||
-                studentToPayFor?.user?.full_name ||
-                'this student'}
-            </strong>{' '}
-            to process the payment. You can return to your account at any time.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => {
-            setPayForStudentConfirmOpen(false);
-            setStudentToPayFor(null);
-          }}
-          >
-            Cancel
-          </Button>
-          <Button variant="contained" size="small" onClick={async () => {
-            if (!studentToPayFor) return;
-
-            const studentUserId =
-              studentToPayFor?.users?.id || studentToPayFor?.user?.id || studentToPayFor?.user_id;
-
-            const result = await impersonateStudent(studentUserId);
-
-            if (result.success) {
-              notify.success('Now logged in as student');
-              window.location.href = `/class-ledger/${studentToPayFor.invoice_number}/${studentToPayFor.user_id}/pay-invoice`;
-            } else {
-              notify.error(result.error);
-            }
-
-            setPayForStudentConfirmOpen(false);
-            setStudentToPayFor(null);
-          }}
-            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
-          >
-            Yes, Login As
-          </Button>
-        </DialogActions>
-      </Dialog>
+        student={selectedStudentForLedger}
+      />
     </PageContainer>
   );
 };

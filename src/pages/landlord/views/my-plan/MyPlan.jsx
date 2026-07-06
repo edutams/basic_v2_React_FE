@@ -467,7 +467,7 @@ const MyPlan = () => {
               <Button variant="contained" size="small" onClick={() => setOpenEditModal(false)} color="inherit">
                 Cancel
               </Button>
-              <Button variant="contained" size="small" type="submit" color="primary">
+              <Button size="small" type="submit" color="primary">
                 Save
               </Button>
             </Box>
@@ -480,9 +480,8 @@ const MyPlan = () => {
         onClose={() => setOpenDeactivateDialog(false)}
         onConfirm={handleDeactivatePlan}
         title={planToDeactivate?.status === 'active' ? 'Deactivate Plan' : 'Activate Plan'}
-        message={`Are you sure you want to ${
-          planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
-        } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
+        message={`Are you sure you want to ${planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
+          } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
         confirmText={planToDeactivate?.status === 'active' ? 'Deactivate' : 'Activate'}
         cancelText="Cancel"
         confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'primary'}

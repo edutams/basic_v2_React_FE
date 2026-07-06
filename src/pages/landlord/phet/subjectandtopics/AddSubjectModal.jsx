@@ -80,7 +80,7 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           <Button variant="contained" size="small" onClick={onClose} sx={{ mr: 1 }} color="inherit" type="button">
             Cancel
           </Button>
-          <Button variant="contained" size="small" type="submit" color="primary">
+          <Button size="small" type="submit" color="primary">
             Add Subject
           </Button>
         </Box>

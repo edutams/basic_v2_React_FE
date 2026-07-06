@@ -1267,11 +1267,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                            .split(' ')
-                            .slice(0, 2)
-                            .map((w) => w[0])
-                            .join('')
-                            .toUpperCase()
+                          .split(' ')
+                          .slice(0, 2)
+                          .map((w) => w[0])
+                          .join('')
+                          .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1572,13 +1572,13 @@ const Agent = () => {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
             <Button variant="contained" size="small" color="inherit" onClick={() => {
-                setImpersonateConfirmOpen(false);
-                setAgentToImpersonate(null);
-              }}
+              setImpersonateConfirmOpen(false);
+              setAgentToImpersonate(null);
+            }}
             >
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
+            <Button size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
           </DialogActions>
         </Dialog>
 
@@ -1596,7 +1596,7 @@ const Agent = () => {
             <Button variant="contained" size="small" color="inherit" onClick={handleCancelDelete}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
+            <Button size="small" color="error" onClick={handleConfirmDelete}>
               Yes, Delete
             </Button>
           </DialogActions>
@@ -1622,7 +1622,7 @@ const Agent = () => {
             <Button variant="contained" size="small" color="inherit" onClick={handleCancelDeleteOrganization}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" color="error" onClick={handleConfirmDeleteOrganization}>
+            <Button size="small" color="error" onClick={handleConfirmDeleteOrganization}>
               Yes, Delete
             </Button>
           </DialogActions>

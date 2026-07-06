@@ -783,10 +783,10 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
               {availablePermissions.filter((perm) =>
                 perm.label.toLowerCase().includes(permissionSearch.toLowerCase()),
               ).length === 0 && (
-                <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
-                  No permissions found.
-                </Typography>
-              )}
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                    No permissions found.
+                  </Typography>
+                )}
             </Box>
           </Box>
         </DialogContent>
@@ -872,10 +872,10 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setOpenRemoveConfirm(false)} color="inherit" disabled={submitting}>
+          <Button variant="contained" size="small" onClick={() => setOpenRemoveConfirm(false)} color="error" disabled={submitting}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleRemoveMember} disabled={submitting}>
+          <Button variant="contained" size="small" color='inherit' onClick={handleRemoveMember} disabled={submitting}>
             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Remove'}
           </Button>
         </DialogActions>

@@ -164,7 +164,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
         <Button variant="contained" size="small" onClick={onCancel} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" type="submit" color="primary" startIcon={loading ? <CircularProgress color="inherit" /> : null}
+        <Button size="small" type="submit" color="primary" startIcon={loading ? <CircularProgress color="inherit" /> : null}
         >
           {actionType === 'create' ? 'Add Plan' : 'Update Plan'}
         </Button>

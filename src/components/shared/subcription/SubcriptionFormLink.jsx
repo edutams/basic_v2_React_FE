@@ -89,13 +89,13 @@ const SubcriptionFormLink = ({
   // Filter plans by the selected student population (matched against plan.data.students_limit)
   const filteredPlans = form.studentpopulation
     ? options.plans.filter((plan) => {
-        const data = plan?.plan?.data
-          ? typeof plan.plan.data === 'string'
-            ? JSON.parse(plan.plan.data)
-            : plan.plan.data
-          : {};
-        return data.students_limit === form.studentpopulation;
-      })
+      const data = plan?.plan?.data
+        ? typeof plan.plan.data === 'string'
+          ? JSON.parse(plan.plan.data)
+          : plan.plan.data
+        : {};
+      return data.students_limit === form.studentpopulation;
+    })
     : [];
 
   const handleSubmit = async (e) => {
@@ -249,7 +249,7 @@ const SubcriptionFormLink = ({
         <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" type="submit" color="primary" disabled={isLoading}>
+        <Button size="small" type="submit" color="primary" disabled={isLoading}>
           {isLoading ? 'Submitting...' : submitText}
         </Button>
       </Box>

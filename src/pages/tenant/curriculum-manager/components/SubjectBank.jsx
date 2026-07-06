@@ -1117,7 +1117,7 @@ const SubjectBank = () => {
               Cancel
             </Button>
 
-            <Button variant="contained" size="small" onClick={handleCreateSubject} disabled={loadingCreateSubject} startIcon={loadingCreateSubject ? <CircularProgress /> : null}
+            <Button size="small" onClick={handleCreateSubject} disabled={loadingCreateSubject} startIcon={loadingCreateSubject ? <CircularProgress /> : null}
             >
               {loadingCreateSubject ? 'Adding...' : 'Add Subject'}
             </Button>
@@ -1263,7 +1263,7 @@ const SubjectBank = () => {
             <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal} disabled={loadingUpdateSubject}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleUpdateSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
+            <Button size="small" onClick={handleUpdateSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
             >
               {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
             </Button>
@@ -1288,7 +1288,7 @@ const SubjectBank = () => {
             <Button variant="contained" size="small" onClick={handleCloseDeleteSubjectModal} disabled={loadingDeleteSubject}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" color="error" onClick={handleDeleteSubject} disabled={loadingDeleteSubject} startIcon={loadingDeleteSubject ? <CircularProgress /> : null}
+            <Button size="small" color="error" onClick={handleDeleteSubject} disabled={loadingDeleteSubject} startIcon={loadingDeleteSubject ? <CircularProgress /> : null}
             >
               {loadingDeleteSubject ? 'Deleting...' : 'Delete'}
             </Button>
@@ -1456,8 +1456,8 @@ const SubjectBank = () => {
                       value={
                         subjectGroupFormData.subject_ids
                           ? subjectGroupModalSubjects.filter((s) =>
-                              subjectGroupFormData.subject_ids.includes(s.id),
-                            )
+                            subjectGroupFormData.subject_ids.includes(s.id),
+                          )
                           : []
                       }
                       onChange={(_, selected) =>
@@ -1501,7 +1501,7 @@ const SubjectBank = () => {
             <Button variant="contained" size="small" onClick={handleCloseCreateSubjectGroupModal} disabled={loadingCreateGroup}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleCreateSubjectGroup} disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingCreateGroup ? <CircularProgress /> : null}
+            <Button size="small" onClick={handleCreateSubjectGroup} disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingCreateGroup ? <CircularProgress /> : null}
             >
               {loadingCreateGroup ? 'Creating...' : 'Create Group'}
             </Button>
@@ -1669,8 +1669,8 @@ const SubjectBank = () => {
                       value={
                         subjectGroupFormData.subject_ids
                           ? subjectGroupModalSubjects.filter((s) =>
-                              subjectGroupFormData.subject_ids.includes(s.id),
-                            )
+                            subjectGroupFormData.subject_ids.includes(s.id),
+                          )
                           : []
                       }
                       onChange={(_, selected) =>
@@ -1714,7 +1714,7 @@ const SubjectBank = () => {
             <Button variant="contained" size="small" onClick={handleCloseEditSubjectGroupModal} disabled={loadingUpdateGroup}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleUpdateSubjectGroup} disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingUpdateGroup ? <CircularProgress /> : null}
+            <Button size="small" onClick={handleUpdateSubjectGroup} disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingUpdateGroup ? <CircularProgress /> : null}
             >
               {loadingUpdateGroup ? 'Updating...' : 'Update Group'}
             </Button>

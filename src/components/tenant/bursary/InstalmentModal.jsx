@@ -180,10 +180,10 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
 
         {/* Action Buttons */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button variant="contained" size="small" onClick={onClose} color="inherit">
+          <Button variant="contained" size="small" onClick={onClose} >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading || isFullPayment} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading || isFullPayment} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${instalment ? 'Update' : 'Add'} Plan`}
           </Button>
         </Stack>

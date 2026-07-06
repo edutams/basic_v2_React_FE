@@ -19,7 +19,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
 
   // Use pre-application payments from the batch
   const preAppPayments = selectedBatch?.pre_application_payments || [];
-  
+
   const feeItems = preAppPayments.map((payment) => ({
     label: payment.name,
     amount: Number(payment.amount || 0),
@@ -61,10 +61,10 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
   }, [onNext, notify]);
 
 
-  const isPaymentDataLoading = !selectedBatch || 
+  const isPaymentDataLoading = !selectedBatch ||
     (selectedBatch.require_payment && selectedBatch.pre_application_payments === undefined) ||
     checkingPayment;
-    console.log(selectedBatch,333)
+  console.log(selectedBatch, 333)
 
   if (isPaymentDataLoading) {
     return (
@@ -104,8 +104,8 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
         </Typography>
         <Divider sx={{ mb: 3 }} />
 
-        <Alert 
-          severity="success" 
+        <Alert
+          severity="success"
           icon={<CheckCircleIcon />}
           sx={{ mb: 3 }}
         >
@@ -344,7 +344,6 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleConfirmPayment}
             sx={{ fontWeight: 600 }}

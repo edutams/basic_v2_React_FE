@@ -626,7 +626,7 @@ const HolidaySection = ({ refreshKey }) => {
           <Button variant="contained" size="small" onClick={handleCloseModal}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSaveHolidays} disabled={saving}>
+          <Button size="small" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>
@@ -640,7 +640,7 @@ const HolidaySection = ({ refreshKey }) => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setConfirmDelete({ open: false, id: null })}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
+          <Button size="small" color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

@@ -398,7 +398,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           <>
             {!showRejectInput ? (
               <>
-                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -424,7 +424,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 >
                   Cancel Rejection
                 </Button>
-                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setOpenConfirmReject(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}

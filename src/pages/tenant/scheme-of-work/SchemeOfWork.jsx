@@ -1362,8 +1362,7 @@ const SchemeOfWork = () => {
           <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
-            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
+          <Button size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
           >
             Download Template
           </Button>
@@ -1504,7 +1503,7 @@ const SchemeOfWork = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
           }
             sx={{ textTransform: 'none' }}
           >
@@ -1612,12 +1611,11 @@ const SchemeOfWork = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
           ) : (
             <IconDownload size={16} />
           )
           }
-            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}
           </Button>

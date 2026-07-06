@@ -740,7 +740,6 @@ const OptionalPaymentTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={confirmDialog.onConfirm}
             sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }}

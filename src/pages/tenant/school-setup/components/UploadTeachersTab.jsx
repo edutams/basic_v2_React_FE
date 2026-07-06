@@ -476,7 +476,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleConfirmClose}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleDeleteTeacher}>
+          <Button size="small" color="error" onClick={handleDeleteTeacher}>
             Yes, Delete
           </Button>
         </DialogActions>

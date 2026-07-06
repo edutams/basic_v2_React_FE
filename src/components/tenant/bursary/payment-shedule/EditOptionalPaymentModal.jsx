@@ -560,67 +560,68 @@ const EditOptionalPaymentModal = ({
                                 {options.map((option, idx) => {
                                   const isExistingOption = hasInvoices && option.id;
                                   return (
-                                  <Box key={idx} display="flex" gap={1} alignItems="flex-start" position="relative">
-                                    {isExistingOption && (
-                                      <Box
-                                        position="absolute"
-                                        top={0} left={0} right={0} bottom={0}
-                                        zIndex={1}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          showInlineWarning(`options_${cls.id}`, 'Cannot edit/delete option: this class has attached invoices');
-                                        }}
-                                        sx={{ cursor: 'not-allowed' }}
+                                    <Box key={idx} display="flex" gap={1} alignItems="flex-start" position="relative">
+                                      {isExistingOption && (
+                                        <Box
+                                          position="absolute"
+                                          top={0} left={0} right={0} bottom={0}
+                                          zIndex={1}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            showInlineWarning(`options_${cls.id}`, 'Cannot edit/delete option: this class has attached invoices');
+                                          }}
+                                          sx={{ cursor: 'not-allowed' }}
+                                        />
+                                      )}
+                                      <TextField
+                                        size="small"
+                                        placeholder="Option name (e.g., Large Bag)"
+                                        value={option.option_name}
+                                        onChange={(e) =>
+                                          handleOptionChange(
+                                            cls.id,
+                                            idx,
+                                            'option_name',
+                                            e.target.value,
+                                          )
+                                        }
+                                        error={!!errors[`${cls.id}_${idx}_option_name`]}
+                                        helperText={errors[`${cls.id}_${idx}_option_name`]}
+                                        sx={{ flex: 2 }}
+                                        disabled={isExistingOption}
                                       />
-                                    )}
-                                    <TextField
-                                      size="small"
-                                      placeholder="Option name (e.g., Large Bag)"
-                                      value={option.option_name}
-                                      onChange={(e) =>
-                                        handleOptionChange(
-                                          cls.id,
-                                          idx,
-                                          'option_name',
-                                          e.target.value,
-                                        )
-                                      }
-                                      error={!!errors[`${cls.id}_${idx}_option_name`]}
-                                      helperText={errors[`${cls.id}_${idx}_option_name`]}
-                                      sx={{ flex: 2 }}
-                                      disabled={isExistingOption}
-                                    />
-                                    <TextField
-                                      size="small"
-                                      type="number"
-                                      placeholder="Amount"
-                                      value={option.amount}
-                                      onChange={(e) =>
-                                        handleOptionChange(cls.id, idx, 'amount', e.target.value)
-                                      }
-                                      error={!!errors[`${cls.id}_${idx}_amount`]}
-                                      helperText={errors[`${cls.id}_${idx}_amount`]}
-                                      slotProps={{
-                                        htmlInput: { min: 0, step: '0.01' },
-                                        input: {
-                                          startAdornment: (
-                                            <InputAdornment position="start">₦</InputAdornment>
-                                          ),
-                                        },
-                                      }}
-                                      sx={{ flex: 1 }}
-                                      disabled={isExistingOption}
-                                    />
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() => handleRemoveOption(cls.id, idx)}
-                                      disabled={options.length === 1 || isExistingOption}
-                                    >
-                                      <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                  </Box>
-                                )})}
+                                      <TextField
+                                        size="small"
+                                        type="number"
+                                        placeholder="Amount"
+                                        value={option.amount}
+                                        onChange={(e) =>
+                                          handleOptionChange(cls.id, idx, 'amount', e.target.value)
+                                        }
+                                        error={!!errors[`${cls.id}_${idx}_amount`]}
+                                        helperText={errors[`${cls.id}_${idx}_amount`]}
+                                        slotProps={{
+                                          htmlInput: { min: 0, step: '0.01' },
+                                          input: {
+                                            startAdornment: (
+                                              <InputAdornment position="start">₦</InputAdornment>
+                                            ),
+                                          },
+                                        }}
+                                        sx={{ flex: 1 }}
+                                        disabled={isExistingOption}
+                                      />
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() => handleRemoveOption(cls.id, idx)}
+                                        disabled={options.length === 1 || isExistingOption}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  )
+                                })}
                                 <Box sx={{ alignSelf: 'flex-start' }}>
                                   <Button variant="contained" size="small" startIcon={<AddIcon />}
                                     onClick={() => handleAddOption(cls.id)}
@@ -677,7 +678,7 @@ const EditOptionalPaymentModal = ({
           <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
+          <Button size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
             {saving ? 'Saving...' : 'Update Payment Schedule'}
           </Button>
         </Stack>
@@ -748,7 +749,7 @@ const EditOptionalPaymentModal = ({
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
+          <Button size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
             {deleting ? 'Deleting...' : 'Delete Schedule'}
           </Button>
         </DialogActions>
@@ -806,7 +807,7 @@ const EditOptionalPaymentModal = ({
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="warning" onClick={handleDeactivateConfirm} sx={{ fontWeight: 600 }}>
+          <Button size="small" color="warning" onClick={handleDeactivateConfirm} sx={{ fontWeight: 600 }}>
             Deactivate Class
           </Button>
         </DialogActions>

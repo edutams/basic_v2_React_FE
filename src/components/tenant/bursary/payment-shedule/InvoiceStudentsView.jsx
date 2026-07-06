@@ -1100,7 +1100,7 @@ const InvoiceStudentsView = () => {
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
             Add
           </Button>
         </DialogActions>
@@ -1182,7 +1182,7 @@ const InvoiceStudentsView = () => {
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button variant="contained" size="small" onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmGenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
+          <Button size="small" onClick={handleConfirmGenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Generate
           </Button>
@@ -1269,7 +1269,7 @@ const InvoiceStudentsView = () => {
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
           <Button variant="contained" size="small" onClick={handleCloseRegenerateConfirm}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmRegenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
+          <Button size="small" onClick={handleConfirmRegenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Regenerate
           </Button>

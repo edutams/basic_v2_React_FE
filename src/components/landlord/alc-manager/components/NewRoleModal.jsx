@@ -44,7 +44,7 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditin
         <Button variant="contained" size="small" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" onClick={onSave} color="primary" disabled={loading}>
+        <Button size="small" onClick={onSave} color="primary" disabled={loading}>
           {loading ? (
             <CircularProgress size={24} color="inherit" />
           ) : isEditing ? (

@@ -222,7 +222,7 @@ const PermissionAttachmentModal = ({
 
       <DialogActions>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button variant="contained" size="small" onClick={handleSave}>Save Permissions</Button>
+        <Button size="small" onClick={handleSave}>Save Permissions</Button>
       </DialogActions>
     </Dialog>
   );

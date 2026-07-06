@@ -422,7 +422,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         {prospect.status === 'pending' && (
           <>
             {!showRejectInput ? (
-              <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
+              <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                 onClick={() => setShowRejectInput(true)}
                 disabled={loading}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -438,7 +438,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 >
                   Cancel Rejection
                 </Button>
-                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => onReject(prospect.id, rejectReason)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -874,8 +874,8 @@ const SchoolDashboard = () => {
     !nameValue
       ? arr
       : arr.filter((r) =>
-          (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-        );
+        (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
+      );
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 

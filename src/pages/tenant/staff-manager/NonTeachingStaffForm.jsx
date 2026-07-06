@@ -237,10 +237,10 @@ const NonTeachingStaffForm = ({
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button variant="contained" size="small" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+        <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
       </Box>
     </Box>
   );

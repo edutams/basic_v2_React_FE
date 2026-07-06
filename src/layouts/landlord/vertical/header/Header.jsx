@@ -257,7 +257,7 @@ const Header = () => {
           <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleStopImpersonation} sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}>
+          <Button size="small" onClick={handleStopImpersonation} sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}>
             Yes, return to my account
           </Button>
         </DialogActions>

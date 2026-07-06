@@ -275,7 +275,7 @@ const CreateAdmissionBatchModal = ({
           <Button variant="contained" size="small" onClick={onClose} color="inherit" disabled={loading}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 700, minWidth: 100 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 700, minWidth: 100 }}>
             {loading ? <CircularProgress size={20} /> : isEdit ? 'Update' : 'Create'}
           </Button>
         </Box>

@@ -235,7 +235,7 @@ const PaymentScheduleModal = ({
           <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={saving}>
+          <Button size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Save'}
           </Button>
         </Stack>

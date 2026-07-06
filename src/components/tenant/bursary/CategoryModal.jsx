@@ -106,7 +106,7 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${category ? 'Update' : 'Add'} Category`}
           </Button>
         </Stack>

@@ -940,7 +940,7 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            <Box
+            {/* <Box
               sx={{
                 px: 3,
                 pt: 2,
@@ -951,7 +951,6 @@ const PaymentShedule = () => {
                 gap: 2,
               }}
             >
-              {/* Schedule Type Tabs */}
               <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
                 <Tabs
                   value={scheduleTab}
@@ -1027,7 +1026,7 @@ const PaymentShedule = () => {
                   Import schedule for current term
                 </Button>
               )}
-            </Box>
+            </Box> */}
           </>
         )}
 
@@ -1085,7 +1084,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        // fullWidth
+      // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>
@@ -1119,7 +1118,6 @@ const PaymentShedule = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleConfirmImportSchedule}
             disabled={importing}

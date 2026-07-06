@@ -17,7 +17,7 @@ const FeeChart = ({
   chartOptions,
   chartSeries,
   chartType = 'bar',
-  onDurationChange,
+  // onDurationChange,
   statusData,
 
   sessions,
@@ -29,13 +29,13 @@ const FeeChart = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedDuration, setSelectedDuration] = useState('monthly');
+  // const [selectedDuration, setSelectedDuration] = useState('monthly');
 
-  const handleDurationChange = (event) => {
-    const newDuration = event.target.value;
-    setSelectedDuration(newDuration);
-    if (onDurationChange) onDurationChange(newDuration);
-  };
+  // const handleDurationChange = (event) => {
+  //   const newDuration = event.target.value;
+  //   setSelectedDuration(newDuration);
+  //   if (onDurationChange) onDurationChange(newDuration);
+  // };
 
   return (
     <Grid container spacing={2} mt={3} mb={3}>
@@ -55,7 +55,7 @@ const FeeChart = ({
               {title || 'Transaction Chart'}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
+              {/* <FormControl size="small" sx={{ minWidth: 120 }}>
                 <Select
                   value={selectedDuration}
                   onChange={handleDurationChange}
@@ -72,7 +72,7 @@ const FeeChart = ({
                   <MenuItem value="quarterly">Quarterly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
-              </FormControl>
+              </FormControl> */}
               <FormControl size="small" sx={{ minWidth: 160 }}>
                 <InputLabel>Session</InputLabel>
                 <Select
@@ -122,6 +122,10 @@ const FeeChart = ({
             title={statusData?.title}
             items={statusData?.items}
             metrics={statusData?.metrics}
+            minRevenue={statusData?.minRevenue || 0}
+            maxRevenue={statusData?.maxRevenue || 0}
+            minType={statusData?.minType || ''}
+            maxType={statusData?.maxType || ''}
           />
         </Box>
       </Grid>

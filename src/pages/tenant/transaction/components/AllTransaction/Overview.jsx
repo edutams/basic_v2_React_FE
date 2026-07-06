@@ -41,6 +41,13 @@ import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurricu
 import tenantApi from '@/api/tenant/tenant_api';
 import dayjs from 'dayjs';
 
+function getISOWeek(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
 const Overview = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -70,7 +77,8 @@ const Overview = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
-  const [duration, setDuration] = useState('monthly');
+  const [period, setPeriod] = useState('this_month'); // today | this_week | this_month | this_year
+  const [periodValue, setPeriodValue] = useState(null);
 
   const [checkingStatusId, setCheckingStatusId] = useState(null);
 
@@ -109,15 +117,18 @@ const Overview = () => {
 
   const loadAnalytics = useCallback(async () => {
     try {
-      const res = await fetchOnlineTransactionAnalytics({
-        filters: {
-          from: fromDate || null,
-          to: toDate || null,
-          session_id: sessionId || null,
-          term_id: termId || null,
-          duration,
-        },
-      });
+      const payload = {
+        session_id: sessionId || null,
+        term_id: termId || null,
+        period,
+      };
+
+      if (period === 'today') payload.selected_date = periodValue || dayjs().format('YYYY-MM-DD');
+      if (period === 'this_week') payload.selected_week = periodValue || dayjs().getISOWeek();
+      if (period === 'this_month') payload.selected_month = periodValue || dayjs().month() + 1;
+      if (period === 'this_year') payload.selected_year = periodValue || dayjs().year();
+
+      const res = await fetchOnlineTransactionAnalytics({ filters: payload });
       if (res.success) {
         setChartData(res.chart);
         setStatusData(res.status_breakdown);
@@ -125,7 +136,11 @@ const Overview = () => {
     } catch (err) {
       console.error('Failed to fetch analytics', err);
     }
-  }, [fromDate, toDate, sessionId, termId, duration]);
+  }, [sessionId, termId, period, periodValue]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [period, periodValue]);
 
   useEffect(() => {
     fetchSessions()
@@ -135,10 +150,6 @@ const Overview = () => {
     loadTable();
     loadAnalytics();
   }, []);
-
-  useEffect(() => {
-    if (duration) loadAnalytics();
-  }, [duration]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -283,9 +294,13 @@ const Overview = () => {
         chartOptions={buildChartOptions(chartData?.categories || [])}
         chartSeries={chartData?.series || []}
         statusData={statusData}
-        onDurationChange={(val) => {
-          setDuration(val);
+        period={period}
+        periodValue={periodValue}
+        onPeriodChange={(p) => {
+          setPeriod(p);
+          setPeriodValue(null);
         }}
+        onPeriodValueChange={(v) => setPeriodValue(v)}
       />
       <ParentCard
         title={

@@ -15,6 +15,7 @@ import {
   Select,
   MenuItem,
   TextField,
+  InputLabel,
 } from '@mui/material';
 import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
@@ -30,17 +31,20 @@ const FeeChart = ({
   buttonLabel = 'Download CSV',
   chartType = 'bar',
   onDurationChange,
-  onSessionChange,
-  onTermChange,
   onFromDateChange,
   onToDateChange,
   statusData,
+
+  sessions,
+  terms,
+  sessionId,
+  termId,
+  onSessionChange,
+  onTermChange,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [selectedDuration, setSelectedDuration] = useState('monthly');
-  const [selectedSession, setSelectedSession] = useState('2025/2026');
-  const [selectedTerm, setSelectedTerm] = useState('First Term');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -49,22 +53,6 @@ const FeeChart = ({
     setSelectedDuration(newDuration);
     if (onDurationChange) {
       onDurationChange(newDuration);
-    }
-  };
-
-  const handleSessionChange = (event) => {
-    const newSession = event.target.value;
-    setSelectedSession(newSession);
-    if (onSessionChange) {
-      onSessionChange(newSession);
-    }
-  };
-
-  const handleTermChange = (event) => {
-    const newTerm = event.target.value;
-    setSelectedTerm(newTerm);
-    if (onTermChange) {
-      onTermChange(newTerm);
     }
   };
 
@@ -155,30 +143,10 @@ const FeeChart = ({
                 }}
               />
 
-              {/* Session Filter */}
-              <FormControl size="small" sx={{ minWidth: 130 }}>
-                <Select
-                  value={selectedSession}
-                  onChange={handleSessionChange}
-                  sx={{
-                    bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: isDark ? '#444' : '#e0e0e0',
-                    },
-                  }}
-                >
-                  <MenuItem value="2025/2026">2025/2026</MenuItem>
-                  <MenuItem value="2024/2025">2024/2025</MenuItem>
-                  <MenuItem value="2023/2024">2023/2024</MenuItem>
-                  <MenuItem value="2022/2023">2022/2023</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Term Filter */}
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <Select
-                  value={selectedTerm}
-                  onChange={handleTermChange}
+                  value={selectedDuration}
+                  onChange={handleDurationChange}
                   sx={{
                     bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
                     '& .MuiOutlinedInput-notchedOutline': {
@@ -186,9 +154,39 @@ const FeeChart = ({
                     },
                   }}
                 >
-                  <MenuItem value="First Term">First Term</MenuItem>
-                  <MenuItem value="Second Term">Second Term</MenuItem>
-                  <MenuItem value="Third Term">Third Term</MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Session</InputLabel>
+                <Select
+                  label="Session"
+                  value={sessionId}
+                  onChange={(e) => onSessionChange(e.target.value)}
+                >
+                  <MenuItem value="">All Sessions</MenuItem>
+
+                  {sessions?.map((session) => (
+                    <MenuItem key={session.id} value={session.id}>
+                      {session.sesname}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Term</InputLabel>
+                <Select label="Term" value={termId} onChange={(e) => onTermChange(e.target.value)}>
+                  <MenuItem value="">All Terms</MenuItem>
+
+                  {terms?.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.term_name || term.display_name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>

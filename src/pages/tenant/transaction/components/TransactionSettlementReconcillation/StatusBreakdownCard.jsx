@@ -1,93 +1,121 @@
 import React from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
-
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import PropTypes from 'prop-types';
+import { Box, Typography, useTheme, Chip } from '@mui/material';
+import {
+  AccountBalanceWalletOutlined as WalletIcon,
+  CheckCircleOutline as ReconciledIcon,
+  WarningAmberOutlined as OutstandingIcon,
+  TrendingUp as TotalIcon,
+} from '@mui/icons-material';
 
 const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const iconMap = {
+    wallet: WalletIcon,
+    settlement: ReconciledIcon,
+    balance: OutstandingIcon,
+    revenue: TotalIcon,
+  };
+
+  const colorMap = {
+    wallet: '#3247C6',
+    settlement: '#10B981',
+    balance: '#EF4444',
+    revenue: '#4DA3F5',
+  };
+
   return (
     <Box>
       <Typography
-        variant="subtitle2"
+        variant="subtitle1"
         fontWeight={700}
-        sx={{ mb: 1.5, color: isDark ? '#fff' : '#1a1a1a' }}
+        sx={{ mb: 3, color: isDark ? '#fff' : '#1f2937' }}
       >
         {title}
       </Typography>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {items.map((item, index) => (
+      {items.map((item, index) => {
+        const IconComponent = iconMap[item.icon] || WalletIcon;
+        const mainColor = colorMap[item.icon] || '#64748B';
+
+        return (
           <Box
-            key={item.label}
+            key={index}
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1.5,
-              py: 1.2,
-              borderBottom:
-                index !== items.length - 1 ? `1px solid ${isDark ? '#333' : '#f0f0f0'}` : 'none',
+              gap: 2.5,
+              py: 1,
+              px: 2,
+              mb: 1,
+              borderRadius: 3,
+              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
             }}
           >
+            {/* Icon */}
             <Box
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: item.bgColor,
+                borderRadius: 2.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
+                bgcolor: isDark ? `${mainColor}20` : `${mainColor}15`,
               }}
             >
-              <AccountBalanceWalletOutlinedIcon
-                sx={{
-                  fontSize: 16,
-                  color: item.color,
-                }}
-              />
+              <IconComponent sx={{ fontSize: 30, color: mainColor }} />
             </Box>
 
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            {/* Content */}
+            <Box sx={{ flex: 1 }}>
               <Typography
-                fontWeight={800}
                 sx={{
-                  fontSize: '14px',
-                  color: item.color,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  fontSize: '1.45rem',
+                  fontWeight: 700,
+                  color: mainColor,
+                  lineHeight: 1.1,
                 }}
               >
                 {item.value}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: isDark ? '#aaa' : '#64748B',
-                  fontSize: '11px',
-                  display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {item.label}
-              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: isDark ? '#9ca3af' : '#64748B' }}>
+                  {item.label}
+                </Typography>
+
+                {item.icon === 'balance' && (
+                  <Chip
+                    label="Outstanding"
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '10px' }}
+                  />
+                )}
+                {item.icon === 'settlement' && (
+                  <Chip
+                    label="Reconciled"
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '10px' }}
+                  />
+                )}
+              </Box>
             </Box>
           </Box>
-        ))}
-      </Box>
+        );
+      })}
     </Box>
   );
+};
+
+StatusBreakdownCard.propTypes = {
+  title: PropTypes.string,
+  items: PropTypes.array,
 };
 
 export default StatusBreakdownCard;

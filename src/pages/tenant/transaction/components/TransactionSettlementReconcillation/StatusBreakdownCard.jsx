@@ -1,16 +1,9 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 
-const StatusBreakdownCard = ({
-  title = 'Total Transaction Value',
-  items = [],
-}) => {
+const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -38,7 +31,8 @@ const StatusBreakdownCard = ({
               alignItems: 'center',
               gap: 1.5,
               py: 1.2,
-              borderBottom: index !== items.length - 1 ? `1px solid ${isDark ? '#333' : '#f0f0f0'}` : 'none',
+              borderBottom:
+                index !== items.length - 1 ? `1px solid ${isDark ? '#333' : '#f0f0f0'}` : 'none',
             }}
           >
             <Box

@@ -480,8 +480,10 @@ const SchoolsTab = ({
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
+  const [openApproveOnboardingDialog, setOpenApproveOnboardingDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
+  const [schoolToApproveOnboarding, setSchoolToApproveOnboarding] = useState(null);
 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewProspect, setReviewProspect] = useState(null);
@@ -674,12 +676,19 @@ const SchoolsTab = ({
   const handleApproveOnboarding = async (school) => {
     if (!school || school.onboarding_status === 'approved') return;
 
-    if (!window.confirm(`Approve onboarding for "${school.tenant_name}"?`)) return;
+    setSchoolToApproveOnboarding(school);
+    setOpenApproveOnboardingDialog(true);
+  };
+
+  const handleConfirmApproveOnboarding = async () => {
+    if (!schoolToApproveOnboarding) return;
 
     try {
-      await approveSchoolOnboarding(school.id);
+      await approveSchoolOnboarding(schoolToApproveOnboarding.id);
       notify('Onboarding approved successfully', 'success');
       await fetchSchools(); // Refresh list
+      setOpenApproveOnboardingDialog(false);
+      setSchoolToApproveOnboarding(null);
     } catch (err) {
       notify('Failed to approve onboarding', 'error');
     }
@@ -1239,6 +1248,19 @@ const SchoolsTab = ({
           message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} ${schoolToDeactivate?.institutionName}?`}
           confirmText={isActive ? 'Deactivate' : 'Activate'}
           severity={isActive ? 'warning' : 'success'}
+        />
+
+        <ConfirmationDialog
+          open={openApproveOnboardingDialog}
+          onClose={() => {
+            setOpenApproveOnboardingDialog(false);
+            setSchoolToApproveOnboarding(null);
+          }}
+          onConfirm={handleConfirmApproveOnboarding}
+          title="Approve Onboarding"
+          message={`Are you sure you want to approve onboarding for "${schoolToApproveOnboarding?.tenant_name}"? This will mark the school setup as complete.`}
+          confirmText="Approve Onboarding"
+          severity="success"
         />
 
         <FilterSideDrawer

@@ -358,7 +358,6 @@ const ParentForm = ({
             helperText={formik.touched.occupation && formik.errors.occupation} />
         </Grid> */}
 
-        {/* Confirm Password — only shown when explicitly requested (e.g. public registration) */}
         {showConfirmPassword && (
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
@@ -582,7 +581,7 @@ const ParentForm = ({
       {beforeActions && <Box sx={{ mt: 3 }}>{beforeActions}</Box>}
 
       <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} sx={{ mt: 3 }}>
-        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button variant="contained" size="small" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
         <Button size="small" type="submit" disabled={isLoading || !formik.isValid}>

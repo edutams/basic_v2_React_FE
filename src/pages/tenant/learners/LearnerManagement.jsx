@@ -709,7 +709,7 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
           </Button>
         </DialogActions>
@@ -796,7 +796,7 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="secondary" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>

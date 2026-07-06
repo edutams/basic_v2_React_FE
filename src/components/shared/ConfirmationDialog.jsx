@@ -24,13 +24,13 @@ const ConfirmationDialog = ({
 
   const actions = (
     <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
-      <Button
+      <PrimaryButton
         onClick={onClose}
         variant="secondary"
       >
         {cancelText}
-      </Button>
-      <Button
+      </PrimaryButton>
+      <PrimaryButton
         onClick={handleConfirm}
         variant="primary"
         autoFocus
@@ -42,7 +42,7 @@ const ConfirmationDialog = ({
         }}
       >
         {confirmText}
-      </Button>
+      </PrimaryButton>
     </Box>
   );
 

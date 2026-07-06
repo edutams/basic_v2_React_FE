@@ -4,7 +4,7 @@ import GetAppIcon from '@mui/icons-material/GetApp';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StandardDataTable from '@/components/shared/StandardDataTable';
 import StandardModal from '@/components/shared/StandardModal';
-import Button from '@/components/shared/Button';
+import PrimaryButton from '@/components/shared/PrimaryButton';
 
 const ViewUsersListModal = ({ open, onClose, schoolName }) => {
   const data = [
@@ -24,12 +24,12 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
       headerBg="white"
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <Button variant="primary" onClick={onClose}>
+          < PrimaryButton variant="primary" onClick={onClose}>
             Cancel
-          </Button>
-          <Button variant="secondary" onClick={onClose}>
+          </  PrimaryButton>
+          < PrimaryButton variant="secondary" onClick={onClose}>
             Save
-          </Button>
+          </  PrimaryButton>
         </Stack>
       }
     >
@@ -44,7 +44,7 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          <Button
+          < PrimaryButton
             variant="primary"
             startIcon={<GetAppIcon />}
             sx={{
@@ -55,7 +55,7 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
             }}
           >
             Export to Excel
-          </Button>
+          </  PrimaryButton>
         </Box>
         <Box sx={{ p: 2 }}>
           <StandardDataTable

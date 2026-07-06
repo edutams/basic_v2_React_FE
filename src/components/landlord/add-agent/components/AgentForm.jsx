@@ -35,7 +35,7 @@ const AgentForm = ({
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} color="inherit" disabled={loading}>
+        <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} disabled={loading}>
           Cancel
         </Button>
         {actionType !== 'viewSchools' && (

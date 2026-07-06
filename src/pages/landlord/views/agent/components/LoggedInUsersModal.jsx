@@ -28,7 +28,6 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
-import Button from 'src/components/shared/Button';
 
 const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
   const theme = useTheme();

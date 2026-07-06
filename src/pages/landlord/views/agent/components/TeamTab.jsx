@@ -512,11 +512,11 @@ const TeamTab = ({
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join('')
-                      .toUpperCase()
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join('')
+                    .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -752,7 +752,7 @@ const TeamTab = ({
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => {}}
+        handleRefresh={() => { }}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />
@@ -768,7 +768,7 @@ const TeamTab = ({
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCancelDelete}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmDelete} color="error">
+          <Button size="small" onClick={handleConfirmDelete} color="error">
             Delete
           </Button>
         </DialogActions>

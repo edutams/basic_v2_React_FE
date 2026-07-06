@@ -619,7 +619,7 @@ const ParentManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>
@@ -643,7 +643,6 @@ const ParentManagement = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
           <Button
-            variant="contained"
             size="small"
             /* color={parentToToggle?.status === 'active' ? 'warning' : 'success'} */
             onClick={handleConfirmToggle}
@@ -681,7 +680,7 @@ const ParentManagement = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmedImpersonateGuardian} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
+          <Button size="small" onClick={handleConfirmedImpersonateGuardian} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
             Yes, Login As
           </Button>
         </DialogActions>

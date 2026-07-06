@@ -132,7 +132,7 @@ const ModuleForm = ({
             <Button variant="contained" size="small" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button variant="contained" size="small" type="submit" disabled={isLoading || !formik.isValid}>
+            <Button size="small" type="submit" disabled={isLoading || !formik.isValid}>
               {isLoading ? 'Saving...' : submitText}
             </Button>
           </Box>

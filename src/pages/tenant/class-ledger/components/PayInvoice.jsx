@@ -1391,7 +1391,6 @@ const PayInvoice = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             disabled={!selectedWallet}
             onClick={() => {
@@ -1563,7 +1562,6 @@ const PayInvoice = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}

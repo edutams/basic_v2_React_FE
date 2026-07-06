@@ -709,7 +709,7 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
           </Button>
         </DialogActions>
@@ -742,7 +742,7 @@ const LearnerManagement = () => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
+          <Button size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
             Yes, Login As
           </Button>
         </DialogActions>
@@ -797,7 +797,7 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>

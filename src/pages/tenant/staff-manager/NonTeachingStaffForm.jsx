@@ -240,7 +240,7 @@ const NonTeachingStaffForm = ({
         <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="contained" size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+        <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
       </Box>
     </Box>
   );

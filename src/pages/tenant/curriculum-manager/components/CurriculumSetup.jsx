@@ -881,7 +881,7 @@ const CurriculumSetup = () => {
           <Button variant="contained" size="small" onClick={handleCloseCreateModal} disabled={loadingCreate}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleCreateCurriculum} disabled={loadingCreate} startIcon={loadingCreate ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleCreateCurriculum} disabled={loadingCreate} startIcon={loadingCreate ? <CircularProgress /> : null}
           >
             {loadingCreate ? 'Creating...' : 'Create'}
           </Button>
@@ -921,7 +921,7 @@ const CurriculumSetup = () => {
           <Button variant="contained" size="small" onClick={handleCloseEditModal} disabled={loadingUpdate}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleUpdateCurriculum} disabled={loadingUpdate} startIcon={loadingUpdate ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingUpdate} startIcon={loadingUpdate ? <CircularProgress /> : null}
           >
             {loadingUpdate ? 'Updating...' : 'Update'}
           </Button>
@@ -941,7 +941,7 @@ const CurriculumSetup = () => {
           <Button variant="contained" size="small" onClick={handleCloseDeleteModal} disabled={loadingDelete}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleDeleteCurriculum} disabled={loadingDelete} startIcon={loadingDelete ? <CircularProgress /> : null}
+          <Button size="small" color="error" onClick={handleDeleteCurriculum} disabled={loadingDelete} startIcon={loadingDelete ? <CircularProgress /> : null}
           >
             {loadingDelete ? 'Deleting...' : 'Delete'}
           </Button>
@@ -1153,7 +1153,7 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
 
-          <Button variant="contained" size="small" onClick={handleImportSelected} disabled={selectedCurriculums.length === 0}>
+          <Button size="small" onClick={handleImportSelected} disabled={selectedCurriculums.length === 0}>
             Import ({selectedCurriculums.length})
           </Button>
         </DialogActions>
@@ -1199,7 +1199,7 @@ const CurriculumSetup = () => {
           <Button variant="contained" size="small" onClick={() => setOpenImportConfirmModal(false)}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmImport} color="primary" disabled={loadingImport} startIcon={loadingImport ? <CircularProgress /> : null}
+          <Button size="small" onClick={handleConfirmImport} color="primary" disabled={loadingImport} startIcon={loadingImport ? <CircularProgress /> : null}
           >
             {loadingImport ? 'Importing...' : 'Confirm Import'}
           </Button>

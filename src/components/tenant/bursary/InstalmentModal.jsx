@@ -183,7 +183,7 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
           <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} disabled={loading || isFullPayment} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} disabled={loading || isFullPayment} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${instalment ? 'Update' : 'Add'} Plan`}
           </Button>
         </Stack>

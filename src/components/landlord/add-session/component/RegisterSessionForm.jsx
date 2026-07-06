@@ -125,7 +125,7 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
           Cancel
         </Button>
         {actionType !== 'view' && (
-          <Button variant="contained" size="small" type="submit" disabled={formik.isSubmitting}>
+          <Button size="small" type="submit" disabled={formik.isSubmitting}>
             {actionType === 'update' ? 'Update Session' : 'Save'}
           </Button>
         )}

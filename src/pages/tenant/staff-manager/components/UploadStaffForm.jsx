@@ -91,7 +91,7 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
         <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={uploading}>
           {result?.severity === 'success' ? 'Close' : 'Cancel'}
         </Button>
-        <Button variant="contained" size="small" startIcon={<IconUpload />}
+        <Button size="small" startIcon={<IconUpload />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
         >

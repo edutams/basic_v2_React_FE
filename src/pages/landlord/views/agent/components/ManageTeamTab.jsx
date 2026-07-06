@@ -668,7 +668,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           <Button variant="contained" size="small" onClick={() => setOpenAddModal(false)} color="inherit" disabled={submitting}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
+          <Button size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Member'}
           </Button>
         </DialogActions>
@@ -783,10 +783,10 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
               {availablePermissions.filter((perm) =>
                 perm.label.toLowerCase().includes(permissionSearch.toLowerCase()),
               ).length === 0 && (
-                <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
-                  No permissions found.
-                </Typography>
-              )}
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                    No permissions found.
+                  </Typography>
+                )}
             </Box>
           </Box>
         </DialogContent>
@@ -798,7 +798,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
+          <Button size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
           </Button>
         </DialogActions>
@@ -849,7 +849,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           <Button variant="contained" size="small" onClick={() => setOpenEditModal(false)} color="inherit" disabled={submitting}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
+          <Button size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Changes'}
           </Button>
         </DialogActions>
@@ -875,7 +875,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           <Button variant="contained" size="small" onClick={() => setOpenRemoveConfirm(false)} color="inherit" disabled={submitting}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleRemoveMember} disabled={submitting}>
+          <Button size="small" color="error" onClick={handleRemoveMember} disabled={submitting}>
             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Remove'}
           </Button>
         </DialogActions>

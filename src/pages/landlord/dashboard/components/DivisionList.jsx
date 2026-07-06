@@ -266,7 +266,7 @@ const DivisionList = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseModal}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleSubmit}>Save</Button>
+          <Button size="small" onClick={handleSubmit}>Save</Button>
         </DialogActions>
       </Dialog>
 

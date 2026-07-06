@@ -161,7 +161,6 @@ const ManageWeeks = ({ sessionTermId }) => {
         </Button>
         <Button variant="contained" size="small" color="success" startIcon={<AddIcon />}
           onClick={handleAddWeek}
-          size="small"
           disabled={loading}
         >
           Add Week
@@ -247,7 +246,7 @@ const ManageWeeks = ({ sessionTermId }) => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={() => setDeleteDialog({ open: false, week: null })}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleDeleteWeek} color="error">
+          <Button size="small" onClick={handleDeleteWeek} color="error">
             Delete
           </Button>
         </DialogActions>

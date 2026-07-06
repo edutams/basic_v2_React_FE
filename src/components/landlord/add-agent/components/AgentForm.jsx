@@ -39,11 +39,11 @@ const AgentForm = ({
           Cancel
         </Button>
         {actionType !== 'viewSchools' && (
-          <Button variant="contained" size="small" type="submit" disabled={loading || !formik.isValid} onClick={(e) => {
-              if (!loading && formik.isValid) {
-                handleSubmit(e);
-              }
-            }}
+          <Button size="small" type="submit" disabled={loading || !formik.isValid} onClick={(e) => {
+            if (!loading && formik.isValid) {
+              handleSubmit(e);
+            }
+          }}
           >
             {loading
               ? 'Saving...'

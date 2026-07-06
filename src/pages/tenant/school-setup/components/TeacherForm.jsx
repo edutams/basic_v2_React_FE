@@ -84,9 +84,8 @@ const TeacherForm = ({
                   name: cls.class_name,
                   class_code: cls.class_code || cls.class_name,
                   programme_code: programme.programme_code || '',
-                  display_name: `${programme.programme_code || ''} - ${
-                    cls.class_code || cls.class_name
-                  }`,
+                  display_name: `${programme.programme_code || ''} - ${cls.class_code || cls.class_name
+                    }`,
                   class_arms: cls.class_arms,
                 });
               }
@@ -386,7 +385,7 @@ const TeacherForm = ({
           Cancel
         </Button>
         {/* disabled={isLoading || !formik.isValid} */}
-        <Button variant="contained" size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+        <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
       </Box>
     </Box>
   );

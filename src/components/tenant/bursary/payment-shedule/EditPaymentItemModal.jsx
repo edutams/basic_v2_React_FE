@@ -657,7 +657,7 @@ const EditPaymentItemModal = ({
           <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
+          <Button size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }} disabled={loadingClasses || saving}>
             {saving ? 'Saving...' : 'Update Payment Schedule'}
           </Button>
         </Stack>
@@ -733,7 +733,7 @@ const EditPaymentItemModal = ({
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleToggleConfirm} disabled={toggling} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleToggleConfirm} disabled={toggling} sx={{ fontWeight: 600 }}>
             {toggling ? 'Processing...' : 'Confirm'}
           </Button>
         </DialogActions>
@@ -763,7 +763,7 @@ const EditPaymentItemModal = ({
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
+          <Button size="small" color="error" onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontWeight: 600 }}>
             {deleting ? 'Deleting...' : 'Delete Schedule'}
           </Button>
         </DialogActions>

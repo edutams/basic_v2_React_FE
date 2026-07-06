@@ -630,9 +630,9 @@ const CreateAdmissionBatch = () => {
                           mb: 2,
                         }}
                       >
-                        <Typography 
-                          variant="caption" 
-                          color={errors.preAppPayments ? 'error.main' : 'text.secondary'} 
+                        <Typography
+                          variant="caption"
+                          color={errors.preAppPayments ? 'error.main' : 'text.secondary'}
                           fontStyle="italic"
                         >
                           {errors.preAppPayments || 'No Options set yet'}
@@ -792,7 +792,7 @@ const CreateAdmissionBatch = () => {
             >
               Cancel
             </Button>
-            <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting} sx={{ fontWeight: 700, px: 4 }} startIcon={submitting ? <CircularProgress color="inherit" /> : null}
+            <Button size="small" onClick={handleSubmit} disabled={submitting} sx={{ fontWeight: 700, px: 4 }} startIcon={submitting ? <CircularProgress color="inherit" /> : null}
             >
               {submitting
                 ? isEdit

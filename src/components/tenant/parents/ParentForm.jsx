@@ -101,18 +101,18 @@ const ParentForm = ({
   const initialValues =
     isEdit && selectedParent
       ? {
-          title: selectedParent.title ?? '',
-          first_name: selectedParent.user?.fname ?? '',
-          last_name: selectedParent.user?.lname ?? '',
-          middle_name: selectedParent.user?.mname ?? '',
-          email: selectedParent.user?.email ?? '',
-          phone: selectedParent.user?.phone ?? '',
-          gender: selectedParent.user?.sex ?? '',
-          occupation: selectedParent.occupation ?? '',
-          relationship: selectedParent.relationship ?? '',
-          address: selectedParent.user?.address ?? '',
-          confirm_password: '',
-        }
+        title: selectedParent.title ?? '',
+        first_name: selectedParent.user?.fname ?? '',
+        last_name: selectedParent.user?.lname ?? '',
+        middle_name: selectedParent.user?.mname ?? '',
+        email: selectedParent.user?.email ?? '',
+        phone: selectedParent.user?.phone ?? '',
+        gender: selectedParent.user?.sex ?? '',
+        occupation: selectedParent.occupation ?? '',
+        relationship: selectedParent.relationship ?? '',
+        address: selectedParent.user?.address ?? '',
+        confirm_password: '',
+      }
       : EMPTY_FORM;
 
   const [wardSearch, setWardSearch] = useState('');
@@ -401,7 +401,7 @@ const ParentForm = ({
               }
               helperText={
                 formik.values.confirm_password &&
-                formik.values.password !== formik.values.confirm_password
+                  formik.values.password !== formik.values.confirm_password
                   ? 'Passwords do not match'
                   : ''
               }
@@ -585,7 +585,7 @@ const ParentForm = ({
         <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button variant="contained" size="small" type="submit" disabled={isLoading || !formik.isValid}>
+        <Button size="small" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : submitText || (isEdit ? 'Save Changes' : 'Add Parent')}
         </Button>
       </Box>

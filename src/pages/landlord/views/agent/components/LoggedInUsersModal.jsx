@@ -21,13 +21,14 @@ import {
   TableRow,
   TableFooter,
   TablePagination,
+  Button,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
-import PrimaryButton from 'src/components/shared/PrimaryButton';
+import Button from 'src/components/shared/Button';
 
 const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
   const theme = useTheme();
@@ -82,8 +83,8 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
         dividers={false}
         actions={
           <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-            <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
-            <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+            <Button variant="contained" onClick={onClose}>Cancel</Button>
+            <Button onClick={onClose}>Save</Button>
           </Stack>
         }
       >
@@ -173,17 +174,12 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               </Box>
               <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
             </Stack>
-            <PrimaryButton
+            <Button
               startIcon={<GetAppIcon />}
-              sx={{
-                color: '#ffffff !important',
-                bgcolor: '#2ca87f !important',
-                '&:hover': { bgcolor: '#238a68 !important' },
-                width: { xs: '100%', sm: 'auto' }
-              }}
+              variant='contained'
             >
               Export to Excel
-            </PrimaryButton>
+            </Button>
           </Box>
 
           {/* Filter Bar */}
@@ -281,7 +277,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               />
             </Box>
 
-            <PrimaryButton
+            <Button
               sx={{
                 color: '#ffffff !important',
                 bgcolor: '#2ca87f !important',
@@ -290,7 +286,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               }}
             >
               Filter
-            </PrimaryButton>
+            </Button>
           </Box>
 
           <Box sx={{ p: 0 }}>

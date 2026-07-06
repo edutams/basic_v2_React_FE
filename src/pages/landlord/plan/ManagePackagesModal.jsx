@@ -237,12 +237,12 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
                             p.id !== pkg.id
                               ? p
                               : {
-                                  ...p,
-                                  modules: p.modules.map((m) => ({
-                                    ...m,
-                                    ckmstatus: checked,
-                                  })),
-                                },
+                                ...p,
+                                modules: p.modules.map((m) => ({
+                                  ...m,
+                                  ckmstatus: checked,
+                                })),
+                              },
                           ),
                         );
                       }}
@@ -267,9 +267,8 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pb: 1 }}>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
 
-        <Button variant="contained" size="small" onClick={handleSave} startIcon={saving && <CircularProgress color="inherit" />}
+        <Button size="small" onClick={handleSave} startIcon={saving && <CircularProgress color="inherit" />}
           disabled={saving}
-          size="small"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

@@ -102,7 +102,7 @@ const ClassStructureTable = ({
               },
             }}
           />
-          <Button variant="contained" size="small" disabled={ !structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0' } onClick={() => onGenerateArms && onGenerateArms(structure.id)}
+          <Button variant="contained" size="small" disabled={!structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'} onClick={() => onGenerateArms && onGenerateArms(structure.id)}
           >
             Generate
           </Button>
@@ -228,7 +228,7 @@ const ClassStructureTable = ({
         </DialogContent>
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
+          <Button size="small" onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
             {isActive ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>

@@ -9,9 +9,9 @@ import {
   FormControl,
   InputLabel,
   Stack,
+  Button,
 } from '@mui/material';
 import StandardModal from 'src/components/shared/StandardModal';
-import PrimaryButton from 'src/components/shared/PrimaryButton';
 import { IconSettings, IconExchange } from '@tabler/icons-react';
 
 export const SetCommissionModal = ({ open, onClose, agent }) => {
@@ -24,12 +24,12 @@ export const SetCommissionModal = ({ open, onClose, agent }) => {
       maxWidth="sm"
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>
+          <Button variant="contained" onClick={onClose}>
             Cancel
-          </PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>
+          </Button>
+          <Button onClick={onClose}>
             Save
-          </PrimaryButton>
+          </Button>
         </Stack>
       }
     >
@@ -78,12 +78,12 @@ export const ChangeCommissionTypeModal = ({ open, onClose, agent }) => {
       maxWidth="xs"
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>
+          <Button variant="contained" onClick={onClose}>
             Cancel
-          </PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>
+          </Button>
+          <Button onClick={onClose}>
             Save
-          </PrimaryButton>
+          </Button>
         </Stack>
       }
     >

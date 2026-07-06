@@ -24,17 +24,17 @@ const ConfirmationDialog = ({
 
   const actions = (
     <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
-      <PrimaryButton
+      <Button
         onClick={onClose}
         variant="secondary"
       >
         {cancelText}
-      </PrimaryButton>
-      <PrimaryButton
+      </Button>
+      <Button
         onClick={handleConfirm}
         variant="primary"
         autoFocus
-        sx={{ 
+        sx={{
           bgcolor: severity === 'error' ? theme.palette.error.main : theme.palette.warning.main,
           '&:hover': {
             bgcolor: severity === 'error' ? theme.palette.error.dark : theme.palette.warning.dark,
@@ -42,7 +42,7 @@ const ConfirmationDialog = ({
         }}
       >
         {confirmText}
-      </PrimaryButton>
+      </Button>
     </Box>
   );
 

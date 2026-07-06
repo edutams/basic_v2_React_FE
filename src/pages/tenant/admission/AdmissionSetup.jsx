@@ -101,27 +101,27 @@ const YesNoPill = ({ value }) => (
 const FeePills = ({ requirePayment, appFee, acceptanceFee, onViewPayments }) => {
   if (!requirePayment) return <YesNoPill value={false} />;
   return (
-   <Stack direction="row" spacing={0.5} alignItems="center">
-  <YesNoPill value />
+    <Stack direction="row" spacing={0.5} alignItems="center">
+      <YesNoPill value />
 
-  <Tooltip title="View payment breakdown">
-    <IconButton
-      size="small"
-      onClick={onViewPayments}
-      sx={{
-        bgcolor: 'info.light',
-        color: 'info.main',
-        borderRadius: 1,
-        '&:hover': {
-          bgcolor: 'info.main',
-          color: 'white',
-        },
-      }}
-    >
-      <IconEye size={12} />
-    </IconButton>
-  </Tooltip>
-</Stack>
+      <Tooltip title="View payment breakdown">
+        <IconButton
+          size="small"
+          onClick={onViewPayments}
+          sx={{
+            bgcolor: 'info.light',
+            color: 'info.main',
+            borderRadius: 1,
+            '&:hover': {
+              bgcolor: 'info.main',
+              color: 'white',
+            },
+          }}
+        >
+          <IconEye size={12} />
+        </IconButton>
+      </Tooltip>
+    </Stack>
   );
 };
 
@@ -700,7 +700,7 @@ const AdmissionSetup = () => {
           <Button variant="contained" size="small" onClick={() => setConfirmToggleBatch({ open: false, batch: null })}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'} onClick={handleToggleBatchStatus}>
+          <Button size="small" color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'} onClick={handleToggleBatchStatus}>
             Confirm
           </Button>
         </DialogActions>
@@ -747,7 +747,7 @@ const AdmissionSetup = () => {
             {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
           {!letterEditorReadOnly && (
-            <Button variant="contained" size="small" onClick={handleSaveAdmissionLetter} sx={{ fontWeight: 700 }}>
+            <Button size="small" onClick={handleSaveAdmissionLetter} sx={{ fontWeight: 700 }}>
               Save Letter
             </Button>
           )}
@@ -789,7 +789,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                paymentViewBatch.pre_application_payments.length === 0 ? (
+                  paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -850,7 +850,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                paymentViewBatch.post_application_payments.length === 0 ? (
+                  paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

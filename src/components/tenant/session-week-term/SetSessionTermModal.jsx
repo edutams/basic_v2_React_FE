@@ -84,7 +84,7 @@ const SetSessionTermModal = ({ open, onClose, onSubmit }) => {
             <Button variant="contained" size="small" onClick={handleClose} color="inherit">
               Cancel
             </Button>
-            <Button variant="contained" size="small" type="submit" color="primary">
+            <Button size="small" type="submit" color="primary">
               Set Session/Term
             </Button>
           </Box>

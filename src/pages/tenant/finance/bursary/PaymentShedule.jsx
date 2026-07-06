@@ -940,7 +940,7 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            <Box
+            {/* <Box
               sx={{
                 px: 3,
                 pt: 2,
@@ -951,7 +951,6 @@ const PaymentShedule = () => {
                 gap: 2,
               }}
             >
-              {/* Schedule Type Tabs */}
               <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
                 <Tabs
                   value={scheduleTab}
@@ -1027,7 +1026,7 @@ const PaymentShedule = () => {
                   Import schedule for current term
                 </Button>
               )}
-            </Box>
+            </Box> */}
           </>
         )}
 

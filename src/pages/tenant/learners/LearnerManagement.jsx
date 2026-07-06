@@ -796,7 +796,7 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="secondary" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>

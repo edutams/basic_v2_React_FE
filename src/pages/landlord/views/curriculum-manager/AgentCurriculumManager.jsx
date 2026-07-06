@@ -948,7 +948,10 @@ const AgentCurriculumManager = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseDeleteDialog}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit" onClick={handleCloseDeleteDialog}>
             Cancel
           </Button>
           <Button size="small" onClick={handleDeleteCurriculum} color="error" disabled={loadingMutation}>
@@ -1096,7 +1099,7 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseAddSubjectModal}>Cancel</Button>
+          <Button variant="contained" size="small" color='inherit' onClick={handleCloseAddSubjectModal}>Cancel</Button>
           <Button size="small" onClick={handleCreateSubject} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
           </Button>
@@ -1261,7 +1264,11 @@ const AgentCurriculumManager = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
           <Button size="small" onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>

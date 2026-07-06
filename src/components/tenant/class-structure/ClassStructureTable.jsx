@@ -227,7 +227,7 @@ const ClassStructureTable = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleClose}>Cancel</Button>
+          <Button size="small" onClick={handleClose}>Cancel</Button>
           <Button size="small" onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
             {isActive ? 'Deactivate' : 'Activate'}
           </Button>

@@ -641,7 +641,7 @@ const ParentManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
+          <Button onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
           <Button
             size="small"
             /* color={parentToToggle?.status === 'active' ? 'warning' : 'success'} */

@@ -750,6 +750,7 @@ const PayInvoice = () => {
                 flexDirection: 'column',
                 alignItems: { xs: 'flex-start', lg: 'flex-end' },
                 gap: 1.5,
+                width: { xs: '100%', lg: 'auto' },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -764,6 +765,22 @@ const PayInvoice = () => {
                   gap: 2,
                   flexWrap: 'nowrap',
                   pb: { xs: 1, lg: 0 },
+                  overflowX: { xs: 'auto', lg: 'visible' },
+                  width: { xs: '100%', lg: 'auto' },
+                  '&::-webkit-scrollbar': {
+                    height: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                    borderRadius: '10px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
+                    borderRadius: '10px',
+                    '&:hover': {
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8',
+                    },
+                  },
                 }}
               >
 
@@ -773,7 +790,8 @@ const PayInvoice = () => {
                     onClick={() => setSelectedWallet(wallet.id)}
                     sx={{
                       p: 1,
-                      minWidth: 220,
+                      minWidth: { xs: 200, sm: 220 },
+                      flexShrink: 0,
                       borderRadius: 1,
                       cursor: 'pointer',
                       transition: 'all .2s',
@@ -1310,57 +1328,47 @@ const PayInvoice = () => {
             borderRadius: 3,
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'space-between',
+            alignItems: { xs: 'center', md: 'center' },
+            justifyContent: { xs: 'center', md: 'space-between' },
             gap: 2,
             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
           }}
         >
-          {/* Left — legends with bulk-select checkboxes */}
+          {/* Left — Amount display */}
           <Box
             sx={{
               display: 'flex',
-              flexDirection: { xs: 'row', sm: 'column', md: 'column' },
-              justifyContent: { xs: 'space-between', sm: 'flex-start' },
-              gap: { xs: 2, sm: 0.5 },
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' },
+              gap: 0.5,
             }}
           >
-
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-
-              <Typography variant="h1" fontWeight={900} color="primary.main" sx={{ mb: 1 }}>
-                ₦{format(grandTotal)}
-              </Typography>
-            </Box>
+            <Typography variant="h1" fontWeight={900} color="primary.main">
+              ₦{format(grandTotal)}
+            </Typography>
           </Box>
 
           {/* Right — Pay button */}
-          {/* Right side - Amount bigger + button under it */}
-          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Button
-                variant="contained"
-                disabled={grandTotal === 0}
-                onClick={() => {
-                  if (grandTotal <= 0) {
-                    notify.error('Please select at least one item to pay');
-                    return;
-                  }
-                  setConfirmModalOpen(true);
-                }}
-                sx={{
-                  px: 4,
-                  py: 1.2,
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                }}
-              >
-                Pay Now
-              </Button>
-            </Box>
-
+          <Box sx={{ textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              disabled={grandTotal === 0}
+              onClick={() => {
+                if (grandTotal <= 0) {
+                  notify.error('Please select at least one item to pay');
+                  return;
+                }
+                setConfirmModalOpen(true);
+              }}
+              sx={{
+                px: 4,
+                py: 1.2,
+                fontSize: '1.05rem',
+                fontWeight: 700,
+              }}
+            >
+              Pay Now
+            </Button>
           </Box>
         </Paper>
       </Box>

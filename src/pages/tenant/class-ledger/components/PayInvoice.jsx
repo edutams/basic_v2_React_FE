@@ -107,55 +107,59 @@ const PayInvoice = () => {
 
   // Dummy wallet balances for UI representation
   const availableWallets = [
-  {
-    id: 'father',
-    name: "Father's Wallet",
-    balance: 150000,
-    parent: {
-      id: 1,
-      name: 'Nwafor Chukwudi',
-      email: 'father@example.com',
-      phone: '08012345678',
+    {
+      id: 'father',
+      name: "Father's Wallet",
+      balance: 150000,
+      parent: {
+        id: 1,
+        name: 'Nwafor Chukwudi',
+        email: 'father@example.com',
+        phone: '08012345678',
+        wallet_number: '9048121392',
+      },
+      themeMain: 'primary.main',
+      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
+      themeBorder: isDark ? 'rgba(25,118,210,0.2)' : '#dbeafe',
+      themeHoverBg: isDark ? 'rgba(25,118,210,0.1)' : '#e0e7ff',
+      themeSelectedBg: isDark ? 'rgba(25,118,210,0.2)' : '#e0e7ff',
     },
-    themeMain: 'primary.main',
-    themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-    themeBorder: isDark ? 'rgba(25,118,210,0.2)' : '#dbeafe',
-    themeHoverBg: isDark ? 'rgba(25,118,210,0.1)' : '#e0e7ff',
-    themeSelectedBg: isDark ? 'rgba(25,118,210,0.2)' : '#e0e7ff',
-  },
-  {
-    id: 'mother',
-    name: "Mother's Wallet",
-    balance: 85000,
-    parent: {
-      id: 2,
-      name: 'Jane Nwafor',
-      email: 'mother@example.com',
-      phone: '08087654321',
+    {
+      id: 'mother',
+      name: "Mother's Wallet",
+      balance: 85000,
+      parent: {
+        id: 2,
+        name: 'Jane Nwafor',
+        email: 'mother@example.com',
+        phone: '08087654321',
+        wallet_number: '9048121391',
+
+      },
+      themeMain: '#0288d1',
+      themeBg: isDark ? 'rgba(2,136,209,0.05)' : '#e1f5fe',
+      themeBorder: isDark ? 'rgba(2,136,209,0.2)' : '#b3e5fc',
+      themeHoverBg: isDark ? 'rgba(2,136,209,0.1)' : '#b3e5fc',
+      themeSelectedBg: isDark ? 'rgba(2,136,209,0.2)' : '#81d4fa',
     },
-    themeMain: '#0288d1',
-    themeBg: isDark ? 'rgba(2,136,209,0.05)' : '#e1f5fe',
-    themeBorder: isDark ? 'rgba(2,136,209,0.2)' : '#b3e5fc',
-    themeHoverBg: isDark ? 'rgba(2,136,209,0.1)' : '#b3e5fc',
-    themeSelectedBg: isDark ? 'rgba(2,136,209,0.2)' : '#81d4fa',
-  },
-  {
-    id: 'child',
-    name: "Child's Wallet",
-    balance: 25000,
-    parent: {
-      id: 3,
-      name: 'David Nwafor',
-      email: 'child@example.com',
-      phone: '08011223344',
+    {
+      id: 'child',
+      name: "Child's Wallet",
+      balance: 25000,
+      parent: {
+        id: 3,
+        name: 'David Nwafor',
+        email: 'child@example.com',
+        phone: '08011223344',
+        wallet_number: '9048121395',
+      },
+      themeMain: 'secondary.main',
+      themeBg: isDark ? 'rgba(156,39,176,0.05)' : '#fdf4ff',
+      themeBorder: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
+      themeHoverBg: isDark ? 'rgba(156,39,176,0.1)' : '#f3e8ff',
+      themeSelectedBg: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
     },
-    themeMain: 'secondary.main',
-    themeBg: isDark ? 'rgba(156,39,176,0.05)' : '#fdf4ff',
-    themeBorder: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
-    themeHoverBg: isDark ? 'rgba(156,39,176,0.1)' : '#f3e8ff',
-    themeSelectedBg: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
-  },
-];
+  ];
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -746,6 +750,7 @@ const PayInvoice = () => {
                 flexDirection: 'column',
                 alignItems: { xs: 'flex-start', lg: 'flex-end' },
                 gap: 1.5,
+                width: { xs: '100%', lg: 'auto' },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -760,79 +765,111 @@ const PayInvoice = () => {
                   gap: 2,
                   flexWrap: 'nowrap',
                   pb: { xs: 1, lg: 0 },
+                  overflowX: { xs: 'auto', lg: 'visible' },
+                  width: { xs: '100%', lg: 'auto' },
+                  '&::-webkit-scrollbar': {
+                    height: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                    borderRadius: '10px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
+                    borderRadius: '10px',
+                    '&:hover': {
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8',
+                    },
+                  },
                 }}
               >
 
-{availableWallets.map((wallet) => (
-  <Box
-    key={wallet.id}
-    onClick={() => setSelectedWallet(wallet.id)}
-    sx={{
-      p: 1,
-      minWidth: 220,
-      borderRadius: 1,
-      cursor: 'pointer',
-      transition: 'all .2s',
-      bgcolor:
-        selectedWallet === wallet.id
-          ? wallet.themeSelectedBg
-          : wallet.themeBg,
-      border: '2px solid',
-           borderColor: selectedWallet === wallet.id ? "error.main" : "error.light",
-      '&:hover': {
-        bgcolor: wallet.themeHoverBg,
-        borderColor: wallet.themeMain,
-      },
-    }}
-  >
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="flex-start"
-    >
-      <Typography
-        variant="subtitle2"
-        fontWeight={800}
-      >
-        {wallet.name}
-      </Typography>
+                {availableWallets.map((wallet) => (
+                  <Box
+                    key={wallet.id}
+                    onClick={() => setSelectedWallet(wallet.id)}
+                    sx={{
+                      p: 1,
+                      minWidth: { xs: 200, sm: 220 },
+                      flexShrink: 0,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      transition: 'all .2s',
+                      bgcolor:
+                        selectedWallet === wallet.id
+                          ? wallet.themeSelectedBg
+                          : wallet.themeBg,
+                      border: '2px solid',
+                      borderColor: selectedWallet === wallet.id ? "error.main" : "error.light",
+                      '&:hover': {
+                        bgcolor: wallet.themeHoverBg,
+                        borderColor: wallet.themeMain,
+                      },
+                    }}
+                  >
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={800}
+                      >
+                        {wallet.name}
+                      </Typography>
 
-     <Radio
-        checked={selectedWallet === wallet.id}
-        value={wallet.id}
-        sx={{
-          color: "error.main",
-          "&.Mui-checked": {
-            color: "error.main",
-          },
-          p: 0,
-        }}
-      />
-    </Box>
+                      <Radio
+                        checked={selectedWallet === wallet.id}
+                        value={wallet.id}
+                        sx={{
+                          color: "error.main",
+                          "&.Mui-checked": {
+                            color: "error.main",
+                          },
+                          p: 0,
+                        }}
+                      />
+                    </Box>
 
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{  display: "block" }}
-    >
-      Balance
-    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block" }}
+                    >
+                      Balance
+                    </Typography>
 
-    <Typography
-      variant="h5"
-      fontWeight={800}
-      color="error.main"
-    >
-      ₦{format(wallet.balance)}
-    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight={800}
+                      color="error.main"
+                    >
+                      ₦{format(wallet.balance)}
+                    </Typography>
 
-    <Typography variant="body2" fontWeight={600}>
-      {wallet.parent.name}
-    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {wallet.parent.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block" }}
+                    >
+                      Wallet No.
+                    </Typography>
 
-   
-  </Box>
-))}
+                    <Typography
+                      variant="h6"
+                      fontWeight={200}
+                      color="dark"
+                    >
+                      {wallet.parent.wallet_number}
+                    </Typography>
+
+
+                  </Box>
+                ))}
               </Box>
             </Box>
           </Paper>
@@ -1291,23 +1328,29 @@ const PayInvoice = () => {
             borderRadius: 3,
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'space-between',
+            alignItems: { xs: 'center', md: 'center' },
+            justifyContent: { xs: 'center', md: 'space-between' },
             gap: 2,
             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
           }}
         >
-          {/* Left — legends with bulk-select checkboxes */}
+          {/* Left — Amount display */}
           <Box
             sx={{
               display: 'flex',
-              flexDirection: { xs: 'row', sm: 'column', md: 'column' },
-              justifyContent: { xs: 'space-between', sm: 'flex-start' },
-              gap: { xs: 2, sm: 0.5 },
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' },
+              gap: 0.5,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Button
+            <Typography variant="h1" fontWeight={900} color="primary.main">
+              ₦{format(grandTotal)}
+            </Typography>
+          </Box>
+
+          {/* Right — Pay button */}
+          <Box sx={{ textAlign: 'center' }}>
+            <Button
               variant="contained"
               disabled={grandTotal === 0}
               onClick={() => {
@@ -1326,20 +1369,6 @@ const PayInvoice = () => {
             >
               Pay Now
             </Button>
-            </Box>
-          </Box>
-
-          {/* Right — Pay button */}
-          {/* Right side - Amount bigger + button under it */}
-          <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-
-            <Typography variant="h2" fontWeight={800} color="primary.main" sx={{ mb: 1 }}>
-              ₦{format(grandTotal)}
-            </Typography>
-            </Box>
-
-           
           </Box>
         </Paper>
       </Box>
@@ -1471,6 +1500,21 @@ const PayInvoice = () => {
 
                   <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                     {wallet.parent.name}
+                  </Typography>
+                   <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: 0.5 }}
+                  >
+                    Wallet No.
+                  </Typography>
+
+                  <Typography
+                    variant="h6"
+                      fontWeight={200}
+                      color="dark"
+                  >
+                   {wallet.parent.wallet_number}
                   </Typography>
                 </Box>
               ))}

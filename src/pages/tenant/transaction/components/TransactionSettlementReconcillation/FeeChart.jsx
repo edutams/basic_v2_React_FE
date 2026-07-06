@@ -170,7 +170,7 @@ const FeeChart = ({
                 >
                   <MenuItem value="">All Sessions</MenuItem>
 
-                  {sessions.map((session) => (
+                  {sessions?.map((session) => (
                     <MenuItem key={session.id} value={session.id}>
                       {session.sesname}
                     </MenuItem>
@@ -182,7 +182,7 @@ const FeeChart = ({
                 <Select label="Term" value={termId} onChange={(e) => onTermChange(e.target.value)}>
                   <MenuItem value="">All Terms</MenuItem>
 
-                  {terms.map((term) => (
+                  {terms?.map((term) => (
                     <MenuItem key={term.id} value={term.id}>
                       {term.term_name || term.display_name}
                     </MenuItem>

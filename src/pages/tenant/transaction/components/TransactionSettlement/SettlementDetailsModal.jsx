@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
-  Grid,
   Typography,
-  Button,
-  TextField,
   IconButton,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -15,22 +11,15 @@ import {
   TableRow,
   Paper,
   CircularProgress,
+  Button,
   useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import DownloadIcon from '@mui/icons-material/Download';
 import StandardModal from '@/components/shared/StandardModal';
-import { fetchSettlementReconciliationDetails } from '@/api/tenant/bursary/transactionApi';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchSettlementDetails } from '@/api/tenant/bursary/transactionApi';
 import dayjs from 'dayjs';
 
-const SettlementTransactionsModal = ({
-  open,
-  onClose,
-  paymentId,
-  revenueName,
-  outstandingOnly = false,
-}) => {
+const SettlementDetailsModal = ({ open, onClose, settlementId, bankLabel }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -40,29 +29,15 @@ const SettlementTransactionsModal = ({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
-  const buildFilters = useCallback(
-    () => ({
-      from: fromDate || null,
-      to: toDate || null,
-      status: outstandingOnly ? 'outstanding' : 'all',
-      page,
-      per_page: 15,
-    }),
-    [fromDate, toDate, page, outstandingOnly],
-  );
-
   const loadData = useCallback(async () => {
-    if (!paymentId) return;
+    if (!settlementId) return;
     setLoading(true);
     try {
-      const res = await fetchSettlementReconciliationDetails({
-        payment_id: paymentId,
-        filters: buildFilters(),
+      const res = await fetchSettlementDetails({
+        settlement_id: settlementId,
+        filters: { page, per_page: 15 },
       });
       if (res.success) {
         setData(res.data);
@@ -74,95 +49,32 @@ const SettlementTransactionsModal = ({
     } finally {
       setLoading(false);
     }
-  }, [paymentId, buildFilters]);
+  }, [settlementId, page]);
 
   useEffect(() => {
-    if (open && paymentId) {
+    if (open && settlementId) {
       setPage(1);
       loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, paymentId]);
+  }, [open, settlementId]);
 
   useEffect(() => {
-    if (open && paymentId) loadData();
+    if (open && settlementId) loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const handleSearch = () => {
-    setPage(1);
-    loadData();
-  };
-
-  const handleDownloadCSV = async () => {
-    try {
-      const res = await tenantApi.post(
-        '/bursary/transactions/settlement/export_csv_settlement_details',
-        { payment_id: paymentId, filters: buildFilters() },
-        { responseType: 'blob' },
-      );
-      const url = URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `settlement_transactions_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('CSV export failed', err);
-    }
-  };
-
   return (
-    <StandardModal open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <StandardModal open={open} onClose={onClose} maxWidth="md" fullWidth>
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h6" fontWeight={700}>
-            {revenueName
-              ? `${outstandingOnly ? 'Outstanding' : 'All'} Transactions — ${revenueName}`
-              : 'Transactions'}
+            {bankLabel ? `Settlement Details — ${bankLabel}` : 'Settlement Details'}
           </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
           </IconButton>
         </Box>
-
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="From"
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="To"
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 6, sm: 2 }}>
-            <Button variant="contained" color="success" fullWidth onClick={handleSearch}>
-              Search
-            </Button>
-          </Grid>
-          <Grid
-            size={{ xs: 6, sm: 4 }}
-            sx={{ display: 'flex', justifyContent: { sm: 'flex-end' } }}
-          >
-            <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleDownloadCSV}>
-              Download CSV
-            </Button>
-          </Grid>
-        </Grid>
 
         {loading ? (
           <Box display="flex" justifyContent="center" py={6}>
@@ -181,15 +93,15 @@ const SettlementTransactionsModal = ({
                   <TableCell>#</TableCell>
                   <TableCell>Transaction ID</TableCell>
                   <TableCell>Paid By</TableCell>
-                  <TableCell>Payment Description</TableCell>
-                  <TableCell>Amount ₦</TableCell>
-                  <TableCell>Transaction Date</TableCell>
+                  <TableCell>Revenue</TableCell>
+                  <TableCell>Amount (₦)</TableCell>
+                  <TableCell>Date</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                       No transactions found.
                     </TableCell>
                   </TableRow>
@@ -197,18 +109,16 @@ const SettlementTransactionsModal = ({
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 220 }}>
+                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 200 }}>
                         {row.transaction_id}
                       </TableCell>
+                      <TableCell>{row.paid_by}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {row.paid_by}
-                        </Typography>
+                        <Typography variant="body2">{row.revenue_name}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {row.class}
+                          {row.revenue_code}
                         </Typography>
                       </TableCell>
-                      <TableCell>{row.description}</TableCell>
                       <TableCell>{format(row.amount_paid)}</TableCell>
                       <TableCell>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                     </TableRow>
@@ -237,4 +147,4 @@ const SettlementTransactionsModal = ({
   );
 };
 
-export default SettlementTransactionsModal;
+export default SettlementDetailsModal;

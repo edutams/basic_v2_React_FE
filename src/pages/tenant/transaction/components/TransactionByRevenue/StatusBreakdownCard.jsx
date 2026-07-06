@@ -6,8 +6,8 @@ const StatusBreakdownCard = ({
   title = 'Distribution',
   items = [],
   metrics = [],
-  minType = 0,
-  maxType = 0,
+  minType = '',
+  maxType = '',
   minRevenue = 0,
   maxRevenue = 0,
 }) => {
@@ -28,45 +28,34 @@ const StatusBreakdownCard = ({
         STATUS BREAKDOWN
       </Typography>
 
-      <Box sx={{ display: 'flex', gap: 4 }}>
-        {/* LEFT: Percentages */}
-        <Box sx={{ flex: 1 }}>
-          {items.map((item) => (
-            <Box key={item.label} sx={{ mb: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      bgcolor: item.color,
-                    }}
-                  />
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      color: isDark ? '#fff' : '#111827',
-                    }}
-                  >
-                    {item.label}
-                  </Typography>
-                </Box>
+      {/* Main Distribution Items */}
+      {items.map((item, index) => (
+        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 4 : 4.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2.5,
+              mb: 1.5,
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: item.color,
+                fontSize: 24,
+                minWidth: 130,
+              }}
+            >
+              {item.amount}
+            </Typography>
 
-                <Typography sx={{ fontWeight: 700, color: '#6B7280' }}>{item.value}%</Typography>
-              </Box>
-
+            <Box sx={{ flex: 1 }}>
               <LinearProgress
                 variant="determinate"
                 value={item.value}
                 sx={{
-                  height: 10,
+                  height: 9,
                   borderRadius: 10,
                   bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
                   '& .MuiLinearProgress-bar': {
@@ -76,49 +65,37 @@ const StatusBreakdownCard = ({
                 }}
               />
             </Box>
-          ))}
-        </Box>
 
-        {/* RIGHT: Amounts + Min/Max */}
-        <Box sx={{ flex: 1, borderLeft: `1px solid ${isDark ? '#444' : '#E5E7EB'}`, pl: 4 }}>
-          <Typography
-            sx={{
-              fontSize: 12,
-              letterSpacing: 2,
-              fontWeight: 700,
-              color: '#6B7280',
-              mb: 2,
-            }}
-          >
-            AMOUNTS
-          </Typography>
-
-          {/* Current Metrics (Compulsory / Optional) */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-            {metrics.map((metric) => (
-              <Box key={metric.label}>
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    letterSpacing: 1,
-                    fontWeight: 700,
-                    color: '#6B7280',
-                    mb: 0.5,
-                  }}
-                >
-                  {metric.label}
-                </Typography>
-                <Typography variant="h4" fontWeight={700} sx={{ color: metric.color }}>
-                  {metric.value}
-                </Typography>
-              </Box>
-            ))}
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: item.color,
+                fontSize: 16,
+                minWidth: 55,
+                textAlign: 'right',
+              }}
+            >
+              {item.value}%
+            </Typography>
           </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pl: 1 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
+            <Typography sx={{ fontWeight: 500, color: isDark ? '#fff' : '#111827', fontSize: 14 }}>
+              {item.label}
+            </Typography>
+          </Box>
+
+          {/* Divider between items */}
+          {index !== items.length - 1 && (
+            <Divider sx={{ mt: 3.5, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
+          )}
         </Box>
-      </Box>
+      ))}
 
-      <Divider sx={{ my: 3 }} />
+      <Divider sx={{ my: 4 }} />
 
+      {/* Min & Max Revenue */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
         <Box sx={{ flex: 1 }}>
           <Typography
@@ -170,6 +147,8 @@ StatusBreakdownCard.propTypes = {
   metrics: PropTypes.array,
   minRevenue: PropTypes.number,
   maxRevenue: PropTypes.number,
+  minType: PropTypes.string,
+  maxType: PropTypes.string,
 };
 
 export default StatusBreakdownCard;

@@ -20,24 +20,30 @@ import {
   Select,
   MenuItem,
   Alert,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   HourglassEmpty as PendingIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import {
   IconId,
   IconCalendar,
   IconMapPin,
   IconSchool,
+  IconCheck,
+  IconX,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
-import { getApplicantByFormNumber, updateAdmissionStatus } from '@/api/tenant/admission/admissionProcessingApi';
+import {
+  getApplicantByFormNumber,
+  updateAdmissionStatus,
+} from '@/api/tenant/admission/admissionProcessingApi';
 import WardReview from '@/components/tenant/admission/review/WardReview';
 import AcademicReview from '@/components/tenant/admission/review/AcademicReview';
 import DocumentsReview from '@/components/tenant/admission/review/DocumentsReview';
@@ -86,6 +92,8 @@ const ProcessApplicationForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [confirmDialog, setConfirmDialog] = useState({ open: false, status: '' });
+  const [declineDialog, setDeclineDialog] = useState({ open: false });
+  const [admitDialog, setAdmitDialog] = useState({ open: false });
 
   // ─── Load admission data ──────────────────────────────────────────────
   useEffect(() => {
@@ -148,7 +156,7 @@ const ProcessApplicationForm = () => {
   const StatusIcon = statusConfig[admission?.admission_status]?.icon || PendingIcon;
   const currentStatusColor = statusConfig[admission?.admission_status]?.color || 'warning';
   const fullName = admission
-    ? [admission.surname, admission.first_name, admission.other_name]
+    ? [admission.surname || admission.lname, admission.first_name || admission.fname, admission.other_name || admission.mname]
         .filter(Boolean)
         .join(' ')
         .toUpperCase() || '—'
@@ -175,21 +183,23 @@ const ProcessApplicationForm = () => {
 
   // ─── Build form data for review components ───────────────────────────
   const wardData = {
-    surname: admission.surname,
-    first_name: admission.first_name,
-    other_name: admission.other_name,
+    surname: admission.surname || admission.lname,
+    first_name: admission.first_name || admission.fname,
+    other_name: admission.other_name || admission.mname,
     dob: admission.dob,
-    gender: admission.gender,
+    gender: admission.gender || admission.sex,
+    religion: admission.religion,
     home_address: admission.home_address,
-    state_of_origin: admission.state_of_origin,
+    state_of_origin: admission.state_of_origin || admission.state_id,
     lga_id: admission.lga_id,
     lga: admission.lga,
-    passport_photo: admission.passport_photo,
+    passport_photo: admission.passport_photo || admission.image,
   };
 
   const academicData = {
     has_previous_school: admission.has_previous_school,
     prev_school_name: admission.prev_school_name,
+    prev_school_address: admission.prev_school_address,
     prev_school_state: admission.prev_school_state,
     prev_school_lga: admission.prev_school_lga,
     previous_class: admission.previous_class,
@@ -199,6 +209,18 @@ const ProcessApplicationForm = () => {
     intending_programme_id: admission.intending_programme_id,
     study_mode: admission.study_mode,
   };
+
+  // ─── Parent/guardian data ───────────────────────────────────────────
+  const parentData = {
+    lname: admission.parent_lname || admission.guardian_lname || '',
+    fname: admission.parent_fname || admission.guardian_fname || '',
+    mname: admission.parent_mname || admission.guardian_mname || '',
+    phone: admission.parent_phone || admission.guardian_phone || '',
+    email: admission.parent_email || admission.guardian_email || '',
+    occupation: admission.parent_occupation || admission.guardian_occupation || '',
+    address: admission.parent_address || admission.guardian_address || admission.parent_home_address || '',
+  };
+  const parentFullName = [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join('  ') || '—';
 
   const documentsData = {
     birth_cert: admission.birth_cert,
@@ -238,111 +260,7 @@ const ProcessApplicationForm = () => {
       </Box>
 
       {/* ── Applicant Summary Card ────────────────────────────────────── */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 2,
-          bgcolor: (theme) =>
-            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB',
-        }}
-      >
-        <Grid container spacing={3} alignItems="center">
-          {/* Avatar + Name */}
-          <Grid size={{ xs: 12, sm: 4, md: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar
-                src={admission.passport_photo}
-                sx={{ width: 64, height: 64, bgcolor: 'primary.light' }}
-              >
-                {admission.first_name?.[0]?.toUpperCase() || '?'}
-              </Avatar>
-              <Box>
-                <Typography variant="h6" fontWeight={700}>
-                  {fullName}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Form: {admission.form_number || '—'}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-
-          {/* Quick Details */}
-          <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-            <Stack spacing={1}>
-              <DetailRow
-                icon={IconId}
-                label="Form Number"
-                value={admission.form_number}
-              />
-              <DetailRow
-                icon={IconSchool}
-                label="Intending Class"
-                value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
-              />
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-            <Stack spacing={1}>
-              <DetailRow
-                icon={IconCalendar}
-                label="Submission Date"
-                value={
-                  admission.form_submit_completion
-                    ? new Date(admission.form_submit_completion).toLocaleDateString()
-                    : 'Not submitted'
-                }
-              />
-              <DetailRow
-                icon={IconMapPin}
-                label="Study Mode"
-                value={
-                  admission.study_mode === 'day'
-                    ? 'Day Student'
-                    : admission.study_mode === 'boarding'
-                      ? 'Boarding Student'
-                      : '—'
-                }
-              />
-            </Stack>
-          </Grid>
-
-          {/* Status Update */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1} fontWeight={600}>
-                Current Status
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                <StatusIcon
-                  size={20}
-                  color={currentStatusColor === 'success' ? 'green' : currentStatusColor === 'error' ? 'red' : 'orange'}
-                />
-                <Chip
-                  label={statusConfig[admission.admission_status]?.label || 'Pending'}
-                  size="small"
-                  color={currentStatusColor}
-                  sx={{ fontWeight: 700, minWidth: 70 }}
-                />
-              </Box>
-              <FormControl fullWidth size="small">
-                <InputLabel>Update Status</InputLabel>
-                <Select
-                  value={newStatus}
-                  label="Update Status"
-                  onChange={handleStatusChange}
-                  disabled={submitting}
-                >
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="admitted">Admitted</MenuItem>
-                  <MenuItem value="declined">Declined</MenuItem>
-                </Select>
-              </FormControl>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Paper>
+      
 
       {/* ── Application Form Details ──────────────────────────────────── */}
       <ParentCard title="Application Form Details">
@@ -370,6 +288,288 @@ const ProcessApplicationForm = () => {
           />
         </Stack>
       </ParentCard>
+
+      {/* ── Parent/Guardian Information ───────────────────────────────── */}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2,mt:3 }}>
+        <Typography variant="subtitle1" fontWeight={700} display="flex" alignItems="center" gap={1} mb={2}>
+          <PersonIcon fontSize="small" />
+          Parent / Guardian Information
+        </Typography>
+
+        {parentData.lname || parentData.fname || parentData.email ? (
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Parent / Guardian Name"
+                value={parentFullName}
+                slotProps={{ input: { readOnly: true } }}
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Parent / Guardian Phone"
+                value={parentData.phone || '—'}
+                slotProps={{ input: { readOnly: true } }}
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Parent / Guardian Email"
+                value={parentData.email || '—'}
+                slotProps={{ input: { readOnly: true } }}
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Parent / Guardian Occupation"
+                value={parentData.occupation || '—'}
+                slotProps={{ input: { readOnly: true } }}
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Parent / Guardian Address"
+                value={parentData.address || '—'}
+                slotProps={{ input: { readOnly: true } }}
+                size="small"
+                multiline
+                rows={2}
+              />
+            </Grid>
+          </Grid>
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Parent / guardian information is not available for this applicant.
+          </Typography>
+        )}
+      </Paper>
+
+      {/* ── Treat Admission (Admission Officer) ────────────────────────── */}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+        <Typography variant="subtitle1" fontWeight={700} display="flex" alignItems="center" gap={1} mb={2}>
+          <IconCheck size={20} />
+          Treat Admission (Admission Officer)
+        </Typography>
+
+        <Grid container spacing={2}>
+          {admission.use_assessment === 'yes' && (
+            <>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Entrance Exam Score"
+                  value={admission.entrance_exam_score ?? '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Required Passmark"
+                  value={admission.assessment_passmark ?? '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
+            </>
+          )}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Intended Class"
+              value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+              slotProps={{ input: { readOnly: true } }}
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Programme"
+              value={admission.prog_name || admission.intending_programme?.programme_name || admission.intending_programme?.programme_code || '—'}
+              slotProps={{ input: { readOnly: true } }}
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              label="Admission Batch"
+              value={selectedBatch?.batch_name || admission.batchname || '—'}
+              slotProps={{ input: { readOnly: true } }}
+              size="small"
+            />
+          </Grid>
+        </Grid>
+
+        <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<IconCheck size={20} />}
+            onClick={() => setAdmitDialog({ open: true })}
+            disabled={admission.admission_status === 'admitted' || submitting}
+            sx={{ fontWeight: 700, px: 5 }}
+          >
+            Admit
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="large"
+            startIcon={<IconX size={20} />}
+            onClick={() => setDeclineDialog({ open: true })}
+            disabled={admission.admission_status === 'declined' || submitting}
+            sx={{ fontWeight: 700, px: 5 }}
+          >
+            Decline
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* ── Admit to Class Modal ───────────────────────────────────────── */}
+      <Dialog
+        open={admitDialog.open}
+        onClose={() => setAdmitDialog({ open: false })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Admit {fullName}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              You are about to admit the following applicant. Please review the details before confirming.
+            </Typography>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Avatar src={admission.passport_photo || admission.image} sx={{ width: 48, height: 48 }}>
+                {(admission.first_name || admission.fname)?.[0]?.toUpperCase() || '?'}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700}>{fullName}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Form: {admission.form_number} | {admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Programme"
+                  value={admission.prog_name || admission.intending_programme?.programme_name || '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Intended Class"
+                  value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Admission Batch"
+                  value={selectedBatch?.batch_name || admission.batchname || '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setAdmitDialog({ open: false })}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={async () => {
+              setAdmitDialog({ open: false });
+              setSubmitting(true);
+              try {
+                await updateAdmissionStatus(form_number, 'admitted');
+                notify.success(`Application status updated to "Admitted"`);
+                setAdmission((prev) => ({ ...prev, admission_status: 'admitted' }));
+                setNewStatus('admitted');
+              } catch (err) {
+                notify.error(err?.response?.data?.message || 'Failed to admit applicant');
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            sx={{ fontWeight: 600 }}
+          >
+            {submitting ? 'Processing...' : 'Confirm Admission'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Decline Confirmation Dialog ────────────────────────────────── */}
+      <Dialog
+        open={declineDialog.open}
+        onClose={() => setDeclineDialog({ open: false })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Decline Application</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to decline the application for <strong>{fullName}</strong>?
+            This action will mark the application as declined.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeclineDialog({ open: false })}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={async () => {
+              setDeclineDialog({ open: false });
+              setSubmitting(true);
+              try {
+                await updateAdmissionStatus(form_number, 'declined');
+                notify.success(`Application status updated to "Declined"`);
+                setAdmission((prev) => ({ ...prev, admission_status: 'declined' }));
+                setNewStatus('declined');
+              } catch (err) {
+                notify.error(err?.response?.data?.message || 'Failed to decline applicant');
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            sx={{ fontWeight: 600 }}
+          >
+            {submitting ? 'Processing...' : 'Yes, Decline'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Status Update Confirmation ────────────────────────────────── */}
       <Dialog

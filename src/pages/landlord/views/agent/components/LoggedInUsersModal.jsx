@@ -31,6 +31,7 @@ import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, Icon
 import ReusableModal from 'src/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
 import axios from '@/api/landlord/landlord_api';
+import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
   { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
@@ -45,10 +46,12 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
   console.log('LoggedInUsersModal rendered with usersData:', usersData);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const notify = useNotification();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const today = new Date().toISOString().split('T')[0];
   const isMenuOpen = Boolean(anchorEl);
 
   const [filters, setFilters] = useState({
@@ -89,7 +92,10 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
   };
 
   const handleExportToExcel = async () => {
-    if (!filteredData || filteredData.length === 0) return;
+    if (!filteredData || filteredData.length === 0) {
+      notify.error('No schools found to export.');
+      return;
+    }
 
     const headers = ['S/N', 'School Name', 'URL', 'Number of Logged-in Users'];
     const rows = filteredData.map((row, index) => [
@@ -116,6 +122,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export excel', error);
+      notify.error('Failed to export excel.');
     }
   };
 
@@ -317,6 +324,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                 type="date"
                 value={filters.from}
                 onChange={(e) => handleFilterChange('from', e.target.value)}
+                inputProps={{ max: today }}
                 sx={{
                   '& fieldset': { border: 'none' },
                   '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },
@@ -343,6 +351,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                 type="date"
                 value={filters.to}
                 onChange={(e) => handleFilterChange('to', e.target.value)}
+                inputProps={{ max: today }}
                 sx={{
                   '& fieldset': { border: 'none' },
                   '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },

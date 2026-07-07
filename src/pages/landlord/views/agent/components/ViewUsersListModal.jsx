@@ -1,14 +1,15 @@
 import React from 'react';
-import { Typography, Box, Stack, IconButton, Card } from '@mui/material';
+import { Typography, Box, Stack, IconButton, Card, Button } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StandardDataTable from '@/components/shared/StandardDataTable';
 import ReusableModal from 'src/components/shared/ReusableModal';
-import PrimaryButton from '@/components/shared/PrimaryButton';
 import { useState, useEffect } from 'react';
 import axios from '@/api/landlord/landlord_api';
+import { useNotification } from '@/hooks/useNotification';
 
 const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
+  const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +34,10 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
   };
 
   const handleExportToExcel = async () => {
-    if (!users || users.length === 0) return;
+    if (!users || users.length === 0) {
+      notify.error('No users found to export.');
+      return;
+    }
 
     const headers = ['S/N', 'User Details', 'Date/Time Logged In'];
     const rows = users.map((row, index) => [
@@ -49,6 +53,8 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
         rows: rows
       }, { responseType: 'blob' });
 
+      console.log('Export API responded with blob size:', response.data.size);
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -59,6 +65,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export excel', error);
+      notify.error('Failed to export excel.');
     }
   };
 
@@ -66,7 +73,14 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`Logged in users today for ${schoolName || 'Selected School'}`}
+      title={
+        <>
+          Logged in users today for{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+            {schoolName || 'Selected School'}
+          </Box>
+        </>
+      }
       size="large"
       showDivider={false}
     >
@@ -81,8 +95,9 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          < PrimaryButton
-            variant="primary"
+          <Button
+            variant="contained"
+            color="primary"
             startIcon={<GetAppIcon />}
             onClick={handleExportToExcel}
             sx={{
@@ -93,7 +108,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
             }}
           >
             Export to Excel
-          </  PrimaryButton>
+          </Button>
         </Box>
         <Box sx={{ p: 2 }}>
           <StandardDataTable

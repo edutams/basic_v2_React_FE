@@ -23,38 +23,65 @@ import {
   Button,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
+import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
-// import PrimaryButton from 'src/components/shared/PrimaryButton';
+import StatCard from 'src/components/shared/StatCard';
 
-const loginActivitiesData = [
-  {
-    id: 1,
-    school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL',
-    url: 'https://fsps.sef.edutams.net',
-    number: 30,
-  },
-  {
-    id: 2,
-    school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL',
-    url: 'https://gmsps.sef.edutams.net',
-    number: 10,
-  },
-  {
-    id: 3,
-    school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL',
-    url: 'https://iksps.sef.edutams.net',
-    number: 39,
-  },
+const predefinedStats = [
+  { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUser, color: '#3B82F6' },
+  { label: 'Student', searchLabels: ['Student'], icon: IconSchool, color: '#10B981' },
+  { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
+  { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
 
-const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
+const defaultUsersData = [
+  { id: '1', school: 'Evergreen High School', url: 'evergreen.edutams.net', number: '12', agent: 'Agent 1', userType: 'Teacher', date: '2026-07-01' },
+  { id: '2', school: 'Oakville Primary', url: 'oakville.edutams.net', number: '5', agent: 'Agent 2', userType: 'Student', date: '2026-07-02' },
+  { id: '3', school: 'Springfield Elementary', url: 'springfield.edutams.net', number: '8', agent: 'Agent 1', userType: 'SPA', date: '2026-07-03' },
+  { id: '4', school: 'Lincoln Tech Academy', url: 'lincoln.edutams.net', number: '15', agent: 'Agent 2', userType: 'Teacher', date: '2026-07-04' },
+];
+
+const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersData = [] }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openMenu = Boolean(anchorEl);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const isMenuOpen = Boolean(anchorEl);
+  const isDarkMode = theme.palette.mode === 'dark';
+
+  const [filters, setFilters] = useState({
+    agent: 'All',
+    userType: 'All',
+    from: '',
+    to: ''
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    agent: 'All',
+    userType: 'All',
+    from: '',
+    to: ''
+  });
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedFilters(filters);
+    setPage(0);
+  };
+
+  const dataToUse = usersData.length > 0 ? usersData : defaultUsersData;
+  const filteredData = dataToUse.filter(row => {
+    let match = true;
+    if (appliedFilters.agent !== 'All' && row.agent !== appliedFilters.agent) match = false;
+    if (appliedFilters.userType !== 'All' && row.userType !== appliedFilters.userType) match = false;
+    if (appliedFilters.from && row.date && row.date < appliedFilters.from) match = false;
+    if (appliedFilters.to && row.date && row.date > appliedFilters.to) match = false;
+    return match;
+  });
 
   const handleClickMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -89,63 +116,19 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
     >
       {/* Top Stat Cards */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3} mt={2}>
-        {[
-          { label: 'Teacher', count: 20, icon: IconUser, bgColor: '#E3E8F8', iconColor: '#3B5BDB' },
-          {
-            label: 'Student',
-            count: 20,
-            icon: IconSchool,
-            bgColor: '#DCFCE7',
-            iconColor: '#22C55E',
-          },
-          { label: 'SPA', count: 20, icon: IconUsers, bgColor: '#FEF3C7', iconColor: '#F59E0B' },
-          {
-            label: 'Parent',
-            count: 20,
-            icon: IconUsersGroup,
-            bgColor: '#FCE7F3',
-            iconColor: '#EC4899',
-          },
-        ].map((stat, idx) => (
-          <Paper
-            key={idx}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 2,
-              width: { xs: '100%', sm: 320 },
-              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFF',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: stat.bgColor,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <stat.icon size={22} color={stat.iconColor} />
+        {predefinedStats.map((stat, idx) => {
+          const statValue = stats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+          return (
+            <Box key={idx} sx={{ width: { xs: '100%', sm: '25%' } }}>
+              <StatCard
+                label={stat.label}
+                count={statValue}
+                icon={stat.icon}
+                color={stat.color}
+              />
             </Box>
-
-            <Box>
-              <Typography fontSize={26} fontWeight={700}>
-                {stat.count}
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                {stat.label}
-              </Typography>
-            </Box>
-          </Paper>
-        ))}
+          );
+        })}
       </Stack>
 
       {/* Table Section */}
@@ -180,19 +163,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             </Typography>
           </Stack>
 
-          {/* <PrimaryButton
-            startIcon={<GetAppIcon />}
-            sx={{
-              bgcolor: '#2ca87f',
-              '&:hover': { bgcolor: '#238a68' },
-              color: '#ffffff !important',
-            }}
-          >
-            Export to Excel
-          </PrimaryButton> */}
-
-          <Button variant="contained" size="small" color="primary" // onClick={handleOpen}modal startIcon={<GetAppIcon />}
-          >
+          <Button variant="contained" size="small" color="primary" onClick={handleApplyFilter}>
             Export to Excel
           </Button>
         </Box>
@@ -208,43 +179,73 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             borderTop: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           }}
         >
-          {/* Agent */}
-          <Box
-            sx={{
-              display: 'flex',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-              borderRadius: '4px',
-              bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
-            }}
-          >
-            <Select
-              size="small"
-              defaultValue="Agent 2"
-              sx={{ minWidth: 120, color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+          {/* Agent Filter */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: '6px',
+            bgcolor: theme.palette.background.paper,
+            overflow: 'hidden',
+            flex: { xs: '1 1 auto', sm: '0 0 auto' }
+          }}>
+            <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
+            </Box>
+            <Select 
+              size="small" 
+              value={filters.agent}
+              onChange={(e) => handleFilterChange('agent', e.target.value)}
+              sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
             >
+              <MenuItem value="All">All Agents</MenuItem>
+              <MenuItem value="Agent 1">Agent 1</MenuItem>
               <MenuItem value="Agent 2">Agent 2</MenuItem>
             </Select>
           </Box>
 
-          {/* User Type */}
-          <Box
-            sx={{
-              display: 'flex',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-              borderRadius: '4px',
-              bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
-            }}
-          >
-            <Select size="small" defaultValue="Teacher" sx={{ minWidth: 120 }}>
+          {/* User Type Filter */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: '6px',
+            bgcolor: theme.palette.background.paper,
+            overflow: 'hidden',
+            flex: { xs: '1 1 auto', sm: '0 0 auto' }
+          }}>
+            <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
+            </Box>
+            <Select 
+              size="small" 
+              value={filters.userType}
+              onChange={(e) => handleFilterChange('userType', e.target.value)}
+              sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
+            >
+              <MenuItem value="All">All Users</MenuItem>
               <MenuItem value="Teacher">Teacher</MenuItem>
+              <MenuItem value="Student">Student</MenuItem>
+              <MenuItem value="SPA">SPA</MenuItem>
             </Select>
           </Box>
 
           {/* Dates */}
-          <TextField size="small" type="date" />
-          <TextField size="small" type="date" />
+          <TextField 
+            size="small" 
+            type="date"
+            value={filters.from}
+            onChange={(e) => handleFilterChange('from', e.target.value)}
+          />
+          <TextField 
+            size="small" 
+            type="date"
+            value={filters.to}
+            onChange={(e) => handleFilterChange('to', e.target.value)}
+          />
 
           <button
+            onClick={handleApplyFilter}
             style={{
               backgroundColor: [theme.palette.primary.main],
               color: '#fff',
@@ -318,11 +319,11 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               </TableHead>
               <TableBody>
                 {(rowsPerPage > 0
-                  ? loginActivitiesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  : loginActivitiesData
-                ).map((row) => (
+                  ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  : filteredData
+                ).map((row, index) => (
                   <TableRow
-                    key={row.id}
+                    key={row.id || index}
                     hover
                     sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
                   >
@@ -350,7 +351,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    count={loginActivitiesData.length}
+                    count={filteredData.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}

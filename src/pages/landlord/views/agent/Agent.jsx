@@ -307,6 +307,7 @@ const Agent = () => {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -1640,11 +1641,35 @@ const Agent = () => {
         <LoggedInUsersModal
           open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={() => setIsViewUsersListModalOpen(true)}
+          onViewUserList={(row) => {
+            setSelectedTenantForUsers(row);
+            setIsViewUsersListModalOpen(true);
+          }}
+          stats={analytics?.loginActivities || []}
+          usersData={data.flatMap(agent => 
+            (agent.tenants || []).map(tenant => ({
+              id: tenant.id,
+              school: tenant.tenant_name,
+              url: (agent.organization_domain || agent.organizationDomain)
+                ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
+                : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
+              agent: agent.organizationName || agent.organization_name,
+              accessLevel: 'Level ' + (agent.access_level || 2),
+              date: tenant.created_at,
+              stats: tenant.login_activities || {
+                Teacher: 0,
+                Student: 0,
+                SPA: 0,
+                Total: 0
+              }
+            }))
+          )}
         />
         <ViewUsersListModal
           open={isViewUsersListModalOpen}
           onClose={() => setIsViewUsersListModalOpen(false)}
+          schoolId={selectedTenantForUsers?.id}
+          schoolName={selectedTenantForUsers?.school}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
 

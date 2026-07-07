@@ -462,6 +462,7 @@ const SchoolsTab = ({
   refreshKey,
   isViewingProfile = false,
   isDashboard = false,
+  loginActivities = [],
 }) => {
   const theme = useTheme();
   const { user } = useAuth();
@@ -936,14 +937,13 @@ const SchoolsTab = ({
                   </IconButton>
                 </Box>
                 <Box sx={{ px: 2, pb: 2 }}>
-                  {[
-                    ['Staffs', 0],
-                    ['SPA', 0],
-                    ['Student', 0],
-                    ['Parent', 0],
-                  ].map(([label, val]) => (
+                  {(loginActivities && loginActivities.length > 0 ? loginActivities : [
+                    { label: 'Staffs', value: 0 },
+                    { label: 'Agents', value: 0 },
+                    { label: 'Total', value: 0 },
+                  ]).map((activity) => (
                     <Box
-                      key={label}
+                      key={activity.label}
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -952,10 +952,10 @@ const SchoolsTab = ({
                       }}
                     >
                       <Typography variant="body2" color="text.secondary">
-                        {label}
+                        {activity.label}
                       </Typography>
                       <Typography variant="body2" fontWeight={600} color="error.main">
-                        {val}
+                        {activity.value}
                       </Typography>
                     </Box>
                   ))}
@@ -1100,12 +1100,12 @@ const SchoolsTab = ({
                   borderRadius: 2,
                   px: 2.5,
                   borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                   fontWeight: activeFilterCount > 0 ? 700 : 400,
                   '&:hover': { borderColor: 'primary.main' },
                 }}
               >
                 Filters
+
                 {activeFilterCount > 0 && (
                   <Box
                     component="span"

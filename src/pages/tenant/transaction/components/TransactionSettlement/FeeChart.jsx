@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Grid, Box, Typography, useTheme, FormControl, Select, MenuItem } from '@mui/material';
 import Chart from 'react-apexcharts';
-// import StatusBreakdownCard from './StatusBreakdownCard';
+import StatusBreakdownCard from './StatusBreakdownCard';
 
 const FeeChart = ({
   title = 'Chart',
@@ -84,7 +84,7 @@ const FeeChart = ({
             height: '100%',
           }}
         >
-          {/* <StatusBreakdownCard title={statusData?.title} items={statusData?.items} /> */}
+          <StatusBreakdownCard title={statusData?.title} items={statusData?.items} />
         </Box>
       </Grid>
     </Grid>

@@ -79,10 +79,12 @@ const DrilldownModal = ({ open, onClose, title, students, loading }) => {
           )}
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Button variant="contained" size="small" startIcon={<IconDownload />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconDownload />}
             onClick={handleDownloadCSV}
             disabled={loading || !students?.length}
-            variant="outlined"
             sx={{ fontSize: '12px' }}
           >
             Download CSV

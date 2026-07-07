@@ -82,13 +82,7 @@ export default function Dashboard() {
   const planSeries = [65, 52, 39, 25];
   const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
 
-  const loginActivities = [
-    { label: 'Teacher', value: 12 },
-    { label: 'SPA', value: 45 },
-    { label: 'Student', value: 23 },
-    { label: 'Parent', value: 12 },
-    { label: 'Agents', value: 72 },
-  ];
+
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -453,7 +447,7 @@ export default function Dashboard() {
               activities={
                 analyticsLoading
                   ? [{ label: 'Loading...', value: '...' }]
-                  : (analytics?.loginActivities ?? loginActivities)
+                  : (analytics?.loginActivities || [])
               }
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />

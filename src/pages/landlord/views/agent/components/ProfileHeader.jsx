@@ -85,36 +85,48 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
 
       {/* Action buttons */}
       <Stack spacing={1.5} direction={{ xs: 'column', sm: 'row' }}>
-        <Button variant="contained" size="small" fullWidth onClick={onManageSchools} startIcon={<IconBuildingStore />}
-          sx={{
-            bgcolor: 'white',
-            borderColor: 'rgba(255,255,255,0.5)',
-            textTransform: 'none',
-            borderRadius: '10px',
-            fontWeight: 500,
-            fontSize: '13px',
-            py: 1,
-            '&:hover': {
-              borderColor: theme.palette.primary.light,
-              bgcolor: 'rgba(255,255,255,0.1)',
-            },
-          }}
-        >
-          Manage Schools
-        </Button>
-        <Button variant="contained" size="small" fullWidth onClick={onManageAgent} startIcon={<IconUsers />}
+        <Button 
+          variant="contained" 
+          fullWidth 
+          onClick={onManageSchools} 
+          startIcon={<IconBuildingStore size={18} />}
           sx={{
             bgcolor: 'white',
             color: theme.palette.primary.main,
             textTransform: 'none',
             borderRadius: '10px',
             fontWeight: 600,
-            fontSize: '13px',
+            fontSize: '14px',
             py: 1,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             '&:hover': {
-              borderColor: theme.palette.primary.light,
-              bgcolor: 'rgba(255,255,255,0.1)',
+              bgcolor: 'rgba(255,255,255,0.9)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            },
+          }}
+        >
+          Manage Schools
+        </Button>
+        <Button 
+          variant="contained" 
+          fullWidth 
+          onClick={onManageAgent} 
+          startIcon={<IconUsers size={18} />}
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.15)',
+            color: 'white',
+            textTransform: 'none',
+            borderRadius: '10px',
+            fontWeight: 600,
+            fontSize: '14px',
+            py: 1,
+            boxShadow: 'none',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.25)',
+              borderColor: 'rgba(255,255,255,0.3)',
+              boxShadow: 'none',
             },
           }}
         >

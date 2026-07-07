@@ -94,6 +94,9 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
               <ReadField label="Previous school name" value={academicData?.prev_school_name || 'N/A'} />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
+              <ReadField label="Previous school address" value={academicData?.prev_school_address || 'N/A'} multiline rows={2} />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <ReadField label="State" value={prevStateName || 'N/A'} />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>

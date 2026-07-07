@@ -118,6 +118,7 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
           }
         /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Select Gender" value={wardData?.gender ? wardData.gender.charAt(0).toUpperCase() + wardData.gender.slice(1) : 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Religion" value={wardData?.religion || 'N/A'} /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><ReadField label="State of Origin" value={stateName} /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><ReadField label="LGA of Origin" value={lgaName} /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Home Address" value={wardData?.home_address || 'N/A'} /></Grid>

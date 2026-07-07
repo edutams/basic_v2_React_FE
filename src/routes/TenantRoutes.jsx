@@ -41,12 +41,27 @@ const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/St
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
+const AdmissionProcessing = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionProcessing')),
+);
 const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
 const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
 
 const NewApplication = Loadable(lazy(() => import('@/pages/tenant/admission/NewApplication')));
 const MyApplication = Loadable(lazy(() => import('@/pages/tenant/admission/MyApplication')));
 const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionLetter')));
+const ProcessApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/ProcessApplicationForm')),
+);
+const EditApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/EditApplicationForm')),
+);
+const PrintApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/PrintApplicationForm')),
+);
+const ApplicantPaymentHistory = Loadable(
+  lazy(() => import('@/pages/tenant/admission/ApplicantPaymentHistory')),
+);
 const ApplicationTracker = Loadable(
   lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
@@ -322,10 +337,39 @@ const TenantRoutes = [
         path: 'process-applications',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
-            <PageUnderDevelopment
-              title="Process Admission Under Development"
-              subtitle="The Process Admission module is currently under development. Check back soon!"
-            />
+            <AdmissionProcessing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/process-form/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <ProcessApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/edit-form/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <EditApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/print-application/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <PrintApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/payment-history/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <ApplicantPaymentHistory />
           </TenantProtectedRoute>
         ),
       },

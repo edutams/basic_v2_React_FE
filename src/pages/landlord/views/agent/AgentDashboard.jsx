@@ -308,6 +308,7 @@ const AgentDashboard = () => {
                         refreshKey={refreshKey}
                         isViewingProfile={false}
                         isDashboard={true}
+                        loginActivities={analytics?.loginActivities || []}
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>

@@ -663,6 +663,8 @@ export default function Dashboard() {
           setIsLoggedInUsersModalOpen(false);
           setIsViewUsersListModalOpen(true);
         }}
+        stats={analytics?.loginActivities || []}
+        usersData={[]}
       />
       <ViewUsersListModal
         open={isViewUsersListModalOpen}

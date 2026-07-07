@@ -1641,6 +1641,8 @@ const Agent = () => {
           open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
           onViewUserList={() => setIsViewUsersListModalOpen(true)}
+          stats={analytics?.loginActivities || []}
+          usersData={[]}
         />
         <ViewUsersListModal
           open={isViewUsersListModalOpen}

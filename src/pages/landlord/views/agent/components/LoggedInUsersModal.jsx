@@ -22,12 +22,13 @@ import {
   TableFooter,
   TablePagination,
   Button,
+  Alert,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
-import StandardModal from 'src/components/shared/StandardModal';
+import ReusableModal from 'src/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
 
 const predefinedStats = [
@@ -37,14 +38,10 @@ const predefinedStats = [
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
 
-const defaultUsersData = [
-  { id: '1', school: 'Evergreen High School', url: 'evergreen.edutams.net', number: '12', agent: 'Agent 1', userType: 'Teacher', date: '2026-07-01' },
-  { id: '2', school: 'Oakville Primary', url: 'oakville.edutams.net', number: '5', agent: 'Agent 2', userType: 'Student', date: '2026-07-02' },
-  { id: '3', school: 'Springfield Elementary', url: 'springfield.edutams.net', number: '8', agent: 'Agent 1', userType: 'SPA', date: '2026-07-03' },
-  { id: '4', school: 'Lincoln Tech Academy', url: 'lincoln.edutams.net', number: '15', agent: 'Agent 2', userType: 'Teacher', date: '2026-07-04' },
-];
+
 
 const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersData = [] }) => {
+  console.log('LoggedInUsersModal rendered with usersData:', usersData);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [anchorEl, setAnchorEl] = useState(null);
@@ -54,14 +51,14 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
   const isMenuOpen = Boolean(anchorEl);
 
   const [filters, setFilters] = useState({
-    agent: 'All',
+    accessLevel: 'All',
     userType: 'All',
     from: '',
     to: ''
   });
 
   const [appliedFilters, setAppliedFilters] = useState({
-    agent: 'All',
+    accessLevel: 'All',
     userType: 'All',
     from: '',
     to: ''
@@ -76,15 +73,26 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     setPage(0);
   };
 
-  const dataToUse = usersData.length > 0 ? usersData : defaultUsersData;
-  const filteredData = dataToUse.filter(row => {
-    let match = true;
-    if (appliedFilters.agent !== 'All' && row.agent !== appliedFilters.agent) match = false;
-    if (appliedFilters.userType !== 'All' && row.userType !== appliedFilters.userType) match = false;
-    if (appliedFilters.from && row.date && row.date < appliedFilters.from) match = false;
-    if (appliedFilters.to && row.date && row.date > appliedFilters.to) match = false;
-    return match;
-  });
+  const filteredData = (usersData || [])
+    .filter(row => {
+      let match = true;
+      if (appliedFilters.accessLevel !== 'All' && row.accessLevel !== appliedFilters.accessLevel) match = false;
+      if (appliedFilters.from && row.date && row.date < appliedFilters.from) match = false;
+      if (appliedFilters.to && row.date && row.date > appliedFilters.to) match = false;
+      return match;
+    })
+    .map(row => {
+      // Calculate dynamic number based on userType filter
+      let currentNumber = row.number || 0;
+      if (row.stats) {
+        if (appliedFilters.userType === 'All') {
+          currentNumber = row.stats.Total || 0;
+        } else {
+          currentNumber = row.stats[appliedFilters.userType] || 0;
+        }
+      }
+      return { ...row, number: currentNumber };
+    });
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -105,25 +113,14 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     setPage(0);
   };
 
-
-
-
   return (
     <>
-      <StandardModal
+      <ReusableModal
         open={open}
         onClose={onClose}
-        maxWidth="lg"
-        padding={4}
-        headerBg={isDarkMode ? theme.palette.background.paper : '#f4f6f8'}
-        sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#f4f6f8' }}
-        dividers={false}
-        actions={
-          <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-            <Button variant="contained" onClick={onClose}>Cancel</Button>
-            <Button onClick={onClose}>Save</Button>
-          </Stack>
-        }
+        title="Logged in user"
+        size="extraLarge"
+        showDivider={false}
       >
         {/* Top Stat Cards */}
         <Grid container spacing={1.5} mb={3}>
@@ -185,7 +182,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
             bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5',
             borderTop: `1px solid ${theme.palette.divider}`
           }}>
-            {/* Agent Filter */}
+            {/* Access Level Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -196,17 +193,19 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
+                <Typography variant="body2" fontWeight="600" color="textPrimary">Access Level</Typography>
               </Box>
               <Select
                 size="small"
-                value={filters.agent}
-                onChange={(e) => handleFilterChange('agent', e.target.value)}
+                value={filters.accessLevel}
+                onChange={(e) => handleFilterChange('accessLevel', e.target.value)}
                 sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
               >
-                <MenuItem value="All">All Agents</MenuItem>
-                <MenuItem value="Agent 1">Agent 1</MenuItem>
-                <MenuItem value="Agent 2">Agent 2</MenuItem>
+                <MenuItem value="All">All Levels</MenuItem>
+                <MenuItem value="Level 2">Level 2</MenuItem>
+                <MenuItem value="Level 3">Level 3</MenuItem>
+                <MenuItem value="Level 4">Level 4</MenuItem>
+                <MenuItem value="Level 5">Level 5</MenuItem>
               </Select>
             </Box>
 
@@ -314,10 +313,19 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(rowsPerPage > 0
-                    ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    : filteredData
-                  ).map((row, index) => (
+                  {filteredData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+                          No schools found for the selected filter criteria.
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (rowsPerPage > 0
+                      ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      : filteredData
+                    ).map((row, index) => (
                     <TableRow
                       key={row.id || index} hover>
                       <TableCell sx={{ color: theme.palette.text.secondary }}>{row.id}</TableCell>
@@ -336,7 +344,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                         </IconButton>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
@@ -355,7 +363,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
             </TableContainer>
           </Box>
         </Card>
-      </StandardModal>
+      </ReusableModal>
 
       <Menu
         anchorEl={anchorEl}

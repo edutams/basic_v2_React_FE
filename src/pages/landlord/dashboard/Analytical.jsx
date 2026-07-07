@@ -123,21 +123,25 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const response = await agentApi.getAll();
-        if (response.success) {
-          const mappedData = response.data.slice(0, 10).map((agent) => ({
+        const paginator = response.status === true ? response.data : response;
+        const agentsArray = paginator.data || [];
+        
+        if (agentsArray.length > 0) {
+          const mappedData = agentsArray.slice(0, 10).map((agent) => ({
             s_n: agent.id,
-            agentDetails: agent.name,
-            organizationName: agent.org_name,
-            imgsrc: agent.image,
+            agentDetails: agent.organization_name || agent.name,
+            organizationName: agent.organization_name || agent.org_name,
+            imgsrc: agent.organization_logo || agent.image,
             tenants_count: agent.tenants_count || 0,
-            sub_agents_count: agent.children_count || 0,
+            sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
             access_level: agent.access_level,
-            phoneNumber: agent.phone,
-            contactDetails: agent.email,
+            phoneNumber: agent.organization_phone || agent.phone,
+            contactDetails: agent.organization_email || agent.email,
             primaryColor: agent.primary_color || '#4a3aff',
             status: agent.status
               ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
               : 'Inactive',
+            tenants: agent.tenants || [],
           }));
           setData(mappedData);
         }
@@ -664,7 +668,24 @@ export default function Dashboard() {
           setIsViewUsersListModalOpen(true);
         }}
         stats={analytics?.loginActivities || []}
-        usersData={[]}
+        usersData={data.flatMap(agent => 
+          (agent.tenants || []).map(tenant => ({
+            id: tenant.id,
+            school: tenant.tenant_name,
+            url: (agent.organization_domain || agent.organizationDomain)
+              ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
+              : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
+            agent: agent.organizationName || agent.organization_name,
+            accessLevel: 'Level ' + (agent.access_level || 2),
+            date: tenant.created_at,
+            stats: tenant.login_activities || {
+              Teacher: 0,
+              Student: 0,
+              SPA: 0,
+              Total: 0
+            }
+          }))
+        )}
       />
       <ViewUsersListModal
         open={isViewUsersListModalOpen}

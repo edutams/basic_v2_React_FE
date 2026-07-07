@@ -1642,7 +1642,24 @@ const Agent = () => {
           onClose={() => setIsLoggedInUsersModalOpen(false)}
           onViewUserList={() => setIsViewUsersListModalOpen(true)}
           stats={analytics?.loginActivities || []}
-          usersData={[]}
+          usersData={data.flatMap(agent => 
+            (agent.tenants || []).map(tenant => ({
+              id: tenant.id,
+              school: tenant.tenant_name,
+              url: (agent.organization_domain || agent.organizationDomain)
+                ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
+                : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
+              agent: agent.organizationName || agent.organization_name,
+              accessLevel: 'Level ' + (agent.access_level || 2),
+              date: tenant.created_at,
+              stats: tenant.login_activities || {
+                Teacher: 0,
+                Student: 0,
+                SPA: 0,
+                Total: 0
+              }
+            }))
+          )}
         />
         <ViewUsersListModal
           open={isViewUsersListModalOpen}

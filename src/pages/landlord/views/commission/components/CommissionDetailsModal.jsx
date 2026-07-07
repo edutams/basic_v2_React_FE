@@ -147,12 +147,25 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               placeholder="Enter transaction ID"
               sx={{ flex: 2, minWidth: { xs: '100%', sm: 180 } }}
             />
-            <Button variant="contained" size="small" onClick={handleFilter} sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', width: { xs: '100%', sm: 'auto' }, '&:hover': { bgcolor: '#303f9f' }, }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleFilter}
+              sx={{
+                bgcolor: '#3949ab',
+                textTransform: 'none',
+                borderRadius: '8px',
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': { bgcolor: '#303f9f' },
+              }}
+            >
               Filter
             </Button>
-            <Button variant="contained" size="small" startIcon={<IconDownload />}
-              onClick={handleExport}
+            <Button
+              variant="contained"
               size="small"
+              startIcon={<IconDownload />}
+              onClick={handleExport}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Export
@@ -235,7 +248,12 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-        <Button variant="contained" size="small" onClick={onClose} sx={{ textTransform: 'none', borderRadius: '8px', }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onClose}
+          sx={{ textTransform: 'none', borderRadius: '8px' }}
+        >
           Close
         </Button>
       </DialogActions>

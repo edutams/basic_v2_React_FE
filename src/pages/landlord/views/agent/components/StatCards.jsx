@@ -165,12 +165,12 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, 
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
         <StatCard
           title="Total Transaction Value"
-          value={`₦${stats.totalTransaction}`}
+          value={`₦${stats?.totalTransaction || 0}`}
           valueColor="#2ca87f"
           valueBg="#d6f5eb"
           subStats={[
-            { label: 'Commission', value: `₦${stats.commission}` },
-            { label: 'Volume', value: stats.volume },
+            { label: 'Commission', value: `₦${stats?.commission || 0}` },
+            { label: 'Volume', value: stats?.volume || 0 },
           ]}
           onIconClick={onTransactionClick}
           onClick={onTransactionClick}

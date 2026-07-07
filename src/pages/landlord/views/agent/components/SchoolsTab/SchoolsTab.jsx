@@ -1100,7 +1100,6 @@ const SchoolsTab = ({
                   borderRadius: 2,
                   px: 2.5,
                   borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                   fontWeight: activeFilterCount > 0 ? 700 : 400,
                   '&:hover': { borderColor: 'primary.main' },
                 }}

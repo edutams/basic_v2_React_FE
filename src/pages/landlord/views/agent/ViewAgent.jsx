@@ -81,6 +81,8 @@ const ViewAgent = () => {
             stats: {
               totalTransaction: data.total_transaction_value || 0,
               transactionCount: data.transaction_count || 0,
+              commission: data.commission || data.stats?.commission || analytics?.commission || 0,
+              volume: data.volume || data.stats?.volume || analytics?.volume || 0,
               totalSchools: data.stats?.totalSchools || 0,
               activeSchools: data.stats?.activeSchools || 0,
               pendingSchools: data.stats?.pendingSchools || 0,

@@ -71,6 +71,8 @@ const AgentDashboard = () => {
             stats: {
               totalTransaction: data.total_transaction_value || 0,
               transactionCount: data.transaction_count || 0,
+              commission: data.commission || analytics?.commission || 0,
+              volume: data.volume || analytics?.volume || 0,
               totalSchools: analytics?.totalSchools || 0,
               activeSchools: analytics?.activeSchools || 0,
               pendingSchools: analytics?.pendingSchools || 0,

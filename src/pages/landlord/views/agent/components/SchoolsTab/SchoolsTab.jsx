@@ -1105,6 +1105,7 @@ const SchoolsTab = ({
                 }}
               >
                 Filters
+
                 {activeFilterCount > 0 && (
                   <Box
                     component="span"

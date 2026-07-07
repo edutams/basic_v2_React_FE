@@ -307,6 +307,7 @@ const Agent = () => {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -1640,7 +1641,10 @@ const Agent = () => {
         <LoggedInUsersModal
           open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={() => setIsViewUsersListModalOpen(true)}
+          onViewUserList={(row) => {
+            setSelectedTenantForUsers(row);
+            setIsViewUsersListModalOpen(true);
+          }}
           stats={analytics?.loginActivities || []}
           usersData={data.flatMap(agent => 
             (agent.tenants || []).map(tenant => ({
@@ -1664,6 +1668,8 @@ const Agent = () => {
         <ViewUsersListModal
           open={isViewUsersListModalOpen}
           onClose={() => setIsViewUsersListModalOpen(false)}
+          schoolId={selectedTenantForUsers?.id}
+          schoolName={selectedTenantForUsers?.school}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
 

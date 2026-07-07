@@ -64,6 +64,8 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     to: ''
   });
 
+  const hasActiveFilters = filters.accessLevel !== 'All' || filters.userType !== 'All' || filters.from !== '' || filters.to !== '';
+
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
@@ -73,12 +75,32 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     setPage(0);
   };
 
+  const handleResetFilter = () => {
+    const defaultFilters = {
+      accessLevel: 'All',
+      userType: 'All',
+      from: '',
+      to: ''
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
+    setPage(0);
+  };
+
   const filteredData = (usersData || [])
     .filter(row => {
       let match = true;
       if (appliedFilters.accessLevel !== 'All' && row.accessLevel !== appliedFilters.accessLevel) match = false;
-      if (appliedFilters.from && row.date && row.date < appliedFilters.from) match = false;
-      if (appliedFilters.to && row.date && row.date > appliedFilters.to) match = false;
+      const rowDateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
+      if (appliedFilters.from && rowDateStr && rowDateStr < appliedFilters.from) match = false;
+      if (appliedFilters.to && rowDateStr && rowDateStr > appliedFilters.to) match = false;
+
+      // If a specific user type is selected, filter out schools that have 0 logins for that type
+      if (appliedFilters.userType !== 'All') {
+        const count = row.stats ? (row.stats[appliedFilters.userType] || 0) : 0;
+        if (count === 0) match = false;
+      }
+
       return match;
     })
     .map(row => {
@@ -287,17 +309,27 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               />
             </Box>
 
-            <Button
-              onClick={handleApplyFilter}
-              sx={{
-                color: '#ffffff !important',
-                bgcolor: '#2ca87f !important',
-                '&:hover': { bgcolor: '#238a68 !important' },
-                ml: { sm: 'auto' }
-              }}
-            >
-              Filter
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+              {hasActiveFilters && (
+                <Button
+                  variant="outlined"
+                  onClick={handleResetFilter}
+
+                >
+                  Clear
+                </Button>
+              )}
+              <Button
+                onClick={handleApplyFilter}
+                variant="contained"
+                color="primary"
+                sx={{
+                  flex: { xs: 1, sm: 'none' }
+                }}
+              >
+                Fetch
+              </Button>
+            </Box>
           </Box>
 
           <Box sx={{ p: 0 }}>
@@ -305,7 +337,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
@@ -326,25 +358,25 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                       ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       : filteredData
                     ).map((row, index) => (
-                    <TableRow
-                      key={row.id || index} hover>
-                      <TableCell sx={{ color: theme.palette.text.secondary }}>{row.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                          <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )))}
+                      <TableRow
+                        key={row.id || index} hover>
+                        <TableCell sx={{ color: theme.palette.text.secondary }}>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
+                            <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    )))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
@@ -401,7 +433,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            if (onViewUserList) onViewUserList();
+            if (onViewUserList) onViewUserList(selectedRow);
           }}
         >
           View Users List

@@ -88,6 +88,7 @@ export default function Dashboard() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
@@ -663,8 +664,8 @@ export default function Dashboard() {
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}
         onClose={() => setIsLoggedInUsersModalOpen(false)}
-        onViewUserList={() => {
-          setIsLoggedInUsersModalOpen(false);
+        onViewUserList={(row) => {
+          setSelectedTenantForUsers(row);
           setIsViewUsersListModalOpen(true);
         }}
         stats={analytics?.loginActivities || []}
@@ -690,7 +691,8 @@ export default function Dashboard() {
       <ViewUsersListModal
         open={isViewUsersListModalOpen}
         onClose={() => setIsViewUsersListModalOpen(false)}
-        schoolName={selectedSchoolForUsers}
+        schoolId={selectedTenantForUsers?.id}
+        schoolName={selectedTenantForUsers?.school}
       />
       <TotalSchoolModal
         open={isSchoolModalOpen}

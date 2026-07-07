@@ -32,6 +32,36 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
     }
   };
 
+  const handleExportToExcel = async () => {
+    if (!users || users.length === 0) return;
+
+    const headers = ['S/N', 'User Details', 'Date/Time Logged In'];
+    const rows = users.map((row, index) => [
+      index + 1,
+      row.name || '',
+      row.time || ''
+    ]);
+
+    try {
+      const response = await axios.post('/v1/landlord/activity-logs/export-excel', {
+        title: `Logged In Users - ${schoolName || 'School'}`,
+        headers: headers,
+        rows: rows
+      }, { responseType: 'blob' });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Logged_In_Users_${(schoolName || 'School').replace(/\s+/g, '_')}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export excel', error);
+    }
+  };
+
   return (
     <ReusableModal
       open={open}
@@ -54,6 +84,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
           < PrimaryButton
             variant="primary"
             startIcon={<GetAppIcon />}
+            onClick={handleExportToExcel}
             sx={{
               color: '#ffffff !important',
               bgcolor: '#2ca87f',

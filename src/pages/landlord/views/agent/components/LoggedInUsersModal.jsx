@@ -27,9 +27,10 @@ import {
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
+import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
+import axios from '@/api/landlord/landlord_api';
 
 const predefinedStats = [
   { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
@@ -85,6 +86,37 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     setFilters(defaultFilters);
     setAppliedFilters(defaultFilters);
     setPage(0);
+  };
+
+  const handleExportToExcel = async () => {
+    if (!filteredData || filteredData.length === 0) return;
+
+    const headers = ['S/N', 'School Name', 'URL', 'Number of Logged-in Users'];
+    const rows = filteredData.map((row, index) => [
+      index + 1,
+      row.school || '',
+      row.url || '',
+      row.number || 0
+    ]);
+
+    try {
+      const response = await axios.post('/v1/landlord/activity-logs/export-excel', {
+        title: 'Logged In Schools Report',
+        headers: headers,
+        rows: rows
+      }, { responseType: 'blob' });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Logged_In_Schools.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export excel', error);
+    }
   };
 
   const filteredData = (usersData || [])
@@ -185,9 +217,19 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               </Box>
               <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
             </Stack>
-            <Button
+            {/* <Button
               startIcon={<GetAppIcon />}
               variant='contained'
+            >
+              Export to Excel
+            </Button> */}
+            <Button
+              variant="contained"
+              startIcon={<GetAppIcon />}
+              onClick={handleExportToExcel}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+              }}
             >
               Export to Excel
             </Button>
@@ -314,11 +356,11 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                 <Button
                   variant="outlined"
                   onClick={handleResetFilter}
-
                 >
                   Clear
                 </Button>
               )}
+
               <Button
                 onClick={handleApplyFilter}
                 variant="contained"

@@ -147,12 +147,12 @@ const SettlementReconcillation = () => {
   const [chartType, setChartType] = useState('bar');
   const [chartData, setChartData] = useState({
     categories: [
-      'School (Tuition) Fees',
-      'School (Tuition) Fees',
-      'School (Tuition) Fees',
-      'School (Tuition) Fees',
-      'School (Tuition) Fees',
-      'School (Tuition) Fees',
+      'Zenith Bank Plc',
+      'Guaranty Trust Bank',
+      'Access Bank',
+      'First Bank of Nigeria',
+      'Guaranty Trust Bank',
+      'Zenith Bank Plc',
     ],
     series: [
       {

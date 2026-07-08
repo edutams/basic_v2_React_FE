@@ -72,16 +72,26 @@ export const getApplicantByFormNumber = async (formNumber) => {
 };
 
 /**
- * Update admission status for an applicant (admit / decline / pending)
+ * Update admission status for an applicant (admit / decline / pending / revoked)
  * POST /admission/process/update-status
  * @param {string} formNumber - the applicant's form number
- * @param {string} status - 'admitted' | 'declined' | 'pending'
+ * @param {string} status - 'admitted' | 'declined' | 'pending' | 'revoked'
+ * @param {Object} [options] - additional options
+ * @param {string} [options.rejection_reason] - reason for rejection (when declining)
+ * @param {string} [options.revoked_reason] - reason for revocation (when revoking)
  */
-export const updateAdmissionStatus = async (formNumber, status) => {
-  const response = await api.post('/admission/process/update-status', {
+export const updateAdmissionStatus = async (formNumber, status, options = {}) => {
+  const payload = {
     form_number: formNumber,
     status,
-  });
+  };
+  if (options.rejection_reason) {
+    payload.rejection_reason = options.rejection_reason;
+  }
+  if (options.revoked_reason) {
+    payload.revoked_reason = options.revoked_reason;
+  }
+  const response = await api.post('/admission/process/update-status', payload);
   return response.data;
 };
 

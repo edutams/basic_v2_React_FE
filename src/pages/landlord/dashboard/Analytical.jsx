@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import {
   flexRender,
   getCoreRowModel,
@@ -98,6 +99,8 @@ export default function Dashboard() {
   // Analytics state
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [loginActivities, setLoginActivities] = useState([]);
+  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -111,6 +114,20 @@ export default function Dashboard() {
       }
     };
     fetchAnalytics();
+  }, []);
+
+  useEffect(() => {
+    const fetchLoginActivities = async () => {
+      try {
+        const res = await activityLogApi.getLoginActivities30Days();
+        if (res.status) setLoginActivities(res.data);
+      } catch (e) {
+        console.error('Failed to fetch login activities', e);
+      } finally {
+        setLoginActivitiesLoading(false);
+      }
+    };
+    fetchLoginActivities();
   }, []);
 
   // Table filter states
@@ -451,9 +468,9 @@ export default function Dashboard() {
             <LoginActivitiesCard
               title="Login Activities (30 days)"
               activities={
-                analyticsLoading
+                loginActivitiesLoading
                   ? [{ label: 'Loading...', value: '...' }]
-                  : (analytics?.loginActivities || [])
+                  : loginActivities
               }
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />

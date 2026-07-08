@@ -45,6 +45,11 @@ const activityLogApi = {
     return response.data;
   },
 
+  getLoginActivities30Days: async () => {
+    const response = await api.get('/v1/landlord/activity-logs/login-activities-30days');
+    return response.data;
+  },
+
   getTenantLoggedInUsers: async (tenantId, params = {}) => {
     const response = await api.get(`/v1/landlord/activity-logs/tenant/${tenantId}/users`, { params });
     return response.data;

@@ -70,7 +70,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
     to: ''
   });
 
-    const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState({
     accessLevels: [{ label: 'All Levels', value: 'All' }],
     userTypes: [{ label: 'All Users', value: 'All' }]
   });
@@ -89,7 +89,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
     fetchOptions();
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
     if (open) {
       fetchData();
     }
@@ -209,11 +209,11 @@ useEffect(() => {
             const isAgents = stat.label === 'Agents';
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-                <Box 
+                <Box
                   onClick={() => {
                     if (isAgents && onViewUserList) {
                       onViewUserList(
-                        { id: 'landlord', school: 'Agents' }, 
+                        { id: 'landlord', school: 'Agents' },
                         { userType: 'All', from: filters.from, to: filters.to }
                       );
                     }
@@ -425,7 +425,7 @@ useEffect(() => {
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                    {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -462,7 +462,7 @@ useEffect(() => {
                               target="_blank"
                               rel="noopener noreferrer"
                               sx={{
-                                color: '#2ca87f',
+                                color: 'success.main',
                                 fontSize: '13px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
@@ -483,6 +483,7 @@ useEffect(() => {
                             sx={{
                               cursor: 'pointer',
                               textDecoration: 'underline',
+                              textAlign: 'center',
                               '&:hover': { opacity: 0.8 }
                             }}
                             onClick={() => onViewUserList && onViewUserList(row, filters)}
@@ -490,11 +491,11 @@ useEffect(() => {
                             {row.number}
                           </Typography>
                         </TableCell>
-                        <TableCell align="right">
+                        {/* <TableCell align="right">
                           <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                             <IconDotsVertical size={18} color={theme.palette.text.secondary} />
                           </IconButton>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     )))}
                 </TableBody>

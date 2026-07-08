@@ -45,6 +45,7 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
@@ -312,12 +313,6 @@ const Agent = () => {
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
-  const loginActivities = [
-    { label: 'Teacher', value: 12 },
-    { label: 'SPA', value: 45 },
-    { label: 'Student', value: 23 },
-    { label: 'Parent', value: 12 },
-  ];
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
 
@@ -342,6 +337,9 @@ const Agent = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
+  const [loginActivities, setLoginActivities] = useState([]);
+  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
+  const [selectedUserFilters, setSelectedUserFilters] = useState(null);
   const [analytics, setAnalytics] = useState({
     totalAgents: 0,
     totalSubAgents: 0,
@@ -360,6 +358,22 @@ const Agent = () => {
       }
     };
     fetchAnalytics();
+  }, [refreshKey]);
+
+  useEffect(() => {
+    const fetchLoginActivities = async () => {
+      try {
+        const res = await activityLogApi.getLoginActivities30Days();
+        if (res.status) {
+          setLoginActivities(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch login activities', error);
+      } finally {
+        setLoginActivitiesLoading(false);
+      }
+    };
+    fetchLoginActivities();
   }, [refreshKey]);
 
   useEffect(() => {
@@ -1021,30 +1035,34 @@ const Agent = () => {
           </Box>
 
           <Box sx={{ px: 3, mt: 1 }}>
-            {(
-              analytics.loginActivities ?? [
+            {loginActivitiesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              (loginActivities.length > 0 ? loginActivities : [
                 { label: 'Staffs', value: 0 },
                 { label: 'Agents', value: 0 },
                 { label: 'Total', value: 0 },
-              ]
-            ).map((item, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 1,
-                }}
-              >
-                <Typography variant="h5" color="text.primary">
-                  {item.label}
-                </Typography>
-                <Typography variant="h5" sx={{ color: theme.palette.error.main }}>
-                  {item.value}
-                </Typography>
-              </Box>
-            ))}
+              ]).map((item, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="h5" color="text.primary">
+                    {item.label}:
+                  </Typography>
+                  <Typography variant="h5" fontWeight="600" color="error.main">
+                    {item.value}
+                  </Typography>
+                </Box>
+              ))
+            )}
           </Box>
         </Paper>
 
@@ -1641,12 +1659,13 @@ const Agent = () => {
         <LoggedInUsersModal
           open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={(row) => {
+          onViewUserList={(row, filters) => {
             setSelectedTenantForUsers(row);
+            setSelectedUserFilters(filters);
             setIsViewUsersListModalOpen(true);
           }}
-          stats={analytics?.loginActivities || []}
-          usersData={data.flatMap(agent => 
+          stats={loginActivities}
+          usersData={data.flatMap(agent =>
             (agent.tenants || []).map(tenant => ({
               id: tenant.id,
               school: tenant.tenant_name,
@@ -1670,6 +1689,7 @@ const Agent = () => {
           onClose={() => setIsViewUsersListModalOpen(false)}
           schoolId={selectedTenantForUsers?.id}
           schoolName={selectedTenantForUsers?.school}
+          filters={selectedUserFilters}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
 

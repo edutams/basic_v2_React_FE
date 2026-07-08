@@ -212,13 +212,13 @@ const ProcessApplicationForm = () => {
 
   // ─── Parent/guardian data ───────────────────────────────────────────
   const parentData = {
-    lname: admission.parent_lname || admission.guardian_lname || '',
-    fname: admission.parent_fname || admission.guardian_fname || '',
-    mname: admission.parent_mname || admission.guardian_mname || '',
-    phone: admission.parent_phone || admission.guardian_phone || '',
-    email: admission.parent_email || admission.guardian_email || '',
-    occupation: admission.parent_occupation || admission.guardian_occupation || '',
-    address: admission.parent_address || admission.guardian_address || admission.parent_home_address || '',
+    lname: admission.parent?.lname || '',
+    fname: admission.parent?.fname || '',
+    mname: admission.parent?.mname || '',
+    phone: admission.parent?.phone || '',
+    email: admission.parent?.email || '',
+    occupation: admission.parent?.occupation || '',
+    address: admission.parent?.address || '',
   };
   const parentFullName = [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join('  ') || '—';
 
@@ -387,7 +387,7 @@ const ProcessApplicationForm = () => {
             <TextField
               fullWidth
               label="Intended Class"
-              value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+              value={admission?.class_code || '—'}
               slotProps={{ input: { readOnly: true } }}
               size="small"
             />
@@ -461,7 +461,7 @@ const ProcessApplicationForm = () => {
               <Box>
                 <Typography variant="subtitle2" fontWeight={700}>{fullName}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Form: {admission.form_number} | {admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                  Form: {admission.form_number} | {admission?.class_code || '—'}
                 </Typography>
               </Box>
             </Box>
@@ -471,7 +471,7 @@ const ProcessApplicationForm = () => {
                 <TextField
                   fullWidth
                   label="Programme"
-                  value={admission.prog_name || admission.intending_programme?.programme_name || '—'}
+                  value={admission.prog_name  || '—'}
                   slotProps={{ input: { readOnly: true } }}
                   size="small"
                 />
@@ -480,7 +480,7 @@ const ProcessApplicationForm = () => {
                 <TextField
                   fullWidth
                   label="Intended Class"
-                  value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                  value={admission?.class_code  || '—'}
                   slotProps={{ input: { readOnly: true } }}
                   size="small"
                 />

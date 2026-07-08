@@ -293,7 +293,7 @@ const AdmissionProcessing = () => {
 
   // ─── Conditional checks for menu items ────────────────────────────────
   const canAcceptOffer = (app) =>
-    app?.admission_status === 'admitted' && app?.accept_admission_offer === 'no';
+    app?.admission_status === 'admitted' && app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null;
 
   const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
 

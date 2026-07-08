@@ -373,13 +373,15 @@ const EditApplicationForm = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Religion"
-                size="small"
-                value={form.religion}
-                onChange={handleChange('religion')}
-              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Religion</InputLabel>
+                <Select value={form.religion} label="Religion" onChange={handleChange('religion')}>
+                  <MenuItem value="">-- Select Religion --</MenuItem>
+                  <MenuItem value="Christianity">Christianity</MenuItem>
+                  <MenuItem value="Islam">Islam</MenuItem>
+                  <MenuItem value="others">Other</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField

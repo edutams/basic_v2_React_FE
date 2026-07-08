@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import Radio from '@mui/material/Radio';
+import CreditCard from '@mui/icons-material/CreditCard';
 
 import {
   Typography,
@@ -134,13 +135,11 @@ const PayInvoice = () => {
         email: 'mother@example.com',
         phone: '08087654321',
         wallet_number: '9048121391',
-
       },
+      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
+      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
+      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
       themeMain: '#0288d1',
-      themeBg: isDark ? 'rgba(2,136,209,0.05)' : '#e1f5fe',
-      themeBorder: isDark ? 'rgba(2,136,209,0.2)' : '#b3e5fc',
-      themeHoverBg: isDark ? 'rgba(2,136,209,0.1)' : '#b3e5fc',
-      themeSelectedBg: isDark ? 'rgba(2,136,209,0.2)' : '#81d4fa',
     },
     {
       id: 'child',
@@ -153,11 +152,10 @@ const PayInvoice = () => {
         phone: '08011223344',
         wallet_number: '9048121395',
       },
+      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
+      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
+      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
       themeMain: 'secondary.main',
-      themeBg: isDark ? 'rgba(156,39,176,0.05)' : '#fdf4ff',
-      themeBorder: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
-      themeHoverBg: isDark ? 'rgba(156,39,176,0.1)' : '#f3e8ff',
-      themeSelectedBg: isDark ? 'rgba(156,39,176,0.2)' : '#f3e8ff',
     },
   ];
 
@@ -224,9 +222,9 @@ const PayInvoice = () => {
   );
   const optTotal = optionalEnabled
     ? optFees.reduce((acc, f) => {
-      if (!f.checked) return acc;
-      return acc + Number(f.payable || f.balance || f.amount || 0);
-    }, 0)
+        if (!f.checked) return acc;
+        return acc + Number(f.payable || f.balance || f.amount || 0);
+      }, 0)
     : 0;
   const grandTotal = compTotal + optTotal;
 
@@ -755,7 +753,12 @@ const PayInvoice = () => {
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <AccountBalanceWalletOutlinedIcon color="primary" fontSize="small" />
-                <Typography variant="subtitle2" fontWeight={800} color="primary.main" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={800}
+                  color="primary.main"
+                  sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}
+                >
                   Select Payment Wallet:
                 </Typography>
               </Box>
@@ -783,7 +786,6 @@ const PayInvoice = () => {
                   },
                 }}
               >
-
                 {availableWallets.map((wallet) => (
                   <Box
                     key={wallet.id}
@@ -796,78 +798,57 @@ const PayInvoice = () => {
                       cursor: 'pointer',
                       transition: 'all .2s',
                       bgcolor:
-                        selectedWallet === wallet.id
-                          ? wallet.themeSelectedBg
-                          : wallet.themeBg,
+                        selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg,
+
                       border: '2px solid',
-                      borderColor: selectedWallet === wallet.id ? "error.main" : "error.light",
+                      borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
                       '&:hover': {
                         bgcolor: wallet.themeHoverBg,
                         borderColor: wallet.themeMain,
                       },
                     }}
                   >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={800}
-                      >
-                        {wallet.name}
-                      </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {/* ATM Card Icon - Added */}
+                        <CreditCard sx={{ color: wallet.themeMain, fontSize: 28 }} />
+
+                        <Typography variant="subtitle2" fontWeight={800}>
+                          {wallet.name}
+                        </Typography>
+                      </Box>
 
                       <Radio
                         checked={selectedWallet === wallet.id}
                         value={wallet.id}
                         sx={{
-                          color: "error.main",
-                          "&.Mui-checked": {
-                            color: "error.main",
+                          color: 'error.main',
+                          '&.Mui-checked': {
+                            color: 'error.main',
                           },
                           p: 0,
                         }}
                       />
                     </Box>
 
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block" }}
-                    >
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                       Balance
                     </Typography>
 
-                    <Typography
-                      variant="h5"
-                      fontWeight={800}
-                      color="error.main"
-                    >
+                    <Typography variant="h5" fontWeight={800} color="error.main">
                       ₦{format(wallet.balance)}
                     </Typography>
 
                     <Typography variant="body2" fontWeight={600}>
                       {wallet.parent.name}
                     </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block" }}
-                    >
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                       Wallet No.
                     </Typography>
 
-                    <Typography
-                      variant="h6"
-                      fontWeight={200}
-                      color="dark"
-                    >
+                    <Typography variant="h6" fontWeight={200} color="dark">
                       {wallet.parent.wallet_number}
                     </Typography>
-
-
                   </Box>
                 ))}
               </Box>
@@ -1068,7 +1049,7 @@ const PayInvoice = () => {
                     py: 1.5,
                     fontWeight: 800,
                     color: isDark ? '#60a5fa' : '#1e40af',
-                    fontSize: '1.5rem',
+                    fontSize: '1rem',
                   }}
                 >
                   ₦{format(compTotal)}
@@ -1282,7 +1263,7 @@ const PayInvoice = () => {
                       py: 1.5,
                       fontWeight: 800,
                       color: isDark ? '#60a5fa' : '#1e40af',
-                      fontSize: '1.5rem',
+                      fontSize: '1rem',
                     }}
                   >
                     ₦{format(optTotal)}
@@ -1343,6 +1324,9 @@ const PayInvoice = () => {
               gap: 0.5,
             }}
           >
+            <Typography variant="body2" fontWeight={600} color="text.secondary">
+              Total Payable Amount
+            </Typography>
             <Typography variant="h1" fontWeight={900} color="primary.main">
               ₦{format(grandTotal)}
             </Typography>
@@ -1445,37 +1429,32 @@ const PayInvoice = () => {
                     borderRadius: 1,
                     cursor: 'pointer',
                     transition: 'all .2s',
-                    bgcolor:
-                      selectedWallet === wallet.id
-                        ? wallet.themeSelectedBg
-                        : wallet.themeBg,
+                    bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg, // now all use same default bg
+
                     border: '2px solid',
-                    borderColor: selectedWallet === wallet.id ? "error.main" : "error.light",
+                    borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider', // better than error color
                     '&:hover': {
                       bgcolor: wallet.themeHoverBg,
-                      borderColor: "error.main",
+                      borderColor: wallet.themeMain,
                     },
                   }}
                 >
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                  >
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={800}
-                    >
-                      {wallet.name}
-                    </Typography>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <CreditCard sx={{ color: wallet.themeMain, fontSize: 28 }} />
+
+                      <Typography variant="subtitle2" fontWeight={800}>
+                        {wallet.name}
+                      </Typography>
+                    </Box>
 
                     <Radio
                       checked={selectedWallet === wallet.id}
                       value={wallet.id}
                       sx={{
-                        color: "error.main",
-                        "&.Mui-checked": {
-                          color: "error.main",
+                        color: 'error.main',
+                        '&.Mui-checked': {
+                          color: 'error.main',
                         },
                         p: 0,
                       }}
@@ -1485,45 +1464,41 @@ const PayInvoice = () => {
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ display: "block", mt: 0.5 }}
+                    sx={{ display: 'block', mt: 0.5 }}
                   >
                     Balance
                   </Typography>
 
-                  <Typography
-                    variant="h6"
-                    fontWeight={800}
-                    color="error.main"
-                  >
+                  <Typography variant="h6" fontWeight={800} color="error.main">
                     ₦{format(wallet.balance)}
                   </Typography>
 
                   <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                     {wallet.parent.name}
                   </Typography>
-                   <Typography
+                  <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ display: "block", mt: 0.5 }}
+                    sx={{ display: 'block', mt: 0.5 }}
                   >
                     Wallet No.
                   </Typography>
 
-                  <Typography
-                    variant="h6"
-                      fontWeight={200}
-                      color="dark"
-                  >
-                   {wallet.parent.wallet_number}
+                  <Typography variant="h6" fontWeight={200} color="dark">
+                    {wallet.parent.wallet_number}
                   </Typography>
                 </Box>
               ))}
             </Stack>
-
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmModalOpen(false)}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setConfirmModalOpen(false)}
+          >
             Cancel
           </Button>
           <Button

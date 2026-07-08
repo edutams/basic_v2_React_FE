@@ -5,7 +5,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StandardDataTable from '@/components/shared/StandardDataTable';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import { useState, useEffect } from 'react';
-import axios from '@/api/landlord/landlord_api';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
@@ -22,9 +22,9 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/v1/landlord/activity-logs/tenant/${schoolId}/users`);
-      if (response.data?.status) {
-        setUsers(response.data.data);
+      const response = await activityLogApi.getTenantLoggedInUsers(schoolId);
+      if (response.status) {
+        setUsers(response.data);
       }
     } catch (error) {
       console.error('Error fetching tenant users:', error);
@@ -47,11 +47,11 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
     ]);
 
     try {
-      const response = await axios.post('/v1/landlord/activity-logs/export-excel', {
+      const response = await activityLogApi.exportExcel({
         title: `Logged In Users - ${schoolName || 'School'}`,
         headers: headers,
         rows: rows
-      }, { responseType: 'blob' });
+      });
 
       console.log('Export API responded with blob size:', response.data.size);
 

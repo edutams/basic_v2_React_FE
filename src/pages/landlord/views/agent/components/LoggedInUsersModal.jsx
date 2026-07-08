@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   IconButton,
@@ -27,10 +27,10 @@ import {
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
+import { IconUsers, IconDotsVertical } from '@tabler/icons-react';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
-import axios from '@/api/landlord/landlord_api';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
@@ -42,11 +42,12 @@ const predefinedStats = [
 
 
 
-const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersData = [] }) => {
-  console.log('LoggedInUsersModal rendered with usersData:', usersData);
+const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const notify = useNotification();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
@@ -68,6 +69,32 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     to: ''
   });
 
+  useEffect(() => {
+    if (open) {
+      fetchData();
+    }
+  }, [open, appliedFilters]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await activityLogApi.getTenantLoginStats({
+        role: appliedFilters.userType,
+        accessLevel: appliedFilters.accessLevel,
+        from: appliedFilters.from,
+        to: appliedFilters.to,
+      });
+      if (response.status) {
+        setData(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data', error);
+      notify.error('Failed to fetch login statistics.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasActiveFilters = filters.accessLevel !== 'All' || filters.userType !== 'All' || filters.from !== '' || filters.to !== '';
 
   const handleFilterChange = (field, value) => {
@@ -87,18 +114,18 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
       to: ''
     };
     setFilters(defaultFilters);
-    setAppliedFilters(defaultFilters);
+    setAppliedFilters({ accessLevel: 'All', userType: 'All', from: '', to: '' });
     setPage(0);
   };
 
   const handleExportToExcel = async () => {
-    if (!filteredData || filteredData.length === 0) {
+    if (!data || data.length === 0) {
       notify.error('No schools found to export.');
       return;
     }
 
     const headers = ['S/N', 'School Name', 'URL', 'Number of Logged-in Users'];
-    const rows = filteredData.map((row, index) => [
+    const rows = data.map((row, index) => [
       index + 1,
       row.school || '',
       row.url || '',
@@ -106,16 +133,16 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     ]);
 
     try {
-      const response = await axios.post('/v1/landlord/activity-logs/export-excel', {
-        title: 'Logged In Schools Report',
+      const response = await activityLogApi.exportExcel({
+        title: 'Logged In Users Report',
         headers: headers,
         rows: rows
-      }, { responseType: 'blob' });
+      });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'Logged_In_Schools.xlsx');
+      link.setAttribute('download', 'Logged_In_Users_Report.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -125,35 +152,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
       notify.error('Failed to export excel.');
     }
   };
-
-  const filteredData = (usersData || [])
-    .filter(row => {
-      let match = true;
-      if (appliedFilters.accessLevel !== 'All' && row.accessLevel !== appliedFilters.accessLevel) match = false;
-      const rowDateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
-      if (appliedFilters.from && rowDateStr && rowDateStr < appliedFilters.from) match = false;
-      if (appliedFilters.to && rowDateStr && rowDateStr > appliedFilters.to) match = false;
-
-      // If a specific user type is selected, filter out schools that have 0 logins for that type
-      if (appliedFilters.userType !== 'All') {
-        const count = row.stats ? (row.stats[appliedFilters.userType] || 0) : 0;
-        if (count === 0) match = false;
-      }
-
-      return match;
-    })
-    .map(row => {
-      // Calculate dynamic number based on userType filter
-      let currentNumber = row.number || 0;
-      if (row.stats) {
-        if (appliedFilters.userType === 'All') {
-          currentNumber = row.stats.Total || 0;
-        } else {
-          currentNumber = row.stats[appliedFilters.userType] || 0;
-        }
-      }
-      return { ...row, number: currentNumber };
-    });
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -396,7 +394,13 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredData.length === 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                        <Typography color="textSecondary">Loading data...</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center">
                         <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
@@ -406,8 +410,8 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                     </TableRow>
                   ) : (
                     (rowsPerPage > 0
-                      ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      : filteredData
+                      ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      : data
                     ).map((row, index) => (
                       <TableRow
                         key={row.id || index} hover>
@@ -433,7 +437,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      count={filteredData.length}
+                      count={data.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={handleChangePage}

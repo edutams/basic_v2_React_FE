@@ -35,8 +35,8 @@ import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
-  { label: 'Student', searchLabels: ['Student'], icon: IconUsers, color: '#10B981' },
+  { label: 'Teacher', searchLabels: ['Teacher', 'Staff'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Learner', searchLabels: ['Learner'], icon: IconUsers, color: '#10B981' },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
@@ -256,12 +256,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
               </Box>
               <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
             </Stack>
-            {/* <Button
-              startIcon={<GetAppIcon />}
-              variant='contained'
-            >
-              Export to Excel
-            </Button> */}
+
             <Button
               variant="contained"
               startIcon={<GetAppIcon />}
@@ -285,7 +280,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
             bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5',
             borderTop: `1px solid ${theme.palette.divider}`
           }}>
-            {/* Access Level Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -312,7 +306,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
               </Select>
             </Box>
 
-            {/* User Type Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -339,7 +332,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
               </Select>
             </Box>
 
-            {/* From Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -366,7 +358,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
               />
             </Box>
 
-            {/* To Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',

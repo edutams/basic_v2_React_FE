@@ -87,7 +87,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
             <Box>
               <Typography variant="subtitle1" fontWeight={800} lineHeight={1}>
-                {schoolName?.toUpperCase() ?? 'SCHOOL'}
+                {schoolName?.toUpperCase()}
               </Typography>
               <Typography variant="caption" color="text.secondary" letterSpacing={1}>
                 ADMISSIONS
@@ -104,10 +104,10 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
               {schoolName}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block">
-              {schoolAddress ?? 'Plot 14, School Rd, Lagos'}
+              {schoolAddress}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block">
-              {schoolEmail ?? 'admissions@edutams.school'}
+              {schoolEmail}
             </Typography>
           </Box>
         </Box>
@@ -141,9 +141,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
         <Divider sx={{ mb: 3 }} />
 
-        <Typography variant="body1" mb={2}>
-          Dear {letter.parentName},
-        </Typography>
 
         <Typography variant="h5" fontWeight={800} mb={1.5}>
           Offer of Admission —{' '}
@@ -152,20 +149,14 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           </Typography>
         </Typography>
 
-        <Typography variant="body2" mb={3} lineHeight={1.8}>
-          Following the successful completion of the entrance examination and review of your child's
-          application, we are pleased to offer{' '}
-          <Typography component="strong" variant="body2" fontWeight={700} color="text.primary">
-            {letter.studentName}
-          </Typography>{' '}
-          a place in{' '}
-          <Typography component="strong" variant="body2" fontWeight={700} color="text.primary">
-            Junior Secondary School 1, Section A
-          </Typography>{' '}
-          for the {letter.session} academic session.
-        </Typography>
+        <Typography
+          variant="body2"
+          mb={3}
+          lineHeight={1.8}
+          dangerouslySetInnerHTML={{ __html: letter.offer_letter }}
+        />
 
-        <Paper sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>
+        {/* <Paper sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <DetailCell label="Class" value={letter.class} />
@@ -180,13 +171,8 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
               <DetailCell label="Deadline" value={letter.deadline} />
             </Grid>
           </Grid>
-        </Paper>
+        </Paper> */}
 
-        <Typography variant="body2" mb={2} lineHeight={1.8}>
-          To confirm this offer, please make payment of the acceptance fee through your parent
-          dashboard before the deadline above. Once payment is received, your child will be
-          automatically enrolled and assigned a student ID.
-        </Typography>
 
         <Typography variant="body2" mb={4} lineHeight={1.8}>
           We look forward to welcoming {(letter.studentName ?? '').split(' ')[0]} into the{' '}
@@ -226,6 +212,7 @@ const AdmissionLetter = () => {
   const { id } = useParams();
   const notify = useNotification();
   const { tenantInfo } = useContext(TenantAuthContext);
+  console.log(tenantInfo, 33)
 
   const [letter, setLetter] = useState(location.state?.letter ?? MOCK_LETTER);
   const [isLoading, setIsLoading] = useState(Boolean(id && !location.state?.letter));
@@ -250,8 +237,10 @@ const AdmissionLetter = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, location.state?.letter]);
 
-  const schoolName = tenantInfo?.school_name ?? tenantInfo?.name ?? 'FunmiSchool';
-  const schoolLogo = tenantInfo?.logo_url ?? tenantInfo?.logo ?? null;
+  const schoolName = tenantInfo?.tenant_name;
+  const schoolLogo = tenantInfo?.school_logo;
+  const schoolAddress = tenantInfo?.address;
+  const schoolEmail = tenantInfo?.tenant_email;
 
   const contentRef = useRef(null);
 
@@ -328,7 +317,8 @@ const AdmissionLetter = () => {
 
       <Box sx={{ bgcolor: '#EEF2F7', py: 4, px: { xs: 1, sm: 3 }, borderRadius: 3 }}>
         <div ref={contentRef} style={{ padding: '20px' }}>
-          <LetterCard letter={letter} schoolName={schoolName} schoolLogo={schoolLogo} />
+          <LetterCard letter={letter} schoolName={schoolName} schoolLogo={schoolLogo} schoolAddress={schoolAddress} schoolEmail={schoolEmail} />
+
         </div>
       </Box>
     </PageContainer>

@@ -4,15 +4,15 @@ import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
 
 const PLACEHOLDER_FIELDS = [
-  { label: "Student's First Name", value: "[@Student's First Name]" },
-  { label: "Student's Middle Name", value: "[@Student's Middle Name]" },
-  { label: "Student's Last Name", value: "[@Student's Last Name]" },
-  { label: 'Form Number', value: '[@Form Number]' },
-  { label: 'Class Name', value: '[@Class Name]' },
-  { label: 'Entrance Score', value: '[@Entrance Score]' },
-  { label: "Parent's Name", value: "[@Parent's Name]" },
-  { label: 'School Division', value: '[@School Division]' },
-  { label: 'Admission Session', value: '[@Admission Session]' },
+  { label: "Student's First Name", value: "[@FIRST_NAME]" },
+  { label: "Student's Middle Name", value: "[@MIDDLE_NAME]" },
+  { label: "Student's Last Name", value: "[@LAST_NAME]" },
+  { label: 'Form Number', value: '[@FORM_NUMBER]' },
+  { label: 'Class Name', value: '[@CLASS_NAME]' },
+  { label: 'Entrance Score', value: '[@ENTRANCE_SCORE]' },
+  { label: "Parent's Name", value: "[@Parent_Name]" },
+  { label: 'School Division', value: '[@SCHOOL_DIVISION]' },
+  { label: 'Admission Session', value: '[@ADMISSION_SESSION]' },
 ];
 
 export const LETTER_TEMPLATES = [
@@ -20,20 +20,20 @@ export const LETTER_TEMPLATES = [
     id: 'offer',
     label: 'Admission Offer',
     preview:
-      "Name [@Student's Last Name] [@Student's First Name] [@Student's Middle Name]\n\n[@Form Number]\n\n\nOFFER OF PROVISIONAL ADMISSION INTO [@Admission Session] FOR 2020 / 2021 ACADEMIC SESSION\n\nAs a result of your performance in the Entrance Examination conducted by the school, you are hereby offered admission into [@Class Name] for the 2020/2021 academic session.\n\nCongratulations!\n\nPlease note that all fees must be paid using Master Card before admission can be allowed on the School portal.\n\nThe 2020/2021 academic session commences on Sunday (Boarder) 20th September, 2020; Monday (Day Students) 21st September, 2020 respectively.\n\nIntending Boarder should please see the Vice Principal (Administration) who is in-charge of the Hostel Requirements.\n\nI wish you a very brilliant future as you step into this Great School. By the special grace of God, you are assured of an all-round quality education.\n\nOnce again, accept my congratulations\n\nYours faithfully,\n\nOlaniyan B.I (Mrs.)",
+      "Name [@LAST_NAME] [@FIRST_NAME] [@MIDDLE_NAME]\n\n[@FORM_NUMBER]\n\n\nOFFER OF PROVISIONAL ADMISSION INTO [@ADMISSION_SESSION] FOR 2020 / 2021 ACADEMIC SESSION\n\nAs a result of your performance in the Entrance Examination conducted by the school, you are hereby offered admission into [@Class Name] for the 2020/2021 academic session.\n\nCongratulations!\n\nPlease note that all fees must be paid using Master Card before admission can be allowed on the School portal.\n\nThe 2020/2021 academic session commences on Sunday (Boarder) 20th September, 2020; Monday (Day Students) 21st September, 2020 respectively.\n\nIntending Boarder should please see the Vice Principal (Administration) who is in-charge of the Hostel Requirements.\n\nI wish you a very brilliant future as you step into this Great School. By the special grace of God, you are assured of an all-round quality education.\n\nOnce again, accept my congratulations\n\nYours faithfully,\n\nOlaniyan B.I (Mrs.)",
   },
 ];
 
 const PREVIEW_SAMPLES = {
-  "[@Student's First Name]": 'John',
-  "[@Student's Middle Name]": 'K.',
-  "[@Student's Last Name]": 'Doe',
-  '[@Form Number]': 'ADM/2026/0012',
-  '[@Class Name]': 'Junior Secondary',
-  '[@Entrance Score]': '85',
-  "[@Parent's Name]": 'Mr. & Mrs. Doe',
-  '[@School Division]': 'Brightwood School',
-  '[@Admission Session]': '2025/2026 Session',
+  "[@FIRST_NAME]": 'John',
+  "[@MIDDLE_NAME]": 'K.',
+  "[@LAST_NAME]": 'Doe',
+  '[@FORM_NUMBER]': 'ADM/2026/0012',
+  '[@CLASS_NAME]': 'Junior Secondary',
+  '[@ENTRANCE_SCORE]': '85',
+  "[@Parent_Name]": 'Mr. & Mrs. Doe',
+  '[@SCHOOL_DIVISION]': 'Brightwood School',
+  '[@ADMISSION_SESSION]': '2025/2026 Session',
 };
 
 const applyPreviewSamples = (html) => {

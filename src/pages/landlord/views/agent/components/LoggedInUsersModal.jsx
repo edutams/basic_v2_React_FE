@@ -70,7 +70,26 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
     to: ''
   });
 
+    const [filterOptions, setFilterOptions] = useState({
+    accessLevels: [{ label: 'All Levels', value: 'All' }],
+    userTypes: [{ label: 'All Users', value: 'All' }]
+  });
+
   useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await activityLogApi.getFilterOptions();
+        if (response.status) {
+          setFilterOptions(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter options', error);
+      }
+    };
+    fetchOptions();
+  }, []);
+
+useEffect(() => {
     if (open) {
       fetchData();
     }
@@ -125,11 +144,12 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
       return;
     }
 
-    const headers = ['S/N', 'School Name', 'URL', 'Number of Logged-in Users'];
+    const headers = ['S/N', 'School Name', 'URL', 'User Type', 'Number of Logged-in Users'];
     const rows = data.map((row, index) => [
       index + 1,
       row.school || '',
       row.url || '',
+      appliedFilters.userType || 'All',
       row.number || 0
     ]);
 
@@ -186,14 +206,27 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
         <Grid container spacing={1.5} mb={3}>
           {predefinedStats.map((stat, idx) => {
             const statValue = stats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+            const isAgents = stat.label === 'Agents';
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-                <StatCard
-                  label={stat.label}
-                  count={statValue}
-                  icon={stat.icon}
-                  color={stat.color}
-                />
+                <Box 
+                  onClick={() => {
+                    if (isAgents && onViewUserList) {
+                      onViewUserList(
+                        { id: 'landlord', school: 'Agents' }, 
+                        { userType: 'All', from: filters.from, to: filters.to }
+                      );
+                    }
+                  }}
+                  sx={{ cursor: isAgents ? 'pointer' : 'default', width: '100%' }}
+                >
+                  <StatCard
+                    label={stat.label}
+                    count={statValue}
+                    icon={stat.icon}
+                    color={stat.color}
+                  />
+                </Box>
               </Grid>
             );
           })}
@@ -271,11 +304,11 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                 onChange={(e) => handleFilterChange('accessLevel', e.target.value)}
                 sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
               >
-                <MenuItem value="All">All Levels</MenuItem>
-                <MenuItem value="Level 2">Level 2</MenuItem>
-                <MenuItem value="Level 3">Level 3</MenuItem>
-                <MenuItem value="Level 4">Level 4</MenuItem>
-                <MenuItem value="Level 5">Level 5</MenuItem>
+                {filterOptions.accessLevels.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
@@ -298,10 +331,11 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                 onChange={(e) => handleFilterChange('userType', e.target.value)}
                 sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
               >
-                <MenuItem value="All">All Users</MenuItem>
-                <MenuItem value="Teacher">Teacher</MenuItem>
-                <MenuItem value="Student">Student</MenuItem>
-                <MenuItem value="SPA">SPA</MenuItem>
+                {filterOptions.userTypes.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
@@ -421,10 +455,40 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                           <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
+                          {row.url ? (
+                            <Typography
+                              component="a"
+                              href={row.url.startsWith('http') ? row.url : `https://${row.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                color: '#2ca87f',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }}
+                            >
+                              {row.url}
+                            </Typography>
+                          ) : (
+                            <Typography sx={{ color: theme.palette.text.disabled, fontSize: '13px' }}>N/A</Typography>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
+                          <Typography
+                            variant="body2"
+                            color="primary"
+                            fontWeight="600"
+                            sx={{
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => onViewUserList && onViewUserList(row, filters)}
+                          >
+                            {row.number}
+                          </Typography>
                         </TableCell>
                         <TableCell align="right">
                           <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
@@ -489,7 +553,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            if (onViewUserList) onViewUserList(selectedRow);
+            if (onViewUserList) onViewUserList(selectedRow, appliedFilters);
           }}
         >
           View Users List

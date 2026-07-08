@@ -35,13 +35,18 @@ const activityLogApi = {
     return response.data;
   },
 
+  getFilterOptions: async () => {
+    const response = await api.get('/v1/landlord/activity-logs/filter-options');
+    return response.data;
+  },
+
   getTenantLoginStats: async (params = {}) => {
     const response = await api.get('/v1/landlord/activity-logs/tenant-login-stats', { params });
     return response.data;
   },
 
-  getTenantLoggedInUsers: async (tenantId) => {
-    const response = await api.get(`/v1/landlord/activity-logs/tenant/${tenantId}/users`);
+  getTenantLoggedInUsers: async (tenantId, params = {}) => {
+    const response = await api.get(`/v1/landlord/activity-logs/tenant/${tenantId}/users`, { params });
     return response.data;
   },
 

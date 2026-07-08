@@ -23,6 +23,7 @@ import {
   TablePagination,
   Button,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -397,7 +398,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                   {loading ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                        <Typography color="textSecondary">Loading data...</Typography>
+                        <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
                   ) : data.length === 0 ? (

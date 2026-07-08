@@ -101,9 +101,6 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName }) => {
             startIcon={<GetAppIcon />}
             onClick={handleExportToExcel}
             sx={{
-              color: '#ffffff !important',
-              bgcolor: '#2ca87f',
-              '&:hover': { bgcolor: '#238a68' },
               width: { xs: '100%', sm: 'auto' },
             }}
           >

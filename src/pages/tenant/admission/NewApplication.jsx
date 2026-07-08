@@ -21,6 +21,7 @@ import SubmitStep from '@/components/tenant/admission/SubmitStep';
 import { useAdmissionForm } from '@/hooks/useAdmissionForm';
 import { useNotification } from 'src/hooks/useNotification';
 import { getOpenBatches, checkAdmissionPaymentStatus } from '@/api/tenant/admission/admissionApi';
+import { getFeeSummary } from '@/utils/feeSummary';
 
 const STEPS = [
   { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
@@ -108,12 +109,14 @@ const StepperBar = ({ activeStep, steps }) => {
   );
 };
 
-const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep }) => {
+const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, intendingClassId }) => {
   if (!batch) {
     return (
       <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
         <Typography variant="body2" color="text.secondary" mb={2}>
-          {batchLoaded ? 'No admission batch selected. Please select a batch to continue.' : 'Loading batch details...'}
+          {batchLoaded
+            ? 'No admission batch selected. Please select a batch to continue.'
+            : 'Loading batch details...'}
         </Typography>
         {batchLoaded && (
           <Button variant="contained" size="small" fullWidth onClick={onChangeBatch}>
@@ -124,19 +127,28 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep }) => 
     );
   }
 
+  // If the applicant's class is already known, show the exact fee for that
+  // class. Otherwise (class not chosen yet), summarize across classes and
+  // show a range only if the fee genuinely differs by class.
+  const relevantPayments = intendingClassId
+    ? (batch.pre_application_payments || []).filter((p) => p.class_id === intendingClassId)
+    : batch.pre_application_payments || [];
+
+  const feeSummary = getFeeSummary(relevantPayments);
+  const feeTotal = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+  const feeHasRange = feeSummary.some((f) => f.isRange);
+
   return (
     <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
       <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
         Selected Admission Batch Detail
       </Typography>
-
       <Typography variant="h5" fontWeight={800} mb={2}>
         Session: {batch?.session_term?.session?.sesname}{' '}
         {batch?.session_term?.display_term?.display_name}
         {' • '}
         Admission Batch: {batch?.batch_name ?? '2'}
       </Typography>
-
       <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
         {(batch?.classes || []).map((cls) => (
           <Chip
@@ -148,8 +160,7 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep }) => 
         ))}
       </Stack>
       {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
-
-      {batch?.require_payment && batch?.pre_application_payments && batch.pre_application_payments.length > 0 && (
+      {batch?.require_payment && feeSummary.length > 0 && (
         <Box
           sx={{
             display: 'flex',
@@ -165,17 +176,19 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep }) => 
           <Typography variant="body2" color="error.dark" fontWeight={500}>
             Pre-Application Payment
           </Typography>
-
           <Typography variant="body2" color="error.dark" fontWeight={700}>
-            ₦{batch.pre_application_payments.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()}
+            {feeHasRange ? 'from ' : ''}₦{feeTotal.toLocaleString()}
           </Typography>
         </Box>
       )}
-
       {activeStep !== 3 && (
         <>
           <Divider sx={{ mb: 2 }} />
-          <Button variant="contained" size="small" fullWidth startIcon={<VisibilityIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            startIcon={<VisibilityIcon />}
             onClick={onChangeBatch}
             sx={{
               borderRadius: 2,
@@ -265,39 +278,39 @@ const NewApplication = () => {
         // Always fetch all open batches to get complete payment data
         const response = await getOpenBatches();
         const allBatches = response?.data?.data || response?.data || [];
-        
+
         let targetBatchId = null;
-        
+
         // Priority 1: If we have a saved admission batch from formData
         if (formData?.admission_batch?.id) {
-          console.log('Loading batch details from formData:', formData.admission_batch.id);
+          // console.log('Loading batch details from formData:', formData.admission_batch.id);
           targetBatchId = formData.admission_batch.id;
         }
         // Priority 2: If we have a batch from location.state (Apply Now from modal)
         else if (batch?.id && !formData?.admission_batch) {
-          console.log('Loading batch details from location.state:', batch.id);
+          // console.log('Loading batch details from location.state:', batch.id);
           targetBatchId = batch.id;
         }
         // Priority 3: If we have existingWard with admission_batch
         else if (existingWard?.admission_batch?.id && !formData?.admission_batch && !batch?.id) {
-          console.log('Loading batch details from existingWard:', existingWard.admission_batch.id);
+          // console.log('Loading batch details from existingWard:', existingWard.admission_batch.id);
           targetBatchId = existingWard.admission_batch.id;
         }
-        
+
         // Priority 4: Check sessionStorage (preserved across URL changes / page reloads within the same tab)
         if (!targetBatchId) {
           const sessionBatch = restoreBatchFromSession();
           if (sessionBatch?.id) {
-            console.log('Loading batch from sessionStorage:', sessionBatch.id);
+            // console.log('Loading batch from sessionStorage:', sessionBatch.id);
             targetBatchId = sessionBatch.id;
           }
         }
-        
+
         // If we have a target batch ID, find it in the full batches list
         if (targetBatchId) {
           const fullBatch = allBatches.find((b) => b.id === targetBatchId);
           if (fullBatch) {
-            console.log('Loaded full batch data with payments:', fullBatch);
+            // console.log('Loaded full batch data with payments:', fullBatch);
             // Ensure payment arrays exist
             if (!fullBatch.pre_application_payments) {
               fullBatch.pre_application_payments = [];
@@ -315,7 +328,7 @@ const NewApplication = () => {
         } else {
           // No batch source found (no location.state, no formData) — mark as loaded
           // so the UI doesn't show "Loading..." indefinitely
-          console.log('No target batch ID found — batch selection needed');
+          // console.log('No target batch ID found — batch selection needed');
           setBatchLoaded(true);
         }
       } catch (error) {
@@ -333,7 +346,14 @@ const NewApplication = () => {
     };
 
     loadBatchDetails();
-  }, [formData?.admission_batch?.id, batch?.id, existingWard?.admission_batch?.id, batch, formData?.admission_batch, existingWard?.admission_batch]);
+  }, [
+    formData?.admission_batch?.id,
+    batch?.id,
+    existingWard?.admission_batch?.id,
+    batch,
+    formData?.admission_batch,
+    existingWard?.admission_batch,
+  ]);
 
   useEffect(() => {
     if (userChangedBatch) {
@@ -369,7 +389,7 @@ const NewApplication = () => {
           setBatchLoaded(true);
         }
       };
-      
+
       reloadBatchWithPayments();
     }
   }, [formData?.admission_batch, selectedBatch?.id, userChangedBatch]);
@@ -388,7 +408,7 @@ const NewApplication = () => {
         { label: 'Submit', icon: SendIcon, isTabler: false },
       ];
     }
-    
+
     // Once batch is loaded, build actual steps based on payment requirement
     return [
       { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
@@ -428,7 +448,7 @@ const NewApplication = () => {
 
       // Get the current admission stage from the database
       const dbStage = currentStage ?? 0;
-      
+
       // For applications with payment requirement, check if payment has been made
       if (selectedBatch.require_payment) {
         // If user is on or past payment step (stage 2), check payment status
@@ -436,28 +456,28 @@ const NewApplication = () => {
           try {
             const response = await checkAdmissionPaymentStatus(admissionId);
             const hasPaid = response?.data?.has_paid === true;
-            
+
             if (!hasPaid && dbStage === 2) {
               // User is on payment step but hasn't paid - can't go beyond step 2
               setMaxAllowedStep(2);
             } else if (hasPaid) {
               // User has paid - can access up to their current stage
-              setMaxAllowedStep(prev => Math.max(prev, dbStage));
+              setMaxAllowedStep((prev) => Math.max(prev, dbStage));
             } else {
               // Default: use database stage
-              setMaxAllowedStep(prev => Math.max(prev, dbStage));
+              setMaxAllowedStep((prev) => Math.max(prev, dbStage));
             }
           } catch (error) {
             console.error('Failed to check payment status:', error);
-            setMaxAllowedStep(prev => Math.max(prev, dbStage));
+            setMaxAllowedStep((prev) => Math.max(prev, dbStage));
           }
         } else {
           // User hasn't reached payment step yet
-          setMaxAllowedStep(prev => Math.max(prev, dbStage));
+          setMaxAllowedStep((prev) => Math.max(prev, dbStage));
         }
       } else {
         // No payment required - use database stage directly
-        setMaxAllowedStep(prev => Math.max(prev, dbStage));
+        setMaxAllowedStep((prev) => Math.max(prev, dbStage));
       }
     };
 
@@ -471,7 +491,9 @@ const NewApplication = () => {
     // This prevents blocking legitimate progression
     const timer = setTimeout(() => {
       if (activeStep > maxAllowedStep) {
-        console.warn(`User tried to access step ${activeStep}, but max allowed is ${maxAllowedStep}. Redirecting...`);
+        console.warn(
+          `User tried to access step ${activeStep}, but max allowed is ${maxAllowedStep}. Redirecting...`,
+        );
         notify.warning('Please complete the previous steps first');
         setActiveStep(maxAllowedStep);
         navigate(`?step=${maxAllowedStep + 1}`, {
@@ -556,8 +578,10 @@ const NewApplication = () => {
           const updatedBatch = result.data.admission_batch;
           setSelectedBatch((prev) => ({
             ...updatedBatch,
-            pre_application_payments: updatedBatch.pre_application_payments ?? prev?.pre_application_payments ?? [],
-            post_application_payments: updatedBatch.post_application_payments ?? prev?.post_application_payments ?? [],
+            pre_application_payments:
+              updatedBatch.pre_application_payments ?? prev?.pre_application_payments ?? [],
+            post_application_payments:
+              updatedBatch.post_application_payments ?? prev?.post_application_payments ?? [],
           }));
           setBatchLoaded(true);
         }
@@ -607,8 +631,10 @@ const NewApplication = () => {
           const updatedBatch = result.data.admission_batch;
           setSelectedBatch((prev) => ({
             ...updatedBatch,
-            pre_application_payments: updatedBatch.pre_application_payments ?? prev?.pre_application_payments ?? [],
-            post_application_payments: updatedBatch.post_application_payments ?? prev?.post_application_payments ?? [],
+            pre_application_payments:
+              updatedBatch.pre_application_payments ?? prev?.pre_application_payments ?? [],
+            post_application_payments:
+              updatedBatch.post_application_payments ?? prev?.post_application_payments ?? [],
           }));
           setBatchLoaded(true);
         }
@@ -710,6 +736,7 @@ const NewApplication = () => {
               isLoading={isLoading}
               selectedBatch={selectedBatch}
               admissionId={admissionId}
+              intendingClassId={formData?.academicData?.intending_class_id}
             />
           );
         } else {
@@ -815,7 +842,10 @@ const NewApplication = () => {
             </Box>
           </Box>
 
-          <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/dashboard')}
             sx={{ color: 'text.secondary', fontWeight: 500 }}
           >
@@ -858,7 +888,7 @@ const NewApplication = () => {
           open={batchModalOpen}
           onClose={() => setBatchModalOpen(false)}
           onApply={(newBatch) => {
-            console.log('User manually changed batch to:', newBatch);
+            // console.log('User manually changed batch to:', newBatch);
             setSelectedBatch(newBatch);
             setBatchLoaded(true);
             setUserChangedBatch(true); // Mark that user manually changed the batch

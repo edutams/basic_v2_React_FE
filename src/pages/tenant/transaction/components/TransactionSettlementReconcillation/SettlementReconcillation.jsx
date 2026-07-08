@@ -156,8 +156,12 @@ const SettlementReconcillation = () => {
     ],
     series: [
       {
-        name: 'Transactions',
+        name: 'Transaction Amount',
         data: [500000, 1000000, 1500000, 2000000, 2500000, 3000000],
+      },
+      {
+        name: 'Settlement Amount',
+        data: [450000, 950000, 1400000, 1800000, 2300000, 2800000],
       },
     ],
   });
@@ -194,7 +198,8 @@ const SettlementReconcillation = () => {
       horizontalAlign: 'right',
     },
 
-    colors: ['#3949AB'],
+    colors: ['#3949AB', '#10B981'],
+    // colors: [theme.palette.primary.main, theme.palette.success.main],
 
     plotOptions: {
       bar: {

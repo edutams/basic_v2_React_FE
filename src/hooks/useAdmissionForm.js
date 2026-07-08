@@ -63,132 +63,132 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
     };
   }, []);
 
-useEffect(() => {
-  const loadAdmissionData = async () => {
+  useEffect(() => {
+    const loadAdmissionData = async () => {
 
-    const savedDraft = localStorage.getItem(STORAGE_KEY);
+      const savedDraft = localStorage.getItem(STORAGE_KEY);
 
-    let parsedDraft = null;
+      let parsedDraft = null;
 
-    if (savedDraft) {
-      try {
-        parsedDraft = JSON.parse(savedDraft);
-      } catch (error) {
-        console.error('[useAdmissionForm] Invalid localStorage draft');
-      }
-    }
-
-    /**
-     * ─────────────────────────────────────────────
-     * PRIORITY 1: existingAdmission (fresh state)
-     * ─────────────────────────────────────────────
-     */
-    if (existingAdmission) {
-
-      const transformedData =
-        transformAdmissionToFormData(existingAdmission);
-
-      setAdmissionId(existingAdmission.id);
-      setCurrentStage(existingAdmission.admission_stage || 0);
-      setFormData(transformedData);
-
-      const draft = {
-        admissionId: existingAdmission.id,
-        currentStage: existingAdmission.admission_stage || 0,
-        formData: transformedData,
-        selectedBatchId:
-          existingAdmission.admission_batch_id ||
-          existingAdmission.admission_batch?.id,
-        timestamp: new Date().toISOString(),
-      };
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-
-      parsedDraft = draft; // keep in memory for consistency
-    }
-
-    /**
-     * ─────────────────────────────────────────────
-     * PRIORITY 2: localStorage / persisted draft
-     * ─────────────────────────────────────────────
-     */
-    if (!existingAdmission && parsedDraft) {
-      console.log('[useAdmissionForm] Using localStorage draft');
-
-      setAdmissionId(parsedDraft.admissionId);
-      setCurrentStage(parsedDraft.currentStage || 0);
-      setFormData(
-        parsedDraft.formData || {
-          wardData: null,
-          academicData: null,
-          documentsData: null,
+      if (savedDraft) {
+        try {
+          parsedDraft = JSON.parse(savedDraft);
+        } catch (error) {
+          console.error('[useAdmissionForm] Invalid localStorage draft');
         }
-      );
-    }
+      }
 
-    /**
-     * ─────────────────────────────────────────────
-     * PRIORITY 3: backend refresh (if admission exists)
-     * ─────────────────────────────────────────────
-     */
-    const admissionIdToFetch =
-      existingAdmission?.id || parsedDraft?.admissionId;
+      /**
+       * ─────────────────────────────────────────────
+       * PRIORITY 1: existingAdmission (fresh state)
+       * ─────────────────────────────────────────────
+       */
+      if (existingAdmission) {
 
-    if (!admissionIdToFetch) {
-      console.log('[useAdmissionForm] No admissionId found');
-      return;
-    }
+        const transformedData =
+          transformAdmissionToFormData(existingAdmission);
 
-    try {
-      setIsLoading(true);
+        setAdmissionId(existingAdmission.id);
+        setCurrentStage(existingAdmission.admission_stage || 0);
+        setFormData(transformedData);
 
-      console.log(
-        '[useAdmissionForm] Fetching fresh data:',
-        admissionIdToFetch
-      );
+        const draft = {
+          admissionId: existingAdmission.id,
+          currentStage: existingAdmission.admission_stage || 0,
+          formData: transformedData,
+          selectedBatchId:
+            existingAdmission.admission_batch_id ||
+            existingAdmission.admission_batch?.id,
+          timestamp: new Date().toISOString(),
+        };
 
-      const response =
-        await getAdmissionApplication(admissionIdToFetch);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
 
-      const freshAdmission = response?.data;
+        parsedDraft = draft; // keep in memory for consistency
+      }
 
-      if (!freshAdmission) return;
+      /**
+       * ─────────────────────────────────────────────
+       * PRIORITY 2: localStorage / persisted draft
+       * ─────────────────────────────────────────────
+       */
+      if (!existingAdmission && parsedDraft) {
+        console.log('[useAdmissionForm] Using localStorage draft');
 
-      const transformedData =
-        transformAdmissionToFormData(freshAdmission);
+        setAdmissionId(parsedDraft.admissionId);
+        setCurrentStage(parsedDraft.currentStage || 0);
+        setFormData(
+          parsedDraft.formData || {
+            wardData: null,
+            academicData: null,
+            documentsData: null,
+          }
+        );
+      }
 
-      setAdmissionId(freshAdmission.id);
-      setCurrentStage(freshAdmission.admission_stage || 0);
-      setFormData(transformedData);
+      /**
+       * ─────────────────────────────────────────────
+       * PRIORITY 3: backend refresh (if admission exists)
+       * ─────────────────────────────────────────────
+       */
+      const admissionIdToFetch =
+        existingAdmission?.id || parsedDraft?.admissionId;
 
-      const updatedDraft = {
-        admissionId: freshAdmission.id,
-        currentStage: freshAdmission.admission_stage || 0,
-        formData: transformedData,
-        selectedBatchId:
-          freshAdmission.admission_batch_id ||
-          freshAdmission.admission_batch?.id,
-        timestamp: new Date().toISOString(),
-      };
+      if (!admissionIdToFetch) {
+        console.log('[useAdmissionForm] No admissionId found');
+        return;
+      }
 
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(updatedDraft)
-      );
+      try {
+        setIsLoading(true);
 
-      console.log('[useAdmissionForm] Synced fresh data');
-    } catch (error) {
-      console.error(
-        '[useAdmissionForm] API fetch failed:',
-        error
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        console.log(
+          '[useAdmissionForm] Fetching fresh data:',
+          admissionIdToFetch
+        );
 
-  loadAdmissionData();
-}, [existingAdmission, transformAdmissionToFormData]);
+        const response =
+          await getAdmissionApplication(admissionIdToFetch);
+
+        const freshAdmission = response?.data;
+
+        if (!freshAdmission) return;
+
+        const transformedData =
+          transformAdmissionToFormData(freshAdmission);
+
+        setAdmissionId(freshAdmission.id);
+        setCurrentStage(freshAdmission.admission_stage || 0);
+        setFormData(transformedData);
+
+        const updatedDraft = {
+          admissionId: freshAdmission.id,
+          currentStage: freshAdmission.admission_stage || 0,
+          formData: transformedData,
+          selectedBatchId:
+            freshAdmission.admission_batch_id ||
+            freshAdmission.admission_batch?.id,
+          timestamp: new Date().toISOString(),
+        };
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(updatedDraft)
+        );
+
+        console.log('[useAdmissionForm] Synced fresh data');
+      } catch (error) {
+        console.error(
+          '[useAdmissionForm] API fetch failed:',
+          error
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAdmissionData();
+  }, [existingAdmission, transformAdmissionToFormData]);
   // Save draft to localStorage whenever it changes
   const saveDraft = useCallback((data = null, batchId = null, stage = null) => {
     const draft = {
@@ -220,10 +220,10 @@ useEffect(() => {
 
     try {
       const updatedFormData = { ...formData };
-      
+
       // Determine if this is the documents step
       const isDocumentsStep = (step === 2 && !selectedBatch?.require_payment) || (step === 3 && selectedBatch?.require_payment);
-      
+
       // Update the specific step data
       switch (step) {
         case 0:
@@ -255,7 +255,7 @@ useEffect(() => {
         payload = new FormData();
         payload.append('admission_batch_id', selectedBatch?.id);
         payload.append('admission_stage', step);
-        
+
         // Add ward data
         if (updatedFormData.wardData) {
           Object.entries(updatedFormData.wardData).forEach(([key, value]) => {
@@ -264,7 +264,7 @@ useEffect(() => {
             }
           });
         }
-        
+
         // Add academic data
         if (updatedFormData.academicData) {
           Object.entries(updatedFormData.academicData).forEach(([key, value]) => {
@@ -272,7 +272,7 @@ useEffect(() => {
             if (key === 'intending_programme' || key === 'intending_class') {
               return;
             }
-            
+
             if (value !== null && value !== undefined && value !== '') {
               // Convert boolean values to 0 or 1 for Laravel
               if (typeof value === 'boolean') {
@@ -283,19 +283,19 @@ useEffect(() => {
             }
           });
         }
-        
+
         // Handle documents - data can be { newFiles, existingDocs } or direct files
         if (data) {
           const newFiles = data.newFiles || {};
           const existingDocs = data.existingDocs || {};
-          
+
           // Add new file uploads
           Object.entries(newFiles).forEach(([key, file]) => {
             if (file instanceof File) {
               payload.append(key, file);
             }
           });
-          
+
           // Add existing document URLs (keep them) or explicit nulls (remove them)
           Object.entries(existingDocs).forEach(([key, value]) => {
             if (value === null) {
@@ -307,7 +307,7 @@ useEffect(() => {
             }
           });
         }
-        
+
         isFormData = true;
       } else {
         // For other steps, use regular JSON payload
@@ -372,17 +372,17 @@ useEffect(() => {
           ...updatedFormData.documentsData,
           // Explicitly merge backend document URLs, including null values (removed documents)
           // Only merge if the backend response has these fields (even if null)
-          ...(Object.prototype.hasOwnProperty.call(backendData, 'birth_cert') && { 
-            birth_cert: backendData.birth_cert 
+          ...(Object.prototype.hasOwnProperty.call(backendData, 'birth_cert') && {
+            birth_cert: backendData.birth_cert
           }),
-          ...(Object.prototype.hasOwnProperty.call(backendData, 'prev_school_report') && { 
-            prev_school_report: backendData.prev_school_report 
+          ...(Object.prototype.hasOwnProperty.call(backendData, 'prev_school_report') && {
+            prev_school_report: backendData.prev_school_report
           }),
-          ...(Object.prototype.hasOwnProperty.call(backendData, 'passport_photo') && { 
-            passport_photo: backendData.passport_photo 
+          ...(Object.prototype.hasOwnProperty.call(backendData, 'passport_photo') && {
+            passport_photo: backendData.passport_photo
           }),
-          ...(Object.prototype.hasOwnProperty.call(backendData, 'medical_record') && { 
-            medical_record: backendData.medical_record 
+          ...(Object.prototype.hasOwnProperty.call(backendData, 'medical_record') && {
+            medical_record: backendData.medical_record
           }),
         },
         admission_batch: backendData.admission_batch,
@@ -400,7 +400,7 @@ useEffect(() => {
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Failed to save step data:', error);
-      
+
       // Handle validation errors
       if (error?.response?.data?.errors) {
         setErrors(error.response.data.errors);

@@ -24,10 +24,18 @@ import { School as SchoolIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import { useNotification } from 'src/hooks/useNotification';
 import { getOpenBatches } from '@/api/tenant/admission/admissionApi';
+import { getFeeSummary } from '@/utils/feeSummary';
 
 // ── Confirmation dialog ───────────────────────────────────────────────────────
 const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
   if (!batch) return null;
+
+  const feeSummary = batch?.pre_application_payments
+    ? getFeeSummary(batch.pre_application_payments)
+    : [];
+  const feeTotal = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+  const feeHasRange = feeSummary.some((f) => f.isRange);
+
   return (
     <Dialog open onClose={onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
@@ -115,11 +123,11 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
               >
                 Pre-Application Payment Breakdown
               </Typography>
-              {batch?.pre_application_payments && batch.pre_application_payments.length > 0 ? (
+              {feeSummary.length > 0 ? (
                 <Stack spacing={0.75} mb={1}>
-                  {batch.pre_application_payments.map((payment) => (
+                  {feeSummary.map((fee) => (
                     <Box
-                      key={payment.id}
+                      key={fee.name}
                       display="flex"
                       justifyContent="space-between"
                       sx={{
@@ -130,10 +138,12 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
                       }}
                     >
                       <Typography variant="caption" color="text.secondary">
-                        {payment.name}
+                        {fee.name}
                       </Typography>
                       <Typography variant="caption" fontWeight={700}>
-                        ₦{payment.amount.toLocaleString()}
+                        {fee.isRange
+                          ? `₦${fee.amount.toLocaleString()} - ₦${fee.maxAmount.toLocaleString()}`
+                          : `₦${fee.amount.toLocaleString()}`}
                       </Typography>
                     </Box>
                   ))}
@@ -150,10 +160,7 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
                       Total Pre-Application Fee
                     </Typography>
                     <Typography variant="body2" fontWeight={700} color="primary.main">
-                      ₦
-                      {batch.pre_application_payments
-                        .reduce((sum, p) => sum + (p.amount || 0), 0)
-                        .toLocaleString()}
+                      {feeHasRange ? 'from ' : ''}₦{feeTotal.toLocaleString()}
                     </Typography>
                   </Box>
                 </Stack>
@@ -173,7 +180,13 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button variant="contained" size="small" onClick={onCancel} color="inherit" sx={{ fontWeight: 600 }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onCancel}
+          color="inherit"
+          sx={{ fontWeight: 600 }}
+        >
           Cancel
         </Button>
         <Button size="small" onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
@@ -291,18 +304,33 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       </TableCell>
                       {batch?.require_payment ? (
                         <TableCell>
-                          {batch?.pre_application_payments && batch.pre_application_payments.length > 0 ? (
-                            <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
-                              Pre-Application:{' '}
-                              <strong style={{ color: '#000', fontWeight: 600 }}>
-                                ₦
-                                {batch.pre_application_payments
-                                  .reduce((sum, p) => sum + (p.amount || 0), 0)
-                                  .toLocaleString()}
-                              </strong>
-                            </Typography>
+                          {batch?.pre_application_payments &&
+                          batch.pre_application_payments.length > 0 ? (
+                            (() => {
+                              const feeSummary = getFeeSummary(batch.pre_application_payments);
+                              const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+                              const hasRange = feeSummary.some((f) => f.isRange);
+                              return (
+                                <Typography
+                                  variant="caption"
+                                  color="primary.main"
+                                  display="block"
+                                  fontWeight={600}
+                                >
+                                  Pre-Application:{' '}
+                                  <strong style={{ color: '#000', fontWeight: 600 }}>
+                                    {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
+                                  </strong>
+                                </Typography>
+                              );
+                            })()
                           ) : (
-                            <Typography variant="caption" color="text.secondary" fontStyle="italic" fontSize={10}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              fontStyle="italic"
+                              fontSize={10}
+                            >
                               No payments configured
                             </Typography>
                           )}
@@ -321,10 +349,13 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       )}
 
                       <TableCell align="center">
-                        <Button variant="contained" size="small" onClick={(e) => {
-                          e.stopPropagation();
-                          setConfirmBatch(batch);
-                        }}
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmBatch(batch);
+                          }}
                           sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
                         >
                           Apply Now

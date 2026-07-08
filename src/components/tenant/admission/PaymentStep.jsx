@@ -1,16 +1,35 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Typography, Paper, Button, Divider, Dialog,
-  DialogTitle, DialogContent, DialogActions, Stack, Alert,
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Alert,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-import { initiateAdmissionPayment, checkAdmissionPaymentStatus } from '@/api/tenant/admission/admissionApi';
+import {
+  initiateAdmissionPayment,
+  checkAdmissionPaymentStatus,
+} from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
 
-const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissionId }) => {
+const PaymentStep = ({
+  onNext,
+  onBack,
+  isLoading = false,
+  selectedBatch,
+  admissionId,
+  intendingClassId,
+}) => {
   const notify = useNotification();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -20,10 +39,15 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
   // Use pre-application payments from the batch
   const preAppPayments = selectedBatch?.pre_application_payments || [];
 
-  const feeItems = preAppPayments.map((payment) => ({
+  // A fee row with class_id === null applies to every class in the batch;
+  // otherwise, only keep the row matching this applicant's own class.
+  const applicableFees = preAppPayments.filter(
+    (payment) => payment.class_id === null || Number(payment.class_id) === Number(intendingClassId),
+  );
+  const feeItems = applicableFees.map((payment) => ({
     label: payment.name,
     amount: Number(payment.amount || 0),
-    fee_type: 'application_fee', // All pre-application payments treated as application fees
+    bursary_schedule_id: payment.bursary_schedule_id,
   }));
 
   const totalPayable = feeItems.reduce((sum, f) => sum + f.amount, 0);
@@ -60,11 +84,11 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
     return () => window.removeEventListener('paymentCompleted', handler);
   }, [onNext, notify]);
 
-
-  const isPaymentDataLoading = !selectedBatch ||
+  const isPaymentDataLoading =
+    !selectedBatch ||
     (selectedBatch.require_payment && selectedBatch.pre_application_payments === undefined) ||
     checkingPayment;
-  console.log(selectedBatch, 333)
+  // console.log(selectedBatch, 333);
 
   if (isPaymentDataLoading) {
     return (
@@ -104,16 +128,13 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
         </Typography>
         <Divider sx={{ mb: 3 }} />
 
-        <Alert
-          severity="success"
-          icon={<CheckCircleIcon />}
-          sx={{ mb: 3 }}
-        >
+        <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 3 }}>
           <Typography variant="body2" fontWeight={600}>
             Payment Already Completed
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            You have already paid for this admission application. Click continue to proceed with your application.
+            You have already paid for this admission application. Click continue to proceed with
+            your application.
           </Typography>
         </Alert>
 
@@ -193,7 +214,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
       const payload = {
         admission_id: admissionId,
         fee_items: feeItems.map((f) => ({
-          fee_type: f.fee_type,
+          bursary_schedule_id: f.bursary_schedule_id,
           amount: f.amount,
         })),
       };
@@ -343,11 +364,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false, selectedBatch, admissi
           <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)}>
             Cancel
           </Button>
-          <Button
-            size="small"
-            onClick={handleConfirmPayment}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button size="small" onClick={handleConfirmPayment} sx={{ fontWeight: 600 }}>
             Confirm & Pay
           </Button>
         </DialogActions>
@@ -362,6 +379,7 @@ PaymentStep.propTypes = {
   isLoading: PropTypes.bool,
   selectedBatch: PropTypes.object,
   admissionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  intendingClassId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default PaymentStep;

@@ -348,7 +348,7 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        {/* <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.revoked}
             label="Total Revoked"
@@ -356,7 +356,7 @@ const AdmissionProcessing = () => {
             color="secondary"
             loading={statsLoading}
           />
-        </Grid>
+        </Grid> */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.accepted_offers}

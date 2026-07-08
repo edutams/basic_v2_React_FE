@@ -308,16 +308,16 @@ const AdmissionProcessing = () => {
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.applications}
-            label="Total Applications"
+            label="Applications"
             icon={PeopleIcon}
             color="primary"
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.admitted}
             label="Total Admitted"
@@ -326,7 +326,7 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.declined}
             label="Total Declined"
@@ -335,7 +335,7 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.pending}
             label="Total Pending"
@@ -344,7 +344,7 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.accepted_offers}
             label="Accepted Offers"

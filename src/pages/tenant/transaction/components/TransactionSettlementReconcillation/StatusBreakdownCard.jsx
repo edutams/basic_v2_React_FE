@@ -85,25 +85,6 @@ const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) 
                 <Typography variant="body2" sx={{ color: isDark ? '#9ca3af' : '#64748B' }}>
                   {item.label}
                 </Typography>
-
-                {item.icon === 'balance' && (
-                  <Chip
-                    label="Outstanding"
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    sx={{ height: 20, fontSize: '10px' }}
-                  />
-                )}
-                {item.icon === 'settlement' && (
-                  <Chip
-                    label="Reconciled"
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                    sx={{ height: 20, fontSize: '10px' }}
-                  />
-                )}
               </Box>
             </Box>
           </Box>

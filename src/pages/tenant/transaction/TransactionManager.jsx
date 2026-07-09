@@ -150,7 +150,7 @@ const TransactionManager = () => {
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
-              label="Settlement Reconcillation"
+              label="Reconcillation"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
           </Tabs>

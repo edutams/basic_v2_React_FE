@@ -51,7 +51,7 @@ export const transactionStatusData = {
       icon: 'settlement',
     },
     {
-      label: 'Outstanding Balance',
+      label: 'Total Reconciled',
       value: '₦28,685,460',
       color: '#EF4444',
       icon: 'balance',
@@ -147,20 +147,20 @@ const SettlementReconcillation = () => {
   const [chartType, setChartType] = useState('bar');
   const [chartData, setChartData] = useState({
     categories: [
-      'Zenith Bank Plc',
-      'Guaranty Trust Bank',
-      'Access Bank',
-      'First Bank of Nigeria',
-      'Guaranty Trust Bank',
-      'Zenith Bank Plc',
+      ['Zenith Bank Plc', '0199118232'],
+      ['Guaranty Trust Bank', '0145678901'],
+      ['Access Bank', '5678901234'],
+      ['First Bank of Nigeria', '1122334455'],
+      ['Guaranty Trust Bank', '0145678901'],
+      ['Zenith Bank Plc', '0199118232'],
     ],
     series: [
       {
-        name: 'Transaction Amount',
+        name: 'Settlement Amount',
         data: [500000, 1000000, 1500000, 2000000, 2500000, 3000000],
       },
       {
-        name: 'Settlement Amount',
+        name: 'Reconciled Amount',
         data: [450000, 950000, 1400000, 1800000, 2300000, 2800000],
       },
     ],

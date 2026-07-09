@@ -687,7 +687,7 @@ export default function Dashboard() {
           setSelectedUserFilters(filters);
           setIsViewUsersListModalOpen(true);
         }}
-        stats={analytics?.loginActivities || []}
+        stats={loginActivities}
       />
       <ViewUsersListModal
         open={isViewUsersListModalOpen}

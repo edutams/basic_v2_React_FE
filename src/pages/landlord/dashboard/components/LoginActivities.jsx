@@ -28,8 +28,8 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUser, color: '#3B82F6' },
-  { label: 'Student', searchLabels: ['Student'], icon: IconSchool, color: '#10B981' },
+  { label: 'Teacher', searchLabels: ['Teacher', 'Staff', 'Staffs'], icon: IconUser, color: '#3B82F6' },
+  { label: 'Student', searchLabels: ['Student', 'Learner', 'Students', 'Learners'], icon: IconSchool, color: '#10B981' },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
@@ -159,7 +159,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
               fontWeight="600"
               sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#4a5568' }}
             >
-              Logged In Users This Week
+              Logged In Users
             </Typography>
           </Stack>
 
@@ -192,8 +192,8 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
             <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
               <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
             </Box>
-            <Select 
-              size="small" 
+            <Select
+              size="small"
               value={filters.agent}
               onChange={(e) => handleFilterChange('agent', e.target.value)}
               sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
@@ -217,8 +217,8 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
             <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
               <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
             </Box>
-            <Select 
-              size="small" 
+            <Select
+              size="small"
               value={filters.userType}
               onChange={(e) => handleFilterChange('userType', e.target.value)}
               sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
@@ -231,14 +231,14 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
           </Box>
 
           {/* Dates */}
-          <TextField 
-            size="small" 
+          <TextField
+            size="small"
             type="date"
             value={filters.from}
             onChange={(e) => handleFilterChange('from', e.target.value)}
           />
-          <TextField 
-            size="small" 
+          <TextField
+            size="small"
             type="date"
             value={filters.to}
             onChange={(e) => handleFilterChange('to', e.target.value)}

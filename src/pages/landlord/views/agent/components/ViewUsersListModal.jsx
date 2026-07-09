@@ -115,7 +115,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
       onClose={onClose}
       title={
         <>
-          Logged in users today for{' '}
+          Logged in users for{' '}
           <Box component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
             {schoolName || 'Selected School'}
           </Box>

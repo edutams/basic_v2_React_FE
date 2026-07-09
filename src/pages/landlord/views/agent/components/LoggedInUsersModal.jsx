@@ -35,8 +35,8 @@ import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staff'], icon: IconUsers, color: '#3B82F6' },
-  { label: 'Learner', searchLabels: ['Learner'], icon: IconUsers, color: '#10B981' },
+  { label: 'Teacher', searchLabels: ['Teacher', 'Staff', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Learner', searchLabels: ['Learner', 'Student', 'Learners', 'Students'], icon: IconUsers, color: '#10B981' },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
@@ -254,7 +254,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '4px', p: 0.5, display: 'flex' }}>
                 <GridViewIcon sx={{ color: theme.palette.text.disabled, fontSize: '24px' }} />
               </Box>
-              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
+              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users</Typography>
             </Stack>
 
             <Button

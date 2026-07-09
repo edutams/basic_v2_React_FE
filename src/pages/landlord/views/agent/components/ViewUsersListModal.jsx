@@ -159,7 +159,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                 <TableRow>
-                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Details</TableCell>
                   {schoolId !== 'landlord' ? (
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Type</TableCell>
@@ -180,7 +180,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                 ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+                      <Alert severity="info" sx={{ mt: 2, mb: 2, justifyContent: 'center' }}>
                         No users logged in for this school matching criteria.
                       </Alert>
                     </TableCell>
@@ -204,7 +204,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                           )}
                         </Typography>
                       </TableCell>
-                       {schoolId !== 'landlord' ? (
+                      {schoolId !== 'landlord' ? (
                         <TableCell>
                           <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
                             {row.user_type || 'N/A'}

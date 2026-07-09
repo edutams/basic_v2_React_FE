@@ -449,7 +449,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                   ) : data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center">
-                        <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+                        <Alert severity="info" sx={{ mt: 2, mb: 2, justifyContent: 'center' }}>
                           No schools found for the selected filter criteria.
                         </Alert>
                       </TableCell>

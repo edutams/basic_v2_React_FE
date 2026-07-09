@@ -78,7 +78,11 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
       : ['S/N', 'User Details', 'User Type', 'Date/Time Logged In'];
 
     const rows = users.map((row, index) => {
-      const rowData = [index + 1, row.name || ''];
+      let displayName = row.name || '';
+      if (row.is_impersonated) {
+        displayName += ` (Impersonated by ${row.impersonator_name || 'Admin'})`;
+      }
+      const rowData = [index + 1, displayName];
       if (!isAgentsList) {
         rowData.push(row.user_type || 'N/A');
       }
@@ -158,7 +162,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Type</TableCell>
                   )}
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Date/Time Logged In</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -188,6 +192,11 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                       <TableCell>
                         <Typography variant="body2" fontWeight="600" color="#4a5568">
                           {row.name}
+                          {row.is_impersonated && (
+                            <Box component="span" sx={{ ml: 1, color: 'text.secondary', fontSize: '11px', fontWeight: 400, fontStyle: 'italic' }}>
+                              (Impersonated by {row.impersonator_name || 'Admin'})
+                            </Box>
+                          )}
                         </Typography>
                       </TableCell>
                       {schoolId !== 'landlord' && (
@@ -202,11 +211,11 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                           {row.time}
                         </Typography>
                       </TableCell>
-                      <TableCell align="right">
+                      {/* <TableCell align="right">
                         <IconButton size="small">
                           <MoreVertIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}

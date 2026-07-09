@@ -35,7 +35,7 @@ import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staff', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Teacher', searchLabels: ['Teacher'], icon: IconUsers, color: '#3B82F6' },
   { label: 'Learner', searchLabels: ['Learner', 'Student', 'Learners', 'Students'], icon: IconUsers, color: '#10B981' },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },

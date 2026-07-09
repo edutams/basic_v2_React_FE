@@ -60,7 +60,6 @@ const Settlement = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [search, setSearch] = useState('');
-  const [duration, setDuration] = useState('monthly');
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -69,6 +68,9 @@ const Settlement = () => {
   const [syncFrom, setSyncFrom] = useState('');
   const [syncTo, setSyncTo] = useState('');
   const [syncing, setSyncing] = useState(false);
+
+  const [period, setPeriod] = useState('this_month');
+  const [periodValue, setPeriodValue] = useState(null);
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
@@ -131,14 +133,44 @@ const Settlement = () => {
 
   const loadAnalytics = useCallback(async () => {
     try {
-      const res = await fetchSettlementAnalytics({
-        filters: { from: fromDate || null, to: toDate || null, duration },
-      });
-      if (res.success) setChartData(res.chart);
+      let from, to;
+
+      if (period === 'today') {
+        const d = periodValue || dayjs().format('YYYY-MM-DD');
+        from = d;
+        to = d;
+      } else if (period === 'this_week') {
+        const year = periodValue?.year ?? dayjs().year();
+        const week = periodValue?.week ?? dayjs().isoWeek();
+        from = dayjs().year(year).isoWeek(week).startOf('week').format('YYYY-MM-DD');
+        to = dayjs().year(year).isoWeek(week).endOf('week').format('YYYY-MM-DD');
+      } else if (period === 'this_month') {
+        const year = periodValue?.year ?? dayjs().year();
+        const month = periodValue?.month ?? dayjs().month() + 1;
+        from = dayjs()
+          .year(year)
+          .month(month - 1)
+          .startOf('month')
+          .format('YYYY-MM-DD');
+        to = dayjs()
+          .year(year)
+          .month(month - 1)
+          .endOf('month')
+          .format('YYYY-MM-DD');
+      } else if (period === 'this_year') {
+        const year = periodValue ?? dayjs().year();
+        from = dayjs().year(year).startOf('year').format('YYYY-MM-DD');
+        to = dayjs().year(year).endOf('year').format('YYYY-MM-DD');
+      }
+
+      const res = await fetchSettlementAnalytics({ filters: { from, to } });
+      if (res.success) {
+        setChartData(res.chart || { categories: [], series: [] });
+      }
     } catch (err) {
       console.error('Failed to fetch settlement analytics', err);
     }
-  }, [fromDate, toDate, duration]);
+  }, [period, periodValue]);
 
   const loadValues = useCallback(async () => {
     try {
@@ -186,7 +218,7 @@ const Settlement = () => {
 
   useEffect(() => {
     loadAnalytics();
-  }, [duration]);
+  }, [period, periodValue, loadAnalytics]);
 
   const handleFetch = () => {
     setPage(1);
@@ -297,12 +329,18 @@ const Settlement = () => {
         </Grid>
       )}
       <FeeChart
-        title=" Settlement Analytics"
+        title="Settlement Analytics"
         chartType={chartType}
         chartOptions={buildChartOptions(chartData?.categories || [])}
         chartSeries={chartData?.series || []}
         statusData={statusData}
-        onDurationChange={setDuration}
+        period={period}
+        periodValue={periodValue}
+        onPeriodChange={(p) => {
+          setPeriod(p);
+          setPeriodValue(null); // Reset sub value when period changes
+        }}
+        onPeriodValueChange={(v) => setPeriodValue(v)}
       />
 
       <ParentCard

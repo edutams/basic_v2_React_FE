@@ -1,31 +1,117 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Grid, Box, Typography, useTheme, FormControl, Select, MenuItem } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Chart from 'react-apexcharts';
 import StatusBreakdownCard from './StatusBreakdownCard';
+import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
+
+dayjs.extend(weekOfYear);
+dayjs.extend(isoWeek);
 
 const FeeChart = ({
-  title = 'Chart',
+  title = 'Settlement Chart',
   chartOptions,
   chartSeries,
   chartType = 'bar',
-  onDurationChange,
   statusData,
+  period,
+  periodValue,
+  onPeriodChange,
+  onPeriodValueChange,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedDuration, setSelectedDuration] = useState('monthly');
 
-  const handleDurationChange = (event) => {
-    const newDuration = event.target.value;
-    setSelectedDuration(newDuration);
-    if (onDurationChange) {
-      onDurationChange(newDuration);
+  const renderSubPicker = () => {
+    switch (period) {
+      case 'today':
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 140 } } }}
+              value={periodValue ? dayjs(periodValue) : dayjs()}
+              onChange={(newValue) => onPeriodValueChange(newValue?.format('YYYY-MM-DD') || null)}
+              maxDate={dayjs()}
+              format="YYYY-MM-DD"
+            />
+          </LocalizationProvider>
+        );
+
+      case 'this_week':
+        return (
+          <ReactDatePicker
+            selected={
+              periodValue?.year && periodValue?.week
+                ? dayjs().year(periodValue.year).isoWeek(periodValue.week).toDate()
+                : new Date()
+            }
+            onChange={(date) => {
+              if (!date) return;
+              const week = dayjs(date).isoWeek();
+              const year = dayjs(date).year();
+              onPeriodValueChange({ week, year });
+            }}
+            showWeekPicker
+            showWeekNumbers
+            dateFormat="yyyy-'W'ww"
+            className="custom-week-picker"
+            maxDate={new Date()}
+            calendarStartDay={1}
+          />
+        );
+
+      case 'this_month':
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              views={['year', 'month']}
+              openTo="month"
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 140 } } }}
+              value={
+                periodValue?.year && periodValue?.month
+                  ? dayjs()
+                      .year(periodValue.year)
+                      .month(periodValue.month - 1)
+                  : dayjs()
+              }
+              onChange={(newValue) => {
+                if (!newValue) return;
+                onPeriodValueChange({
+                  month: newValue.month() + 1,
+                  year: newValue.year(),
+                });
+              }}
+              maxDate={dayjs()}
+            />
+          </LocalizationProvider>
+        );
+
+      case 'this_year':
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              views={['year']}
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 120 } } }}
+              value={periodValue ? dayjs().year(Number(periodValue)) : dayjs()}
+              onChange={(newValue) => onPeriodValueChange(newValue?.year() ?? null)}
+              maxDate={dayjs()}
+            />
+          </LocalizationProvider>
+        );
+
+      default:
+        return null;
     }
   };
 
   return (
     <Grid container spacing={2} mt={3} mb={3}>
-      {/* Chart */}
       <Grid size={{ xs: 12, md: 9 }}>
         <Box
           sx={{
@@ -38,42 +124,35 @@ const FeeChart = ({
           <Box
             sx={{
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              gap: 2,
+              alignItems: 'center',
               mb: 2,
+              flexWrap: 'wrap',
+              gap: 1,
             }}
           >
             <Typography variant="h6" fontWeight={600} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>
-              {title || 'Settlement Chart'}
+              {title}
             </Typography>
 
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={selectedDuration}
-                onChange={handleDurationChange}
-                sx={{
-                  bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: isDark ? '#444' : '#e0e0e0',
-                  },
-                }}
-              >
-                <MenuItem value="daily">Daily</MenuItem>
-                <MenuItem value="weekly">Weekly</MenuItem>
-                <MenuItem value="monthly">Monthly</MenuItem>
-                <MenuItem value="quarterly">Quarterly</MenuItem>
-                <MenuItem value="yearly">Yearly</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select value={period} onChange={(e) => onPeriodChange(e.target.value)}>
+                  <MenuItem value="today">Today</MenuItem>
+                  <MenuItem value="this_week">This Week</MenuItem>
+                  <MenuItem value="this_month">This Month</MenuItem>
+                  <MenuItem value="this_year">This Year</MenuItem>
+                </Select>
+              </FormControl>
+
+              {renderSubPicker()}
+            </Box>
           </Box>
 
           <Chart options={chartOptions} series={chartSeries} type={chartType} height={320} />
         </Box>
       </Grid>
 
-      {/* Side Panel */}
       <Grid size={{ xs: 12, md: 3 }}>
         <Box
           sx={{

@@ -37,6 +37,8 @@ import {
   HowToReg as HowToRegIcon,
   PersonOff as PersonOffIcon,
   HourglassEmpty as HourglassEmptyIcon,
+  CheckCircle as CheckCircleIcon,
+  Block as BlockIcon,
 } from '@mui/icons-material';
 import {
   IconDotsVertical,
@@ -69,6 +71,7 @@ const statusColors = {
   admitted: 'success',
   declined: 'error',
   pending: 'warning',
+  revoked: 'error',
 };
 
 const formSubmitColors = {
@@ -93,6 +96,8 @@ const AdmissionProcessing = () => {
     admitted: 0,
     declined: 0,
     pending: 0,
+    revoked: 0,
+    accepted_offers: 0,
   });
 
   // ─── Loading state ─────────────────────────────────────────────────────
@@ -168,6 +173,8 @@ const AdmissionProcessing = () => {
         admitted: data.admitted ?? 0,
         declined: data.declined ?? 0,
         pending: data.pending ?? 0,
+        revoked: data.revoked ?? 0,
+        accepted_offers: data.accepted_offers ?? 0,
       });
     } catch (err) {
       console.error('Failed to load stats:', err);
@@ -293,7 +300,7 @@ const AdmissionProcessing = () => {
 
   // ─── Conditional checks for menu items ────────────────────────────────
   const canAcceptOffer = (app) =>
-    app?.admission_status === 'admitted' && app?.accept_admission_offer === 'no';
+    app?.admission_status === 'admitted' && app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null;
 
   const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
 
@@ -305,16 +312,16 @@ const AdmissionProcessing = () => {
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.applications}
-            label="Total Applications"
+            label="Applications"
             icon={PeopleIcon}
             color="primary"
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.admitted}
             label="Total Admitted"
@@ -323,7 +330,7 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.declined}
             label="Total Declined"
@@ -332,12 +339,30 @@ const AdmissionProcessing = () => {
             loading={statsLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.pending}
             label="Total Pending"
             icon={HourglassEmptyIcon}
             color="warning"
+            loading={statsLoading}
+          />
+        </Grid>
+        {/* <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={stats.revoked}
+            label="Total Revoked"
+            icon={BlockIcon}
+            color="secondary"
+            loading={statsLoading}
+          />
+        </Grid> */}
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={stats.accepted_offers}
+            label="Accepted Offers"
+            icon={CheckCircleIcon}
+            color="info"
             loading={statsLoading}
           />
         </Grid>

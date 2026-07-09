@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -52,6 +52,7 @@ const statusConfig = {
   admitted: { label: 'Admitted', color: 'success', icon: CheckCircleIcon },
   declined: { label: 'Declined', color: 'error', icon: CancelIcon },
   pending: { label: 'Pending', color: 'warning', icon: PendingIcon },
+  revoked: { label: 'Revoked', color: 'error', icon: CancelIcon },
 };
 
 const DetailRow = ({ icon: Icon, label, value }) => (
@@ -92,7 +93,8 @@ const ProcessApplicationForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [confirmDialog, setConfirmDialog] = useState({ open: false, status: '' });
-  const [declineDialog, setDeclineDialog] = useState({ open: false });
+  const [declineDialog, setDeclineDialog] = useState({ open: false, reason: '' });
+  const [revokeDialog, setRevokeDialog] = useState({ open: false, reason: '' });
   const [admitDialog, setAdmitDialog] = useState({ open: false });
 
   // ─── Load admission data ──────────────────────────────────────────────
@@ -119,6 +121,18 @@ const ProcessApplicationForm = () => {
     };
     load();
   }, [form_number]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Refetch admission data from API ────────────────────────────────
+  const refetchAdmission = useCallback(async () => {
+    try {
+      const response = await getApplicantByFormNumber(form_number);
+      const data = response?.data ?? response;
+      setAdmission(data);
+      setNewStatus(data?.admission_status || 'pending');
+    } catch (err) {
+      console.error('Failed to refetch admission:', err);
+    }
+  }, [form_number]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handleStatusChange = (e) => {
@@ -212,13 +226,13 @@ const ProcessApplicationForm = () => {
 
   // ─── Parent/guardian data ───────────────────────────────────────────
   const parentData = {
-    lname: admission.parent_lname || admission.guardian_lname || '',
-    fname: admission.parent_fname || admission.guardian_fname || '',
-    mname: admission.parent_mname || admission.guardian_mname || '',
-    phone: admission.parent_phone || admission.guardian_phone || '',
-    email: admission.parent_email || admission.guardian_email || '',
-    occupation: admission.parent_occupation || admission.guardian_occupation || '',
-    address: admission.parent_address || admission.guardian_address || admission.parent_home_address || '',
+    lname: admission.parent?.lname || '',
+    fname: admission.parent?.fname || '',
+    mname: admission.parent?.mname || '',
+    phone: admission.parent?.phone || '',
+    email: admission.parent?.email || '',
+    occupation: admission.parent?.occupation || '',
+    address: admission.parent?.address || '',
   };
   const parentFullName = [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join('  ') || '—';
 
@@ -387,7 +401,7 @@ const ProcessApplicationForm = () => {
             <TextField
               fullWidth
               label="Intended Class"
-              value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+              value={admission?.class_code || '—'}
               slotProps={{ input: { readOnly: true } }}
               size="small"
             />
@@ -412,7 +426,7 @@ const ProcessApplicationForm = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+        <Box sx={{ display: 'flex', gap: 2, mt: 3, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
             color="primary"
@@ -429,13 +443,74 @@ const ProcessApplicationForm = () => {
             color="error"
             size="large"
             startIcon={<IconX size={20} />}
-            onClick={() => setDeclineDialog({ open: true })}
-            disabled={admission.admission_status === 'declined' || submitting}
+            onClick={() => setDeclineDialog({ open: true, reason: '' })}
+            disabled={admission.admission_status !== 'pending' || submitting}
             sx={{ fontWeight: 700, px: 5 }}
           >
             Decline
           </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            size="large"
+            startIcon={<IconX size={20} />}
+            onClick={() => setRevokeDialog({ open: true, reason: '' })}
+            disabled={admission.admission_status !== 'admitted' || submitting}
+            sx={{ fontWeight: 700, px: 5 }}
+          >
+            Revoke
+          </Button>
         </Box>
+
+        {/* ── Status Action Details ────────────────────────────────── */}
+        {(admission.treated_by || admission.rejected_by || admission.revoked_by) && (
+          <Divider sx={{ my: 3 }} />
+        )}
+        {admission.treated_by && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+            <PersonIcon fontSize="small" color="action" />
+            <Typography variant="body2" color="text.secondary">
+              <strong>Treated by:</strong>{' '}
+              {admission.treated_by_name || admission.treated_by}
+              {admission.date_treated && (
+                <> on {new Date(admission.date_treated).toLocaleDateString('en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                })}</>
+              )}
+            </Typography>
+          </Box>
+        )}
+        {admission.rejected_by && (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
+            <CancelIcon fontSize="small" color="error" />
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Rejected by:</strong> {admission.rejected_by_name || admission.rejected_by}
+              </Typography>
+              {admission.rejection_reason && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                  Reason: {admission.rejection_reason}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
+        {admission.revoked_by && (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
+            <CancelIcon fontSize="small" color="warning" />
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Revoked by:</strong> {admission.revoked_by_name || admission.revoked_by}
+              </Typography>
+              {admission.revoked_reason && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                  Reason: {admission.revoked_reason}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
       </Paper>
 
       {/* ── Admit to Class Modal ───────────────────────────────────────── */}
@@ -461,7 +536,7 @@ const ProcessApplicationForm = () => {
               <Box>
                 <Typography variant="subtitle2" fontWeight={700}>{fullName}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Form: {admission.form_number} | {admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                  Form: {admission.form_number} | {admission?.class_code || '—'}
                 </Typography>
               </Box>
             </Box>
@@ -471,7 +546,7 @@ const ProcessApplicationForm = () => {
                 <TextField
                   fullWidth
                   label="Programme"
-                  value={admission.prog_name || admission.intending_programme?.programme_name || '—'}
+                  value={admission.prog_name  || '—'}
                   slotProps={{ input: { readOnly: true } }}
                   size="small"
                 />
@@ -480,7 +555,7 @@ const ProcessApplicationForm = () => {
                 <TextField
                   fullWidth
                   label="Intended Class"
-                  value={admission.intending_class?.class_code || admission.intending_class?.class_name || '—'}
+                  value={admission?.class_code  || '—'}
                   slotProps={{ input: { readOnly: true } }}
                   size="small"
                 />
@@ -511,8 +586,7 @@ const ProcessApplicationForm = () => {
               try {
                 await updateAdmissionStatus(form_number, 'admitted');
                 notify.success(`Application status updated to "Admitted"`);
-                setAdmission((prev) => ({ ...prev, admission_status: 'admitted' }));
-                setNewStatus('admitted');
+                await refetchAdmission();
               } catch (err) {
                 notify.error(err?.response?.data?.message || 'Failed to admit applicant');
               } finally {
@@ -530,19 +604,34 @@ const ProcessApplicationForm = () => {
       {/* ── Decline Confirmation Dialog ────────────────────────────────── */}
       <Dialog
         open={declineDialog.open}
-        onClose={() => setDeclineDialog({ open: false })}
-        maxWidth="xs"
+        onClose={() => setDeclineDialog({ open: false, reason: '' })}
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Decline Application</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            Are you sure you want to decline the application for <strong>{fullName}</strong>?
-            This action will mark the application as declined.
-          </Typography>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to decline the application for <strong>{fullName}</strong>?
+              This action will mark the application as declined.
+            </Typography>
+            <TextField
+              fullWidth
+              label="Rejection Reason"
+              placeholder="Enter the reason for declining this application..."
+              value={declineDialog.reason}
+              onChange={(e) =>
+                setDeclineDialog((prev) => ({ ...prev, reason: e.target.value }))
+              }
+              multiline
+              rows={3}
+              size="small"
+              required
+            />
+          </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setDeclineDialog({ open: false })}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDeclineDialog({ open: false, reason: '' })}>
             Cancel
           </Button>
           <Button
@@ -550,13 +639,17 @@ const ProcessApplicationForm = () => {
             size="small"
             color="error"
             onClick={async () => {
-              setDeclineDialog({ open: false });
+              const reason = declineDialog.reason.trim();
+              if (!reason) {
+                notify.error('Please enter a rejection reason');
+                return;
+              }
+              setDeclineDialog({ open: false, reason: '' });
               setSubmitting(true);
               try {
-                await updateAdmissionStatus(form_number, 'declined');
+                await updateAdmissionStatus(form_number, 'declined', { rejection_reason: reason });
                 notify.success(`Application status updated to "Declined"`);
-                setAdmission((prev) => ({ ...prev, admission_status: 'declined' }));
-                setNewStatus('declined');
+                await refetchAdmission();
               } catch (err) {
                 notify.error(err?.response?.data?.message || 'Failed to decline applicant');
               } finally {
@@ -567,6 +660,69 @@ const ProcessApplicationForm = () => {
             sx={{ fontWeight: 600 }}
           >
             {submitting ? 'Processing...' : 'Yes, Decline'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Revoke Confirmation Dialog ──────────────────────────────────── */}
+      <Dialog
+        open={revokeDialog.open}
+        onClose={() => setRevokeDialog({ open: false, reason: '' })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Revoke Admission</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to revoke the admission for <strong>{fullName}</strong>?
+              This will undo the admission and clear the assigned class and programme.
+            </Typography>
+            <TextField
+              fullWidth
+              label="Revoke Reason"
+              placeholder="Enter the reason for revoking this admission..."
+              value={revokeDialog.reason}
+              onChange={(e) =>
+                setRevokeDialog((prev) => ({ ...prev, reason: e.target.value }))
+              }
+              multiline
+              rows={3}
+              size="small"
+              required
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setRevokeDialog({ open: false, reason: '' })}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="warning"
+            onClick={async () => {
+              const reason = revokeDialog.reason.trim();
+              if (!reason) {
+                notify.error('Please enter a revocation reason');
+                return;
+              }
+              setRevokeDialog({ open: false, reason: '' });
+              setSubmitting(true);
+              try {
+                await updateAdmissionStatus(form_number, 'revoked', { revoked_reason: reason });
+                notify.success(`Application status updated to "Revoked"`);
+                await refetchAdmission();
+              } catch (err) {
+                notify.error(err?.response?.data?.message || 'Failed to revoke admission');
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            sx={{ fontWeight: 600 }}
+          >
+            {submitting ? 'Processing...' : 'Yes, Revoke'}
           </Button>
         </DialogActions>
       </Dialog>

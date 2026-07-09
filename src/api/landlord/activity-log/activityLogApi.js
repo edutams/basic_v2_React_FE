@@ -55,6 +55,11 @@ const activityLogApi = {
     return response.data;
   },
 
+  getAgentLoggedInUsers: async (params = {}) => {
+    const response = await api.get('/v1/landlord/activity-logs/agents/users', { params });
+    return response.data;
+  },
+
   exportExcel: async (data) => {
     const response = await api.post('/v1/landlord/activity-logs/export-excel', data, {
       responseType: 'blob'

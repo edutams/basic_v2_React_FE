@@ -42,12 +42,18 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await activityLogApi.getTenantLoggedInUsers(schoolId, {
-        role: filters?.userType,
-        accessLevel: filters?.accessLevel,
-        from: filters?.from,
-        to: filters?.to
-      });
+      const isAgents = schoolId === 'landlord';
+      const response = isAgents
+        ? await activityLogApi.getAgentLoggedInUsers({
+            from: filters?.from,
+            to: filters?.to,
+            accessLevel: filters?.accessLevel
+          })
+        : await activityLogApi.getTenantLoggedInUsers(schoolId, {
+            role: filters?.userType,
+            from: filters?.from,
+            to: filters?.to
+          });
       if (response.status) {
         setUsers(response.data);
       }

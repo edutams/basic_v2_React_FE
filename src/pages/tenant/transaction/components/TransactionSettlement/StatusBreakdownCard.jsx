@@ -18,7 +18,7 @@ const StatusBreakdownCard = ({ items = [] }) => {
           fontSize: '15px',
           fontWeight: 600,
           color: isDark ? '#fff' : '#1f2937',
-          mb: 3,
+          mb: 2,
         }}
       >
         Total Transaction Value
@@ -36,9 +36,9 @@ const StatusBreakdownCard = ({ items = [] }) => {
               display: 'flex',
               alignItems: 'center',
               gap: 2.5,
-              mb: 2.8,
-              p: 1.8,
-              borderRadius: 3,
+              mb: 1.5,
+              p: 1.5,
+              borderRadius: 1.5,
               bgcolor: isDark ? 'rgba(255,255,255,0.05)' : bgColor,
             }}
           >
@@ -55,14 +55,14 @@ const StatusBreakdownCard = ({ items = [] }) => {
                 boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
               }}
             >
-              <IconComponent sx={{ fontSize: 30, color: textColor }} />
+              <IconComponent sx={{ fontSize: 20, color: textColor }} />
             </Box>
 
             {/* Amount & Label */}
             <Box sx={{ flex: 1 }}>
               <Typography
                 sx={{
-                  fontSize: '1.35rem',
+                  fontSize: '1.rem',
                   fontWeight: 700,
                   color: textColor,
                   lineHeight: 1.2,

@@ -143,38 +143,36 @@ const Settlement = () => {
   const loadValues = useCallback(async () => {
     try {
       const res = await fetchBursarySettlementValues();
-      if (res.success) {
-        const d = res.data;
-        setStatusData({
-          title: 'Total Transaction Value',
-          items: [
-            {
-              label: 'Settlement Today',
-              value: format(d.today_total),
-              color: '#4DA3F5',
-              bgColor: '#EAF4FF',
-            },
-            {
-              label: 'Settlement This Week',
-              value: format(d.this_week_total),
-              color: '#6BC68D',
-              bgColor: '#EEF9F2',
-            },
-            {
-              label: 'Settlement This Month',
-              value: format(d.this_month_total),
-              color: '#E95A71',
-              bgColor: '#FDF1F3',
-            },
-            {
-              label: 'Settlement This Year',
-              value: format(d.this_year_total),
-              color: '#3247C6',
-              bgColor: '#EEF0FF',
-            },
-          ],
-        });
-      }
+      const d = res.data;
+      setStatusData({
+        title: 'Total Transaction Value',
+        items: [
+          {
+            label: 'Settlement Today',
+            value: format(d.today_total) ?? 0,
+            color: '#4DA3F5',
+            bgColor: '#EAF4FF',
+          },
+          {
+            label: 'Settlement This Week',
+            value: format(d.this_week_total) ?? 0,
+            color: '#6BC68D',
+            bgColor: '#EEF9F2',
+          },
+          {
+            label: 'Settlement This Month',
+            value: format(d.this_month_total) ?? 0,
+            color: '#E95A71',
+            bgColor: '#FDF1F3',
+          },
+          {
+            label: 'Settlement This Year',
+            value: format(d.this_year_total) ?? 0,
+            color: '#3247C6',
+            bgColor: '#EEF0FF',
+          },
+        ],
+      });
     } catch (err) {
       console.error('Failed to fetch settlement values', err);
     }

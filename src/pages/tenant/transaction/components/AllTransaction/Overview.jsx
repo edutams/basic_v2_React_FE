@@ -123,10 +123,17 @@ const Overview = () => {
         period,
       };
 
-      if (period === 'today') payload.selected_date = periodValue || dayjs().format('YYYY-MM-DD');
-      if (period === 'this_week') payload.selected_week = periodValue || dayjs().getISOWeek();
-      if (period === 'this_month') payload.selected_month = periodValue || dayjs().month() + 1;
-      if (period === 'this_year') payload.selected_year = periodValue || dayjs().year();
+      if (period === 'today') {
+        payload.selected_date = periodValue || dayjs().format('YYYY-MM-DD');
+      } else if (period === 'this_week') {
+        payload.selected_week = periodValue?.week || dayjs().isoWeek();
+        payload.selected_year = periodValue?.year || dayjs().year();
+      } else if (period === 'this_month') {
+        payload.selected_month = periodValue?.month || dayjs().month() + 1;
+        payload.selected_year = periodValue?.year || dayjs().year();
+      } else if (period === 'this_year') {
+        payload.selected_year = periodValue || dayjs().year();
+      }
 
       const res = await fetchOnlineTransactionAnalytics({ filters: payload });
       if (res.success) {

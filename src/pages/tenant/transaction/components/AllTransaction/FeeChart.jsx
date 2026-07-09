@@ -20,14 +20,19 @@ import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
 import { IconDownload } from '@tabler/icons';
 import StatusBreakdownCard from './StatusBreakdownCard';
-import dayjs from 'dayjs';
 
-function getISOWeek(date = new Date()) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-}
+import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
+
+// Register dayjs plugins
+dayjs.extend(weekOfYear);
+dayjs.extend(isoWeek);
 
 const FeeChart = ({
   title = 'Chart',
@@ -38,84 +43,94 @@ const FeeChart = ({
   period,
   periodValue,
   onPeriodChange,
+  // setPeriodValue,
   onPeriodValueChange,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const currentYear = dayjs().year();
-  const currentWeek = getISOWeek();
 
   const renderSubPicker = () => {
+    const handleChange = (value) => {
+      onPeriodValueChange(value);
+    };
+
     switch (period) {
       case 'today':
         return (
-          <TextField
-            size="small"
-            type="date"
-            value={periodValue || dayjs().format('YYYY-MM-DD')}
-            onChange={(e) => onPeriodValueChange(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ max: dayjs().format('YYYY-MM-DD') }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <MuiDatePicker
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 140 } } }}
+              value={periodValue ? dayjs(periodValue) : dayjs()}
+              onChange={(newValue) => handleChange(newValue?.format('YYYY-MM-DD') || null)}
+              maxDate={dayjs()} // Only today picker should be limited to today
+              format="YYYY-MM-DD"
+            />
+          </LocalizationProvider>
         );
+
       case 'this_week':
         return (
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <Select
-              value={periodValue || currentWeek}
-              onChange={(e) => onPeriodValueChange(e.target.value)}
-            >
-              {Array.from({ length: currentWeek }, (_, i) => i + 1).map((w) => (
-                <MenuItem key={w} value={w}>
-                  Week {w}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <ReactDatePicker
+            selected={
+              periodValue?.year && periodValue?.week
+                ? dayjs().year(periodValue.year).isoWeek(periodValue.week).toDate()
+                : new Date()
+            }
+            onChange={(date) => {
+              if (!date) return;
+              const week = dayjs(date).isoWeek();
+              const year = dayjs(date).year();
+              handleChange({ week, year });
+            }}
+            showWeekPicker
+            showWeekNumbers
+            dateFormat="yyyy-'W'ww"
+            className="custom-week-picker"
+            maxDate={new Date()} // Allow past weeks
+            minDate={new Date(2020, 0, 1)} // Optional: limit how far back
+            calendarStartDay={1}
+          />
         );
+
       case 'this_month':
         return (
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <Select
-              value={periodValue || dayjs().month() + 1}
-              onChange={(e) => onPeriodValueChange(e.target.value)}
-            >
-              {[
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec',
-              ].map((m, i) => (
-                <MenuItem key={m} value={i + 1}>
-                  {m}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <MuiDatePicker
+              views={['year', 'month']}
+              openTo="month"
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 140 } } }}
+              value={
+                periodValue?.year && periodValue?.month
+                  ? dayjs()
+                      .year(periodValue.year)
+                      .month(periodValue.month - 1)
+                  : dayjs()
+              }
+              onChange={(newValue) => {
+                if (!newValue) return;
+                handleChange({
+                  month: newValue.month() + 1,
+                  year: newValue.year(),
+                });
+              }}
+              maxDate={dayjs()} // Allow past months
+            />
+          </LocalizationProvider>
         );
+
       case 'this_year':
         return (
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={periodValue || currentYear}
-              onChange={(e) => onPeriodValueChange(e.target.value)}
-            >
-              {Array.from({ length: 5 }, (_, i) => currentYear - i).map((y) => (
-                <MenuItem key={y} value={y}>
-                  {y}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <MuiDatePicker
+              views={['year']}
+              slotProps={{ textField: { size: 'small', sx: { minWidth: 120 } } }}
+              value={periodValue ? dayjs().year(Number(periodValue)) : dayjs()}
+              onChange={(newValue) => handleChange(newValue?.year() ?? null)}
+              maxDate={dayjs()} // Allow past years
+            />
+          </LocalizationProvider>
         );
+
       default:
         return null;
     }

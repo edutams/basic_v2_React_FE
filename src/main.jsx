@@ -10,6 +10,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { tenantValidation } from './routes/Router';
+import './global.css';
 
 const isTenantSubdomain = tenantValidation?.status === true;
 

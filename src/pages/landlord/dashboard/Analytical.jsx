@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import {
   flexRender,
   getCoreRowModel,
@@ -89,6 +90,7 @@ export default function Dashboard() {
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
   const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
+  const [selectedUserFilters, setSelectedUserFilters] = useState(null);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
@@ -97,6 +99,8 @@ export default function Dashboard() {
   // Analytics state
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [loginActivities, setLoginActivities] = useState([]);
+  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -110,6 +114,20 @@ export default function Dashboard() {
       }
     };
     fetchAnalytics();
+  }, []);
+
+  useEffect(() => {
+    const fetchLoginActivities = async () => {
+      try {
+        const res = await activityLogApi.getLoginActivities30Days();
+        if (res.status) setLoginActivities(res.data);
+      } catch (e) {
+        console.error('Failed to fetch login activities', e);
+      } finally {
+        setLoginActivitiesLoading(false);
+      }
+    };
+    fetchLoginActivities();
   }, []);
 
   // Table filter states
@@ -450,9 +468,9 @@ export default function Dashboard() {
             <LoginActivitiesCard
               title="Login Activities (30 days)"
               activities={
-                analyticsLoading
+                loginActivitiesLoading
                   ? [{ label: 'Loading...', value: '...' }]
-                  : (analytics?.loginActivities || [])
+                  : loginActivities
               }
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />
@@ -664,35 +682,19 @@ export default function Dashboard() {
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}
         onClose={() => setIsLoggedInUsersModalOpen(false)}
-        onViewUserList={(row) => {
+        onViewUserList={(row, filters) => {
           setSelectedTenantForUsers(row);
+          setSelectedUserFilters(filters);
           setIsViewUsersListModalOpen(true);
         }}
-        stats={analytics?.loginActivities || []}
-        usersData={data.flatMap(agent => 
-          (agent.tenants || []).map(tenant => ({
-            id: tenant.id,
-            school: tenant.tenant_name,
-            url: (agent.organization_domain || agent.organizationDomain)
-              ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
-              : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
-            agent: agent.organizationName || agent.organization_name,
-            accessLevel: 'Level ' + (agent.access_level || 2),
-            date: tenant.created_at,
-            stats: tenant.login_activities || {
-              Teacher: 0,
-              Student: 0,
-              SPA: 0,
-              Total: 0
-            }
-          }))
-        )}
+        stats={loginActivities}
       />
       <ViewUsersListModal
         open={isViewUsersListModalOpen}
         onClose={() => setIsViewUsersListModalOpen(false)}
         schoolId={selectedTenantForUsers?.id}
         schoolName={selectedTenantForUsers?.school}
+        filters={selectedUserFilters}
       />
       <TotalSchoolModal
         open={isSchoolModalOpen}

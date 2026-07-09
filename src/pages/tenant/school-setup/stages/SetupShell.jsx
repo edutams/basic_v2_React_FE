@@ -435,7 +435,6 @@ const SetupShell = ({
         >
           <Button variant="contained" size="small" startIcon={<IconArrowLeft />}
             onClick={onBack}
-            sx={{ fontSize: 14, fontWeight: 600, color: 'text.primary', textTransform: 'none' }}
           >
             {backLabel || 'Back'}
           </Button>

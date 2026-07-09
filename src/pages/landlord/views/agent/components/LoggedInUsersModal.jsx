@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   IconButton,
@@ -23,30 +23,32 @@ import {
   TablePagination,
   Button,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
+import { IconUsers, IconDotsVertical } from '@tabler/icons-react';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
-import axios from '@/api/landlord/landlord_api';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staffs'], icon: IconUsers, color: '#3B82F6' },
-  { label: 'Student', searchLabels: ['Student'], icon: IconUsers, color: '#10B981' },
+  { label: 'Teacher', searchLabels: ['Teacher'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Learner', searchLabels: ['Learner', 'Student', 'Learners', 'Students'], icon: IconUsers, color: '#10B981' },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
 
 
 
-const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersData = [] }) => {
-  console.log('LoggedInUsersModal rendered with usersData:', usersData);
+const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const notify = useNotification();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
@@ -68,6 +70,51 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
     to: ''
   });
 
+  const [filterOptions, setFilterOptions] = useState({
+    accessLevels: [{ label: 'All Levels', value: 'All' }],
+    userTypes: [{ label: 'All Users', value: 'All' }]
+  });
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await activityLogApi.getFilterOptions();
+        if (response.status) {
+          setFilterOptions(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter options', error);
+      }
+    };
+    fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchData();
+    }
+  }, [open, appliedFilters]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await activityLogApi.getTenantLoginStats({
+        role: appliedFilters.userType,
+        accessLevel: appliedFilters.accessLevel,
+        from: appliedFilters.from,
+        to: appliedFilters.to,
+      });
+      if (response.status) {
+        setData(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data', error);
+      notify.error('Failed to fetch login statistics.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasActiveFilters = filters.accessLevel !== 'All' || filters.userType !== 'All' || filters.from !== '' || filters.to !== '';
 
   const handleFilterChange = (field, value) => {
@@ -87,35 +134,36 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
       to: ''
     };
     setFilters(defaultFilters);
-    setAppliedFilters(defaultFilters);
+    setAppliedFilters({ accessLevel: 'All', userType: 'All', from: '', to: '' });
     setPage(0);
   };
 
   const handleExportToExcel = async () => {
-    if (!filteredData || filteredData.length === 0) {
+    if (!data || data.length === 0) {
       notify.error('No schools found to export.');
       return;
     }
 
-    const headers = ['S/N', 'School Name', 'URL', 'Number of Logged-in Users'];
-    const rows = filteredData.map((row, index) => [
+    const headers = ['S/N', 'School Name', 'URL', 'User Type', 'Number of Logged-in Users'];
+    const rows = data.map((row, index) => [
       index + 1,
       row.school || '',
       row.url || '',
+      appliedFilters.userType || 'All',
       row.number || 0
     ]);
 
     try {
-      const response = await axios.post('/v1/landlord/activity-logs/export-excel', {
-        title: 'Logged In Schools Report',
+      const response = await activityLogApi.exportExcel({
+        title: 'Logged In Users Report',
         headers: headers,
         rows: rows
-      }, { responseType: 'blob' });
+      });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'Logged_In_Schools.xlsx');
+      link.setAttribute('download', 'Logged_In_Users_Report.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -125,35 +173,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
       notify.error('Failed to export excel.');
     }
   };
-
-  const filteredData = (usersData || [])
-    .filter(row => {
-      let match = true;
-      if (appliedFilters.accessLevel !== 'All' && row.accessLevel !== appliedFilters.accessLevel) match = false;
-      const rowDateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
-      if (appliedFilters.from && rowDateStr && rowDateStr < appliedFilters.from) match = false;
-      if (appliedFilters.to && rowDateStr && rowDateStr > appliedFilters.to) match = false;
-
-      // If a specific user type is selected, filter out schools that have 0 logins for that type
-      if (appliedFilters.userType !== 'All') {
-        const count = row.stats ? (row.stats[appliedFilters.userType] || 0) : 0;
-        if (count === 0) match = false;
-      }
-
-      return match;
-    })
-    .map(row => {
-      // Calculate dynamic number based on userType filter
-      let currentNumber = row.number || 0;
-      if (row.stats) {
-        if (appliedFilters.userType === 'All') {
-          currentNumber = row.stats.Total || 0;
-        } else {
-          currentNumber = row.stats[appliedFilters.userType] || 0;
-        }
-      }
-      return { ...row, number: currentNumber };
-    });
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -187,14 +206,27 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
         <Grid container spacing={1.5} mb={3}>
           {predefinedStats.map((stat, idx) => {
             const statValue = stats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+            const isAgents = stat.label === 'Agents';
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-                <StatCard
-                  label={stat.label}
-                  count={statValue}
-                  icon={stat.icon}
-                  color={stat.color}
-                />
+                <Box
+                  onClick={() => {
+                    if (isAgents && onViewUserList) {
+                      onViewUserList(
+                        { id: 'landlord', school: 'Agents' },
+                        { userType: 'All', from: filters.from, to: filters.to }
+                      );
+                    }
+                  }}
+                  sx={{ cursor: isAgents ? 'pointer' : 'default', width: '100%' }}
+                >
+                  <StatCard
+                    label={stat.label}
+                    count={statValue}
+                    icon={stat.icon}
+                    color={stat.color}
+                  />
+                </Box>
               </Grid>
             );
           })}
@@ -222,14 +254,9 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '4px', p: 0.5, display: 'flex' }}>
                 <GridViewIcon sx={{ color: theme.palette.text.disabled, fontSize: '24px' }} />
               </Box>
-              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
+              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users</Typography>
             </Stack>
-            {/* <Button
-              startIcon={<GetAppIcon />}
-              variant='contained'
-            >
-              Export to Excel
-            </Button> */}
+
             <Button
               variant="contained"
               startIcon={<GetAppIcon />}
@@ -253,7 +280,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
             bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5',
             borderTop: `1px solid ${theme.palette.divider}`
           }}>
-            {/* Access Level Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -272,15 +298,14 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                 onChange={(e) => handleFilterChange('accessLevel', e.target.value)}
                 sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
               >
-                <MenuItem value="All">All Levels</MenuItem>
-                <MenuItem value="Level 2">Level 2</MenuItem>
-                <MenuItem value="Level 3">Level 3</MenuItem>
-                <MenuItem value="Level 4">Level 4</MenuItem>
-                <MenuItem value="Level 5">Level 5</MenuItem>
+                {filterOptions.accessLevels.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
-            {/* User Type Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -299,14 +324,14 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                 onChange={(e) => handleFilterChange('userType', e.target.value)}
                 sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
               >
-                <MenuItem value="All">All Users</MenuItem>
-                <MenuItem value="Teacher">Teacher</MenuItem>
-                <MenuItem value="Student">Student</MenuItem>
-                <MenuItem value="SPA">SPA</MenuItem>
+                {filterOptions.userTypes.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
-            {/* From Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -333,7 +358,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
               />
             </Box>
 
-            {/* To Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -392,11 +416,17 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                    {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredData.length === 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                        <CircularProgress size={24} />
+                      </TableCell>
+                    </TableRow>
+                  ) : data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center">
                         <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
@@ -406,8 +436,8 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                     </TableRow>
                   ) : (
                     (rowsPerPage > 0
-                      ? filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      : filteredData
+                      ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      : data
                     ).map((row, index) => (
                       <TableRow
                         key={row.id || index} hover>
@@ -416,16 +446,47 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                           <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
+                          {row.url ? (
+                            <Typography
+                              component="a"
+                              href={row.url.startsWith('http') ? row.url : `https://${row.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                color: 'success.main',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }}
+                            >
+                              {row.url}
+                            </Typography>
+                          ) : (
+                            <Typography sx={{ color: theme.palette.text.disabled, fontSize: '13px' }}>N/A</Typography>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
+                          <Typography
+                            variant="body2"
+                            color="primary"
+                            fontWeight="600"
+                            sx={{
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              textAlign: 'center',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => onViewUserList && onViewUserList(row, filters)}
+                          >
+                            {row.number}
+                          </Typography>
                         </TableCell>
-                        <TableCell align="right">
+                        {/* <TableCell align="right">
                           <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                             <IconDotsVertical size={18} color={theme.palette.text.secondary} />
                           </IconButton>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     )))}
                 </TableBody>
@@ -433,7 +494,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      count={filteredData.length}
+                      count={data.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={handleChangePage}
@@ -484,7 +545,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [], usersDa
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            if (onViewUserList) onViewUserList(selectedRow);
+            if (onViewUserList) onViewUserList(selectedRow, appliedFilters);
           }}
         >
           View Users List

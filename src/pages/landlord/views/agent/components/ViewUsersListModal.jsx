@@ -42,11 +42,18 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await activityLogApi.getTenantLoggedInUsers(schoolId, {
-        role: filters?.userType,
-        from: filters?.from,
-        to: filters?.to
-      });
+      const isAgents = schoolId === 'landlord';
+      const response = isAgents
+        ? await activityLogApi.getAgentLoggedInUsers({
+            from: filters?.from,
+            to: filters?.to,
+            accessLevel: filters?.accessLevel
+          })
+        : await activityLogApi.getTenantLoggedInUsers(schoolId, {
+            role: filters?.userType,
+            from: filters?.from,
+            to: filters?.to
+          });
       if (response.status) {
         setUsers(response.data);
       }
@@ -74,12 +81,18 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
 
     const isAgentsList = schoolId === 'landlord';
     const headers = isAgentsList
-      ? ['S/N', 'User Details', 'Date/Time Logged In']
+      ? ['S/N', 'User Details', 'Access Level', 'Date/Time Logged In']
       : ['S/N', 'User Details', 'User Type', 'Date/Time Logged In'];
 
     const rows = users.map((row, index) => {
-      const rowData = [index + 1, row.name || ''];
-      if (!isAgentsList) {
+      let displayName = row.name || '';
+      if (row.is_impersonated) {
+        displayName += ` (Impersonated by ${row.impersonator_name || 'Admin'})`;
+      }
+      const rowData = [index + 1, displayName];
+      if (isAgentsList) {
+        rowData.push(row.access_level || 'N/A');
+      } else {
         rowData.push(row.user_type || 'N/A');
       }
       rowData.push(row.time || '');
@@ -154,24 +167,26 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Details</TableCell>
-                  {schoolId !== 'landlord' && (
+                  {schoolId !== 'landlord' ? (
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Type</TableCell>
+                  ) : (
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Access Level</TableCell>
                   )}
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Date/Time Logged In</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={schoolId === 'landlord' ? 4 : 5} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={schoolId === 'landlord' ? 4 : 5} align="center">
-                      <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+                    <TableCell colSpan={5} align="center">
+                      <Alert severity="info" sx={{ mt: 2, mb: 2, justifyContent: 'center' }}>
                         No users logged in for this school matching criteria.
                       </Alert>
                     </TableCell>
@@ -188,12 +203,23 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                       <TableCell>
                         <Typography variant="body2" fontWeight="600" color="#4a5568">
                           {row.name}
+                          {row.is_impersonated && (
+                            <Box component="span" sx={{ ml: 1, color: 'text.secondary', fontSize: '11px', fontWeight: 400, fontStyle: 'italic' }}>
+                              (Impersonated by {row.impersonator_name || 'Admin'})
+                            </Box>
+                          )}
                         </Typography>
                       </TableCell>
-                      {schoolId !== 'landlord' && (
+                      {schoolId !== 'landlord' ? (
                         <TableCell>
                           <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
                             {row.user_type || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      ) : (
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
+                            {row.access_level || 'N/A'}
                           </Typography>
                         </TableCell>
                       )}
@@ -202,11 +228,11 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                           {row.time}
                         </Typography>
                       </TableCell>
-                      <TableCell align="right">
+                      {/* <TableCell align="right">
                         <IconButton size="small">
                           <MoreVertIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}

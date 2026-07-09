@@ -44,6 +44,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
     try {
       const response = await activityLogApi.getTenantLoggedInUsers(schoolId, {
         role: filters?.userType,
+        accessLevel: filters?.accessLevel,
         from: filters?.from,
         to: filters?.to
       });
@@ -74,7 +75,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
 
     const isAgentsList = schoolId === 'landlord';
     const headers = isAgentsList
-      ? ['S/N', 'User Details', 'Date/Time Logged In']
+      ? ['S/N', 'User Details', 'Access Level', 'Date/Time Logged In']
       : ['S/N', 'User Details', 'User Type', 'Date/Time Logged In'];
 
     const rows = users.map((row, index) => {
@@ -83,7 +84,9 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
         displayName += ` (Impersonated by ${row.impersonator_name || 'Admin'})`;
       }
       const rowData = [index + 1, displayName];
-      if (!isAgentsList) {
+      if (isAgentsList) {
+        rowData.push(row.access_level || 'N/A');
+      } else {
         rowData.push(row.user_type || 'N/A');
       }
       rowData.push(row.time || '');
@@ -156,10 +159,12 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
+                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Details</TableCell>
-                  {schoolId !== 'landlord' && (
+                  {schoolId !== 'landlord' ? (
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>User Type</TableCell>
+                  ) : (
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Access Level</TableCell>
                   )}
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Date/Time Logged In</TableCell>
                   {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
@@ -168,13 +173,13 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={schoolId === 'landlord' ? 4 : 5} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={schoolId === 'landlord' ? 4 : 5} align="center">
+                    <TableCell colSpan={5} align="center">
                       <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
                         No users logged in for this school matching criteria.
                       </Alert>
@@ -199,10 +204,16 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
                           )}
                         </Typography>
                       </TableCell>
-                      {schoolId !== 'landlord' && (
+                       {schoolId !== 'landlord' ? (
                         <TableCell>
                           <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
                             {row.user_type || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      ) : (
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
+                            {row.access_level || 'N/A'}
                           </Typography>
                         </TableCell>
                       )}

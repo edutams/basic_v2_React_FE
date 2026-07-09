@@ -48,6 +48,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
   const isDarkMode = theme.palette.mode === 'dark';
   const notify = useNotification();
   const [data, setData] = useState([]);
+  const [modalStats, setModalStats] = useState(stats);
   const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -74,6 +75,10 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
     accessLevels: [{ label: 'All Levels', value: 'All' }],
     userTypes: [{ label: 'All Users', value: 'All' }]
   });
+
+  useEffect(() => {
+    setModalStats(stats);
+  }, [stats]);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -106,6 +111,16 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
       });
       if (response.status) {
         setData(response.data);
+      }
+
+      // Fetch dynamic stats card counts matching active filters
+      const statsRes = await activityLogApi.getLoginActivities30Days({
+        accessLevel: appliedFilters.accessLevel,
+        from: appliedFilters.from,
+        to: appliedFilters.to,
+      });
+      if (statsRes.status) {
+        setModalStats(statsRes.data);
       }
     } catch (error) {
       console.error('Failed to fetch data', error);
@@ -205,7 +220,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
         {/* Top Stat Cards */}
         <Grid container spacing={1.5} mb={3}>
           {predefinedStats.map((stat, idx) => {
-            const statValue = stats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+            const statValue = modalStats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
             const isAgents = stat.label === 'Agents';
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
@@ -214,7 +229,12 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                     if (isAgents && onViewUserList) {
                       onViewUserList(
                         { id: 'landlord', school: 'Agents' },
-                        { userType: 'All', from: filters.from, to: filters.to }
+                        {
+                          userType: 'All',
+                          accessLevel: appliedFilters.accessLevel,
+                          from: appliedFilters.from,
+                          to: appliedFilters.to
+                        }
                       );
                     }
                   }}
@@ -477,7 +497,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                               textAlign: 'center',
                               '&:hover': { opacity: 0.8 }
                             }}
-                            onClick={() => onViewUserList && onViewUserList(row, filters)}
+                            onClick={() => onViewUserList && onViewUserList(row, appliedFilters)}
                           >
                             {row.number}
                           </Typography>

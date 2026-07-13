@@ -274,7 +274,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
             Cancel
           </Button>
           <Button size="small" onClick={handleSubmit} disabled={saving || gatewaysLoading} sx={{ fontWeight: 600 }}>
-            {saving ? 'Saving...' : mode === 'existing' ? 'Save' : 'Create Payment Gateway Account'}
+            {saving ? 'Saving...' : mode === 'existing' ? 'Save' : 'Create Pay. Gateway Account'}
           </Button>
         </Stack>
       </Stack>

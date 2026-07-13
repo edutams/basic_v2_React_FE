@@ -32,6 +32,18 @@ export const fetchAdmissionEntrySessionTerm = async (sessionTermId) => {
   return response.data;
 };
 
+// Get admission code format (school-level setting)
+export const fetchAdmissionCodeFormat = async () => {
+  const response = await api.get('/admission/code-format');
+  return response.data;
+};
+
+// Update admission code format (school-level setting)
+export const updateAdmissionCodeFormat = async (data) => {
+  const response = await api.put('/admission/code-format', data);
+  return response.data;
+};
+
 
 // Get all open admission batches (student-facing)
 export const getOpenBatches = () =>

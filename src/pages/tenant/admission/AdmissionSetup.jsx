@@ -26,8 +26,22 @@ import {
   CircularProgress,
   Stack,
   Tooltip,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
+  OutlinedInput,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Divider,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
+import {
+  MoreVert as MoreVertIcon,
+  Edit as EditIcon,
+  ContentCopy as ContentCopyIcon,
+  Save as SaveIcon,
+} from '@mui/icons-material';
 import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -41,6 +55,8 @@ import {
   fetchAdmissionBatches,
   toggleAdmissionBatchStatus,
   updateAdmissionBatch,
+  fetchAdmissionCodeFormat,
+  updateAdmissionCodeFormat,
 } from '@/api/tenant/admission/admissionApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
@@ -158,9 +174,34 @@ const ViewEditPair = ({ onView, onEdit }) => (
   </Stack>
 );
 
+const TabPanel = ({ children, value, index, ...other }) => (
+  <div
+    role="tabpanel"
+    hidden={value !== index}
+    id={`admission-tabpanel-${index}`}
+    aria-labelledby={`admission-tab-${index}`}
+    {...other}
+  >
+    {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+  </div>
+);
+
+// ─── Student number length options ────────────────────────────────────────────
+const STD_NUM_OPTIONS = [
+  { key: '[:stdNum_2]', label: '2 digits', example: '01' },
+  { key: '[:stdNum_3]', label: '3 digits', example: '001' },
+  { key: '[:stdNum_4]', label: '4 digits', example: '0001' },
+  { key: '[:stdNum_5]', label: '5 digits', example: '00001' },
+  { key: '[:stdNum_6]', label: '6 digits', example: '000001' },
+];
+
 const AdmissionSetup = () => {
   const navigate = useNavigate();
 
+  // ── Tabs state ──────────────────────────────────────────────────────────────
+  const [tabValue, setTabValue] = useState(0);
+
+  // ── Existing state (Admission Setup tab) ────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -187,6 +228,15 @@ const AdmissionSetup = () => {
 
   const [paymentViewOpen, setPaymentViewOpen] = useState(false);
   const [paymentViewBatch, setPaymentViewBatch] = useState(null);
+
+  // ── Code Format state (school-level, not per-batch) ─────────────────────────
+  const [codeFormatInput, setCodeFormatInput] = useState('');
+  const [schoolShortName, setSchoolShortName] = useState('');
+  const [selectedStdNum, setSelectedStdNum] = useState('');
+  // hasShortNameInFormat removed — everything lives in codeFormatInput directly
+  const [codeFormatSaving, setCodeFormatSaving] = useState(false);
+  const [codeFormatLoading, setCodeFormatLoading] = useState(false);
+  const [copiedPlaceholder, setCopiedPlaceholder] = useState(null);
 
   useEffect(() => {
     loadSessions();
@@ -255,6 +305,34 @@ const AdmissionSetup = () => {
     }
   };
 
+  // ── Load admission code format (school-level, no batch needed) ────────────
+  const loadAdmissionCodeFormat = async () => {
+    setCodeFormatLoading(true);
+    try {
+      const res = await fetchAdmissionCodeFormat();
+      const savedFormat = res?.data?.code_format ?? '';
+      const savedShortName = res?.data?.school_short_name ?? '';
+
+      // Put the full format directly into the input field
+      setCodeFormatInput(savedFormat);
+      setSchoolShortName(savedShortName || '');
+
+      // Detect which student number is selected
+      let foundStdNum = '';
+      for (const opt of STD_NUM_OPTIONS) {
+        if (savedFormat.includes(opt.key)) {
+          foundStdNum = opt.key;
+          break;
+        }
+      }
+      setSelectedStdNum(foundStdNum);
+    } catch (err) {
+      console.error('Failed to load admission code format', err);
+    } finally {
+      setCodeFormatLoading(false);
+    }
+  };
+
   const handleSessionChange = (e) => {
     const id = Number(e.target.value);
     setSelectedSessionId(id);
@@ -318,7 +396,6 @@ const AdmissionSetup = () => {
 
   const handleSaveAdmissionLetter = async () => {
     if (!letterEditorBatch) return;
-
     try {
       const payload = {
         admission_letter_template: letterEditorContent,
@@ -366,266 +443,737 @@ const AdmissionSetup = () => {
     });
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    // Load code format data when switching to the Code Format tab
+    if (newValue === 1) {
+      loadAdmissionCodeFormat();
+    }
+  };
+
+  // ── Code Format handlers (school-level, no batch) ──────────────────────────
+
+  // Helper: append a placeholder to codeFormatInput with auto-slash
+  const appendToFormat = (placeholder) => {
+    setCodeFormatInput((prev) => {
+      const trimmed = prev.trim();
+      const prefix = trimmed.length > 0 ? '/' : '';
+      return trimmed + prefix + placeholder;
+    });
+  };
+
+  // Get the complete format string — everything is already in the input
+  const getFullCodeFormat = () => codeFormatInput.trim();
+
+  const handleShortNameChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setSchoolShortName(value);
+
+    if (value.trim()) {
+      // Insert [:shortname] if not already present (functional updater avoids stale closure)
+      setCodeFormatInput((prev) => {
+        if (prev.includes('[:shortname]')) return prev;
+        const trimmed = prev.trim();
+        const prefix = trimmed.length > 0 ? '/' : '';
+        return trimmed + prefix + '[:shortname]';
+      });
+    } else {
+      // Remove [:shortname] when cleared (use split/join to avoid regex special chars)
+      setCodeFormatInput((prev) =>
+        prev
+          .split('/[:shortname]')
+          .join('')
+          .split('[:shortname]/')
+          .join('')
+          .split('[:shortname]')
+          .join('')
+          .replace(/\/+$/, '')
+          .replace(/^\/+/, '')
+          .replace(/\/+/g, '/'),
+      );
+    }
+  };
+
+  const handleYearClick = () => {
+    appendToFormat('[:year]');
+    setCopiedPlaceholder('[:year]');
+    setTimeout(() => setCopiedPlaceholder(null), 1500);
+  };
+
+  const handleStdNumChange = (event) => {
+    const value = event.target.value;
+    setSelectedStdNum(value);
+
+    // Remove any existing stdNum placeholder first (use split/join to avoid regex issues)
+    setCodeFormatInput((prev) => {
+      let cleaned = prev;
+      for (const opt of STD_NUM_OPTIONS) {
+        cleaned = cleaned
+          .split(`/${opt.key}`)
+          .join('')
+          .split(`${opt.key}/`)
+          .join('')
+          .split(opt.key)
+          .join('');
+      }
+      cleaned = cleaned.replace(/\/+$/, '').replace(/^\/+/, '').replace(/\/+/g, '/').trim();
+      const prefix = cleaned.length > 0 ? '/' : '';
+      return cleaned + prefix + value;
+    });
+
+    setCopiedPlaceholder(value);
+    setTimeout(() => setCopiedPlaceholder(null), 1500);
+  };
+
+  const handleSaveCodeFormat = async () => {
+    const fullFormat = getFullCodeFormat().trim();
+    if (!fullFormat) {
+      showSnackbar('Please build a code format first', 'warning');
+      return;
+    }
+    setCodeFormatSaving(true);
+    try {
+      await updateAdmissionCodeFormat({
+        code_format: fullFormat,
+        school_short_name: schoolShortName.trim(),
+      });
+      showSnackbar('Admission code format updated successfully');
+    } catch (err) {
+      console.error('Failed to save code format', err);
+      showSnackbar('Failed to update admission code format', 'error');
+    } finally {
+      setCodeFormatSaving(false);
+    }
+  };
+
+  // Generate example output
+  const getExampleOutput = () => {
+    const shortNameValue = schoolShortName.trim() || 'STPAULS';
+    return getFullCodeFormat()
+      .replace(/\[:shortname\]/g, shortNameValue)
+      .replace(/\[:year\]/g, '2026')
+      .replace(/\[:stdNum_2\]/g, '01')
+      .replace(/\[:stdNum_3\]/g, '001')
+      .replace(/\[:stdNum_4\]/g, '0001')
+      .replace(/\[:stdNum_5\]/g, '00001')
+      .replace(/\[:stdNum_6\]/g, '000001');
+  };
+
   return (
     <PageContainer title="Admission Setup" description="Manage admission batches">
       <Breadcrumb title="Admission Setup" items={BCrumb} />
 
-      <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12, md: 4 }}>
-          <ParentCard title="Manage Admissions">
-            {loading ? (
-              <Box display="flex" justifyContent="center" py={4}>
-                <CircularProgress size={28} />
-              </Box>
-            ) : (
-              <>
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Select Session Term"
-                    value={selectedSessionId}
-                    onChange={handleSessionChange}
-                    size="small"
-                  >
-                    {sessions.map((s) => (
-                      <MenuItem key={s.id} value={s.id}>
-                        {s.sesname}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="Admission setup tabs"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: 15,
+              minWidth: 180,
+            },
+          }}
+        >
+          <Tab label="Admission Setup" id="admission-tab-0" aria-controls="admission-tabpanel-0" />
+          <Tab
+            label="Admission Code Format"
+            id="admission-tab-1"
+            aria-controls="admission-tabpanel-1"
+          />
+        </Tabs>
+      </Box>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          TAB 1 — ADMISSION SETUP (existing content)
+          ══════════════════════════════════════════════════════════════════════════ */}
+      <TabPanel value={tabValue} index={0}>
+        <Grid container spacing={3} alignItems="flex-start">
+          <Grid size={{ xs: 12, md: 4 }}>
+            <ParentCard title="Manage Admissions">
+              {loading ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <CircularProgress size={28} />
                 </Box>
+              ) : (
+                <>
+                  <Box sx={{ mb: 2 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Select Session Term"
+                      value={selectedSessionId}
+                      onChange={handleSessionChange}
+                      size="small"
+                    >
+                      {sessions.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.sesname}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
 
-                {sessionTerms.length === 0 ? (
-                  <Alert severity="info">No session terms found.</Alert>
-                ) : (
-                  <Paper>
-                    <TableContainer>
-                      <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Session</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700 }}>
-                              Status
-                            </TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700 }}>
-                              Actions
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {sessionTerms.map((session_term, i) => {
-                            const isSelected = selectedSessionTermId === session_term.id;
-                            return (
-                              <TableRow
-                                key={session_term.id}
-                                hover
-                                selected={isSelected}
-                                onClick={() => handleTermSelect(session_term)}
-                                sx={{ cursor: 'pointer' }}
-                              >
-                                <TableCell>{i + 1}</TableCell>
-                                <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
-                                  {session_term?.session?.sesname}{' '}
-                                  {session_term?.display_term?.display_name}
-                                </TableCell>
-                                <TableCell align="center">
-                                  {session_term?.is_subscribed === 'yes' ? (
-                                    <StatusChip status={session_term?.status} />
-                                  ) : (
-                                    <Typography variant="caption" color="text.disabled">
-                                      —
-                                    </Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell align="center">
-                                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, term)}>
-                                    <MoreVertIcon fontSize="small" />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
-                )}
-              </>
-            )}
-          </ParentCard>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 8 }}>
-          <ParentCard
-            title={
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                flexDirection={{ xs: 'column', sm: 'row' }}
-                gap={{ xs: 1.5, sm: 0 }}
-              >
-                <Typography variant="h5">
-                  Manage Admission Batches
-                  {selectedSessionTermLabel && (
-                    <>
-                      {' '}
-                      For{' '}
-                      <Box
-                        component="span"
-                        sx={{
-                          color: 'primary.main',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {selectedSessionTermLabel}
-                      </Box>
-                    </>
+                  {sessionTerms.length === 0 ? (
+                    <Alert severity="info">No session terms found.</Alert>
+                  ) : (
+                    <Paper>
+                      <TableContainer>
+                        <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                              <TableCell sx={{ fontWeight: 700 }}>Session</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                Status
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                Actions
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {sessionTerms.map((session_term, i) => {
+                              const isSelected = selectedSessionTermId === session_term.id;
+                              return (
+                                <TableRow
+                                  key={session_term.id}
+                                  hover
+                                  selected={isSelected}
+                                  onClick={() => handleTermSelect(session_term)}
+                                  sx={{ cursor: 'pointer' }}
+                                >
+                                  <TableCell>{i + 1}</TableCell>
+                                  <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
+                                    {session_term?.session?.sesname}{' '}
+                                    {session_term?.display_term?.display_name}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    {session_term?.is_subscribed === 'yes' ? (
+                                      <StatusChip status={session_term?.status} />
+                                    ) : (
+                                      <Typography variant="caption" color="text.disabled">
+                                        —
+                                      </Typography>
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, term)}>
+                                      <MoreVertIcon fontSize="small" />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
                   )}
-                </Typography>
-                <Button variant="contained" size="small" // startIcon={<AddIcon />}
-                  disabled={!selectedSessionTermId}
-                  onClick={handleCreateBatch}
-                  sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: { xs: 0, sm: 2 } }}
+                </>
+              )}
+            </ParentCard>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 8 }}>
+            <ParentCard
+              title={
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  flexDirection={{ xs: 'column', sm: 'row' }}
+                  gap={{ xs: 1.5, sm: 0 }}
                 >
-                  Create New Admission
-                </Button>
-              </Box>
-            }
-          >
-            {!selectedSessionTermId ? (
-              <Alert severity="info">Select a session term on the left to manage batches.</Alert>
-            ) : batchesLoading ? (
-              <Box display="flex" justifyContent="center" py={4}>
-                <CircularProgress size={28} />
-              </Box>
-            ) : batches.length === 0 ? (
-              <Alert
-                severity="info"
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                No admission batches yet for this term. Click "Create New Admission" to add one.
-              </Alert>
-            ) : (
-              <Paper>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Batch Name</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          Entrance Exam
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          Require Payment
-                        </TableCell>
-                        {/* <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          App Instruction
-                        </TableCell> */}
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          Admission Letter
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          Status
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
-                          Action
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {batches.map((batch, i) => (
-                        <TableRow key={batch.id} hover>
-                          <TableCell>{i + 1}</TableCell>
-
-                          <TableCell sx={{ fontWeight: 600 }}>{batch.batch_name}</TableCell>
-
-                          {/* Entrance Exam */}
-                          <TableCell align="center">
-                            {batch.has_entrance_exam ? (
-                              <Chip
-                                label="Set E-Exam"
-                                size="small"
-                                sx={{
-                                  bgcolor: 'success.light',
-                                  color: 'success.dark',
-                                  fontWeight: 700,
-                                  fontSize: 10,
-                                }}
-                              />
-                            ) : (
-                              <YesNoPill value={false} />
-                            )}
+                  <Typography variant="h5">
+                    Manage Admission Batches
+                    {selectedSessionTermLabel && (
+                      <>
+                        {' '}
+                        For{' '}
+                        <Box
+                          component="span"
+                          sx={{
+                            color: 'primary.main',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedSessionTermLabel}
+                        </Box>
+                      </>
+                    )}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={!selectedSessionTermId}
+                    onClick={handleCreateBatch}
+                    sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: { xs: 0, sm: 2 } }}
+                  >
+                    Create New Admission
+                  </Button>
+                </Box>
+              }
+            >
+              {!selectedSessionTermId ? (
+                <Alert severity="info">Select a session term on the left to manage batches.</Alert>
+              ) : batchesLoading ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : batches.length === 0 ? (
+                <Alert
+                  severity="info"
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                  }}
+                >
+                  No admission batches yet for this term. Click &quot;Create New Admission&quot; to
+                  add one.
+                </Alert>
+              ) : (
+                <Paper>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Batch Name</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Entrance Exam
                           </TableCell>
-
-                          {/* Require Payment */}
-                          <TableCell align="center">
-                            <FeePills
-                              requirePayment={batch.require_payment}
-                              appFee={batch.application_fee}
-                              acceptanceFee={batch.acceptance_fee}
-                              onViewPayments={() => {
-                                setPaymentViewBatch(batch);
-                                setPaymentViewOpen(true);
-                              }}
-                            />
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Require Payment
                           </TableCell>
-
-                          {/* App Instruction */}
-                          {/* <TableCell align="center">
-                            <ViewEditPair onView={() => { }} onEdit={() => { }} />
-                          </TableCell> */}
-
-                          {/* Admission Letter */}
-                          <TableCell align="center">
-                            <ViewEditPair
-                              onView={() => {
-                                setLetterEditorBatch(batch);
-                                setLetterEditorReadOnly(true);
-                                setLetterEditorOpen(true);
-                              }}
-                              onEdit={() => {
-                                setLetterEditorBatch(batch);
-                                setLetterEditorReadOnly(false);
-                                setLetterEditorOpen(true);
-                              }}
-                            />
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Admission Letter
                           </TableCell>
-
-                          <TableCell align="center">
-                            <BatchStatusChip status={batch.status} />
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Status
                           </TableCell>
-
-                          {/* Action */}
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBatchMenuAnchor(e.currentTarget);
-                                setMenuBatch(batch);
-                              }}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Action
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            )}
-          </ParentCard>
+                      </TableHead>
+                      <TableBody>
+                        {batches.map((batch, i) => (
+                          <TableRow key={batch.id} hover>
+                            <TableCell>{i + 1}</TableCell>
+
+                            <TableCell sx={{ fontWeight: 600 }}>{batch.batch_name}</TableCell>
+
+                            {/* Entrance Exam */}
+                            <TableCell align="center">
+                              {batch.has_entrance_exam ? (
+                                <Chip
+                                  label="Set E-Exam"
+                                  size="small"
+                                  sx={{
+                                    bgcolor: 'success.light',
+                                    color: 'success.dark',
+                                    fontWeight: 700,
+                                    fontSize: 10,
+                                  }}
+                                />
+                              ) : (
+                                <YesNoPill value={false} />
+                              )}
+                            </TableCell>
+
+                            {/* Require Payment */}
+                            <TableCell align="center">
+                              <FeePills
+                                requirePayment={batch.require_payment}
+                                appFee={batch.application_fee}
+                                acceptanceFee={batch.acceptance_fee}
+                                onViewPayments={() => {
+                                  setPaymentViewBatch(batch);
+                                  setPaymentViewOpen(true);
+                                }}
+                              />
+                            </TableCell>
+
+                            {/* Admission Letter */}
+                            <TableCell align="center">
+                              <ViewEditPair
+                                onView={() => {
+                                  setLetterEditorBatch(batch);
+                                  setLetterEditorReadOnly(true);
+                                  setLetterEditorOpen(true);
+                                }}
+                                onEdit={() => {
+                                  setLetterEditorBatch(batch);
+                                  setLetterEditorReadOnly(false);
+                                  setLetterEditorOpen(true);
+                                }}
+                              />
+                            </TableCell>
+
+                            <TableCell align="center">
+                              <BatchStatusChip status={batch.status} />
+                            </TableCell>
+
+                            {/* Action */}
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setBatchMenuAnchor(e.currentTarget);
+                                  setMenuBatch(batch);
+                                }}
+                              >
+                                <MoreVertIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              )}
+            </ParentCard>
+          </Grid>
         </Grid>
-      </Grid>
+      </TabPanel>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          TAB 2 — ADMISSION CODE FORMAT (school-level, no batch needed)
+          ══════════════════════════════════════════════════════════════════════════ */}
+      <TabPanel value={tabValue} index={1}>
+        <Grid container spacing={3}>
+          {/* ── Info alert ──────────────────────────────────────────────────── */}
+          <Grid size={{ xs: 12 }}>
+            <Alert severity="info" sx={{ mb: 1 }}>
+              Define the admission code format for your school. Type your school&apos;s short
+              name, insert <strong>[:year]</strong>, and choose the student number digit length. A
+              slash <strong>/</strong> is automatically added between segments.
+            </Alert>
+          </Grid>
+
+          {/* ── Main content — full width, no batch selector ──────────────── */}
+          <Grid size={{ xs: 12 }}>
+            <ParentCard title="Admission Code Format">
+              {codeFormatLoading ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {/* ── Left grid (md=6) — Inputs & placeholders ──────────── */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Card variant="outlined" sx={{ bgcolor: 'grey.50', height: '100%' }}>
+                      <CardContent>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          gutterBottom
+                          sx={{ mb: 2 }}
+                        >
+                          Format Components
+                        </Typography>
+
+                        <Stack spacing={2.5}>
+                          {/* ── School Short Name (text input) ───────────── */}
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              gutterBottom
+                              sx={{ fontSize: 13 }}
+                            >
+                              School Short Name
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ mb: 1, display: 'block' }}
+                            >
+                              Type your school abbreviation (optional)
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="e.g STPAULS"
+                              value={schoolShortName}
+                              onChange={handleShortNameChange}
+                              sx={{
+                                '& .MuiOutlinedInput-input': {
+                                  fontFamily: 'monospace',
+                                  fontWeight: 600,
+                                  fontSize: 14,
+                                  textTransform: 'uppercase',
+                                },
+                              }}
+                            />
+                          </Box>
+
+                          <Divider />
+
+                          {/* ── Admission Year (clickable) ──────────────── */}
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              gutterBottom
+                              sx={{ fontSize: 13 }}
+                            >
+                              Admission Year
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ mb: 1, display: 'block' }}
+                            >
+                              Click to insert <strong>[:year]</strong> into the format
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={handleYearClick}
+                              startIcon={
+                                <ContentCopyIcon
+                                  fontSize="small"
+                                  sx={{
+                                    color:
+                                      copiedPlaceholder === '[:year]'
+                                        ? 'success.main'
+                                        : 'inherit',
+                                  }}
+                                />
+                              }
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 700,
+                                borderColor:
+                                  copiedPlaceholder === '[:year]'
+                                    ? 'success.main'
+                                    : 'primary.main',
+                                color:
+                                  copiedPlaceholder === '[:year]'
+                                    ? 'success.main'
+                                    : 'primary.main',
+                                bgcolor:
+                                  copiedPlaceholder === '[:year]'
+                                    ? 'success.light'
+                                    : 'transparent',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  bgcolor: 'primary.light',
+                                  borderColor: 'primary.main',
+                                },
+                              }}
+                            >
+                              {copiedPlaceholder === '[:year]' ? 'Inserted!' : '[:year]'}
+                            </Button>
+                          </Box>
+
+                          <Divider />
+
+                          {/* ── Student Number (radio options) ──────────── */}
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              gutterBottom
+                              sx={{ fontSize: 13 }}
+                            >
+                              Student Number
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ mb: 0.5, display: 'block' }}
+                            >
+                              Choose the digit length{' '}
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{ fontStyle: 'italic', color: 'warning.main' }}
+                              >
+                                (only one can be used)
+                              </Typography>
+                            </Typography>
+                            <RadioGroup
+                              value={selectedStdNum}
+                              onChange={handleStdNumChange}
+                              sx={{
+                                '& .MuiFormControlLabel-root': {
+                                  mr: 0,
+                                  borderRadius: 1,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  bgcolor: 'background.paper',
+                                  px: 1.5,
+                                  py: 0.5,
+                                  mb: 0.5,
+                                  transition: 'all 0.15s ease',
+                                  '&:hover': {
+                                    borderColor: 'primary.light',
+                                    bgcolor: 'primary.light',
+                                  },
+                                  '&.Mui-selected': {
+                                    borderColor: 'primary.main',
+                                    bgcolor: 'primary.light',
+                                  },
+                                },
+                              }}
+                            >
+                              {STD_NUM_OPTIONS.map((opt) => (
+                                <FormControlLabel
+                                  key={opt.key}
+                                  value={opt.key}
+                                  control={
+                                    <Radio
+                                      size="small"
+                                      sx={{
+                                        '&.Mui-checked': { color: 'primary.main' },
+                                      }}
+                                    />
+                                  }
+                                  label={
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Typography
+                                        variant="body2"
+                                        fontWeight={700}
+                                        sx={{ fontFamily: 'monospace', fontSize: 13 }}
+                                      >
+                                        {opt.key}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {opt.label}
+                                      </Typography>
+                                      <Chip
+                                        label={opt.example}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          height: 20,
+                                          fontSize: 10,
+                                          fontFamily: 'monospace',
+                                          fontWeight: 600,
+                                        }}
+                                      />
+                                    </Box>
+                                  }
+                                />
+                              ))}
+                            </RadioGroup>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* ── Right grid (md=6) — Format builder & save ───────── */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Card variant="outlined" sx={{ height: '100%' }}>
+                      <CardContent>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={700}
+                          gutterBottom
+                          sx={{ mb: 2 }}
+                        >
+                          Code Format
+                        </Typography>
+
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mb: 1.5, display: 'block' }}
+                        >
+                          The format is built automatically from your selections above. You can
+                          also edit it manually.
+                        </Typography>
+
+                        {/* Format input */}
+                        <OutlinedInput
+                          fullWidth
+                          value={codeFormatInput}
+                          onChange={(e) => setCodeFormatInput(e.target.value)}
+                          placeholder="Add components from the left..."
+                          size="small"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                            mb: 2,
+                            '& .MuiOutlinedInput-input': {
+                              py: 1.5,
+                            },
+                          }}
+                        />
+
+                        {/* Example output */}
+                        {getFullCodeFormat() && (
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              bgcolor: 'success.light',
+                              borderRadius: 1,
+                              mb: 2,
+                              border: '1px solid',
+                              borderColor: 'success.main',
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              color="success.dark"
+                              gutterBottom
+                              display="block"
+                            >
+                              Example output:
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              fontWeight={700}
+                              color="success.dark"
+                              sx={{ fontFamily: 'monospace', fontSize: 18 }}
+                            >
+                              {getExampleOutput()}
+                            </Typography>
+                            <Typography variant="caption" color="success.dark" sx={{ mt: 0.5, display: 'block' }}>
+                              Using shortname: &quot;{schoolShortName.trim() || 'STPAULS'}&quot;
+                              | Year: 2026 | Sequential number starting from 001
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          size="large"
+                          startIcon={
+                            codeFormatSaving ? (
+                              <CircularProgress size={18} color="inherit" />
+                            ) : (
+                              <SaveIcon />
+                            )
+                          }
+                          onClick={handleSaveCodeFormat}
+                          disabled={codeFormatSaving || !getFullCodeFormat().trim()}
+                          sx={{ fontWeight: 700, py: 1.2 }}
+                        >
+                          {codeFormatSaving ? 'Saving...' : 'Update Code Format'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              )}
+            </ParentCard>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ── Shared menus & dialogs ────────────────────────────────────────────── */}
 
       <Menu
         anchorEl={anchorEl}
@@ -697,10 +1245,18 @@ const AdmissionSetup = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmToggleBatch({ open: false, batch: null })}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setConfirmToggleBatch({ open: false, batch: null })}
+          >
             Cancel
           </Button>
-          <Button size="small" color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'} onClick={handleToggleBatchStatus}>
+          <Button
+            size="small"
+            color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'}
+            onClick={handleToggleBatchStatus}
+          >
             Confirm
           </Button>
         </DialogActions>
@@ -743,7 +1299,12 @@ const AdmissionSetup = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setLetterEditorOpen(false)} color="inherit">
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setLetterEditorOpen(false)}
+            color="inherit"
+          >
             {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
           {!letterEditorReadOnly && (
@@ -789,7 +1350,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                  paymentViewBatch.pre_application_payments.length === 0 ? (
+                paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -850,7 +1411,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                  paymentViewBatch.post_application_payments.length === 0 ? (
+                paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

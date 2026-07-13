@@ -114,3 +114,33 @@ export const updateApplicantForm = async (data) => {
   const response = await api.post('/admission/process/update-form', data);
   return response.data;
 };
+
+/**
+ * Fetch classes for a specific admission batch
+ * GET /admission/process/batch-classes/{batchId}
+ * @param {number} batchId - the admission batch ID
+ */
+export const fetchBatchClasses = async (batchId) => {
+  const response = await api.get(`/admission/process/batch-classes/${batchId}`);
+  return response.data;
+};
+
+/**
+ * Fetch applications by batch and class for batch processing
+ * POST /admission/process/applications-by-class
+ * @param {Object} filters - { appBatchId, classId, search }
+ */
+export const fetchApplicationsByClass = async (filters = null) => {
+  const response = await api.post('/admission/process/applications-by-class', { filters });
+  return response.data;
+};
+
+/**
+ * Batch process admissions (admit/decline/revoke multiple applications)
+ * POST /admission/process/batch-process
+ * @param {Object} data - { action, form_numbers, programme_id, class_id, class_arm_id, rejection_reason, revoked_reason }
+ */
+export const batchProcessAdmissions = async (data) => {
+  const response = await api.post('/admission/process/batch-process', data);
+  return response.data;
+};

@@ -25,7 +25,7 @@ const StatusBreakdownCard = ({
           mb: 3,
         }}
       >
-        STATUS BREAKDOWN
+        REVENUE STATUS BREAKDOWN
       </Typography>
 
       {/* Main Distribution Items */}

@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Grid,
-  Tabs,
-  Tab,
-} from '@mui/material';
+import { Box, Grid, Tabs, Tab } from '@mui/material';
 import {
   People as PeopleIcon,
   HowToReg as HowToRegIcon,
@@ -23,10 +18,7 @@ import {
   fetchApplicationStats,
 } from '@/api/tenant/admission/admissionProcessingApi';
 
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Admission Processing' },
-];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Processing' }];
 
 const AdmissionProcessing = () => {
   // ─── Data state ────────────────────────────────────────────────────────
@@ -93,7 +85,10 @@ const AdmissionProcessing = () => {
   };
 
   return (
-    <PageContainer title="Admission Processing" description="Process and manage admission applications">
+    <PageContainer
+      title="Admission Processing"
+      description="Process and manage admission applications"
+    >
       <Breadcrumb title="Admission Processing" items={BCrumb} />
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
@@ -170,16 +165,10 @@ const AdmissionProcessing = () => {
       >
         <Box sx={{ mt: 3 }}>
           {activeTab === 0 && (
-            <IndividualProcessingTab
-              allBatches={allBatches}
-              onDataChange={handleDataChange}
-            />
+            <IndividualProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
           )}
           {activeTab === 1 && (
-            <BatchProcessingTab
-              allBatches={allBatches}
-              onDataChange={handleDataChange}
-            />
+            <BatchProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
           )}
         </Box>
       </ParentCard>

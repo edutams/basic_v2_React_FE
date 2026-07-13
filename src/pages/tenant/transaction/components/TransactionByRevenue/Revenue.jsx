@@ -130,6 +130,7 @@ const Revenue = () => {
 
   useEffect(() => {
     loadAnalytics();
+    loadTable();
   }, [sessionId, termId]);
 
   // useEffect(() => {

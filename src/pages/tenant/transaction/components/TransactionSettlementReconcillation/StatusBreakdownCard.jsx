@@ -8,7 +8,7 @@ import {
   TrendingUp as TotalIcon,
 } from '@mui/icons-material';
 
-const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) => {
+const StatusBreakdownCard = ({ items = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -33,7 +33,7 @@ const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) 
         fontWeight={700}
         sx={{ mb: 3, color: isDark ? '#fff' : '#1f2937' }}
       >
-        {title}
+        TOTAL SETTLEMENT
       </Typography>
 
       {items.map((item, index) => {
@@ -95,7 +95,6 @@ const StatusBreakdownCard = ({ title = 'Total Transaction Value', items = [] }) 
 };
 
 StatusBreakdownCard.propTypes = {
-  title: PropTypes.string,
   items: PropTypes.array,
 };
 

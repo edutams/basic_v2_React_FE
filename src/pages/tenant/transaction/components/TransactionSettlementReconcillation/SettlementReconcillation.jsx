@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -36,7 +36,7 @@ import SettlementModal from './SettlementModal';
 
 // Define transactionStatusData here
 export const transactionStatusData = {
-  title: 'Total Transaction Value',
+  title: 'TOTAL RECONCILIATION',
   items: [
     {
       label: 'Total Revenue',
@@ -127,21 +127,8 @@ const SettlementReconcillation = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleMenuOpen = (event, row) => {
-    setAnchorEl(event.currentTarget);
-    setMenuRow(row);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setMenuRow(null);
-  };
-
-  const handleViewSettlements = (row) => {
-    setActiveRow(row);
-    setModalOpen(true);
-    handleMenuClose();
-  };
+  const [period, setPeriod] = useState('this_month');
+  const [periodValue, setPeriodValue] = useState(null);
 
   const [chartTitle, setChartTitle] = useState('Settlement Recon.');
   const [chartType, setChartType] = useState('bar');
@@ -165,6 +152,68 @@ const SettlementReconcillation = () => {
       },
     ],
   });
+
+  const handleMenuOpen = (event, row) => {
+    setAnchorEl(event.currentTarget);
+    setMenuRow(row);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuRow(null);
+  };
+
+  const handleViewSettlements = (row) => {
+    setActiveRow(row);
+    setModalOpen(true);
+    handleMenuClose();
+  };
+
+  const loadAnalytics = useCallback(async () => {
+    try {
+      let from, to;
+
+      if (period === 'today') {
+        const d = periodValue || dayjs().format('YYYY-MM-DD');
+        from = d;
+        to = d;
+      } else if (period === 'this_week') {
+        const year = periodValue?.year ?? dayjs().year();
+        const week = periodValue?.week ?? dayjs().isoWeek();
+        from = dayjs().year(year).isoWeek(week).startOf('week').format('YYYY-MM-DD');
+        to = dayjs().year(year).isoWeek(week).endOf('week').format('YYYY-MM-DD');
+      } else if (period === 'this_month') {
+        const year = periodValue?.year ?? dayjs().year();
+        const month = periodValue?.month ?? dayjs().month() + 1;
+        from = dayjs()
+          .year(year)
+          .month(month - 1)
+          .startOf('month')
+          .format('YYYY-MM-DD');
+        to = dayjs()
+          .year(year)
+          .month(month - 1)
+          .endOf('month')
+          .format('YYYY-MM-DD');
+      } else if (period === 'this_year') {
+        const year = periodValue ?? dayjs().year();
+        from = dayjs().year(year).startOf('year').format('YYYY-MM-DD');
+        to = dayjs().year(year).endOf('year').format('YYYY-MM-DD');
+      }
+
+      //  const res = await fetchSettlementAnalytics({ filters: { from, to } });
+      //  if (res.success) {
+      //    setChartData(res.chart || { categories: [], series: [] });
+      //  }
+    } catch (err) {
+      console.error('Failed to fetch settlement analytics', err);
+    }
+  }, [period, periodValue]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [period, periodValue, loadAnalytics]);
+
   const buildChartOptions = (categories) => ({
     chart: {
       type: chartType,

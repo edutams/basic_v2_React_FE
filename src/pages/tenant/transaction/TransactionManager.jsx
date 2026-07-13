@@ -138,11 +138,11 @@ const TransactionManager = () => {
             variant="scrollable"
           >
             <Tab
-              label="Overview"
+              label="Transactions"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
-              label="Revenue Transactions"
+              label="Revenue"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab

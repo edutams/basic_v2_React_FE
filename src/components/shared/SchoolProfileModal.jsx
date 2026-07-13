@@ -11,6 +11,7 @@ import {
   Chip,
   Divider,
   Avatar,
+  Link
 } from '@mui/material';
 
 const SchoolProfileModal = ({ open, onClose, school }) => {
@@ -80,7 +81,14 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
               {schoolName}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {schoolUrl}
+              <Link
+    href={schoolUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    underline="hover"
+  >
+    {schoolUrl}
+  </Link>
             </Typography>
           </Box>
         </Box>
@@ -99,7 +107,7 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
           {/* Agent / Organisation */}
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Agent / Organisation
+          Organisation
             </Typography>
             {field('Agent Name', agentName)}
             {field('Agent Email', agentEmail)}

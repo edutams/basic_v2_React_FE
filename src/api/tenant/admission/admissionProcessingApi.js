@@ -79,6 +79,9 @@ export const getApplicantByFormNumber = async (formNumber) => {
  * @param {Object} [options] - additional options
  * @param {string} [options.rejection_reason] - reason for rejection (when declining)
  * @param {string} [options.revoked_reason] - reason for revocation (when revoking)
+ * @param {number} [options.programme_id] - programme ID (when admitting)
+ * @param {number} [options.class_id] - class ID (when admitting)
+ * @param {number} [options.class_arm_id] - class arm ID (when admitting)
  */
 export const updateAdmissionStatus = async (formNumber, status, options = {}) => {
   const payload = {
@@ -90,6 +93,15 @@ export const updateAdmissionStatus = async (formNumber, status, options = {}) =>
   }
   if (options.revoked_reason) {
     payload.revoked_reason = options.revoked_reason;
+  }
+  if (options.programme_id) {
+    payload.programme_id = options.programme_id;
+  }
+  if (options.class_id) {
+    payload.class_id = options.class_id;
+  }
+  if (options.class_arm_id) {
+    payload.class_arm_id = options.class_arm_id;
   }
   const response = await api.post('/admission/process/update-status', payload);
   return response.data;

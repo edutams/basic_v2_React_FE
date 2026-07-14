@@ -28,8 +28,10 @@ import {
   DialogActions,
   Checkbox,
   Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
@@ -41,6 +43,7 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import ViewAdmissionModal from './ViewAdmissionModal';
 
 const statusColors = {
   admitted: 'success',
@@ -67,7 +70,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [processing, setProcessing] = useState(false);
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: '', search: '' });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -77,7 +80,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Batch processing modal state ──────────────────────────────────────
   const [batchModal, setBatchModal] = useState({
     open: false,
-    action: '', // 'admit' | 'decline' | 'revoke'
+    action: '',
     programmes: [],
     classes: [],
     classArms: [],
@@ -88,10 +91,21 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     revokedReason: '',
   });
 
+  // ─── View admission modal state ────────────────────────────────────────
+  const [viewModal, setViewModal] = useState({
+    open: false,
+    formNumber: '',
+  });
+
   // ─── Data helpers ──────────────────────────────────────────────────────
   const getFullName = (app) => {
     const parts = [app.lname, app.fname, app.mname].filter(Boolean);
     return parts.join('  ') || '—';
+  };
+
+  const getGuardianName = (app) => {
+    const parts = [app.guardian_lname, app.guardian_fname, app.guardian_mname].filter(Boolean);
+    return parts.join(' ') || '—';
   };
 
   const getBatchLabel = (app) => {
@@ -138,7 +152,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const handleBatchChange = async (e) => {
     const id = e.target.value;
     setPage(0);
-    setFilter({ appBatchId: id, classId: '', search: '' });
+    setFilter({ appBatchId: id, classId: '', status: '', search: '' });
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
@@ -153,6 +167,10 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setFilter((prev) => ({ ...prev, classId }));
     setApplications([]);
     setSelectedApplications(new Set());
+  };
+
+  const handleStatusChange = (e) => {
+    setFilter((prev) => ({ ...prev, status: e.target.value }));
   };
 
   const handleSearchChange = (e) => {
@@ -201,6 +219,14 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       }
       return next;
     });
+  };
+
+  const handleViewAdmission = (formNumber) => {
+    setViewModal({ open: true, formNumber });
+  };
+
+  const handleCloseViewModal = () => {
+    setViewModal({ open: false, formNumber: '' });
   };
 
   // ─── Batch processing modal handlers ───────────────────────────────────
@@ -316,7 +342,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     <Box>
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select
@@ -334,7 +360,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2 }}>
           <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
             <InputLabel>Class</InputLabel>
             <Select
@@ -352,7 +378,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filter.status}
+              label="Status"
+              onChange={handleStatusChange}
+            >
+              <MenuItem value="">All Status</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="admitted">Admitted</MenuItem>
+              <MenuItem value="declined">Declined</MenuItem>
+              <MenuItem value="revoked">Revoked</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <TextField
             fullWidth
             placeholder="Search by name"
@@ -397,14 +440,14 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       </Grid>
 
       {/* ── Action Buttons ────────────────────────────────────────────── */}
-      {/* {applications.length > 0 && (
+      {applications.length > 0 && (
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           <Button
             variant="contained"
             color="success"
             size="small"
             onClick={() => openBatchModal('admit')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='admitted'}
           >
             Admit Selected ({selectedApplications.size})
           </Button>
@@ -413,7 +456,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             color="error"
             size="small"
             onClick={() => openBatchModal('decline')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='declined'}
           >
             Decline Selected ({selectedApplications.size})
           </Button>
@@ -422,12 +465,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             color="warning"
             size="small"
             onClick={() => openBatchModal('revoke')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='revoked'}
           >
             Revoke Selected ({selectedApplications.size})
           </Button>
         </Stack>
-      )} */}
+      )}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
       <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
@@ -437,7 +480,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
             }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }}>
+                <TableCell sx={{ fontWeight: 700, width: '4%' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -446,15 +489,20 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     disabled={applications.length === 0}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '23%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '3%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Form Number</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '13%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '13%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Admission Status
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }} align="center">
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -462,7 +510,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -486,6 +534,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       <Typography variant="body2">{getFullName(app)}</Typography>
                     </TableCell>
                     <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {getGuardianName(app)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.intending_class_code || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2">{getBatchLabel(app)}</Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -504,11 +562,22 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         sx={{ fontWeight: 600, fontSize: 11, minWidth: 80 }}
                       />
                     </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="View Details">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleViewAdmission(app.form_number)}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found
@@ -569,7 +638,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Programme --</MenuItem>
                     {batchModal.programmes.map((prog) => (
                       <MenuItem key={prog.id} value={prog.id}>
-                        {prog.programme_name}
+                        {prog.programme_code}
                       </MenuItem>
                     ))}
                   </Select>
@@ -585,7 +654,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class --</MenuItem>
                     {batchModal.classes.map((cls) => (
                       <MenuItem key={cls.id} value={cls.id}>
-                        {cls.class_name}
+                        {cls.class_code}
                       </MenuItem>
                     ))}
                   </Select>
@@ -601,7 +670,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class Arm --</MenuItem>
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
-                        {arm.arm_name}
+                        {arm.arm_names}
                       </MenuItem>
                     ))}
                   </Select>
@@ -648,6 +717,13 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* ── View Admission Modal ──────────────────────────────────────── */}
+      <ViewAdmissionModal
+        open={viewModal.open}
+        onClose={handleCloseViewModal}
+        formNumber={viewModal.formNumber}
+      />
     </Box>
   );
 };

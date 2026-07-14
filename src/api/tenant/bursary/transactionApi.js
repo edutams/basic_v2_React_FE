@@ -64,8 +64,13 @@ export const fetchSettlementDetails = async (payload) => {
     return res.data;
 }
 
-export const fetchBursarySettlementValues = async () => {
-    const res = await api.get('/bursary/transactions/settlement/get_settlement_values');
+export const fetchBursarySettlementValues = async (filters = {}) => {
+    const res = await api.get('/bursary/transactions/settlement/get_settlement_values', {
+        params: {
+            from: filters.from || null,
+            to: filters.to || null,
+        }
+    });
     return res.data;
 }
 

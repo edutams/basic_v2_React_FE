@@ -69,7 +69,7 @@ const Settlement = () => {
   const [syncTo, setSyncTo] = useState('');
   const [syncing, setSyncing] = useState(false);
 
-  const [period, setPeriod] = useState('this_month');
+  const [period, setPeriod] = useState('this_week');
   const [periodValue, setPeriodValue] = useState(null);
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
@@ -95,6 +95,7 @@ const Settlement = () => {
       setTimeout(() => {
         loadTable();
         loadValues();
+        loadAnalytics();
       }, 5000);
     } catch (err) {
       console.error('Gateway sync failed', err);
@@ -174,7 +175,10 @@ const Settlement = () => {
 
   const loadValues = useCallback(async () => {
     try {
-      const res = await fetchBursarySettlementValues();
+      const res = await fetchBursarySettlementValues({
+        from: fromDate || null,
+        to: toDate || null,
+      });
       const d = res.data;
       setStatusData({
         title: 'Total Transaction Value',
@@ -208,7 +212,7 @@ const Settlement = () => {
     } catch (err) {
       console.error('Failed to fetch settlement values', err);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     loadTable();
@@ -216,13 +220,19 @@ const Settlement = () => {
     loadValues();
   }, []);
 
+  // useEffect(() => {
+  //   loadValues();
+  // }, [loadValues]);
+
   useEffect(() => {
     loadAnalytics();
+    loadValues();
   }, [period, periodValue, loadAnalytics]);
 
   const handleFetch = () => {
     setPage(1);
     loadTable();
+    loadValues();
   };
 
   const handleDownloadCSV = async () => {

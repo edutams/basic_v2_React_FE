@@ -15,8 +15,8 @@ import {
   Paper,
   CircularProgress,
   useTheme,
+  Link,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import StandardModal from '@/components/shared/StandardModal';
 import { fetchRevenueAmountDetails } from '@/api/tenant/bursary/transactionApi';
@@ -100,17 +100,13 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
   };
 
   return (
-    <StandardModal open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <StandardModal open={open} onClose={onClose} maxWidth="lg" fullWidth revenueName={revenueName}>
+      {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h6" fontWeight={700}>
+          {revenueName ? `Transactions — ${revenueName}` : 'Transactions'}
+        </Typography>
+      </Box> */}
       <Box sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" fontWeight={700}>
-            {revenueName ? `Transactions — ${revenueName}` : 'Transactions'}
-          </Typography>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
         <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
@@ -166,6 +162,7 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                   <TableCell>#</TableCell>
                   <TableCell>Transaction ID</TableCell>
                   <TableCell>Paid By</TableCell>
+                  <TableCell>Wallet Account</TableCell>
                   <TableCell>Payment Type</TableCell>
                   <TableCell>Payment Description</TableCell>
                   <TableCell>Amount ₦</TableCell>
@@ -193,6 +190,18 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                         <Typography variant="caption" color="text.secondary">
                           {row.class}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          component="button"
+                          underline="hover"
+                          href={`/bursary/transactions/wallet_transactions?wallet_account_no=${encodeURIComponent(row.wallet_account_no)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ ml: 1, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
+                        >
+                          {row.wallet_account_no ?? 'N/A'}
+                        </Link>
                       </TableCell>
                       <TableCell>{row.payment_type}</TableCell>
                       <TableCell>{row.description}</TableCell>

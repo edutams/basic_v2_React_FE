@@ -45,6 +45,9 @@ import {
   updateAdmissionStatus,
 } from '@/api/tenant/admission/admissionProcessingApi';
 import {
+  fetchAdmissionCodeFormat,
+} from '@/api/tenant/admission/admissionApi';
+import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassArmsByClass,
@@ -108,6 +111,9 @@ const ProcessApplicationForm = () => {
     selectedProgramme: '',
     selectedClass: '',
     selectedClassArm: '',
+    admissionNumber: '',
+    hasCodeFormat: false,
+    codeFormatLoading: false,
   });
 
   // ─── Load admission data ──────────────────────────────────────────────
@@ -447,8 +453,12 @@ const ProcessApplicationForm = () => {
             startIcon={<IconCheck size={20} />}
             onClick={async () => {
               try {
-                const programmesRes = await fetchProgrammes();
+                const [programmesRes, codeFormatRes] = await Promise.all([
+                  fetchProgrammes(),
+                  fetchAdmissionCodeFormat(),
+                ]);
                 const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+                const hasCodeFormat = !!(codeFormatRes?.data?.code_format);
                 setAdmitDialog({
                   open: true,
                   programmes,
@@ -457,6 +467,9 @@ const ProcessApplicationForm = () => {
                   selectedProgramme: '',
                   selectedClass: '',
                   selectedClassArm: '',
+                  admissionNumber: '',
+                  hasCodeFormat,
+                  codeFormatLoading: false,
                 });
               } catch (err) {
                 notify.error('Failed to load programmes');
@@ -656,6 +669,20 @@ const ProcessApplicationForm = () => {
               </Select>
             </FormControl>
 
+            {/* ── Admission Number Field (only shown when code format is NOT set) ── */}
+            {!admitDialog.hasCodeFormat && (
+              <TextField
+                fullWidth
+                size="small"
+                label="Admission Number *"
+                placeholder="Enter admission number for this student"
+                value={admitDialog.admissionNumber}
+                onChange={(e) => setAdmitDialog((prev) => ({ ...prev, admissionNumber: e.target.value }))}
+                required
+                helperText="No admission code format configured — enter manually"
+              />
+            )}
+
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
@@ -687,10 +714,15 @@ const ProcessApplicationForm = () => {
             size="small"
             color="primary"
             onClick={async () => {
-              const { selectedProgramme, selectedClass, selectedClassArm } = admitDialog;
+              const { selectedProgramme, selectedClass, selectedClassArm, admissionNumber, hasCodeFormat } = admitDialog;
 
               if (!selectedProgramme || !selectedClass || !selectedClassArm) {
                 notify.warning('Please select programme, class, and class arm');
+                return;
+              }
+
+              if (!hasCodeFormat && !admissionNumber.trim()) {
+                notify.warning('Please enter an admission number');
                 return;
               }
 
@@ -701,6 +733,7 @@ const ProcessApplicationForm = () => {
                   programme_id: selectedProgramme,
                   class_id: selectedClass,
                   class_arm_id: selectedClassArm,
+                  admission_number: hasCodeFormat ? null : admissionNumber.trim(),
                 });
                 notify.success(`Application status updated to "Admitted"`);
                 await refetchAdmission();

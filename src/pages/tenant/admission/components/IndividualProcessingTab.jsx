@@ -103,6 +103,11 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
     return parts.join('  ') || '—';
   };
 
+  const getGuardianName = (app) => {
+    const parts = [app.guardian_lname, app.guardian_fname, app.guardian_mname].filter(Boolean);
+    return parts.join(' ') || '—';
+  };
+
   const getBatchLabel = (app) => {
     const parts = [app.sesname, app.prog_name, app.batchname].filter(Boolean);
     return parts.length ? `${parts[0]} - ${parts[1]} (${parts[2]})` : '—';
@@ -302,20 +307,21 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
               theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
             }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '4%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '9%' }}>Form Number</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '16%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Admission Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Accept Offer
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '4%' }} align="center">
                   Action
                 </TableCell>
               </TableRow>
@@ -324,7 +330,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -339,6 +345,11 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">{getFullName(app)}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {getGuardianName(app)}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">{getBatchLabel(app)}</Typography>
@@ -380,7 +391,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found

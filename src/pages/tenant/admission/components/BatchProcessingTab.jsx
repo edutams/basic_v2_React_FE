@@ -28,19 +28,28 @@ import {
   DialogActions,
   Checkbox,
   Divider,
+  IconButton,
+  Menu,
+  Alert,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon, Download as DownloadIcon, Upload as UploadIcon } from '@mui/icons-material';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
   fetchApplicationsByClass,
   batchProcessAdmissions,
+  downloadAdmissionTemplate,
+  uploadAdmissionTemplate,
 } from '@/api/tenant/admission/admissionProcessingApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchAdmissionCodeFormat,
+} from '@/api/tenant/admission/admissionApi';
+import ViewAdmissionModal from './ViewAdmissionModal';
 
 const statusColors = {
   admitted: 'success',
@@ -65,9 +74,10 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Loading state ─────────────────────────────────────────────────────
   const [tableLoading, setTableLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: '', search: '' });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -77,7 +87,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Batch processing modal state ──────────────────────────────────────
   const [batchModal, setBatchModal] = useState({
     open: false,
-    action: '', // 'admit' | 'decline' | 'revoke'
+    action: '',
     programmes: [],
     classes: [],
     classArms: [],
@@ -86,12 +96,47 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     selectedClassArm: '',
     rejectionReason: '',
     revokedReason: '',
+    hasCodeFormat: false,
+    admissionPrefix: '',
+  });
+
+  // ─── Menu state ────────────────────────────────────────────────────────
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [selectedApp, setSelectedApp] = useState(null);
+
+  // ─── View admission modal state ────────────────────────────────────────
+  const [viewModal, setViewModal] = useState({
+    open: false,
+    formNumber: '',
+  });
+
+  // ─── Download Template modal state ─────────────────────────────────────
+  const [downloadModal, setDownloadModal] = useState({
+    open: false,
+    programmes: [],
+    classes: [],
+    selectedProgramme: '',
+    selectedClass: '',
+  });
+  const [downloading, setDownloading] = useState(false);
+
+  // ─── Upload Template modal state ───────────────────────────────────────
+  const [uploadModal, setUploadModal] = useState({
+    open: false,
+    file: null,
+    uploading: false,
+    result: null,
   });
 
   // ─── Data helpers ──────────────────────────────────────────────────────
   const getFullName = (app) => {
     const parts = [app.lname, app.fname, app.mname].filter(Boolean);
     return parts.join('  ') || '—';
+  };
+
+  const getGuardianName = (app) => {
+    const parts = [app.guardian_lname, app.guardian_fname, app.guardian_mname].filter(Boolean);
+    return parts.join(' ') || '—';
   };
 
   const getBatchLabel = (app) => {
@@ -126,6 +171,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       setApplications(Array.isArray(data) ? data : []);
       setMeta(res?.meta ?? res?.pagination ?? null);
       setSelectedApplications(new Set());
+      setHasFetched(true);
     } catch (err) {
       console.error('Failed to load applications:', err);
       notify.error('Failed to load applications');
@@ -138,10 +184,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const handleBatchChange = async (e) => {
     const id = e.target.value;
     setPage(0);
-    setFilter({ appBatchId: id, classId: '', search: '' });
+    setFilter({ appBatchId: id, classId: '', status: '', search: '' });
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
+    setHasFetched(false);
     
     if (id) {
       await loadBatchClasses(id);
@@ -153,6 +200,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setFilter((prev) => ({ ...prev, classId }));
     setApplications([]);
     setSelectedApplications(new Set());
+    setHasFetched(false);
+  };
+
+  const handleStatusChange = (e) => {
+    setFilter((prev) => ({ ...prev, status: e.target.value }));
   };
 
   const handleSearchChange = (e) => {
@@ -203,16 +255,190 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     });
   };
 
-  // ─── Batch processing modal handlers ───────────────────────────────────
-  const openBatchModal = async (action) => {
-    if (selectedApplications.size === 0) {
-      notify.warning('Please select at least one application');
+  const handleMenuOpen = (event, app) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedApp(app);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedApp(null);
+  };
+
+  const handleViewAdmission = (formNumber) => {
+    setViewModal({ open: true, formNumber });
+    handleMenuClose();
+  };
+
+  const handleCloseViewModal = () => {
+    setViewModal({ open: false, formNumber: '' });
+  };
+
+  // ─── Download Template handlers ────────────────────────────────────────
+  const handleOpenDownloadModal = async () => {
+    if (!filter.appBatchId || !filter.classId) {
+      notify.warning('Please select both batch and class first');
       return;
     }
 
     try {
       const programmesRes = await fetchProgrammes();
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+      setDownloadModal({
+        open: true,
+        programmes,
+        classes: [],
+        selectedProgramme: '',
+        selectedClass: '',
+      });
+    } catch (err) {
+      notify.error('Failed to load programmes');
+    }
+  };
+
+  const handleProgrammeChangeDownload = async (e) => {
+    const progId = e.target.value;
+    setDownloadModal((prev) => ({
+      ...prev,
+      selectedProgramme: progId,
+      selectedClass: '',
+      selectedClassArm: '',
+      classes: [],
+      classArms: [],
+    }));
+
+    if (progId) {
+      try {
+        const classesRes = await fetchClassesByProgramme(progId);
+        const classes = Array.isArray(classesRes?.data) ? classesRes.data : [];
+        setDownloadModal((prev) => ({ ...prev, classes }));
+      } catch (err) {
+        notify.error('Failed to load classes');
+      }
+    }
+  };
+
+  const handleClassChangeDownload = (e) => {
+    const classId = e.target.value;
+    setDownloadModal((prev) => ({
+      ...prev,
+      selectedClass: classId,
+    }));
+  };
+
+  const handleDownloadTemplate = async () => {
+    const { selectedProgramme, selectedClass } = downloadModal;
+    if (!selectedClass) {
+      notify.warning('Please select a class');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const res = await downloadAdmissionTemplate({
+        batch_id: filter.appBatchId,
+        intend_class_id: filter.classId,
+        programme_id: selectedProgramme,
+        class_id: selectedClass,
+      });
+
+      // Trigger blob download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'admission_applicants_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      notify.success('Template downloaded successfully');
+      setDownloadModal((prev) => ({ ...prev, open: false }));
+    } catch (err) {
+      notify.error('Failed to download template');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleCloseDownloadModal = () => {
+    setDownloadModal((prev) => ({ ...prev, open: false }));
+  };
+
+  // ─── Upload Template handlers ──────────────────────────────────────────
+  const handleOpenUploadModal = () => {
+    setUploadModal({
+      open: true,
+      file: null,
+      uploading: false,
+      result: null,
+    });
+  };
+
+  const handleUploadFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadModal((prev) => ({ ...prev, file, result: null }));
+    }
+    e.target.value = '';
+  };
+
+  const handleUploadTemplate = async () => {
+    const { file } = uploadModal;
+
+    if (!file) {
+      notify.warning('Please select a file to upload');
+      return;
+    }
+
+    setUploadModal((prev) => ({ ...prev, uploading: true, result: null }));
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('batch_id', filter.appBatchId);
+
+      const res = await uploadAdmissionTemplate(formData);
+      setUploadModal((prev) => ({
+        ...prev,
+        open: false,
+        uploading: false,
+        result: { severity: 'success', message: res?.message || 'Upload completed' },
+        file: null,
+      }));
+      loadApplications(filter);
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      setUploadModal((prev) => ({
+        ...prev,
+        uploading: false,
+        result: {
+          severity: 'error',
+          message: err?.response?.data?.message || 'Upload failed. Please try again.',
+        },
+      }));
+    }
+  };
+
+  // ─── Batch processing modal handlers ───────────────────────────────────
+  const openBatchModal = async (action) => {
+    // If filter is set to 'pending', auto-select all visible applications
+    if (selectedApplications.size === 0) {
+      if (filter.status === 'pending' && applications.length > 0) {
+        const allFormNumbers = new Set(applications.map((app) => app.form_number));
+        setSelectedApplications(allFormNumbers);
+      } else {
+        notify.warning('Please select at least one application');
+        return;
+      }
+    }
+
+    try {
+      const [programmesRes, codeFormatRes] = await Promise.all([
+        fetchProgrammes(),
+        fetchAdmissionCodeFormat(),
+      ]);
+      const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+      const hasCodeFormat = !!(codeFormatRes?.data?.code_format);
 
       setBatchModal({
         open: true,
@@ -225,6 +451,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         selectedClassArm: '',
         rejectionReason: '',
         revokedReason: '',
+        hasCodeFormat,
+        admissionPrefix: '',
       });
     } catch (err) {
       notify.error('Failed to load programmes');
@@ -266,11 +494,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const handleConfirmBatchProcess = async () => {
-    const { action, selectedProgramme, selectedClass, selectedClassArm, rejectionReason, revokedReason } = batchModal;
+    const { action, selectedProgramme, selectedClass, selectedClassArm, rejectionReason, revokedReason, hasCodeFormat, admissionPrefix } = batchModal;
 
     // Validation
     if (action === 'admit' && (!selectedProgramme || !selectedClass || !selectedClassArm)) {
       notify.warning('Please select programme, class, and class arm for admission');
+      return;
+    }
+
+    if (action === 'admit' && !hasCodeFormat && !admissionPrefix.trim()) {
+      notify.warning('Please enter an admission prefix or set up an admission code format');
       return;
     }
 
@@ -296,6 +529,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         revoked_reason: revokedReason || null,
       };
 
+      // Only send admission_prefix when there's no auto-generation
+      if (!hasCodeFormat && admissionPrefix.trim()) {
+        payload.admission_prefix = admissionPrefix.trim();
+      }
+
       await batchProcessAdmissions(payload);
       notify.success(`Successfully ${action === 'admit' ? 'admitted' : action === 'decline' ? 'declined' : 'revoked'} ${selectedApplications.size} application(s)`);
       
@@ -316,7 +554,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     <Box>
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select
@@ -334,7 +572,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2 }}>
           <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
             <InputLabel>Class</InputLabel>
             <Select
@@ -352,7 +590,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filter.status}
+              label="Status"
+              onChange={handleStatusChange}
+            >
+              <MenuItem value="">All Status</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="admitted">Admitted</MenuItem>
+              <MenuItem value="declined">Declined</MenuItem>
+              <MenuItem value="revoked">Revoked</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <TextField
             fullWidth
             placeholder="Search by name"
@@ -388,13 +643,37 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               fullWidth
               onClick={() => openBatchModal('admit')}
-              disabled={selectedApplications.size === 0}
+              disabled={!hasFetched || (selectedApplications.size === 0 && filter.status !== 'pending')}
             >
               Process All
             </Button>
           </Stack>
         </Grid>
       </Grid>
+
+      {/* ── Download/Upload Template Buttons ──────────────────────────── */}
+      <Box sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleOpenDownloadModal}
+            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
+          >
+            Download Template
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={handleOpenUploadModal}
+            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
+          >
+            Upload Template
+          </Button>
+        </Stack>
+      </Box>
 
       {/* ── Action Buttons ────────────────────────────────────────────── */}
       {/* {applications.length > 0 && (
@@ -404,7 +683,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             color="success"
             size="small"
             onClick={() => openBatchModal('admit')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='admitted'}
           >
             Admit Selected ({selectedApplications.size})
           </Button>
@@ -413,7 +692,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             color="error"
             size="small"
             onClick={() => openBatchModal('decline')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='declined'}
           >
             Decline Selected ({selectedApplications.size})
           </Button>
@@ -422,7 +701,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             color="warning"
             size="small"
             onClick={() => openBatchModal('revoke')}
-            disabled={selectedApplications.size === 0}
+            disabled={selectedApplications.size === 0 || filter.status =='revoked'}
           >
             Revoke Selected ({selectedApplications.size})
           </Button>
@@ -437,7 +716,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
             }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }}>
+                <TableCell sx={{ fontWeight: 700, width: '4%' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -446,15 +725,20 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     disabled={applications.length === 0}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '5%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '23%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '3%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Form Number</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '13%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '13%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Admission Status
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }} align="center">
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -462,7 +746,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -486,6 +770,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       <Typography variant="body2">{getFullName(app)}</Typography>
                     </TableCell>
                     <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {getGuardianName(app)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.intending_class_code || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2">{getBatchLabel(app)}</Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -504,11 +798,30 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         sx={{ fontWeight: 600, fontSize: 11, minWidth: 80 }}
                       />
                     </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, app)}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                      <Menu
+                        anchorEl={menuAnchorEl}
+                        open={Boolean(menuAnchorEl) && selectedApp?.form_number === app.form_number}
+                        onClose={handleMenuClose}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                      >
+                        <MenuItem onClick={() => handleViewAdmission(app.form_number)}>
+                          View Details
+                        </MenuItem>
+                      </Menu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found
@@ -569,7 +882,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Programme --</MenuItem>
                     {batchModal.programmes.map((prog) => (
                       <MenuItem key={prog.id} value={prog.id}>
-                        {prog.programme_name}
+                        {prog.programme_code}
                       </MenuItem>
                     ))}
                   </Select>
@@ -585,7 +898,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class --</MenuItem>
                     {batchModal.classes.map((cls) => (
                       <MenuItem key={cls.id} value={cls.id}>
-                        {cls.class_name}
+                        {cls.class_code}
                       </MenuItem>
                     ))}
                   </Select>
@@ -601,11 +914,25 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class Arm --</MenuItem>
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
-                        {arm.arm_name}
+                        {arm.arm_names}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* ── Admission Prefix (only when code format is NOT configured) ── */}
+                {!batchModal.hasCodeFormat && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Admission Number Prefix *"
+                    placeholder="e.g. ADM/2026/STU/"
+                    value={batchModal.admissionPrefix}
+                    onChange={(e) => setBatchModal((prev) => ({ ...prev, admissionPrefix: e.target.value }))}
+                    helperText="Enter a prefix — the system will append sequential numbers (e.g. ADM/2026/STU/0001, ADM/2026/STU/0002, ...)"
+                    required
+                  />
+                )}
               </>
             )}
 
@@ -648,6 +975,161 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* ── Download Template Modal ──────────────────────────────────── */}
+      <Dialog
+        open={downloadModal.open}
+        onClose={handleCloseDownloadModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Download Admission Template
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Select the programme and class to generate an Excel template with all admission applicants.
+              The template will include a <strong>Class Arm</strong> column — fill in the arm name for each applicant before uploading.
+            </Typography>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Programme *</InputLabel>
+              <Select
+                value={downloadModal.selectedProgramme}
+                label="Programme *"
+                onChange={handleProgrammeChangeDownload}
+              >
+                <MenuItem value="">-- Select Programme --</MenuItem>
+                {downloadModal.programmes.map((prog) => (
+                  <MenuItem key={prog.id} value={prog.id}>
+                    {prog.programme_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small" disabled={!downloadModal.selectedProgramme}>
+              <InputLabel>Class *</InputLabel>
+              <Select
+                value={downloadModal.selectedClass}
+                label="Class *"
+                onChange={handleClassChangeDownload}
+              >
+                <MenuItem value="">-- Select Class --</MenuItem>
+                {downloadModal.classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.class_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleCloseDownloadModal} disabled={downloading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={downloading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />}
+            onClick={handleDownloadTemplate}
+            disabled={!downloadModal.selectedClass || downloading}
+          >
+            {downloading ? 'Downloading...' : 'Download Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Upload Template Modal ──────────────────────────────────────── */}
+      <Dialog
+        open={uploadModal.open}
+        onClose={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Upload Admission Template
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Upload the completed admission template (.xlsx) to bulk admit applicants.
+              The programme, class, and <strong>Class Arm</strong> column (P) from the downloaded template
+              will be used to assign each applicant to their programme, class, and arm.
+            </Typography>
+
+            {/* ── File Upload Area ── */}
+            <Box
+              onClick={() => document.getElementById('upload-admission-file-input')?.click()}
+              sx={{
+                border: '2px dashed',
+                borderColor: uploadModal.file ? 'primary.main' : 'divider',
+                borderRadius: 2,
+                p: 3,
+                textAlign: 'center',
+                cursor: 'pointer',
+                bgcolor: uploadModal.file ? 'primary.lighter' : 'background.default',
+                transition: 'all 0.2s',
+                '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.lighter' },
+              }}
+            >
+              <UploadIcon sx={{ fontSize: 36, opacity: 0.6 }} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {uploadModal.file ? uploadModal.file.name : 'Click to select an Excel file (.xlsx)'}
+              </Typography>
+            </Box>
+
+            <input
+              id="upload-admission-file-input"
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={handleUploadFileChange}
+            />
+
+            {uploadModal.uploading && <CircularProgress size={20} sx={{ alignSelf: 'center' }} />}
+
+            {uploadModal.result && (
+              <Alert severity={uploadModal.result.severity}>
+                {uploadModal.result.message}
+              </Alert>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+            disabled={uploadModal.uploading}
+          >
+            {uploadModal.result?.severity === 'success' ? 'Close' : 'Cancel'}
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={uploadModal.uploading ? <CircularProgress size={14} color="inherit" /> : <UploadIcon />}
+            onClick={handleUploadTemplate}
+            disabled={!uploadModal.file || uploadModal.uploading}
+          >
+            {uploadModal.uploading ? 'Uploading...' : 'Upload Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── View Admission Modal ──────────────────────────────────────── */}
+      <ViewAdmissionModal
+        open={viewModal.open}
+        onClose={handleCloseViewModal}
+        formNumber={viewModal.formNumber}
+      />
     </Box>
   );
 };

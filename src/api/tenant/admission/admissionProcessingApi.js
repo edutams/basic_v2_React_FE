@@ -79,6 +79,9 @@ export const getApplicantByFormNumber = async (formNumber) => {
  * @param {Object} [options] - additional options
  * @param {string} [options.rejection_reason] - reason for rejection (when declining)
  * @param {string} [options.revoked_reason] - reason for revocation (when revoking)
+ * @param {number} [options.programme_id] - programme ID (when admitting)
+ * @param {number} [options.class_id] - class ID (when admitting)
+ * @param {number} [options.class_arm_id] - class arm ID (when admitting)
  */
 export const updateAdmissionStatus = async (formNumber, status, options = {}) => {
   const payload = {
@@ -90,6 +93,18 @@ export const updateAdmissionStatus = async (formNumber, status, options = {}) =>
   }
   if (options.revoked_reason) {
     payload.revoked_reason = options.revoked_reason;
+  }
+  if (options.programme_id) {
+    payload.programme_id = options.programme_id;
+  }
+  if (options.class_id) {
+    payload.class_id = options.class_id;
+  }
+  if (options.class_arm_id) {
+    payload.class_arm_id = options.class_arm_id;
+  }
+  if (options.admission_number) {
+    payload.admission_number = options.admission_number;
   }
   const response = await api.post('/admission/process/update-status', payload);
   return response.data;
@@ -138,9 +153,34 @@ export const fetchApplicationsByClass = async (filters = null) => {
 /**
  * Batch process admissions (admit/decline/revoke multiple applications)
  * POST /admission/process/batch-process
- * @param {Object} data - { action, form_numbers, programme_id, class_id, class_arm_id, rejection_reason, revoked_reason }
+ * @param {Object} data - { action, form_numbers, programme_id, class_id, class_arm_id, rejection_reason, revoked_reason, admission_prefix }
  */
 export const batchProcessAdmissions = async (data) => {
   const response = await api.post('/admission/process/batch-process', data);
+  return response.data;
+};
+
+/**
+ * Download an Excel template of admission applicants for a given batch and class arm
+ * GET /admission/process/download-template
+ * @param {Object} params - { batch_id, class_arm_id }
+ */
+export const downloadAdmissionTemplate = async (params) => {
+  const response = await api.get('/admission/process/download-template', {
+    params,
+    responseType: 'blob',
+  });
+  return response;
+};
+
+/**
+ * Upload a filled Excel template to bulk admit applicants
+ * POST /admission/process/upload-template
+ * @param {FormData} formData - file and batch info
+ */
+export const uploadAdmissionTemplate = async (formData) => {
+  const response = await api.post('/admission/process/upload-template', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };

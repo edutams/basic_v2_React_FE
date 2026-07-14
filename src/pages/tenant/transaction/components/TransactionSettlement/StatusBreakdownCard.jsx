@@ -16,12 +16,12 @@ const StatusBreakdownCard = ({ items = [] }) => {
       <Typography
         sx={{
           fontSize: '15px',
-          fontWeight: 600,
+          // fontWeight: 600,
           color: isDark ? '#fff' : '#1f2937',
           mb: 2,
         }}
       >
-        Total Transaction Value
+        TOTAL SETTLEMENT
       </Typography>
 
       {items.map((item, index) => {

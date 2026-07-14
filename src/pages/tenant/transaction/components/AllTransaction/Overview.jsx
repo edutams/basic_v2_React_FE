@@ -454,6 +454,7 @@ const Overview = () => {
                 <TableRow>
                   <TableCell>#</TableCell>
                   <TableCell width={20}>Transaction ID</TableCell>
+                  <TableCell>Paid For</TableCell>
                   <TableCell>Paid By</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Amount</TableCell>
@@ -493,6 +494,7 @@ const Overview = () => {
                           </Box>
                         </Box>
                       </TableCell>
+                      <TableCell>Wallet Number Account</TableCell>
                       <TableCell>{row.description}</TableCell>
                       <TableCell>{format(row.amount)}</TableCell>
                       <TableCell>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>

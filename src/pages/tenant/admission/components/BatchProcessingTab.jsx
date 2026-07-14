@@ -30,13 +30,16 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Alert,
 } from '@mui/material';
-import { Search as SearchIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Visibility as VisibilityIcon, Download as DownloadIcon, Upload as UploadIcon } from '@mui/icons-material';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
   fetchApplicationsByClass,
   batchProcessAdmissions,
+  downloadAdmissionTemplate,
+  uploadAdmissionTemplate,
 } from '@/api/tenant/admission/admissionProcessingApi';
 import {
   fetchProgrammes,
@@ -68,6 +71,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Loading state ─────────────────────────────────────────────────────
   const [tableLoading, setTableLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // ─── Filter state ──────────────────────────────────────────────────────
   const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: '', search: '' });
@@ -95,6 +99,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [viewModal, setViewModal] = useState({
     open: false,
     formNumber: '',
+  });
+
+  // ─── Download Template modal state ─────────────────────────────────────
+  const [downloadModal, setDownloadModal] = useState({
+    open: false,
+    programmes: [],
+    classes: [],
+    selectedProgramme: '',
+    selectedClass: '',
+  });
+  const [downloading, setDownloading] = useState(false);
+
+  // ─── Upload Template modal state ───────────────────────────────────────
+  const [uploadModal, setUploadModal] = useState({
+    open: false,
+    file: null,
+    uploading: false,
+    result: null,
   });
 
   // ─── Data helpers ──────────────────────────────────────────────────────
@@ -140,6 +162,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       setApplications(Array.isArray(data) ? data : []);
       setMeta(res?.meta ?? res?.pagination ?? null);
       setSelectedApplications(new Set());
+      setHasFetched(true);
     } catch (err) {
       console.error('Failed to load applications:', err);
       notify.error('Failed to load applications');
@@ -156,6 +179,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
+    setHasFetched(false);
     
     if (id) {
       await loadBatchClasses(id);
@@ -167,6 +191,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setFilter((prev) => ({ ...prev, classId }));
     setApplications([]);
     setSelectedApplications(new Set());
+    setHasFetched(false);
   };
 
   const handleStatusChange = (e) => {
@@ -227,6 +252,150 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   const handleCloseViewModal = () => {
     setViewModal({ open: false, formNumber: '' });
+  };
+
+  // ─── Download Template handlers ────────────────────────────────────────
+  const handleOpenDownloadModal = async () => {
+    if (!filter.appBatchId || !filter.classId) {
+      notify.warning('Please select both batch and class first');
+      return;
+    }
+
+    try {
+      const programmesRes = await fetchProgrammes();
+      const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+      setDownloadModal({
+        open: true,
+        programmes,
+        classes: [],
+        selectedProgramme: '',
+        selectedClass: '',
+      });
+    } catch (err) {
+      notify.error('Failed to load programmes');
+    }
+  };
+
+  const handleProgrammeChangeDownload = async (e) => {
+    const progId = e.target.value;
+    setDownloadModal((prev) => ({
+      ...prev,
+      selectedProgramme: progId,
+      selectedClass: '',
+      selectedClassArm: '',
+      classes: [],
+      classArms: [],
+    }));
+
+    if (progId) {
+      try {
+        const classesRes = await fetchClassesByProgramme(progId);
+        const classes = Array.isArray(classesRes?.data) ? classesRes.data : [];
+        setDownloadModal((prev) => ({ ...prev, classes }));
+      } catch (err) {
+        notify.error('Failed to load classes');
+      }
+    }
+  };
+
+  const handleClassChangeDownload = (e) => {
+    const classId = e.target.value;
+    setDownloadModal((prev) => ({
+      ...prev,
+      selectedClass: classId,
+    }));
+  };
+
+  const handleDownloadTemplate = async () => {
+    const { selectedProgramme, selectedClass } = downloadModal;
+    if (!selectedClass) {
+      notify.warning('Please select a class');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const res = await downloadAdmissionTemplate({
+        batch_id: filter.appBatchId,
+        intend_class_id: filter.classId,
+        programme_id: selectedProgramme,
+        class_id: selectedClass,
+      });
+
+      // Trigger blob download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'admission_applicants_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      notify.success('Template downloaded successfully');
+      setDownloadModal((prev) => ({ ...prev, open: false }));
+    } catch (err) {
+      notify.error('Failed to download template');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleCloseDownloadModal = () => {
+    setDownloadModal((prev) => ({ ...prev, open: false }));
+  };
+
+  // ─── Upload Template handlers ──────────────────────────────────────────
+  const handleOpenUploadModal = () => {
+    setUploadModal({
+      open: true,
+      file: null,
+      uploading: false,
+      result: null,
+    });
+  };
+
+  const handleUploadFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadModal((prev) => ({ ...prev, file, result: null }));
+    }
+    e.target.value = '';
+  };
+
+  const handleUploadTemplate = async () => {
+    const { file } = uploadModal;
+
+    if (!file) {
+      notify.warning('Please select a file to upload');
+      return;
+    }
+
+    setUploadModal((prev) => ({ ...prev, uploading: true, result: null }));
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('batch_id', filter.appBatchId);
+
+      const res = await uploadAdmissionTemplate(formData);
+      setUploadModal((prev) => ({
+        ...prev,
+        uploading: false,
+        result: { severity: 'success', message: res?.message || 'Upload completed' },
+        file: null,
+      }));
+      loadApplications(filter);
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      setUploadModal((prev) => ({
+        ...prev,
+        uploading: false,
+        result: {
+          severity: 'error',
+          message: err?.response?.data?.message || 'Upload failed. Please try again.',
+        },
+      }));
+    }
   };
 
   // ─── Batch processing modal handlers ───────────────────────────────────
@@ -438,6 +607,30 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </Stack>
         </Grid>
       </Grid>
+
+      {/* ── Download/Upload Template Buttons ──────────────────────────── */}
+      <Box sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleOpenDownloadModal}
+            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
+          >
+            Download Template
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={handleOpenUploadModal}
+            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
+          >
+            Upload Template
+          </Button>
+        </Stack>
+      </Box>
 
       {/* ── Action Buttons ────────────────────────────────────────────── */}
       {applications.length > 0 && (
@@ -714,6 +907,154 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             disabled={processing}
           >
             {processing ? 'Processing...' : `Confirm ${batchModal.action === 'admit' ? 'Admission' : batchModal.action === 'decline' ? 'Decline' : 'Revocation'}`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Download Template Modal ──────────────────────────────────── */}
+      <Dialog
+        open={downloadModal.open}
+        onClose={handleCloseDownloadModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Download Admission Template
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Select the programme and class to generate an Excel template with all admission applicants.
+              The template will include a <strong>Class Arm</strong> column — fill in the arm name for each applicant before uploading.
+            </Typography>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Programme *</InputLabel>
+              <Select
+                value={downloadModal.selectedProgramme}
+                label="Programme *"
+                onChange={handleProgrammeChangeDownload}
+              >
+                <MenuItem value="">-- Select Programme --</MenuItem>
+                {downloadModal.programmes.map((prog) => (
+                  <MenuItem key={prog.id} value={prog.id}>
+                    {prog.programme_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small" disabled={!downloadModal.selectedProgramme}>
+              <InputLabel>Class *</InputLabel>
+              <Select
+                value={downloadModal.selectedClass}
+                label="Class *"
+                onChange={handleClassChangeDownload}
+              >
+                <MenuItem value="">-- Select Class --</MenuItem>
+                {downloadModal.classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.class_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleCloseDownloadModal} disabled={downloading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={downloading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />}
+            onClick={handleDownloadTemplate}
+            disabled={!downloadModal.selectedClass || downloading}
+          >
+            {downloading ? 'Downloading...' : 'Download Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Upload Template Modal ──────────────────────────────────────── */}
+      <Dialog
+        open={uploadModal.open}
+        onClose={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Upload Admission Template
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Upload the completed admission template (.xlsx) to bulk admit applicants.
+              The programme, class, and <strong>Class Arm</strong> column (P) from the downloaded template
+              will be used to assign each applicant to their programme, class, and arm.
+            </Typography>
+
+            {/* ── File Upload Area ── */}
+            <Box
+              onClick={() => document.getElementById('upload-admission-file-input')?.click()}
+              sx={{
+                border: '2px dashed',
+                borderColor: uploadModal.file ? 'primary.main' : 'divider',
+                borderRadius: 2,
+                p: 3,
+                textAlign: 'center',
+                cursor: 'pointer',
+                bgcolor: uploadModal.file ? 'primary.lighter' : 'background.default',
+                transition: 'all 0.2s',
+                '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.lighter' },
+              }}
+            >
+              <UploadIcon sx={{ fontSize: 36, opacity: 0.6 }} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {uploadModal.file ? uploadModal.file.name : 'Click to select an Excel file (.xlsx)'}
+              </Typography>
+            </Box>
+
+            <input
+              id="upload-admission-file-input"
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={handleUploadFileChange}
+            />
+
+            {uploadModal.uploading && <CircularProgress size={20} sx={{ alignSelf: 'center' }} />}
+
+            {uploadModal.result && (
+              <Alert severity={uploadModal.result.severity}>
+                {uploadModal.result.message}
+              </Alert>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setUploadModal((prev) => ({ ...prev, open: false }))}
+            disabled={uploadModal.uploading}
+          >
+            {uploadModal.result?.severity === 'success' ? 'Close' : 'Cancel'}
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={uploadModal.uploading ? <CircularProgress size={14} color="inherit" /> : <UploadIcon />}
+            onClick={handleUploadTemplate}
+            disabled={!uploadModal.file || uploadModal.uploading}
+          >
+            {uploadModal.uploading ? 'Uploading...' : 'Upload Template'}
           </Button>
         </DialogActions>
       </Dialog>

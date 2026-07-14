@@ -29,10 +29,10 @@ import {
   Checkbox,
   Divider,
   IconButton,
-  Tooltip,
+  Menu,
   Alert,
 } from '@mui/material';
-import { Search as SearchIcon, Visibility as VisibilityIcon, Download as DownloadIcon, Upload as UploadIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon, Download as DownloadIcon, Upload as UploadIcon } from '@mui/icons-material';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
@@ -46,6 +46,9 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchAdmissionCodeFormat,
+} from '@/api/tenant/admission/admissionApi';
 import ViewAdmissionModal from './ViewAdmissionModal';
 
 const statusColors = {
@@ -93,7 +96,13 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     selectedClassArm: '',
     rejectionReason: '',
     revokedReason: '',
+    hasCodeFormat: false,
+    admissionPrefix: '',
   });
+
+  // ─── Menu state ────────────────────────────────────────────────────────
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [selectedApp, setSelectedApp] = useState(null);
 
   // ─── View admission modal state ────────────────────────────────────────
   const [viewModal, setViewModal] = useState({
@@ -246,8 +255,19 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     });
   };
 
+  const handleMenuOpen = (event, app) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedApp(app);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedApp(null);
+  };
+
   const handleViewAdmission = (formNumber) => {
     setViewModal({ open: true, formNumber });
+    handleMenuClose();
   };
 
   const handleCloseViewModal = () => {
@@ -401,14 +421,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   // ─── Batch processing modal handlers ───────────────────────────────────
   const openBatchModal = async (action) => {
+    // If filter is set to 'pending', auto-select all visible applications
     if (selectedApplications.size === 0) {
-      notify.warning('Please select at least one application');
-      return;
+      if (filter.status === 'pending' && applications.length > 0) {
+        const allFormNumbers = new Set(applications.map((app) => app.form_number));
+        setSelectedApplications(allFormNumbers);
+      } else {
+        notify.warning('Please select at least one application');
+        return;
+      }
     }
 
     try {
-      const programmesRes = await fetchProgrammes();
+      const [programmesRes, codeFormatRes] = await Promise.all([
+        fetchProgrammes(),
+        fetchAdmissionCodeFormat(),
+      ]);
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+      const hasCodeFormat = !!(codeFormatRes?.data?.code_format);
 
       setBatchModal({
         open: true,
@@ -421,6 +451,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         selectedClassArm: '',
         rejectionReason: '',
         revokedReason: '',
+        hasCodeFormat,
+        admissionPrefix: '',
       });
     } catch (err) {
       notify.error('Failed to load programmes');
@@ -462,11 +494,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const handleConfirmBatchProcess = async () => {
-    const { action, selectedProgramme, selectedClass, selectedClassArm, rejectionReason, revokedReason } = batchModal;
+    const { action, selectedProgramme, selectedClass, selectedClassArm, rejectionReason, revokedReason, hasCodeFormat, admissionPrefix } = batchModal;
 
     // Validation
     if (action === 'admit' && (!selectedProgramme || !selectedClass || !selectedClassArm)) {
       notify.warning('Please select programme, class, and class arm for admission');
+      return;
+    }
+
+    if (action === 'admit' && !hasCodeFormat && !admissionPrefix.trim()) {
+      notify.warning('Please enter an admission prefix or set up an admission code format');
       return;
     }
 
@@ -491,6 +528,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         rejection_reason: rejectionReason || null,
         revoked_reason: revokedReason || null,
       };
+
+      // Only send admission_prefix when there's no auto-generation
+      if (!hasCodeFormat && admissionPrefix.trim()) {
+        payload.admission_prefix = admissionPrefix.trim();
+      }
 
       await batchProcessAdmissions(payload);
       notify.success(`Successfully ${action === 'admit' ? 'admitted' : action === 'decline' ? 'declined' : 'revoked'} ${selectedApplications.size} application(s)`);
@@ -601,7 +643,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               fullWidth
               onClick={() => openBatchModal('admit')}
-              disabled={selectedApplications.size === 0}
+              disabled={!hasFetched || (selectedApplications.size === 0 && filter.status !== 'pending')}
             >
               Process All
             </Button>
@@ -634,7 +676,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       </Box>
 
       {/* ── Action Buttons ────────────────────────────────────────────── */}
-      {applications.length > 0 && (
+      {/* {applications.length > 0 && (
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
           <Button
             variant="contained"
@@ -664,7 +706,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             Revoke Selected ({selectedApplications.size})
           </Button>
         </Stack>
-      )}
+      )} */}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
       <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
@@ -757,15 +799,23 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="View Details">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleViewAdmission(app.form_number)}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuOpen(e, app)}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                      <Menu
+                        anchorEl={menuAnchorEl}
+                        open={Boolean(menuAnchorEl) && selectedApp?.form_number === app.form_number}
+                        onClose={handleMenuClose}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                      >
+                        <MenuItem onClick={() => handleViewAdmission(app.form_number)}>
+                          View Details
+                        </MenuItem>
+                      </Menu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -869,6 +919,20 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* ── Admission Prefix (only when code format is NOT configured) ── */}
+                {!batchModal.hasCodeFormat && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Admission Number Prefix *"
+                    placeholder="e.g. ADM/2026/STU/"
+                    value={batchModal.admissionPrefix}
+                    onChange={(e) => setBatchModal((prev) => ({ ...prev, admissionPrefix: e.target.value }))}
+                    helperText="Enter a prefix — the system will append sequential numbers (e.g. ADM/2026/STU/0001, ADM/2026/STU/0002, ...)"
+                    required
+                  />
+                )}
               </>
             )}
 

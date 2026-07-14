@@ -103,6 +103,9 @@ export const updateAdmissionStatus = async (formNumber, status, options = {}) =>
   if (options.class_arm_id) {
     payload.class_arm_id = options.class_arm_id;
   }
+  if (options.admission_number) {
+    payload.admission_number = options.admission_number;
+  }
   const response = await api.post('/admission/process/update-status', payload);
   return response.data;
 };
@@ -150,7 +153,7 @@ export const fetchApplicationsByClass = async (filters = null) => {
 /**
  * Batch process admissions (admit/decline/revoke multiple applications)
  * POST /admission/process/batch-process
- * @param {Object} data - { action, form_numbers, programme_id, class_id, class_arm_id, rejection_reason, revoked_reason }
+ * @param {Object} data - { action, form_numbers, programme_id, class_id, class_arm_id, rejection_reason, revoked_reason, admission_prefix }
  */
 export const batchProcessAdmissions = async (data) => {
   const response = await api.post('/admission/process/batch-process', data);

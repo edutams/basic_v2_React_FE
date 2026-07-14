@@ -86,6 +86,9 @@ const InvoiceView = Loadable(
   lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceView')),
 );
 
+const WalletTransactions = Loadable(
+  lazy(() => import('@/pages/tenant/transaction/wallet/WalletTransactions')),
+);
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
@@ -161,7 +164,7 @@ const TenantRoutes = [
   {
     path: '/class-ledger/:invoiceId/:user_id/pay-invoice',
     element: (
-      <TenantProtectedRoute >
+      <TenantProtectedRoute>
         {/* permission="bursary_manager.ledger.pay_invoice" */}
         <SchoolLayout />
       </TenantProtectedRoute>
@@ -418,6 +421,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="walet_manager.transactions.index">
             <PrintReceipt />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: '/bursary/transactions/wallet_transactions',
+        element: (
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
+            <WalletTransactions />
           </TenantProtectedRoute>
         ),
       },

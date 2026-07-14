@@ -20,6 +20,12 @@ import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
 import { IconDownload } from '@tabler/icons';
 import StatusBreakdownCard from './StatusBreakdownCard';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import ReactDatePicker from 'react-datepicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const FeeChart = ({
   open,

@@ -88,3 +88,10 @@ export const exportSettlementReconciliationCsv = async (payload) => {
     const res = await api.post('/bursary/transactions/settlement_reconciliation/export_csv_settlement_reconciliation', payload);
     return res.data;
 }
+
+export const fetchWalletTransactions = async (wallet_account_no) => {
+    const res = await api.get('/bursary/transactions/wallet_transactions', {
+        params: { wallet_account_no: wallet_account_no },
+    });
+    return res.data;
+}

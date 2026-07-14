@@ -25,6 +25,7 @@ import {
   useTheme,
   Tabs,
   Tab,
+  Link,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
@@ -494,7 +495,18 @@ const Overview = () => {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>Wallet Number Account</TableCell>
+                      <TableCell>
+                        <Link
+                          component="button"
+                          underline="hover"
+                          href={`/bursary/transactions/wallet_transactions?wallet_account_no=${encodeURIComponent(row.wallet_account_no)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ ml: 1, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
+                        >
+                          {row.wallet_account_no ?? 'N/A'}
+                        </Link>
+                      </TableCell>
                       <TableCell>{row.description}</TableCell>
                       <TableCell>{format(row.amount)}</TableCell>
                       <TableCell>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>

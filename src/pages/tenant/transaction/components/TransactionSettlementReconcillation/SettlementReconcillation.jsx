@@ -33,6 +33,7 @@ import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import FeeChart from './FeeChart';
 import SettlementModal from './SettlementModal';
+import dayjs from 'dayjs';
 
 // Define transactionStatusData here
 export const transactionStatusData = {
@@ -313,6 +314,10 @@ const SettlementReconcillation = () => {
         chartOptions={buildChartOptions(chartData?.categories || [])}
         chartSeries={chartData?.series || []}
         statusData={transactionStatusData}
+        period={period}
+        periodValue={periodValue}
+        setPeriod={setPeriod}
+        setPeriodValue={setPeriodValue}
       />
 
       <ParentCard

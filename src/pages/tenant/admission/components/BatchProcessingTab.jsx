@@ -380,6 +380,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       const res = await uploadAdmissionTemplate(formData);
       setUploadModal((prev) => ({
         ...prev,
+        open: false,
         uploading: false,
         result: { severity: 'success', message: res?.message || 'Upload completed' },
         file: null,

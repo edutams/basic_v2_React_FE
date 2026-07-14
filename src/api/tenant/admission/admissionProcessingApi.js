@@ -156,3 +156,28 @@ export const batchProcessAdmissions = async (data) => {
   const response = await api.post('/admission/process/batch-process', data);
   return response.data;
 };
+
+/**
+ * Download an Excel template of admission applicants for a given batch and class arm
+ * GET /admission/process/download-template
+ * @param {Object} params - { batch_id, class_arm_id }
+ */
+export const downloadAdmissionTemplate = async (params) => {
+  const response = await api.get('/admission/process/download-template', {
+    params,
+    responseType: 'blob',
+  });
+  return response;
+};
+
+/**
+ * Upload a filled Excel template to bulk admit applicants
+ * POST /admission/process/upload-template
+ * @param {FormData} formData - file and batch info
+ */
+export const uploadAdmissionTemplate = async (formData) => {
+  const response = await api.post('/admission/process/upload-template', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

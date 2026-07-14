@@ -44,6 +44,11 @@ import {
   getApplicantByFormNumber,
   updateAdmissionStatus,
 } from '@/api/tenant/admission/admissionProcessingApi';
+import {
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import WardReview from '@/components/tenant/admission/review/WardReview';
 import AcademicReview from '@/components/tenant/admission/review/AcademicReview';
 import DocumentsReview from '@/components/tenant/admission/review/DocumentsReview';
@@ -95,7 +100,15 @@ const ProcessApplicationForm = () => {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, status: '' });
   const [declineDialog, setDeclineDialog] = useState({ open: false, reason: '' });
   const [revokeDialog, setRevokeDialog] = useState({ open: false, reason: '' });
-  const [admitDialog, setAdmitDialog] = useState({ open: false });
+  const [admitDialog, setAdmitDialog] = useState({
+    open: false,
+    programmes: [],
+    classes: [],
+    classArms: [],
+    selectedProgramme: '',
+    selectedClass: '',
+    selectedClassArm: '',
+  });
 
   // ─── Load admission data ──────────────────────────────────────────────
   useEffect(() => {
@@ -432,7 +445,23 @@ const ProcessApplicationForm = () => {
             color="primary"
             size="large"
             startIcon={<IconCheck size={20} />}
-            onClick={() => setAdmitDialog({ open: true })}
+            onClick={async () => {
+              try {
+                const programmesRes = await fetchProgrammes();
+                const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
+                setAdmitDialog({
+                  open: true,
+                  programmes,
+                  classes: [],
+                  classArms: [],
+                  selectedProgramme: '',
+                  selectedClass: '',
+                  selectedClassArm: '',
+                });
+              } catch (err) {
+                notify.error('Failed to load programmes');
+              }
+            }}
             disabled={admission.admission_status === 'admitted' || submitting}
             sx={{ fontWeight: 700, px: 5 }}
           >
@@ -516,17 +545,18 @@ const ProcessApplicationForm = () => {
       {/* ── Admit to Class Modal ───────────────────────────────────────── */}
       <Dialog
         open={admitDialog.open}
-        onClose={() => setAdmitDialog({ open: false })}
+        onClose={() => setAdmitDialog((prev) => ({ ...prev, open: false }))}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
           Admit {fullName}
         </DialogTitle>
+        <Divider />
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              You are about to admit the following applicant. Please review the details before confirming.
+              You are about to admit the following applicant. Select the programme, class, and class arm to assign.
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
@@ -541,25 +571,92 @@ const ProcessApplicationForm = () => {
               </Box>
             </Box>
 
+            {/* ── Programme / Class / Class Arm selectors (like batch modal) ── */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Programme *</InputLabel>
+              <Select
+                value={admitDialog.selectedProgramme}
+                label="Programme *"
+                onChange={async (e) => {
+                  const progId = e.target.value;
+                  setAdmitDialog((prev) => ({
+                    ...prev,
+                    selectedProgramme: progId,
+                    selectedClass: '',
+                    selectedClassArm: '',
+                    classes: [],
+                    classArms: [],
+                  }));
+                  if (progId) {
+                    try {
+                      const classesRes = await fetchClassesByProgramme(progId);
+                      const classes = Array.isArray(classesRes?.data) ? classesRes.data : [];
+                      setAdmitDialog((prev) => ({ ...prev, classes }));
+                    } catch (err) {
+                      notify.error('Failed to load classes');
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="">-- Select Programme --</MenuItem>
+                {admitDialog.programmes.map((prog) => (
+                  <MenuItem key={prog.id} value={prog.id}>
+                    {prog.programme_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small" disabled={!admitDialog.selectedProgramme}>
+              <InputLabel>Class *</InputLabel>
+              <Select
+                value={admitDialog.selectedClass}
+                label="Class *"
+                onChange={async (e) => {
+                  const classId = e.target.value;
+                  setAdmitDialog((prev) => ({
+                    ...prev,
+                    selectedClass: classId,
+                    selectedClassArm: '',
+                    classArms: [],
+                  }));
+                  if (classId) {
+                    try {
+                      const armsRes = await fetchClassArmsByClass(classId);
+                      const arms = Array.isArray(armsRes?.data) ? armsRes.data : [];
+                      setAdmitDialog((prev) => ({ ...prev, classArms: arms }));
+                    } catch (err) {
+                      notify.error('Failed to load class arms');
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="">-- Select Class --</MenuItem>
+                {admitDialog.classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.class_code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small" disabled={!admitDialog.selectedClass}>
+              <InputLabel>Class Arm *</InputLabel>
+              <Select
+                value={admitDialog.selectedClassArm}
+                label="Class Arm *"
+                onChange={(e) => setAdmitDialog((prev) => ({ ...prev, selectedClassArm: e.target.value }))}
+              >
+                <MenuItem value="">-- Select Class Arm --</MenuItem>
+                {admitDialog.classArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {arm.arm_names}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Programme"
-                  value={admission.prog_name  || '—'}
-                  slotProps={{ input: { readOnly: true } }}
-                  size="small"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Intended Class"
-                  value={admission?.class_code  || '—'}
-                  slotProps={{ input: { readOnly: true } }}
-                  size="small"
-                />
-              </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -569,11 +666,20 @@ const ProcessApplicationForm = () => {
                   size="small"
                 />
               </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Intended Class"
+                  value={admission?.class_code || admission.intending_class?.class_code || '—'}
+                  slotProps={{ input: { readOnly: true } }}
+                  size="small"
+                />
+              </Grid>
             </Grid>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setAdmitDialog({ open: false })}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setAdmitDialog((prev) => ({ ...prev, open: false }))}>
             Cancel
           </Button>
           <Button
@@ -581,10 +687,21 @@ const ProcessApplicationForm = () => {
             size="small"
             color="primary"
             onClick={async () => {
-              setAdmitDialog({ open: false });
+              const { selectedProgramme, selectedClass, selectedClassArm } = admitDialog;
+
+              if (!selectedProgramme || !selectedClass || !selectedClassArm) {
+                notify.warning('Please select programme, class, and class arm');
+                return;
+              }
+
+              setAdmitDialog((prev) => ({ ...prev, open: false }));
               setSubmitting(true);
               try {
-                await updateAdmissionStatus(form_number, 'admitted');
+                await updateAdmissionStatus(form_number, 'admitted', {
+                  programme_id: selectedProgramme,
+                  class_id: selectedClass,
+                  class_arm_id: selectedClassArm,
+                });
                 notify.success(`Application status updated to "Admitted"`);
                 await refetchAdmission();
               } catch (err) {

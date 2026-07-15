@@ -659,6 +659,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         </Grid>
       </Grid>
 
+      {/* ── Info Banner ────────────────────────────────────────────────── */}
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          <strong>Note:</strong> Only applications with a <strong>Pending</strong> admission status can be processed.
+          Use the <strong>Status</strong> filter above to select <strong>Pending</strong> before proceeding with batch
+          processing, bulk upload, or template download.
+        </Typography>
+      </Alert>
+
       {/* ── Download/Upload Template Buttons ──────────────────────────── */}
 
       {hasFetched && filter.status == 'pending' &&

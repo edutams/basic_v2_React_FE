@@ -57,7 +57,6 @@ const skoolpay = (data) => {
             } catch (err) {
                 console.error('Payment confirmation failed:', err);
             }
-            // window.location.href = `/bursary/payment_schedule/confirm_card_payment?transref=${response.data.transactionReference}&user_id=${data[0].user_id}`;
         },
         onClose: () => console.log("SkoolPay closed"),
         onError: (error) => console.error("SkoolPay Error:", error),

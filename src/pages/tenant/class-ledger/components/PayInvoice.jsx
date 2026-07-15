@@ -1506,8 +1506,6 @@ const PayInvoice = () => {
             disabled={!selectedWallet}
             onClick={() => {
               setConfirmModalOpen(false);
-              // Pass selectedWallet to handlePayNow if needed
-              // e.g. handlePayNow(selectedWallet)
               handlePayNow();
             }}
             sx={{ fontWeight: 600 }}

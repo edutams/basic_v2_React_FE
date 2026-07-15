@@ -41,7 +41,8 @@ const ParentDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [enrolledLoading, setEnrolledLoading] = useState(false);
   const [hasOpenBatches, setHasOpenBatches] = useState(false);
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
+  const [prospectiveSessionTerm, setProspectiveSessionTerm] = useState('all');
+  const [enrolledSessionTerm, setEnrolledSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
   const [wardDetailModal, setWardDetailModal] = useState({ open: false, wardId: null });
 
@@ -91,7 +92,7 @@ const ParentDashboard = () => {
     const fetchProspectiveWards = async () => {
       setLoading(true);
       try {
-        const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
+        const sessionTermId = prospectiveSessionTerm === 'all' ? null : prospectiveSessionTerm;
         const response = await getUserProspectiveAdmissions(sessionTermId);
 
         if (response.status) {
@@ -123,7 +124,7 @@ const ParentDashboard = () => {
 
     fetchProspectiveWards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSessionTerm]); // Only depend on selectedSessionTerm
+  }, [prospectiveSessionTerm]); // Only depend on prospectiveSessionTerm
 
   // Helper function to determine admission status
   const getAdmissionStatus = (admission) => {
@@ -174,12 +175,13 @@ const ParentDashboard = () => {
   const theme = useTheme();
   const bg = `linear-gradient(90deg, #121212e3 0%, ${theme.palette.primary.main} 100%)`;
 
-  // Fetch enrolled wards
+  // Fetch enrolled wards (filtered by selected session term)
   useEffect(() => {
     const loadEnrolledWards = async () => {
       setEnrolledLoading(true);
       try {
-        const response = await fetchEnrolledWards();
+        const sessionTermId = enrolledSessionTerm === 'all' ? null : enrolledSessionTerm;
+        const response = await fetchEnrolledWards(sessionTermId);
         if (response.status) {
           setEnrolledWards(response.data || []);
         }
@@ -195,7 +197,7 @@ const ParentDashboard = () => {
       loadEnrolledWards();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantInfo?.id]);
+  }, [tenantInfo?.id, enrolledSessionTerm]);
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent portal">
@@ -247,8 +249,8 @@ const ParentDashboard = () => {
               </Typography>
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  value={enrolledSessionTerm}
+                  onChange={(e) => setEnrolledSessionTerm(e.target.value)}
                   displayEmpty
                   sx={{
                     bgcolor: '#F1F4F1',
@@ -339,8 +341,8 @@ const ParentDashboard = () => {
               </Typography>
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  value={prospectiveSessionTerm}
+                  onChange={(e) => setProspectiveSessionTerm(e.target.value)}
                   displayEmpty
                   sx={{
                     bgcolor: '#F1F4F1',

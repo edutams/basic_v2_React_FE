@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -27,21 +27,23 @@ import {
   ReceiptLong as ReceiptIcon,
   Paid as PaidIcon,
   AccountBalanceWallet as WalletIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useNotification } from '@/hooks/useNotification';
 import { fetchWardDetail } from '@/api/tenant/admission/admissionProcessingApi';
 import PropTypes from 'prop-types';
 
-const StatCard = ({ title, amount, icon, color, bgColor, currency = '₦' }) => (
-  <Paper
-    variant="outlined"
+const StatCard = ({ title, amount, icon, color, bgColor }) => (
+  <Box
     sx={{
       p: 2,
       borderRadius: 2,
       display: 'flex',
       alignItems: 'center',
       gap: 2,
+      border: '1px solid',
+      borderColor: 'divider',
       flex: 1,
       minWidth: 160,
       transition: 'all 0.2s ease',
@@ -66,14 +68,14 @@ const StatCard = ({ title, amount, icon, color, bgColor, currency = '₦' }) => 
       {icon}
     </Box>
     <Box sx={{ minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary" fontWeight={500} noWrap>
+      <Typography variant="body2" color="text.secondary" fontWeight={500} noWrap>
         {title}
       </Typography>
-      <Typography variant="body1" color={color} fontWeight={700} noWrap>
-        {currency}{(amount ?? 0).toLocaleString()}
+      <Typography variant="h6" color={color} fontWeight={700} noWrap>
+        NGN {amount.toLocaleString()}
       </Typography>
     </Box>
-  </Paper>
+  </Box>
 );
 
 StatCard.propTypes = {
@@ -82,7 +84,6 @@ StatCard.propTypes = {
   icon: PropTypes.node.isRequired,
   color: PropTypes.string.isRequired,
   bgColor: PropTypes.string.isRequired,
-  currency: PropTypes.string,
 };
 
 const WardDetailModal = ({ open, onClose, wardId }) => {
@@ -90,7 +91,6 @@ const WardDetailModal = ({ open, onClose, wardId }) => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
-
   useEffect(() => {
     if (open && wardId) {
       loadDetail();
@@ -122,10 +122,108 @@ const WardDetailModal = ({ open, onClose, wardId }) => {
     onClose();
   };
 
+  const handlePrint = () => {
+    const printContent = document.getElementById('ward-ledger-print-area');
+    if (printContent) {
+      const printHtml = `
+        <html>
+          <head>
+            <title>Payment Ledger - ${data?.name || 'Student'}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .summary { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>${data?.name || 'Student'}'s Payment Ledger</h2>
+            </div>
+            <div class="summary">
+              <div>Total Bill: NGN ${totals.bill.toLocaleString()}</div>
+              <div>Amount Paid: NGN ${totals.paid.toLocaleString()}</div>
+              <div>Balance: NGN ${totals.balance.toLocaleString()}</div>
+            </div>
+            ${printContent.querySelector('table').outerHTML}
+          </body>
+        </html>
+      `;
+      const printWindow = window.open('', '', 'height=600,width=800');
+      printWindow.document.write(printHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+  };
+
+  // Transform the nested ledger data from fetchWardDetail into a flat format
+  // matching the StudentLedgerModal data structure
+  const { groupedData, totals } = useMemo(() => {
+    const groups = {};
+    let totalBill = 0;
+    let totalPaid = 0;
+    let totalBalance = 0;
+    let cumulative = 0;
+
+    const flatItems = [];
+    (data?.ledger || []).forEach((group) => {
+      (group.items || []).forEach((item) => {
+        flatItems.push({
+          session_term_id: group.session_term_id,
+          session_name: group.session_term_id || '—',
+          payment_item: item.payment_item || '—',
+          sched_amount: item.amount || 0,
+          amount_paid: item.paid || 0,
+          balance_amount: item.balance || 0,
+        });
+      });
+    });
+
+    flatItems.forEach((item) => {
+      // If the backend provides a proper label, use it; otherwise fallback to session_term_id
+      const termLabel = `${item.session_name || 'Unknown'}`;
+      if (!groups[termLabel]) {
+        groups[termLabel] = [];
+      }
+      groups[termLabel].push(item);
+
+      totalBill += parseFloat(item.sched_amount || 0);
+      totalPaid += parseFloat(item.amount_paid || 0);
+      totalBalance += parseFloat(item.balance_amount || 0);
+    });
+
+    const sortedTerms = Object.keys(groups).sort((a, b) => {
+      return (groups[b][0]?.session_term_id || 0) - (groups[a][0]?.session_term_id || 0);
+    });
+
+    const finalGroups = sortedTerms.map(term => {
+      const items = groups[term];
+      return {
+        term,
+        items: items.map(item => {
+          cumulative += parseFloat(item.sched_amount || 0);
+          return { ...item, cumulative };
+        })
+      };
+    });
+
+    return {
+      groupedData: finalGroups,
+      totals: {
+        bill: totalBill,
+        paid: totalPaid,
+        balance: totalBalance,
+      }
+    };
+  }, [data]);
+
   if (!open) return null;
 
-  const feeSummary = data?.fee_summary || {};
-  const ledger = data?.ledger || [];
+  const isLoading = loading;
 
   return (
     <Dialog
@@ -186,7 +284,7 @@ const WardDetailModal = ({ open, onClose, wardId }) => {
 
       {/* ── Content ──────────────────────────────────── */}
       <DialogContent sx={{ p: 3 }}>
-        {loading ? (
+        {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
             <CircularProgress size={36} />
           </Box>
@@ -197,170 +295,118 @@ const WardDetailModal = ({ open, onClose, wardId }) => {
             </Typography>
           </Box>
         ) : (
-          <Stack spacing={3}>
-            {/* ── Fee Overview Stats ─────────────────── */}
-            <Typography variant="subtitle1" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ReceiptIcon fontSize="small" />
-              Fee Overview
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box id="ward-ledger-print-area">
+            {/* ── Fee Overview Stats ─────────────────── (StudentLedgerModal-style) */}
+            <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
               <StatCard
                 title="Total Bill"
-                amount={feeSummary.total_payable || 0}
+                amount={totals.bill}
                 icon={<ReceiptIcon />}
                 color="#10b981"
                 bgColor="#ecfdf5"
               />
               <StatCard
                 title="Amount Paid"
-                amount={feeSummary.total_paid || 0}
+                amount={totals.paid}
                 icon={<PaidIcon />}
                 color="#f59e0b"
                 bgColor="#fffbeb"
               />
               <StatCard
-                title="Outstanding Balance"
-                amount={feeSummary.total_balance || 0}
+                title="Balance"
+                amount={totals.balance}
                 icon={<WalletIcon />}
-                color={feeSummary.total_balance > 0 ? '#ef4444' : '#10b981'}
-                bgColor={feeSummary.total_balance > 0 ? '#fef2f2' : '#ecfdf5'}
+                color="#ef4444"
+                bgColor="#fef2f2"
               />
             </Box>
 
-            {/* ── Fee Breakdown ───────────────────────── */}
-            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                  Compulsory Fees
-                </Typography>
-                <Typography variant="body1" fontWeight={700} color="primary.main">
-                  ₦{(feeSummary.total_compulsory || 0).toLocaleString()}
-                </Typography>
-              </Paper>
-              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, flex: 1, minWidth: 140 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                  Optional Fees
-                </Typography>
-                <Typography variant="body1" fontWeight={700} sx={{ color: '#6366f1' }}>
-                  ₦{(feeSummary.total_optional || 0).toLocaleString()}
-                </Typography>
-              </Paper>
+            <Divider sx={{ mb: 3 }} />
+
+            {/* ── Payment Ledger ─────────────────────── (StudentLedgerModal-style) */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ReceiptIcon fontSize="small" />
+                {data?.name ? `${data.name?.toUpperCase()}'s Payment Ledger` : 'Payment Ledger'}
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<PrintIcon />}
+                onClick={handlePrint}
+                sx={{
+                  bgcolor: '#1e293b',
+                  color: 'white',
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: '#0f172a' }
+                }}
+                size="small"
+              >
+                Print Payment Ledger
+              </Button>
             </Box>
 
-            <Divider />
-
-            {/* ── Payment Ledger Table ───────────────── */}
-            <Typography variant="subtitle1" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ReceiptIcon fontSize="small" />
-              Payment Ledger
-            </Typography>
-
-            {ledger.length === 0 ? (
+            {groupedData.length === 0 ? (
               <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   No payment records found for this ward.
                 </Typography>
               </Paper>
             ) : (
-              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Table size="small">
                   <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Session/Term</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Payment Item</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Type</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Amount (₦)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Paid (₦)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Balance (₦)</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Sessn/Term</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Payment Items</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount Paid (NGN)</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Balance</TableCell>
+                      <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Cumulative</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {ledger.map((group, gIdx) =>
-                      group.items.map((item, iIdx) => (
-                        <TableRow key={`${gIdx}-${iIdx}`} hover>
-                          {iIdx === 0 ? (
-                            <TableCell
-                              rowSpan={group.items.length}
-                                              sx={{
-                                fontWeight: 600,
-                                fontSize: 11,
-                                verticalAlign: 'top',
-                                borderRight: '1px solid',
-                                borderColor: 'divider',
-                                bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                              }}
-                              rowSpan={group.items.length + 1}
-                            >
-                              {group.session_term_id || '—'}
-                            </TableCell>
-                          ) : null}
-                          <TableCell sx={{ fontSize: 12 }}>{item.payment_item || '—'}</TableCell>
-                          <TableCell align="right" sx={{ fontSize: 12 }}>
-                            <Chip
-                              label={item.pay_type || '—'}
-                              size="small"
-                              color={item.pay_type === 'compulsory' ? 'primary' : 'default'}
-                              variant="outlined"
-                              sx={{ fontSize: 10, fontWeight: 600, height: 20 }}
-                            />
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontSize: 12, fontWeight: 600 }}>
-                            {item.amount?.toLocaleString() || '0'}
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontSize: 12 }}>
-                            {item.paid?.toLocaleString() || '0'}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              fontSize: 12,
-                              fontWeight: 600,
-                              color: item.balance > 0 ? 'error.main' : 'success.main',
-                            }}
-                          >
-                            {item.balance?.toLocaleString() || '0'}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                    {/* Totals per group */}
-                    {ledger.map((group, gIdx) => (
-                      <TableRow
-                        key={`total-${gIdx}`}
-                        sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}
-                      >
-                        {gIdx === 0 ? (
-                          <TableCell
-                            rowSpan={ledger.length}
-                            sx={{ borderRight: '1px solid', borderColor: 'divider' }}
-                          />
-                        ) : null}
-                        <TableCell colSpan={2} sx={{ fontWeight: 700, fontSize: 12 }}>
-                          Term Total
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          {group.total_bill?.toLocaleString() || '0'}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}>
-                          {group.total_paid?.toLocaleString() || '0'}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: 12,
-                            color: group.total_balance > 0 ? 'error.main' : 'success.main',
-                          }}
-                        >
-                          {group.total_balance?.toLocaleString() || '0'}
-                        </TableCell>
-                      </TableRow>
+                    {groupedData.map((group, gIndex) => (
+                      <React.Fragment key={gIndex}>
+                        {group.items.map((item, iIndex) => (
+                          <TableRow key={`${gIndex}-${iIndex}`} hover>
+                            {iIndex === 0 ? (
+                              <TableCell
+                                rowSpan={group.items.length}
+                                sx={{
+                                  verticalAlign: 'top',
+                                  fontWeight: 600,
+                                  borderRight: '1px solid',
+                                  borderColor: 'divider',
+                                  fontSize: '0.75rem',
+                                }}
+                              >
+                                {group.term}
+                              </TableCell>
+                            ) : null}
+                            <TableCell sx={{ fontSize: '0.75rem' }}>{item.payment_item}</TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>{parseFloat(item.sched_amount || 0).toLocaleString()}</TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>{parseFloat(item.amount_paid || 0).toLocaleString()}</TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>{parseFloat(item.balance_amount || 0).toLocaleString()}</TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem' }}>{item.cumulative.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </React.Fragment>
                     ))}
+                    {/* Totals Row */}
+                    {groupedData.length > 0 && (
+                      <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
+                        <TableCell colSpan={2} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.bill.toLocaleString()}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.paid.toLocaleString()}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.balance.toLocaleString()}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{/* cumulative total */}</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
             )}
-          </Stack>
+          </Box>
         )}
       </DialogContent>
 

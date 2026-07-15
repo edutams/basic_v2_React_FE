@@ -204,7 +204,13 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const handleStatusChange = (e) => {
-    setFilter((prev) => ({ ...prev, status: e.target.value }));
+    const newStatus = e.target.value;
+    setFilter((prev) => ({ ...prev, status: newStatus }));
+    // Auto-trigger fetch when status changes (no need to click Filter button)
+    if (filter.appBatchId && filter.classId) {
+      setPage(0);
+      loadApplications({ ...filter, status: newStatus });
+    }
   };
 
   const handleSearchChange = (e) => {

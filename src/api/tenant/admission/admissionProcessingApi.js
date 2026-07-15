@@ -188,9 +188,14 @@ export const uploadAdmissionTemplate = async (formData) => {
 /**
  * Fetch enrolled wards for the currently logged-in guardian/parent
  * GET /admission/process/enrolled-wards
+ * @param {string|null} sessionTermId - Optional session term ID to filter by
  */
-export const fetchEnrolledWards = async () => {
-  const response = await api.get('/admission/process/enrolled-wards');
+export const fetchEnrolledWards = async (sessionTermId = null) => {
+  const params = {};
+  if (sessionTermId) {
+    params.session_term_id = sessionTermId;
+  }
+  const response = await api.get('/admission/process/enrolled-wards', { params });
   return response.data;
 };
 

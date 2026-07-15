@@ -66,6 +66,9 @@ const GenerateInvoiceTab = ({
   const [studentCounts, setStudentCounts] = useState({ total: 0, generated: 0, pending: 0 });
   const [loadingCounts, setLoadingCounts] = useState(false);
 
+  // True when at least one bursary schedule exists for the selected class & session
+  const hasSchedules = !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
+
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
 
@@ -406,10 +409,14 @@ const GenerateInvoiceTab = ({
             Payment Schedule for {selectedSessionLabel} - {selectedClassName}
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button variant="contained" size="small" onClick={() => {
-              const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-              window.open(url, '_blank');
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!hasSchedules}
+              onClick={() => {
+                const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
+                window.open(url, '_blank');
+              }}
               sx={{ fontWeight: 600 }}
             >
               Generate Invoice / {selectedClassName}
@@ -461,7 +468,7 @@ const GenerateInvoiceTab = ({
               </Stack>
             </Box>
 
-            {studentCounts.pending > 0 && (
+            {hasSchedules && studentCounts.pending > 0 && (
               <Alert
                 severity="warning"
                 action={
@@ -479,7 +486,7 @@ const GenerateInvoiceTab = ({
               </Alert>
             )}
 
-            {studentCounts.total > 0 && studentCounts.pending === 0 && (
+            {hasSchedules && studentCounts.total > 0 && studentCounts.pending === 0 && (
               <Alert severity="success" sx={{ mb: 2 }}>
                 <Typography variant="body2" fontWeight={600}>
                   All {studentCounts.total} student(s) have invoices generated successfully.
@@ -489,7 +496,35 @@ const GenerateInvoiceTab = ({
           </>
         )}
 
-        {/* Payment Schedule Table */}
+        {/* Empty state - no bursary schedules configured */}
+        {!loadingScheduleData && !errorScheduleData && !hasSchedules && selectedClass && selectedSessionTermId && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2,
+              '& .MuiAlert-message': { width: '100%' },
+            }}
+          >
+            <Typography variant="body2" fontWeight={600}>
+              No payment schedules found for {selectedClassName} in {selectedSessionLabel} - {selectedTermLabel}.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Please ensure at least one bursary schedule has been set up for this class and session term
+              before generating invoices. Go to the{' '}
+              <Typography
+                component="span"
+                variant="body2"
+                fontWeight={600}
+                color="primary.main"
+              >
+                Payment Schedule
+              </Typography>{' '}
+              section to add a schedule first.
+            </Typography>
+          </Alert>
+        )}
+
+        {hasSchedules && (
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
@@ -568,6 +603,7 @@ const GenerateInvoiceTab = ({
             rowsPerPageOptions={[5, 10, 25]}
           />
         </TableContainer>
+        )}
       </Box>
     </Stack>
   );

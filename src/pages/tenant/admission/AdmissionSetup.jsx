@@ -192,7 +192,7 @@ const STD_NUM_OPTIONS = [
   { key: '[:stdNum_3]', label: '3 digits', example: '001' },
   { key: '[:stdNum_4]', label: '4 digits', example: '0001' },
   { key: '[:stdNum_5]', label: '5 digits', example: '00001' },
-  { key: '[:stdNum_6]', label: '6 digits', example: '000001' },
+  // { key: '[:stdNum_6]', label: '6 digits', example: '000001' },
 ];
 
 const AdmissionSetup = () => {
@@ -556,7 +556,7 @@ const AdmissionSetup = () => {
       .replace(/\[:stdNum_3\]/g, '001')
       .replace(/\[:stdNum_4\]/g, '0001')
       .replace(/\[:stdNum_5\]/g, '00001')
-      .replace(/\[:stdNum_6\]/g, '000001');
+      // .replace(/\[:stdNum_6\]/g, '000001');
   };
 
   return (

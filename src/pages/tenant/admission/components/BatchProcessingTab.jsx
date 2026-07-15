@@ -637,43 +637,48 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             >
               {tableLoading ? 'Fetching...' : 'Filter'}
             </Button>
-            <Button
-              variant="contained"
-              color="success"
-              size="small"
-              fullWidth
-              onClick={() => openBatchModal('admit')}
-              disabled={!hasFetched || (selectedApplications.size === 0 && filter.status !== 'pending')}
-            >
-              Process All
-            </Button>
+            {filter.status == 'pending' && applications.length > 0 &&
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                fullWidth
+                onClick={() => openBatchModal('admit')}
+                disabled={!hasFetched}
+              >
+                Process All
+              </Button>
+            }
           </Stack>
         </Grid>
       </Grid>
 
       {/* ── Download/Upload Template Buttons ──────────────────────────── */}
-      <Box sx={{ mb: 2 }}>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            onClick={handleOpenDownloadModal}
-            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
-          >
-            Download Template
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<UploadIcon />}
-            onClick={handleOpenUploadModal}
-            disabled={!filter.appBatchId || !filter.classId || !hasFetched}
-          >
-            Upload Template
-          </Button>
-        </Stack>
-      </Box>
+
+      {hasFetched && filter.status == 'pending' &&
+        <Box sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<DownloadIcon />}
+              onClick={handleOpenDownloadModal}
+              disabled={!filter.appBatchId || !filter.classId}
+            >
+              Download Template
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<UploadIcon />}
+              onClick={handleOpenUploadModal}
+              disabled={!filter.appBatchId || !filter.classId}
+            >
+              Upload Template
+            </Button>
+          </Stack>
+        </Box>
+      }
 
       {/* ── Action Buttons ────────────────────────────────────────────── */}
       {/* {applications.length > 0 && (

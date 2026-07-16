@@ -253,7 +253,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           <TableContainer component={Paper} variant="outlined">
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableRow >
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>

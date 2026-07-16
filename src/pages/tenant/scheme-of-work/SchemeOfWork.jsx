@@ -3,6 +3,8 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import { useReactToPrint } from 'react-to-print';
+import StatCard from 'src/components/shared/StatCard';
+
 
 import {
   Box,
@@ -69,6 +71,7 @@ const BCrumb = [
 
 const SchemeOfWork = () => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -567,22 +570,27 @@ const SchemeOfWork = () => {
     {
       title: 'Topics',
       value: analytics.total_topics,
-      icon: <IconFolder color={theme.palette.primary.main} />,
-      bgColor: theme.palette.primary.light,
+      icon: IconFolder,
+      color: 'primary',
     },
     {
       title: 'Sub Topics',
       value: analytics.total_subtopics,
-      icon: <IconFolder color={theme.palette.primary.main} />,
-      bgColor: theme.palette.primary.light,
+      icon: IconFolder,
+      color: 'primary',
     },
     {
       title: 'Lesson Content',
       value: '0',
-      icon: <IconFileDescription color={theme.palette.primary.main} />,
-      bgColor: theme.palette.primary.light,
+      icon: IconFileDescription,
+      color: 'primary',
     },
-    { title: 'Video Content', value: '0', icon: <IconVideo color={theme.palette.primary.main} />, bgColor: theme.palette.primary.light },
+    {
+      title: 'Video Content',
+      value: '0',
+      icon: IconVideo,
+      color: 'primary',
+    },
   ];
 
   const drawerFilters = [
@@ -597,42 +605,13 @@ const SchemeOfWork = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid #eee',
-                px: 2,
-                py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgcolor: stat.bgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <StatCard
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              color={stat.color}
+              loading={loading}
+            />
           </Grid>
         ))}
       </Grid>
@@ -703,12 +682,12 @@ const SchemeOfWork = () => {
       </Box>
 
       {/* Main Content Area */}
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden' }}>
+      <Card elevation={0} sx={{ borderRadius: 3, border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee', overflow: 'hidden' }}>
         <Box
           sx={{
             p: 3,
-            borderBottom: '1px solid #f0f0f0',
-            bgcolor: '#fff',
+            borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #f0f0f0',
+            bgcolor: isDark ? 'background.paper' : '#fff',
           }}
         >
           <Grid container spacing={2} alignItems="center">
@@ -774,10 +753,10 @@ const SchemeOfWork = () => {
           </Grid>
         </Box>
 
-        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
+        <Box sx={{ p: 2, px: 3, bgcolor: isDark ? 'background.default' : '#fafafa', borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee' }}>
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}
+            sx={{ fontWeight: 700, letterSpacing: 0.5, color: 'text.primary' }}
           >
             MANAGE SCHEME OF WORK
           </Typography>
@@ -786,28 +765,28 @@ const SchemeOfWork = () => {
         <TableContainer>
           <Table stickyHeader sx={{ whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                <TableCell sx={{ fontWeight: 700, width: '8%', border: '1px solid #dee2e6' }}>
+              <TableRow sx={{ bgcolor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, width: '8%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Week
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Topic
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Sub Topic
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Learning Objectives
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Lesson Content
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Video Content
                 </TableCell>
                 <TableCell
                   align="center"
-                  sx={{ fontWeight: 700, width: '7%', border: '1px solid #dee2e6' }}
+                  sx={{ fontWeight: 700, width: '7%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}
                 >
                   Action
                 </TableCell>
@@ -826,8 +805,8 @@ const SchemeOfWork = () => {
                       <TableCell
                         sx={{
                           verticalAlign: 'top',
-                          border: '1px solid #dee2e6',
-                          bgcolor: isFirstInWeek ? '#fff' : '#fcfcfc',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6',
+                          bgcolor: isFirstInWeek ? (isDark ? 'background.paper' : '#fff') : (isDark ? 'background.default' : '#fcfcfc'),
                         }}
                       >
                         {isFirstInWeek && (
@@ -859,7 +838,7 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Topic Column */}
-                      <TableCell sx={{ verticalAlign: 'top', border: '1px solid #dee2e6' }}>
+                      <TableCell sx={{ verticalAlign: 'top', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {isFirstInTopic && row.topic_name && (
                           <Box
                             sx={{
@@ -880,7 +859,7 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Sub Topic Column */}
-                      <TableCell sx={{ border: '1px solid #dee2e6', verticalAlign: 'top' }}>
+                      <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6', verticalAlign: 'top' }}>
                         {row.subtopic_name && (
                           <Box
                             sx={{
@@ -903,7 +882,7 @@ const SchemeOfWork = () => {
                       {/* Learning Objectives Column */}
                       <TableCell
                         sx={{
-                          border: '1px solid #dee2e6',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6',
                           whiteSpace: 'normal',
                           minWidth: 200,
                           verticalAlign: 'top',
@@ -919,7 +898,7 @@ const SchemeOfWork = () => {
                                 py: 0.5,
                                 borderBottom:
                                   lidx !== row.learningObjectives.length - 1
-                                    ? '1px dashed #eee'
+                                    ? (isDark ? '1px dashed rgba(255, 255, 255, 0.08)' : '1px dashed #eee')
                                     : 'none',
                               }}
                             >
@@ -949,25 +928,25 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Lesson Content Status */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {row.learning_material ? (
-                          <IconCheck size={20} color="green" />
+                          <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
-                          <IconX size={20} color="red" />
+                          <IconX size={20} color={theme.palette.error.main} />
                         )}
                       </TableCell>
 
                       {/* Video Content Status */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {row.resource_links ? (
-                          <IconCheck size={20} color="green" />
+                          <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
-                          <IconX size={20} color="red" />
+                          <IconX size={20} color={theme.palette.error.main} />
                         )}
                       </TableCell>
 
                       {/* Action Column */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         <IconButton size="small" onClick={(e) => handleMenuOpen(e, row, 'row')}>
                           <MoreVertIcon fontSize="small" />
                         </IconButton>
@@ -1457,11 +1436,13 @@ const SchemeOfWork = () => {
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <Box
                 sx={{
-                  border: '2px dashed #e0e0e0',
+                  border: (theme) => theme.palette.mode === 'dark' ? '2px dashed rgba(255, 255, 255, 0.15)' : '2px dashed #e0e0e0',
                   borderRadius: 2,
                   p: 2,
                   textAlign: 'center',
-                  bgcolor: uploadFile ? '#f1f8e9' : '#fafafa',
+                  bgcolor: (theme) => theme.palette.mode === 'dark'
+                    ? (uploadFile ? 'rgba(0, 192, 146, 0.15)' : 'rgba(255, 255, 255, 0.05)')
+                    : (uploadFile ? '#f1f8e9' : '#fafafa'),
                   cursor: 'pointer',
                   '&:hover': { borderColor: '#7cb342' },
                 }}

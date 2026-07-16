@@ -17,51 +17,73 @@ import PropTypes from 'prop-types';
 const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
-  const borderColor = theme.palette.grey[100];
+
+  // Dynamic colors for premium styling
+  const resolvedBgColor = theme.palette[color]?.light || theme.palette.primary.light;
+  const resolvedIconColor = theme.palette[color]?.main || theme.palette.primary.main;
+  const borderColor = theme.palette.mode === 'dark' ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100];
 
   return (
     <Paper
       elevation={0}
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
-        borderRadius: 2,
+        borderRadius: '16px',
         p: 3,
         width: '100%',
         bgcolor: 'background.paper',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        border: !isCardShadow ? `1px solid ${borderColor}` : 'none',
+        border: `1px solid ${borderColor}`,
         boxShadow: isCardShadow
           ? theme.palette.mode === 'dark'
-            ? '0px 0px 20px rgba(0, 0, 0, 0.3)'
-            : '0px 0px 15px rgba(0, 0, 0, 0.05)'
+            ? '0px 0px 20px rgba(0, 0, 0, 0.25)'
+            : '0px 16px 40px rgba(15, 23, 42, 0.15)'
           : 'none',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        // '&:hover': {
+        //   transform: 'translateY(-4px)',
+        //   boxShadow: isCardShadow
+        //     ? theme.palette.mode === 'dark'
+        //       ? '0px 10px 25px rgba(0, 0, 0, 0.4)'
+        //       : '0px 10px 20px rgba(0, 0, 0, 0.08)'
+        //     : 'none',
+        // },
       }}
     >
       <Box
         sx={{
           width: 48,
           height: 48,
-          borderRadius: '50%',
-          bgcolor: 'primary.light',
+          borderRadius: '12px',
+          bgcolor: resolvedBgColor,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          flexShrink: 0,
         }}
       >
-        {Icon && <Icon size={22} color={color} />}
+        {Icon && (
+          <Icon
+            size={22}
+            sx={{ fontSize: 22 }}
+            style={{
+              color: resolvedIconColor,
+            }}
+          />
+        )}
       </Box>
 
-      <Box sx={{ textAlign: 'center' }}>
+      <Box sx={{ textAlign: 'right', flexGrow: 1, pl: 2 }}>
         {loading ? (
           <CircularProgress size={24} />
         ) : (
           <>
-            <Typography fontSize={26} fontWeight={700}>
+            <Typography fontSize={26} fontWeight={700} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
               {count}
             </Typography>
-            <Typography fontSize={14} color="text.secondary">
+            <Typography fontSize={14} fontWeight={500} sx={{ color: 'text.secondary', mt: 0.5 }}>
               {label}
             </Typography>
           </>

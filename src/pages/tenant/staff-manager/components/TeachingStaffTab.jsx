@@ -158,7 +158,7 @@ const TeachingStaffTab = ({
           {/* Table */}
           <TableContainer>
             <Table>
-              <TableHead sx={{ bgcolor: '#fafafa' }}>
+              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Staff Id</TableCell>
@@ -216,7 +216,7 @@ const TeachingStaffTab = ({
                               height: 30,
                               fontSize: '12px',
                               fontWeight: 700,
-                              bgcolor: '#2196f3',
+                              bgcolor: 'primary.main',
                               flexShrink: 0,
                             }}
                           >

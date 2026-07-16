@@ -30,6 +30,7 @@ import {
   TablePagination,
   Alert,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
@@ -42,6 +43,8 @@ const GenerateInvoiceTab = ({
   setSelectedClass,
   onUpdateCategory,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -366,9 +369,9 @@ const GenerateInvoiceTab = ({
                       //   : hasInvoiceGenerated
                       //     ? 'primary.light'
                       //     : 'white',
-                      bgcolor: isSelected ? 'primary.main' : 'white',
+                      bgcolor: isSelected ? 'primary.main' : (isDark ? 'background.paper' : '#fff'),
                       color: isSelected
-                        ? 'white'
+                        ? '#fff'
                         : hasInvoiceGenerated
                           ? 'primary.main'
                           : 'text.primary',
@@ -385,7 +388,7 @@ const GenerateInvoiceTab = ({
                           : 'primary.light',
                       },
                       '& .MuiChip-icon': {
-                        color: isSelected ? 'white' : 'success.dark',
+                        color: isSelected ? '#fff' : 'success.dark',
                       },
                     }}
                   />
@@ -434,10 +437,10 @@ const GenerateInvoiceTab = ({
                 gap: 2,
                 mb: 1,
                 p: 2,
-                bgcolor: 'grey.50',
+                bgcolor: isDark ? 'background.default' : 'grey.50',
                 borderRadius: 1,
                 border: '1px solid',
-                borderColor: 'grey.200',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'grey.200',
               }}
             >
               <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
@@ -528,7 +531,7 @@ const GenerateInvoiceTab = ({
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
                 {tableCategories.map((cat) => (
@@ -574,7 +577,7 @@ const GenerateInvoiceTab = ({
                   })}
                 </TableRow>
               ))}
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
                 <TableCell colSpan={2}>
                   <Typography variant="body2" fontWeight={700}>
                     Total

@@ -73,7 +73,7 @@ const SchoolLayout = () => {
           </Container>
           <DashboardFooter />
         </PageWrapper>
-        {/* <Customizer /> */}
+        <Customizer />
       </MainWrapper>
     </>
   );

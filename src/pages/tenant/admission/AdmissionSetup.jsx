@@ -556,7 +556,7 @@ const AdmissionSetup = () => {
       .replace(/\[:stdNum_3\]/g, '001')
       .replace(/\[:stdNum_4\]/g, '0001')
       .replace(/\[:stdNum_5\]/g, '00001')
-      // .replace(/\[:stdNum_6\]/g, '000001');
+    // .replace(/\[:stdNum_6\]/g, '000001');
   };
 
   return (
@@ -868,7 +868,7 @@ const AdmissionSetup = () => {
                 <Grid container spacing={3}>
                   {/* ── Left grid (md=6) — Inputs & placeholders ──────────── */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant="outlined" sx={{ bgcolor: 'grey.50', height: '100%' }}>
+                    <Card variant="outlined" >
                       <CardContent>
                         <Typography
                           variant="subtitle2"
@@ -1350,7 +1350,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                paymentViewBatch.pre_application_payments.length === 0 ? (
+                  paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -1411,7 +1411,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                paymentViewBatch.post_application_payments.length === 0 ? (
+                  paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

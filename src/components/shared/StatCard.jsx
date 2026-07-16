@@ -35,13 +35,12 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        border: `1px solid ${borderColor}`,
-        boxShadow: isCardShadow
-          ? theme.palette.mode === 'dark'
-            ? '0px 0px 20px rgba(0, 0, 0, 0.25)'
-            : '0px 16px 40px rgba(15, 23, 42, 0.15)'
-          : 'none',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        // border: `2px solid ${borderColor}`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 0 20px rgba(0,0,0,.10)'
+        // transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         // '&:hover': {
         //   transform: 'translateY(-4px)',
         //   boxShadow: isCardShadow

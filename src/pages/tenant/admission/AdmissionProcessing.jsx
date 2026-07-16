@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Grid, Tabs, Tab } from '@mui/material';
+import { Box, Grid, Tabs, Tab, Stack, } from '@mui/material';
 import {
   People as PeopleIcon,
   HowToReg as HowToRegIcon,
@@ -92,8 +92,10 @@ const AdmissionProcessing = () => {
       <Breadcrumb title="Admission Processing" items={BCrumb} />
 
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+
+
+      <Box sx={{ mb: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.applications}
             label="Applications"
@@ -101,8 +103,6 @@ const AdmissionProcessing = () => {
             color="primary"
             loading={statsLoading}
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.admitted}
             label="Total Admitted"
@@ -110,8 +110,6 @@ const AdmissionProcessing = () => {
             color="success"
             loading={statsLoading}
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.declined}
             label="Total Declined"
@@ -119,8 +117,6 @@ const AdmissionProcessing = () => {
             color="error"
             loading={statsLoading}
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.pending}
             label="Total Pending"
@@ -128,8 +124,6 @@ const AdmissionProcessing = () => {
             color="warning"
             loading={statsLoading}
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.accepted_offers}
             label="Accepted Offers"
@@ -137,8 +131,8 @@ const AdmissionProcessing = () => {
             color="info"
             loading={statsLoading}
           />
-        </Grid>
-      </Grid>
+        </Stack>
+      </Box>
 
       {/* ── Main Card with Tabs ──────────────────────────────────────────────────── */}
       <ParentCard

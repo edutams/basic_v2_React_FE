@@ -3,14 +3,14 @@ import { IconWallet, IconReceipt, IconCoins, IconPigMoney } from '@tabler/icons-
 export const mockSummaryStats = [
   {
     title: 'Total Transaction Value',
-    value: '₦ 7,000,234.00',
+    value: '₦ 7,0000',
     color: '#42A5F5',
     lightColor: '#E3F2FD',
     icon: IconWallet,
   },
   {
     title: 'Total Transaction Volume',
-    value: '7,000,234.00',
+    value: '₦ 6,00000',
     color: '#EF5350',
     lightColor: '#FDECEA',
     // icon: IconReceipt,
@@ -18,7 +18,7 @@ export const mockSummaryStats = [
   },
   {
     title: 'Total Commission',
-    value: '₦ 1,000,234.00',
+    value: '₦ 15,000',
     color: '#273DA9',
     lightColor: '#E8EAF6',
     // icon: IconCoins,
@@ -26,7 +26,7 @@ export const mockSummaryStats = [
   },
   {
     title: 'My Commission',
-    value: '₦ 1,000,234.00',
+    value: '₦ 1,000,000',
     color: '#F59E0B',
     lightColor: '#FEF3C7',
     // icon: IconPigMoney,

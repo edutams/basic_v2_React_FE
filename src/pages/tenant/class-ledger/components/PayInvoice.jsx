@@ -1058,6 +1058,19 @@ const PayInvoice = () => {
               </TableRow>
             </TableBody>
           </Table>
+          {compFees.length === 0 && (
+            <Paper
+              sx={{
+                p: 4,
+                textAlign: 'center',
+                bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+              }}
+            >
+              <Typography variant="body1" color="text.secondary">
+                No compulsory fees found for this invoice.
+              </Typography>
+            </Paper>
+          )}
         </TableContainer>
 
         {/* ══════════════════════════════════════════════ */}
@@ -1286,7 +1299,8 @@ const PayInvoice = () => {
             }}
           >
             <Typography variant="body1" fontWeight={600} color="text.secondary">
-              No optional payment set for this student.
+              {/* No optional payment set for this student.  */}
+              No outstanding optional fees. All optional payments have been cleared.
             </Typography>
           </Paper>
         ) : null}

@@ -57,6 +57,9 @@ import UploadStaffModal from './components/UploadStaffModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
+import { CustomizerContext } from 'src/context/CustomizerContext';
+import { useTheme } from '@mui/material/styles';
+
 
 const BCrumb = [
   {
@@ -68,6 +71,9 @@ const BCrumb = [
 
 const StaffManager = () => {
   const { impersonateStaff } = useContext(TenantAuthContext);
+  const { isCardShadow } = useContext(CustomizerContext);
+  const theme = useTheme();
+  const borderColor = theme.palette.grey[100];
 
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
@@ -551,12 +557,17 @@ const StaffManager = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <Card
               elevation={0}
+              variant={!isCardShadow ? 'outlined' : undefined}
               sx={{
                 borderRadius: 3,
-                border: '1px solid #eee',
                 px: 2,
                 py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
+                border: !isCardShadow ? `1px solid ${borderColor}` : 'none',
+                boxShadow: isCardShadow
+                  ? theme.palette.mode === 'dark'
+                    ? '0px 0px 20px rgba(0, 0, 0, 0.3)'
+                    : '0px 0px 15px rgba(0, 0, 0, 0.05)'
+                  : 'none',
               }}
             >
               <Box

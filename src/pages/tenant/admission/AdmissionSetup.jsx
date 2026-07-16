@@ -525,6 +525,80 @@ const AdmissionSetup = () => {
     setTimeout(() => setCopiedPlaceholder(null), 1500);
   };
 
+  // Handle manual edits to the code format input field
+  // Rules:
+  //   1. No typing — any addition or replacement is reverted
+  //   2. Delete inside a placeholder → remove the entire placeholder
+  //   3. Delete outside a placeholder → clear everything before the deletion point
+  const handleCodeFormatInputChange = (e) => {
+    const oldValue = codeFormatInput;
+    const newValue = e.target.value;
+
+    const allPlaceholders = ['[:shortname]', '[:year]', ...STD_NUM_OPTIONS.map((o) => o.key)];
+
+    // ── Rule 1: No typing allowed — reject additions & replacements ──────────
+    if (newValue.length >= oldValue.length) {
+      setCodeFormatInput(oldValue);
+      return;
+    }
+
+    // ── Deletion: newValue is shorter ────────────────────────────────────────
+
+    // Find the exact position where a character was removed
+    let delPos = 0;
+    while (delPos < newValue.length && oldValue[delPos] === newValue[delPos]) {
+      delPos++;
+    }
+
+    // Check if the deletion point falls within a known placeholder in the OLD value
+    let targetPlaceholder = null;
+    let phStart = -1;
+
+    for (const ph of allPlaceholders) {
+      let idx = oldValue.indexOf(ph);
+      while (idx !== -1) {
+        const end = idx + ph.length - 1;
+        if (delPos >= idx && delPos <= end) {
+          targetPlaceholder = ph;
+          phStart = idx;
+          break;
+        }
+        idx = oldValue.indexOf(ph, idx + 1);
+      }
+      if (targetPlaceholder) break;
+    }
+
+    if (targetPlaceholder) {
+      // ── Rule 2: Delete inside a placeholder → remove the entire placeholder ──
+      // Remove everything from the placeholder's start in old up to the next /
+      // or end of string in the new value
+      const endIdx = newValue.indexOf('/', phStart);
+      const removeEnd = endIdx !== -1 ? endIdx : newValue.length;
+
+      let result = newValue.substring(0, phStart) + newValue.substring(removeEnd);
+
+      // Clean up double slashes and trim
+      result = result.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '').trim();
+
+      setCodeFormatInput(result || '');
+
+      // Update component states
+      if (targetPlaceholder === '[:shortname]') setSchoolShortName('');
+      if (STD_NUM_OPTIONS.some((o) => o.key === targetPlaceholder)) setSelectedStdNum('');
+
+      return;
+    }
+
+    // ── Rule 3: Delete outside any placeholder → clear everything before ────
+    const preserved = newValue.substring(delPos).replace(/^\//, '').trim();
+
+    setCodeFormatInput(preserved || '');
+
+    // Sync component states based on what survived
+    if (!preserved.includes('[:shortname]')) setSchoolShortName('');
+    if (!STD_NUM_OPTIONS.some((o) => preserved.includes(o.key))) setSelectedStdNum('');
+  };
+
   const handleSaveCodeFormat = async () => {
     const fullFormat = getFullCodeFormat().trim();
     if (!fullFormat) {
@@ -1093,22 +1167,21 @@ const AdmissionSetup = () => {
                           also edit it manually.
                         </Typography>
 
-                        {/* Format input */}
-                        <OutlinedInput
-                          fullWidth
-                          value={codeFormatInput}
-                          onChange={(e) => setCodeFormatInput(e.target.value)}
-                          placeholder="Add components from the left..."
-                          size="small"
-                          sx={{
-                            fontFamily: 'monospace',
-                            fontSize: 14,
-                            mb: 2,
-                            '& .MuiOutlinedInput-input': {
-                              py: 1.5,
-                            },
-                          }}
-                        />
+                        {/* Format input */}<OutlinedInput
+  fullWidth
+  value={codeFormatInput}
+  onChange={handleCodeFormatInputChange}
+  placeholder="Add components from the left..."
+  size="small"
+  sx={{
+    fontFamily: 'monospace',
+    fontSize: 14,
+    mb: 2,
+    '& .MuiOutlinedInput-input': {
+      py: 1.5,
+    },
+  }}
+/>
 
                         {/* Example output */}
                         {getFullCodeFormat() && (

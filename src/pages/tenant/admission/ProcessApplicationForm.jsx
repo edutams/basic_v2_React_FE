@@ -486,7 +486,7 @@ const ProcessApplicationForm = () => {
             size="large"
             startIcon={<IconX size={20} />}
             onClick={() => setDeclineDialog({ open: true, reason: '' })}
-            disabled={(admission.admission_status !== 'pending' && admission.admission_status !== 'admitted') || submitting}
+            disabled={(admission.admission_status !== 'pending' && admission.admission_status == 'admitted') || submitting}
             sx={{ fontWeight: 700, px: 5 }}
           >
             Decline

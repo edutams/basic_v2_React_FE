@@ -189,7 +189,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setApplications([]);
     setSelectedApplications(new Set());
     setHasFetched(false);
-    
+
     if (id) {
       await loadBatchClasses(id);
     }
@@ -542,7 +542,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
       await batchProcessAdmissions(payload);
       notify.success(`Successfully ${action === 'admit' ? 'admitted' : action === 'decline' ? 'declined' : 'revoked'} ${selectedApplications.size} application(s)`);
-      
+
       handleCloseBatchModal();
       loadApplications(filter);
       if (onDataChange) onDataChange();
@@ -729,11 +729,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       )} */}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Box variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table size="small">
-            <TableHead sx={{ bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
+            <TableHead sx={{
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
             }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: '4%' }}>
@@ -871,7 +872,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             </TableFooter>
           </Table>
         </TableContainer>
-      </Paper>
+      </Box>
 
       {/* ── Batch Processing Modal ────────────────────────────────────── */}
       <Dialog

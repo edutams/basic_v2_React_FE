@@ -693,7 +693,7 @@ const AdmissionSetup = () => {
                   {sessionTerms.length === 0 ? (
                     <Alert severity="info">No session terms found.</Alert>
                   ) : (
-                    <Paper>
+                    <Box>
                       <TableContainer>
                         <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                           <TableHead>
@@ -744,7 +744,7 @@ const AdmissionSetup = () => {
                           </TableBody>
                         </Table>
                       </TableContainer>
-                    </Paper>
+                    </Box>
                   )}
                 </>
               )}
@@ -810,7 +810,7 @@ const AdmissionSetup = () => {
                   add one.
                 </Alert>
               ) : (
-                <Paper>
+                <Box>
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
@@ -910,7 +910,7 @@ const AdmissionSetup = () => {
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </Paper>
+                </Box>
               )}
             </ParentCard>
           </Grid>
@@ -1168,20 +1168,20 @@ const AdmissionSetup = () => {
                         </Typography>
 
                         {/* Format input */}<OutlinedInput
-  fullWidth
-  value={codeFormatInput}
-  onChange={handleCodeFormatInputChange}
-  placeholder="Add components from the left..."
-  size="small"
-  sx={{
-    fontFamily: 'monospace',
-    fontSize: 14,
-    mb: 2,
-    '& .MuiOutlinedInput-input': {
-      py: 1.5,
-    },
-  }}
-/>
+                          fullWidth
+                          value={codeFormatInput}
+                          onChange={handleCodeFormatInputChange}
+                          placeholder="Add components from the left..."
+                          size="small"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                            mb: 2,
+                            '& .MuiOutlinedInput-input': {
+                              py: 1.5,
+                            },
+                          }}
+                        />
 
                         {/* Example output */}
                         {getFullCodeFormat() && (

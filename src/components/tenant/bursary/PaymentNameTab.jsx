@@ -250,7 +250,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             )}
           </Box>
 
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer variant="outlined">
             <Table>
               <TableHead>
                 <TableRow >

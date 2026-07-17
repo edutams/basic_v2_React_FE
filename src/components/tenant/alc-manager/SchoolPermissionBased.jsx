@@ -121,7 +121,7 @@ const SchoolPermissionBased = () => {
           </Grid>
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
@@ -230,7 +230,7 @@ const SchoolPermissionBased = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
 
       <SchoolTotalPermissionModal

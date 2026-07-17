@@ -156,7 +156,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
   };
 
   return (
-    <ParentCard
+    <Box
       title={
         <Box
           display="flex"
@@ -194,7 +194,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
           onReset={handleFilterReset}
         />
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -315,27 +315,23 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                   </TableRow>
                 )}
               </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    colSpan={7}
-                    count={totalCount}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                  />
-                </TableRow>
-              </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </Box>
       </Box>
-    </ParentCard>
+    </Box>
   );
 };
 

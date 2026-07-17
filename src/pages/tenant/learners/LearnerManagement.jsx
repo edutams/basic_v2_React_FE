@@ -470,7 +470,7 @@ const LearnerManagement = () => {
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table>
               <TableHead>
@@ -617,7 +617,7 @@ const LearnerManagement = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </ParentCard>
 
       <AddLearnerModal

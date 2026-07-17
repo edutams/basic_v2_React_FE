@@ -528,84 +528,84 @@ const GenerateInvoiceTab = ({
         )}
 
         {hasSchedules && (
-        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
-                {tableCategories.map((cat) => (
-                  <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">
-                        {cat.name}
+          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
+                  {tableCategories.map((cat) => (
+                    <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
+                      <Box>
+                        <Typography variant="caption" fontWeight={700} display="block">
+                          {cat.name}
+                        </Typography>
+                        <Chip
+                          label="Update"
+                          size="small"
+                          onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
+                          sx={{
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {scheduleData.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {row.paymentName}
                       </Typography>
-                      <Chip
-                        label="Update"
-                        size="small"
-                        onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </Box>
-                  </TableCell>
+                    </TableCell>
+                    {tableCategories.map((cat) => {
+                      const catKey = `category_${cat.id}`;
+                      const amount = row[catKey];
+                      return (
+                        <TableCell key={cat.id}>
+                          <Typography variant="body2">
+                            {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                          </Typography>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {scheduleData.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {row.paymentName}
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell colSpan={2}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Total
                     </Typography>
                   </TableCell>
                   {tableCategories.map((cat) => {
                     const catKey = `category_${cat.id}`;
-                    const amount = row[catKey];
                     return (
                       <TableCell key={cat.id}>
-                        <Typography variant="body2">
-                          {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                        <Typography variant="body2" fontWeight={700}>
+                          {calculateTotal(catKey)}
                         </Typography>
                       </TableCell>
                     );
                   })}
                 </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
-                <TableCell colSpan={2}>
-                  <Typography variant="body2" fontWeight={700}>
-                    Total
-                  </Typography>
-                </TableCell>
-                {tableCategories.map((cat) => {
-                  const catKey = `category_${cat.id}`;
-                  return (
-                    <TableCell key={cat.id}>
-                      <Typography variant="body2" fontWeight={700}>
-                        {calculateTotal(catKey)}
-                      </Typography>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={scheduleData.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </TableContainer>
+              </TableBody>
+            </Table>
+            <TablePagination
+              component="div"
+              count={scheduleData.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </TableContainer>
         )}
       </Box>
     </Stack>

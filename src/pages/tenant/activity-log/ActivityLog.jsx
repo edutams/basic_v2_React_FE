@@ -185,7 +185,7 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+              <TableContainer sx={{ overflowX: "auto" }}>
                 <Table sx={{ tableLayout: "fixed", width: "100%" }}>
                   <TableHead>
                     <TableRow>
@@ -353,7 +353,7 @@ const ActivityLog = () => {
                   <Typography variant="subtitle2" gutterBottom>
                     Additional Properties
                   </Typography>
-                  <TableContainer component={Paper}>
+                  <TableContainer >
                     <Table size="small">
                       <TableHead>
                         <TableRow>

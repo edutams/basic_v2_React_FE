@@ -118,7 +118,7 @@ const SchoolRoleBasedAccess = () => {
           </Grid>
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
@@ -222,7 +222,7 @@ const SchoolRoleBasedAccess = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
 
       <SchoolRolePermissionsModal

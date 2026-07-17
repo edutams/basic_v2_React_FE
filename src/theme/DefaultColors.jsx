@@ -135,18 +135,18 @@ const baseDarkTheme = {
     action: {
       disabledBackground: "rgba(73,82,88,0.12)",
       hoverOpacity: 0.02,
-      hover: "#333F55",
+      hover: "#1c2541",
     },
     divider: "#ffffff12",
 
     background: {
-      default: '#20242d',
-      dark: '#20242d',
-      paper: '#20242d',
+      default: '#0a1128',
+      dark: '#070c1d',
+      paper: '#121b36',
     },
 
     header: {
-      bg: "#1c1f26", 
+      bg: '#0a1128', 
     },
     
   },

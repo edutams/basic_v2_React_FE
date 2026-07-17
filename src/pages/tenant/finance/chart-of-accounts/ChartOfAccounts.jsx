@@ -389,7 +389,7 @@ const ChartOfAccounts = () => {
             </Box>
           }
         >
-          <Paper>
+          <Box>
             <TableContainer>
               <Table sx={{ minWidth: 800 }}>
                 <TableHead
@@ -521,7 +521,7 @@ const ChartOfAccounts = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         </ParentCard>
       </Box>
 

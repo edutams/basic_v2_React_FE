@@ -30,6 +30,7 @@ import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/i
 import agentApi from '@/api/landlord/organizations/agent';
 import { IMaskInput } from 'react-imask';
 import { useNotification } from '@/hooks/useNotification';
+import ParentCard from '@/components/shared/ParentCard';
 
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   const { onChange, ...other } = props;
@@ -278,7 +279,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
   };
 
   return (
-    <Box>
+    <ParentCard title="Manage Team">
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Box
@@ -880,7 +881,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </ParentCard>
   );
 };
 

@@ -101,7 +101,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -198,7 +198,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
     </ParentCard>
   );

@@ -633,7 +633,7 @@ const CurriculumSetup = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: '#f1f5f9',
+                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -646,8 +646,12 @@ const CurriculumSetup = () => {
                               label={item.status}
                               size="small"
                               sx={{
-                                bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                color: item.status === 'active' ? '#166534' : '#991b1b',
+                                bgcolor: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
+                                  : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
+                                color: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
+                                  : (item.status === 'active' ? '#166534' : '#991b1b'),
                               }}
                             />
                           </TableCell>
@@ -656,8 +660,12 @@ const CurriculumSetup = () => {
                               label={item.agent_curriculum_id ? 'Yes' : 'No'}
                               size="small"
                               sx={{
-                                bgcolor: item.agent_curriculum_id ? '#dbeafe' : '#f3f4f6',
-                                color: item.agent_curriculum_id ? '#1e40af' : '#6b7280',
+                                bgcolor: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.agent_curriculum_id ? 'rgba(30, 77, 183, 0.2)' : 'rgba(255, 255, 255, 0.08)')
+                                  : (item.agent_curriculum_id ? '#dbeafe' : '#f3f4f6'),
+                                color: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.agent_curriculum_id ? '#4570EA' : '#adb0bb')
+                                  : (item.agent_curriculum_id ? '#1e40af' : '#6b7280'),
                               }}
                             />
                           </TableCell>
@@ -778,7 +786,7 @@ const CurriculumSetup = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: '#f1f5f9',
+                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -793,7 +801,7 @@ const CurriculumSetup = () => {
                               onChange={(e) => handleClassCurriculumChange(item.id, e.target.value)}
                               displayEmpty
                               sx={{
-                                bgcolor: '#f8fafc',
+                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
                                 borderRadius: 2,
                                 width: '100%',
                               }}

@@ -57,52 +57,9 @@ import ViewParentsModal from '@/components/tenant/learners/ViewParentsModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
+import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
-
-const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
-  <Paper
-    sx={{
-      borderRadius: 2,
-      p: 3,
-      flex: 1,
-      minWidth: { xs: '100%', sm: 200 },
-      bgcolor: 'background.paper',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Box
-      sx={{
-        width: 48,
-        height: 48,
-        borderRadius: '50%',
-        bgcolor: 'primary.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Icon sx={{ fontSize: 22 }} color={color} />
-    </Box>
-
-    <Box sx={{ textAlign: 'center' }}>
-      {loading ? (
-        <CircularProgress size={24} />
-      ) : (
-        <>
-          <Typography fontSize={26} fontWeight={700}>
-            {count}
-          </Typography>
-          <Typography fontSize={14} color="text.secondary">
-            {label}
-          </Typography>
-        </>
-      )}
-    </Box>
-  </Paper>
-);
 
 const LearnerManagement = () => {
   const notify = useNotification();
@@ -513,7 +470,7 @@ const LearnerManagement = () => {
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table>
               <TableHead>
@@ -660,7 +617,7 @@ const LearnerManagement = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </ParentCard>
 
       <AddLearnerModal

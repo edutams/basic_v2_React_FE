@@ -565,7 +565,7 @@ const CompulsoryScheduleTab = ({
           </Stack>
         </Box>
 
-        <TableContainer component={Paper} variant="outlined">
+        <TableContainer variant="outlined">
           <Table>
             <TableHead>
               <TableRow>

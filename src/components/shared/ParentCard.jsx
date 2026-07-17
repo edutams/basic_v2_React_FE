@@ -8,9 +8,20 @@ const ParentCard = ({ title, children, footer, codeModel }) => {
 
   return (
     <Card
-      sx={{ padding: 0 }}
-      elevation={isCardShadow ? 9 : 0}
-      variant={!isCardShadow ? 'outlined' : undefined}
+      elevation={0}
+      sx={{
+        padding: 0,
+        borderRadius: '16px',
+        border: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '2px solid rgba(91, 38, 38, 0.08)'
+            : `2px solid ${theme.palette.grey[100]}`,
+        boxShadow: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 0 20px rgba(0,0,0,.10)',
+        // boxShadow: '0 0 40px red',
+      }}
     >
       <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />
 

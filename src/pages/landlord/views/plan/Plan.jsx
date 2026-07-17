@@ -261,7 +261,7 @@ const Plan = () => {
   return (
     <PageContainer title="Plans" description="This is the Plans page">
       {/* <Breadcrumb title="Plans" items={BCrumb} /> */}
-      <ParentCard
+      <Box
         title={
           <Box sx={{ width: '100%' }}>
             <Box
@@ -316,7 +316,7 @@ const Plan = () => {
           </Box>
         }
       >
-        <Paper>
+        <Box>
           <TableContainer>
             <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -489,7 +489,7 @@ const Plan = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
 
         <ReusableModal
           open={open}
@@ -538,7 +538,7 @@ const Plan = () => {
           <PackageModal
             open={openPackageModal}
             onClose={handleClose}
-            handleRefresh={() => {}}
+            handleRefresh={() => { }}
             selectedPackage={selectedPlan}
             actionType="update"
           />
@@ -569,7 +569,7 @@ const Plan = () => {
             onCancel={handleCloseManageModule}
           />
         </ReusableModal>
-      </ParentCard>
+      </Box>
     </PageContainer>
   );
 };

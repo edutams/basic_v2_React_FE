@@ -185,7 +185,7 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper}>
+              <TableContainer >
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -294,9 +294,9 @@ const ActivityLog = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedLog &&
-          selectedLog.properties &&
-          Object.keys(selectedLog.properties).length > 0 ? (
-            <TableContainer component={Paper}>
+            selectedLog.properties &&
+            Object.keys(selectedLog.properties).length > 0 ? (
+            <TableContainer >
               <Table size="small">
                 <TableHead>
                   <TableRow>

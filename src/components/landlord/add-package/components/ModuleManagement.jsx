@@ -193,7 +193,7 @@ const ModuleManagement = ({
         ) : packageModules.length === 0 ? (
           renderEmptyState()
         ) : (
-          <Paper>
+          <Box>
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 {/* <Table> */}
@@ -304,7 +304,7 @@ const ModuleManagement = ({
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         )}
       </Box>
 

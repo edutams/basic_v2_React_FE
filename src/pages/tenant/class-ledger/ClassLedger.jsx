@@ -692,9 +692,9 @@ const ClassLedger = () => {
           </Grid>
         </Grid>
 
-        <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
-            <TableHead sx={{ bgcolor: '#fafafa' }}>
+            <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>
                 <TableCell>Student Name</TableCell>

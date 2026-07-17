@@ -121,7 +121,7 @@ const NonTeachingStaffTab = ({
       {/* Table */}
       <TableContainer>
         <Table>
-          <TableHead sx={{ bgcolor: '#fafafa' }}>
+          <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Staff Id</TableCell>
@@ -179,7 +179,7 @@ const NonTeachingStaffTab = ({
                           height: 30,
                           fontSize: '12px',
                           fontWeight: 700,
-                          bgcolor: '#2196f3',
+                          bgcolor: 'primary.main',
                           flexShrink: 0,
                         }}
                       >
@@ -199,8 +199,8 @@ const NonTeachingStaffTab = ({
                       label={staffMember.role || 'N/A'}
                       size="small"
                       sx={{
-                        bgcolor: '#f5f5f5',
-                        color: '#666',
+                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#f5f5f5',
+                        color: (theme) => theme.palette.mode === 'dark' ? 'text.secondary' : '#666',
                         textTransform: 'capitalize',
                       }}
                     />

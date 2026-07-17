@@ -264,13 +264,13 @@ const SetUpClassesTab = forwardRef(
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>
+                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
                   Classes
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>
+                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
                   No. of Arms
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '50%', bgcolor: '#fff' }}>
+                <TableCell sx={{ fontWeight: 600, width: '50%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
                   Class Arm Names
                 </TableCell>
               </TableRow>

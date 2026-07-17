@@ -415,7 +415,7 @@ const ParentManagement = () => {
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table>
               <TableHead>
@@ -580,7 +580,7 @@ const ParentManagement = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </ParentCard>
 
       <ParentModal

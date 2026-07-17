@@ -300,11 +300,12 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
       </Grid>
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Box variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table size="small">
-            <TableHead sx={{ bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
+            <TableHead sx={{
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
             }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: '4%' }}>#</TableCell>
@@ -423,7 +424,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
             </TableFooter>
           </Table>
         </TableContainer>
-      </Paper>
+      </Box>
 
       {/* ── Row Action Menu ──────────────────────────────────────────────── */}
       <Menu

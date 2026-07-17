@@ -137,7 +137,22 @@ const BursarySetup = () => {
         <Grid container spacing={3} mb={3}>
           {/* Total Payment Items Card */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: '16px',
+                bgcolor: 'background.paper',
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(91, 38, 38, 0.08)'
+                    : `2px solid ${theme.palette.grey[100]}`,
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.35)'
+                    : '0 0 20px rgba(0,0,0,.10)',
+              }}
+            >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Total Payment Items
               </Typography>
@@ -198,7 +213,23 @@ const BursarySetup = () => {
 
           {/* Settlement Accounts Card */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: '16px',
+                bgcolor: 'background.paper',
+                height: '100%',
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(91, 38, 38, 0.08)'
+                    : `2px solid ${theme.palette.grey[100]}`,
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.35)'
+                    : '0 0 20px rgba(0,0,0,.10)',
+              }}
+            >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Settlement Accounts
               </Typography>
@@ -247,7 +278,22 @@ const BursarySetup = () => {
 
           {/* Fee Bearer Distribution Card */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: '16px',
+                bgcolor: 'background.paper',
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(91, 38, 38, 0.08)'
+                    : `2px solid ${theme.palette.grey[100]}`,
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.35)'
+                    : '0 0 20px rgba(0,0,0,.10)',
+              }}
+            >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Fee Bearer Distribution
               </Typography>

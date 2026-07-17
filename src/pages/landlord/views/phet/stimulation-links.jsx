@@ -198,7 +198,7 @@ const ManagePhETLinks = () => {
             )}
           </Box>
 
-          <Paper>
+          <Box>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -293,7 +293,7 @@ const ManagePhETLinks = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         </Box>
       </ParentCard>
       <StimulationLinkModal

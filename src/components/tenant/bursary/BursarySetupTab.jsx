@@ -632,7 +632,7 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer variant="outlined">
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -749,7 +749,7 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer variant="outlined">
                 <Table size="small">
                   <TableHead>
                     <TableRow>

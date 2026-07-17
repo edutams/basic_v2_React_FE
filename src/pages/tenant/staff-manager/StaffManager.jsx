@@ -57,6 +57,8 @@ import UploadStaffModal from './components/UploadStaffModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
+import StatCard from 'src/components/shared/StatCard';
+
 
 const BCrumb = [
   {
@@ -514,30 +516,26 @@ const StaffManager = () => {
     {
       title: 'Total Staff',
       value: stats.total,
-      icon: <IconUsers size={24} />,
-      bgColor: 'primary.light',
-      iconColor: 'primary.main',
+      icon: IconUsers,
+      color: 'primary',
     },
     {
       title: 'Teaching Staff',
       value: stats.teaching,
-      icon: <IconUserCheck size={24} />,
-      bgColor: 'primary.light',
-      iconColor: 'primary.main',
+      icon: IconUserCheck,
+      color: 'primary',
     },
     {
       title: 'Non-Teaching Staff',
       value: stats.nonTeaching,
-      icon: <IconUserX size={24} />,
-      bgColor: 'primary.light',
-      iconColor: 'primary.main',
+      icon: IconUserX,
+      color: 'primary',
     },
     {
       title: 'On Leave',
       value: stats.onLeave,
-      icon: <IconCalendarOff size={24} />,
-      bgColor: 'primary.light',
-      iconColor: 'primary.main',
+      icon: IconCalendarOff,
+      color: 'primary',
     },
   ];
 
@@ -549,43 +547,13 @@ const StaffManager = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid #eee',
-                px: 2,
-                py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgcolor: stat.bgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: stat.iconColor,
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <StatCard
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              color={stat.color}
+              loading={loading}
+            />
           </Grid>
         ))}
       </Grid>
@@ -611,7 +579,7 @@ const StaffManager = () => {
       {/* Main Content Card */}
       <Card
         elevation={0}
-        sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden', p: 2 }}
+        sx={{ borderRadius: 3, border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee', overflow: 'hidden', p: 2 }}
       >
         {/* Content Area */}
         <Box>

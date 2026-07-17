@@ -44,9 +44,7 @@ import {
   getApplicantByFormNumber,
   updateAdmissionStatus,
 } from '@/api/tenant/admission/admissionProcessingApi';
-import {
-  fetchAdmissionCodeFormat,
-} from '@/api/tenant/admission/admissionApi';
+import { fetchAdmissionCodeFormat } from '@/api/tenant/admission/admissionApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
@@ -189,7 +187,11 @@ const ProcessApplicationForm = () => {
   const StatusIcon = statusConfig[admission?.admission_status]?.icon || PendingIcon;
   const currentStatusColor = statusConfig[admission?.admission_status]?.color || 'warning';
   const fullName = admission
-    ? [admission.surname || admission.lname, admission.first_name || admission.fname, admission.other_name || admission.mname]
+    ? [
+        admission.surname || admission.lname,
+        admission.first_name || admission.fname,
+        admission.other_name || admission.mname,
+      ]
         .filter(Boolean)
         .join(' ')
         .toUpperCase() || '—'
@@ -199,7 +201,9 @@ const ProcessApplicationForm = () => {
   if (loading) {
     return (
       <PageContainer title="Process Application" description="Loading application details">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        >
           <CircularProgress size={36} />
         </Box>
       </PageContainer>
@@ -253,7 +257,8 @@ const ProcessApplicationForm = () => {
     occupation: admission.parent?.occupation || '',
     address: admission.parent?.address || '',
   };
-  const parentFullName = [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join('  ') || '—';
+  const parentFullName =
+    [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join('  ') || '—';
 
   const documentsData = {
     birth_cert: admission.birth_cert,
@@ -293,14 +298,15 @@ const ProcessApplicationForm = () => {
       </Box>
 
       {/* ── Applicant Summary Card ────────────────────────────────────── */}
-      
 
       {/* ── Application Form Details ──────────────────────────────────── */}
       <ParentCard title="Application Form Details">
         <Stack spacing={3}>
           <WardReview
             wardData={wardData}
-            intendingClass={admission.intending_class?.class_code || admission.intending_class?.class_name}
+            intendingClass={
+              admission.intending_class?.class_code || admission.intending_class?.class_name
+            }
             selectedBatch={selectedBatch}
             academicData={academicData}
           />
@@ -309,7 +315,9 @@ const ProcessApplicationForm = () => {
 
           <AcademicReview
             academicData={academicData}
-            intendingClass={admission.intending_class?.class_code || admission.intending_class?.class_name}
+            intendingClass={
+              admission.intending_class?.class_code || admission.intending_class?.class_name
+            }
             selectedBatch={selectedBatch}
           />
 
@@ -323,8 +331,15 @@ const ProcessApplicationForm = () => {
       </ParentCard>
 
       {/* ── Parent/Guardian Information ───────────────────────────────── */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 2,mt:3 }}>
-        <Typography variant="subtitle1" fontWeight={700} display="flex" alignItems="center" gap={1} mb={2}>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2, mt: 3 }}>
+        <Typography
+          variant="subtitle1"
+          fontWeight={700}
+          display="flex"
+          alignItems="center"
+          gap={1}
+          mb={2}
+        >
           <PersonIcon fontSize="small" />
           Parent / Guardian Information
         </Typography>
@@ -388,7 +403,14 @@ const ProcessApplicationForm = () => {
 
       {/* ── Treat Admission (Admission Officer) ────────────────────────── */}
       <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        <Typography variant="subtitle1" fontWeight={700} display="flex" alignItems="center" gap={1} mb={2}>
+        <Typography
+          variant="subtitle1"
+          fontWeight={700}
+          display="flex"
+          alignItems="center"
+          gap={1}
+          mb={2}
+        >
           <IconCheck size={20} />
           Treat Admission (Admission Officer)
         </Typography>
@@ -429,7 +451,12 @@ const ProcessApplicationForm = () => {
             <TextField
               fullWidth
               label="Programme"
-              value={admission.prog_name || admission.intending_programme?.programme_name || admission.intending_programme?.programme_code || '—'}
+              value={
+                admission.prog_name ||
+                admission.intending_programme?.programme_name ||
+                admission.intending_programme?.programme_code ||
+                '—'
+              }
               slotProps={{ input: { readOnly: true } }}
               size="small"
             />
@@ -458,7 +485,7 @@ const ProcessApplicationForm = () => {
                   fetchAdmissionCodeFormat(),
                 ]);
                 const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
-                const hasCodeFormat = !!(codeFormatRes?.data?.code_format);
+                const hasCodeFormat = !!codeFormatRes?.data?.code_format;
                 setAdmitDialog({
                   open: true,
                   programmes,
@@ -475,7 +502,11 @@ const ProcessApplicationForm = () => {
                 notify.error('Failed to load programmes');
               }
             }}
-            disabled={admission.admission_status === 'admitted' || submitting}
+            disabled={
+              admission.admission_status === 'admitted' ||
+              admission.admission_status == 'declined' ||
+              submitting
+            }
             sx={{ fontWeight: 700, px: 5 }}
           >
             Admit
@@ -486,7 +517,11 @@ const ProcessApplicationForm = () => {
             size="large"
             startIcon={<IconX size={20} />}
             onClick={() => setDeclineDialog({ open: true, reason: '' })}
-            disabled={admission.admission_status !== 'pending' || submitting}
+            disabled={
+              (admission.admission_status !== 'pending' &&
+                admission.admission_status == 'admitted') ||
+              submitting
+            }
             sx={{ fontWeight: 700, px: 5 }}
           >
             Decline
@@ -497,7 +532,11 @@ const ProcessApplicationForm = () => {
             size="large"
             startIcon={<IconX size={20} />}
             onClick={() => setRevokeDialog({ open: true, reason: '' })}
-            disabled={admission.admission_status !== 'admitted' || submitting}
+            disabled={
+              (admission.admission_status !== 'admitted' &&
+                admission.admission_status !== 'declined') ||
+              submitting
+            }
             sx={{ fontWeight: 700, px: 5 }}
           >
             Revoke
@@ -512,13 +551,19 @@ const ProcessApplicationForm = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
             <PersonIcon fontSize="small" color="action" />
             <Typography variant="body2" color="text.secondary">
-              <strong>Treated by:</strong>{' '}
-              {admission.treated_by_name || admission.treated_by}
+              <strong>Treated by:</strong> {admission.treated_by_name || admission.treated_by}
               {admission.date_treated && (
-                <> on {new Date(admission.date_treated).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'short', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit'
-                })}</>
+                <>
+                  {' '}
+                  on{' '}
+                  {new Date(admission.date_treated).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </>
               )}
             </Typography>
           </Box>
@@ -531,7 +576,11 @@ const ProcessApplicationForm = () => {
                 <strong>Rejected by:</strong> {admission.rejected_by_name || admission.rejected_by}
               </Typography>
               {admission.rejection_reason && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, fontStyle: 'italic' }}
+                >
                   Reason: {admission.rejection_reason}
                 </Typography>
               )}
@@ -546,7 +595,11 @@ const ProcessApplicationForm = () => {
                 <strong>Revoked by:</strong> {admission.revoked_by_name || admission.revoked_by}
               </Typography>
               {admission.revoked_reason && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, fontStyle: 'italic' }}
+                >
                   Reason: {admission.revoked_reason}
                 </Typography>
               )}
@@ -562,22 +615,35 @@ const ProcessApplicationForm = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Admit {fullName}
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>Admit {fullName}</DialogTitle>
         <Divider />
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              You are about to admit the following applicant. Select the programme, class, and class arm to assign.
+              You are about to admit the following applicant. Select the programme, class, and class
+              arm to assign.
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-              <Avatar src={admission.passport_photo || admission.image} sx={{ width: 48, height: 48 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+              }}
+            >
+              <Avatar
+                src={admission.passport_photo || admission.image}
+                sx={{ width: 48, height: 48 }}
+              >
                 {(admission.first_name || admission.fname)?.[0]?.toUpperCase() || '?'}
               </Avatar>
               <Box>
-                <Typography variant="subtitle2" fontWeight={700}>{fullName}</Typography>
+                <Typography variant="subtitle2" fontWeight={700}>
+                  {fullName}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Form: {admission.form_number} | {admission?.class_code || '—'}
                 </Typography>
@@ -658,7 +724,9 @@ const ProcessApplicationForm = () => {
               <Select
                 value={admitDialog.selectedClassArm}
                 label="Class Arm *"
-                onChange={(e) => setAdmitDialog((prev) => ({ ...prev, selectedClassArm: e.target.value }))}
+                onChange={(e) =>
+                  setAdmitDialog((prev) => ({ ...prev, selectedClassArm: e.target.value }))
+                }
               >
                 <MenuItem value="">-- Select Class Arm --</MenuItem>
                 {admitDialog.classArms.map((arm) => (
@@ -677,7 +745,9 @@ const ProcessApplicationForm = () => {
                 label="Admission Number *"
                 placeholder="Enter admission number for this student"
                 value={admitDialog.admissionNumber}
-                onChange={(e) => setAdmitDialog((prev) => ({ ...prev, admissionNumber: e.target.value }))}
+                onChange={(e) =>
+                  setAdmitDialog((prev) => ({ ...prev, admissionNumber: e.target.value }))
+                }
                 required
                 helperText="No admission code format configured — enter manually"
               />
@@ -706,7 +776,12 @@ const ProcessApplicationForm = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setAdmitDialog((prev) => ({ ...prev, open: false }))}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setAdmitDialog((prev) => ({ ...prev, open: false }))}
+          >
             Cancel
           </Button>
           <Button
@@ -714,7 +789,13 @@ const ProcessApplicationForm = () => {
             size="small"
             color="primary"
             onClick={async () => {
-              const { selectedProgramme, selectedClass, selectedClassArm, admissionNumber, hasCodeFormat } = admitDialog;
+              const {
+                selectedProgramme,
+                selectedClass,
+                selectedClassArm,
+                admissionNumber,
+                hasCodeFormat,
+              } = admitDialog;
 
               if (!selectedProgramme || !selectedClass || !selectedClassArm) {
                 notify.warning('Please select programme, class, and class arm');
@@ -762,17 +843,15 @@ const ProcessApplicationForm = () => {
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Are you sure you want to decline the application for <strong>{fullName}</strong>?
-              This action will mark the application as declined.
+              Are you sure you want to decline the application for <strong>{fullName}</strong>? This
+              action will mark the application as declined.
             </Typography>
             <TextField
               fullWidth
               label="Rejection Reason"
               placeholder="Enter the reason for declining this application..."
               value={declineDialog.reason}
-              onChange={(e) =>
-                setDeclineDialog((prev) => ({ ...prev, reason: e.target.value }))
-              }
+              onChange={(e) => setDeclineDialog((prev) => ({ ...prev, reason: e.target.value }))}
               multiline
               rows={3}
               size="small"
@@ -781,7 +860,12 @@ const ProcessApplicationForm = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setDeclineDialog({ open: false, reason: '' })}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setDeclineDialog({ open: false, reason: '' })}
+          >
             Cancel
           </Button>
           <Button
@@ -825,17 +909,15 @@ const ProcessApplicationForm = () => {
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Are you sure you want to revoke the admission for <strong>{fullName}</strong>?
-              This will undo the admission and clear the assigned class and programme.
+              Are you sure you want to revoke the admission for <strong>{fullName}</strong>? This
+              will undo the admission and clear the assigned class and programme.
             </Typography>
             <TextField
               fullWidth
               label="Revoke Reason"
               placeholder="Enter the reason for revoking this admission..."
               value={revokeDialog.reason}
-              onChange={(e) =>
-                setRevokeDialog((prev) => ({ ...prev, reason: e.target.value }))
-              }
+              onChange={(e) => setRevokeDialog((prev) => ({ ...prev, reason: e.target.value }))}
               multiline
               rows={3}
               size="small"
@@ -844,7 +926,12 @@ const ProcessApplicationForm = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setRevokeDialog({ open: false, reason: '' })}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setRevokeDialog({ open: false, reason: '' })}
+          >
             Cancel
           </Button>
           <Button
@@ -878,17 +965,11 @@ const ProcessApplicationForm = () => {
       </Dialog>
 
       {/* ── Status Update Confirmation ────────────────────────────────── */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleCancelConfirm}
-        maxWidth="xs"
-        fullWidth
-      >
+      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Update Admission Status</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Are you sure you want to change the admission status for{' '}
-            <strong>{fullName}</strong> to{' '}
+            Are you sure you want to change the admission status for <strong>{fullName}</strong> to{' '}
             <Chip
               label={statusConfig[confirmDialog.status]?.label || confirmDialog.status}
               size="small"

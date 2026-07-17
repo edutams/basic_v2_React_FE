@@ -27,12 +27,25 @@ const DashboardStatCard = ({
       onClick={onClick}
       sx={{
         height: '100%',
-        borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : 'rgba(0,0,0,0.08)'}`,
+        borderRadius: '16px',
+        border: `2px solid ${isDark ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100]}`,
         bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 0 20px rgba(0,0,0,.10)',
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick ? { boxShadow: '0 4px 12px rgba(0,0,0,0.08)', transition: '0.2s' } : {},
+        '&:hover': onClick
+          ? {
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 12px 35px rgba(0,0,0,0.45)'
+                  : '0 10px 25px rgba(0,0,0,0.15)',
+              transform: 'translateY(-4px)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }
+          : {},
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         ...sx,
       }}
     >

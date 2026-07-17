@@ -20,9 +20,11 @@ import StatCard from '@/components/shared/StatCard';
 import WalletCard from '@/components/shared/WalletCard';
 import AdmissionBanner from '@/components/tenant/admission/AdmissionBanner';
 import EnrolledWardCard from '@/components/tenant/admission/EnrolledWardCard';
+import WardDetailModal from '@/components/tenant/admission/WardDetailModal';
 import ProspectiveWardCard from '@/components/tenant/admission/ProspectiveWardCard';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
 import { getUserProspectiveAdmissions, getOpenBatches } from '@/api/tenant/admission/admissionApi';
+import { fetchEnrolledWards } from '@/api/tenant/admission/admissionProcessingApi';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { useNotification } from 'src/hooks/useNotification';
 import ward from '@/assets/images/backgrounds/ward.png';
@@ -35,13 +37,16 @@ const ParentDashboard = () => {
 
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
   const [prospectiveWards, setProspectiveWards] = useState([]);
+  const [enrolledWards, setEnrolledWards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [enrolledLoading, setEnrolledLoading] = useState(false);
   const [hasOpenBatches, setHasOpenBatches] = useState(false);
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
+  const [prospectiveSessionTerm, setProspectiveSessionTerm] = useState('all');
+  const [enrolledSessionTerm, setEnrolledSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+  const [wardDetailModal, setWardDetailModal] = useState({ open: false, wardId: null });
 
   const session = tenantInfo?.academic_session || '2025/2026';
-  const term = tenantInfo?.academic_term || '';
 
   // Fetch session terms on mount
   useEffect(() => {
@@ -87,7 +92,7 @@ const ParentDashboard = () => {
     const fetchProspectiveWards = async () => {
       setLoading(true);
       try {
-        const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
+        const sessionTermId = prospectiveSessionTerm === 'all' ? null : prospectiveSessionTerm;
         const response = await getUserProspectiveAdmissions(sessionTermId);
 
         if (response.status) {
@@ -119,7 +124,7 @@ const ParentDashboard = () => {
 
     fetchProspectiveWards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSessionTerm]); // Only depend on selectedSessionTerm
+  }, [prospectiveSessionTerm]); // Only depend on prospectiveSessionTerm
 
   // Helper function to determine admission status
   const getAdmissionStatus = (admission) => {
@@ -145,14 +150,7 @@ const ParentDashboard = () => {
   };
 
   const handleViewEnrolledWard = (ward) => {
-    // Normalize enrolled ward shape to match what AdmissionStatus expects
-    const normalized = {
-      ...ward,
-      applicationNo: ward.regNo,
-      class: ward.tags?.[0] ?? '—',
-      session: session,
-      term: term,
-    };
+    setWardDetailModal({ open: true, wardId: ward.id });
   };
 
   const handleViewProspectiveWard = (ward) => {
@@ -177,8 +175,29 @@ const ParentDashboard = () => {
   const theme = useTheme();
   const bg = `linear-gradient(90deg, #121212e3 0%, ${theme.palette.primary.main} 100%)`;
 
-  // Hardcoded enrolled wards for now (you can create a separate API for this)
-  const ENROLLED_WARDS = [];
+  // Fetch enrolled wards (filtered by selected session term)
+  useEffect(() => {
+    const loadEnrolledWards = async () => {
+      setEnrolledLoading(true);
+      try {
+        const sessionTermId = enrolledSessionTerm === 'all' ? null : enrolledSessionTerm;
+        const response = await fetchEnrolledWards(sessionTermId);
+        if (response.status) {
+          setEnrolledWards(response.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch enrolled wards:', error);
+        notify.error('Failed to load enrolled wards');
+      } finally {
+        setEnrolledLoading(false);
+      }
+    };
+
+    if (tenantInfo?.id) {
+      loadEnrolledWards();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantInfo?.id, enrolledSessionTerm]);
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent portal">
@@ -192,7 +211,7 @@ const ParentDashboard = () => {
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard icon={GroupsIcon} count={ENROLLED_WARDS.length} label="Enrolled Ward" />
+            <StatCard icon={GroupsIcon} count={enrolledWards.length} label="Enrolled Ward" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard icon={GroupsIcon} count={prospectiveWards.length} label="Prospective Ward" />
@@ -230,8 +249,8 @@ const ParentDashboard = () => {
               </Typography>
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  value={enrolledSessionTerm}
+                  onChange={(e) => setEnrolledSessionTerm(e.target.value)}
                   displayEmpty
                   sx={{
                     bgcolor: '#F1F4F1',
@@ -249,9 +268,15 @@ const ParentDashboard = () => {
             </Box>
 
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
-              {ENROLLED_WARDS.length > 0 ? (
+              {enrolledLoading ? (
+                <Box display="flex" alignItems="center" justifyContent="center" height="100%">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading...
+                  </Typography>
+                </Box>
+              ) : enrolledWards.length > 0 ? (
                 <Stack spacing={1.5}>
-                  {ENROLLED_WARDS.map((ward) => (
+                  {enrolledWards.map((ward) => (
                     <EnrolledWardCard
                       key={ward.id}
                       ward={ward}
@@ -316,8 +341,8 @@ const ParentDashboard = () => {
               </Typography>
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  value={prospectiveSessionTerm}
+                  onChange={(e) => setProspectiveSessionTerm(e.target.value)}
                   displayEmpty
                   sx={{
                     bgcolor: '#F1F4F1',
@@ -366,6 +391,12 @@ const ParentDashboard = () => {
         open={admissionModalOpen}
         onClose={() => setAdmissionModalOpen(false)}
         onApply={handleApplyAdmission}
+      />
+
+      <WardDetailModal
+        open={wardDetailModal.open}
+        onClose={() => setWardDetailModal({ open: false, wardId: null })}
+        wardId={wardDetailModal.wardId}
       />
     </PageContainer>
   );

@@ -343,7 +343,7 @@ const AlcManager = () => {
             </Button>
           </Box>
 
-          <Paper>
+          <Box>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -441,7 +441,7 @@ const AlcManager = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         </ParentCard>
       )}
 

@@ -331,9 +331,15 @@ const HolidaySection = ({ refreshKey }) => {
               sx={{
                 p: { xs: 1, sm: 2 },
                 bgcolor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(91, 38, 38, 0.08)'
+                    : `2px solid ${theme.palette.grey[100]}`,
+                borderRadius: '16px',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.35)'
+                    : '0 0 20px rgba(0,0,0,.10)',
               }}
             >
               <Typography
@@ -360,10 +366,16 @@ const HolidaySection = ({ refreshKey }) => {
             sx={{
               p: { xs: 1, sm: 2 },
               bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
+              border: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '2px solid rgba(91, 38, 38, 0.08)'
+                  : `2px solid ${theme.palette.grey[100]}`,
+              borderRadius: '16px',
               gridColumn: { xs: '1 / -1', md: 'auto' },
+              boxShadow: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '0 10px 30px rgba(0,0,0,0.35)'
+                  : '0 0 20px rgba(0,0,0,.10)',
             }}
           >
             <Box display="flex" justifyContent="space-between">
@@ -453,7 +465,7 @@ const HolidaySection = ({ refreshKey }) => {
         ) : !selectedTermId ? (
           <Alert severity="info">Select a session and term to view holidays.</Alert>
         ) : (
-          <Paper>
+          <Box>
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead>
@@ -525,7 +537,7 @@ const HolidaySection = ({ refreshKey }) => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         )}
       </ParentCard>
 

@@ -435,56 +435,56 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   </Box>
 
                   <Box ref={tableWrapRef} sx={{ position: 'relative' }}>
-                    <Paper>
-                      <TableContainer>
-                        <Table sx={{ whiteSpace: 'nowrap' }}>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                Status
+                    {/* <Paper> */}
+                    <TableContainer>
+                      <Table sx={{ whiteSpace: 'nowrap' }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              Status
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                              Action
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {sessionTerms.map((item, i) => (
+                            <TableRow key={item.app_term_id} hover>
+                              <TableCell>{i + 1}</TableCell>
+                              <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
+                              <TableCell align="center">
+                                {item.is_subscribed === 'yes' ? (
+                                  <Chip
+                                    label={item.status === 'active' ? 'active' : 'inactive'}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                      color: item.status === 'active' ? '#166534' : '#92400e',
+                                      fontWeight: 500,
+                                    }}
+                                  />
+                                ) : (
+                                  '-'
+                                )}
                               </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                Action
+                              <TableCell align="center">
+                                <IconButton
+                                  ref={i === 0 ? actionBtnRef : null}
+                                  size="small"
+                                  onClick={(e) => handleMenuOpen(e, item)}
+                                >
+                                  <MoreVertIcon size={18} />
+                                </IconButton>
                               </TableCell>
                             </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {sessionTerms.map((item, i) => (
-                              <TableRow key={item.app_term_id} hover>
-                                <TableCell>{i + 1}</TableCell>
-                                <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
-                                <TableCell align="center">
-                                  {item.is_subscribed === 'yes' ? (
-                                    <Chip
-                                      label={item.status === 'active' ? 'active' : 'inactive'}
-                                      size="small"
-                                      sx={{
-                                        bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                        color: item.status === 'active' ? '#166534' : '#92400e',
-                                        fontWeight: 500,
-                                      }}
-                                    />
-                                  ) : (
-                                    '-'
-                                  )}
-                                </TableCell>
-                                <TableCell align="center">
-                                  <IconButton
-                                    ref={i === 0 ? actionBtnRef : null}
-                                    size="small"
-                                    onClick={(e) => handleMenuOpen(e, item)}
-                                  >
-                                    <MoreVertIcon size={18} />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Paper>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    {/* </Paper> */}
 
                     {/* Subscribe hint — measured from the first row's ⋮ button */}
                     {!sessionTerms.some((t) => t.is_subscribed === 'yes') && actionHintStyle && (
@@ -537,7 +537,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             >
               {activeSessionTermId ? (
                 // paperRef anchors the hint position calculations
-                <Paper ref={paperRef} sx={{ p: 2, position: 'relative' }}>
+                <Box ref={paperRef} sx={{ p: 2, position: 'relative' }}>
                   <Box
                     sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
                   >
@@ -655,7 +655,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </Paper>
+                </Box>
               ) : (
                 <Alert severity="info" sx={{ mt: 3 }}>
                   No weeks generated yet. Subscribe to a term first to set the weeks

@@ -163,7 +163,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
         onReset={handleFilterReset}
       />
 
-      <Paper>
+      <Box>
         <TableContainer>
           <Table>
             <TableHead>
@@ -270,7 +270,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
             </TableFooter>
           </Table>
         </TableContainer>
-      </Paper>
+      </Box>
     </ParentCard>
   );
 };

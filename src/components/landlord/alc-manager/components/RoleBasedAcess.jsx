@@ -131,7 +131,7 @@ const RoleBasedAcess = () => {
           </Grid>
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 600 }}>
               <TableHead>
@@ -217,7 +217,7 @@ const RoleBasedAcess = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}

@@ -30,6 +30,7 @@ import {
   TablePagination,
   Alert,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
@@ -42,6 +43,8 @@ const GenerateInvoiceTab = ({
   setSelectedClass,
   onUpdateCategory,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -65,6 +68,9 @@ const GenerateInvoiceTab = ({
 
   const [studentCounts, setStudentCounts] = useState({ total: 0, generated: 0, pending: 0 });
   const [loadingCounts, setLoadingCounts] = useState(false);
+
+  // True when at least one bursary schedule exists for the selected class & session
+  const hasSchedules = !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
@@ -363,9 +369,9 @@ const GenerateInvoiceTab = ({
                       //   : hasInvoiceGenerated
                       //     ? 'primary.light'
                       //     : 'white',
-                      bgcolor: isSelected ? 'primary.main' : 'white',
+                      bgcolor: isSelected ? 'primary.main' : (isDark ? 'background.paper' : '#fff'),
                       color: isSelected
-                        ? 'white'
+                        ? '#fff'
                         : hasInvoiceGenerated
                           ? 'primary.main'
                           : 'text.primary',
@@ -382,7 +388,7 @@ const GenerateInvoiceTab = ({
                           : 'primary.light',
                       },
                       '& .MuiChip-icon': {
-                        color: isSelected ? 'white' : 'success.dark',
+                        color: isSelected ? '#fff' : 'success.dark',
                       },
                     }}
                   />
@@ -406,10 +412,14 @@ const GenerateInvoiceTab = ({
             Payment Schedule for {selectedSessionLabel} - {selectedClassName}
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button variant="contained" size="small" onClick={() => {
-              const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-              window.open(url, '_blank');
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!hasSchedules}
+              onClick={() => {
+                const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
+                window.open(url, '_blank');
+              }}
               sx={{ fontWeight: 600 }}
             >
               Generate Invoice / {selectedClassName}
@@ -427,10 +437,10 @@ const GenerateInvoiceTab = ({
                 gap: 2,
                 mb: 1,
                 p: 2,
-                bgcolor: 'grey.50',
+                bgcolor: isDark ? 'background.default' : 'grey.50',
                 borderRadius: 1,
                 border: '1px solid',
-                borderColor: 'grey.200',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'grey.200',
               }}
             >
               <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
@@ -461,7 +471,7 @@ const GenerateInvoiceTab = ({
               </Stack>
             </Box>
 
-            {studentCounts.pending > 0 && (
+            {hasSchedules && studentCounts.pending > 0 && (
               <Alert
                 severity="warning"
                 action={
@@ -479,7 +489,7 @@ const GenerateInvoiceTab = ({
               </Alert>
             )}
 
-            {studentCounts.total > 0 && studentCounts.pending === 0 && (
+            {hasSchedules && studentCounts.total > 0 && studentCounts.pending === 0 && (
               <Alert severity="success" sx={{ mb: 2 }}>
                 <Typography variant="body2" fontWeight={600}>
                   All {studentCounts.total} student(s) have invoices generated successfully.
@@ -489,85 +499,114 @@ const GenerateInvoiceTab = ({
           </>
         )}
 
-        {/* Payment Schedule Table */}
-        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
-                {tableCategories.map((cat) => (
-                  <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">
-                        {cat.name}
+        {/* Empty state - no bursary schedules configured */}
+        {!loadingScheduleData && !errorScheduleData && !hasSchedules && selectedClass && selectedSessionTermId && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2,
+              '& .MuiAlert-message': { width: '100%' },
+            }}
+          >
+            <Typography variant="body2" fontWeight={600}>
+              No payment schedules found for {selectedClassName} in {selectedSessionLabel} - {selectedTermLabel}.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Please ensure at least one bursary schedule has been set up for this class and session term
+              before generating invoices. Go to the{' '}
+              <Typography
+                component="span"
+                variant="body2"
+                fontWeight={600}
+                color="primary.main"
+              >
+                Payment Schedule
+              </Typography>{' '}
+              section to add a schedule first.
+            </Typography>
+          </Alert>
+        )}
+
+        {hasSchedules && (
+          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
+                  {tableCategories.map((cat) => (
+                    <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
+                      <Box>
+                        <Typography variant="caption" fontWeight={700} display="block">
+                          {cat.name}
+                        </Typography>
+                        <Chip
+                          label="Update"
+                          size="small"
+                          onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
+                          sx={{
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {scheduleData.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {row.paymentName}
                       </Typography>
-                      <Chip
-                        label="Update"
-                        size="small"
-                        onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </Box>
-                  </TableCell>
+                    </TableCell>
+                    {tableCategories.map((cat) => {
+                      const catKey = `category_${cat.id}`;
+                      const amount = row[catKey];
+                      return (
+                        <TableCell key={cat.id}>
+                          <Typography variant="body2">
+                            {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                          </Typography>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {scheduleData.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {row.paymentName}
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell colSpan={2}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Total
                     </Typography>
                   </TableCell>
                   {tableCategories.map((cat) => {
                     const catKey = `category_${cat.id}`;
-                    const amount = row[catKey];
                     return (
                       <TableCell key={cat.id}>
-                        <Typography variant="body2">
-                          {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                        <Typography variant="body2" fontWeight={700}>
+                          {calculateTotal(catKey)}
                         </Typography>
                       </TableCell>
                     );
                   })}
                 </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell colSpan={2}>
-                  <Typography variant="body2" fontWeight={700}>
-                    Total
-                  </Typography>
-                </TableCell>
-                {tableCategories.map((cat) => {
-                  const catKey = `category_${cat.id}`;
-                  return (
-                    <TableCell key={cat.id}>
-                      <Typography variant="body2" fontWeight={700}>
-                        {calculateTotal(catKey)}
-                      </Typography>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={scheduleData.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </TableContainer>
+              </TableBody>
+            </Table>
+            <TablePagination
+              component="div"
+              count={scheduleData.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </TableContainer>
+        )}
       </Box>
     </Stack>
   );

@@ -27,7 +27,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState(null);
 
-  const handleViewDetails = onViewDetails || (() => {});
+  const handleViewDetails = onViewDetails || (() => { });
 
   const handleClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -58,8 +58,8 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
         ? 'rgba(250, 204, 21, 0.2)'
         : '#FEF3C7'
       : isDarkMode
-      ? 'rgba(236, 72, 153, 0.2)'
-      : '#FCE7F3';
+        ? 'rgba(236, 72, 153, 0.2)'
+        : '#FCE7F3';
 
   const getCommissionTypeTextColor = (type) =>
     type === 'Subscription'
@@ -67,12 +67,12 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
         ? '#fde047'
         : '#B45309'
       : isDarkMode
-      ? '#f472b6'
-      : '#BE185D';
+        ? '#f472b6'
+        : '#BE185D';
 
   return (
     <Box sx={{ width: '100%' }}>
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      <TableContainer sx={{ borderRadius: 2 }}>
         <Table>
           {/* HEADER */}
           <TableHead>
@@ -163,16 +163,16 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
                               ? 'rgba(34, 197, 94, 0.2)'
                               : '#DCFCE7'
                             : isDarkMode
-                            ? 'rgba(239, 68, 68, 0.2)'
-                            : '#FEE2E2',
+                              ? 'rgba(239, 68, 68, 0.2)'
+                              : '#FEE2E2',
                         color:
                           row.status === 'active'
                             ? isDarkMode
                               ? '#4ade80'
                               : '#166534'
                             : isDarkMode
-                            ? '#f87171'
-                            : '#DC2626',
+                              ? '#f87171'
+                              : '#DC2626',
                         fontWeight: 600,
                         borderRadius: '8px',
                       }}

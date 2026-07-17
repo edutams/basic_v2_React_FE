@@ -536,7 +536,7 @@ const AgentCurriculumManager = () => {
                   }
                   sx={{ mb: 3 }}
                 >
-                  <Paper>
+                  <Box>
                     <TableContainer>
                       <Table sx={{ tableLayout: 'fixed' }}>
                         <TableHead>
@@ -619,7 +619,7 @@ const AgentCurriculumManager = () => {
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </Paper>
+                  </Box>
                 </ParentCard>
               </Box>
 

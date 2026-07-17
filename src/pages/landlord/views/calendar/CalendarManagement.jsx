@@ -363,7 +363,7 @@ function SessionsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -814,7 +814,7 @@ function TermsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer >
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -1130,7 +1130,7 @@ function MappingsPanel() {
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer >
           <Table size="small">
             <TableHead>
               <TableRow>

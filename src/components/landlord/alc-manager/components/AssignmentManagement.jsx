@@ -417,162 +417,162 @@ const AssignmentManagement = () => {
         </Grid>
       </Grid>
       <Box sx={{ p: 0 }}>
-        <Paper>
-          <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 600 }}>
-              <TableHead>
+        {/* <Paper> */}
+        <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 600 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: '5%' }}>#</TableCell>
+                <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>User Details</TableCell>
+                <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>Organization</TableCell>
+                <TableCell sx={{ width: { xs: '30%', md: '35%' } }}>Assigned Role</TableCell>
+                <TableCell sx={{ width: '15%' }} align="center">
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
                 <TableRow>
-                  <TableCell sx={{ width: '5%' }}>#</TableCell>
-                  <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>User Details</TableCell>
-                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>Organization</TableCell>
-                  <TableCell sx={{ width: { xs: '30%', md: '35%' } }}>Assigned Role</TableCell>
-                  <TableCell sx={{ width: '15%' }} align="center">
-                    Action
+                  <TableCell colSpan={5} align="center">
+                    <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedFilteredUsers.length > 0 ? (
-                  paginatedFilteredUsers.map((user, index) => (
-                    <TableRow key={user.id} hover>
-                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar
-                            src={user.image}
-                            sx={{
-                              width: 30,
-                              height: 30,
-                              fontSize: 11,
-                              bgcolor: 'primary.light',
-                              color: 'primary.main',
-                            }}
-                          >
-                            {!user.image && getInitials(user.name)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={500} noWrap>
-                              {user.name}
-                            </Typography>
-                            <Typography variant="small" color="text.secondary">
-                              {user.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar
-                            src={user?.organization_logo}
-                            sx={{
-                              width: 30,
-                              height: 30,
-                              fontSize: 11,
-                              bgcolor: 'primary.light',
-                              color: 'primary.main',
-                            }}
-                          >
-                            {!user?.organization_logo && getInitials(user?.organization_name)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={500} noWrap>
-                              {user?.organization_name}
-                            </Typography>
-                            <Typography variant="body2">{user.organization_email}</Typography>
-
-                            <Typography variant="body2" color="text.secondary">
-                              {user?.organization_code}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {user.assignedRoles?.map((role, i) => (
-                            <Chip
-                              key={i}
-                              label={typeof role === 'object' ? role.name : role}
-                              size="small"
-                              sx={{
-                                borderRadius: '8px',
-                                ...getRoleSx(typeof role === 'object' ? role.name : role),
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleMenuOpen(e, user)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === user.id}
-                          onClose={handleMenuClose}
+              ) : paginatedFilteredUsers.length > 0 ? (
+                paginatedFilteredUsers.map((user, index) => (
+                  <TableRow key={user.id} hover>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar
+                          src={user.image}
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            fontSize: 11,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
                         >
-                          <MenuItem onClick={() => handleAction('edit', user)}>
-                            Assign Role
-                          </MenuItem>
-                          <MenuItem onClick={() => handleAction('view', user)}>
-                            View Assigned Roles
-                          </MenuItem>
-                          <MenuItem onClick={() => handleAction('directPermission', user)}>
-                            Assign Permission
-                          </MenuItem>
-                          {/* <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                          {!user.image && getInitials(user.name)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight={500} noWrap>
+                            {user.name}
+                          </Typography>
+                          <Typography variant="small" color="text.secondary">
+                            {user.email}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar
+                          src={user?.organization_logo}
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            fontSize: 11,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
+                        >
+                          {!user?.organization_logo && getInitials(user?.organization_name)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight={500} noWrap>
+                            {user?.organization_name}
+                          </Typography>
+                          <Typography variant="body2">{user.organization_email}</Typography>
+
+                          <Typography variant="body2" color="text.secondary">
+                            {user?.organization_code}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        {user.assignedRoles?.map((role, i) => (
+                          <Chip
+                            key={i}
+                            label={typeof role === 'object' ? role.name : role}
+                            size="small"
+                            sx={{
+                              borderRadius: '8px',
+                              ...getRoleSx(typeof role === 'object' ? role.name : role),
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleMenuOpen(e, user)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl) && selectedRow?.id === user.id}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem onClick={() => handleAction('edit', user)}>
+                          Assign Role
+                        </MenuItem>
+                        <MenuItem onClick={() => handleAction('view', user)}>
+                          View Assigned Roles
+                        </MenuItem>
+                        <MenuItem onClick={() => handleAction('directPermission', user)}>
+                          Assign Permission
+                        </MenuItem>
+                        {/* <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
                             View  Permission
                           </MenuItem> */}
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 3,
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
-                        }}
-                      >
-                        {hasFilters
-                          ? 'No users match the current filters.'
-                          : 'No users available. Add new users or adjust filters.'}
-                      </Alert>
+                      </Menu>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
+                ))
+              ) : (
                 <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredUsers.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                    colSpan={5}
-                  />
+                  <TableCell colSpan={5} align="center">
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: 3,
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        '& .MuiAlert-icon': {
+                          mr: 1.5,
+                        },
+                      }}
+                    >
+                      {hasFilters
+                        ? 'No users match the current filters.'
+                        : 'No users available. Add new users or adjust filters.'}
+                    </Alert>
+                  </TableCell>
                 </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
-        </Paper>
+              )}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  count={filteredUsers.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  colSpan={5}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+        {/* </Paper> */}
       </Box>
 
       <RoleAttachmentModal

@@ -244,7 +244,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
                     label={stat.label}
                     count={statValue}
                     icon={stat.icon}
-                    color={stat.color}
+                    colorIndex={idx}
                   />
                 </Box>
               </Grid>

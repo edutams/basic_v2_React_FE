@@ -350,8 +350,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total School"
               value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
-              valueColor="#4a3aff"
-              valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
+              colorIndex={0}
               subStats={[
                 {
                   label: 'Approved',
@@ -375,8 +374,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total Transaction Value"
               value="₦7,000,234.00"
-              valueColor="#2ca87f"
-              valueBg={isDark ? '#0d2e1e' : '#E6F7F1'}
+              colorIndex={1}
               subStats={[
                 { label: 'Commission', value: '₦100,000,000' },
                 { label: 'Volume', value: '304,043,000' },
@@ -390,8 +388,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total Organization"
               value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
-              valueColor="#f59e0b"
-              valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
+              colorIndex={2}
               subStats={[
                 {
                   label: 'Lv2',

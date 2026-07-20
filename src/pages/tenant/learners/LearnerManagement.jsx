@@ -348,21 +348,21 @@ const LearnerManagement = () => {
             count={stats.total}
             label="Total Learners"
             icon={GroupsIcon}
-            color="primary"
+            colorIndex={0}
             loading={statsLoading}
           />
           <StatCard
             count={stats.active}
             label="Active Learners"
             icon={PeopleIcon}
-            color="primary"
+            colorIndex={1}
             loading={statsLoading}
           />
           <StatCard
             count={stats.transferred}
             label="Transferred Learners"
             icon={SwapHorizIcon}
-            color="primary"
+            colorIndex={2}
             loading={statsLoading}
           />
         </Stack>

@@ -2,26 +2,30 @@ import React, { useContext } from 'react';
 import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
+import { getStatCardColor } from 'src/utils/statCardColors';
 import PropTypes from 'prop-types';
 
 /**
  * StatCard — reusable metric card used across dashboard pages.
  *
  * Props:
- *  - count:   string | number — the value to display
- *  - label:   string          — description below the count
- *  - icon:    component       — MUI or Tabler icon component
- *  - color:   string          — icon color (default: 'primary')
- *  - loading: bool            — shows a spinner instead of count when true
+ *  - count:      string | number — the value to display
+ *  - label:      string          — description below the count
+ *  - icon:       component       — MUI or Tabler icon component
+ *  - color:      string          — color name ('blue', 'purple', 'green', 'orange', 'cyan') or hex string
+ *  - colorIndex: number          — fallback palette index (0, 1, 2, 3...)
+ *  - loading:    bool            — shows a spinner instead of count when true
  */
-const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
+const StatCard = ({ count, label, icon: Icon, color, colorIndex = 0, loading }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-  // Dynamic colors for premium styling
-  const resolvedBgColor = theme.palette[color]?.light || theme.palette.primary.light;
-  const resolvedIconColor = theme.palette[color]?.main || theme.palette.primary.main;
-  const borderColor = theme.palette.mode === 'dark' ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100];
+  const { cardBg, iconBg, accentColor, borderColor } = getStatCardColor(
+    color,
+    colorIndex,
+    isDark
+  );
 
   return (
     <Paper
@@ -31,24 +35,24 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
         borderRadius: '16px',
         p: 3,
         width: '100%',
-        bgcolor: 'background.paper',
+        bgcolor: `${cardBg} !important`,
+        backgroundColor: `${cardBg} !important`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        // border: `2px solid ${borderColor}`,
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 0 20px rgba(0,0,0,.10)'
-        // transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        // '&:hover': {
-        //   transform: 'translateY(-4px)',
-        //   boxShadow: isCardShadow
-        //     ? theme.palette.mode === 'dark'
-        //       ? '0px 10px 25px rgba(0, 0, 0, 0.4)'
-        //       : '0px 10px 20px rgba(0, 0, 0, 0.08)'
-        //     : 'none',
-        // },
+        border: `1px solid ${borderColor}`,
+        boxShadow: isDark
+          ? '0 6px 20px rgba(0,0,0,0.25)'
+          : '0 4px 20px rgba(0,0,0,0.03)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          boxShadow: isCardShadow
+            ? isDark
+              ? '0px 10px 25px rgba(0, 0, 0, 0.35)'
+              : '0px 8px 22px rgba(0, 0, 0, 0.06)'
+            : 'none',
+        },
       }}
     >
       <Box
@@ -56,7 +60,8 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
           width: 48,
           height: 48,
           borderRadius: '12px',
-          bgcolor: resolvedBgColor,
+          bgcolor: `${iconBg} !important`,
+          backgroundColor: `${iconBg} !important`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -68,7 +73,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
             size={22}
             sx={{ fontSize: 22 }}
             style={{
-              color: resolvedIconColor,
+              color: accentColor,
             }}
           />
         )}
@@ -76,7 +81,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
 
       <Box sx={{ textAlign: 'right', flexGrow: 1, pl: 2 }}>
         {loading ? (
-          <CircularProgress size={24} />
+          <CircularProgress size={24} color="inherit" sx={{ color: accentColor }} />
         ) : (
           <>
             <Typography fontSize={26} fontWeight={700} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
@@ -97,6 +102,7 @@ StatCard.propTypes = {
   label: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string,
+  colorIndex: PropTypes.number,
   loading: PropTypes.bool,
 };
 

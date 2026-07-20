@@ -878,7 +878,9 @@ const ProcessApplicationForm = () => {
                         setClassTotalStudents(0);
                         if (classId) {
                           try {
-                            const armsRes = await fetchClassArmsByClass(classId);
+                            const armsRes = await fetchClassArmsByClass(classId, {
+                              programme_id: admitForm.selectedProgramme,
+                            });
                             const arms = Array.isArray(armsRes?.data) ? armsRes.data : [];
                             setAdmitForm((prev) => ({ ...prev, classArms: arms }));
                             setClassTotalStudents(armsRes?.class_total_students || 0);

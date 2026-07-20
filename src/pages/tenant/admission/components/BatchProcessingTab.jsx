@@ -605,7 +605,9 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
     if (classId) {
       try {
-        const armsRes = await fetchClassArmsByClass(classId);
+        const armsRes = await fetchClassArmsByClass(classId, {
+          programme_id: batchModal.selectedProgramme,
+        });
         const arms = Array.isArray(armsRes?.data) ? armsRes.data : [];
         setBatchModal((prev) => ({ ...prev, classArms: arms }));
       } catch (err) {

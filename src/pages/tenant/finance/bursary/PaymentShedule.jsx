@@ -830,7 +830,7 @@ const PaymentShedule = () => {
         <Grid container spacing={3} mb={3}>
           {sendInvoiceStats.map((stat, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <StatCard count={stat.value} label={stat.label} icon={stat.icon} color={stat.color} />
+              <StatCard count={stat.value} label={stat.label} icon={stat.icon} colorIndex={i} />
             </Grid>
           ))}
         </Grid>

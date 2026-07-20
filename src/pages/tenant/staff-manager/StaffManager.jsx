@@ -551,7 +551,7 @@ const StaffManager = () => {
               count={stat.value}
               label={stat.title}
               icon={stat.icon}
-              color={stat.color}
+              colorIndex={i}
               loading={loading}
             />
           </Grid>

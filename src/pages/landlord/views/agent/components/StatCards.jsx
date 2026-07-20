@@ -8,7 +8,7 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const softColors = getStatCardColor(valueColor, colorIndex, isDark);
+  const softColors = getStatCardColor(valueColor, colorIndex, isDark, theme);
   const resolvedValueColor = valueColor || softColors.accentColor;
   const resolvedValueBg = valueBg || softColors.valueBg;
 
@@ -64,7 +64,7 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={15} color={resolvedValueColor} />
+            <IconChartBar size={15} color={softColors.iconColor || 'white'} />
           </Box>
         </Box>
 

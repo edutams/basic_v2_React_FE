@@ -108,6 +108,7 @@ const BursarySetup = () => {
               count={bursaryStats.totalCategories}
               label="Total Categories"
               icon={SettingsIcon}
+              colorIndex={0}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -115,6 +116,7 @@ const BursarySetup = () => {
               count={bursaryStats.activeCategories}
               label="Active Categories"
               icon={CheckCircleIcon}
+              colorIndex={1}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -122,6 +124,7 @@ const BursarySetup = () => {
               count={bursaryStats.totalInstalments}
               label="Instalment Plans"
               icon={CreditCardIcon}
+              colorIndex={2}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -129,6 +132,7 @@ const BursarySetup = () => {
               count={bursaryStats.activeInstalments}
               label="Active Plans"
               icon={CheckCircleIcon}
+              colorIndex={3}
             />
           </Grid>
         </Grid>

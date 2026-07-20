@@ -24,7 +24,7 @@ const DashboardStatCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const softColors = getStatCardColor(valueColor, colorIndex, isDark);
+  const softColors = getStatCardColor(valueColor, colorIndex, isDark, theme);
   const resolvedValueColor = softColors.accentColor;
   const resolvedValueBg = softColors.valueBg;
 
@@ -74,7 +74,7 @@ const DashboardStatCard = ({
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={18} color={resolvedValueColor} />
+            <IconChartBar size={18} color={softColors.iconColor || 'white'} />
           </Box>
         </Box>
 

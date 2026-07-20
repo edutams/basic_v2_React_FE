@@ -803,7 +803,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               }}
             >
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '4%' }}>
+                <TableCell sx={{ fontWeight: 700, width: '3%' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -812,20 +812,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     disabled={applications.length === 0}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '3%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Admitted Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '13%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '2%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Form Number</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Admission No</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Admitted Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Admission Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                  Form Submit Date
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '6%' }} align="center">
                   Actions
                 </TableCell>
               </TableRow>
@@ -834,7 +838,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -852,6 +856,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {app.form_number}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.admission_no || '—'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -893,6 +902,17 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        {app.form_submit_completion
+                          ? new Date(app.form_submit_completion).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, app)}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
@@ -912,7 +932,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found

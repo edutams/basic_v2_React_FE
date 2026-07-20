@@ -46,6 +46,7 @@ import {
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchApplications,
+  fetchBatchClasses,
   acceptAdmissionOffer,
   resetAdmissionOffer,
 } from '@/api/tenant/admission/admissionProcessingApi';
@@ -81,8 +82,9 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', status: 'pending', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
   const [batchName, setBatchName] = useState('');
+  const [batchClasses, setBatchClasses] = useState([]);
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -121,6 +123,19 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   const getFormSubmitLabel = (value) => (value === 'yes' ? 'Submitted' : 'Not Submitted');
 
   // ─── API calls ─────────────────────────────────────────────────────────
+  const loadBatchClasses = useCallback(
+    async (batchId) => {
+      try {
+        const res = await fetchBatchClasses(batchId);
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setBatchClasses(list);
+      } catch (err) {
+        console.error('Failed to load batch classes:', err);
+      }
+    },
+    [],
+  );
+
   const loadApplications = useCallback(
     async (filters = null, url = null) => {
       setTableLoading(true);
@@ -156,7 +171,11 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
     const found = allBatches.find((b) => Number(b.batch_id) === Number(id));
     setBatchName(found ? `${found.sesname} - ${found.prog_name} (${found.batchname})` : '');
     setPage(0);
-    setFilter((prev) => ({ ...prev, appBatchId: id }));
+    setFilter((prev) => ({ ...prev, appBatchId: id, classId: '' }));
+    setBatchClasses([]);
+    if (id) {
+      loadBatchClasses(id);
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -319,7 +338,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
 
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select value={filter.appBatchId} label="Admission Batch" onChange={handleBatchChange}>
@@ -333,7 +352,25 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
+            <InputLabel>Class</InputLabel>
+            <Select
+              value={filter.classId}
+              label="Class"
+              onChange={(e) => setFilter((prev) => ({ ...prev, classId: e.target.value }))}
+            >
+              <MenuItem value="">-- Select Class --</MenuItem>
+              {batchClasses.map((cls) => (
+                <MenuItem key={cls.id} value={String(cls.id)}>
+                  {cls.class_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             placeholder="Name Filter"
@@ -353,13 +390,13 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Button
             variant="contained"
             size="small"
             fullWidth
             onClick={handleFetch}
-            disabled={tableLoading}
+            disabled={tableLoading || !filter.appBatchId}
             sx={{ fontWeight: 600 }}
           >
             {tableLoading ? 'Fetching...' : 'Fetch'}
@@ -378,21 +415,25 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
               }}
             >
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '4%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '3%' }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '9%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '16%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Admitted Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Admission No</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Admitted Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Admission Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Accept Offer
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
+                  Form Submit Date
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '4%' }} align="center">
                   Action
@@ -403,7 +444,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -414,6 +455,11 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {app.form_number}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.admission_no || '—'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -463,6 +509,17 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        {app.form_submit_completion
+                          ? new Date(app.form_submit_completion).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, app)}>
                         <IconDotsVertical size={16} />
                       </IconButton>
@@ -471,7 +528,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found

@@ -21,6 +21,8 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
+  Alert,
+  Link,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -34,6 +36,10 @@ import ParentCard from '@/components/shared/ParentCard';
 import FeeChart from './FeeChart';
 import SettlementModal from './SettlementModal';
 import dayjs from 'dayjs';
+
+import RevenueTransactionsModal from '../TransactionByRevenue/RevenueTransactionsModal';
+import TransactionsModal from './ReconciliationModals/TransactionsModal';
+import SettlementsModal from './ReconciliationModals/SettlementsModal';
 
 // Define transactionStatusData here
 export const transactionStatusData = {
@@ -120,6 +126,13 @@ const dummyData = [
 const SettlementReconcillation = () => {
   const [activeRow, setActiveRow] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const [transactionsModalOpen, setTransactionsModalOpen] = useState(false);
+  const [revenueModalOpen, setRevenueModalOpen] = useState(false);
+  const [settlementsModalOpen, setSettlementsModalOpen] = useState(false);
+
+  const [selectedRow, setSelectedRow] = useState(null);
+
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [anchorEl, setAnchorEl] = useState(null);
@@ -168,6 +181,21 @@ const SettlementReconcillation = () => {
     setActiveRow(row);
     setModalOpen(true);
     handleMenuClose();
+  };
+
+  const handleOpenTransactions = (row) => {
+    setSelectedRow(row);
+    setTransactionsModalOpen(true);
+  };
+
+  const handleOpenRevenue = (row) => {
+    setSelectedRow(row);
+    setRevenueModalOpen(true);
+  };
+
+  const handleOpenSettlements = (row) => {
+    setSelectedRow(row);
+    setSettlementsModalOpen(true);
   };
 
   const loadAnalytics = useCallback(async () => {
@@ -334,12 +362,20 @@ const SettlementReconcillation = () => {
                 Upload Bank Statement
               </Button>
               <Button variant="outlined" startIcon={<DownloadIcon />} size="small">
-                Download Unreconciled
+                Download Reconciliation
               </Button>
             </Box>
           </Box>
         }
       >
+        <Alert severity="info" sx={{ mb: 2 }} color="info" variant="outlined">
+          <Typography variant="body2">
+            Settlement represents the amount expected from transactions processed through payment
+            channels. To ensure accuracy, always reconcile settlement figures against your uploaded
+            bank statement.
+          </Typography>
+        </Alert>
+
         {/* Filters */}
         <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
           <Grid item xs={12} md={2}>
@@ -392,9 +428,9 @@ const SettlementReconcillation = () => {
                 <TableCell>No. of Transactions</TableCell>
                 <TableCell>No. of Revenue</TableCell>
                 <TableCell>No. of Settlements</TableCell>
-                <TableCell>Expected Amount (₦)</TableCell>
-                <TableCell>Reconciled Amount (₦)</TableCell>
-                <TableCell>Balance (₦)</TableCell>
+                <TableCell>Total Settelements (₦)</TableCell>
+                <TableCell>Total Reconciliations (₦)</TableCell>
+                <TableCell>Total Balance (₦)</TableCell>
                 <TableCell align="center">Action</TableCell>
               </TableRow>
             </TableHead>
@@ -404,9 +440,36 @@ const SettlementReconcillation = () => {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{row.bank_name}</TableCell>
                   <TableCell>{row.account_number}</TableCell>
-                  <TableCell>{row.no_of_transactions}</TableCell>
-                  <TableCell>{row.no_of_revenue}</TableCell>
-                  <TableCell>{row.no_of_settlements}</TableCell>
+                  <TableCell>
+                    <Link
+                      component="button"
+                      variant="body2"
+                      onClick={() => handleOpenTransactions(row)}
+                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      {row.no_of_transactions}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      component="button"
+                      variant="body2"
+                      onClick={() => handleOpenRevenue(row)}
+                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      {row.no_of_revenue}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      component="button"
+                      variant="body2"
+                      onClick={() => handleOpenSettlements(row)}
+                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      {row.no_of_settlements}
+                    </Link>
+                  </TableCell>
                   <TableCell>₦{row.expected_amount}</TableCell>
                   <TableCell>₦{row.reconciled_amount}</TableCell>
                   <TableCell sx={{ color: '#ef4444', fontWeight: 600 }}>₦{row.balance}</TableCell>
@@ -423,8 +486,36 @@ const SettlementReconcillation = () => {
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleViewSettlements(menuRow)}>View Settlements</MenuItem>
+        <MenuItem onClick={() => handleViewSettlements(menuRow)}>Reconcile Settlements</MenuItem>
+        <MenuItem onClick={() => handleViewSettlements(menuRow)}>Download Reconciliation</MenuItem>
       </Menu>
+
+      <SettlementModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        settlementData={activeRow}
+      />
+
+      {/* New Modals */}
+      <TransactionsModal
+        open={transactionsModalOpen}
+        onClose={() => setTransactionsModalOpen(false)}
+        rowData={selectedRow}
+      />
+
+      <RevenueTransactionsModal
+        open={revenueModalOpen}
+        onClose={() => setRevenueModalOpen(false)}
+        // Pass appropriate props - adjust according to your API needs
+        paymentId={selectedRow?.id} // or whatever identifier you use
+        revenueName={selectedRow?.bank_name}
+      />
+
+      <SettlementsModal
+        open={settlementsModalOpen}
+        onClose={() => setSettlementsModalOpen(false)}
+        rowData={selectedRow}
+      />
 
       <Dialog
         open={uploadDialogOpen}
@@ -464,12 +555,6 @@ const SettlementReconcillation = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <SettlementModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        settlementData={activeRow}
-      />
     </PageContainer>
   );
 };

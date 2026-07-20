@@ -11,6 +11,7 @@ import {
   Button,
   Typography,
   IconButton,
+  Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -25,28 +26,37 @@ const SettlementModal = ({ open, onClose, settlementData }) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
+      <Alert severity="info" sx={{ mb: 2 }} color="info" variant="outlined">
+        <Typography variant="body2">
+          Settlement represents the amount expected from transactions processed through payment
+          channels. To ensure accuracy, always reconcile settlement figures against your uploaded
+          bank statement.
+        </Typography>
+      </Alert>
       <DialogContent>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Transaction ID</TableCell>
-              <TableCell>Revenue Name</TableCell>
+              <TableCell>Session ID</TableCell>
               <TableCell>Amount (₦)</TableCell>
+              <TableCell>Date</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {/* Dummy rows - replace with real data later */}
+            {/* Dummy rows - replace with real data later  */}
+            {/* We well order the data by settlement date( latest first) */}
             {[1, 2, 3, 4].map((i) => (
               <TableRow key={i}>
                 <TableCell>
                   TXN-{Date.now().toString().slice(-6)}
                   {i}
                 </TableCell>
-                <TableCell>School Tuition Fee</TableCell>
+                <TableCell>SESSION-{Date.now().toString().slice(-6)}</TableCell>
                 <TableCell>850,000</TableCell>
+                <TableCell>01/01/2023</TableCell>
                 <TableCell>
                   <Typography color="success.main">Pending Reconciliation</Typography>
                 </TableCell>

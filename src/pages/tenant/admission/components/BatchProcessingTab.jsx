@@ -775,6 +775,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Admitted Class</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '13%' }}>Application Batch</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Form Status
@@ -824,6 +825,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         {app.intending_class_code || '—'}
                       </Typography>
                     </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.admitted_class_code || '—'} {app.admitted_class_arm_name || '—'}
+                      </Typography>
+                    </TableCell>
+
                     <TableCell>
                       <Typography variant="body2">{getBatchLabel(app)}</Typography>
                     </TableCell>

@@ -456,7 +456,7 @@ const Overview = () => {
                   <TableCell>#</TableCell>
                   <TableCell width={20}>Transaction ID</TableCell>
                   <TableCell>Paid For</TableCell>
-                  <TableCell>Paid By</TableCell>
+                  <TableCell>Wallet Account</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Amount</TableCell>
                   <TableCell>Date</TableCell>

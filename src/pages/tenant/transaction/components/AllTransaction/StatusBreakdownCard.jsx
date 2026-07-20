@@ -9,7 +9,7 @@ const StatusBreakdownCard = ({ title = 'Distribution', items = [] }) => {
   return (
     <Box>
       <Typography sx={{ fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6B7280', mb: 3 }}>
-        TRANSACTION STATUS BREAKDOWN
+        TRANSACTION STATUS
       </Typography>
 
       {items.map((item, index) => (

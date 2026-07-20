@@ -106,22 +106,39 @@ const DocRow = ({ label, file, required, onView }) => {
       display="flex"
       alignItems="center"
       justifyContent="space-between"
-      sx={{ py: 1.25, borderBottom: '1px solid', borderColor: 'divider', gap: 1 }}
+      sx={{
+        py: 1.5,
+        px: 1.5,
+        mb: 1,
+        borderRadius: 2,
+        bgcolor: (theme) =>
+          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'grey.50',
+        border: '1px solid',
+        borderColor: 'divider',
+        gap: 1,
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          bgcolor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.100',
+          borderColor: 'primary.light',
+        },
+      }}
     >
       <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
         <Box
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 1.5,
-            bgcolor: uploaded ? 'success.light' : 'grey.100',
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            bgcolor: uploaded ? 'success.light' : 'grey.200',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            transition: 'all 0.2s ease',
           }}
         >
-          <FileIcon sx={{ color: uploaded ? 'success.dark' : 'text.disabled', fontSize: 18 }} />
+          <FileIcon sx={{ color: uploaded ? 'success.dark' : 'text.disabled', fontSize: 20 }} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="body2" fontWeight={600} noWrap>
@@ -153,9 +170,18 @@ const DocRow = ({ label, file, required, onView }) => {
                 fontSize: 11,
               }}
             />
-            <Button variant="contained" size="small" startIcon={<VisibilityIcon />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<VisibilityIcon />}
               onClick={onView}
-              sx={{ fontSize: 11, whiteSpace: 'nowrap' }}
+              sx={{
+                fontSize: 11,
+                whiteSpace: 'nowrap',
+                borderRadius: 1.5,
+                boxShadow: 'none',
+                '&:hover': { boxShadow: '0 2px 8px rgba(99,102,241,0.3)' },
+              }}
             >
               View
             </Button>
@@ -164,7 +190,12 @@ const DocRow = ({ label, file, required, onView }) => {
           <Chip
             label="Not uploaded"
             size="small"
-            sx={{ bgcolor: 'error.light', color: 'error.dark', fontWeight: 600, fontSize: 11 }}
+            sx={{
+              bgcolor: 'error.light',
+              color: 'error.dark',
+              fontWeight: 600,
+              fontSize: 11,
+            }}
           />
         )}
       </Box>

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -31,6 +32,8 @@ import {
   IconButton,
   Menu,
   Alert,
+  Tab,
+  Tabs,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -38,11 +41,21 @@ import {
   Download as DownloadIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
+import {
+  IconNote,
+  IconEdit,
+  IconEye,
+  IconHistory,
+  IconCheck,
+  IconX,
+} from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
   fetchApplicationsByClass,
   batchProcessAdmissions,
+  acceptAdmissionOffer,
+  resetAdmissionOffer,
   downloadAdmissionTemplate,
   uploadAdmissionTemplate,
 } from '@/api/tenant/admission/admissionProcessingApi';
@@ -67,6 +80,7 @@ const formSubmitColors = {
 };
 
 const BatchProcessingTab = ({ allBatches, onDataChange }) => {
+  const navigate = useNavigate();
   const notify = useNotification();
 
   // ─── Data state ────────────────────────────────────────────────────────
@@ -79,8 +93,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [processing, setProcessing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
+  // ─── Tab state ─────────────────────────────────────────────────────────
+  const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
+
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: '', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -111,6 +128,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [viewModal, setViewModal] = useState({
     open: false,
     formNumber: '',
+  });
+
+  // ─── Confirm dialog state ──────────────────────────────────────────────
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    type: '', // 'accept-offer' | 'reset-offer'
+    app: null,
+    title: '',
+    message: '',
   });
 
   // ─── Download Template modal state ─────────────────────────────────────
@@ -190,10 +216,20 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   );
 
   // ─── Handlers ──────────────────────────────────────────────────────────
+  const handleStatusTabChange = (_, newValue) => {
+    setStatusTab(newValue);
+    const newStatus = newValue === 0 ? 'pending' : 'processed';
+    setFilter((prev) => ({ ...prev, status: newStatus }));
+    setSelectedApplications(new Set());
+    setApplications([]);
+    setHasFetched(false);
+  };
+
   const handleBatchChange = async (e) => {
     const id = e.target.value;
     setPage(0);
-    setFilter({ appBatchId: id, classId: '', status: '', search: '' });
+    const currentStatus = statusTab === 0 ? 'pending' : 'processed';
+    setFilter({ appBatchId: id, classId: '', status: currentStatus, search: '' });
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
@@ -210,16 +246,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setApplications([]);
     setSelectedApplications(new Set());
     setHasFetched(false);
-  };
-
-  const handleStatusChange = (e) => {
-    const newStatus = e.target.value;
-    setFilter((prev) => ({ ...prev, status: newStatus }));
-    // Auto-trigger fetch when status changes (no need to click Filter button)
-    if (filter.appBatchId && filter.classId) {
-      setPage(0);
-      loadApplications({ ...filter, status: newStatus });
-    }
   };
 
   const handleSearchChange = (e) => {
@@ -289,6 +315,72 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setViewModal({ open: false, formNumber: '' });
   };
 
+  // ─── Conditional checks for menu items ────────────────────────────────
+  const canAcceptOffer = (app) =>
+    app?.admission_status === 'admitted' &&
+    (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
+
+  const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
+
+  // ─── Confirm dialog handlers ──────────────────────────────────────────
+  const openConfirmAcceptOffer = (app) => {
+    handleMenuClose();
+    setConfirmDialog({
+      open: true,
+      type: 'accept-offer',
+      app,
+      title: 'Accept Admission Offer',
+      message: `Are you sure you want to accept the admission offer for ${getFullName(app)} (${app.form_number})?`,
+    });
+  };
+
+  const openConfirmResetOffer = (app) => {
+    handleMenuClose();
+    setConfirmDialog({
+      open: true,
+      type: 'reset-offer',
+      app,
+      title: 'Reverse Admission Offer',
+      message: `Are you sure you want to reverse the admission offer for ${getFullName(app)} (${app.form_number})?`,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { type, app } = confirmDialog;
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+
+    try {
+      if (type === 'accept-offer') {
+        await acceptAdmissionOffer(app);
+        notify.success('Admission offer accepted successfully');
+      } else if (type === 'reset-offer') {
+        const payload = {
+          form_number: app.form_number,
+          status: 'no',
+          fname: app.fname,
+          lname: app.lname,
+          mname: app.mname || '',
+          batchname: app.batchname,
+          prog_name: app.prog_name,
+          sesname: app.sesname,
+        };
+        await resetAdmissionOffer(payload);
+        notify.success('Admission offer reset successfully');
+      }
+      loadApplications(filter);
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      notify.error(
+        err?.response?.data?.message ||
+          `Failed to ${type === 'accept-offer' ? 'accept' : 'reset'} admission offer`,
+      );
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
+
   // ─── Download Template handlers ────────────────────────────────────────
   const handleOpenDownloadModal = async () => {
     if (!filter.appBatchId || !filter.classId) {
@@ -348,6 +440,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       return;
     }
 
+    if (selectedApplications.size === 0) {
+      notify.warning('Please select at least one applicant to include in the download');
+      return;
+    }
+
     setDownloading(true);
     try {
       const res = await downloadAdmissionTemplate({
@@ -355,6 +452,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         intend_class_id: filter.classId,
         programme_id: selectedProgramme,
         class_id: selectedClass,
+        form_numbers: Array.from(selectedApplications),
       });
 
       // Trigger blob download
@@ -507,7 +605,9 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
     if (classId) {
       try {
-        const armsRes = await fetchClassArmsByClass(classId);
+        const armsRes = await fetchClassArmsByClass(classId, {
+          programme_id: batchModal.selectedProgramme,
+        });
         const arms = Array.isArray(armsRes?.data) ? armsRes.data : [];
         setBatchModal((prev) => ({ ...prev, classArms: arms }));
       } catch (err) {
@@ -591,9 +691,58 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   return (
     <Box>
+      {/* ── Status Tabs ──────────────────────────────────────────────── */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs
+          value={statusTab}
+          onChange={handleStatusTabChange}
+          aria-label="application status tabs"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              minHeight: 40,
+              px: 3,
+            },
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'warning.main',
+                  }}
+                />
+                Pending Applications
+              </Box>
+            }
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                Processed Applications
+              </Box>
+            }
+          />
+        </Tabs>
+      </Box>
+
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select value={filter.appBatchId} label="Admission Batch" onChange={handleBatchChange}>
@@ -607,7 +756,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
             <InputLabel>Class</InputLabel>
             <Select value={filter.classId} label="Class" onChange={handleClassChange}>
@@ -621,20 +770,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
-            <Select value={filter.status} label="Status" onChange={handleStatusChange}>
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="admitted">Admitted</MenuItem>
-              <MenuItem value="declined">Declined</MenuItem>
-              <MenuItem value="revoked">Revoked</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             placeholder="Search by name"
@@ -653,46 +789,40 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              size="small"
-              fullWidth
-              onClick={handleFetch}
-              disabled={tableLoading || !filter.appBatchId || !filter.classId}
-            >
-              {tableLoading ? 'Fetching...' : 'Filter'}
-            </Button>
-            {filter.status == 'pending' && applications.length > 0 && (
-              <Button
-                variant="contained"
-                color="success"
-                size="small"
-                fullWidth
-                onClick={() => openBatchModal('admit')}
-                disabled={!hasFetched}
-              >
-                Process All
-              </Button>
-            )}
-          </Stack>
+        <Grid size={{ xs: 12, md: 3.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            onClick={handleFetch}
+            disabled={tableLoading || !filter.appBatchId || !filter.classId}
+          >
+            {tableLoading ? 'Fetching...' : 'Filter'}
+          </Button>
         </Grid>
       </Grid>
 
       {/* ── Info Banner ────────────────────────────────────────────────── */}
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2">
-          <strong>Note:</strong> Only applications with a <strong>Pending</strong> admission status
-          can be processed. Use the <strong>Status</strong> filter above to select{' '}
-          <strong>Pending</strong> before proceeding with batch processing, bulk upload, or template
-          download.
-        </Typography>
-      </Alert>
+      {statusTab === 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Stack spacing={0.5}>
+            <Typography variant="body2">
+              <strong>Note:</strong> Only <strong>Pending</strong> applications can be batch
+              processed. Switch to the <strong>Processed</strong> tab to view admitted, declined, or
+              revoked applications.
+            </Typography>
+            <Typography variant="body2">
+              Select (<strong>check</strong>) the applicant(s) you want to include before using
+              the <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
+              Only the checked applicants will be included in the downloaded template.
+            </Typography>
+          </Stack>
+        </Alert>
+      )}
 
-      {/* ── Download/Upload Template Buttons ──────────────────────────── */}
+      {/* ── Download/Upload Template Buttons + Process All ──────────── */}
 
-      {hasFetched && filter.status == 'pending' && (
+      {hasFetched && statusTab === 0 && (
         <Box sx={{ mb: 2 }}>
           <Stack direction="row" spacing={1}>
             <Button
@@ -700,7 +830,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               startIcon={<DownloadIcon />}
               onClick={handleOpenDownloadModal}
-              disabled={!filter.appBatchId || !filter.classId}
+              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
             >
               Download Template
             </Button>
@@ -709,10 +839,23 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               startIcon={<UploadIcon />}
               onClick={handleOpenUploadModal}
-              disabled={!filter.appBatchId || !filter.classId}
+              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
             >
               Upload Template
             </Button>
+            {applications.length > 0 && (
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                startIcon={<IconCheck size={18} />}
+                onClick={() => openBatchModal('admit')}
+                disabled={!hasFetched || selectedApplications.size === 0}
+                sx={{ fontWeight: 600 }}
+              >
+                Process All ({selectedApplications.size || applications.length})
+              </Button>
+            )}
           </Stack>
         </Box>
       )}
@@ -761,7 +904,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               }}
             >
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '4%' }}>
+                <TableCell sx={{ fontWeight: 700, width: '3%' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -770,20 +913,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     disabled={applications.length === 0}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '3%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Form Number</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Admitted Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '13%' }}>Application Batch</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '2%' }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Form Number</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Admission No</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Applicant's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Guardian's Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Admitted Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Form Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Admission Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                  Form Submit Date
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '6%' }} align="center">
                   Actions
                 </TableCell>
               </TableRow>
@@ -792,7 +939,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             <TableBody>
               {tableLoading ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
@@ -810,6 +957,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {app.form_number}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.admission_no || '—'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -851,6 +1003,17 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        {app.form_submit_completion
+                          ? new Date(app.form_submit_completion).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, app)}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
@@ -860,17 +1023,91 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         onClose={handleMenuClose}
                         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
                       >
-                        <MenuItem onClick={() => handleViewAdmission(app.form_number)}>
+                        {/* Process Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/process-form/${form_number}`);
+                          }}
+                        >
+                          <IconNote size={18} style={{ marginRight: 12 }} />
+                          Process Application Form
+                        </MenuItem>
+
+                        {/* Edit Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/edit-form/${form_number}`);
+                          }}
+                        >
+                          <IconEdit size={18} style={{ marginRight: 12 }} />
+                          Edit Application Form
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* View Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/print-application/${form_number}`);
+                          }}
+                        >
+                          <IconEye size={18} style={{ marginRight: 12 }} />
+                          View Application Form
+                        </MenuItem>
+
+                        {/* View Payment History */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/payment-history/${form_number}`);
+                          }}
+                        >
+                          <IconHistory size={18} style={{ marginRight: 12 }} />
+                          View Payment History
+                        </MenuItem>
+
+                        {/* View Details (Modal) */}
+                        <MenuItem onClick={() => handleViewAdmission(selectedApp?.form_number)}>
+                          <IconEye size={18} style={{ marginRight: 12 }} />
                           View Details
                         </MenuItem>
+
+                        <Divider />
+
+                        {/* Accept Admission Offer */}
+                        {selectedApp && canAcceptOffer(selectedApp) && (
+                          <MenuItem
+                            onClick={() => openConfirmAcceptOffer(selectedApp)}
+                            sx={{ color: 'success.main' }}
+                          >
+                            <IconCheck size={18} style={{ marginRight: 12 }} />
+                            Accept Admission Offer
+                          </MenuItem>
+                        )}
+
+                        {/* Reverse Admission Offer */}
+                        {selectedApp && canResetOffer(selectedApp) && (
+                          <MenuItem onClick={() => openConfirmResetOffer(selectedApp)} sx={{ color: 'error.main' }}>
+                            <IconX size={18} style={{ marginRight: 12 }} />
+                            Reverse Admission Offer
+                          </MenuItem>
+                        )}
                       </Menu>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
                     <Stack spacing={1} alignItems="center">
                       <Typography variant="h6" color="text.secondary" fontWeight={500}>
                         No record found
@@ -967,6 +1204,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
                         {arm.arm_names}
+                        {arm.student_count !== undefined && (
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 1 }}
+                          >
+                            ({arm.student_count})
+                          </Typography>
+                        )}
                       </MenuItem>
                     ))}
                   </Select>
@@ -1194,6 +1441,28 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             disabled={!uploadModal.file || uploadModal.uploading}
           >
             {uploadModal.uploading ? 'Uploading...' : 'Upload Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Confirmation Dialog ──────────────────────────────────────────── */}
+      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {confirmDialog.message}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleCancelConfirm}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            color={confirmDialog.type === 'reset-offer' ? 'error' : 'primary'}
+            onClick={handleConfirmAction}
+          >
+            {confirmDialog.type === 'reset-offer' ? 'Yes, Reverse' : 'Yes, Accept'}
           </Button>
         </DialogActions>
       </Dialog>

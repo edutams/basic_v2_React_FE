@@ -31,6 +31,8 @@ import {
   IconButton,
   Menu,
   Alert,
+  Tab,
+  Tabs,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -38,6 +40,7 @@ import {
   Download as DownloadIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
+import { IconCheck } from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
@@ -79,8 +82,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [processing, setProcessing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
+  // ─── Tab state ─────────────────────────────────────────────────────────
+  const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
+
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: '', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -190,10 +196,20 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   );
 
   // ─── Handlers ──────────────────────────────────────────────────────────
+  const handleStatusTabChange = (_, newValue) => {
+    setStatusTab(newValue);
+    const newStatus = newValue === 0 ? 'pending' : 'processed';
+    setFilter((prev) => ({ ...prev, status: newStatus }));
+    setSelectedApplications(new Set());
+    setApplications([]);
+    setHasFetched(false);
+  };
+
   const handleBatchChange = async (e) => {
     const id = e.target.value;
     setPage(0);
-    setFilter({ appBatchId: id, classId: '', status: '', search: '' });
+    const currentStatus = statusTab === 0 ? 'pending' : 'processed';
+    setFilter({ appBatchId: id, classId: '', status: currentStatus, search: '' });
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
@@ -210,16 +226,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setApplications([]);
     setSelectedApplications(new Set());
     setHasFetched(false);
-  };
-
-  const handleStatusChange = (e) => {
-    const newStatus = e.target.value;
-    setFilter((prev) => ({ ...prev, status: newStatus }));
-    // Auto-trigger fetch when status changes (no need to click Filter button)
-    if (filter.appBatchId && filter.classId) {
-      setPage(0);
-      loadApplications({ ...filter, status: newStatus });
-    }
   };
 
   const handleSearchChange = (e) => {
@@ -591,9 +597,58 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   return (
     <Box>
+      {/* ── Status Tabs ──────────────────────────────────────────────── */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs
+          value={statusTab}
+          onChange={handleStatusTabChange}
+          aria-label="application status tabs"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              minHeight: 40,
+              px: 3,
+            },
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'warning.main',
+                  }}
+                />
+                Pending Applications
+              </Box>
+            }
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                Processed Applications
+              </Box>
+            }
+          />
+        </Tabs>
+      </Box>
+
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select value={filter.appBatchId} label="Admission Batch" onChange={handleBatchChange}>
@@ -607,7 +662,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
             <InputLabel>Class</InputLabel>
             <Select value={filter.classId} label="Class" onChange={handleClassChange}>
@@ -621,20 +676,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
-            <Select value={filter.status} label="Status" onChange={handleStatusChange}>
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="admitted">Admitted</MenuItem>
-              <MenuItem value="declined">Declined</MenuItem>
-              <MenuItem value="revoked">Revoked</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             placeholder="Search by name"
@@ -653,46 +695,33 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              size="small"
-              fullWidth
-              onClick={handleFetch}
-              disabled={tableLoading || !filter.appBatchId || !filter.classId}
-            >
-              {tableLoading ? 'Fetching...' : 'Filter'}
-            </Button>
-            {filter.status == 'pending' && applications.length > 0 && (
-              <Button
-                variant="contained"
-                color="success"
-                size="small"
-                fullWidth
-                onClick={() => openBatchModal('admit')}
-                disabled={!hasFetched}
-              >
-                Process All
-              </Button>
-            )}
-          </Stack>
+        <Grid size={{ xs: 12, md: 3.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            onClick={handleFetch}
+            disabled={tableLoading || !filter.appBatchId || !filter.classId}
+          >
+            {tableLoading ? 'Fetching...' : 'Filter'}
+          </Button>
         </Grid>
       </Grid>
 
       {/* ── Info Banner ────────────────────────────────────────────────── */}
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2">
-          <strong>Note:</strong> Only applications with a <strong>Pending</strong> admission status
-          can be processed. Use the <strong>Status</strong> filter above to select{' '}
-          <strong>Pending</strong> before proceeding with batch processing, bulk upload, or template
-          download.
-        </Typography>
-      </Alert>
+      {statusTab === 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            <strong>Note:</strong> Only <strong>Pending</strong> applications can be batch
+            processed. Switch to the <strong>Processed</strong> tab to view admitted, declined, or
+            revoked applications.
+          </Typography>
+        </Alert>
+      )}
 
-      {/* ── Download/Upload Template Buttons ──────────────────────────── */}
+      {/* ── Download/Upload Template Buttons + Process All ──────────── */}
 
-      {hasFetched && filter.status == 'pending' && (
+      {hasFetched && statusTab === 0 && (
         <Box sx={{ mb: 2 }}>
           <Stack direction="row" spacing={1}>
             <Button
@@ -713,6 +742,19 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             >
               Upload Template
             </Button>
+            {applications.length > 0 && (
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                startIcon={<IconCheck size={18} />}
+                onClick={() => openBatchModal('admit')}
+                disabled={!hasFetched}
+                sx={{ fontWeight: 600 }}
+              >
+                Process All ({selectedApplications.size || applications.length})
+              </Button>
+            )}
           </Stack>
         </Box>
       )}
@@ -960,6 +1002,16 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
                         {arm.arm_names}
+                        {arm.student_count !== undefined && (
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 1 }}
+                          >
+                            ({arm.student_count})
+                          </Typography>
+                        )}
                       </MenuItem>
                     ))}
                   </Select>

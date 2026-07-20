@@ -30,6 +30,8 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  Tab,
+  Tabs,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -75,8 +77,11 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Loading state ─────────────────────────────────────────────────────
   const [tableLoading, setTableLoading] = useState(false);
 
+  // ─── Tab state ─────────────────────────────────────────────────────────
+  const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
+
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', search: '' });
+  const [filter, setFilter] = useState({ appBatchId: '', status: 'pending', search: '' });
   const [batchName, setBatchName] = useState('');
 
   // ─── Pagination state ──────────────────────────────────────────────────
@@ -132,6 +137,17 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   }, [notify]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────
+  const handleStatusTabChange = (_, newValue) => {
+    setStatusTab(newValue);
+    setPage(0);
+    const newStatus = newValue === 0 ? 'pending' : 'processed';
+    setFilter((prev) => ({ ...prev, status: newStatus }));
+    // Auto-fetch with new status if a batch is selected
+    if (filter.appBatchId) {
+      loadApplications({ ...filter, status: newStatus });
+    }
+  };
+
   const handleBatchChange = (e) => {
     const id = e.target.value;
     const found = allBatches.find((b) => Number(b.batch_id) === Number(id));
@@ -245,6 +261,55 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
 
   return (
     <Box>
+      {/* ── Status Tabs ──────────────────────────────────────────────── */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs
+          value={statusTab}
+          onChange={handleStatusTabChange}
+          aria-label="application status tabs"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              minHeight: 40,
+              px: 3,
+            },
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'warning.main',
+                  }}
+                />
+                Pending Applications
+              </Box>
+            }
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                Processed Applications
+              </Box>
+            }
+          />
+        </Tabs>
+      </Box>
+
       {/* ── Filters ──────────────────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, md: 4 }}>

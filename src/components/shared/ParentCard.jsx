@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Card, CardHeader, CardContent, Box } from '@mui/material';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
-const ParentCard = ({ title, children, footer, codeModel }) => {
+const ParentCard = ({ title, children, footer, codeModel, sx }) => {
   const { isCardShadow } = useContext(CustomizerContext);
 
   return (
@@ -21,6 +21,7 @@ const ParentCard = ({ title, children, footer, codeModel }) => {
             ? '0 10px 30px rgba(0,0,0,0.35)'
             : '0 0 20px rgba(0,0,0,.10)',
         // boxShadow: '0 0 40px red',
+        ...sx,
       }}
     >
       <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />
@@ -36,6 +37,7 @@ ParentCard.propTypes = {
   children: PropTypes.node,
   codeModel: PropTypes.node,
   footer: PropTypes.node,
+  sx: PropTypes.object,
 };
 
 export default ParentCard;

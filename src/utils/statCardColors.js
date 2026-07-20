@@ -1,6 +1,6 @@
 /**
  * Premium Stat Card Color Helper
- * Softer backgrounds, richer accents, better borders.
+ * Rich dual-tone gradients, vibrant accents, and glowing badges.
  */
 
 export const getStatCardColor = (
@@ -9,65 +9,72 @@ export const getStatCardColor = (
   isDark = false,
   theme = null
 ) => {
+  const primaryMain = theme?.palette?.primary?.main || '#2563EB';
+  let primaryLight = theme?.palette?.primary?.light;
+
+  if (!primaryLight || primaryLight === '#ffffff' || primaryLight === '#fff') {
+    primaryLight = `${primaryMain}18`;
+  }
+
   const paletteMap = {
     primary: {
       name: 'primary',
-      cardBg: '#F5F3FF',
-      iconBg: theme?.palette?.primary?.main || '#6D28D9',
+      cardBg: `linear-gradient(135deg, ${primaryLight} 0%, ${primaryMain}22 100%)`,
+      iconBg: primaryMain,
+      iconGlow: `${primaryMain}50`,
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.primary?.main || '#6D28D9',
-      borderColor: '#DDD6FE',
-      valueBg: '#EDE9FE',
+      accentColor: primaryMain,
+      borderColor: `${primaryMain}35`,
     },
 
     success: {
       name: 'success',
-      cardBg: '#F0FDF4',
-      iconBg: theme?.palette?.success?.main || '#16A34A',
+      cardBg: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)',
+      iconBg: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+      iconGlow: 'rgba(5, 150, 105, 0.4)',
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.success?.main || '#16A34A',
+      accentColor: '#059669',
       borderColor: '#BBF7D0',
-      valueBg: '#DCFCE7',
     },
 
     info: {
       name: 'info',
-      cardBg: '#EFF6FF',
-      iconBg: theme?.palette?.info?.main || '#2563EB',
+      cardBg: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+      iconBg: 'linear-gradient(135deg, #60A5FA 0%, #2563EB 100%)',
+      iconGlow: 'rgba(37, 99, 235, 0.4)',
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.info?.main || '#2563EB',
+      accentColor: '#2563EB',
       borderColor: '#BFDBFE',
-      valueBg: '#DBEAFE',
     },
 
     warning: {
       name: 'warning',
-      cardBg: '#FFFBEB',
-      iconBg: theme?.palette?.warning?.main || '#D97706',
+      cardBg: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+      iconBg: 'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)',
+      iconGlow: 'rgba(217, 119, 6, 0.4)',
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.warning?.main || '#D97706',
+      accentColor: '#D97706',
       borderColor: '#FCD34D',
-      valueBg: '#FEF3C7',
     },
 
     error: {
       name: 'error',
-      cardBg: '#FEF2F2',
-      iconBg: theme?.palette?.error?.main || '#DC2626',
+      cardBg: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
+      iconBg: 'linear-gradient(135deg, #F87171 0%, #DC2626 100%)',
+      iconGlow: 'rgba(220, 38, 38, 0.4)',
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.error?.main || '#DC2626',
+      accentColor: '#DC2626',
       borderColor: '#FECACA',
-      valueBg: '#FEE2E2',
     },
 
     secondary: {
       name: 'secondary',
-      cardBg: '#FAF5FF',
-      iconBg: theme?.palette?.secondary?.main || '#9333EA',
+      cardBg: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
+      iconBg: 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)',
+      iconGlow: 'rgba(147, 51, 234, 0.4)',
       iconColor: '#FFFFFF',
-      accentColor: theme?.palette?.secondary?.main || '#9333EA',
+      accentColor: '#9333EA',
       borderColor: '#E9D5FF',
-      valueBg: '#F3E8FF',
     },
   };
 
@@ -82,45 +89,36 @@ export const getStatCardColor = (
 
   let selected;
 
-  // Custom HEX color
   if (typeof colorProp === 'string' && colorProp.startsWith('#')) {
     selected = {
-      cardBg: `${colorProp}12`,
+      cardBg: `linear-gradient(135deg, ${colorProp}10 0%, ${colorProp}22 100%)`,
       iconBg: colorProp,
+      iconGlow: `${colorProp}50`,
       iconColor: '#FFFFFF',
       accentColor: colorProp,
-      borderColor: `${colorProp}35`,
-      valueBg: `${colorProp}18`,
+      borderColor: `${colorProp}40`,
     };
-  }
-  // Theme color name
-  else if (
-    typeof colorProp === 'string' &&
-    paletteMap[colorProp]
-  ) {
+  } else if (typeof colorProp === 'string' && paletteMap[colorProp]) {
     selected = paletteMap[colorProp];
-  }
-  // Auto rotate colors by index
-  else {
+  } else {
     const idx =
       typeof colorIndex === 'number'
         ? colorIndex
         : typeof colorProp === 'number'
-          ? colorProp
-          : 0;
+        ? colorProp
+        : 0;
 
     selected = cardList[idx % cardList.length];
   }
 
-  // Dark Mode
   if (isDark) {
     return {
       cardBg: 'background.paper',
       iconBg: selected.iconBg,
+      iconGlow: selected.iconGlow,
       iconColor: '#FFFFFF',
-      accentColor: selected.iconBg,
-      borderColor: 'rgba(255,255,255,0.08)',
-      valueBg: 'rgba(255,255,255,0.06)',
+      accentColor: '#FFFFFF',
+      borderColor: 'rgba(255,255,255,0.12)',
     };
   }
 

@@ -5,6 +5,9 @@ import { CustomizerContext } from 'src/context/CustomizerContext';
 import { getStatCardColor } from 'src/utils/statCardColors';
 import PropTypes from 'prop-types';
 
+/**
+ * StatCard — High-end modern SaaS metric card.
+ */
 const StatCard = ({
   count,
   label,
@@ -17,7 +20,7 @@ const StatCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { cardBg, iconBg, iconColor, accentColor, borderColor } =
+  const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
     getStatCardColor(color, colorIndex, isDark, theme);
 
   return (
@@ -25,75 +28,87 @@ const StatCard = ({
       elevation={0}
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
-        borderRadius: 2,
+        borderRadius: 2.5,
         p: 3,
         width: '100%',
-        backgroundColor: cardBg,
+        background: isDark ? 'background.paper' : `${cardBg} !important`,
+        bgcolor: isDark ? 'background.paper' : undefined,
+        backgroundColor: isDark ? 'background.paper' : undefined,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        position: 'relative',
+        overflow: 'hidden',
 
-        border: `1px solid ${borderColor}`,
+        border: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '1px solid rgba(255, 255, 255, 0.12)'
+            : `1px solid ${borderColor}`,
+        boxShadow: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 0 20px rgba(0,0,0,.10)',
 
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,.35)'
-          : '0 8px 24px rgba(15,23,42,.06)',
-
-        transition: 'all .25s ease',
+        transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
 
         '&:hover': {
-          transform: 'translateY(-5px)',
-          boxShadow: isDark
-            ? '0 18px 40px rgba(0,0,0,.45)'
-            : '0 18px 40px rgba(15,23,42,.12)',
+          transform: 'translateY(-6px)',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 18px 40px rgba(0,0,0,.45)'
+              : '0 10px 30px rgba(0,0,0,.15)',
         },
       }}
     >
-      {/* Icon */}
+      {/* Background Watermark Icon */}
+      {/* {Icon && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: -10,
+            bottom: -15,
+            opacity: 0.08,
+            pointerEvents: 'none',
+            color: accentColor,
+            display: 'flex',
+            transform: 'rotate(-10deg)',
+          }}
+        >
+          <Icon size={84} />
+        </Box>
+      )} */}
 
-      {/* <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          bgcolor: iconBg,
-          color: iconColor,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-
-          boxShadow: `0 0 0 8px ${borderColor}`,
-        }}
-      >
-        {Icon && <Icon size={28} />}
-      </Box> */}
-
+      {/* Icon Badge */}
       <Box
         sx={{
-          width: 46,
-          height: 46,
+          width: 48,
+          height: 48,
           borderRadius: '50%',
-          bgcolor: iconBg,
-          color: '#fff',
+          background: iconBg,
+          color: iconColor || '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
+          position: 'relative',
+          zIndex: 1,
 
-          boxShadow: '0 8px 18px rgba(0,0,0,.12)',
+          boxShadow: isDark
+            ? '0 6px 16px rgba(0,0,0,.3)'
+            : `0 8px 22px -2px ${iconGlow}`,
         }}
       >
-        {Icon && <Icon size={22} />}
+        {Icon && <Icon size={24} />}
       </Box>
 
       {/* Content */}
-
       <Box
         sx={{
           flexGrow: 1,
           pl: 2.5,
           textAlign: 'right',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {loading ? (
@@ -107,10 +122,11 @@ const StatCard = ({
           <>
             <Typography
               sx={{
-                fontSize: 30,
-                fontWeight: 700,
+                fontSize: 32,
+                fontWeight: 800,
                 lineHeight: 1,
-                color: isDark ? '#fff' : '#111827',
+                letterSpacing: '-0.02em',
+                color: isDark ? '#ffffff' : accentColor,
               }}
             >
               {count}
@@ -119,11 +135,11 @@ const StatCard = ({
             <Typography
               sx={{
                 mt: 0.75,
-                fontSize: 14,
-                fontWeight: 500,
+                fontSize: 13,
+                fontWeight: 600,
                 color: isDark
                   ? 'rgba(255,255,255,.72)'
-                  : '#6B7280',
+                  : '#4B5563',
               }}
             >
               {label}

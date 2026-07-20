@@ -88,6 +88,16 @@ const DetailRow = ({ icon: Icon, label, value }) => (
   </Box>
 );
 
+const readOnlyFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    bgcolor: (theme) =>
+      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'grey.50',
+  },
+  '& .MuiInputLabel-root': {
+    fontWeight: 500,
+  },
+};
+
 const ProcessApplicationForm = () => {
   const { form_number } = useParams();
   const navigate = useNavigate();
@@ -315,8 +325,8 @@ const ProcessApplicationForm = () => {
             height: 200,
             background: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.03) 100%)',
+                ? 'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.15) 100%)'
+                : 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.08) 100%)',
             borderRadius: '0 0 40px 40px',
             pointerEvents: 'none',
             zIndex: 0,
@@ -331,7 +341,12 @@ const ProcessApplicationForm = () => {
           flexDirection={{ xs: 'column', sm: 'row' }}
           gap={1.5}
           mb={3}
-          sx={{ position: 'relative', zIndex: 1,p:2 }}
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            p: 2,
+            pb: 0,
+          }}
         >
           <Box>
             <Typography variant="h5" fontWeight={800}>
@@ -412,10 +427,11 @@ const ProcessApplicationForm = () => {
           mt: 3,
           position: 'relative',
           zIndex: 1,
+          bgcolor: (theme) => theme.palette.background.paper,
           boxShadow: (theme) =>
             theme.palette.mode === 'dark'
-              ? '0 4px 20px rgba(0,0,0,0.3)'
-              : '0 4px 20px rgba(0,0,0,0.06)',
+              ? '0 4px 24px rgba(0,0,0,0.4)'
+              : '0 2px 16px rgba(0,0,0,0.08)',
           border: '1px solid',
           borderColor: 'divider',
           '&::before': {
@@ -439,7 +455,19 @@ const ProcessApplicationForm = () => {
           mb={2}
           sx={{ pl: 1 }}
         >
-          <PersonIcon fontSize="small" color="primary" />
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: 1,
+              bgcolor: 'primary.light',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <PersonIcon fontSize="small" sx={{ color: 'primary.dark' }} />
+          </Box>
           Parent / Guardian Information
         </Typography>
 
@@ -452,6 +480,7 @@ const ProcessApplicationForm = () => {
                 value={parentFullName}
                 slotProps={{ input: { readOnly: true } }}
                 size="small"
+                sx={readOnlyFieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -461,6 +490,7 @@ const ProcessApplicationForm = () => {
                 value={parentData.phone || '—'}
                 slotProps={{ input: { readOnly: true } }}
                 size="small"
+                sx={readOnlyFieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -470,6 +500,7 @@ const ProcessApplicationForm = () => {
                 value={parentData.email || '—'}
                 slotProps={{ input: { readOnly: true } }}
                 size="small"
+                sx={readOnlyFieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -479,6 +510,7 @@ const ProcessApplicationForm = () => {
                 value={parentData.occupation || '—'}
                 slotProps={{ input: { readOnly: true } }}
                 size="small"
+                sx={readOnlyFieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -490,13 +522,23 @@ const ProcessApplicationForm = () => {
                 size="small"
                 multiline
                 rows={2}
+                sx={readOnlyFieldSx}
               />
             </Grid>
           </Grid>
         ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            Parent / guardian information is not available for this applicant.
-          </Typography>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.100',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              Parent / guardian information is not available for this applicant.
+            </Typography>
+          </Box>
         )}
       </Paper>
 
@@ -509,10 +551,11 @@ const ProcessApplicationForm = () => {
           mt: 3,
           position: 'relative',
           zIndex: 1,
+          bgcolor: (theme) => theme.palette.background.paper,
           boxShadow: (theme) =>
             theme.palette.mode === 'dark'
-              ? '0 4px 20px rgba(0,0,0,0.3)'
-              : '0 4px 20px rgba(0,0,0,0.06)',
+              ? '0 4px 24px rgba(0,0,0,0.4)'
+              : '0 2px 16px rgba(0,0,0,0.08)',
           border: '1px solid',
           borderColor: 'divider',
           '&::before': {
@@ -595,14 +638,7 @@ const ProcessApplicationForm = () => {
                     inputLabel: { shrink: true },
                   }}
                   size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,255,255,0.03)'
-                          : 'rgba(0,0,0,0.01)',
-                    },
-                  }}
+                  sx={readOnlyFieldSx}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -615,14 +651,7 @@ const ProcessApplicationForm = () => {
                     inputLabel: { shrink: true },
                   }}
                   size="small"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,255,255,0.03)'
-                          : 'rgba(0,0,0,0.01)',
-                    },
-                  }}
+                  sx={readOnlyFieldSx}
                 />
               </Grid>
             </>
@@ -637,14 +666,7 @@ const ProcessApplicationForm = () => {
                 inputLabel: { shrink: true },
               }}
               size="small"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(0,0,0,0.01)',
-                },
-              }}
+              sx={readOnlyFieldSx}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
@@ -662,14 +684,7 @@ const ProcessApplicationForm = () => {
                 inputLabel: { shrink: true },
               }}
               size="small"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(0,0,0,0.01)',
-                },
-              }}
+              sx={readOnlyFieldSx}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
@@ -682,14 +697,7 @@ const ProcessApplicationForm = () => {
                 inputLabel: { shrink: true },
               }}
               size="small"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(0,0,0,0.01)',
-                },
-              }}
+              sx={readOnlyFieldSx}
             />
           </Grid>
         </Grid>
@@ -701,22 +709,22 @@ const ProcessApplicationForm = () => {
             mt: 2.5,
             bgcolor: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'rgba(255,255,255,0.03)'
-                : 'rgba(99,102,241,0.04)',
+                ? 'rgba(99,102,241,0.1)'
+                : 'rgba(99,102,241,0.06)',
             borderRadius: 3,
-            border: '1px solid',
+            border: '2px solid',
             borderColor: (theme) =>
               admission.admission_status === 'admitted'
                 ? theme.palette.mode === 'dark'
-                  ? 'rgba(76,175,80,0.3)'
-                  : 'rgba(76,175,80,0.4)'
+                  ? 'rgba(76,175,80,0.5)'
+                  : 'rgba(76,175,80,0.5)'
                 : theme.palette.mode === 'dark'
-                  ? 'rgba(99,102,241,0.3)'
-                  : 'rgba(99,102,241,0.25)',
+                  ? 'rgba(99,102,241,0.5)'
+                  : 'rgba(99,102,241,0.35)',
             boxShadow: (theme) =>
               theme.palette.mode === 'dark'
-                ? '0 2px 12px rgba(0,0,0,0.2)'
-                : '0 2px 12px rgba(99,102,241,0.08)',
+                ? '0 2px 16px rgba(0,0,0,0.3)'
+                : '0 2px 16px rgba(99,102,241,0.12)',
           }}
         >
           <Typography
@@ -1099,100 +1107,161 @@ const ProcessApplicationForm = () => {
           </Stack>
         </Box>
 
-        {/* ── Status Action Details ────────────────────────────────── */}
+        {/* ── Status Action Details ──────────────────────────────────── */}
         {(admission.treated_by || admission.rejected_by || admission.revoked_by) && (
-          <Divider sx={{ my: 3 }} />
-        )}
-        {admission.treated_by && (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              mb: 1,
-              p: 1.5,
+              mt: 3,
+              p: 2,
               bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(99,102,241,0.04)',
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
               borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
             }}
           >
-            <PersonIcon fontSize="small" color="primary" />
-            <Typography variant="body2" color="text.secondary">
-              <strong>Treated by:</strong> {admission.treated_by_name || admission.treated_by}
-              {admission.date_treated && (
-                <>
-                  {' '}
-                  on{' '}
-                  {new Date(admission.date_treated).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </>
-              )}
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                mb: 1.5,
+                display: 'block',
+              }}
+            >
+              Status Action History
             </Typography>
-          </Box>
-        )}
-        {admission.rejected_by && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 1.5,
-              mb: 1,
-              p: 1.5,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(211,47,47,0.04)',
-              borderRadius: 2,
-            }}
-          >
-            <CancelIcon fontSize="small" color="error" />
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Rejected by:</strong> {admission.rejected_by_name || admission.rejected_by}
-              </Typography>
-              {admission.rejection_reason && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5, fontStyle: 'italic' }}
+
+            {admission.treated_by && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 1,
+                  p: 1.5,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)',
+                  borderRadius: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1,
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
                 >
-                  Reason: {admission.rejection_reason}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        )}
-        {admission.revoked_by && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 1.5,
-              mb: 1,
-              p: 1.5,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(237,108,2,0.04)',
-              borderRadius: 2,
-            }}
-          >
-            <CancelIcon fontSize="small" color="warning" />
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Revoked by:</strong> {admission.revoked_by_name || admission.revoked_by}
-              </Typography>
-              {admission.revoked_reason && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5, fontStyle: 'italic' }}
+                  <PersonIcon fontSize="small" sx={{ color: 'primary.dark' }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Treated by:</strong>{' '}
+                    {admission.treated_by_name || admission.treated_by}
+                  </Typography>
+                  {admission.date_treated && (
+                    <Typography variant="caption" color="text.disabled">
+                      {new Date(admission.date_treated).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {admission.rejected_by && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1.5,
+                  mb: 1,
+                  p: 1.5,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(211,47,47,0.12)' : 'rgba(211,47,47,0.08)',
+                  borderRadius: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1,
+                    bgcolor: 'error.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
                 >
-                  Reason: {admission.revoked_reason}
-                </Typography>
-              )}
-            </Box>
+                  <CancelIcon fontSize="small" sx={{ color: 'error.dark' }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Rejected by:</strong>{' '}
+                    {admission.rejected_by_name || admission.rejected_by}
+                  </Typography>
+                  {admission.rejection_reason && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <em>Reason: {admission.rejection_reason}</em>
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {admission.revoked_by && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1.5,
+                  mb: 1,
+                  p: 1.5,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(237,108,2,0.12)' : 'rgba(237,108,2,0.08)',
+                  borderRadius: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1,
+                    bgcolor: 'warning.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <CancelIcon fontSize="small" sx={{ color: 'warning.dark' }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Revoked by:</strong>{' '}
+                    {admission.revoked_by_name || admission.revoked_by}
+                  </Typography>
+                  {admission.revoked_reason && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <em>Reason: {admission.revoked_reason}</em>
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
           </Box>
         )}
       </Paper>

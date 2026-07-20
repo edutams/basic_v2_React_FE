@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -40,12 +41,21 @@ import {
   Download as DownloadIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import { IconCheck } from '@tabler/icons-react';
+import {
+  IconNote,
+  IconEdit,
+  IconEye,
+  IconHistory,
+  IconCheck,
+  IconX,
+} from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
   fetchApplicationsByClass,
   batchProcessAdmissions,
+  acceptAdmissionOffer,
+  resetAdmissionOffer,
   downloadAdmissionTemplate,
   uploadAdmissionTemplate,
 } from '@/api/tenant/admission/admissionProcessingApi';
@@ -70,6 +80,7 @@ const formSubmitColors = {
 };
 
 const BatchProcessingTab = ({ allBatches, onDataChange }) => {
+  const navigate = useNavigate();
   const notify = useNotification();
 
   // ─── Data state ────────────────────────────────────────────────────────
@@ -117,6 +128,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [viewModal, setViewModal] = useState({
     open: false,
     formNumber: '',
+  });
+
+  // ─── Confirm dialog state ──────────────────────────────────────────────
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    type: '', // 'accept-offer' | 'reset-offer'
+    app: null,
+    title: '',
+    message: '',
   });
 
   // ─── Download Template modal state ─────────────────────────────────────
@@ -295,6 +315,72 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setViewModal({ open: false, formNumber: '' });
   };
 
+  // ─── Conditional checks for menu items ────────────────────────────────
+  const canAcceptOffer = (app) =>
+    app?.admission_status === 'admitted' &&
+    (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
+
+  const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
+
+  // ─── Confirm dialog handlers ──────────────────────────────────────────
+  const openConfirmAcceptOffer = (app) => {
+    handleMenuClose();
+    setConfirmDialog({
+      open: true,
+      type: 'accept-offer',
+      app,
+      title: 'Accept Admission Offer',
+      message: `Are you sure you want to accept the admission offer for ${getFullName(app)} (${app.form_number})?`,
+    });
+  };
+
+  const openConfirmResetOffer = (app) => {
+    handleMenuClose();
+    setConfirmDialog({
+      open: true,
+      type: 'reset-offer',
+      app,
+      title: 'Reverse Admission Offer',
+      message: `Are you sure you want to reverse the admission offer for ${getFullName(app)} (${app.form_number})?`,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { type, app } = confirmDialog;
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+
+    try {
+      if (type === 'accept-offer') {
+        await acceptAdmissionOffer(app);
+        notify.success('Admission offer accepted successfully');
+      } else if (type === 'reset-offer') {
+        const payload = {
+          form_number: app.form_number,
+          status: 'no',
+          fname: app.fname,
+          lname: app.lname,
+          mname: app.mname || '',
+          batchname: app.batchname,
+          prog_name: app.prog_name,
+          sesname: app.sesname,
+        };
+        await resetAdmissionOffer(payload);
+        notify.success('Admission offer reset successfully');
+      }
+      loadApplications(filter);
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      notify.error(
+        err?.response?.data?.message ||
+          `Failed to ${type === 'accept-offer' ? 'accept' : 'reset'} admission offer`,
+      );
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
+  };
+
   // ─── Download Template handlers ────────────────────────────────────────
   const handleOpenDownloadModal = async () => {
     if (!filter.appBatchId || !filter.classId) {
@@ -354,6 +440,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       return;
     }
 
+    if (selectedApplications.size === 0) {
+      notify.warning('Please select at least one applicant to include in the download');
+      return;
+    }
+
     setDownloading(true);
     try {
       const res = await downloadAdmissionTemplate({
@@ -361,6 +452,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         intend_class_id: filter.classId,
         programme_id: selectedProgramme,
         class_id: selectedClass,
+        form_numbers: Array.from(selectedApplications),
       });
 
       // Trigger blob download
@@ -711,11 +803,18 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       {/* ── Info Banner ────────────────────────────────────────────────── */}
       {statusTab === 0 && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            <strong>Note:</strong> Only <strong>Pending</strong> applications can be batch
-            processed. Switch to the <strong>Processed</strong> tab to view admitted, declined, or
-            revoked applications.
-          </Typography>
+          <Stack spacing={0.5}>
+            <Typography variant="body2">
+              <strong>Note:</strong> Only <strong>Pending</strong> applications can be batch
+              processed. Switch to the <strong>Processed</strong> tab to view admitted, declined, or
+              revoked applications.
+            </Typography>
+            <Typography variant="body2">
+              Select (<strong>check</strong>) the applicant(s) you want to include before using
+              the <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
+              Only the checked applicants will be included in the downloaded template.
+            </Typography>
+          </Stack>
         </Alert>
       )}
 
@@ -729,7 +828,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               startIcon={<DownloadIcon />}
               onClick={handleOpenDownloadModal}
-              disabled={!filter.appBatchId || !filter.classId}
+              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
             >
               Download Template
             </Button>
@@ -738,7 +837,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               size="small"
               startIcon={<UploadIcon />}
               onClick={handleOpenUploadModal}
-              disabled={!filter.appBatchId || !filter.classId}
+              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
             >
               Upload Template
             </Button>
@@ -749,7 +848,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 size="small"
                 startIcon={<IconCheck size={18} />}
                 onClick={() => openBatchModal('admit')}
-                disabled={!hasFetched}
+                disabled={!hasFetched || selectedApplications.size === 0}
                 sx={{ fontWeight: 600 }}
               >
                 Process All ({selectedApplications.size || applications.length})
@@ -922,10 +1021,84 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         onClose={handleMenuClose}
                         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
                       >
-                        <MenuItem onClick={() => handleViewAdmission(app.form_number)}>
+                        {/* Process Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/process-form/${form_number}`);
+                          }}
+                        >
+                          <IconNote size={18} style={{ marginRight: 12 }} />
+                          Process Application Form
+                        </MenuItem>
+
+                        {/* Edit Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/edit-form/${form_number}`);
+                          }}
+                        >
+                          <IconEdit size={18} style={{ marginRight: 12 }} />
+                          Edit Application Form
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* View Application Form */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/print-application/${form_number}`);
+                          }}
+                        >
+                          <IconEye size={18} style={{ marginRight: 12 }} />
+                          View Application Form
+                        </MenuItem>
+
+                        {/* View Payment History */}
+                        <MenuItem
+                          onClick={() => {
+                            const form_number = selectedApp?.form_number;
+                            handleMenuClose();
+                            if (form_number) navigate(`/admission/payment-history/${form_number}`);
+                          }}
+                        >
+                          <IconHistory size={18} style={{ marginRight: 12 }} />
+                          View Payment History
+                        </MenuItem>
+
+                        {/* View Details (Modal) */}
+                        <MenuItem onClick={() => handleViewAdmission(selectedApp?.form_number)}>
+                          <IconEye size={18} style={{ marginRight: 12 }} />
                           View Details
                         </MenuItem>
+
+                        <Divider />
+
+                        {/* Accept Admission Offer */}
+                        {selectedApp && canAcceptOffer(selectedApp) && (
+                          <MenuItem
+                            onClick={() => openConfirmAcceptOffer(selectedApp)}
+                            sx={{ color: 'success.main' }}
+                          >
+                            <IconCheck size={18} style={{ marginRight: 12 }} />
+                            Accept Admission Offer
+                          </MenuItem>
+                        )}
+
+                        {/* Reverse Admission Offer */}
+                        {selectedApp && canResetOffer(selectedApp) && (
+                          <MenuItem onClick={() => openConfirmResetOffer(selectedApp)} sx={{ color: 'error.main' }}>
+                            <IconX size={18} style={{ marginRight: 12 }} />
+                            Reverse Admission Offer
+                          </MenuItem>
+                        )}
                       </Menu>
                     </TableCell>
                   </TableRow>
@@ -1266,6 +1439,28 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             disabled={!uploadModal.file || uploadModal.uploading}
           >
             {uploadModal.uploading ? 'Uploading...' : 'Upload Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Confirmation Dialog ──────────────────────────────────────────── */}
+      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {confirmDialog.message}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleCancelConfirm}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            color={confirmDialog.type === 'reset-offer' ? 'error' : 'primary'}
+            onClick={handleConfirmAction}
+          >
+            {confirmDialog.type === 'reset-offer' ? 'Yes, Reverse' : 'Yes, Accept'}
           </Button>
         </DialogActions>
       </Dialog>

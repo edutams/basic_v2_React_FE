@@ -380,13 +380,27 @@ const ProcessApplicationForm = () => {
         sx={{
           position: 'relative',
           zIndex: 1,
+          bgcolor: (theme) => theme.palette.background.paper,
           boxShadow: (theme) =>
             theme.palette.mode === 'dark'
-              ? '0 4px 20px rgba(0,0,0,0.3)'
-              : '0 4px 20px rgba(0,0,0,0.06)',
+              ? '0 4px 24px rgba(0,0,0,0.4)'
+              : '0 2px 16px rgba(0,0,0,0.08)',
           borderRadius: 3,
           border: '1px solid',
           borderColor: 'divider',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)'
+                : 'linear-gradient(90deg, #6366f1 0%, #7c3aed 100%)',
+            borderRadius: '3px 3px 0 0',
+          },
         }}
       >
         <Stack spacing={3}>

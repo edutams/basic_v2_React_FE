@@ -121,20 +121,23 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   const getFormSubmitLabel = (value) => (value === 'yes' ? 'Submitted' : 'Not Submitted');
 
   // ─── API calls ─────────────────────────────────────────────────────────
-  const loadApplications = useCallback(async (filters = null, url = null) => {
-    setTableLoading(true);
-    try {
-      const res = await fetchApplications(filters, url);
-      const data = res?.data ?? res ?? [];
-      setApplications(Array.isArray(data) ? data : []);
-      setMeta(res?.meta ?? res?.pagination ?? null);
-    } catch (err) {
-      console.error('Failed to load applications:', err);
-      notify.error('Failed to load applications');
-    } finally {
-      setTableLoading(false);
-    }
-  }, [notify]);
+  const loadApplications = useCallback(
+    async (filters = null, url = null) => {
+      setTableLoading(true);
+      try {
+        const res = await fetchApplications(filters, url);
+        const data = res?.data ?? res ?? [];
+        setApplications(Array.isArray(data) ? data : []);
+        setMeta(res?.meta ?? res?.pagination ?? null);
+      } catch (err) {
+        console.error('Failed to load applications:', err);
+        notify.error('Failed to load applications');
+      } finally {
+        setTableLoading(false);
+      }
+    },
+    [notify],
+  );
 
   // ─── Handlers ──────────────────────────────────────────────────────────
   const handleStatusTabChange = (_, newValue) => {
@@ -245,7 +248,10 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
       loadApplications(filter);
       if (onDataChange) onDataChange();
     } catch (err) {
-      notify.error(err?.response?.data?.message || `Failed to ${type === 'accept-offer' ? 'accept' : 'reset'} admission offer`);
+      notify.error(
+        err?.response?.data?.message ||
+          `Failed to ${type === 'accept-offer' ? 'accept' : 'reset'} admission offer`,
+      );
     }
   };
 
@@ -255,7 +261,8 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
 
   // ─── Conditional checks for menu items ────────────────────────────────
   const canAcceptOffer = (app) =>
-    app?.admission_status === 'admitted' && (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
+    app?.admission_status === 'admitted' &&
+    (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
 
   const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
 
@@ -315,11 +322,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
         <Grid size={{ xs: 12, md: 4 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
-            <Select
-              value={filter.appBatchId}
-              label="Admission Batch"
-              onChange={handleBatchChange}
-            >
+            <Select value={filter.appBatchId} label="Admission Batch" onChange={handleBatchChange}>
               <MenuItem value="">-- Select Admission --</MenuItem>
               {allBatches.map((batch) => (
                 <MenuItem key={batch.batch_id} value={String(batch.batch_id)}>
@@ -368,16 +371,20 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
       <Box variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table size="small">
-            <TableHead sx={{
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB'
-            }}>
+            <TableHead
+              sx={{
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB',
+              }}
+            >
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: '4%' }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '9%' }}>Form Number</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '15%' }}>Applicant's Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '15%' }}>Guardian's Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '16%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%' }}>Admitted Class</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
                   Form Status
                 </TableCell>
@@ -420,6 +427,16 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                     <TableCell>
                       <Typography variant="body2">{getBatchLabel(app)}</Typography>
                     </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.intending_class_code || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {app.admitted_class_code || '—'} {app.admitted_class_arm_name || '—'}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="center">
                       <Chip
                         label={getFormSubmitLabel(app.form_submit_status)}
@@ -446,10 +463,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuOpen(e, app)}
-                      >
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, app)}>
                         <IconDotsVertical size={16} />
                       </IconButton>
                     </TableCell>
@@ -565,10 +579,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
 
         {/* Reverse Admission Offer */}
         {activeRow && canResetOffer(activeRow) && (
-          <MenuItem
-            onClick={() => openConfirmResetOffer(activeRow)}
-            sx={{ color: 'error.main' }}
-          >
+          <MenuItem onClick={() => openConfirmResetOffer(activeRow)} sx={{ color: 'error.main' }}>
             <IconX size={18} style={{ marginRight: 12 }} />
             Reverse Admission Offer
           </MenuItem>
@@ -576,12 +587,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
       </Menu>
 
       {/* ── Confirmation Dialog ──────────────────────────────────────────── */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleCancelConfirm}
-        maxWidth="xs"
-        fullWidth
-      >
+      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

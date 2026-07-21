@@ -116,7 +116,7 @@ const CommissionManagement = () => {
                 count={stat.value}
                 label={stat.title}
                 icon={stat.icon}
-                color={colors[index] || 'primary'}
+                colorIndex={index}
               />
             );
           })}

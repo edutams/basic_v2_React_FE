@@ -266,7 +266,7 @@ const ChartOfAccounts = () => {
               label="Registered Banks"
               count="3"
               icon={IconBuildingBank}
-              color={theme.palette.primary.main}
+              colorIndex={0}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -274,7 +274,7 @@ const ChartOfAccounts = () => {
               label="Chart of Accounts"
               count="5"
               icon={IconReceipt2}
-              color={theme.palette.primary.main}
+              colorIndex={1}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -282,7 +282,7 @@ const ChartOfAccounts = () => {
               label="Income Lines"
               count="2"
               icon={IconChartPie}
-              color={theme.palette.primary.main}
+              colorIndex={2}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -290,7 +290,7 @@ const ChartOfAccounts = () => {
               label="Expenditure Line"
               count="3"
               icon={IconWallet}
-              color={theme.palette.primary.main}
+              colorIndex={3}
             />
           </Grid>
         </Grid>

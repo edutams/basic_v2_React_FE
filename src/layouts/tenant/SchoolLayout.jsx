@@ -58,14 +58,15 @@ const SchoolLayout = () => {
 
           <Container
             sx={{
-              maxWidth: '100%!important',
+              maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',
               overflowX: 'auto',
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
+              px: { xs: 2, sm: 3 },
             }}
           >
-            <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', py: 3, px: { xs: 1, sm: 2 } }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

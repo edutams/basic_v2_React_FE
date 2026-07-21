@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, Stack, Divider, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 /**
  * Reusable dashboard stat card matching the new design:
@@ -17,10 +18,18 @@ const StatCard = ({
   subStats = [],
   onIconClick,
   onClick,
+  colorIndex = 0,
+  color,
   sx = {},
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { cardBg, iconBg, iconGlow, accentColor, borderColor } = getStatCardColor(
+    color,
+    colorIndex,
+    isDark,
+    theme,
+  );
 
   return (
     <Card
@@ -28,19 +37,19 @@ const StatCard = ({
       sx={{
         height: '100%',
         borderRadius: '16px',
-        border: `2px solid ${isDark ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100]}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        background: isDark ? theme.palette.background.paper : `${cardBg} !important`,
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${borderColor}`,
         boxShadow:
           theme.palette.mode === 'dark'
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 0 20px rgba(0,0,0,.10)',
+            ? '0 6px 24px rgba(0,0,0,0.28)'
+            : '0 4px 20px rgba(0,0,0,0.07)',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
               boxShadow:
                 theme.palette.mode === 'dark'
-                  ? '0 12px 35px rgba(0,0,0,0.45)'
-                  : '0 10px 25px rgba(0,0,0,0.15)',
+                  ? '0 8px 30px rgba(0,0,0,0.35)'
+                  : '0 6px 24px rgba(0,0,0,0.12)',
               transform: 'translateY(-4px)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }
@@ -73,14 +82,14 @@ const StatCard = ({
               onIconClick?.();
             }}
             sx={{
-              bgcolor: isDark ? '#333' : '#333333',
-              p: 0.6,
-              borderRadius: '6px',
+              background: iconBg,
+              boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${iconGlow}`,
+              p: 0.75,
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: onIconClick ? 'pointer' : 'default',
-              '&:hover': onIconClick ? { bgcolor: '#222' } : {},
             }}
           >
             <IconChartBar size={18} color="white" />
@@ -90,7 +99,7 @@ const StatCard = ({
         {/* Value */}
         <Box
           sx={{
-            bgcolor: valueBg || (isDark ? '#1e3a5f22' : '#EEF2FF'),
+            bgcolor: valueBg || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)'),
             borderRadius: '8px',
             px: 2,
             py: 1.2,
@@ -101,7 +110,11 @@ const StatCard = ({
           <Typography
             variant="h3"
             fontWeight="800"
-            sx={{ color: valueColor || '#4a3aff', fontSize: '32px', lineHeight: 1 }}
+            sx={{
+              color: valueColor || (isDark ? '#ffffff' : accentColor),
+              fontSize: '32px',
+              lineHeight: 1,
+            }}
           >
             {value}
           </Typography>
@@ -161,6 +174,8 @@ StatCard.propTypes = {
   ),
   onIconClick: PropTypes.func,
   onClick: PropTypes.func,
+  colorIndex: PropTypes.number,
+  color: PropTypes.string,
   sx: PropTypes.object,
 };
 

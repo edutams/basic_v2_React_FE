@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Stack, Divider, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
+import { getStatCardColor } from 'src/utils/statCardColors';
 import PropTypes from 'prop-types';
 
 /**
@@ -14,6 +15,7 @@ const DashboardStatCard = ({
   value,
   valueColor,
   valueBg,
+  colorIndex = 0,
   subStats = [],
   onIconClick,
   onClick,
@@ -22,26 +24,28 @@ const DashboardStatCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const softColors = getStatCardColor(valueColor, colorIndex, isDark, theme);
+  const resolvedValueColor = softColors.accentColor;
+  const resolvedValueBg = softColors.valueBg;
+
   return (
     <Card
       onClick={onClick}
       sx={{
         height: '100%',
         borderRadius: '16px',
-        border: `2px solid ${isDark ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100]}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 0 20px rgba(0,0,0,.10)',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${softColors.borderColor}`,
+        background: isDark ? theme.palette.background.paper : `${softColors.cardBg} !important`,
+        boxShadow: isDark
+          ? '0 6px 24px rgba(0,0,0,0.28)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 12px 35px rgba(0,0,0,0.45)'
-                  : '0 10px 25px rgba(0,0,0,0.15)',
-              transform: 'translateY(-4px)',
+              boxShadow: isDark
+                ? '0 8px 30px rgba(0,0,0,0.35)'
+                : '0 6px 24px rgba(0,0,0,0.12)',
+              transform: 'translateY(-3px)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }
           : {},
@@ -52,30 +56,31 @@ const DashboardStatCard = ({
       <CardContent sx={{ p: '20px !important', height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" fontWeight="900" sx={{ color: isDark ? '#ccc' : '#555', fontSize: '13px' }}>
+          <Typography variant="subtitle2" fontWeight="700" sx={{ color: 'text.secondary', fontSize: '13px' }}>
             {title}
           </Typography>
           <Box
             onClick={(e) => { e.stopPropagation(); onIconClick?.(); }}
             sx={{
-              bgcolor: isDark ? '#333' : '#333333',
+              background: `${softColors.iconBg} !important`,
+              boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${softColors.iconGlow}`,
               p: 0.6,
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: onIconClick ? 'pointer' : 'default',
-              '&:hover': onIconClick ? { bgcolor: '#222' } : {},
+              '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={18} color="white" />
+            <IconChartBar size={18} color={softColors.iconColor || 'white'} />
           </Box>
         </Box>
 
         {/* Value */}
         <Box
           sx={{
-            bgcolor: valueBg || (isDark ? '#1e3a5f22' : '#EEF2FF'),
+            background: `${resolvedValueBg} !important`,
             borderRadius: '8px',
             px: 2,
             py: 1.2,
@@ -86,7 +91,7 @@ const DashboardStatCard = ({
           <Typography
             variant="h3"
             fontWeight="800"
-            sx={{ color: valueColor || '#4a3aff', fontSize: '32px', lineHeight: 1 }}
+            sx={{ color: resolvedValueColor, fontSize: '32px', lineHeight: 1 }}
           >
             {value}
           </Typography>
@@ -94,10 +99,10 @@ const DashboardStatCard = ({
 
         {/* Sub Stats */}
         {subStats.length > 0 && (
-          <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
+          <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem sx={{ borderColor: softColors.borderColor }} />} sx={{ mt: 'auto' }}>
             {subStats.map((stat, i) => (
               <Box key={i} sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2 }}>
-                <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#333333', fontWeight: 800, display: 'block', mb: 0.3 ,fontSize: '13px'}}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, display: 'block', mb: 0.3, fontSize: '12px' }}>
                   {stat.label}
                 </Typography>
                 <Typography variant="subtitle2" fontWeight="700" sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}>

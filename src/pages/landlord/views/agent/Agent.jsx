@@ -36,6 +36,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Divider
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -45,8 +46,7 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
-import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
-
+import { getStatCardColor } from '@/utils/statCardColors';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -262,6 +262,11 @@ import useNotification from '@/hooks/useNotification';
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const statColor0 = getStatCardColor(null, 0, isDark, theme);
+  const statColor1 = getStatCardColor(null, 1, isDark, theme);
+  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+  const statColor3 = getStatCardColor(null, 3, isDark, theme);
   const notify = useNotification();
 
   const [tab, setTab] = useState(0);
@@ -819,12 +824,17 @@ const Agent = () => {
           mb: 3,
         }}
       >
+        {/* Total School */}
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -835,7 +845,7 @@ const Agent = () => {
               mb: 2,
             }}
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={700}>
               Total School
             </Typography>
 
@@ -844,70 +854,77 @@ const Agent = () => {
                 width: 30,
                 height: 30,
                 borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                background: `${statColor0.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsSchoolModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: '#E6F7F1',
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
-              px: 3,
-              py: 1,
+              px: 2,
+              py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 20, fontWeight: 700, color: '#2CA87F' }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
               {analytics.totalSchools ?? 0}
             </Typography>
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
+              <Typography variant="caption" color="text.secondary">
                 Approved
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+              <Typography fontWeight={600}>
                 {analytics.activeSchools ?? 0}
               </Typography>
             </Box>
-            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
+              <Typography variant="caption" color="text.secondary">
                 Pending
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+              <Typography fontWeight={600}>
                 {analytics.pendingSchools ?? 0}
               </Typography>
             </Box>
-            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
+              <Typography variant="caption" color="text.secondary">
                 Rejected
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+              <Typography fontWeight={600}>
                 {analytics.rejectedSchools ?? 0}
               </Typography>
             </Box>
           </Box>
         </Paper>
 
+        {/* Subscriptions */}
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -918,7 +935,7 @@ const Agent = () => {
               mb: 2,
             }}
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={700}>
               Subscriptions
             </Typography>
 
@@ -927,36 +944,32 @@ const Agent = () => {
                 width: 30,
                 height: 30,
                 borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                background: `${statColor1.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: '#EEF2FF',
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
-              px: 3,
-              py: 1,
+              px: 2,
+              py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 3,
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#4A3AFF',
-              }}
-            >
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -969,72 +982,72 @@ const Agent = () => {
             }}
           >
             <Box>
-              <Typography variant="h6" color="text.primary">
+              <Typography variant="caption" color="text.secondary">
                 Primary School
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+              <Typography fontWeight={600}>
                 {schoolSummary.primary}
               </Typography>
             </Box>
 
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
 
             <Box>
-              <Typography variant="h6" color="text.primary">
+              <Typography variant="caption" color="text.secondary">
                 Secondary School
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+              <Typography fontWeight={600}>
                 {schoolSummary.secondary}
               </Typography>
             </Box>
           </Box>
         </Paper>
 
+        {/* Login Activities */}
         <Paper
+          elevation={0}
           sx={{
-            // px: 3,
-            // py: 2,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            p: 3,
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
-            // mb={2}
             sx={{
-              p: 2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              mb: 2,
             }}
           >
-            <Typography variant="h5" color="text.primary">
+            <Typography variant="subtitle1" fontWeight={700}>
               Login Activities
             </Typography>
 
             <Box
               sx={{
-                bgcolor: '#3d3d3d',
-                p: '4px',
-                borderRadius: '6px',
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: `${statColor2.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer',
-                '&:hover': { bgcolor: '#111' },
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsLoggedInUsersModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
 
-          <Box sx={{ px: 3, mt: 1 }}>
+          <Box sx={{ pb: 0 }}>
             {loginActivitiesLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
                 <CircularProgress size={24} />
@@ -1051,13 +1064,14 @@ const Agent = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 1,
+                    py: 0.5,
+                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                   }}
                 >
-                  <Typography variant="h5" color="text.primary">
-                    {item.label}:
+                  <Typography variant="body2" color="text.secondary">
+                    {item.label}
                   </Typography>
-                  <Typography variant="h5" fontWeight="600" color="error.main">
+                  <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
                     {item.value}
                   </Typography>
                 </Box>
@@ -1066,25 +1080,28 @@ const Agent = () => {
           </Box>
         </Paper>
 
+        {/* Plan Distribution */}
         <Paper
+          elevation={0}
           sx={{
-            // px: 3,
-            // py: 2,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            p: 3,
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
-            // mb={2}
             sx={{
-              p: 2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              mb: 1,
             }}
           >
-            <Typography variant="h5" color="text.primary">
+            <Typography variant="subtitle1" fontWeight={700}>
               Plan Distribution
             </Typography>
 
@@ -1092,22 +1109,25 @@ const Agent = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                borderRadius: 1,
+                background: `${statColor3.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
 
           <Box>
             <Box
               sx={{
-                height: 170,
+                height: 130,
                 display: 'flex',
                 alignItems: 'center',
                 overflow: 'hidden',

@@ -42,7 +42,7 @@ const plans = [
 
 const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
 
-// ── Shared card components matching TotalTransactionModal ──────────────
+// \u2500\u2500 Shared card components matching TotalTransactionModal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -93,6 +93,7 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
     </Card>
   );
 };
+
 
 const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
   const theme = useTheme();

@@ -5,14 +5,11 @@ import React from "react";
 
 
 
-// Create the context with an initial value
 export const CustomizerContext = createContext(undefined);
 
 
-// Create the provider component
 export const CustomizerContextProvider = ({ children }) => {
 
-    // Initialize state with localStorage values or fallback to config defaults
     const [activeDir, setActiveDir] = useState(() => {
         return localStorage.getItem('activeDir') || config.activeDir;
     });

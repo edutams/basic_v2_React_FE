@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Avatar } from '@mui/material';
+import { Box, Grid, Typography, Avatar, Chip } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, Person as PersonIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
@@ -73,36 +73,90 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
 
   return (
     <ReviewSection number={1} title="Tell us about your ward" subtitle="Basic information" id="section-ward-detail">
-      <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
-        <Box sx={{ position: 'relative', mb: 1 }}>
-          <Avatar src={wardData?.passport_photo} sx={{ width: 72, height: 72, bgcolor: 'grey.300' }}>
-            {(!wardData?.passport_photo) && <PersonIcon sx={{ color: '#000', fontSize: 40 }} />}
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        mb={3}
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          bgcolor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(99,102,241,0.04)',
+        }}
+      >
+        <Box sx={{ position: 'relative', mb: 1.5 }}>
+          <Avatar
+            src={wardData?.passport_photo}
+            sx={{
+              width: 80,
+              height: 80,
+              bgcolor: 'primary.light',
+              border: '3px solid',
+              borderColor: 'primary.main',
+              boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
+            }}
+          >
+            {!wardData?.passport_photo && (
+              <PersonIcon sx={{ color: 'primary.dark', fontSize: 40 }} />
+            )}
           </Avatar>
           <Box
             sx={{
-              position: 'absolute', bottom: 0, right: 0,
-              width: 20, height: 20, borderRadius: '50%',
-              bgcolor: 'primary.dark', border: '2px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              bgcolor: 'success.main',
+              border: '2px solid',
+              borderColor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <CheckCircleIcon sx={{ fontSize: 12, color: '#fff' }} />
+            <CheckCircleIcon sx={{ fontSize: 14, color: '#fff' }} />
           </Box>
         </Box>
-        <Typography variant="body2" fontWeight={700}>{fullName || 'N/A'}</Typography>
-        <Typography variant="caption" color="text.secondary">
-          Intending Class: {displayIntendingClass}
+        <Typography variant="body1" fontWeight={700} sx={{ mb: 0.5 }}>
+          {fullName || 'N/A'}
         </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.0 }}>
-          Batch: {selectedBatch?.batch_name || 'N/A'}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          Session: {
-            selectedBatch?.session_term
-              ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
-              : 'N/A'
-          }
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: 0.75,
+          }}
+        >
+          <Chip
+            label={`Intending: ${displayIntendingClass}`}
+            size="small"
+            variant="outlined"
+            color="primary"
+            sx={{ fontSize: 11, fontWeight: 600 }}
+          />
+          <Chip
+            label={`Batch: ${selectedBatch?.batch_name || 'N/A'}`}
+            size="small"
+            variant="outlined"
+            color="secondary"
+            sx={{ fontSize: 11, fontWeight: 600 }}
+          />
+          <Chip
+            label={`Session: ${
+              selectedBatch?.session_term
+                ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
+                : 'N/A'
+            }`}
+            size="small"
+            variant="outlined"
+            color="info"
+            sx={{ fontSize: 11, fontWeight: 600 }}
+          />
+        </Box>
       </Box>
 
       <Grid container spacing={2}>

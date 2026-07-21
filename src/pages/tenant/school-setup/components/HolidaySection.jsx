@@ -25,6 +25,7 @@ import {
   CircularProgress,
   LinearProgress,
   Grid,
+  useTheme,
 } from '@mui/material';
 import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
@@ -36,10 +37,13 @@ import {
   fetchHolidayStatistics,
 } from '@/api/tenant/holidays/holidayApi';
 import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
 const HolidaySection = ({ refreshKey }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -310,72 +314,80 @@ const HolidaySection = ({ refreshKey }) => {
             {
               label: 'Total School Days',
               value: statistics.total_school_days,
-              color: 'text.primary',
+              colorIndex: 0,
             },
-            { label: 'Holiday Count', value: statistics.holiday_count, color: 'text.primary' },
+            {
+              label: 'Holiday Count',
+              value: statistics.holiday_count,
+              colorIndex: 1
+            },
             {
               label: 'Days Allocated',
               value: statistics.holiday_days_allocated,
-              color: 'warning.main',
+              colorIndex: 2,
             },
-            { label: 'Days Used', value: statistics.holiday_days_used, color: 'error.main' },
-            { label: 'Upcoming Days', value: statistics.upcoming_holiday_days, color: 'info.main' },
+            {
+              label: 'Days Used',
+              value: statistics.holiday_days_used,
+              colorIndex: 3
+            },
+            {
+              label: 'Upcoming Days',
+              value: statistics.upcoming_holiday_days,
+              colorIndex: 4
+            },
             {
               label: 'Teaching Days Left',
               value: statistics.remaining_school_days,
-              color: 'success.main',
+              colorIndex: 5,
             },
-          ].map((stat) => (
-            <Box
-              key={stat.label}
-              sx={{
-                p: { xs: 1, sm: 2 },
-                bgcolor: 'background.paper',
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
-                borderRadius: '16px',
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
-              }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' }, lineHeight: 1.3 }}
+          ].map((stat) => {
+            const colors = getStatCardColor(null, stat.colorIndex, isDark, theme);
+
+            return (
+              <Box
+                key={stat.label}
+                sx={{
+                  p: { xs: 1, sm: 2 },
+                  background: colors.cardBg,
+                  border: `1px solid ${colors.borderColor}`,
+                  borderRadius: '16px',
+                  boxShadow: isDark
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
+                }}
               >
-                {stat.label}
-              </Typography>
-              <Typography
-                variant="h5"
-                fontWeight={700}
-                color={stat.color}
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-              >
-                {stat.value}
-              </Typography>
-            </Box>
-          ))}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' }, lineHeight: 1.3 }}
+                >
+                  {stat.label}
+                </Typography>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color={colors.accentColor}
+                  sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                >
+                  {stat.value}
+                </Typography>
+              </Box>
+            );
+          })}
 
           {/* Utilization */}
           <Box
             sx={{
               p: { xs: 1, sm: 2 },
-              bgcolor: 'background.paper',
-              border: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '2px solid rgba(91, 38, 38, 0.08)'
-                  : `2px solid ${theme.palette.grey[100]}`,
+              background: getStatCardColor(null, 0, isDark, theme).cardBg,
+              border: `1px solid ${getStatCardColor(null, 0, isDark, theme).borderColor}`,
               borderRadius: '16px',
               gridColumn: { xs: '1 / -1', md: 'auto' },
-              boxShadow: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '0 10px 30px rgba(0,0,0,0.35)'
-                  : '0 0 20px rgba(0,0,0,.10)',
+              boxShadow: isDark
+                ? '0 6px 24px rgba(0,0,0,0.28)'
+                : '0 4px 20px rgba(0,0,0,0.07)',
             }}
           >
             <Box display="flex" justifyContent="space-between">
@@ -390,6 +402,13 @@ const HolidaySection = ({ refreshKey }) => {
                 variant="caption"
                 fontWeight={700}
                 sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
+                color={
+                  statistics.holiday_percentage > 80
+                    ? 'error.main'
+                    : statistics.holiday_percentage > 50
+                      ? 'warning.main'
+                      : 'primary.main'
+                }
               >
                 {statistics.holiday_percentage}%
               </Typography>
@@ -404,7 +423,12 @@ const HolidaySection = ({ refreshKey }) => {
                     ? 'warning'
                     : 'primary'
               }
-              sx={{ height: 6, borderRadius: 4, my: 1 }}
+              sx={{
+                height: 6, borderRadius: 4, my: 1, backgroundColor: '#FFFFFF',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 4,
+                },
+              }}
             />
             <Typography variant="caption" color="text.secondary">
               {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated

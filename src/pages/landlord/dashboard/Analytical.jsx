@@ -441,14 +441,33 @@ export default function Dashboard() {
                 >
                   Transaction
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Select size="small" value="year" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="year">Year</MenuItem>
-                  </Select>
-                  <Select size="small" value="gateway" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="gateway">Gateway</MenuItem>
-                  </Select>
-                </Stack>
+             <Stack direction="row" spacing={1}>
+  <Select
+    size="small"
+    value="year"
+    sx={{
+      minWidth: 100,
+      height: '35px',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '8px',
+    }}
+  >
+    <MenuItem value="year">Year</MenuItem>
+  </Select>
+
+  <Select
+    size="small"
+    value="gateway"
+    sx={{
+      minWidth: 100,
+      height: '35px',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '8px',
+    }}
+  >
+    <MenuItem value="gateway">Gateway</MenuItem>
+  </Select>
+</Stack>
               </Box>
               <Box 
                 sx={{ 

@@ -33,6 +33,7 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import { usePermissions } from '@/context/AgentContext/permissions';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -82,6 +83,12 @@ function a11yProps(index) {
 
 const EduTier = () => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const statColor0 = getStatCardColor(null, 0, isDark, theme);
+  const statColor1 = getStatCardColor(null, 1, isDark, theme);
+  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
@@ -138,11 +145,13 @@ const EduTier = () => {
         }}
       >
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -153,80 +162,51 @@ const EduTier = () => {
               mb: 2,
             }}
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={700}>
               Total Payment
             </Typography>
-
             <Box
               sx={{
                 width: 30,
                 height: 30,
                 borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                background: statColor0.iconBg,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenTotalTransactionModal(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
-
           <Box
             sx={{
-              background: '#EEF2FF',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
-              px: 3,
-              py: 1,
+              px: 2,
+              py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 3,
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#4A3AFF',
-              }}
-            >
-              {/* {schoolSummary.total} */}0
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+              0
             </Typography>
           </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Commission
-              </Typography>
-              <Typography sx={{ fontSize: 18, fontWeight: 500 }}>
-                {/* {schoolSummary.primary} */}100,000,000
-              </Typography>
+              <Typography variant="caption" color="text.secondary">Commission</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>100,000,000</Typography>
             </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
-
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Volume
-              </Typography>
-              <Typography sx={{ fontSize: 18, fontWeight: 500 }}>
-                {/* {schoolSummary.secondary} */} 304,043,000
-              </Typography>
+              <Typography variant="caption" color="text.secondary">Volume</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>304,043,000</Typography>
             </Box>
           </Box>
         </Paper>
@@ -275,11 +255,13 @@ const EduTier = () => {
         </Paper> */}
 
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -290,80 +272,49 @@ const EduTier = () => {
               mb: 2,
             }}
           >
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={700}>
               Subscriptions
             </Typography>
-
             <Box
               sx={{
                 width: 30,
                 height: 30,
                 borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                background: statColor1.iconBg,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
-              // onClick={() => setOpenTotalSchoolModal(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
-
           <Box
             sx={{
-              background: '#EEF2FF',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
-              px: 3,
-              py: 1,
+              px: 2,
+              py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 3,
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#4A3AFF',
-              }}
-            >
-              {/* {schoolSummary.total} */}0
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+              0
             </Typography>
           </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Primary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.primary} */} 0
-              </Typography>
+              <Typography variant="caption" color="text.secondary">Primary School</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
             </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
-
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Secondary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.secondary} */}0
-              </Typography>
+              <Typography variant="caption" color="text.secondary">Secondary School</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
             </Box>
           </Box>
         </Paper>
@@ -459,59 +410,52 @@ const EduTier = () => {
           </Box>
         </Paper> */}
         <Paper
+          elevation={0}
           sx={{
-            p: 2,
-            // py: 2,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            p: 3,
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
-            // mb={1}
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              mb: 1,
             }}
           >
-            <Typography variant="h5" color="text.primary">
+            <Typography variant="subtitle1" fontWeight={700}>
               Plan Distribution
             </Typography>
-
             <Box
               sx={{
                 width: 30,
                 height: 30,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                borderRadius: 1,
+                background: statColor3.iconBg,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenPlanDistributionModal(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color="#FFFFFF" />
             </Box>
           </Box>
-
-          <Box>
-            <Box
-              sx={{
-                height: 170,
-                display: 'flex',
-                alignItems: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={180}
-                hideCard
-              />
-            </Box>
+          <Box sx={{ height: 140, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+            <ReusablePieChart
+              series={planSeries}
+              colors={planColors}
+              labels={planLabels}
+              height={150}
+              hideCard
+            />
           </Box>
         </Paper>
 

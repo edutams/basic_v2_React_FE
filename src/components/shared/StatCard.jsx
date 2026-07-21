@@ -2,87 +2,146 @@ import React, { useContext } from 'react';
 import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
+import { getStatCardColor } from 'src/utils/statCardColors';
 import PropTypes from 'prop-types';
 
 /**
- * StatCard — reusable metric card used across dashboard pages.
- *
- * Props:
- *  - count:   string | number — the value to display
- *  - label:   string          — description below the count
- *  - icon:    component       — MUI or Tabler icon component
- *  - color:   string          — icon color (default: 'primary')
- *  - loading: bool            — shows a spinner instead of count when true
+ * StatCard — High-end modern SaaS metric card.
  */
-const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => {
+const StatCard = ({
+  count,
+  label,
+  icon: Icon,
+  color,
+  colorIndex = 0,
+  loading,
+}) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-  // Dynamic colors for premium styling
-  const resolvedBgColor = theme.palette[color]?.light || theme.palette.primary.light;
-  const resolvedIconColor = theme.palette[color]?.main || theme.palette.primary.main;
-  const borderColor = theme.palette.mode === 'dark' ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100];
+  const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
+    getStatCardColor(color, colorIndex, isDark, theme);
 
   return (
     <Paper
       elevation={0}
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
-        borderRadius: '16px',
+        borderRadius: 1,
         p: 3,
         width: '100%',
-        bgcolor: 'background.paper',
+        background: isDark ? 'background.paper' : `${cardBg} !important`,
+        bgcolor: isDark ? 'background.paper' : undefined,
+        backgroundColor: isDark ? 'background.paper' : undefined,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        // border: `2px solid ${borderColor}`,
-        boxShadow:
+        position: 'relative',
+        overflow: 'hidden',
+
+        border: (theme) =>
           theme.palette.mode === 'dark'
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 0 20px rgba(0,0,0,.10)'
-        // transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            ? '1px solid rgba(255, 255, 255, 0.12)'
+            : `1px solid ${borderColor}`,
+        boxShadow: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '0 6px 24px rgba(0,0,0,0.28)'
+            : '0 4px 20px rgba(0,0,0,0.07)',
+
+        transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+
         // '&:hover': {
-        //   transform: 'translateY(-4px)',
-        //   boxShadow: isCardShadow
-        //     ? theme.palette.mode === 'dark'
-        //       ? '0px 10px 25px rgba(0, 0, 0, 0.4)'
-        //       : '0px 10px 20px rgba(0, 0, 0, 0.08)'
-        //     : 'none',
+        //   transform: 'translateY(-6px)',
+        //   boxShadow: (theme) =>
+        //     theme.palette.mode === 'dark'
+        //       ? '0 18px 40px rgba(0,0,0,.45)'
+        //       : '0 10px 30px rgba(0,0,0,.15)',
         // },
       }}
     >
+      {/* Background Watermark Icon */}
+      {/* {Icon && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: -10,
+            bottom: -15,
+            opacity: 0.08,
+            pointerEvents: 'none',
+            color: accentColor,
+            display: 'flex',
+            transform: 'rotate(-10deg)',
+          }}
+        >
+          <Icon size={84} />
+        </Box>
+      )} */}
+
+      {/* Icon Badge */}
       <Box
         sx={{
           width: 48,
           height: 48,
-          borderRadius: '12px',
-          bgcolor: resolvedBgColor,
+          borderRadius: '50%',
+          background: iconBg,
+          color: iconColor || '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
+          position: 'relative',
+          zIndex: 1,
+
+          boxShadow: isDark
+            ? '0 6px 16px rgba(0,0,0,.3)'
+            : `0 8px 22px -2px ${iconGlow}`,
         }}
       >
-        {Icon && (
-          <Icon
-            size={22}
-            sx={{ fontSize: 22 }}
-            style={{
-              color: resolvedIconColor,
-            }}
-          />
-        )}
+        {Icon && <Icon size={24} />}
       </Box>
 
-      <Box sx={{ textAlign: 'right', flexGrow: 1, pl: 2 }}>
+      {/* Content */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          pl: 2.5,
+          textAlign: 'right',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         {loading ? (
-          <CircularProgress size={24} />
+          <CircularProgress
+            size={24}
+            sx={{
+              color: accentColor,
+            }}
+          />
         ) : (
           <>
-            <Typography fontSize={26} fontWeight={700} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+            <Typography
+              sx={{
+                fontSize: 23,
+                fontWeight: 800,
+                lineHeight: 1,
+                letterSpacing: '-0.02em',
+                color: isDark ? '#ffffff' : accentColor,
+              }}
+            >
               {count}
             </Typography>
-            <Typography fontSize={14} fontWeight={500} sx={{ color: 'text.secondary', mt: 0.5 }}>
+
+            <Typography
+              sx={{
+                mt: 0.75,
+                fontSize: 13,
+                fontWeight: 600,
+                color: isDark
+                  ? 'rgba(255,255,255,.72)'
+                  : '#4B5563',
+              }}
+            >
               {label}
             </Typography>
           </>
@@ -97,6 +156,7 @@ StatCard.propTypes = {
   label: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string,
+  colorIndex: PropTypes.number,
   loading: PropTypes.bool,
 };
 

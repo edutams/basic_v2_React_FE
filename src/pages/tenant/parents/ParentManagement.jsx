@@ -318,21 +318,21 @@ const ParentManagement = () => {
             count={stats.total}
             label="Total Parents"
             icon={FamilyRestroomIcon}
-            color="primary"
+            colorIndex={0}
             loading={statsLoading}
           />
           <StatCard
             count={stats.active}
             label="Active Parents"
             icon={PeopleIcon}
-            color="primary"
+            colorIndex={1}
             loading={statsLoading}
           />
           <StatCard
             count={stats.linked}
             label="Guardians Linked"
             icon={LinkIcon}
-            color="primary"
+            colorIndex={2}
             loading={statsLoading}
           />
         </Stack>

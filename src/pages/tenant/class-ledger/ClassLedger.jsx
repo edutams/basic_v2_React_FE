@@ -486,8 +486,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Invoice(Compulsory Bill)"
             value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
-            valueColor="#5CB979"
-            valueBg={isDark ? '#1e2a4a' : '#EEFAF3'}
+            colorIndex={1}
             subStats={[
               {
                 label: 'Total Paid',
@@ -517,8 +516,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Invoice (Optional Bill)"
             value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
-            valueColor="#1F35B6"
-            valueBg={isDark ? '#0d2e1e' : '#ECEFFF'}
+            colorIndex={2}
             subStats={[
               {
                 label: 'Total Paid',
@@ -547,8 +545,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Payable"
             value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
-            valueColor="#895CB9"
-            valueBg={isDark ? '#0d2e1e' : '#F3EEFA'}
+            colorIndex={0}
             subStats={[
               {
                 label: 'Total Paid',

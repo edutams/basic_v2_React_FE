@@ -52,7 +52,6 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
     </Card>
   );
 };
-
 const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';

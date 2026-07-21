@@ -4,46 +4,58 @@ import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconCash, IconTrendingUp, IconCoins } from '@tabler/icons-react';
+import { getStatCardColor } from '@/utils/statCardColors';
 
-const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+const TopCard = ({ label, value, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  
   return (
     <Card
       sx={{
         p: 2.5,
         borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        boxShadow: isDark
+          ? '0 6px 24px rgba(0,0,0,0.28)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
+        border: `1px solid ${colors.borderColor}`,
+        background: colors.cardBg,
         height: '100%',
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
         <Box
           sx={{
             width: 42,
             height: 42,
             borderRadius: '10px',
-            bgcolor: iconBg,
+            background: colors.iconBg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            boxShadow: isDark
+              ? '0 4px 12px rgba(0,0,0,0.3)'
+              : `0 6px 14px ${colors.iconGlow}`,
           }}
         >
-          <Icon size={20} color={valueColor} />
+          <Icon size={20} color={colors.iconColor || '#fff'} />
         </Box>
-        <Box>
+        <Box sx={{ textAlign: 'right' }}>
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '22px', color: valueColor, lineHeight: 1.2 }}
+            sx={{ fontSize: '22px', color: colors.accentColor, lineHeight: 1.2 }}
           >
             ₦ {value}
           </Typography>
           <Typography
             variant="caption"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
+            sx={{ 
+              color: isDark ? '#ffffff' : '#4B5563', 
+              fontWeight: 500, 
+              fontSize: '12px' 
+            }}
           >
             {label}
           </Typography>
@@ -52,17 +64,20 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
     </Card>
   );
 };
-const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+const SideStatRow = ({ label, value, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  
   return (
     <Stack
       direction="row"
       spacing={1.5}
       alignItems="center"
+      justifyContent="space-between"
       sx={{
         py: 1.2,
-        borderBottom: `1px solid ${isDark ? '#333' : '#f0f0f0'}`,
+        borderBottom: `1px solid ${colors.borderColor}`,
         '&:last-child': { borderBottom: 'none' },
       }}
     >
@@ -71,20 +86,20 @@ const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
           width: 32,
           height: 32,
           borderRadius: '8px',
-          bgcolor: iconBg,
+          background: colors.iconBg,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={16} color={valueColor} />
+        <Icon size={16} color={colors.iconColor || '#fff'} />
       </Box>
-      <Box>
-        <Typography fontWeight={800} sx={{ fontSize: '14px', color: valueColor, lineHeight: 1.2 }}>
+      <Box sx={{ textAlign: 'right' }}>
+        <Typography fontWeight={800} sx={{ fontSize: '14px', color: colors.accentColor, lineHeight: 1.2 }}>
           ₦{value}
         </Typography>
-        <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B', fontSize: '11px' }}>
+        <Typography variant="caption" sx={{ color: isDark ? '#ffffff' : '#4B5563', fontSize: '11px' }}>
           {label}
         </Typography>
       </Box>
@@ -182,8 +197,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Transaction Value"
             value="7,000,234.00"
-            valueColor="#2ca87f"
-            iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+            colorIndex={0}
             icon={IconCash}
           />
         </Grid>
@@ -191,8 +205,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Transaction Volume"
             value="7,000,234.00"
-            valueColor="#e11d48"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+            colorIndex={1}
             icon={IconTrendingUp}
           />
         </Grid>
@@ -200,8 +213,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Commission"
             value="1,000,234.00"
-            valueColor="#4a3aff"
-            iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
+            colorIndex={2}
             icon={IconCoins}
           />
         </Grid>
@@ -305,29 +317,25 @@ const TotalTransactionModal = ({ open, onClose }) => {
             <SideStatRow
               label="Transaction Today"
               value="7,000,234.00"
-              valueColor="#2ca87f"
-              iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+              colorIndex={0}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Month"
               value="7,000,234.00"
-              valueColor="#e11d48"
-              iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+              colorIndex={1}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Week"
               value="7,000,234.00"
-              valueColor="#2ca87f"
-              iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+              colorIndex={2}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Year"
               value="7,000,234.00"
-              valueColor="#4a3aff"
-              iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
+              colorIndex={3}
               icon={IconCash}
             />
           </Box>

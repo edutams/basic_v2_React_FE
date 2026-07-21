@@ -131,8 +131,10 @@ export const getStatCardColor = (
   }
 
   if (isDark) {
+    const darkPaper = theme?.palette?.background?.paper || '#1e1e2d';
     return {
-      cardBg: 'background.paper',
+      cardBg: darkPaper,
+      valueBg: 'rgba(255,255,255,0.08)',
       iconBg: selected.iconBg,
       iconGlow: selected.iconGlow,
       iconColor: '#FFFFFF',
@@ -141,7 +143,7 @@ export const getStatCardColor = (
     };
   }
 
-  return selected;
+  return { ...selected, valueBg: 'rgba(255,255,255,0.7)' };
 };
 
 

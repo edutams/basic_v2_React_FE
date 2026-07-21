@@ -34,18 +34,17 @@ const DashboardStatCard = ({
       sx={{
         height: '100%',
         borderRadius: '16px',
-        border: `1px solid ${softColors.borderColor}`,
-        bgcolor: `${softColors.cardBg} !important`,
-        backgroundColor: `${softColors.cardBg} !important`,
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${softColors.borderColor}`,
+        background: isDark ? theme.palette.background.paper : `${softColors.cardBg} !important`,
         boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.03)',
+          ? '0 6px 24px rgba(0,0,0,0.28)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
               boxShadow: isDark
-                ? '0 12px 35px rgba(0,0,0,0.45)'
-                : '0 8px 25px rgba(0,0,0,0.08)',
+                ? '0 8px 30px rgba(0,0,0,0.35)'
+                : '0 6px 24px rgba(0,0,0,0.12)',
               transform: 'translateY(-3px)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }
@@ -63,8 +62,8 @@ const DashboardStatCard = ({
           <Box
             onClick={(e) => { e.stopPropagation(); onIconClick?.(); }}
             sx={{
-              bgcolor: `${softColors.iconBg} !important`,
-              backgroundColor: `${softColors.iconBg} !important`,
+              background: `${softColors.iconBg} !important`,
+              boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${softColors.iconGlow}`,
               p: 0.6,
               borderRadius: '6px',
               display: 'flex',
@@ -81,8 +80,7 @@ const DashboardStatCard = ({
         {/* Value */}
         <Box
           sx={{
-            bgcolor: `${resolvedValueBg} !important`,
-            backgroundColor: `${resolvedValueBg} !important`,
+            background: `${resolvedValueBg} !important`,
             borderRadius: '8px',
             px: 2,
             py: 1.2,

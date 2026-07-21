@@ -25,6 +25,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import { useTheme } from '@mui/material/styles';
 import { fetchStudentLedgerModalData } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
+import SharedStatCard from '@/components/shared/StatCard';
 
 const StudentLedgerModal = ({ open, onClose, student }) => {
   const [loading, setLoading] = useState(false);
@@ -145,34 +146,10 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
     };
   }, [data]);
 
-  const StatCard = ({ title, amount, icon, color, bgColor }) => (
-    <Box sx={{
-      p: 2,
-      borderRadius: 2,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      border: '1px solid',
-      borderColor: 'divider',
-      flex: 1
-    }}>
-      <Box sx={{
-        bgcolor: bgColor,
-        color: color,
-        p: 1.5,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>{title}</Typography>
-        <Typography variant="h6" color={color} fontWeight={700}>NGN {amount.toLocaleString()}</Typography>
-      </Box>
-    </Box>
-  );
+  // Adapter wrappers so MUI SvgIcons work as tabler-style icon components
+  const ReceiptIcon = ({ size }) => <ReceiptLongIcon sx={{ fontSize: size }} />;
+  const WalletIcon = ({ size }) => <AccountBalanceWalletIcon sx={{ fontSize: size }} />;
+  const PayIcon = ({ size }) => <PaidIcon sx={{ fontSize: size }} />;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
@@ -190,29 +167,32 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
         ) : (
           <Box id="student-ledger-print-area">
             {/* Stat Cards */}
-            <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-              <StatCard
-                title="Total Bill"
-                amount={totals.bill}
-                icon={<ReceiptLongIcon />}
-                color="#10b981"
-                bgColor="#ecfdf5"
-              />
-              <StatCard
-                title="Amount Paid"
-                amount={totals.paid}
-                icon={<PaidIcon />}
-                color="#f59e0b"
-                bgColor="#fffbeb"
-              />
-              <StatCard
-                title="Balance"
-                amount={totals.balance}
-                icon={<AccountBalanceWalletIcon />}
-                color="#ef4444"
-                bgColor="#fef2f2"
-              />
-            </Box>
+            <Grid container spacing={2} mb={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SharedStatCard
+                  label="Total Bill"
+                  count={`NGN ${totals.bill.toLocaleString()}`}
+                  icon={ReceiptIcon}
+                  colorIndex={1}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SharedStatCard
+                  label="Amount Paid"
+                  count={`NGN ${totals.paid.toLocaleString()}`}
+                  icon={PayIcon}
+                  colorIndex={3}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SharedStatCard
+                  label="Balance"
+                  count={`NGN ${totals.balance.toLocaleString()}`}
+                  icon={WalletIcon}
+                  colorIndex={4}
+                />
+              </Grid>
+            </Grid>
 
             {/* Header section */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

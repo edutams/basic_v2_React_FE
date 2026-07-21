@@ -32,7 +32,9 @@ import {
   Article as ArticleIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import StatCard from '@/components/shared/StatCard';
+import { getStatCardColor } from '@/utils/statCardColors';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
@@ -52,6 +54,14 @@ import { fetchSendInvoiceStats } from '@/api/tenant/bursary/sendInvoiceApi';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
 const PaymentShedule = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const statColor0 = getStatCardColor(null, 0, isDark, theme);
+  const statColor1 = getStatCardColor(null, 1, isDark, theme);
+  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+
   const [actionTab, setActionTab] = useState(0);
   const [scheduleTab, setScheduleTab] = useState(0);
 
@@ -431,16 +441,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor0.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Typography variant="body2" color="textSecondary" mb={3}>
@@ -450,7 +460,7 @@ const PaymentShedule = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
                   sx={{
-                    bgcolor: 'primary.light',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
                     borderRadius: 1,
                     px: 3,
                     py: 2,
@@ -464,8 +474,7 @@ const PaymentShedule = () => {
                     <Typography
                       variant="h2"
                       fontWeight={700}
-                      color="primary"
-                      sx={{ lineHeight: 1 }}
+                      sx={{ color: isDark ? '#ffffff' : statColor0.accentColor, lineHeight: 1 }}
                     >
                       {stats.schedule.total}
                     </Typography>
@@ -493,16 +502,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor1.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -511,13 +520,13 @@ const PaymentShedule = () => {
                     width: 25,
                     height: 25,
                     borderRadius: '50%',
-                    bgcolor: 'primary.light',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                  <ReceiptIcon sx={{ fontSize: 14, color: statColor1.accentColor }} />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Payment Name
@@ -531,7 +540,7 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor1.accentColor }}>
                       ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -546,7 +555,7 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor1.accentColor }}>
                       ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -564,16 +573,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor2.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -582,13 +591,13 @@ const PaymentShedule = () => {
                     width: 25,
                     height: 25,
                     borderRadius: '50%',
-                    bgcolor: 'primary.light',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                  <ReceiptIcon sx={{ fontSize: 14, color: statColor2.accentColor }} />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Student Category
@@ -602,7 +611,7 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor2.accentColor }}>
                       ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -617,7 +626,7 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3">
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor2.accentColor }}>
                       ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -640,16 +649,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 2,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor0.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Typography variant="caption" color="text.secondary" gutterBottom display="block">
@@ -658,7 +667,7 @@ const PaymentShedule = () => {
               <Box display="flex" alignItems="center" gap={2} mt={5}>
                 <Box
                   sx={{
-                    bgcolor: '#FFF8E1',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
                     borderRadius: 1,
                     px: 3,
                     py: 1.5,
@@ -669,7 +678,7 @@ const PaymentShedule = () => {
                   {loadingInvoiceStats ? (
                     <Skeleton width={80} height={36} />
                   ) : (
-                    <Typography variant="h2" fontWeight={700} color="#F57C00">
+                    <Typography variant="h2" fontWeight={700} sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}>
                       {invoiceStats.invoiceGenerated}
                     </Typography>
                   )}
@@ -696,16 +705,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 2,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor1.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -714,13 +723,13 @@ const PaymentShedule = () => {
                     width: 24,
                     height: 24,
                     borderRadius: '4px',
-                    bgcolor: 'primary.light',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <WalletIcon sx={{ fontSize: 16, color: statColor1.accentColor }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Payment Name
@@ -763,16 +772,16 @@ const PaymentShedule = () => {
               sx={{
                 p: 2,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor2.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -781,13 +790,13 @@ const PaymentShedule = () => {
                     width: 24,
                     height: 24,
                     borderRadius: '4px',
-                    bgcolor: 'primary.light',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <WalletIcon sx={{ fontSize: 16, color: statColor2.accentColor }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Category Name

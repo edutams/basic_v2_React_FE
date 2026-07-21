@@ -8,7 +8,6 @@ import {
   Tab,
   Select,
   MenuItem,
-  Card,
   useTheme,
   CircularProgress,
 } from '@mui/material';
@@ -17,54 +16,9 @@ import Chart from 'react-apexcharts';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar, IconBuildingCommunity } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
+import StatCard from '@/components/shared/StatCard';
 
-const TopCard = ({ label, value, icon: Icon, iconBg, valueColor }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Card
-      sx={{
-        p: 2.5,
-        borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
-        height: '100%',
-      }}
-    >
-      <Stack direction="row" spacing={2} alignItems="center">
-        <Box
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: '10px',
-            bgcolor: iconBg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={22} color={valueColor} />
-        </Box>
-        <Box>
-          <Typography
-            fontWeight={800}
-            sx={{ fontSize: '26px', color: valueColor, lineHeight: 1.1 }}
-          >
-            {value}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500 }}
-          >
-            {label}
-          </Typography>
-        </Box>
-      </Stack>
-    </Card>
-  );
-};
+
 
 const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) => {
   const theme = useTheme();
@@ -236,39 +190,35 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
       {/* Top stat cards */}
       <Grid container spacing={2} mb={3} mt={3}>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <TopCard
+          <StatCard
             label="Total School"
-            value={stats?.totalSchools ?? 0}
-            valueColor="#4a3aff"
-            iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
+            count={stats?.totalSchools ?? 0}
             icon={IconSchool}
+            colorIndex={0}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <TopCard
+          <StatCard
             label="Approved Schools"
-            value={stats?.activeSchools ?? 0}
-            valueColor="#16a34a"
-            iconBg={isDark ? '#0d2e1e' : '#dcfee6'}
+            count={stats?.activeSchools ?? 0}
             icon={IconBuildingCommunity}
+            colorIndex={1}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <TopCard
+          <StatCard
             label="Pending Schools"
-            value={stats?.pendingSchools ?? 0}
-            valueColor="#dae11d"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+            count={stats?.pendingSchools ?? 0}
             icon={IconBuildingCommunity}
+            colorIndex={3}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <TopCard
+          <StatCard
             label="Rejected Schools"
-            value={stats?.rejected ?? stats?.rejectedSchools ?? 0}
-            valueColor="#e11d48"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+            count={stats?.rejected ?? stats?.rejectedSchools ?? 0}
             icon={IconBuildingCommunity}
+            colorIndex={4}
           />
         </Grid>
       </Grid>

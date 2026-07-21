@@ -6,9 +6,11 @@ import {
   CreditCard as CreditCardIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import StatCard from '@/components/shared/StatCard';
+import { getStatCardColor } from '@/utils/statCardColors';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
 import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
@@ -18,6 +20,13 @@ import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary Setup' }];
 
 const BursarySetup = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const statColor0 = getStatCardColor(null, 0, isDark, theme);
+  const statColor1 = getStatCardColor(null, 1, isDark, theme);
+  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+
   const [currentTab, setCurrentTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -146,21 +155,27 @@ const BursarySetup = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
+                height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor0.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Total Payment Items
               </Typography>
-              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
+              <Typography
+                variant="h2"
+                fontWeight={700}
+                sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}
+                mb={2}
+              >
                 {paymentNameStats.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
@@ -222,23 +237,28 @@ const BursarySetup = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
                 height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor1.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Settlement Accounts
               </Typography>
 
-              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
+              <Typography
+                variant="h2"
+                fontWeight={700}
+                sx={{ color: isDark ? '#ffffff' : statColor1.accentColor }}
+                mb={2}
+              >
                 {bankCount}
               </Typography>
 
@@ -287,21 +307,27 @@ const BursarySetup = () => {
               sx={{
                 p: 3,
                 borderRadius: '16px',
-                bgcolor: 'background.paper',
+                height: '100%',
+                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(91, 38, 38, 0.08)'
-                    : `2px solid ${theme.palette.grey[100]}`,
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor2.borderColor}`,
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.35)'
-                    : '0 0 20px rgba(0,0,0,.10)',
+                    ? '0 6px 24px rgba(0,0,0,0.28)'
+                    : '0 4px 20px rgba(0,0,0,0.07)',
               }}
             >
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Fee Bearer Distribution
               </Typography>
-              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
+              <Typography
+                variant="h2"
+                fontWeight={700}
+                sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                mb={2}
+              >
                 {paymentNameStats.total}
               </Typography>
               <Grid container spacing={2} mb={2}>

@@ -46,8 +46,8 @@ const StatCard = ({
             : `1px solid ${borderColor}`,
         boxShadow: (theme) =>
           theme.palette.mode === 'dark'
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 0 20px rgba(0,0,0,.10)',
+            ? '0 6px 24px rgba(0,0,0,0.28)'
+            : '0 4px 20px rgba(0,0,0,0.07)',
 
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
 

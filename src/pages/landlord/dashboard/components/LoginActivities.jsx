@@ -124,7 +124,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
                 label={stat.label}
                 count={statValue}
                 icon={stat.icon}
-                color={stat.color}
+                colorIndex={idx}
               />
             </Box>
           );

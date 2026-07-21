@@ -3,28 +3,43 @@
  * Rich dual-tone gradients, vibrant accents, and glowing badges.
  */
 
+import { alpha, lighten } from '@mui/material/styles';
+
 export const getStatCardColor = (
   colorProp,
   colorIndex = 0,
   isDark = false,
   theme = null
 ) => {
-  const primaryMain = theme?.palette?.primary?.main || '#2563EB';
-  let primaryLight = theme?.palette?.primary?.light;
-
-  if (!primaryLight || primaryLight === '#ffffff' || primaryLight === '#fff') {
-    primaryLight = `${primaryMain}18`;
-  }
+  const primaryMain = theme?.palette?.primary?.main || '#6D28D9';
 
   const paletteMap = {
     primary: {
       name: 'primary',
-      cardBg: `linear-gradient(135deg, ${primaryLight} 0%, ${primaryMain}22 100%)`,
-      iconBg: primaryMain,
-      iconGlow: `${primaryMain}50`,
+
+      cardBg: `
+        radial-gradient(
+          circle at top left,
+          ${alpha(primaryMain, 0.08)} 0%,
+          transparent 45%
+        ),
+        linear-gradient(
+          135deg,
+          ${lighten(primaryMain, 0.93)} 0%,
+          ${lighten(primaryMain, 0.88)} 100%
+        )
+      `,
+
+      iconBg: `linear-gradient(
+        135deg,
+        ${lighten(primaryMain, 0.08)} 0%,
+        ${primaryMain} 100%
+      )`,
+
+      iconGlow: alpha(primaryMain, 0.35),
       iconColor: '#FFFFFF',
       accentColor: primaryMain,
-      borderColor: `${primaryMain}35`,
+      borderColor: alpha(primaryMain, 0.18),
     },
 
     success: {
@@ -91,12 +106,16 @@ export const getStatCardColor = (
 
   if (typeof colorProp === 'string' && colorProp.startsWith('#')) {
     selected = {
-      cardBg: `linear-gradient(135deg, ${colorProp}10 0%, ${colorProp}22 100%)`,
+      cardBg: `linear-gradient(
+        135deg,
+        ${alpha(colorProp, 0.08)} 0%,
+        ${alpha(colorProp, 0.14)} 100%
+      )`,
       iconBg: colorProp,
-      iconGlow: `${colorProp}50`,
+      iconGlow: alpha(colorProp, 0.35),
       iconColor: '#FFFFFF',
       accentColor: colorProp,
-      borderColor: `${colorProp}40`,
+      borderColor: alpha(colorProp, 0.18),
     };
   } else if (typeof colorProp === 'string' && paletteMap[colorProp]) {
     selected = paletteMap[colorProp];
@@ -105,8 +124,8 @@ export const getStatCardColor = (
       typeof colorIndex === 'number'
         ? colorIndex
         : typeof colorProp === 'number'
-        ? colorProp
-        : 0;
+          ? colorProp
+          : 0;
 
     selected = cardList[idx % cardList.length];
   }
@@ -124,5 +143,6 @@ export const getStatCardColor = (
 
   return selected;
 };
+
 
 export const getDynamicStatCardColors = getStatCardColor;

@@ -28,7 +28,7 @@ const StatCard = ({
       elevation={0}
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
-        borderRadius: 2.5,
+        borderRadius: 1,
         p: 3,
         width: '100%',
         background: isDark ? 'background.paper' : `${cardBg} !important`,
@@ -51,13 +51,13 @@ const StatCard = ({
 
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
 
-        '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '0 18px 40px rgba(0,0,0,.45)'
-              : '0 10px 30px rgba(0,0,0,.15)',
-        },
+        // '&:hover': {
+        //   transform: 'translateY(-6px)',
+        //   boxShadow: (theme) =>
+        //     theme.palette.mode === 'dark'
+        //       ? '0 18px 40px rgba(0,0,0,.45)'
+        //       : '0 10px 30px rgba(0,0,0,.15)',
+        // },
       }}
     >
       {/* Background Watermark Icon */}

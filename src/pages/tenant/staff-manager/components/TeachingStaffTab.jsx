@@ -235,13 +235,13 @@ const TeachingStaffTab = ({
                         <Typography variant="body2">
                           {staffMember.date_of_first_appointment
                             ? new Date(staffMember.date_of_first_appointment).toLocaleDateString(
-                                'en-US',
-                                {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                },
-                              )
+                              'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              },
+                            )
                             : 'N/A'}
                         </Typography>
                       </TableCell>

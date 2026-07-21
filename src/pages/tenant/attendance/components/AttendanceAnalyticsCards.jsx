@@ -20,12 +20,52 @@ import {
   PeopleOutline as PeopleOutlineIcon,
   WarningAmberOutlined as WarningIcon,
 } from '@mui/icons-material';
+import { getStatCardColor } from '@/utils/statCardColors';
 import AnalyticsModal from './AnalyticsModal';
 
-const AttendanceAnalyticsCards = ({
-  metrics,
-  onFilterAttendance,
-}) => {
+// ── Theme-aware stat card ──────────────────────────────────────
+const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
+
+  return (
+    <Paper
+      elevation={0}
+      onClick={onClick}
+      sx={{
+        p: 2.5,
+        borderRadius: '16px',
+        background: isDark ? theme.palette.background.paper : colors.cardBg,
+        border: isDark
+          ? '1px solid rgba(255,255,255,0.12)'
+          : `1px solid ${colors.borderColor}`,
+        boxShadow: isDark
+          ? '0 10px 30px rgba(0,0,0,0.35)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
+        height: '100%',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        ...(clickable
+          ? {
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: isDark
+                  ? '0 8px 30px rgba(0,0,0,0.35)'
+                  : '0 6px 24px rgba(0,0,0,0.12)',
+              },
+            }
+          : {}),
+        ...sx,
+      }}
+    >
+      {children}
+    </Paper>
+  );
+};
+
+// ── Main Component ─────────────────────────────────────────────
+const AttendanceAnalyticsCards = ({ metrics }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
@@ -34,20 +74,12 @@ const AttendanceAnalyticsCards = ({
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
 
-  const cardSx = {
-    p: 2.5,
-    borderRadius: '16px',
-    border: `2px solid ${isDark ? 'rgba(91, 38, 38, 0.08)' : theme.palette.grey[100]}`,
-    bgcolor: isDark ? 'background.paper' : '#fff',
-    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 0 20px rgba(0,0,0,.10)',
-    height: '100%',
-  };
-
-  const clickableCardSx = {
-    ...cardSx,
-    cursor: 'pointer',
-    transition: 'transform 0.2s',
-    '&:hover': { transform: 'translateY(-3px)' },
+  const colors = {
+    success: getStatCardColor('success', 1, isDark, theme),
+    warning: getStatCardColor('warning', 3, isDark, theme),
+    info: getStatCardColor('info', 2, isDark, theme),
+    error: getStatCardColor('error', 4, isDark, theme),
+    secondary: getStatCardColor('secondary', 5, isDark, theme),
   };
 
   return (
@@ -55,18 +87,52 @@ const AttendanceAnalyticsCards = ({
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Card 1: DAYS SCHOOL OPEN */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Paper elevation={0} sx={cardSx}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary">DAYS SCHOOL OPEN</Typography>
-            <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ my: 0.5 }}>{metrics.daysOpen}%</Typography>
-            <LinearProgress variant="determinate" value={metrics.daysOpen} color="success" sx={{ my: 1, height: 4, borderRadius: 2 }} />
-            <Typography variant="caption" color="text.secondary">126 out of 130</Typography>
-          </Paper>
+          <StatCard colorName="success" colorIndex={1}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
+                textTransform: 'uppercase',
+              }}
+            >
+              DAYS SCHOOL OPEN
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
+            >
+              {metrics.daysOpen}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={metrics.daysOpen}
+              sx={{
+                my: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.success.accentColor,
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+            >
+              126 out of 130
+            </Typography>
+          </StatCard>
         </Grid>
 
         {/* Card 2: WEEK ATTENDANCE RATE */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Paper
-            elevation={0}
+          <StatCard
+            colorName="warning"
+            colorIndex={3}
+            clickable
             onClick={() =>
               openCardModal('Week Attendance Rate Analysis', (
                 <Box>
@@ -95,19 +161,52 @@ const AttendanceAnalyticsCards = ({
                 </Box>
               ))
             }
-            sx={clickableCardSx}
           >
-            <Typography variant="caption" fontWeight={700} color="text.secondary">WEEK ATTENDANCE RATE</Typography>
-            <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ my: 0.5 }}>{metrics.weekRate}%</Typography>
-            <LinearProgress variant="determinate" value={metrics.weekRate} color="error" sx={{ my: 1, height: 4, borderRadius: 2 }} />
-            <Typography variant="caption" color="text.secondary">0% Same as last week</Typography>
-          </Paper>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                textTransform: 'uppercase',
+              }}
+            >
+              WEEK ATTENDANCE RATE
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+            >
+              {metrics.weekRate}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={metrics.weekRate}
+              sx={{
+                my: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.warning.accentColor,
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+            >
+              0% Same as last week
+            </Typography>
+          </StatCard>
         </Grid>
 
         {/* Card 3: TERM ATTENDANCE RATE */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Paper
-            elevation={0}
+          <StatCard
+            colorName="info"
+            colorIndex={2}
+            clickable
             onClick={() =>
               openCardModal('Term Attendance Trend', (
                 <Box>
@@ -122,19 +221,53 @@ const AttendanceAnalyticsCards = ({
                 </Box>
               ))
             }
-            sx={clickableCardSx}
           >
-            <Typography variant="caption" fontWeight={700} color="text.secondary">TERM ATTENDANCE RATE</Typography>
-            <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ my: 0.5 }}>{metrics.termRate}%</Typography>
-            <LinearProgress variant="determinate" value={metrics.termRate} color="success" sx={{ my: 1, height: 4, borderRadius: 2 }} />
-            <Typography variant="caption" color="success.main" fontWeight={600}>↑ 44% Higher last term</Typography>
-          </Paper>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor,
+                textTransform: 'uppercase',
+              }}
+            >
+              TERM ATTENDANCE RATE
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ my: 0.5, color: isDark ? '#fff' : colors.info.accentColor }}
+            >
+              {metrics.termRate}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={metrics.termRate}
+              sx={{
+                my: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.info.accentColor,
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              sx={{ color: colors.info.accentColor }}
+            >
+              ↑ 44% Higher last term
+            </Typography>
+          </StatCard>
         </Grid>
 
         {/* Card 4: TOTAL ABSENTEES */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Paper
-            elevation={0}
+          <StatCard
+            colorName="error"
+            colorIndex={4}
+            clickable
             onClick={() =>
               openCardModal('Absentees Summary List', (
                 <Box>
@@ -155,22 +288,56 @@ const AttendanceAnalyticsCards = ({
                 </Box>
               ))
             }
-            sx={{ ...clickableCardSx, position: 'relative' }}
+            sx={{ position: 'relative' }}
           >
-            <Typography variant="caption" fontWeight={700} color="text.secondary">TOTAL ABSENTEES</Typography>
-            <Typography variant="h4" fontWeight={700} color="text.primary" sx={{ my: 0.5 }}>{metrics.totalAbsentees}</Typography>
-            <LinearProgress variant="determinate" value={30} color="error" sx={{ my: 1, height: 4, borderRadius: 2 }} />
-            <Typography variant="caption" color="text.secondary">Current Session</Typography>
-            <Box sx={{ position: 'absolute', right: 12, bottom: 12, opacity: 0.1 }}>
-              <PeopleOutlineIcon sx={{ fontSize: 36 }} />
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.72)' : colors.error.accentColor,
+                textTransform: 'uppercase',
+              }}
+            >
+              TOTAL ABSENTEES
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ my: 0.5, color: isDark ? '#fff' : colors.error.accentColor }}
+            >
+              {metrics.totalAbsentees}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={30}
+              sx={{
+                my: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.error.accentColor,
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+            >
+              Current Session
+            </Typography>
+            <Box sx={{ position: 'absolute', right: 12, bottom: 12, opacity: 0.08 }}>
+              <PeopleOutlineIcon sx={{ fontSize: 36, color: colors.error.accentColor }} />
             </Box>
-          </Paper>
+          </StatCard>
         </Grid>
 
         {/* Card 5: AT-RISK STUDENTS */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Paper
-            elevation={0}
+          <StatCard
+            colorName="error"
+            colorIndex={4}
+            clickable
             onClick={() =>
               openCardModal('At-Risk Learners Alert List', (
                 <Box>
@@ -199,18 +366,46 @@ const AttendanceAnalyticsCards = ({
               ))
             }
             sx={{
-              ...cardSx,
-              border: `2px solid ${theme.palette.error.main}`,
-              cursor: 'pointer',
-              transition: 'transform 0.2s',
-              '&:hover': { transform: 'translateY(-3px)' },
+              border: (t) =>
+                t.palette.mode === 'dark'
+                  ? '2px solid rgba(239,68,68,0.5)'
+                  : `2px solid ${colors.error.accentColor}`,
             }}
           >
-            <Typography variant="caption" fontWeight={700} color="error.main">AT-RISK STUDENTS</Typography>
-            <Typography variant="h4" fontWeight={700} color="error.main" sx={{ my: 0.5 }}>{metrics.atRisk}</Typography>
-            <LinearProgress variant="determinate" value={15} color="error" sx={{ my: 1, height: 4, borderRadius: 2 }} />
-            <Typography variant="caption" color="error.main">1+ Week Absence</Typography>
-          </Paper>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{ color: colors.error.accentColor, textTransform: 'uppercase' }}
+            >
+              AT-RISK STUDENTS
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ my: 0.5, color: colors.error.accentColor }}
+            >
+              {metrics.atRisk}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={15}
+              sx={{
+                my: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.error.accentColor,
+                },
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{ color: colors.error.accentColor }}
+            >
+              1+ Week Absence
+            </Typography>
+          </StatCard>
         </Grid>
       </Grid>
 

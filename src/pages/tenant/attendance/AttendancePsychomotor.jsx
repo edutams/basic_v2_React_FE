@@ -70,7 +70,6 @@ const AttendancePsychomotor = () => {
       {activeTab === 0 ? (
         <AttendanceAnalyticsCards
           metrics={attendanceMetrics}
-          onFilterAttendance={handleAttendanceFilter}
         />
       ) : (
         <PsychomotorAnalyticsCards metrics={psychomotorMetrics} />

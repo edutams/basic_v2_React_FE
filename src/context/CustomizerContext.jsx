@@ -12,18 +12,96 @@ export const CustomizerContext = createContext(undefined);
 // Create the provider component
 export const CustomizerContextProvider = ({ children }) => {
 
-    const [activeDir, setActiveDir] = useState(config.activeDir);
-    const [activeMode, setActiveMode] = useState(config.activeMode);
-    const [activeTheme, setActiveTheme] = useState(config.activeTheme);
-    const [activeLayout, setActiveLayout] = useState(config.activeLayout);
-    const [isCardShadow, setIsCardShadow] = useState(config.isCardShadow);
-    const [isLayout, setIsLayout] = useState(config.isLayout);
-    const [isBorderRadius, setIsBorderRadius] = useState(config.isBorderRadius);
-    const [isCollapse, setIsCollapse] = useState(config.isCollapse);
-    const [isLanguage, setIsLanguage] = useState(config.isLanguage);
+    // Initialize state with localStorage values or fallback to config defaults
+    const [activeDir, setActiveDir] = useState(() => {
+        return localStorage.getItem('activeDir') || config.activeDir;
+    });
+    const [activeMode, setActiveMode] = useState(() => {
+        return localStorage.getItem('activeMode') || config.activeMode;
+    });
+    const [activeTheme, setActiveTheme] = useState(() => {
+        return localStorage.getItem('activeTheme') || config.activeTheme;
+    });
+    const [activeLayout, setActiveLayout] = useState(() => {
+        return localStorage.getItem('activeLayout') || config.activeLayout;
+    });
+    const [isCardShadow, setIsCardShadow] = useState(() => {
+        const saved = localStorage.getItem('isCardShadow');
+        return saved !== null ? JSON.parse(saved) : config.isCardShadow;
+    });
+    const [isLayout, setIsLayout] = useState(() => {
+        return localStorage.getItem('isLayout') || config.isLayout;
+    });
+    const [isBorderRadius, setIsBorderRadius] = useState(() => {
+        const saved = localStorage.getItem('isBorderRadius');
+        return saved !== null ? JSON.parse(saved) : config.isBorderRadius;
+    });
+    const [isCollapse, setIsCollapse] = useState(() => {
+        return localStorage.getItem('isCollapse') || config.isCollapse;
+    });
+    const [isLanguage, setIsLanguage] = useState(() => {
+        return localStorage.getItem('isLanguage') || config.isLanguage;
+    });
     const [isSidebarHover, setIsSidebarHover] = useState(false);
     const [isMobileSidebar, setIsMobileSidebar] = useState(false);
-    const [primaryColor, setPrimaryColor] = useState(null);
+    const [primaryColor, setPrimaryColor] = useState(() => {
+        return localStorage.getItem('primaryColor') || null;
+    });
+
+    // Wrapper functions to save to localStorage when values change
+    const setActiveDirWithPersist = (value) => {
+        setActiveDir(value);
+        localStorage.setItem('activeDir', value);
+    };
+
+    const setActiveModeWithPersist = (value) => {
+        setActiveMode(value);
+        localStorage.setItem('activeMode', value);
+    };
+
+    const setActiveThemeWithPersist = (value) => {
+        setActiveTheme(value);
+        localStorage.setItem('activeTheme', value);
+    };
+
+    const setActiveLayoutWithPersist = (value) => {
+        setActiveLayout(value);
+        localStorage.setItem('activeLayout', value);
+    };
+
+    const setIsCardShadowWithPersist = (value) => {
+        setIsCardShadow(value);
+        localStorage.setItem('isCardShadow', JSON.stringify(value));
+    };
+
+    const setIsLayoutWithPersist = (value) => {
+        setIsLayout(value);
+        localStorage.setItem('isLayout', value);
+    };
+
+    const setIsBorderRadiusWithPersist = (value) => {
+        setIsBorderRadius(value);
+        localStorage.setItem('isBorderRadius', JSON.stringify(value));
+    };
+
+    const setIsCollapseWithPersist = (value) => {
+        setIsCollapse(value);
+        localStorage.setItem('isCollapse', value);
+    };
+
+    const setIsLanguageWithPersist = (value) => {
+        setIsLanguage(value);
+        localStorage.setItem('isLanguage', value);
+    };
+
+    const setPrimaryColorWithPersist = (value) => {
+        setPrimaryColor(value);
+        if (value) {
+            localStorage.setItem('primaryColor', value);
+        } else {
+            localStorage.removeItem('primaryColor');
+        }
+    };
     // Set attributes immediately
     useEffect(() => {
         document.documentElement.setAttribute("class", activeMode);
@@ -47,29 +125,29 @@ export const CustomizerContextProvider = ({ children }) => {
         <CustomizerContext.Provider
             value={{
                 activeDir,
-                setActiveDir,
+                setActiveDir: setActiveDirWithPersist,
                 activeMode,
-                setActiveMode,
+                setActiveMode: setActiveModeWithPersist,
                 activeTheme,
-                setActiveTheme,
+                setActiveTheme: setActiveThemeWithPersist,
                 activeLayout,
-                setActiveLayout,
+                setActiveLayout: setActiveLayoutWithPersist,
                 isCardShadow,
-                setIsCardShadow,
+                setIsCardShadow: setIsCardShadowWithPersist,
                 isLayout,
-                setIsLayout,
+                setIsLayout: setIsLayoutWithPersist,
                 isBorderRadius,
-                setIsBorderRadius,
+                setIsBorderRadius: setIsBorderRadiusWithPersist,
                 isCollapse,
-                setIsCollapse,
+                setIsCollapse: setIsCollapseWithPersist,
                 isLanguage,
-                setIsLanguage,
+                setIsLanguage: setIsLanguageWithPersist,
                 isSidebarHover,
                 setIsSidebarHover,
                 isMobileSidebar,
                 setIsMobileSidebar,
                 primaryColor,
-                setPrimaryColor
+                setPrimaryColor: setPrimaryColorWithPersist
             }}
         >
             {children}

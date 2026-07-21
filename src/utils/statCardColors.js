@@ -126,15 +126,15 @@ export const getStatCardColor = (
   }
 
   if (isDark) {
-    // In dark mode, we want to keep the gradient backgrounds but make them darker/more subtle
+    const darkPaper = theme?.palette?.background?.paper || '#1e1e2d';
     return {
-      cardBg: selected.cardBg, // Keep the gradient background
+      cardBg: darkPaper,
       valueBg: 'rgba(255,255,255,0.08)',
       iconBg: selected.iconBg,
       iconGlow: selected.iconGlow,
       iconColor: '#FFFFFF',
-      accentColor: selected.accentColor, // Keep the accent color instead of white
-      borderColor: selected.borderColor,
+      accentColor: '#FFFFFF',
+      borderColor: 'rgba(255,255,255,0.12)',
     };
   }
 

@@ -448,8 +448,18 @@ export default function Dashboard() {
     sx={{
       minWidth: 100,
       height: '35px',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
       borderRadius: '8px',
+      color: isDark ? '#fff' : 'inherit',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+      },
+      '& .MuiSelect-icon': {
+        color: isDark ? '#fff' : 'inherit',
+      },
     }}
   >
     <MenuItem value="year">Year</MenuItem>
@@ -461,8 +471,18 @@ export default function Dashboard() {
     sx={{
       minWidth: 100,
       height: '35px',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
       borderRadius: '8px',
+      color: isDark ? '#fff' : 'inherit',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+      },
+      '& .MuiSelect-icon': {
+        color: isDark ? '#fff' : 'inherit',
+      },
     }}
   >
     <MenuItem value="gateway">Gateway</MenuItem>
@@ -561,17 +581,20 @@ export default function Dashboard() {
                   <Box 
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
                     sx={{ 
-                      bgcolor: getStatCardColor(null, 4, isDark, theme).accentColor,
+                      background: getStatCardColor(null, 4, isDark, theme).iconBg,
                       p: 0.5, 
                       borderRadius: '4px', 
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
                       cursor: 'pointer',
+                      boxShadow: isDark
+                        ? '0 6px 16px rgba(0,0,0,.3)'
+                        : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
                       '&:hover': { opacity: 0.8 }
                     }}
                   >
-                    <IconChartBar size={20} color="white" />
+                    <IconChartBar size={20} color={getStatCardColor(null, 4, isDark, theme).iconColor} />
                   </Box>
                 </Box>
 
@@ -640,17 +663,20 @@ export default function Dashboard() {
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    bgcolor: getStatCardColor(null, 5, isDark, theme).accentColor,
+                    background: getStatCardColor(null, 5, isDark, theme).iconBg,
                     p: 0.5,
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    boxShadow: isDark
+                      ? '0 6px 16px rgba(0,0,0,.3)'
+                      : `0 8px 22px -2px ${getStatCardColor(null, 5, isDark, theme).iconGlow}`,
                     '&:hover': { opacity: 0.8 },
                   }}
                 >
-                  <IconChartBar size={20} color="white" />
+                  <IconChartBar size={20} color={getStatCardColor(null, 5, isDark, theme).iconColor} />
                 </Box>
               </Box>
               <Box 

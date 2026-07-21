@@ -22,10 +22,12 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import Chart from 'react-apexcharts';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
 import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
+import { getStatCardColor } from '@/utils/statCardColors';
 import {
   flexRender,
   getCoreRowModel,
@@ -37,13 +39,8 @@ import {
 import DashboardStatCard from '@/components/shared/cards/DashboardStatCard';
 
 // Agent Analytics Components
-import LoginActivitiesCard from '@/pages/landlord/views/agent/components/LoginActivitiesCard';
 import { IconSchool, IconListTree, IconSearch } from '@tabler/icons-react';
 import { IconChartBar } from '@tabler/icons-react';
-
-// Charts
-import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
-import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 // Agent Modals
 import PlanDistributionModal from '@/pages/landlord/views/agent/components/PlanDistributionModal';
@@ -421,8 +418,11 @@ export default function Dashboard() {
                 p: 0,
                 height: '100%',
                 borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 3, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 3, isDark, theme).cardBg,
               }}
             >
               <Box
@@ -431,12 +431,13 @@ export default function Dashboard() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  background: 'transparent',
                 }}
               >
                 <Typography
                   variant="h5"
                   fontWeight="600"
-                  sx={{ color: isDark ? '#fff' : '#4a3aff' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   Transaction
                 </Typography>
@@ -449,28 +450,143 @@ export default function Dashboard() {
                   </Select>
                 </Stack>
               </Box>
-              <ReusableBarChart
-                series={revenueSeries}
-                categories={months}
-                colors={[theme.palette.primary.main]}
-                height={250}
-                yAxisPrefix="N"
-                yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-                xAxisTitle="Month"
-              />
+              <Box 
+                sx={{ 
+                  background: 'transparent',
+                  p: 2,
+                  '& .apexcharts-canvas': {
+                    background: 'transparent !important',
+                  },
+                  '& .apexcharts-svg': {
+                    background: 'transparent !important',
+                  },
+                }}
+              >
+                <Chart 
+                  options={{
+                    chart: {
+                      type: 'bar',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                      foreColor: '#adb0bb',
+                      toolbar: { show: false },
+                      zoom: { enabled: false },
+                      background: 'transparent',
+                    },
+                    colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 4,
+                        columnWidth: '45%',
+                        distributed: false,
+                      },
+                    },
+                    dataLabels: { enabled: false },
+                    legend: { show: false },
+                    grid: {
+                      borderColor: 'rgba(0,0,0,0.1)',
+                      strokeDashArray: 3,
+                      xaxis: { lines: { show: false } },
+                      yaxis: { lines: { show: true } }
+                    },
+                    xaxis: {
+                      categories: months,
+                      axisBorder: { show: false },
+                      title: {
+                        text: 'Month',
+                        style: { color: '#adb0bb', fontWeight: 400 }
+                      }
+                    },
+                    yaxis: {
+                      labels: {
+                        show: true,
+                        formatter: (val) => `N${val.toFixed(1)}M`,
+                      },
+                    },
+                    tooltip: {
+                      theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+                    },
+                  }}
+                  series={revenueSeries}
+                  type="bar" 
+                  height={250} 
+                  width="100%" 
+                />
+              </Box>
             </Card>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 3 }}>
-            <LoginActivitiesCard
-              title="Login Activities (30 days)"
-              activities={
-                loginActivitiesLoading
-                  ? [{ label: 'Loading...', value: '...' }]
-                  : loginActivities
-              }
-              onIconClick={() => setIsLoggedInUsersModalOpen(true)}
-            />
+            <Card
+              sx={{
+                p: 0,
+                height: '100%',
+                borderRadius: '12px',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 4, isDark, theme).cardBg,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <Box sx={{ p: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+                  <Typography 
+                    variant="subtitle2" 
+                    fontWeight="600" 
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Login Activities (30 days)
+                  </Typography>
+                  <Box 
+                    onClick={() => setIsLoggedInUsersModalOpen(true)}
+                    sx={{ 
+                      bgcolor: getStatCardColor(null, 4, isDark, theme).accentColor,
+                      p: 0.5, 
+                      borderRadius: '4px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      '&:hover': { opacity: 0.8 }
+                    }}
+                  >
+                    <IconChartBar size={20} color="white" />
+                  </Box>
+                </Box>
+
+                <Stack spacing={2.5} sx={{ px: 2, flex: 1 }}>
+                  {(loginActivitiesLoading
+                    ? [{ label: 'Loading...', value: '...' }]
+                    : loginActivities
+                  )?.map((activity, index) => (
+                    <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="500" 
+                        sx={{ 
+                          color: isDark ? '#fff' : '#1a1a1a',
+                          fontSize: '18px' 
+                        }}
+                      >
+                        {activity.label}:
+                      </Typography>
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="600" 
+                        sx={{ 
+                          color: getStatCardColor(null, 4, isDark, theme).accentColor,
+                          fontSize: '20px' 
+                        }}
+                      >
+                        {activity.value}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
+            </Card>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
@@ -479,8 +595,11 @@ export default function Dashboard() {
                 p: '24px !important',
                 height: '100%',
                 borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 5, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 5, isDark, theme).cardBg,
                 position: 'relative',
               }}
             >
@@ -495,32 +614,94 @@ export default function Dashboard() {
                 <Typography
                   variant="subtitle2"
                   fontWeight="600"
-                  sx={{ color: isDark ? '#fff' : '#1E3A5F' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   Plan Distribution
                 </Typography>
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    bgcolor: '#454545',
+                    bgcolor: getStatCardColor(null, 5, isDark, theme).accentColor,
                     p: 0.5,
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    '&:hover': { bgcolor: '#333' },
+                    '&:hover': { opacity: 0.8 },
                   }}
                 >
                   <IconChartBar size={20} color="white" />
                 </Box>
               </Box>
-              <ReusablePieChart
-                series={planSeries}
-                labels={planLabels}
-                colors={[theme.palette.primary.main, '#2196f3', '#ff4081', '#9c27b0']}
-                height={200}
-              />
+              <Box 
+                sx={{ 
+                  '& .apexcharts-canvas': {
+                    background: 'transparent !important',
+                  },
+                  '& .apexcharts-svg': {
+                    background: 'transparent !important',
+                  },
+                }}
+              >
+                <Chart 
+                  options={{
+                    chart: {
+                      type: 'donut',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                      foreColor: theme.palette.text.secondary,
+                      toolbar: { show: false },
+                      background: 'transparent',
+                    },
+                    labels: planLabels,
+                    colors: [
+                      getStatCardColor(null, 5, isDark, theme).accentColor, 
+                      '#2196f3', 
+                      '#ff4081', 
+                      '#9c27b0'
+                    ],
+                    plotOptions: {
+                      pie: {
+                        donut: {
+                          size: '50%',
+                          background: 'transparent',
+                        },
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function (val) {
+                        return val.toFixed(0) + '%';
+                      },
+                      style: {
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        colors: ['#ffffff'],
+                      },
+                      dropShadow: { enabled: false },
+                    },
+                    stroke: { show: false },
+                    legend: {
+                      show: true,
+                      position: 'right',
+                      horizontalAlign: 'center',
+                      floating: false,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      labels: { colors: theme.palette.text.secondary },
+                      itemMargin: { horizontal: 5, vertical: 5 },
+                    },
+                    tooltip: {
+                      theme: theme.palette.mode,
+                      fillSeriesColor: false,
+                    },
+                  }}
+                  series={planSeries}
+                  type="donut" 
+                  height={200} 
+                  width="100%" 
+                />
+              </Box>
             </Card>
           </Grid>
         </Grid>

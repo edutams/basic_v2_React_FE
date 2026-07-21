@@ -3,6 +3,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import { useReactToPrint } from 'react-to-print';
+import StatCard from '@/components/shared/StatCard';
 
 import {
   Box,
@@ -567,28 +568,28 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   const statCards = [
     {
-      title: 'Topics',
-      value: analytics.total_topics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      label: 'Topics',
+      count: analytics.total_topics,
+      icon: IconFolder,
+      colorIndex: 0,
     },
     {
-      title: 'Sub Topics',
-      value: analytics.total_subtopics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      label: 'Sub Topics',
+      count: analytics.total_subtopics,
+      icon: IconFolder,
+      colorIndex: 1,
     },
     {
-      title: 'Lesson Content',
-      value: '0',
-      icon: <IconFileDescription color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      label: 'Lesson Content',
+      count: '0',
+      icon: IconFileDescription,
+      colorIndex: 2,
     },
     {
-      title: 'Video Content',
-      value: '0',
-      icon: <IconVideo color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      label: 'Video Content',
+      count: '0',
+      icon: IconVideo,
+      colorIndex: 3,
     },
   ];
 
@@ -604,42 +605,12 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid #eee',
-                px: 2,
-                py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgColor: stat.bgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <StatCard
+              label={stat.label}
+              count={stat.count}
+              icon={stat.icon}
+              colorIndex={stat.colorIndex}
+            />
           </Grid>
         ))}
       </Grid>

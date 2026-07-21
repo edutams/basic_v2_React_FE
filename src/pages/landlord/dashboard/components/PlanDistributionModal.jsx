@@ -7,27 +7,32 @@ import {
   Select,
   MenuItem,
   Button,
-  Paper,
   useTheme,
   Divider,
   Card,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import { IconCreditCard } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import { IconBuildingBank } from '@tabler/icons-react';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const PlanDistributionModal = ({ open, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const plans = [
-    { label: 'Freemium', value: '7,000,234.00', color: '#263393', bg: 'white', border: '#263393' },
-    { label: 'Basic', value: '7,000,234.00', color: '#7987FF', bg: 'white', border: '#7987FF' },
-    { label: 'Basic +', value: '7,000,234.00', color: '#FA7CEB', bg: 'white', border: '#FA7CEB' },
-    { label: 'Basic ++', value: '7,000,234.00', color: '#E697FF', bg: 'white', border: '#E697FF' },
+    { label: 'Freemium', value: '7,000,234.00', colorIndex: 0 },
+    { label: 'Basic', value: '7,000,234.00', colorIndex: 1 },
+    { label: 'Basic +', value: '7,000,234.00', colorIndex: 2 },
+    { label: 'Basic ++', value: '7,000,234.00', colorIndex: 3 },
   ];
 
   const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
+
+  // Get colors from stat utility for consistency
+  const planColors = plans.map(plan => {
+    const colors = getStatCardColor(null, plan.colorIndex, isDark, theme);
+    return colors.accentColor;
+  });
 
   const chartOptions = {
     chart: {
@@ -97,7 +102,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
       tickAmount: 10,
     },
     fill: { opacity: 1 },
-    colors: ['#263393', '#7987FF', '#FA7CEB', '#E697FF'],
+    colors: planColors,
     legend: {
       position: 'top',
       horizontalAlign: 'center',
@@ -130,7 +135,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
         <Typography
           fontSize={24}
           fontWeight={700}
-          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
+          sx={{ color: theme.palette.text.secondary }}
         >
           Plan Distribution
         </Typography>
@@ -139,56 +144,62 @@ const PlanDistributionModal = ({ open, onClose }) => {
       <Box sx={{ bgcolor: isDark ? theme.palette.background.default : '#f8fafc' }}>
         {/* Top Plan Value Cards */}
         <Grid container spacing={2} mb={3}>
-          {plans.map((plan, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <Card
-                sx={{
-                  p: 2,
-                  boxShadow: 'none',
-                  borderRadius: '12px',
-                  border: `1px solid ${isDark ? '#333' : '#e8eaf6'}`,
-                  bgcolor: isDark ? '#1e1e1e' : '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                }}
-              >
-                <Box
+          {plans.map((plan, i) => {
+            const colors = getStatCardColor(null, plan.colorIndex, isDark, theme);
+            return (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+                <Card
                   sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '10px',
-                    bgcolor: isDark ? '#2a2a2a' : plan.iconBg,
+                    p: 2,
+                    boxShadow: 'none',
+                    borderRadius: '12px',
+                    border: `1px solid ${colors.borderColor}`,
+                    background: `${colors.cardBg} !important`,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <IconBuildingBank size={22} color={plan.color} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="h6"
-                    fontWeight="800"
-                    sx={{ color: plan.color, fontSize: '16px', lineHeight: 1.2 }}
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '10px',
+                      background: colors.iconBg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: isDark
+                        ? '0 6px 16px rgba(0,0,0,.3)'
+                        : `0 8px 22px -2px ${colors.iconGlow}`,
+                    }}
                   >
-                    {plan.value}
-                  </Typography>
-                  <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3}>
-                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: plan.color }} />
+                    <IconBuildingBank size={22} color={colors.iconColor} />
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
                     <Typography
-                      variant="caption"
-                      fontWeight="600"
-                      sx={{ color: isDark ? '#aaa' : '#666' }}
+                      variant="h6"
+                      fontWeight="800"
+                      sx={{ color: colors.accentColor, fontSize: '16px', lineHeight: 1.2 }}
                     >
-                      {plan.label}
+                      {plan.value}
                     </Typography>
-                  </Stack>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
+                    <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5} mt={0.3}>
+                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
+                      <Typography
+                        variant="caption"
+                        fontWeight="600"
+                        sx={{ color: isDark ? '#ffffff' : theme.palette.text.secondary }}
+                      >
+                        {plan.label}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
 
         {/* Chart Section */}

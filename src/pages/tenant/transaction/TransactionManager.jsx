@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Tabs, Tab, Grid, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import StatCard from './components/StatCard';
+import StatCard from '@/components/shared/StatCard';
 import { IconWallet } from '@tabler/icons';
 import Overview from './components/AllTransaction/Overview';
 import Revenue from './components/TransactionByRevenue/Revenue';
@@ -79,39 +79,35 @@ const TransactionManager = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction Today"
-              value={`₦${(stats?.today_total || 0).toLocaleString()}`}
+              label="Transaction Today"
+              count={`₦${(stats?.today_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#5CB979'}
-              lightColor={'#E3F2FD'}
+              colorIndex={0}
             />
           </Grid>
 
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction This Week"
-              value={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
+              label="Transaction This Week"
+              count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#EF5350'}
-              lightColor={'#FDECEA'}
+              colorIndex={1}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction This Month"
-              value={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
+              label="Transaction This Month"
+              count={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#273DA9'}
-              lightColor={'#E3F2FD'}
+              colorIndex={2}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction This Year"
-              value={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
+              label="Transaction This Year"
+              count={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#F59E0B'}
-              lightColor={'#FEF3C7'}
+              colorIndex={3}
             />
           </Grid>
         </Grid>

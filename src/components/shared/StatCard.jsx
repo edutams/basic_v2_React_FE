@@ -31,19 +31,14 @@ const StatCard = ({
         borderRadius: 1,
         p: 3,
         width: '100%',
-        background: isDark ? 'background.paper' : `${cardBg} !important`,
-        bgcolor: isDark ? 'background.paper' : undefined,
-        backgroundColor: isDark ? 'background.paper' : undefined,
+        background: `${cardBg} !important`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'relative',
         overflow: 'hidden',
 
-        border: (theme) =>
-          theme.palette.mode === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.12)'
-            : `1px solid ${borderColor}`,
+        border: `1px solid ${borderColor}`,
         boxShadow: (theme) =>
           theme.palette.mode === 'dark'
             ? '0 6px 24px rgba(0,0,0,0.28)'
@@ -126,7 +121,7 @@ const StatCard = ({
                 fontWeight: 800,
                 lineHeight: 1,
                 letterSpacing: '-0.02em',
-                color: isDark ? '#ffffff' : accentColor,
+                color: accentColor,
               }}
             >
               {count}
@@ -138,7 +133,7 @@ const StatCard = ({
                 fontSize: 13,
                 fontWeight: 600,
                 color: isDark
-                  ? 'rgba(255,255,255,.72)'
+                  ? '#ffffff'
                   : '#4B5563',
               }}
             >

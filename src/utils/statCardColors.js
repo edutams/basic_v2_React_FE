@@ -1,8 +1,3 @@
-/**
- * Premium Stat Card Color Helper
- * Rich dual-tone gradients, vibrant accents, and glowing badges.
- */
-
 import { alpha, lighten } from '@mui/material/styles';
 
 export const getStatCardColor = (

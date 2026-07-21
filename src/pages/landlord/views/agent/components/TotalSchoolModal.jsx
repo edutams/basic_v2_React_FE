@@ -8,6 +8,7 @@ import {
   Tab,
   Select,
   MenuItem,
+  Card,
   useTheme,
   CircularProgress,
 } from '@mui/material';
@@ -16,9 +17,65 @@ import Chart from 'react-apexcharts';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar, IconBuildingCommunity } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
-import StatCard from '@/components/shared/StatCard';
+import { getStatCardColor } from '@/utils/statCardColors';
 
-
+const TopCard = ({ label, value, icon: Icon, colorIndex = 0 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
+    getStatCardColor(null, colorIndex, isDark, theme);
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        p: 2.5,
+        borderRadius: '12px',
+        background: isDark ? theme.palette.background.paper : cardBg,
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : borderColor}`,
+        boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+        height: '100%',
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box
+          sx={{
+            width: 46,
+            height: 46,
+            borderRadius: '50%',
+            background: iconBg,
+            color: iconColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: isDark ? '0 6px 16px rgba(0,0,0,.3)' : `0 8px 22px -2px ${iconGlow}`,
+          }}
+        >
+          <Icon size={22} color={iconColor} />
+        </Box>
+        <Box
+          sx={{
+            flex: 1,
+            textAlign: 'right',
+          }}
+        >
+          <Typography
+            fontWeight={800}
+            sx={{ fontSize: '22px', color: isDark ? '#fff' : accentColor, lineHeight: 1.1 }}
+          >
+            {value}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: isDark ? 'rgba(255,255,255,.72)' : '#64748B', fontWeight: 500 }}
+          >
+            {label}
+          </Typography>
+        </Box>
+      </Stack>
+    </Card>
+  );
+};
 
 const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) => {
   const theme = useTheme();
@@ -190,33 +247,33 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
       {/* Top stat cards */}
       <Grid container spacing={2} mb={3} mt={3}>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <StatCard
+          <TopCard
             label="Total School"
-            count={stats?.totalSchools ?? 0}
+            value={stats?.totalSchools ?? 0}
             icon={IconSchool}
             colorIndex={0}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <StatCard
+          <TopCard
             label="Approved Schools"
-            count={stats?.activeSchools ?? 0}
+            value={stats?.activeSchools ?? 0}
             icon={IconBuildingCommunity}
             colorIndex={1}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <StatCard
+          <TopCard
             label="Pending Schools"
-            count={stats?.pendingSchools ?? 0}
+            value={stats?.pendingSchools ?? 0}
             icon={IconBuildingCommunity}
             colorIndex={3}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <StatCard
+          <TopCard
             label="Rejected Schools"
-            count={stats?.rejected ?? stats?.rejectedSchools ?? 0}
+            value={stats?.rejected ?? stats?.rejectedSchools ?? 0}
             icon={IconBuildingCommunity}
             colorIndex={4}
           />

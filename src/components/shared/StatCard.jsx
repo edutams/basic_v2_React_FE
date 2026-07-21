@@ -122,7 +122,7 @@ const StatCard = ({
           <>
             <Typography
               sx={{
-                fontSize: 32,
+                fontSize: 23,
                 fontWeight: 800,
                 lineHeight: 1,
                 letterSpacing: '-0.02em',

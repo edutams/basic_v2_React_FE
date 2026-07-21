@@ -6,6 +6,7 @@ import {
   Stack,
   Select,
   MenuItem,
+  Card,
   Divider,
   useTheme,
 } from '@mui/material';
@@ -13,7 +14,6 @@ import Chart from 'react-apexcharts';
 import StandardModal from '@/components/shared/StandardModal';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconBuildingBank } from '@tabler/icons-react';
-import StatCard from '@/components/shared/StatCard';
 
 const plans = [
   {
@@ -42,6 +42,57 @@ const plans = [
 
 const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
 
+// \u2500\u2500 Shared card components matching TotalTransactionModal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Card
+      sx={{
+        p: 2.5,
+        borderRadius: '12px',
+        boxShadow: 'none',
+        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
+        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        height: '100%',
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box
+          sx={{
+            width: 42,
+            height: 42,
+            borderRadius: '10px',
+            bgcolor: iconBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={20} color={valueColor} />
+        </Box>
+        <Box>
+          <Typography
+            fontWeight={800}
+            sx={{ fontSize: '18px', color: valueColor, lineHeight: 1.2 }}
+          >
+            {value}
+          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3}>
+            <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: valueColor }} />
+            <Typography
+              variant="caption"
+              sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
+            >
+              {label}
+            </Typography>
+          </Stack>
+        </Box>
+      </Stack>
+    </Card>
+  );
+};
 
 
 const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
@@ -184,11 +235,12 @@ const PlanDistributionModal = ({ open, onClose }) => {
       <Grid container spacing={2} mb={3}>
         {plans.map((plan, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <StatCard
+            <TopCard
               label={plan.label}
-              count={plan.value}
+              value={plan.value}
+              valueColor={plan.color}
+              iconBg={isDark ? '#2a2a2a' : plan.iconBg}
               icon={IconBuildingBank}
-              colorIndex={i % 6}
             />
           </Grid>
         ))}

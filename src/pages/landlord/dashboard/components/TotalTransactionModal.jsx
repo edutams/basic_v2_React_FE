@@ -12,14 +12,59 @@ import {
   useTheme,
   Grid,
   Button,
+  Card,
 } from '@mui/material';
 import { IconCash, IconTrendingUp, IconCoins } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
-import StatCard from '@/components/shared/StatCard';
 
-
-
+const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Card
+      sx={{
+        p: 2.5,
+        borderRadius: '12px',
+        boxShadow: 'none',
+        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
+        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        height: '100%',
+      }}
+    >
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box
+          sx={{
+            width: 42,
+            height: 42,
+            borderRadius: '10px',
+            bgcolor: iconBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={20} color={valueColor} />
+        </Box>
+        <Box>
+          <Typography
+            fontWeight={800}
+            sx={{ fontSize: '22px', color: valueColor, lineHeight: 1.2 }}
+          >
+            ₦ {value}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
+          >
+            {label}
+          </Typography>
+        </Box>
+      </Stack>
+    </Card>
+  );
+};
 const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -148,27 +193,30 @@ const TotalTransactionModal = ({ open, onClose }) => {
       {/* Top 3 stat cards */}
       <Grid container spacing={2} mb={3}>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
+          <TopCard
             label="Total Transaction Value"
-            count="7,000,234.00"
+            value="7,000,234.00"
+            valueColor="#2ca87f"
+            iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
             icon={IconCash}
-            colorIndex={1}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
+          <TopCard
             label="Total Transaction Volume"
-            count="7,000,234.00"
+            value="7,000,234.00"
+            valueColor="#e11d48"
+            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
             icon={IconTrendingUp}
-            colorIndex={4}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
+          <TopCard
             label="Total Commission"
-            count="1,000,234.00"
+            value="1,000,234.00"
+            valueColor="#4a3aff"
+            iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
             icon={IconCoins}
-            colorIndex={0}
           />
         </Grid>
       </Grid>

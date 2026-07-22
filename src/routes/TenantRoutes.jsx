@@ -91,6 +91,13 @@ const WalletTransactions = Loadable(
 );
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
+const SubjectRegistration = Loadable(
+  lazy(() => import('@/pages/tenant/subject-registration/SubjectRegistration')),
+);
+const ClassRegister = Loadable(lazy(() => import('@/pages/tenant/class-register/ClassRegister')));
+const AttendancePsychomotor = Loadable(
+  lazy(() => import('@/pages/tenant/attendance/AttendancePsychomotor')),
+);
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
 const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
 const PayInvoice = Loadable(
@@ -538,6 +545,32 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.tracker.index">
             <FormDetails />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      // ── Class Manager Routes ──
+      {
+        path: 'subject-registration',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.subject_registrar.view">
+            <SubjectRegistration />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-register',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.class_register.view">
+            <ClassRegister />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'attendance-psychomotor',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.attendance_psychomotor.view">
+            <AttendancePsychomotor />
           </TenantProtectedRoute>
         ),
       },

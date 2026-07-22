@@ -16,6 +16,10 @@ import {
   TableCell,
   useTheme,
 } from '@mui/material';
+import {
+  TrendingUp as TrendingUpIcon,
+  CheckCircleOutline as CheckCircleIcon,
+} from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import AnalyticsModal from './AnalyticsModal';
 
@@ -105,17 +109,20 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               value={84}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.success.accentColor,
                 },
               }}
             />
-            <Typography variant="caption" fontWeight={600} sx={{ color: colors.success.accentColor }}>
-              +0.4 from last term
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography variant="caption" fontWeight={600} sx={{ color: colors.success.accentColor }}>
+                +0.4 from last term
+              </Typography>
+              <TrendingUpIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -162,20 +169,23 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               value={76}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.primary.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
-            >
-              → Stable performance
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+              >
+                → Stable performance
+              </Typography>
+              <CheckCircleIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -278,7 +288,7 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
                   sx={{
                     height: 4,
                     borderRadius: 2,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                     '& .MuiLinearProgress-bar': { bgcolor: colors.primary.accentColor },
                   }}
                 />
@@ -294,7 +304,7 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
                   sx={{
                     height: 4,
                     borderRadius: 2,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                     '& .MuiLinearProgress-bar': { bgcolor: colors.success.accentColor },
                   }}
                 />

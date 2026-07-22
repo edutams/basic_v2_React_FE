@@ -19,6 +19,10 @@ import {
 import {
   PeopleOutline as PeopleOutlineIcon,
   WarningAmberOutlined as WarningIcon,
+  CalendarMonth as CalendarMonthIcon,
+  TrendingFlat as TrendingFlatIcon,
+  TrendingUp as TrendingUpIcon,
+  EventNote as EventNoteIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import AnalyticsModal from './AnalyticsModal';
@@ -110,20 +114,23 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               value={metrics.daysOpen}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.success.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
-            >
-              126 out of 130
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+              >
+                126 out of 130
+              </Typography>
+              <CalendarMonthIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -184,20 +191,23 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               value={metrics.weekRate}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.warning.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
-            >
-              0% Same as last week
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+              >
+                0% Same as last week
+              </Typography>
+              <TrendingFlatIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -244,21 +254,24 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               value={metrics.termRate}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.info.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              fontWeight={600}
-              sx={{ color: colors.info.accentColor }}
-            >
-              ↑ 44% Higher last term
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                fontWeight={600}
+                sx={{ color: colors.info.accentColor }}
+              >
+                ↑ 44% Higher last term
+              </Typography>
+              <TrendingUpIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -312,23 +325,23 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               value={30}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.error.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
-            >
-              Current Session
-            </Typography>
-            <Box sx={{ position: 'absolute', right: 12, bottom: 12, opacity: 0.08 }}>
-              <PeopleOutlineIcon sx={{ fontSize: 36, color: colors.error.accentColor }} />
-            </Box>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+              >
+                Current Session
+              </Typography>
+              <EventNoteIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+            </Stack>
           </StatCard>
         </Grid>
 
@@ -391,20 +404,23 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               value={15}
               sx={{
                 my: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : undefined,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                 '& .MuiLinearProgress-bar': {
                   bgcolor: colors.error.accentColor,
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              sx={{ color: colors.error.accentColor }}
-            >
-              1+ Week Absence
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.4}>
+              <Typography
+                variant="caption"
+                sx={{ color: colors.error.accentColor }}
+              >
+                1+ Week Absence
+              </Typography>
+              <WarningIcon sx={{ fontSize: 13, color: colors.error.accentColor }} />
+            </Stack>
           </StatCard>
         </Grid>
       </Grid>

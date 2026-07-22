@@ -461,7 +461,7 @@ const TeamTab = ({
       </Grid>
 
       {/* Table */}
-      <TableContainer component={Paper}>
+      <TableContainer>
         <Table>
           <TableHead>
             <TableRow>

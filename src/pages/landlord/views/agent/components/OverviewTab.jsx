@@ -43,6 +43,7 @@ import {
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import { getStatCardColor } from '@/utils/statCardColors';
+import ParentCard from '@/components/shared/ParentCard';
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
@@ -554,7 +555,7 @@ const OverviewTab = ({ data }) => {
 
         {/* Column 3: Recent Onboarding School */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Card
+          <ParentCard
             sx={{
               borderRadius: '12px',
               height: '98%',
@@ -696,12 +697,12 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Card>
+          </ParentCard>
         </Grid>
 
         {/* Bottom Row: Top Agents */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
+          <ParentCard>
             <Box sx={{ p: 2 }}>
               <Typography variant="subtitle1" fontWeight={800} color="textPrimary">
                 TOP 10 AGENT BY REVENUE
@@ -760,12 +761,12 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Card>
+          </ParentCard>
         </Grid>
 
         {/* Bottom Row: Top Schools */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
+          <ParentCard>
             <Box
               sx={{
                 p: 2,
@@ -832,7 +833,7 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Card>
+          </ParentCard>
         </Grid>
       </Grid>
 

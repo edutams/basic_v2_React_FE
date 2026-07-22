@@ -279,7 +279,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
   };
 
   return (
-    <ParentCard title="Manage Team">
+    <Box title="Manage Team">
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Box
@@ -881,7 +881,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </ParentCard>
+    </Box>
   );
 };
 

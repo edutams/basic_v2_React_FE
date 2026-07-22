@@ -1,7 +1,7 @@
 import React from 'react';
 import { Grid, Card, Box, Typography, Stack, Divider, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
-import { getStatCardColor } from 'src/utils/statCardColors';
+import { getStatCardColor } from '@/utils/statCardColors';
 import PropTypes from 'prop-types';
 
 const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats = [], onIconClick, onClick }) => {
@@ -26,12 +26,12 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-              boxShadow: isDark
-                ? '0 8px 30px rgba(0,0,0,0.35)'
-                : '0 6px 24px rgba(0,0,0,0.12)',
-              transform: 'translateY(-3px)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }
+            boxShadow: isDark
+              ? '0 8px 30px rgba(0,0,0,0.35)'
+              : '0 6px 24px rgba(0,0,0,0.12)',
+            transform: 'translateY(-3px)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }
           : {},
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
@@ -54,17 +54,21 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
               onIconClick?.();
             }}
             sx={{
-              bgcolor: softColors.iconBg,
-              p: '5px',
+              background: `${softColors.iconBg} !important`,
+              boxShadow: isDark
+                ? '0 4px 12px rgba(0,0,0,0.3)'
+                : `0 4px 14px ${softColors.iconGlow}`,
+              p: 0.6,
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               cursor: onIconClick ? 'pointer' : 'default',
               flexShrink: 0,
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={15} color={softColors.iconColor || 'white'} />
+            <IconChartBar size={18} color={softColors.iconColor || 'white'} />
           </Box>
         </Box>
 

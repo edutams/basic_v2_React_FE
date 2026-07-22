@@ -1127,7 +1127,7 @@ const Agent = () => {
           <Box>
             <Box
               sx={{
-                height: 130,
+                height: 160,
                 display: 'flex',
                 alignItems: 'center',
                 overflow: 'hidden',

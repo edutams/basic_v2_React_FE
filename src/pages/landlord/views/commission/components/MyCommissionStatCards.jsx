@@ -1,17 +1,19 @@
 import React from 'react';
 import { Box, useTheme, Paper, Typography, Button } from '@mui/material';
 import {
-  IconCurrencyNaira,
-  IconUsers,
-  IconCash,
   IconAdjustments,
   IconChartBar,
 } from '@tabler/icons-react';
-import { color } from 'framer-motion';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const MyCommissionStatCards = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+
+  const statColor0 = getStatCardColor(null, 0, isDarkMode, theme); // Primary
+  const statColor1 = getStatCardColor(null, 1, isDarkMode, theme); // Success
+  const statColor2 = getStatCardColor(null, 2, isDarkMode, theme); // Info
+  const statColor3 = getStatCardColor(null, 3, isDarkMode, theme); // Warning
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -23,11 +25,18 @@ const MyCommissionStatCards = () => {
           mb: 3,
         }}
       >
+        {/* GUPSA Ogun State Card */}
         <Paper
           sx={{
             p: 3,
-            borderRadius: '20px',
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            borderRadius: '16px',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor0.borderColor}`,
+            background: isDarkMode ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+            boxShadow: isDarkMode
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           {/* Header */}
@@ -38,8 +47,8 @@ const MyCommissionStatCards = () => {
           {/* Amount */}
           <Box
             sx={{
-              background: '#E6F7F1',
-              borderRadius: '5px',
+              background: `${statColor0.valueBg} !important`,
+              borderRadius: '8px',
               px: 3,
               py: 1,
               display: 'inline-block',
@@ -50,7 +59,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: '#2ca87f',
+                color: statColor0.accentColor,
               }}
             >
               ₦7,000,234.00
@@ -62,8 +71,8 @@ const MyCommissionStatCards = () => {
             <Box
               fontWeight="600"
               sx={{
-                background: '#DEFEDE',
-                color: '#21A943',
+                background: isDarkMode ? 'rgba(255,255,255,0.1)' : statColor0.borderColor,
+                color: statColor0.accentColor,
                 px: 2,
                 py: '4px',
                 borderRadius: '5px',
@@ -88,31 +97,38 @@ const MyCommissionStatCards = () => {
             sx={{
               display: 'flex',
               gap: 1,
-              // mt: 2,
             }}
           >
-            <Button variant="contained" size="small" startIcon={<IconAdjustments />}
-              onClick={() => setIsRegisterModalOpen(true)}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<IconAdjustments size={16} />}
               sx={{
-                borderColor: '#2ca87f',
-                color: '#2ca87f',
+                borderColor: statColor0.accentColor,
+                color: statColor0.accentColor,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px',
                 '&:hover': {
-                  borderColor: '#2ca87f',
-                  backgroundColor: '#2ca87f',
+                  borderColor: statColor0.accentColor,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(109, 40, 217, 0.08)',
                 },
               }}
             >
               View Details
             </Button>
 
-            <Button variant="contained" size="small" // startIcon={<IconCash />}
-              onClick={() => setIsRegisterModalOpen(true)}
+            <Button
+              variant="contained"
+              size="small"
               sx={{
-                backgroundColor: '#2ca87f',
-                color: '#ffff',
+                backgroundColor: `${statColor0.accentColor} !important`,
+                color: '#ffffff',
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px',
                 '&:hover': {
-                  borderColor: '#2ca87f',
-                  backgroundColor: '#2ca87f',
+                  opacity: 0.9,
                 },
               }}
             >
@@ -121,12 +137,18 @@ const MyCommissionStatCards = () => {
           </Box>
         </Paper>
 
+        {/* Total Transaction Card */}
         <Paper
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor1.borderColor}`,
+            background: isDarkMode ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+            boxShadow: isDarkMode
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -143,18 +165,20 @@ const MyCommissionStatCards = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                width: 32,
+                height: 32,
+                borderRadius: '6px',
+                background: `${statColor1.iconBg} !important`,
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor1.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color={statColor1.iconColor || '#FFFFFF'} />
             </Box>
           </Box>
 
@@ -163,17 +187,16 @@ const MyCommissionStatCards = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-
               flex: 1,
               height: '100%',
             }}
           >
             <Box>
-              <Typography variant="h6" sx={{ color: '#2ca87f' }}>
+              <Typography variant="h6" sx={{ color: statColor1.accentColor }}>
                 Inflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: '#2ca87f' }}>
-                {/* {schoolSummary.primary} */} 0
+              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor1.accentColor }}>
+                0
               </Typography>
             </Box>
 
@@ -181,27 +204,33 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: '#E5E7EB',
+                background: statColor1.borderColor,
               }}
             />
 
             <Box>
-              <Typography variant="h6" sx={{ color: '#f59e0b' }}>
+              <Typography variant="h6" sx={{ color: statColor3.accentColor }}>
                 Outflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: '#f59e0b' }}>
-                {/* {schoolSummary.secondary} */} 0
+              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor3.accentColor }}>
+                0
               </Typography>
             </Box>
           </Box>
         </Paper>
 
+        {/* Total Sub Orgs Card */}
         <Paper
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor2.borderColor}`,
+            background: isDarkMode ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+            boxShadow: isDarkMode
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -218,25 +247,27 @@ const MyCommissionStatCards = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                width: 32,
+                height: 32,
+                borderRadius: '6px',
+                background: `${statColor2.iconBg} !important`,
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor2.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color={statColor2.iconColor || '#FFFFFF'} />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: '#FEF3C7',
-              borderRadius: 1,
+              background: `${statColor2.valueBg} !important`,
+              borderRadius: '8px',
               px: 3,
               py: 1,
               display: 'inline-flex',
@@ -248,10 +279,10 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: '#f59e0b',
+                color: statColor2.accentColor,
               }}
             >
-              {/* {schoolSummary.total} */} 0
+              0
             </Typography>
           </Box>
 
@@ -267,7 +298,7 @@ const MyCommissionStatCards = () => {
                 Level 3
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.primary} */} 0
+                0
               </Typography>
             </Box>
 
@@ -275,7 +306,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: '#E5E7EB',
+                background: statColor2.borderColor,
               }}
             />
 
@@ -284,7 +315,7 @@ const MyCommissionStatCards = () => {
                 Level 4
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.secondary} */} 0
+                0
               </Typography>
             </Box>
 
@@ -292,7 +323,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: '#E5E7EB',
+                background: statColor2.borderColor,
               }}
             />
 
@@ -301,18 +332,24 @@ const MyCommissionStatCards = () => {
                 Level 5
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.secondary} */} 0
+                0
               </Typography>
             </Box>
           </Box>
         </Paper>
 
+        {/* Total School Card */}
         <Paper
           sx={{
             p: 3,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            borderRadius: '16px',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor3.borderColor}`,
+            background: isDarkMode ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
+            boxShadow: isDarkMode
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -329,25 +366,27 @@ const MyCommissionStatCards = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                width: 32,
+                height: 32,
+                borderRadius: '6px',
+                background: `${statColor3.iconBg} !important`,
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor3.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={22} color="#FFFFFF" />
+              <IconChartBar size={18} color={statColor3.iconColor || '#FFFFFF'} />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: '#EEF2FF',
-              borderRadius: 1,
+              background: `${statColor3.valueBg} !important`,
+              borderRadius: '8px',
               px: 3,
               py: 1,
               display: 'inline-flex',
@@ -359,10 +398,10 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: '#4A3AFF',
+                color: statColor3.accentColor,
               }}
             >
-              {/* {schoolSummary.total} */} 0
+              0
             </Typography>
           </Box>
 
@@ -378,7 +417,7 @@ const MyCommissionStatCards = () => {
                 Primary School
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.primary} */} 0
+                0
               </Typography>
             </Box>
 
@@ -386,7 +425,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: '#E5E7EB',
+                background: statColor3.borderColor,
               }}
             />
 
@@ -395,7 +434,7 @@ const MyCommissionStatCards = () => {
                 Secondary School
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {/* {schoolSummary.secondary} */} 0
+                0
               </Typography>
             </Box>
           </Box>

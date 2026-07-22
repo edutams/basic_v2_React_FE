@@ -1038,7 +1038,7 @@ const SchoolsTab = ({
                   </IconButton>
                 </Box>
                 <Box
-                  sx={{ height: 130, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                  sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
                 >
                   <ReusablePieChart
                     series={planSeries}

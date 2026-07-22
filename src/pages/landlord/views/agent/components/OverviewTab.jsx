@@ -42,6 +42,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
@@ -259,12 +260,17 @@ const OverviewTab = ({ data }) => {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const transactionColors = getStatCardColor(null, 3, isDarkMode, theme);
+  const creditColors = getStatCardColor(null, 4, isDarkMode, theme);
+  const planColorsCard = getStatCardColor(null, 5, isDarkMode, theme);
+
   const revenueOptions = {
     chart: {
       type: 'bar',
       toolbar: { show: false },
       stacked: false,
       fontFamily: "'DM Sans', sans-serif",
+      background: 'transparent',
     },
     plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
     dataLabels: { enabled: false },
@@ -281,7 +287,7 @@ const OverviewTab = ({ data }) => {
         formatter: (val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val / 1000}K`),
       },
     },
-    fill: { opacity: 1, colors: [theme.palette.primary.main] },
+    fill: { opacity: 1, colors: [transactionColors.accentColor] },
     tooltip: {
       theme: isDarkMode ? 'dark' : 'light',
       y: { formatter: (val) => `# ${val.toLocaleString()}` },
@@ -338,32 +344,49 @@ const OverviewTab = ({ data }) => {
               p: 3,
               borderRadius: '12px',
               height: '98%',
-              border: `1px solid ${theme.palette.divider}`,
-              bgcolor: theme.palette.background.paper,
-              boxShadow: 'none',
+              border: `1px solid ${transactionColors.borderColor}`,
+              background: isDarkMode ? theme.palette.background.paper : transactionColors.cardBg,
+              boxShadow: isDarkMode
+                ? '0 6px 24px rgba(0,0,0,0.28)'
+                : '0 4px 20px rgba(0,0,0,0.07)',
             }}
           >
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
               <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
                 Transaction
               </Typography>
-              <Button variant="contained" size="small" startIcon={<IconFilter />}
+              <Button variant="outlined" size="small" startIcon={<IconFilter size={16} />}
                 sx={{
                   borderRadius: '8px',
                   textTransform: 'none',
                   fontWeight: 600,
+                  bgcolor: '#FFFFFF !important',
+                  color: isDarkMode ? '#333333' : 'text.primary',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : '#E2E8F0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  '&:hover': {
+                    bgcolor: '#F8FAFC !important',
+                    borderColor: '#CBD5E1',
+                  },
                 }}
               >
                 Filter by Date
               </Button>
             </Stack>
-            <Chart
-              options={revenueOptions}
-              series={revenueSeries}
-              type="bar"
-              height={320}
-              width="100%"
-            />
+            <Box
+              sx={{
+                '& .apexcharts-canvas': { background: 'transparent !important' },
+                '& .apexcharts-svg': { background: 'transparent !important' },
+              }}
+            >
+              <Chart
+                options={revenueOptions}
+                series={revenueSeries}
+                type="bar"
+                height={320}
+                width="100%"
+              />
+            </Box>
           </Card>
         </Grid>
 
@@ -374,13 +397,15 @@ const OverviewTab = ({ data }) => {
             <Card
               sx={{
                 borderRadius: '8px',
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: 'none',
+                border: `1px solid ${creditColors.borderColor}`,
+                background: isDarkMode ? theme.palette.background.paper : creditColors.cardBg,
+                boxShadow: isDarkMode
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
                 overflow: 'hidden',
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                bgcolor: theme.palette.background.paper,
               }}
             >
               {/* Header Section */}
@@ -408,23 +433,26 @@ const OverviewTab = ({ data }) => {
                 <Box
                   sx={{
                     p: 0.6,
-                    bgcolor: isDarkMode ? theme.palette.grey[800] : '#545454',
+                    background: `${creditColors.iconBg} !important`,
+                    boxShadow: isDarkMode
+                      ? '0 4px 12px rgba(0,0,0,0.3)'
+                      : `0 4px 14px ${creditColors.iconGlow}`,
                     borderRadius: '4px',
                     display: 'flex',
-                    color: 'white',
+                    color: creditColors.iconColor || 'white',
                   }}
                 >
                   <IconChartBar size={18} strokeWidth={2.5} />
                 </Box>
               </Box>
-              <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6 }} />
+              <Divider sx={{ borderColor: creditColors.borderColor, opacity: 0.6 }} />
 
               {/* Content Section */}
               <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     flex: 1.8,
-                    bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : '#DEE5F6',
+                    bgcolor: creditColors.valueBg,
                     borderRadius: '4px',
                     p: 2,
                     display: 'flex',
@@ -449,7 +477,7 @@ const OverviewTab = ({ data }) => {
                   <Typography
                     fontWeight={800}
                     sx={{
-                      color: theme.palette.text.primary,
+                      color: creditColors.accentColor,
                       fontSize: '18px',
                       lineHeight: 1,
                       wordBreak: 'break-word',
@@ -487,14 +515,18 @@ const OverviewTab = ({ data }) => {
                 </Box>
               </Box>
             </Card>
+
+            {/* Plan Distribution Card */}
             <Card
               sx={{
                 p: 3,
                 borderRadius: '12px',
                 flex: 1.5,
-                border: `1px solid ${theme.palette.divider}`,
-                bgcolor: theme.palette.background.paper,
-                boxShadow: 'none',
+                border: `1px solid ${planColorsCard.borderColor}`,
+                background: isDarkMode ? theme.palette.background.paper : planColorsCard.cardBg,
+                boxShadow: isDarkMode
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
                 color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
               }}
             >

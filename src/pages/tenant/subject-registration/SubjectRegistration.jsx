@@ -222,8 +222,8 @@ const SubjectRegistration = () => {
             icon={BarChartIcon}
             value={totalSubjects}
             label="Registered Subjects"
-            subtitle="Male 52 | Female 55"
-            subtitleIcon={PeopleOutlineIcon}
+            // subtitle="Male 52 | Female 55"
+            // subtitleIcon={PeopleOutlineIcon}
             colorName="success"
             colorIndex={1}
           />

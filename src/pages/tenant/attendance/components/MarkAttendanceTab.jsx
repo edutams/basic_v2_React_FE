@@ -334,9 +334,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 ↑ 90% Higher than yesterday
               </Typography>
             </Box>
-            <Typography variant="caption" color="text.disabled" sx={{ mt: 3 }}>
+            {/* <Typography variant="caption" color="text.disabled" sx={{ mt: 3 }}>
               Powered by EduTAMS
-            </Typography>
+            </Typography> */}
           </Paper>
         </Grid>
       </Grid>

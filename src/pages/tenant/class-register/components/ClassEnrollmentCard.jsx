@@ -6,6 +6,7 @@ import {
   Button,
   Stack,
   Grid,
+  Tooltip,
   useTheme,
 } from '@mui/material';
 import { Groups as GroupsIcon } from '@mui/icons-material';
@@ -58,35 +59,36 @@ const ClassEnrollmentCard = ({ onClassClick }) => {
           const itemColors = getStatCardColor(colorNames[cls.colorIndex], cls.colorIndex, isDark, theme);
           return (
             <Grid size={{ xs: 6, sm: 4 }} key={cls.label}>
-              <Box
-                onClick={() => onClassClick(cls)}
-                sx={{
-                  p: 2,
-                  borderRadius: '12px',
-                  border: isDark
-                    ? '1px solid rgba(255,255,255,0.08)'
-                    : `1px solid ${itemColors.borderColor}`,
-                  background: isDark ? 'rgba(255,255,255,0.02)' : itemColors.cardBg,
-                  cursor: 'pointer',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                   transform: 'translateY(-3px)',
+              <Tooltip title="click to view the number of learners in each class arm in this class" arrow placement="top">
+                <Box
+                  onClick={() => onClassClick(cls)}
+                  sx={{
+                    p: 2,
+                    borderRadius: '12px',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : `1px solid ${itemColors.borderColor}`,
+                    background: isDark ? 'rgba(255,255,255,0.02)' : itemColors.cardBg,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: 'translateY(-3px)',
                     boxShadow: isDark
                       ? '0 8px 20px rgba(0,0,0,0.35)'
                       : '0 6px 16px rgba(0,0,0,0.12)',
                     borderColor: itemColors.accentColor,
-                  // '&:hover': {
-                  //   transform: 'translateY(-3px)',
-                  //   boxShadow: isDark
-                  //     ? '0 8px 20px rgba(0,0,0,0.35)'
-                  //     : '0 6px 16px rgba(0,0,0,0.12)',
-                  //   borderColor: itemColors.accentColor,
-                  // },
-                }}
-              >
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: isDark
+                        ? '0 8px 20px rgba(0,0,0,0.35)'
+                        : '0 6px 16px rgba(0,0,0,0.12)',
+                      borderColor: itemColors.accentColor,
+                    },
+                  }}
+                >
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography
                     variant="caption"
@@ -125,8 +127,8 @@ const ClassEnrollmentCard = ({ onClassClick }) => {
                   }}
                 >
                   <GroupsIcon sx={{ fontSize: 22 }} />
-                </Box>
-              </Box>
+                </Box>                </Box>
+              </Tooltip>
             </Grid>
           );
         })}

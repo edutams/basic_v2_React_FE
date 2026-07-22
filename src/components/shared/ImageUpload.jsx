@@ -117,10 +117,7 @@ const ImageUpload = ({
 
         <Box sx={{ textAlign: 'left', width: '100%' }}>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-start', mb: 1 }}>
-            <Button
-              size="small"
-              component="label"
-              startIcon={<IconCloudUpload size={16} />}
+            <Button variant="contained" size="small" component="label" startIcon={<IconCloudUpload />}
               sx={{
                 borderRadius: '8px',
                 textTransform: 'none',
@@ -133,17 +130,7 @@ const ImageUpload = ({
             </Button>
 
             {hasCustomImage && (
-              <Button
-                variant="text"
-                color="error"
-                size="small"
-                onClick={handleClear}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
+              <Button variant="contained" size="small" color="error" onClick={handleClear} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, }}>
                 Remove
               </Button>
             )}

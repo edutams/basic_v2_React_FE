@@ -114,11 +114,10 @@ const UploadLogoModal = ({ open, onClose, onUploaded }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={handleClose} disabled={uploading}>
+        <Button variant="contained" size="small" color="inherit" onClick={handleClose} disabled={uploading}>
           Cancel
         </Button>
-        <Button
-          startIcon={<IconUpload size={16} />}
+        <Button size="small" startIcon={<IconUpload />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
         >

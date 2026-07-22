@@ -286,12 +286,10 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
                       label={`${selectedCount}/${permissions.length}`}
                       size="small"
                       color={selectedCount > 0 ? 'primary' : 'default'}
-                      // variant={selectedCount > 0 ? 'filled' : 'outlined'}
+                    // variant={selectedCount > 0 ? 'filled' : 'outlined'}
                     />
                   </Box>
-                  <Button
-                    size="small"
-                    onClick={() => handleSelectAll(permissions)}
+                  <Button variant="contained" size="small" onClick={() => handleSelectAll(permissions)}
                     // variant={allSelected ? 'contained' : 'outlined'}
                     color="primary"
                     sx={{ minWidth: 120 }}
@@ -382,10 +380,10 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
         </Box>
 
         <Box display="flex" gap={2}>
-          <Button onClick={onCancel} color="inherit">
+          <Button variant="contained" size="small" onClick={onCancel} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!hasChanges}>
+          <Button size="small" onClick={handleSave} disabled={!hasChanges}>
             Save Changes
           </Button>
         </Box>

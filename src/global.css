@@ -1,0 +1,11 @@
+.custom-week-picker {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-width: 140px;
+}
+
+.custom-week-picker:focus {
+    border-color: #1976d2;
+    outline: none;
+}

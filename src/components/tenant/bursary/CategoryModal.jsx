@@ -105,8 +105,8 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
         </TextField>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
+          <Button size="small" onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${category ? 'Update' : 'Add'} Category`}
           </Button>
         </Stack>

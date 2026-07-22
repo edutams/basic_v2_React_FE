@@ -294,7 +294,7 @@ const SchoolAlcManager = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Typography variant="h5">Manage Roles</Typography>
 
-              <Button color="primary" onClick={() => setNewRoleModalOpen(true)}>
+              <Button variant="contained" size="small" color="primary" onClick={() => setNewRoleModalOpen(true)}>
                 New Role
               </Button>
             </Box>
@@ -309,17 +309,12 @@ const SchoolAlcManager = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Button
-              startIcon={<IconAdjustmentsHorizontal size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
-                textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
               Filters
@@ -344,96 +339,96 @@ const SchoolAlcManager = () => {
             </Button>
           </Box>
 
-          <Paper>
-            <TableContainer>
-              <Table>
-                <TableHead>
+          {/* <Paper> */}
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 70 }}>S/N</TableCell>
+                  <TableCell>Role Name</TableCell>
+                  {/* <TableCell>Guard Name</TableCell> */}
+                  <TableCell>Description</TableCell>
+                  <TableCell align="center">Action</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>Role Name</TableCell>
-                    {/* <TableCell>Guard Name</TableCell> */}
-                    <TableCell>Description</TableCell>
-                    <TableCell align="center">Action</TableCell>
+                    <TableCell colSpan={5} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
                   </TableRow>
-                </TableHead>
+                ) : filteredRows.length > 0 ? (
+                  filteredRows.map((row, index) => (
+                    <TableRow key={row.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      {/* <TableCell>{row.guard_name}</TableCell> */}
+                      <TableCell>{row.description}</TableCell>
 
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredRows.length > 0 ? (
-                    filteredRows.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{row.name}</TableCell>
-                        {/* <TableCell>{row.guard_name}</TableCell> */}
-                        <TableCell>{row.description}</TableCell>
+                      <TableCell align="center">
+                        <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                          <MoreVertIcon />
+                        </IconButton>
 
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                            onClose={handleMenuClose}
-                          >
-                            <MenuItem onClick={() => handleAttachPermission(row)}>
-                              Attach Permission
-                            </MenuItem>
-
-                            <MenuItem onClick={() => handleViewPermissions(row)}>
-                              View Permission
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <Alert
-                          severity="info"
-                          sx={{
-                            mb: 3,
-                            justifyContent: 'center',
-                            textAlign: 'center',
-                            '& .MuiAlert-icon': {
-                              mr: 1.5,
-                            },
-                          }}
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                          onClose={handleMenuClose}
                         >
-                          {hasFilters
-                            ? 'No roles match the current filters.'
-                            : 'No roles available. Create a new role to get started.'}
-                        </Alert>
+                          <MenuItem onClick={() => handleAttachPermission(row)}>
+                            Attach Permission
+                          </MenuItem>
+
+                          <MenuItem onClick={() => handleViewPermissions(row)}>
+                            View Permission
+                          </MenuItem>
+                        </Menu>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-
-                <TableFooter>
+                  ))
+                ) : (
                   <TableRow>
-                    <TablePagination
-                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                      count={hasFilters ? filteredRows.length : totalRoles}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={(_, newPage) => setPage(newPage)}
-                      onRowsPerPageChange={(e) => {
-                        setRowsPerPage(parseInt(e.target.value, 10));
-                        setPage(0);
-                      }}
-                    />
+                    <TableCell colSpan={5} align="center">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 3,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        {hasFilters
+                          ? 'No roles match the current filters.'
+                          : 'No roles available. Create a new role to get started.'}
+                      </Alert>
+                    </TableCell>
                   </TableRow>
-                </TableFooter>
-              </Table>
-            </TableContainer>
-          </Paper>
+                )}
+              </TableBody>
+
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                    count={hasFilters ? filteredRows.length : totalRoles}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                  />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </TableContainer>
+          {/* </Paper> */}
         </ParentCard>
       )}
 

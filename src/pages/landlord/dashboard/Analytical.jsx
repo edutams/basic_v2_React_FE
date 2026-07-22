@@ -22,9 +22,12 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import Chart from 'react-apexcharts';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
+import { getStatCardColor } from '@/utils/statCardColors';
 import {
   flexRender,
   getCoreRowModel,
@@ -36,13 +39,8 @@ import {
 import DashboardStatCard from '@/components/shared/cards/DashboardStatCard';
 
 // Agent Analytics Components
-import LoginActivitiesCard from '@/pages/landlord/views/agent/components/LoginActivitiesCard';
 import { IconSchool, IconListTree, IconSearch } from '@tabler/icons-react';
 import { IconChartBar } from '@tabler/icons-react';
-
-// Charts
-import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
-import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 // Agent Modals
 import PlanDistributionModal from '@/pages/landlord/views/agent/components/PlanDistributionModal';
@@ -82,18 +80,14 @@ export default function Dashboard() {
   const planSeries = [65, 52, 39, 25];
   const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
 
-  const loginActivities = [
-    { label: 'Teacher', value: 12 },
-    { label: 'SPA', value: 45 },
-    { label: 'Student', value: 23 },
-    { label: 'Parent', value: 12 },
-    { label: 'Agents', value: 72 },
-  ];
+
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
+  const [selectedUserFilters, setSelectedUserFilters] = useState(null);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
@@ -102,6 +96,8 @@ export default function Dashboard() {
   // Analytics state
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [loginActivities, setLoginActivities] = useState([]);
+  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -117,6 +113,20 @@ export default function Dashboard() {
     fetchAnalytics();
   }, []);
 
+  useEffect(() => {
+    const fetchLoginActivities = async () => {
+      try {
+        const res = await activityLogApi.getLoginActivities30Days();
+        if (res.status) setLoginActivities(res.data);
+      } catch (e) {
+        console.error('Failed to fetch login activities', e);
+      } finally {
+        setLoginActivitiesLoading(false);
+      }
+    };
+    fetchLoginActivities();
+  }, []);
+
   // Table filter states
   const [searchName, setSearchName] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
@@ -129,21 +139,25 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const response = await agentApi.getAll();
-        if (response.success) {
-          const mappedData = response.data.slice(0, 10).map((agent) => ({
+        const paginator = response.status === true ? response.data : response;
+        const agentsArray = paginator.data || [];
+        
+        if (agentsArray.length > 0) {
+          const mappedData = agentsArray.slice(0, 10).map((agent) => ({
             s_n: agent.id,
-            agentDetails: agent.name,
-            organizationName: agent.org_name,
-            imgsrc: agent.image,
+            agentDetails: agent.organization_name || agent.name,
+            organizationName: agent.organization_name || agent.org_name,
+            imgsrc: agent.organization_logo || agent.image,
             tenants_count: agent.tenants_count || 0,
-            sub_agents_count: agent.children_count || 0,
+            sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
             access_level: agent.access_level,
-            phoneNumber: agent.phone,
-            contactDetails: agent.email,
+            phoneNumber: agent.organization_phone || agent.phone,
+            contactDetails: agent.organization_email || agent.email,
             primaryColor: agent.primary_color || '#4a3aff',
             status: agent.status
               ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
               : 'Inactive',
+            tenants: agent.tenants || [],
           }));
           setData(mappedData);
         }
@@ -333,8 +347,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total School"
               value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
-              valueColor="#4a3aff"
-              valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
+              colorIndex={0}
               subStats={[
                 {
                   label: 'Approved',
@@ -358,8 +371,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total Transaction Value"
               value="₦7,000,234.00"
-              valueColor="#2ca87f"
-              valueBg={isDark ? '#0d2e1e' : '#E6F7F1'}
+              colorIndex={1}
               subStats={[
                 { label: 'Commission', value: '₦100,000,000' },
                 { label: 'Volume', value: '304,043,000' },
@@ -373,8 +385,7 @@ export default function Dashboard() {
             <DashboardStatCard
               title="Total Organization"
               value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
-              valueColor="#f59e0b"
-              valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
+              colorIndex={2}
               subStats={[
                 {
                   label: 'Lv2',
@@ -407,8 +418,11 @@ export default function Dashboard() {
                 p: 0,
                 height: '100%',
                 borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 3, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 3, isDark, theme).cardBg,
               }}
             >
               <Box
@@ -417,46 +431,204 @@ export default function Dashboard() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  background: 'transparent',
                 }}
               >
                 <Typography
                   variant="h5"
                   fontWeight="600"
-                  sx={{ color: isDark ? '#fff' : '#4a3aff' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   Transaction
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Select size="small" value="year" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="year">Year</MenuItem>
-                  </Select>
-                  <Select size="small" value="gateway" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="gateway">Gateway</MenuItem>
-                  </Select>
-                </Stack>
+             <Stack direction="row" spacing={1}>
+  <Select
+    size="small"
+    value="year"
+    sx={{
+      minWidth: 100,
+      height: '35px',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+      borderRadius: '8px',
+      color: isDark ? '#fff' : 'inherit',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+      },
+      '& .MuiSelect-icon': {
+        color: isDark ? '#fff' : 'inherit',
+      },
+    }}
+  >
+    <MenuItem value="year">Year</MenuItem>
+  </Select>
+
+  <Select
+    size="small"
+    value="gateway"
+    sx={{
+      minWidth: 100,
+      height: '35px',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+      borderRadius: '8px',
+      color: isDark ? '#fff' : 'inherit',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+      },
+      '& .MuiSelect-icon': {
+        color: isDark ? '#fff' : 'inherit',
+      },
+    }}
+  >
+    <MenuItem value="gateway">Gateway</MenuItem>
+  </Select>
+</Stack>
               </Box>
-              <ReusableBarChart
-                series={revenueSeries}
-                categories={months}
-                colors={[theme.palette.primary.main]}
-                height={250}
-                yAxisPrefix="N"
-                yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-                xAxisTitle="Month"
-              />
+              <Box 
+                sx={{ 
+                  background: 'transparent',
+                  p: 2,
+                  '& .apexcharts-canvas': {
+                    background: 'transparent !important',
+                  },
+                  '& .apexcharts-svg': {
+                    background: 'transparent !important',
+                  },
+                }}
+              >
+                <Chart 
+                  options={{
+                    chart: {
+                      type: 'bar',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                      foreColor: '#adb0bb',
+                      toolbar: { show: false },
+                      zoom: { enabled: false },
+                      background: 'transparent',
+                    },
+                    colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 4,
+                        columnWidth: '45%',
+                        distributed: false,
+                      },
+                    },
+                    dataLabels: { enabled: false },
+                    legend: { show: false },
+                    grid: {
+                      borderColor: 'rgba(0,0,0,0.1)',
+                      strokeDashArray: 3,
+                      xaxis: { lines: { show: false } },
+                      yaxis: { lines: { show: true } }
+                    },
+                    xaxis: {
+                      categories: months,
+                      axisBorder: { show: false },
+                      title: {
+                        text: 'Month',
+                        style: { color: '#adb0bb', fontWeight: 400 }
+                      }
+                    },
+                    yaxis: {
+                      labels: {
+                        show: true,
+                        formatter: (val) => `N${val.toFixed(1)}M`,
+                      },
+                    },
+                    tooltip: {
+                      theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+                    },
+                  }}
+                  series={revenueSeries}
+                  type="bar" 
+                  height={250} 
+                  width="100%" 
+                />
+              </Box>
             </Card>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 3 }}>
-            <LoginActivitiesCard
-              title="Login Activities (30 days)"
-              activities={
-                analyticsLoading
-                  ? [{ label: 'Loading...', value: '...' }]
-                  : (analytics?.loginActivities ?? loginActivities)
-              }
-              onIconClick={() => setIsLoggedInUsersModalOpen(true)}
-            />
+            <Card
+              sx={{
+                p: 0,
+                height: '100%',
+                borderRadius: '12px',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 4, isDark, theme).cardBg,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <Box sx={{ p: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+                  <Typography 
+                    variant="subtitle2" 
+                    fontWeight="600" 
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Login Activities (30 days)
+                  </Typography>
+                  <Box 
+                    onClick={() => setIsLoggedInUsersModalOpen(true)}
+                    sx={{ 
+                      background: getStatCardColor(null, 4, isDark, theme).iconBg,
+                      p: 0.5, 
+                      borderRadius: '4px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: isDark
+                        ? '0 6px 16px rgba(0,0,0,.3)'
+                        : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
+                      '&:hover': { opacity: 0.8 }
+                    }}
+                  >
+                    <IconChartBar size={20} color={getStatCardColor(null, 4, isDark, theme).iconColor} />
+                  </Box>
+                </Box>
+
+                <Stack spacing={2.5} sx={{ px: 2, flex: 1 }}>
+                  {(loginActivitiesLoading
+                    ? [{ label: 'Loading...', value: '...' }]
+                    : loginActivities
+                  )?.map((activity, index) => (
+                    <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="500" 
+                        sx={{ 
+                          color: isDark ? '#fff' : '#1a1a1a',
+                          fontSize: '18px' 
+                        }}
+                      >
+                        {activity.label}:
+                      </Typography>
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="600" 
+                        sx={{ 
+                          color: getStatCardColor(null, 4, isDark, theme).accentColor,
+                          fontSize: '20px' 
+                        }}
+                      >
+                        {activity.value}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
+            </Card>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
@@ -465,8 +637,11 @@ export default function Dashboard() {
                 p: '24px !important',
                 height: '100%',
                 borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: isDark
+                  ? '0 6px 24px rgba(0,0,0,0.28)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
+                border: `1px solid ${getStatCardColor(null, 5, isDark, theme).borderColor}`,
+                background: getStatCardColor(null, 5, isDark, theme).cardBg,
                 position: 'relative',
               }}
             >
@@ -481,32 +656,97 @@ export default function Dashboard() {
                 <Typography
                   variant="subtitle2"
                   fontWeight="600"
-                  sx={{ color: isDark ? '#fff' : '#1E3A5F' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   Plan Distribution
                 </Typography>
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    bgcolor: '#454545',
+                    background: getStatCardColor(null, 5, isDark, theme).iconBg,
                     p: 0.5,
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    '&:hover': { bgcolor: '#333' },
+                    boxShadow: isDark
+                      ? '0 6px 16px rgba(0,0,0,.3)'
+                      : `0 8px 22px -2px ${getStatCardColor(null, 5, isDark, theme).iconGlow}`,
+                    '&:hover': { opacity: 0.8 },
                   }}
                 >
-                  <IconChartBar size={20} color="white" />
+                  <IconChartBar size={20} color={getStatCardColor(null, 5, isDark, theme).iconColor} />
                 </Box>
               </Box>
-              <ReusablePieChart
-                series={planSeries}
-                labels={planLabels}
-                colors={[theme.palette.primary.main, '#2196f3', '#ff4081', '#9c27b0']}
-                height={200}
-              />
+              <Box 
+                sx={{ 
+                  '& .apexcharts-canvas': {
+                    background: 'transparent !important',
+                  },
+                  '& .apexcharts-svg': {
+                    background: 'transparent !important',
+                  },
+                }}
+              >
+                <Chart 
+                  options={{
+                    chart: {
+                      type: 'donut',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                      foreColor: theme.palette.text.secondary,
+                      toolbar: { show: false },
+                      background: 'transparent',
+                    },
+                    labels: planLabels,
+                    colors: [
+                      getStatCardColor(null, 5, isDark, theme).accentColor, 
+                      '#2196f3', 
+                      '#ff4081', 
+                      '#9c27b0'
+                    ],
+                    plotOptions: {
+                      pie: {
+                        donut: {
+                          size: '50%',
+                          background: 'transparent',
+                        },
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function (val) {
+                        return val.toFixed(0) + '%';
+                      },
+                      style: {
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        colors: ['#ffffff'],
+                      },
+                      dropShadow: { enabled: false },
+                    },
+                    stroke: { show: false },
+                    legend: {
+                      show: true,
+                      position: 'right',
+                      horizontalAlign: 'center',
+                      floating: false,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      labels: { colors: theme.palette.text.secondary },
+                      itemMargin: { horizontal: 5, vertical: 5 },
+                    },
+                    tooltip: {
+                      theme: theme.palette.mode,
+                      fillSeriesColor: false,
+                    },
+                  }}
+                  series={planSeries}
+                  type="donut" 
+                  height={200} 
+                  width="100%" 
+                />
+              </Box>
             </Card>
           </Grid>
         </Grid>
@@ -540,8 +780,7 @@ export default function Dashboard() {
                     </Box>
                     <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
-                  <Button
-                    onClick={() => navigate('/agent/organization')}
+                  <Button variant="contained" size="small" onClick={() => navigate('/agent/organization')}
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',
@@ -621,14 +860,7 @@ export default function Dashboard() {
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
                   </Select>
-                  <Button
-                    sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      px: 3,
-                      boxShadow: 'none',
-                    }}
-                  >
+                  <Button variant="contained" size="small" sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none', }}>
                     Filter
                   </Button>
                 </Stack>
@@ -673,15 +905,19 @@ export default function Dashboard() {
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}
         onClose={() => setIsLoggedInUsersModalOpen(false)}
-        onViewUserList={() => {
-          setIsLoggedInUsersModalOpen(false);
+        onViewUserList={(row, filters) => {
+          setSelectedTenantForUsers(row);
+          setSelectedUserFilters(filters);
           setIsViewUsersListModalOpen(true);
         }}
+        stats={loginActivities}
       />
       <ViewUsersListModal
         open={isViewUsersListModalOpen}
         onClose={() => setIsViewUsersListModalOpen(false)}
-        schoolName={selectedSchoolForUsers}
+        schoolId={selectedTenantForUsers?.id}
+        schoolName={selectedTenantForUsers?.school}
+        filters={selectedUserFilters}
       />
       <TotalSchoolModal
         open={isSchoolModalOpen}

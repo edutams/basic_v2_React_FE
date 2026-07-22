@@ -57,52 +57,9 @@ import ViewParentsModal from '@/components/tenant/learners/ViewParentsModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
+import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
-
-const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
-  <Paper
-    sx={{
-      borderRadius: 2,
-      p: 3,
-      flex: 1,
-      minWidth: { xs: '100%', sm: 200 },
-      bgcolor: 'background.paper',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Box
-      sx={{
-        width: 48,
-        height: 48,
-        borderRadius: '50%',
-        bgcolor: 'primary.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Icon sx={{ fontSize: 22 }} color={color} />
-    </Box>
-
-    <Box sx={{ textAlign: 'center' }}>
-      {loading ? (
-        <CircularProgress size={24} />
-      ) : (
-        <>
-          <Typography fontSize={26} fontWeight={700}>
-            {count}
-          </Typography>
-          <Typography fontSize={14} color="text.secondary">
-            {label}
-          </Typography>
-        </>
-      )}
-    </Box>
-  </Paper>
-);
 
 const LearnerManagement = () => {
   const notify = useNotification();
@@ -391,21 +348,21 @@ const LearnerManagement = () => {
             count={stats.total}
             label="Total Learners"
             icon={GroupsIcon}
-            color="primary"
+            colorIndex={0}
             loading={statsLoading}
           />
           <StatCard
             count={stats.active}
             label="Active Learners"
             icon={PeopleIcon}
-            color="primary"
+            colorIndex={1}
             loading={statsLoading}
           />
           <StatCard
             count={stats.transferred}
             label="Transferred Learners"
             icon={SwapHorizIcon}
-            color="primary"
+            colorIndex={2}
             loading={statsLoading}
           />
         </Stack>
@@ -432,17 +389,14 @@ const LearnerManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                startIcon={<AddIcon />}
+              <Button variant="contained" size="small" startIcon={<AddIcon />}
                 fullWidth={false}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setAddLearnerOpen(true)}
               >
                 Add Learner
               </Button>
-              <Button
-                startIcon={<DownloadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
                   setDownloadClassId('');
@@ -452,9 +406,7 @@ const LearnerManagement = () => {
                 Download Template
               </Button>
 
-              <Button
-                startIcon={<UploadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setUploadLearnerOpen(true)}
               >
@@ -483,7 +435,13 @@ const LearnerManagement = () => {
                 ),
               },
             }}
-            sx={{ flex: 1, minWidth: { xs: '100%', sm: 220 } }}
+            sx={{
+              width: {
+                xs: "100%",
+                sm: 300,
+                md: 350,
+              },
+            }}
           />
 
           <FormControl size="small" sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
@@ -506,13 +464,13 @@ const LearnerManagement = () => {
           </FormControl>
 
           {hasFilters && (
-            <Button size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table>
               <TableHead>
@@ -659,7 +617,7 @@ const LearnerManagement = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </ParentCard>
 
       <AddLearnerModal
@@ -707,8 +665,8 @@ const LearnerManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
           </Button>
         </DialogActions>
@@ -734,19 +692,14 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => {
-              setImpersonateStudentConfirmOpen(false);
-              setStudentToImpersonate(null);
-            }}
+          <Button variant="contained" size="small" color="inherit" onClick={() => {
+            setImpersonateStudentConfirmOpen(false);
+            setStudentToImpersonate(null);
+          }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmedImpersonateStudent}
-            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
-          >
+          <Button size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
             Yes, Login As
           </Button>
         </DialogActions>
@@ -800,8 +753,8 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>

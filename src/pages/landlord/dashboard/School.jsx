@@ -53,6 +53,7 @@ import LoginActivities from './components/LoginActivities';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
 
+import { getStatCardColor } from '@/utils/statCardColors';
 import { AuthContext } from '@/context/AgentContext/auth';
 import {
   getSchools,
@@ -416,15 +417,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
       <Divider />
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
+        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
           Close
         </Button>
         {prospect.status === 'pending' && (
           <>
             {!showRejectInput ? (
-              <Button
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
+              <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                 onClick={() => setShowRejectInput(true)}
                 disabled={loading}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -433,18 +432,14 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </Button>
             ) : (
               <>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button
-                  color="error"
-                  startIcon={<CancelOutlinedIcon />}
+                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
                   onClick={() => onReject(prospect.id, rejectReason)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -453,9 +448,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 </Button>
               </>
             )}
-            <Button
-              color="success"
-              startIcon={<CheckCircleOutlineIcon />}
+            <Button variant="contained" size="small" color="success" startIcon={<CheckCircleOutlineIcon />}
               onClick={() => onApprove(prospect.id)}
               disabled={loading || showRejectInput}
               sx={{
@@ -577,9 +570,7 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
       </TableCell>
       <TableCell align="right">
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button
-            size="small"
-            startIcon={<IconEye size={14} />}
+          <Button variant="contained" size="small" startIcon={<IconEye />}
             onClick={() => onReview(row)}
             sx={{
               textTransform: 'none',
@@ -593,10 +584,7 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
             {row.status?.toLowerCase() === 'approved' ? 'View' : 'Review'}
           </Button>
           {showDelete && (
-            <Button
-              size="small"
-              color="error"
-              onClick={() => onDelete(row)}
+            <Button variant="contained" size="small" color="error" onClick={() => onDelete(row)}
               sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px' }}
             >
               Delete
@@ -613,6 +601,12 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
 const SchoolDashboard = () => {
   const { impersonateTenant } = useContext(AuthContext);
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const statColor0 = getStatCardColor(null, 0, isDark, theme);
+  const statColor1 = getStatCardColor(null, 1, isDark, theme);
+  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+  const statColor3 = getStatCardColor(null, 3, isDark, theme);
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState(0);
@@ -887,8 +881,8 @@ const SchoolDashboard = () => {
     !nameValue
       ? arr
       : arr.filter((r) =>
-          (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-        );
+        (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
+      );
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -915,23 +909,33 @@ const SchoolDashboard = () => {
       >
         {/* Total Schools */}
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
-              Total Schools
+              Total School
             </Typography>
             <Tooltip title="View breakdown">
               <IconButton
                 size="small"
                 onClick={() => setOpenTotalSchoolModal(true)}
-                sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                sx={{
+                  background: `${statColor0.iconBg} !important`,
+                  boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                  borderRadius: 1,
+                  '&:hover': { opacity: 0.85 }
+                }}
               >
                 <IconChartBar size={18} color="#fff" />
               </IconButton>
@@ -939,7 +943,7 @@ const SchoolDashboard = () => {
           </Box>
           <Box
             sx={{
-              bgcolor: '#E6F7F1',
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -947,7 +951,7 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#2CA87F' }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -958,7 +962,7 @@ const SchoolDashboard = () => {
               </Typography>
               <Typography fontWeight={600}>{schoolSummary.active}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Inactive
@@ -970,10 +974,15 @@ const SchoolDashboard = () => {
 
         {/* Subscriptions */}
         <Paper
+          elevation={0}
           sx={{
             p: 3,
-            borderRadius: 2,
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -984,14 +993,19 @@ const SchoolDashboard = () => {
             </Typography>
             <IconButton
               size="small"
-              sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+              sx={{
+                background: `${statColor1.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                borderRadius: 1,
+                '&:hover': { opacity: 0.85 }
+              }}
             >
               <IconChartBar size={18} color="#fff" />
             </IconButton>
           </Box>
           <Box
             sx={{
-              bgcolor: '#EEF2FF',
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -999,7 +1013,7 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
               {schoolSummary.subscriptions}
             </Typography>
           </Box>
@@ -1010,7 +1024,7 @@ const SchoolDashboard = () => {
               </Typography>
               <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Secondary
@@ -1022,13 +1036,19 @@ const SchoolDashboard = () => {
 
         {/* Login Activities */}
         <Paper
+          elevation={0}
           sx={{
-            borderRadius: 2,
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+            p: 3,
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
-            sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
               Login Activities
@@ -1036,12 +1056,17 @@ const SchoolDashboard = () => {
             <IconButton
               size="small"
               onClick={() => setOpenLoginModal(true)}
-              sx={{ bgcolor: '#3d3d3d', borderRadius: 1, '&:hover': { bgcolor: '#111' } }}
+              sx={{
+                background: `${statColor2.iconBg} !important`,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
+                borderRadius: 1,
+                '&:hover': { opacity: 0.85 }
+              }}
             >
               <IconChartBar size={18} color="#fff" />
             </IconButton>
           </Box>
-          <Box sx={{ px: 2, pb: 2 }}>
+          <Box sx={{ pb: 0 }}>
             {[
               ['Staffs', 0],
               ['SPA', 0],
@@ -1054,13 +1079,13 @@ const SchoolDashboard = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   py: 0.5,
-                  borderBottom: '1px solid #f3f4f6',
+                  borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                 }}
               >
                 <Typography variant="body2" color="text.secondary">
                   {label}
                 </Typography>
-                <Typography variant="body2" fontWeight={600} color="error.main">
+                <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
                   {val}
                 </Typography>
               </Box>
@@ -1070,13 +1095,19 @@ const SchoolDashboard = () => {
 
         {/* Plan Distribution */}
         <Paper
+          elevation={0}
           sx={{
-            borderRadius: 2,
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+            p: 3,
+            borderRadius: '16px',
+            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
+            boxShadow: isDark
+              ? '0 6px 24px rgba(0,0,0,0.28)'
+              : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
-            sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
               Plan Distribution
@@ -1084,17 +1115,22 @@ const SchoolDashboard = () => {
             <IconButton
               size="small"
               onClick={() => setOpenPlanModal(true)}
-              sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+              sx={{
+                bgcolor: statColor3.iconBg,
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                borderRadius: 1,
+                '&:hover': { opacity: 0.85 }
+              }}
             >
               <IconChartBar size={18} color="#fff" />
             </IconButton>
           </Box>
-          <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+          <Box sx={{ height: 130, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
             <ReusablePieChart
               series={planSeries}
               colors={planColors}
               labels={planLabels}
-              height={170}
+              height={140}
               hideCard
             />
           </Box>
@@ -1165,9 +1201,7 @@ const SchoolDashboard = () => {
               sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
             {/* {activeTab === 0 && (
-              <Button
-                
-                startIcon={<IconUserPlus size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconUserPlus />}
                 onClick={() => setOpenRegisterModal(true)}
                 sx={{
                   bgcolor: '#3949ab',

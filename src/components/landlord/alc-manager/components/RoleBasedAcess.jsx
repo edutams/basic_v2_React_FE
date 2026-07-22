@@ -125,13 +125,13 @@ const RoleBasedAcess = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button size="small" onClick={handleSearch} sx={{ height: 40 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
               Search
             </Button>
           </Grid>
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 600 }}>
               <TableHead>
@@ -217,7 +217,7 @@ const RoleBasedAcess = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}

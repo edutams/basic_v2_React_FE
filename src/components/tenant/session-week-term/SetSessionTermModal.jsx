@@ -81,10 +81,10 @@ const SetSessionTermModal = ({ open, onClose, onSubmit }) => {
           </TextField>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-            <Button onClick={handleClose} color="inherit">
+            <Button variant="contained" size="small" onClick={handleClose} color="inherit">
               Cancel
             </Button>
-            <Button type="submit" color="primary">
+            <Button size="small" type="submit" color="primary">
               Set Session/Term
             </Button>
           </Box>

@@ -72,12 +72,13 @@ const FullLayout = () => {
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
+              px: { xs: 2, sm: 3 },
             }}
           >
             {/* ------------------------------------------- */}
             {/* PageContent */}
             {/* ------------------------------------------- */}
-            <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', py: 3, px: { xs: 1, sm: 2 } }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

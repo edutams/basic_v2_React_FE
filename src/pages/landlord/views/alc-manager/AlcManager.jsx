@@ -272,7 +272,7 @@ const AlcManager = () => {
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
           variant="scrollable"
-          // scrollButtons="auto"
+        // scrollButtons="auto"
         >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />
@@ -289,13 +289,11 @@ const AlcManager = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Typography variant="h5">Manage Roles</Typography>
 
-              <Button
-                color="primary"
-                onClick={() => {
-                  setIsEditing(false);
-                  setNewRoleForm({ roleName: '', description: '' });
-                  setNewRoleModalOpen(true);
-                }}
+              <Button variant="contained" size="small" color="primary" onClick={() => {
+                setIsEditing(false);
+                setNewRoleForm({ roleName: '', description: '' });
+                setNewRoleModalOpen(true);
+              }}
               >
                 New Role
               </Button>
@@ -311,15 +309,14 @@ const AlcManager = () => {
               justifyContent: 'flex-end',
             }}
           >
-            <Button
-              startIcon={<IconAdjustmentsHorizontal size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
+                // borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                // color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
                 '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
@@ -346,7 +343,7 @@ const AlcManager = () => {
             </Button>
           </Box>
 
-          <Paper>
+          <Box>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -444,7 +441,7 @@ const AlcManager = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         </ParentCard>
       )}
 

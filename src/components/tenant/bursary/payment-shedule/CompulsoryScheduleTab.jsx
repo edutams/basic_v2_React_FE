@@ -10,6 +10,7 @@ import {
   Tab,
   Table,
   TableBody,
+  Switch,
   TableCell,
   TableContainer,
   TableHead,
@@ -26,6 +27,7 @@ import {
   Alert,
   TableFooter,
   TablePagination,
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -58,6 +60,7 @@ const CompulsoryScheduleTab = ({
   sessionLabel,
   categoryLabel,
   payOption = 'compulsory',
+  payType = 'bursary',
   onTermChange,
   refreshStats,
   scheduleRefreshKey = 0,
@@ -134,6 +137,7 @@ const CompulsoryScheduleTab = ({
         selectedTermId,
         categoryId,
         payOption,
+        payType,
         searchTerm,
       );
 
@@ -143,11 +147,12 @@ const CompulsoryScheduleTab = ({
           const classes =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.class_id,
-              name: schedule.my_class?.class_name || `Class ${schedule.class_id}`,
+              name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
               amount: schedule.amount || 0,
               schedule_id: schedule.id,
               bursary_installment_id: schedule.bursary_installment_id,
               status: schedule.status,
+              invoices_count: schedule.invoices_count || 0,
             })) || [];
 
           return {
@@ -164,6 +169,7 @@ const CompulsoryScheduleTab = ({
             },
             classes: classes,
             missingCount: classes.filter((c) => !c.amount || c.amount === 0).length,
+            hasInvoices: classes.some((c) => c.invoices_count > 0),
           };
         });
 
@@ -199,7 +205,6 @@ const CompulsoryScheduleTab = ({
     setAddItemModal(true);
   };
 
-  // Toggle active/inactive status for a class within a schedule
   const toggleClassStatus = (scheduleId, classId) => {
     setSchedules((prev) => ({
       ...prev,
@@ -300,7 +305,7 @@ const CompulsoryScheduleTab = ({
   };
 
   // const handleClassClick = (schedule, cls) => {
-  //   const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
+  //   const isEdit = cls.name.includes('₦'); // Has amount if name contains ₦
 
   //   setConfirmDialog({
   //     open: true,
@@ -337,7 +342,7 @@ const CompulsoryScheduleTab = ({
       const { className, paymentName } = paymentModal.payment || {};
 
       showSnackbar?.(
-        `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
+        `Payment ${action} successfully: ${formData.amount} ₦ for ${className} in ${paymentName}`,
       );
 
       // Reload schedules after saving
@@ -540,7 +545,7 @@ const CompulsoryScheduleTab = ({
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  bgcolor: 'primary.main',
+                  bgcolor: '#5CB979',
                 }}
               />
               <Typography variant="caption">Active Payment Schedules</Typography>
@@ -560,7 +565,7 @@ const CompulsoryScheduleTab = ({
           </Stack>
         </Box>
 
-        <TableContainer component={Paper} variant="outlined">
+        <TableContainer variant="outlined">
           <Table>
             <TableHead>
               <TableRow>
@@ -597,11 +602,22 @@ const CompulsoryScheduleTab = ({
                           return (
                             <Chip
                               key={cls.id}
-                              label={hasAmount ? `${cls.name} - [${cls.amount} NGN]` : cls.name}
+                              label={
+                                <Tooltip title="Click to set or edit payment amount">
+                                  <span>
+                                    {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
+                                  </span>
+                                </Tooltip>
+                              }
                               size="small"
                               onClick={(e) => {
                                 // Prevent bubbling if clicking on delete icon
                                 if (e.target.closest('.MuiChip-deleteIcon')) {
+                                  return;
+                                }
+
+                                if (cls.invoices_count > 0) {
+                                  showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
                                   return;
                                 }
 
@@ -615,6 +631,7 @@ const CompulsoryScheduleTab = ({
                                     bursaryPaymentNameId: schedule.payment_name.id,
                                     scheduleId: cls.schedule_id,
                                     amount: cls.amount || '',
+                                    bursary_installment_id: cls.bursary_installment_id || '',
                                   },
                                   isEdit: hasAmount,
                                 });
@@ -622,35 +639,55 @@ const CompulsoryScheduleTab = ({
                               onDelete={
                                 hasAmount
                                   ? (e) => {
-                                      e.stopPropagation();
-                                      handleClassActionClick(schedule, cls, 'delete');
+                                    e.stopPropagation();
+                                    if (cls.invoices_count > 0) {
+                                      showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                      return;
                                     }
+                                    handleClassActionClick(schedule, cls, 'delete');
+                                  }
                                   : undefined
                               }
                               deleteIcon={
                                 hasAmount ? (
-                                  <Box display="flex" alignItems="center" gap={0.5}>
-                                    <ShieldIcon
-                                      sx={{
-                                        fontSize: 16,
-                                        cursor: 'pointer',
-                                      }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleClassActionClick(schedule, cls, 'toggle');
-                                      }}
-                                    />
-                                    <DeleteIcon sx={{ fontSize: 14 }} />
+                                  <Box
+                                    onClick={(e) => e.stopPropagation()}
+                                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                  >
+                                    <Tooltip
+                                      title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    >
+                                      <Switch
+                                        size="small"
+                                        checked={cls.status === 'active'}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          handleClassActionClick(schedule, cls, 'toggle');
+                                        }}
+                                        sx={{
+                                          color: hasAmount
+                                            ? schedule.status === 'inactive'
+                                              ? 'white'
+                                              : '#5CB979'
+                                            : 'grey.300',
+                                        }}
+                                      />
+                                    </Tooltip>
+                                    <Tooltip title="Delete class schedule">
+                                      <DeleteIcon sx={{ fontSize: 14 }} />
+                                    </Tooltip>
                                   </Box>
                                 ) : (
-                                  <AddIcon sx={{ fontSize: 14 }} />
+                                  <Tooltip title="Add payment for this class">
+                                    <AddIcon sx={{ fontSize: 14 }} />
+                                  </Tooltip>
                                 )
                               }
                               sx={{
                                 bgcolor: hasAmount
                                   ? cls.status === 'inactive'
                                     ? 'error.main'
-                                    : 'primary.main'
+                                    : '#5CB979'
                                   : 'grey.300',
 
                                 color: hasAmount ? 'white' : 'text.secondary',
@@ -665,7 +702,7 @@ const CompulsoryScheduleTab = ({
                                   backgroundColor: hasAmount
                                     ? cls.status === 'inactive'
                                       ? 'error.dark'
-                                      : 'primary.dark'
+                                      : '#5CB979'
                                     : 'grey.400',
                                 },
 
@@ -714,10 +751,16 @@ const CompulsoryScheduleTab = ({
       </ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
-        <MenuOption onClick={handleDeleteSchedule} sx={{ color: 'error.main' }}>
-          Delete Schedule
+        <MenuOption onClick={handleEditSchedule}>
+          Set/Edit Schedule
         </MenuOption>
+        <Tooltip title={selectedRow?.hasInvoices ? "Cannot delete: one or more classes have attached invoices" : ""} placement="left">
+          <span>
+            <MenuOption onClick={handleDeleteSchedule} sx={{ color: selectedRow?.hasInvoices ? 'text.disabled' : 'error.main' }} disabled={selectedRow?.hasInvoices}>
+              Delete Schedule
+            </MenuOption>
+          </span>
+        </Tooltip>
       </Menu>
 
       {/* Confirmation Dialog */}
@@ -727,10 +770,19 @@ const CompulsoryScheduleTab = ({
           <Typography variant="body2">{confirmDialog.message}</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={handleConfirmDialogClose}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleConfirmDialogClose}
+          >
             Cancel
           </Button>
-          <Button variant="contained" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
+          <Button
+            size="small"
+            onClick={confirmDialog.onConfirm}
+            sx={{ fontWeight: 600 }}
+          >
             Confirm
           </Button>
         </DialogActions>
@@ -762,7 +814,8 @@ const CompulsoryScheduleTab = ({
         sessionId={sessionId}
         termId={selectedTermId}
         categoryId={categoryId}
-        onRefresh={handleRefreshSchedules}
+        onRefresh={() => loadPaymentSchedules()}
+        showSnackbar={showSnackbar}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -796,11 +849,16 @@ const CompulsoryScheduleTab = ({
           )} */}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setDeleteDialog({ open: false, schedule: null })}
+          >
             Cancel
           </Button>
           <Button
-            variant="contained"
+            size="small"
             color="error"
             onClick={handleConfirmDelete}
             sx={{ fontWeight: 600 }}
@@ -846,6 +904,8 @@ const CompulsoryScheduleTab = ({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
+            variant="contained"
+            size="small"
             color="inherit"
             onClick={() =>
               setClassActionDialog({ open: false, action: null, schedule: null, classData: null })
@@ -855,7 +915,7 @@ const CompulsoryScheduleTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
+            size="small"
             color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
             onClick={handleConfirmClassAction}
             disabled={processingAction}

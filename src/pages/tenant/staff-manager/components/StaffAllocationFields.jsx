@@ -447,9 +447,7 @@ const StaffAllocationFields = ({
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             1. Class Allocation
           </Typography>
-          <Button
-            size="small"
-            startIcon={<AddIcon />}
+          <Button variant="contained" size="small" startIcon={<AddIcon />}
             onClick={addClassAllocation}
             disabled={isLoading}
             sx={{ minWidth: 'auto' }}
@@ -578,9 +576,7 @@ const StaffAllocationFields = ({
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             2. Subject Allocation
           </Typography>
-          <Button
-            size="small"
-            startIcon={<AddIcon />}
+          <Button variant="contained" size="small" startIcon={<AddIcon />}
             onClick={addSubjectAllocation}
             disabled={isLoading}
             sx={{ minWidth: 'auto' }}

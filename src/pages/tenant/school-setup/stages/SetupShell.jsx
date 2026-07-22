@@ -433,26 +433,17 @@ const SetupShell = ({
             borderColor: 'divider',
           }}
         >
-          <Button
-            size="small"
-            startIcon={<IconArrowLeft size={16} />}
+          <Button variant="contained" size="small" startIcon={<IconArrowLeft />}
             onClick={onBack}
-            sx={{ fontSize: 14, fontWeight: 600, color: 'text.primary', textTransform: 'none' }}
           >
             {backLabel || 'Back'}
           </Button>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            {/* <Button
-              size="small"
-              onClick={onSkip}
-              sx={{ fontSize: 14, fontWeight: 600, color: 'primary.main' }}
-            >
+            {/* <Button variant="contained" size="small" onClick={onSkip} sx={{ fontSize: 14, fontWeight: 600, color: 'primary.main' }}>
               Skip
             </Button> */}
-            <Button
-              size="small"
-              endIcon={<IconChevronRight size={16} />}
+            <Button variant="contained" size="small" endIcon={<IconChevronRight />}
               onClick={onSaveAndContinue}
               disabled={saving || !canContinue}
               title={!canContinue ? 'Complete the required action to continue' : undefined}

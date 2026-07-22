@@ -9,7 +9,23 @@ const ReadField = ({ label, value, multiline = false, rows = 1 }) => (
     multiline={multiline}
     rows={multiline ? rows : undefined}
     slotProps={{ input: { readOnly: true } }}
-    sx={{ '& .MuiInputBase-input': { cursor: 'default' } }}
+    sx={{
+      '& .MuiInputBase-input': {
+        cursor: 'default',
+      },
+      '& .MuiOutlinedInput-root': {
+        bgcolor: (theme) =>
+          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+      },
+      '& .MuiInputLabel-root': {
+        fontWeight: 600,
+        fontSize: '0.75rem',
+      },
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: (theme) =>
+          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.12)',
+      },
+    }}
   />
 );
 

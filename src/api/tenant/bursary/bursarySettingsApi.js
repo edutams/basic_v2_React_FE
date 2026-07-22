@@ -55,12 +55,13 @@ export const fetchGatewayChargeBearer = async () => {
     return res.data;
 }
 
-export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', search = '') => {
+export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', payType = 'bursary', search = '') => {
     const params = {
         session_id: sessionId,
         term_id: termId,
         category_id: categoryId,
-        pay_option: payOption
+        pay_option: payOption,
+        pay_type: payType
     };
 
     if (search) {
@@ -117,9 +118,9 @@ export const togglePaymentScheduleStatus = async (id, status) => {
     return res.data;
 };
 
-export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory') => {
+export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory', payType = 'bursary') => {
     const res = await api.get('/bursary/payment_schedule/stats', {
-        params: { session_id: sessionId, term_id: termId, pay_option: payOption }
+        params: { session_id: sessionId, term_id: termId, pay_option: payOption, pay_type: payType }
     });
     return res.data;
 };
@@ -132,12 +133,19 @@ export const fetchGenerateInvoiceStats = async (sessionTermId, classId) => {
     const res = await api.get('/bursary/payment_schedule/generate_invoice_stats', { params });
     return res.data;
 };
-    
-export const fetchStudentForInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
+
+export const fetchInvoiceStudentCounts = async (sessionTermId, classId) => {
+    const params = { session_term_id: sessionTermId, class_id: classId };
+    const res = await api.get('/bursary/payment_schedule/invoice_student_counts', { params });
+    return res.data;
+};
+
+export const fetchStudentForInvoiceData = async ({ sessionTermId, classId, categoryId, pending } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
     if (classId) params.class_id = classId;
     if (categoryId) params.category_id = categoryId;
+    if (pending) params.pending = pending;
     const res = await api.get('/bursary/payment_schedule/fetch_student_for_invoice_data', { params });
     return res.data;
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -30,6 +30,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -49,9 +51,24 @@ import {
   updateParentPhoneNumberOrEmail,
   sendInvoiceSms,
   sendInvoiceEmail,
+  generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
-const SendInvoiceTab = ({ showSnackbar }) => {
+const INVOICE_PLACEHOLDER_FIELDS = [
+  { label: "Student's First Name", value: '{student_fname}' },
+  { label: "Student's Last Name", value: '{student_lname}' },
+  { label: "Student's Middle Name", value: '{student_mname}' },
+  { label: "Student's Parent First Name", value: '{student_parent_fname}' },
+  { label: "Student's Parent Last Name", value: '{student_parent_lname}' },
+  { label: "Student's Parent Middle Name", value: '{student_parent_mname}' },
+  { label: "Student's Parent Email", value: '{student_parent_email}' },
+  { label: 'Term Name', value: '{term_name}' },
+  { label: 'Session Name', value: '{session_name}' },
+  // { label: 'Invoice URL', value: '{invoice_url}' },
+  { label: 'School Name', value: '{school_name}' },
+];
+
+const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [deliveryTab, setDeliveryTab] = useState(0);
 
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -86,12 +103,22 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [editError, setEditError] = useState('');
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [messageContent, setMessageContent] = useState(
-    `<p>Dear Parent,</p><br><p>The invoice for <strong>{student_name}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready.</p><br><p>View Here: <a href="{invoice_url}">{invoice_url}</a></p><br><p>Best Regards,<br><strong>{school_name}</strong></p>`
+    `<p>Dear Parent,</p><p>The invoice for <strong>{student_fname} {student_lname}</strong> for the <strong>{term_name} {session_name}</strong> Session is ready. Please click the button below to view it.</p><p>Best Regards,<br><strong>{school_name}</strong></p>`,
   );
   const [studentStats, setStudentStats] = useState(null);
 
+  const [generatingExcel, setGeneratingExcel] = useState(false);
+  const [excelBlobUrl, setExcelBlobUrl] = useState(null);
+
   // Debounce ref for search
   const searchTimerRef = useRef(null);
+  const tiptapEditorRef = useRef(null);
+
+  const handleInsertPlaceholder = (value) => {
+    if (tiptapEditorRef.current) {
+      tiptapEditorRef.current.chain().focus().insertContent(value).run();
+    }
+  };
 
   const selectedClassName =
     programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
@@ -121,15 +148,46 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           // Reload to refresh statuses
           loadParents();
           loadStats();
+          refreshStats?.();
         } else {
           showSnackbar?.(res?.message || 'Failed to send invoice.', 'error');
         }
+        setSelectedParents([]);
       } catch (err) {
-        console.error('Send invoice error:', err);
-        showSnackbar?.(err.response?.data?.message || 'Failed to send invoice.', 'error');
+        console.error('Send invoice exact error:', err);
+        showSnackbar?.(err?.response?.data?.message || 'Failed to send invoices.', 'error');
       } finally {
         setSendingInvoice(false);
       }
+    }
+  };
+
+  const handleGenerateExcelInvoice = async () => {
+    if (!selectedSessionTermId || !selectedClassId) {
+      showSnackbar?.('Please select a session term and a class.', 'warning');
+      return;
+    }
+
+    try {
+      setGeneratingExcel(true);
+      const res = await generateInvoiceExcel({
+        session_term_id: selectedSessionTermId,
+        class_id: selectedClassId,
+        programme_id: selectedProgrammeId || undefined,
+      });
+
+      if (res) {
+        const url = window.URL.createObjectURL(new Blob([res]));
+        setExcelBlobUrl(url);
+        showSnackbar?.('Excel invoice generated successfully. You can now download it.', 'success');
+        loadParents();
+        loadStats();
+        refreshStats?.();
+      }
+    } catch (err) {
+      showSnackbar?.('Failed to generate Excel invoice.', 'error');
+    } finally {
+      setGeneratingExcel(false);
     }
   };
 
@@ -278,6 +336,20 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     );
   };
 
+  const handleSelectStudentParents = (group) => {
+    const groupIds = group.parents.map((p) => p.guardian_user_id);
+    const allSelected = groupIds.every((id) => selectedParents.includes(id));
+    if (allSelected) {
+      setSelectedParents((prev) => prev.filter((id) => !groupIds.includes(id)));
+    } else {
+      setSelectedParents((prev) => {
+        const existing = new Set(prev);
+        groupIds.forEach((id) => existing.add(id));
+        return [...existing];
+      });
+    }
+  };
+
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
     setMenuParent(row);
@@ -345,17 +417,42 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     setSelectedParents([]);
   };
 
+  const groupedByStudent = useMemo(() => {
+    const map = {};
+    parentsList.forEach((p) => {
+      const key = p.student_user_id;
+      if (!map[key]) {
+        map[key] = {
+          student_user_id: p.student_user_id,
+          student_name: p.student_name || 'Unknown Student',
+          parents: [],
+        };
+      }
+      map[key].parents.push(p);
+    });
+    return Object.values(map);
+  }, [parentsList]);
+
   const dynamicStats = {
     total_parents: selectedParents.length,
     sent: parentsList
       .filter((p) => selectedParents.includes(p.guardian_user_id))
-      .filter((p) => (deliveryTab === 0 ? p.sms_status === 'sent' : p.email_status === 'sent')).length,
+      .filter((p) => {
+        if (deliveryTab === 0) return p.sms_status === 'sent';
+        if (deliveryTab === 1) return p.email_status === 'sent';
+        return p.excel_status === 'generated';
+      }).length,
     not_sent: parentsList
       .filter((p) => selectedParents.includes(p.guardian_user_id))
-      .filter((p) => (deliveryTab === 0 ? p.sms_status !== 'sent' : p.email_status !== 'sent')).length,
+      .filter((p) => {
+        if (deliveryTab === 0) return p.sms_status !== 'sent';
+        if (deliveryTab === 1) return p.email_status !== 'sent';
+        return p.excel_status !== 'generated';
+      }).length,
   };
 
   const handleEditorUpdate = useCallback(({ editor }) => {
+    tiptapEditorRef.current = editor;
     setMessageContent(editor.getHTML());
   }, []);
 
@@ -363,144 +460,148 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
         <ParentCard>
-          <Box display="flex" alignItems="center" mb={2} gap={1}>
-            <Typography variant="subtitle1" fontWeight={700}>
-              List of Parent in
-            </Typography>
-            {selectedClassName && (
-              <Chip
-                label={selectedClassName}
-                size="small"
-                sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
-              />
-            )}
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Parents in
+              </Typography>
+              {selectedClassName && (
+                <Chip
+                  label={selectedClassName}
+                  size="small"
+                  sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
+                />
+              )}
+            </Box>
+            <Checkbox
+              size="small"
+              indeterminate={
+                selectedParents.length > 0 && selectedParents.length < parentsList.length
+              }
+              checked={parentsList.length > 0 && selectedParents.length === parentsList.length}
+              onChange={handleSelectAll}
+            />
           </Box>
 
-          {studentStats && (
-            <Box
-              sx={{
-                bgcolor: "info.light",
-                p: 1.2,
-                borderRadius: 2,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                mb: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 2,
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="body2" sx={{ m: 0 }}>
-                  Total Wards:{" "}
-                  <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
-                    {studentStats.total_students}
-                  </Box>
-                </Typography>
+          {loadingParents ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : groupedByStudent.length === 0 ? (
+            <Alert severity="info">No parents found</Alert>
+          ) : (
+            <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
+              {groupedByStudent.map((group) => {
+                const allGroupSelected = group.parents.every((p) =>
+                  selectedParents.includes(p.guardian_user_id),
+                );
+                return (
+                  <Box
+                    key={group.student_user_id}
+                    sx={{
+                      mb: 2,
+                      p: 1.5,
+                      borderRadius: 2,
+                      bgcolor: 'grey.50',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Box
+                          sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {group.student_name.charAt(0).toUpperCase()}
+                        </Box>
+                        <Typography variant="body2" fontWeight={700}>
+                          {group.student_name}
+                        </Typography>
+                      </Box>
+                      <Checkbox
+                        size="small"
+                        checked={allGroupSelected}
+                        indeterminate={
+                          !allGroupSelected &&
+                          group.parents.some((p) => selectedParents.includes(p.guardian_user_id))
+                        }
+                        onClick={() => handleSelectStudentParents(group)}
+                      />
+                    </Box>
 
-                <Typography variant="body2" sx={{ m: 0 }}>
-                  Unlinked Wards:{" "}
-                  <Box component="span" sx={{ color: "error.main", fontWeight: 600 }}>
-                    {studentStats.unlinked_students}
+                    <Stack
+                      spacing={0.5}
+                      sx={{
+                        maxHeight: group.parents.length > 5 ? 200 : 'none',
+                        overflowY: group.parents.length > 5 ? 'auto' : 'visible',
+                      }}
+                    >
+                      {group.parents.map((parent) => (
+                        <Paper
+                          key={parent.guardian_user_id}
+                          variant="outlined"
+                          sx={{
+                            p: 1,
+                            borderRadius: 1.5,
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 1,
+                            bgcolor: selectedParents.includes(parent.guardian_user_id)
+                              ? 'primary.light'
+                              : 'background.paper',
+                            borderColor: selectedParents.includes(parent.guardian_user_id)
+                              ? 'primary.main'
+                              : 'divider',
+                            cursor: 'pointer',
+                            '&:hover': { borderColor: 'primary.main' },
+                          }}
+                          onClick={() => handleSelectParent(parent.guardian_user_id)}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={selectedParents.includes(parent.guardian_user_id)}
+                            sx={{ mt: -0.5, ml: -0.5 }}
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {parent.guardian_name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: 'block', wordBreak: 'break-all' }}
+                            >
+                              {deliveryTab === 0 ? parent.guardian_phone : parent.guardian_email}
+                            </Typography>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMenuClick(e, parent);
+                            }}
+                          >
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </Paper>
+                      ))}
+                    </Stack>
                   </Box>
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  lineHeight: 1.2,
-                }}
-              >
-                Students must be linked to a parent for their parent to receive an invoice.
-              </Typography>
+                );
+              })}
             </Box>
           )}
-
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ borderRadius: 2, borderColor: 'grey.200' }}
-          >
-            <Table size="medium">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      indeterminate={
-                        selectedParents.length > 0 && selectedParents.length < parentsList.length
-                      }
-                      checked={
-                        parentsList.length > 0 && selectedParents.length === parentsList.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                    {deliveryTab === 0 ? 'Phone No.' : 'Email'}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textAlign: 'center' }}>
-                    Action
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingParents ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedParentsList.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                      <Alert severity="info">No parents found</Alert>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedParentsList.map((row) => (
-                    <TableRow
-                      key={row.guardian_user_id}
-                      hover
-                      selected={selectedParents.includes(row.guardian_user_id)}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedParents.includes(row.guardian_user_id)}
-                          onChange={() => handleSelectParent(row.guardian_user_id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
-                      <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                        {deliveryTab === 0 ? row.guardian_phone : row.guardian_email}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={parentsList.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[5, 10, 25]}
-            />
-          </TableContainer>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
             <MenuItem onClick={() => handleOpenEditDialog(deliveryTab === 0 ? 'phone' : 'email')}>
@@ -609,22 +710,50 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               }}
             />
           </Box>
+          <Alert severity="info" icon={false} sx={{ mb: 1.5, py: 0.5, fontSize: 12 }}>
+            An <strong>Invoice Button</strong> is automatically added to every email — no need to
+            add a link manually.
+          </Alert>
+          <Grid container spacing={2} sx={{ flex: 1 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                display="block"
+                mb={1}
+              >
+                Placeholders
+              </Typography>
+              <Stack spacing={0.75}>
+                {INVOICE_PLACEHOLDER_FIELDS.map((field) => (
+                  <Button variant="contained" size="small" key={field.value} fullWidth onClick={() => handleInsertPlaceholder(field.value)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    {field.label}
+                  </Button>
+                ))}
+              </Stack>
+            </Grid>
 
-          <Box sx={{ mb: 5, overflow: 'hidden' }}>
-            <TiptapEdit
-              initialContent={messageContent}
-              onUpdate={handleEditorUpdate}
-            />
-          </Box>
+            <Grid size={{ xs: 12, sm: 9 }}>
+              <Box sx={{ overflow: 'hidden' }}>
+                <TiptapEdit initialContent={messageContent} onUpdate={handleEditorUpdate} />
+              </Box>
+            </Grid>
+          </Grid>
 
-          <Box display="flex" justifyContent="flex-end">
-            <Button
-              size="small"
-              color="primary"
-              onClick={handleSendInvoice}
-              disabled={sendingInvoice || selectedParents.length === 0}
-            >
-              {sendingInvoice ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button variant="contained" size="small" color="primary" onClick={handleSendInvoice} disabled={sendingInvoice || selectedParents.length === 0}>
+              {sendingInvoice ? (
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+              ) : null}
               Send Invoice to Parent
             </Button>
           </Box>
@@ -717,8 +846,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               {dynamicStats.not_sent}
             </Box>
           </Box>
-          <Chip
-            label="Regenerate"
+          {/* <Chip
+            label="Regenerate"CompulsoryScheduleTab
             size="small"
             icon={<RefreshIcon fontSize="small" sx={{ color: 'inherit !important' }} />}
             sx={{
@@ -728,10 +857,57 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               borderRadius: 5,
               cursor: 'pointer',
             }}
-          // onClick={() => showSnackbar?.('Regenerating...', 'info')}
-          />
+          onClick={() => showSnackbar?.('Regenerating...', 'info')}
+          /> */}
         </Box>
       </Box>
+
+      {/* {studentStats && (
+        <Box
+          sx={{
+            bgcolor: "info.light",
+            p: 1.2,
+            borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="body2" sx={{ m: 0 }}>
+              Total Wards:{" "}
+              <Box component="span" sx={{ color: "success.main", fontWeight: 600 }}>
+                {studentStats.total_students}
+              </Box>
+            </Typography>
+
+            <Typography variant="body2" sx={{ m: 0 }}>
+              Unlinked Wards:{" "}
+              <Box component="span" sx={{ color: "error.main", fontWeight: 600 }}>
+                {studentStats.unlinked_students}
+              </Box>
+            </Typography>
+          </Box>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              lineHeight: 1.2,
+            }}
+          >
+            Students must be linked to a parent for their parent to receive an invoice.
+          </Typography>
+        </Box>
+      )} */}
 
       <TableContainer
         component={Paper}
@@ -741,7 +917,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         <Table size="medium">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox">
+              {/* <TableCell padding="checkbox">
                 <Checkbox
                   indeterminate={
                     selectedParents.length > 0 && selectedParents.length < parentsList.length
@@ -749,11 +925,12 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   checked={parentsList.length > 0 && selectedParents.length === parentsList.length}
                   onChange={handleSelectAll}
                 />
-              </TableCell>
+              </TableCell> */}
+              <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>S/N</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Phone No</TableCell>
               <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Status</TableCell>
-              <TableCell
+              {/* <TableCell
                 sx={{
                   fontWeight: 600,
                   color: 'text.secondary',
@@ -762,7 +939,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 }}
               >
                 Action
-              </TableCell>
+              </TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -779,37 +956,40 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedParentsList.map((row) => (
+              paginatedParentsList.map((row, index) => (
                 <TableRow
                   key={row.guardian_user_id}
                   hover
                   selected={selectedParents.includes(row.guardian_user_id)}
                 >
-                  <TableCell padding="checkbox">
+                  {/* <TableCell padding="checkbox">
                     <Checkbox
                       checked={selectedParents.includes(row.guardian_user_id)}
                       onChange={() => handleSelectParent(row.guardian_user_id)}
                     />
-                  </TableCell>
+                  </TableCell> */}
+                  <TableCell sx={{ fontWeight: 700 }}>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     {row.guardian_phone}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label="Generate"
+                      label={row.excel_status === 'generated' ? 'Generated' : 'Pending'}
                       size="small"
                       sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
+                        bgcolor:
+                          row.excel_status === 'generated' ? 'success.light' : 'warning.light',
+                        color: row.excel_status === 'generated' ? 'success.main' : 'warning.main',
+                        fontWeight: 600,
                       }}
                     />
                   </TableCell>
-                  <TableCell align="center">
+                  {/* <TableCell align="center">
                     <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                       <MoreVertIcon />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))
             )}
@@ -1033,21 +1213,25 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               },
             }}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSearch}
-            startIcon={<SearchIcon />}
-            size="small"
-          >
+          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} >
             Search
           </Button>
         </Box>
 
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-            <Button size="small">Generate</Button>
-            <Button endIcon={<DownloadIcon />}>Downloaded</Button>
+            <Button variant="contained" size="small" onClick={handleGenerateExcelInvoice} disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}>
+              {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
+            </Button>
+            {excelBlobUrl && (
+              <Button size="small" endIcon={<DownloadIcon />}
+                component="a"
+                href={excelBlobUrl}
+                download={`Invoices_${selectedClassName || 'Class'}.xlsx`}
+              >
+                Downloaded
+              </Button>
+            )}
           </Box>
         )}
       </Box>
@@ -1084,14 +1268,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseEditDialog} disabled={savingEdit}>
+          <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveEdit}
-            disabled={savingEdit}
-            startIcon={savingEdit ? <CircularProgress size={14} /> : null}
+          <Button size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
           >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>

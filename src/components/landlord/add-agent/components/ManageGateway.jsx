@@ -19,7 +19,7 @@ import gatewayApi from '@/api/landlord/gateway/gatewayApi';
 import { fetchSkoolPayBanks } from '@/api/landlord/bank-service/bankService';
 
 const availableCurrencies = [
-  { code: 'NGN', name: 'Nigerian Naira (₦)', symbol: '₦' },
+  { code: '₦', name: 'Nigerian Naira (₦)', symbol: '₦' },
   { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
 ];
 
@@ -84,7 +84,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
       gateway: selectedAgent?.gateway || '',
       bank: selectedAgent?.bank || '',
       accountNumber: selectedAgent?.accountNumber || '',
-      currency: selectedAgent?.currency || 'NGN',
+      currency: selectedAgent?.currency || '₦',
     },
     validationSchema: gatewayValidationSchema,
     enableReinitialize: true,
@@ -304,13 +304,10 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onClose} color="inherit">
+          <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}
-          >
+          <Button size="small" type="submit" disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}>
             {formik.isSubmitting ? 'Saving...' : 'Create Payment Gateway'}
           </Button>
         </Box>

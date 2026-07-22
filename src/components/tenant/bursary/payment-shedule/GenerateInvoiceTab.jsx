@@ -5,6 +5,7 @@ import {
   fetchClasses,
   fetchGenerateInvoiceData,
   fetchGenerateInvoiceStats,
+  fetchInvoiceStudentCounts,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
@@ -29,13 +30,21 @@ import {
   TablePagination,
   Alert,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 
-const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUpdateCategory }) => {
+const GenerateInvoiceTab = ({
+  showSnackbar,
+  selectedClass,
+  setSelectedClass,
+  onUpdateCategory,
+}) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -56,6 +65,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
   const [loadingScheduleData, setLoadingScheduleData] = useState(false);
   const [errorScheduleData, setErrorScheduleData] = useState(null);
   const [tableCategories, setTableCategories] = useState([]);
+
+  const [studentCounts, setStudentCounts] = useState({ total: 0, generated: 0, pending: 0 });
+  const [loadingCounts, setLoadingCounts] = useState(false);
+
+  // True when at least one bursary schedule exists for the selected class & session
+  const hasSchedules = !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
@@ -194,6 +209,34 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
       .toLocaleString();
   };
 
+  useEffect(() => {
+    const loadCounts = async () => {
+      if (!selectedSessionTermId || !selectedClass) return;
+      try {
+        setLoadingCounts(true);
+        const res = await fetchInvoiceStudentCounts(selectedSessionTermId, selectedClass);
+        const d = res?.data || {};
+        setStudentCounts({
+          total: Number(d.total_students) || 0,
+          generated: Number(d.generated_count) || 0,
+          pending: Number(d.pending_count) || 0,
+        });
+      } catch (err) {
+        console.error('Failed to load student counts', err);
+        setStudentCounts({ total: 0, generated: 0, pending: 0 });
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+    loadCounts();
+  }, [selectedSessionTermId, selectedClass]);
+
+  const handleGenerateForPending = () => {
+    if (!selectedSessionTermId || !selectedClass) return;
+    const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}?pending=${studentCounts.pending}`;
+    window.open(url, '_blank');
+  };
+
   const handleFetch = () => {
     showSnackbar?.(`Fetching data for ${selectedClass}...`, 'info');
   };
@@ -279,11 +322,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
               sx={{ width: 250 }}
             />
 
-            <Button
-              variant="contained"
-              onClick={handleFetch}
-              sx={{ fontWeight: 600, minWidth: 100 }}
-            >
+            <Button variant="contained" size="small" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
               Fetch
             </Button>
           </Stack>
@@ -321,26 +360,35 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
                     onClick={() => setSelectedClass(cls.id)}
                     icon={
                       hasInvoiceGenerated ? (
-                        <CheckCircleIcon
-                          sx={{
-                            fontSize: 18,
-                            color: isSelected ? 'white !important' : 'primary.main !important',
-                          }}
-                        />
+                        <CheckCircleIcon sx={{ fontSize: 18 }} />
                       ) : undefined
                     }
                     sx={{
-                      bgcolor: isSelected
-                        ? 'primary.main'
+                      // bgcolor: isSelected
+                      //   ? 'primary.main'
+                      //   : hasInvoiceGenerated
+                      //     ? 'primary.light'
+                      //     : 'white',
+                      bgcolor: isSelected ? 'primary.main' : (isDark ? 'background.paper' : '#fff'),
+                      color: isSelected
+                        ? '#fff'
                         : hasInvoiceGenerated
-                          ? 'primary.light'
-                          : 'white',
-                      color: isSelected ? 'white' : hasInvoiceGenerated ? 'primary.main' : 'text.primary',
+                          ? 'primary.main'
+                          : 'text.primary',
                       fontWeight: 600,
                       border: '1px solid',
-                      borderColor: isSelected ? 'primary.main' : hasInvoiceGenerated ? 'primary.main' : 'divider',
+                      borderColor: isSelected
+                        ? 'primary.main'
+                        : hasInvoiceGenerated
+                          ? 'primary.main'
+                          : 'divider',
                       '&:hover': {
-                        bgcolor: isSelected ? 'primary.dark' : hasInvoiceGenerated ? 'primary.main' : 'grey.100',
+                        bgcolor: isSelected
+                          ? 'primary.dark'
+                          : 'primary.light',
+                      },
+                      '& .MuiChip-icon': {
+                        color: isSelected ? '#fff' : 'success.dark',
                       },
                     }}
                   />
@@ -360,16 +408,17 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
             gap: 2,
           }}
         >
-          <Alert severity="info">
+          <Alert severity="info" sx={{ flex: 1 }}>
             Payment Schedule for {selectedSessionLabel} - {selectedClassName}
           </Alert>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Button
               variant="contained"
               size="small"
+              disabled={!hasSchedules}
               onClick={() => {
                 const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-                window.open(url, '_blank'); // opens new tab
+                window.open(url, '_blank');
               }}
               sx={{ fontWeight: 600 }}
             >
@@ -378,85 +427,186 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass,onUp
           </Stack>
         </Box>
 
-        {/* Payment Schedule Table */}
-        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
-                {tableCategories.map((cat) => (
-                  <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">
-                        {cat.name}
+        {selectedClass && (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
+                mb: 1,
+                p: 2,
+                bgcolor: isDark ? 'background.default' : 'grey.50',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'grey.200',
+              }}
+            >
+              <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Students
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700}>
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.total}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Invoice Generated
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} color="success.main">
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.generated}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Pending
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700} color="error.main">
+                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.pending}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+
+            {hasSchedules && studentCounts.pending > 0 && (
+              <Alert
+                severity="warning"
+                action={
+                  <Button variant="contained" size="small" color="warning" onClick={handleGenerateForPending} sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}>
+                    Generate Now
+                  </Button>
+                }
+                sx={{ mb: 2, alignItems: 'center' }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {studentCounts.pending} student(s) still need invoice generation. Click
+                  &quot;Generate Now&quot; to go to the invoice page and generate for pending
+                  students.
+                </Typography>
+              </Alert>
+            )}
+
+            {hasSchedules && studentCounts.total > 0 && studentCounts.pending === 0 && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  All {studentCounts.total} student(s) have invoices generated successfully.
+                </Typography>
+              </Alert>
+            )}
+          </>
+        )}
+
+        {/* Empty state - no bursary schedules configured */}
+        {!loadingScheduleData && !errorScheduleData && !hasSchedules && selectedClass && selectedSessionTermId && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2,
+              '& .MuiAlert-message': { width: '100%' },
+            }}
+          >
+            <Typography variant="body2" fontWeight={600}>
+              No payment schedules found for {selectedClassName} in {selectedSessionLabel} - {selectedTermLabel}.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Please ensure at least one bursary schedule has been set up for this class and session term
+              before generating invoices. Go to the{' '}
+              <Typography
+                component="span"
+                variant="body2"
+                fontWeight={600}
+                color="primary.main"
+              >
+                Payment Schedule
+              </Typography>{' '}
+              section to add a schedule first.
+            </Typography>
+          </Alert>
+        )}
+
+        {hasSchedules && (
+          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>PAYMENT NAME</TableCell>
+                  {tableCategories.map((cat) => (
+                    <TableCell key={cat.id} sx={{ fontWeight: 700, minWidth: 120 }}>
+                      <Box>
+                        <Typography variant="caption" fontWeight={700} display="block">
+                          {cat.name}
+                        </Typography>
+                        <Chip
+                          label="Update"
+                          size="small"
+                          onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
+                          sx={{
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Box>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {scheduleData.map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {row.paymentName}
                       </Typography>
-                      <Chip
-                        label="Update"
-                        size="small"
-                        onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </Box>
-                  </TableCell>
+                    </TableCell>
+                    {tableCategories.map((cat) => {
+                      const catKey = `category_${cat.id}`;
+                      const amount = row[catKey];
+                      return (
+                        <TableCell key={cat.id}>
+                          <Typography variant="body2">
+                            {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                          </Typography>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {scheduleData.map((row) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {row.paymentName}
+                <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+                  <TableCell colSpan={2}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Total
                     </Typography>
                   </TableCell>
                   {tableCategories.map((cat) => {
                     const catKey = `category_${cat.id}`;
-                    const amount = row[catKey];
                     return (
                       <TableCell key={cat.id}>
-                        <Typography variant="body2">
-                          {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                        <Typography variant="body2" fontWeight={700}>
+                          {calculateTotal(catKey)}
                         </Typography>
                       </TableCell>
                     );
                   })}
                 </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell colSpan={2}>
-                  <Typography variant="body2" fontWeight={700}>
-                    Total
-                  </Typography>
-                </TableCell>
-                {tableCategories.map((cat) => {
-                  const catKey = `category_${cat.id}`;
-                  return (
-                    <TableCell key={cat.id}>
-                      <Typography variant="body2" fontWeight={700}>
-                        {calculateTotal(catKey)}
-                      </Typography>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={scheduleData.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </TableContainer>
+              </TableBody>
+            </Table>
+            <TablePagination
+              component="div"
+              count={scheduleData.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          </TableContainer>
+        )}
       </Box>
     </Stack>
   );

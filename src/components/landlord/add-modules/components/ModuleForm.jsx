@@ -133,13 +133,10 @@ const ModuleForm = ({
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={1}>
-            <Button color="inherit" onClick={onCancel} type="button" disabled={isLoading}>
+            <Button variant="contained" size="small" color="inherit" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || !formik.isValid}
-              startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
+            <Button size="small" type="submit" disabled={isLoading || !formik.isValid} startIcon={isLoading ? <CircularProgress color="inherit" /> : null}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

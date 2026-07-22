@@ -101,10 +101,17 @@ const InvoiceStudentsView = () => {
           // URL param is valid — keep it
           setSelectedStudentCategory(urlCategoryId);
         } else if (cats.length > 0) {
-          // Fall back to first category
+          // Fall back to first category, preserve existing params
           const firstCatId = String(cats[0].id);
           setSelectedStudentCategory(firstCatId);
-          setSearchParams({ category_id: firstCatId }, { replace: true });
+          setSearchParams(
+            (prev) => {
+              const next = new URLSearchParams(prev);
+              next.set('category_id', firstCatId);
+              return next;
+            },
+            { replace: true },
+          );
         }
       } catch (err) {
         console.error('Failed to load categories', err);
@@ -151,13 +158,16 @@ const InvoiceStudentsView = () => {
   }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
 
   // ── Refetchable helper to load student data from backend ──
-  const fetchAndSetStudentData = async () => {
+  const fetchAndSetStudentData = async (forcePending) => {
     setError(null);
 
+    const pendingParam = forcePending ?? searchParams.get('pending');
+    const isPendingFilter = pendingParam && Number(pendingParam) > 0;
     const response = await fetchStudentForInvoiceData({
       sessionTermId: session_term_id,
       classId: class_id,
       categoryId: selectedCategoryId,
+      ...(pendingParam && Number(pendingParam) > 0 ? { pending: '1' } : {}),
     });
     const d = response?.data || {};
     const students = Array.isArray(d.students) ? d.students : [];
@@ -165,6 +175,23 @@ const InvoiceStudentsView = () => {
     setSessionLabel(d.session_label || '');
     setTermLabel(d.term_label || '');
     setClassName(d.class_name || '');
+
+    // If not using pending filter and no pending students remain, clean up URL
+    if (!isPendingFilter && searchParams.get('pending')) {
+      const hasPending = students.some(
+        (s) => !s.compulsory_invoice_generated || Number(s.compulsory_invoice_generated) === 0,
+      );
+      if (!hasPending) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('pending');
+            return next;
+          },
+          { replace: true },
+        );
+      }
+    }
 
     // ── Populate existing optional payment selections from backend ──
     const optionIdsMap = {};
@@ -358,9 +385,19 @@ const InvoiceStudentsView = () => {
       const res = await generateStudentInvoice(payload);
 
       if (res?.success) {
-        // Refetch student data so the table shows the new invoice status
+        // Remove pending param from URL
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('pending');
+            return next;
+          },
+          { replace: true },
+        );
+
+        // Refetch all student data (no pending filter)
         try {
-          await fetchAndSetStudentData();
+          await fetchAndSetStudentData(false);
         } catch (refetchErr) {
           console.error('Failed to refresh student data after generation', refetchErr);
         }
@@ -534,7 +571,7 @@ const InvoiceStudentsView = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
-        <Button sx={{ mt: 2 }} onClick={() => navigate('/payment-schedule')}>
+        <Button variant="contained" size="small" sx={{ mt: 2 }} onClick={() => navigate('/payment-schedule')}>
           Back to Payment Schedule
         </Button>
       </Box>
@@ -559,6 +596,15 @@ const InvoiceStudentsView = () => {
           </Box>
         }
       >
+        {searchParams.get('pending') && Number(searchParams.get('pending')) > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight={600}>
+              {searchParams.get('pending')} student(s) still need invoices generated. Please select
+              them below and click &quot;Generate Invoice&quot; to create their invoices.
+            </Typography>
+          </Alert>
+        )}
+
         <Box
           display="flex"
           flexDirection={{ xs: 'column', sm: 'row' }}
@@ -567,10 +613,7 @@ const InvoiceStudentsView = () => {
           gap={1.5}
           mb={2}
         >
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => navigate('/payment-schedule')}
+          <Button variant="contained" size="small" onClick={() => navigate('/payment-schedule')}
             sx={{ alignSelf: { xs: 'flex-start', sm: 'auto' } }}
           >
             Back
@@ -580,12 +623,7 @@ const InvoiceStudentsView = () => {
             spacing={1}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            <Button
-              size="small"
-              variant="contained"
-              disabled={selectedStudents.length === 0 || generatingInvoice}
-              onClick={handleGenerateInvoiceClick}
-              startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
+            <Button variant="contained" size="small" disabled={selectedStudents.length === 0 || generatingInvoice} onClick={handleGenerateInvoiceClick} startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
               sx={{
                 width: { xs: '100%', sm: 'auto' },
                 whiteSpace: 'nowrap',
@@ -596,16 +634,7 @@ const InvoiceStudentsView = () => {
               ) : null}
               Generate Invoice
             </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handlePrintInvoiceForAll}
-              disabled={filteredStudents.length === 0}
-              sx={{
-                width: { xs: '100%', sm: 'auto' },
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <Button variant="contained" size="small" onClick={handlePrintInvoiceForAll} disabled={filteredStudents.length === 0} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap', }}>
               View Invoice for All
             </Button>
           </Stack>
@@ -621,9 +650,17 @@ const InvoiceStudentsView = () => {
                   const val = e.target.value;
                   setSelectedStudentCategory(val);
                   if (val && val !== 'all') {
-                    setSearchParams({ category_id: val });
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set('category_id', val);
+                      return next;
+                    });
                   } else {
-                    setSearchParams({});
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.delete('category_id');
+                      return next;
+                    });
                   }
                 }}
                 sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
@@ -831,10 +868,7 @@ const InvoiceStudentsView = () => {
                                 -
                               </Typography>
                             )}
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<AddIcon fontSize="small" />}
+                            <Button variant="contained" size="small" startIcon={<AddIcon fontSize="small" />}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenOptionalModal(student);
@@ -856,7 +890,6 @@ const InvoiceStudentsView = () => {
                         <TableCell>
                           <Box
                             sx={{
-                              bgcolor: 'primary.light',
                               px: { xs: 1, sm: 1.5 },
                               py: 0.25,
                               borderRadius: 1,
@@ -1066,13 +1099,8 @@ const InvoiceStudentsView = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleAddOptionalPayments}
-            disabled={selectedOptionalIds.size === 0}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
+          <Button size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
             Add
           </Button>
         </DialogActions>
@@ -1153,12 +1181,8 @@ const InvoiceStudentsView = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleConfirmGenerateInvoice}
-            sx={{ fontWeight: 600 }}
-            startIcon={<DescriptionIcon />}
+          <Button variant="contained" size="small" onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+          <Button size="small" onClick={handleConfirmGenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Generate
           </Button>
@@ -1244,12 +1268,8 @@ const InvoiceStudentsView = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleCloseRegenerateConfirm}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleConfirmRegenerateInvoice}
-            sx={{ fontWeight: 600 }}
-            startIcon={<DescriptionIcon />}
+          <Button variant="contained" size="small" onClick={handleCloseRegenerateConfirm}>Cancel</Button>
+          <Button size="small" onClick={handleConfirmRegenerateInvoice} sx={{ fontWeight: 600 }} startIcon={<DescriptionIcon />}
           >
             Yes, Regenerate
           </Button>
@@ -1282,9 +1302,7 @@ const InvoiceStudentsView = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-          <Button variant="contained" onClick={handleCloseInvoiceResult}>
-            OK
-          </Button>
+          <Button variant="contained" size="small" onClick={handleCloseInvoiceResult}>OK</Button>
         </DialogActions>
       </Dialog>
     </>

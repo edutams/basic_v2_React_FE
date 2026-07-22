@@ -13,29 +13,15 @@ export const getClassStudentsPaymentStatus = async (payload) => {
     const res = await api.post('/bursary/class_ledger/fetch_payment_status', { payload });
     return res.data;
 }
-export const fetchInvoiceByNumber = async ({ sessionId, termId, userId, invoiceNumber, categoryId } = {}) => {
+export const getStudentSchedule = async ({ userId, invoiceNumber } = {}) => {
     const params = {
-        session_id: sessionId,
-        term_id: termId,
         user_id: userId,
         invoice_number: invoiceNumber,
     };
     // if (categoryId) params.category_id = categoryId;
-    const res = await api.get('/bursary/payment_schedule/fetch_invoice_by_number', { params });
+    const res = await api.get('/bursary/payment_schedule/fetch_student_schedule', { params });
     return res.data;
 };
-
-export const fetchCashPostData = async ({ sessionId, termId, userId, categoryId, invoiceId } = {}) => {
-    const params = {
-        session_id: sessionId,
-        term_id: termId,
-        user_id: userId,
-    };
-    if (invoiceId) params.invoice_id = invoiceId;
-    const res = await api.get('/bursary/payment_schedule/fetch_cash_post_data', { params });
-    return res.data;
-};
-
 
 export const generateClassLedgerExcel = async (payload) => {
     const res = await api.post('/bursary/class_ledger/generate_excel', { payload }, {
@@ -54,7 +40,12 @@ export const fetchDrilldownStudents = async (payload) => {
     return res.data;
 };
 
-export const postCashData = async (payload) => {
-    const res = await api.post('/bursary/payment_schedule/post_cash_data', payload);
+export const updateStudentInvoice = async (payload) => {
+    const res = await api.post('/bursary/payment_schedule/update_student_invoice', payload);
+    return res.data;
+};
+
+export const fetchStudentLedgerModalData = async (userId) => {
+    const res = await api.get('/bursary/class_ledger/fetch_modal_data', { params: { user_id: userId } });
     return res.data;
 };

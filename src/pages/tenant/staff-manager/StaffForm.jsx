@@ -444,18 +444,10 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
                 gap: 2,
               }}
             >
-              <Button
-                color="inherit"
-                onClick={onCancel}
-                disabled={isLoading}
-                sx={{ textTransform: 'none', minWidth: 100 }}
-              >
+              <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading} sx={{ textTransform: 'none', minWidth: 100 }}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                startIcon={isLoading ? <CircularProgress size={16} /> : null}
+              <Button size="small" type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
                 sx={{ textTransform: 'none', minWidth: 100 }}
               >
                 {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Staff' : 'Save Staff'}

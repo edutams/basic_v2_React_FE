@@ -183,10 +183,10 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
                       mr: 1,
                       '&::after': isSelected(permission)
                         ? {
-                            content: '"✓"',
-                            color: '#fff',
-                            fontSize: '12px',
-                          }
+                          content: '"✓"',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }
                         : {},
                     }}
                   />
@@ -211,8 +211,8 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} color="primary">
+        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
+        <Button size="small" onClick={handleSave} color="primary">
           Save Permissions
         </Button>
       </DialogActions>

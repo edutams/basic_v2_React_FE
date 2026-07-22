@@ -23,6 +23,7 @@ import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import ReusableModal from '@/components/shared/ReusableModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
+import ParentCard from '@/components/shared/ParentCard';
 
 const ViewAgent = () => {
   const { id } = useParams();
@@ -81,6 +82,8 @@ const ViewAgent = () => {
             stats: {
               totalTransaction: data.total_transaction_value || 0,
               transactionCount: data.transaction_count || 0,
+              commission: data.commission || data.stats?.commission || analytics?.commission || 0,
+              volume: data.volume || data.stats?.volume || analytics?.volume || 0,
               totalSchools: data.stats?.totalSchools || 0,
               activeSchools: data.stats?.activeSchools || 0,
               pendingSchools: data.stats?.pendingSchools || 0,
@@ -150,10 +153,10 @@ const ViewAgent = () => {
 
                 created_at: tenant.created_at
                   ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })
                   : '—',
               })),
 
@@ -250,7 +253,7 @@ const ViewAgent = () => {
             </Grid>
 
             <Box mt={4}>
-              <Box
+              <ParentCard
                 sx={{
                   bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
                   borderRadius: '12px',
@@ -260,14 +263,7 @@ const ViewAgent = () => {
                 }}
               >
                 <TabContext value={value}>
-                  <Box
-                    sx={{
-                      borderBottom: 1,
-                      borderColor: isDark ? '#333' : '#E2E8F0',
-                      bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
-                      px: 2,
-                    }}
-                  >
+                  <Box>
                     <TabList
                       onChange={(_, newValue) => setValue(newValue)}
                       variant="scrollable"
@@ -340,7 +336,7 @@ const ViewAgent = () => {
                     </TabPanel>
                   </Box>
                 </TabContext>
-              </Box>
+              </ParentCard>
             </Box>
           </>
         ) : (
@@ -385,12 +381,12 @@ const ViewAgent = () => {
           selectedAgent={
             agentData
               ? {
-                  ...agentData.raw,
-                  ...agentData.leadUser,
-                  id: id,
-                  organization_logo: agentData.raw?.organization_logo,
-                  avatar: agentData.leadUser?.avatar,
-                }
+                ...agentData.raw,
+                ...agentData.leadUser,
+                id: id,
+                organization_logo: agentData.raw?.organization_logo,
+                avatar: agentData.leadUser?.avatar,
+              }
               : null
           }
         />

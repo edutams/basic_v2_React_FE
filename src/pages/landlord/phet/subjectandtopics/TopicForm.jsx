@@ -77,10 +77,10 @@ const TopicForm = ({
           <MenuItem value="inactive">Inactive</MenuItem>
         </TextField>
         <Box display="flex" justifyContent="flex-end">
-          <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
+          <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button size="small" type="submit" disabled={isLoading}>
             {submitText}
           </Button>
         </Box>

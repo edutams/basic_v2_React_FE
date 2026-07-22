@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Tabs,
-  Tab,
   Stack,
   Select,
   MenuItem,
-  IconButton,
   useTheme,
   Grid,
   Button,
@@ -17,18 +13,25 @@ import {
 import { IconCash, IconTrendingUp, IconCoins } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
+import { getStatCardColor } from '@/utils/statCardColors';
 
-const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+
   return (
     <Card
       sx={{
         p: 2.5,
-        borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        borderRadius: '16px',
+        border: isDark
+          ? '1px solid rgba(255, 255, 255, 0.12)'
+          : `1px solid ${colors.borderColor}`,
+        background: isDark ? theme.palette.background.paper : `${colors.cardBg} !important`,
+        boxShadow: isDark
+          ? '0 6px 24px rgba(0,0,0,0.28)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
       }}
     >
@@ -38,19 +41,22 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
             width: 42,
             height: 42,
             borderRadius: '10px',
-            bgcolor: iconBg,
+            background: `${colors.iconBg} !important`,
+            boxShadow: isDark
+              ? '0 4px 12px rgba(0,0,0,0.3)'
+              : `0 4px 14px ${colors.iconGlow}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={20} color={valueColor} />
+          <Icon size={20} color={colors.iconColor || '#FFFFFF'} />
         </Box>
         <Box>
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '22px', color: valueColor, lineHeight: 1.2 }}
+            sx={{ fontSize: '22px', color: colors.accentColor, lineHeight: 1.2 }}
           >
             ₦ {value}
           </Typography>
@@ -66,9 +72,11 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
   );
 };
 
-const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+const SideStatRow = ({ label, value, colorIndex = 0, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+
   return (
     <Stack
       direction="row"
@@ -85,17 +93,20 @@ const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
           width: 32,
           height: 32,
           borderRadius: '8px',
-          bgcolor: iconBg,
+          background: `${colors.iconBg} !important`,
+          boxShadow: isDark
+            ? '0 2px 8px rgba(0,0,0,0.3)'
+            : `0 2px 8px ${colors.iconGlow}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={16} color={valueColor} />
+        <Icon size={16} color={colors.iconColor || '#FFFFFF'} />
       </Box>
       <Box>
-        <Typography fontWeight={800} sx={{ fontSize: '14px', color: valueColor, lineHeight: 1.2 }}>
+        <Typography fontWeight={800} sx={{ fontSize: '14px', color: colors.accentColor, lineHeight: 1.2 }}>
           ₦{value}
         </Typography>
         <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B', fontSize: '11px' }}>
@@ -128,10 +139,11 @@ const TotalTransactionModal = ({ open, onClose }) => {
       },
       fontFamily: 'inherit',
       foreColor: isDark ? '#aaa' : '#64748B',
+      background: 'transparent',
     },
     plotOptions: { bar: { borderRadius: 3, columnWidth: '55%' } },
     dataLabels: { enabled: false },
-    colors: ['#3B82F6'],
+    colors: [theme.palette.primary.main || '#3B82F6'],
     xaxis: {
       categories: [
         'Jan',
@@ -187,7 +199,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
       padding={0}
       title={
         <Typography fontSize={24} fontWeight={700}>
-          Total School
+          Total Transaction
         </Typography>
       }
     >
@@ -197,8 +209,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Transaction Value"
             value="7,000,234.00"
-            valueColor="#2ca87f"
-            iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+            colorIndex={0}
             icon={IconCash}
           />
         </Grid>
@@ -206,8 +217,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Transaction Volume"
             value="7,000,234.00"
-            valueColor="#e11d48"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+            colorIndex={1}
             icon={IconTrendingUp}
           />
         </Grid>
@@ -215,8 +225,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
           <TopCard
             label="Total Commission"
             value="1,000,234.00"
-            valueColor="#4a3aff"
-            iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
+            colorIndex={2}
             icon={IconCoins}
           />
         </Grid>
@@ -238,9 +247,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
             background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F9F9F9',
             px: 3,
             py: 1,
-            // display: 'flex',
-            // justifyContent: 'space-between',
-            // alignItems: 'center',
+            width: '100%',
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
@@ -299,12 +306,16 @@ const TotalTransactionModal = ({ open, onClose }) => {
             </Box>
 
             <Button
+              variant="contained"
+              size="small"
               sx={{
                 height: 40,
                 px: 3,
                 borderRadius: '6px',
                 bgcolor: 'primary.main',
                 color: '#fff',
+                textTransform: 'none',
+                fontWeight: 600,
                 '&:hover': { bgcolor: 'primary.dark' },
               }}
             >
@@ -314,7 +325,6 @@ const TotalTransactionModal = ({ open, onClose }) => {
         </Box>
 
         <Grid size={{ xs: 12, md: 9 }}>
-          {/* Filter row */}
           {/* Chart */}
           <Box
             sx={{
@@ -349,29 +359,25 @@ const TotalTransactionModal = ({ open, onClose }) => {
             <SideStatRow
               label="Transaction Today"
               value="7,000,234.00"
-              valueColor="#2ca87f"
-              iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+              colorIndex={1}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Month"
               value="7,000,234.00"
-              valueColor="#e11d48"
-              iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+              colorIndex={4}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Week"
               value="7,000,234.00"
-              valueColor="#2ca87f"
-              iconBg={isDark ? '#0d2e1e' : '#d6f5eb'}
+              colorIndex={1}
               icon={IconCash}
             />
             <SideStatRow
               label="Transaction This Year"
               value="7,000,234.00"
-              valueColor="#4a3aff"
-              iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
+              colorIndex={0}
               icon={IconCash}
             />
           </Box>

@@ -28,6 +28,7 @@ import {
   Tab,
   Alert,
   Grid,
+  Tooltip,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -49,6 +50,7 @@ const OptionalPaymentTab = ({
   sessionLabel,
   categoryLabel,
   payOption = 'optional',
+  payType = 'bursary',
   onTermChange,
   refreshStats,
   scheduleRefreshKey = 0,
@@ -74,6 +76,7 @@ const OptionalPaymentTab = ({
         selectedTermId,
         categoryId,
         payOption,
+        payType,
         searchTerm,
       );
       console.log('Raw API response:', data);
@@ -88,7 +91,7 @@ const OptionalPaymentTab = ({
           let totalAmount = 0;
 
           schedules.forEach((schedule) => {
-            const className = schedule.my_class?.class_name || `Class ${schedule.class_id}`;
+            const className = schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`;
             classesSet.add(className);
 
             // If schedule has options, use them; otherwise create option from schedule amount
@@ -123,6 +126,7 @@ const OptionalPaymentTab = ({
             classes: Array.from(classesSet).join(', ') || 'All Classes',
             status: 'Active',
             payschedules: schedules,
+            hasInvoices: schedules.some(s => s.invoices_count > 0),
           };
         });
 
@@ -397,9 +401,7 @@ const OptionalPaymentTab = ({
             </Typography>
           </Box>
 
-          {/* <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+          {/* <Button variant="contained" size="small" startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
           sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
           fullWidth={{ xs: true, sm: false }}
@@ -408,10 +410,10 @@ const OptionalPaymentTab = ({
         </Button> */}
         </Stack>
 
-        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+        <TableContainer variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>Payment Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
@@ -536,7 +538,9 @@ const OptionalPaymentTab = ({
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
+        <MenuOption onClick={handleEditSchedule}>
+          Set/Edit Schedule
+        </MenuOption>
         {/* <MenuOption onClick={handleToggleStatus}>
           {selectedRow?.status === 'Active' ? 'Deactivate' : 'Activate'}
         </MenuOption> */}
@@ -672,12 +676,18 @@ const OptionalPaymentTab = ({
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button onClick={handleDetailsDialogClose} fullWidth={{ xs: true, sm: false }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleDetailsDialogClose}
+            fullWidth={{ xs: true, sm: false }}
+          >
             Close
           </Button>
 
           <Button
             variant="contained"
+            size="small"
             onClick={() => {
               handleDetailsDialogClose();
               handleEditSchedule();
@@ -697,7 +707,8 @@ const OptionalPaymentTab = ({
         sessionId={sessionId}
         termId={selectedTermId}
         categoryId={categoryId}
-        onRefresh={handleRefreshSchedules}
+        onRefresh={() => loadPaymentSchedules()}
+        showSnackbar={showSnackbar}
       />
 
       <Dialog
@@ -719,6 +730,8 @@ const OptionalPaymentTab = ({
           sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}
         >
           <Button
+            variant="contained"
+            size="small"
             color="inherit"
             onClick={handleConfirmDialogClose}
             fullWidth={{ xs: true, sm: false }}
@@ -727,7 +740,7 @@ const OptionalPaymentTab = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
+            size="small"
             onClick={confirmDialog.onConfirm}
             sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }}
             fullWidth={{ xs: true, sm: false }}

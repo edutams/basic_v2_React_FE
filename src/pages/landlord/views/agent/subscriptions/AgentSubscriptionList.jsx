@@ -108,9 +108,8 @@ const AgentSubscriptionList = ({ status }) => {
   };
 
   const filteredRows = rows.filter((row) => {
-    const searchStr = `${row.tenant?.tenant_name || ''} ${row.sessions?.sesname || ''} ${
-      row.terms?.term_name || ''
-    } ${row.my_plans?.display_name || ''}`.toLowerCase();
+    const searchStr = `${row.tenant?.tenant_name || ''} ${row.sessions?.sesname || ''} ${row.terms?.term_name || ''
+      } ${row.my_plans?.display_name || ''}`.toLowerCase();
     return searchStr.includes(searchTerm.toLowerCase());
   });
 
@@ -165,7 +164,7 @@ const AgentSubscriptionList = ({ status }) => {
           <CircularProgress />
         </Box>
       ) : (
-        <Paper>
+        <Box>
           <TableContainer>
             <Table>
               <TableHead>
@@ -216,11 +215,7 @@ const AgentSubscriptionList = ({ status }) => {
                       <TableCell align="center">
                         <Box display="flex" justifyContent="center" alignItems="center">
                           {row.status === 'pending' && (
-                            <Button
-                              size="small"
-                              color="success"
-                              sx={{ mr: 1 }}
-                              onClick={() => handleApproveConfirm(row)}
+                            <Button variant="contained" size="small" color="success" sx={{ mr: 1 }} onClick={() => handleApproveConfirm(row)}
                             >
                               Approve
                             </Button>
@@ -235,7 +230,7 @@ const AgentSubscriptionList = ({ status }) => {
                           open={Boolean(anchorEl) && selectedRow?.id === row.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => {}}>
+                          <MenuItem onClick={() => { }}>
                             <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
                           </MenuItem>
                           {row.status !== 'active' && (
@@ -292,7 +287,7 @@ const AgentSubscriptionList = ({ status }) => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       )}
       <ConfirmationDialog
         {...confirm}

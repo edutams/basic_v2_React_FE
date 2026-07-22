@@ -26,10 +26,18 @@ const cardStyle = {
 const cardStyle1 = {
   bgcolor: 'primary.main',
   borderRadius: 2,
-  border: '2px solid #e6d300',
+  // border: '2px solid #e6d300',
 };
-const cardStyle2 = { background: '#2E2414', borderRadius: 2, border: '2px solid #C8B80C' };
-const cardStyle3 = { background: '#4CAAF8', borderRadius: 2, border: '2px solid #A39500' };
+const cardStyle2 = {
+  background: '#2E2414',
+  borderRadius: 2,
+  //  border: '2px solid #C8B80C'
+};
+const cardStyle3 = {
+  background: '#4CAAF8',
+  borderRadius: 2,
+  //  border: '2px solid #A39500' 
+};
 
 const buttonStyle = {
   borderRadius: 1,
@@ -117,7 +125,8 @@ const TenantLogin = () => {
             minHeight: '100vh',
             '&:before': {
               content: '""',
-              background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
+              // background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
+              bgcolor: 'primary.light',
               backgroundSize: '400% 400%',
               animation: 'gradient 15s ease infinite',
               position: 'absolute',
@@ -131,9 +140,9 @@ const TenantLogin = () => {
             position="relative"
             sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
           >
-            <Box px={3}>
+            {/* <Box px={3}>
               <Logo />
-            </Box>
+            </Box> */}
 
             <Box
               sx={{
@@ -160,15 +169,14 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       NOW OPEN
                     </Typography>
-                    <Button
-                      onClick={() => setView('apply')}
+                    <Button variant="contained" size="small" onClick={() => setView('apply')}
                       sx={[
                         buttonStyle,
                         {
-                          bgcolor: 'primary.dark',
-                          color: '#fff',
+                          bgcolor: '#fff',
+                          color: 'primary.main',
                           '&:hover': {
-                            bgcolor: 'primary.light',
+                            bgcolor: 'grey.100',
                           },
                         },
                       ]}
@@ -189,7 +197,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       IS OUT
                     </Typography>
-                    <Button sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
+                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
                       Check Result
                     </Button>
                   </Box>
@@ -206,7 +214,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       STATUS
                     </Typography>
-                    <Button sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
+                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
                       Check Admission
                     </Button>
                   </Box>
@@ -378,12 +386,7 @@ const TenantLogin = () => {
                 />
 
                 <Box mt={3}>
-                  <Button
-                    variant="text"
-                    fullWidth
-                    onClick={handleBackToLogin}
-                    sx={{ color: 'text.secondary', textTransform: 'none' }}
-                  >
+                  <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                     ← Back to Login
                   </Button>
                 </Box>
@@ -424,12 +427,7 @@ const TenantLogin = () => {
                 />
 
                 <Box mt={3}>
-                  <Button
-                    variant="text"
-                    fullWidth
-                    onClick={handleBackToLogin}
-                    sx={{ color: 'text.secondary', textTransform: 'none' }}
-                  >
+                  <Button variant="contained" size="small" fullWidth onClick={handleBackToLogin} sx={{ color: 'text.secondary', textTransform: 'none' }}>
                     ← Back to Login
                   </Button>
                 </Box>

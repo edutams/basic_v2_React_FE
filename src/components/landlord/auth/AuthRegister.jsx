@@ -156,14 +156,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
             />
           </Box> */}
 
-          <Button
-            sx={{ mt: 2 }}
-            color="primary"
-            size="large"
-            fullWidth
-            type="submit"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+          <Button variant="contained" size="small" sx={{ mt: 2 }} color="primary" fullWidth type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
           >
             {isLoading ? 'Signing Up...' : 'Sign Up'}
           </Button>

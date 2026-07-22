@@ -29,11 +29,11 @@ const NavItem = ({ item, level, pathDirect, onClick }) => {
       backgroundColor: theme.palette.primary.light,
     },
     '&.Mui-selected': {
-      color: level > 1 ? theme.palette.primary.main : 'white!important',
+      color: level > 1 ? theme.palette.primary.main : `${theme.palette.primary.contrastText}!important`,
       backgroundColor: level > 1 ? 'transparent' : theme.palette.primary.main,
       '&:hover': {
         backgroundColor: level > 1 ? '' : theme.palette.primary.main,
-        color: 'white',
+        color: theme.palette.primary.contrastText,
       },
     },
   }));

@@ -42,7 +42,7 @@ const colorToRgb = (color) => {
     document.body.appendChild(tempElem);
     const computedColor = window.getComputedStyle(tempElem).color;
     document.body.removeChild(tempElem);
-    
+
     const computedRgbMatch = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(computedColor);
     if (computedRgbMatch) {
       return {
@@ -62,7 +62,25 @@ const generatePrimaryPalette = (primaryColor) => {
   const rgb = colorToRgb(primaryColor);
   if (!rgb) return null;
 
-  const isDark = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000 < 128;
+  // WCAG Relative Luminance Calculation
+  const getRelativeLuminance = (r, g, b) => {
+    const rsRGB = r / 255;
+    const gsRGB = g / 255;
+    const bsRGB = b / 255;
+
+    const R = rsRGB <= 0.03928 ? rsRGB / 12.92 : Math.pow((rsRGB + 0.055) / 1.055, 2.4);
+    const G = gsRGB <= 0.03928 ? gsRGB / 12.92 : Math.pow((gsRGB + 0.055) / 1.055, 2.4);
+    const B = bsRGB <= 0.03928 ? bsRGB / 12.92 : Math.pow((bsRGB + 0.055) / 1.055, 2.4);
+
+    return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  };
+
+  const luminance = getRelativeLuminance(rgb.r, rgb.g, rgb.b);
+
+  // The threshold where contrast with white equals contrast with black is ~0.179
+  // const isDark = luminance <= 0.179;
+
+  const isDark = luminance <= 0.5;
 
   // Convert to hex for consistency
   const toHex = (value) => {

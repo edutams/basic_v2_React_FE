@@ -206,11 +206,10 @@ const ReceiptModal = ({ open, onClose, transaction }) => {
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
-          <Button startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
+          <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
             Download
           </Button>
-          <Button
-            startIcon={<PrintIcon />}
+          <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}
           >

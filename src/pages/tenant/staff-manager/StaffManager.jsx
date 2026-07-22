@@ -47,7 +47,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
@@ -57,6 +57,8 @@ import UploadStaffModal from './components/UploadStaffModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
+import StatCard from 'src/components/shared/StatCard';
+
 
 const BCrumb = [
   {
@@ -270,46 +272,46 @@ const StaffManager = () => {
           staffData.classAllocations ||
           (staffData.classTeachers && staffData.classTeachers.length > 0
             ? staffData.classTeachers.map((classTeacher) => {
-                return {
-                  session_term_id: classTeacher.session_term_id || '',
-                  programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: classTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: classTeacher.class_arm_id || '',
-                };
-              })
+              return {
+                session_term_id: classTeacher.session_term_id || '',
+                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: classTeacher.class_arm_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+              },
+            ]);
 
         // Transform subject teachers to subjectAllocations array
         const subjectAllocations =
           staffData.subjectAllocations ||
           (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
             ? staffData.subjectTeachers.map((subjectTeacher) => {
-                return {
-                  session_term_id: subjectTeacher.session_term_id || '',
-                  programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: subjectTeacher.class_arm_id || '',
-                  curriculum_id: subjectTeacher.subject?.curriculum_id || '',
-                  subject_id: subjectTeacher.subject_id || '',
-                };
-              })
+              return {
+                session_term_id: subjectTeacher.session_term_id || '',
+                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: subjectTeacher.class_arm_id || '',
+                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                subject_id: subjectTeacher.subject_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                  curriculum_id: '',
-                  subject_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+                curriculum_id: '',
+                subject_id: '',
+              },
+            ]);
 
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
@@ -514,30 +516,26 @@ const StaffManager = () => {
     {
       title: 'Total Staff',
       value: stats.total,
-      icon: <IconUsers size={24} />,
-      bgColor: 'primary.light',
-      iconColor: 'primary.main',
+      icon: IconUsers,
+      color: 'primary',
     },
     {
       title: 'Teaching Staff',
       value: stats.teaching,
-      icon: <IconUserCheck size={24} />,
-      bgColor: 'success.light',
-      iconColor: 'success.main',
+      icon: IconUserCheck,
+      color: 'primary',
     },
     {
       title: 'Non-Teaching Staff',
       value: stats.nonTeaching,
-      icon: <IconUserX size={24} />,
-      bgColor: 'info.light',
-      iconColor: 'info.main',
+      icon: IconUserX,
+      color: 'primary',
     },
     {
       title: 'On Leave',
       value: stats.onLeave,
-      icon: <IconCalendarOff size={24} />,
-      bgColor: 'warning.light',
-      iconColor: 'warning.main',
+      icon: IconCalendarOff,
+      color: 'primary',
     },
   ];
 
@@ -549,43 +547,13 @@ const StaffManager = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid #eee',
-                px: 2,
-                py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgcolor: stat.bgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: stat.iconColor,
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <StatCard
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              colorIndex={i}
+              loading={loading}
+            />
           </Grid>
         ))}
       </Grid>
@@ -611,7 +579,7 @@ const StaffManager = () => {
       {/* Main Content Card */}
       <Card
         elevation={0}
-        sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden', p: 2 }}
+        sx={{ borderRadius: 3, border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee', overflow: 'hidden', p: 2 }}
       >
         {/* Content Area */}
         <Box>
@@ -834,7 +802,12 @@ const StaffManager = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setViewModalOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
             Close
           </Button>
         </DialogActions>
@@ -861,6 +834,8 @@ const StaffManager = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
+            variant="contained"
+            size="small"
             color="inherit"
             onClick={() => {
               setImpersonateConfirmOpen(false);
@@ -870,6 +845,7 @@ const StaffManager = () => {
             Cancel
           </Button>
           <Button
+            size="small"
             color="inherit"
             onClick={handleConfirmedImpersonateStaff}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}

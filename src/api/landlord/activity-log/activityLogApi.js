@@ -35,6 +35,38 @@ const activityLogApi = {
     return response.data;
   },
 
+  getFilterOptions: async () => {
+    const response = await api.get('/v1/landlord/activity-logs/filter-options');
+    return response.data;
+  },
+
+  getTenantLoginStats: async (params = {}) => {
+    const response = await api.get('/v1/landlord/activity-logs/tenant-login-stats', { params });
+    return response.data;
+  },
+
+  getLoginActivities30Days: async (params = {}) => {
+    const response = await api.get('/v1/landlord/activity-logs/login-activities-30days', { params });
+    return response.data;
+  },
+
+  getTenantLoggedInUsers: async (tenantId, params = {}) => {
+    const response = await api.get(`/v1/landlord/activity-logs/tenant/${tenantId}/users`, { params });
+    return response.data;
+  },
+
+  getAgentLoggedInUsers: async (params = {}) => {
+    const response = await api.get('/v1/landlord/activity-logs/agents/users', { params });
+    return response.data;
+  },
+
+  exportExcel: async (data) => {
+    const response = await api.post('/v1/landlord/activity-logs/export-excel', data, {
+      responseType: 'blob'
+    });
+    return response;
+  },
+
 };
 
 export default activityLogApi;

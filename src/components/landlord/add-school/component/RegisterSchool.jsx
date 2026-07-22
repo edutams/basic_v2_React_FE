@@ -101,13 +101,13 @@ const fromSelected = (s) => {
         ? s.school_type[0] || ''
         : typeof s.school_type === 'string'
           ? (() => {
-              try {
-                const parsed = JSON.parse(s.school_type);
-                return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
-              } catch {
-                return s.school_type;
-              }
-            })()
+            try {
+              const parsed = JSON.parse(s.school_type);
+              return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
+            } catch {
+              return s.school_type;
+            }
+          })()
           : s.school_type
       : '',
     school_divisions: Array.isArray(s.school_divisions)
@@ -714,14 +714,10 @@ const RegisterSchoolForm = ({
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        <Button onClick={onCancel} disabled={loading}>
+        <Button variant="contained" size="small" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          color="primary"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+        <Button size="small" type="submit" color="primary" disabled={loading} startIcon={loading ? <CircularProgress color="inherit" /> : null}
         >
           {loading
             ? 'Processing...'

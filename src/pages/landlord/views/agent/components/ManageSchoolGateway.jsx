@@ -32,7 +32,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
     gateway_private_key: '',
     bank: '',
     account_number: '',
-    currency: 'NGN',
+    currency: '₦',
   });
 
   const selectedGateway = gateways.find((g) => g.id === formData.gateway_id);
@@ -50,7 +50,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
         gateway_private_key: '',
         bank: '',
         account_number: '',
-        currency: 'NGN',
+        currency: '₦',
       });
     }
   }, [open]);
@@ -264,22 +264,17 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
             value={formData.currency}
             onChange={handleChange('currency')}
           >
-            <MenuItem value="NGN">NGN</MenuItem>
+            <MenuItem value="₦">₦</MenuItem>
             <MenuItem value="USD">USD</MenuItem>
           </TextField>
         )}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button onClick={onClose} disabled={saving}>
+          <Button variant="contained" size="small" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={saving || gatewaysLoading}
-            sx={{ fontWeight: 600 }}
-          >
-            {saving ? 'Saving...' : mode === 'existing' ? 'Save' : 'Create Payment Gateway Account'}
+          <Button size="small" onClick={handleSubmit} disabled={saving || gatewaysLoading} sx={{ fontWeight: 600 }}>
+            {saving ? 'Saving...' : mode === 'existing' ? 'Save' : 'Create Pay. Gateway Account'}
           </Button>
         </Stack>
       </Stack>

@@ -102,12 +102,7 @@ const ClassStructureTable = ({
               },
             }}
           />
-          <Button
-            size="small"
-            disabled={
-              !structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'
-            }
-            onClick={() => onGenerateArms && onGenerateArms(structure.id)}
+          <Button variant="contained" size="small" disabled={!structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'} onClick={() => onGenerateArms && onGenerateArms(structure.id)}
           >
             Generate
           </Button>
@@ -202,10 +197,7 @@ const ClassStructureTable = ({
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Button
-                      size="small"
-                      color={structure.status === 'active' ? 'error' : 'success'}
-                      onClick={() => handleToggleClick(structure)}
+                    <Button variant="contained" size="small" color={structure.status === 'active' ? 'error' : 'success'} onClick={() => handleToggleClick(structure)}
                     >
                       {structure.status === 'active' ? 'Deactivate' : 'Activate'}
                     </Button>
@@ -235,8 +227,8 @@ const ClassStructureTable = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
+          <Button size="small" onClick={handleClose}>Cancel</Button>
+          <Button size="small" onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
             {isActive ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>

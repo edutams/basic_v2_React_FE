@@ -148,19 +148,32 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   const isAdmitted = ward.status === 'admitted';
   const admission = ward.admissionData;
 
-  // Check if payment is required and not yet paid
+  // Check if payment is required
   const requiresPayment = admission?.admission_batch?.require_payment;
-  const applicationFee = parseFloat(admission?.admission_batch?.application_fee || 0);
-  const acceptanceFee = parseFloat(admission?.admission_batch?.acceptance_fee || 0);
-  const totalFee = applicationFee + acceptanceFee;
+  
+  // Calculate total fee from pre-application payments
+  const preAppPayments = admission?.admission_batch?.pre_application_payments || [];
+  const totalFee = preAppPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+
+  // Check if form is submitted
+  const isFormSubmitted = admission?.form_submit_status === 'yes';
+  
+  // Check if payment has been made (check for has_paid flag from backend)
+  const hasAlreadyPaid = admission?.has_paid === true;
 
   // Show payment action if ALL conditions are met:
   // 1. Payment is required (require_payment === true)
-  // 2. Form is submitted (form_submit_status === 'yes')
-  // 3. Total fee > 0 (application_fee + acceptance_fee)
-  // 4. Not yet admitted (admission_status !== 'admitted')
+  // 2. Total fee > 0
+  // 3. Not yet admitted (admission_status !== 'admitted')
+  // 4. Has NOT already paid
   const showPaymentAction =
-    requiresPayment && totalFee > 0 && admission?.admission_status !== 'admitted';
+    requiresPayment && 
+    totalFee > 0 && 
+    admission?.admission_status !== 'admitted' &&
+    !hasAlreadyPaid;
+
+  // Show continue application if form is not submitted yet
+  const showContinueAction = !isFormSubmitted && !showPaymentAction;
 
   return (
     <Paper
@@ -263,15 +276,64 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
               </Box>
             </Box>
 
-            <Button
-              size="small"
-              onClick={(e) => {
+            <Button variant="contained" size="small" onClick={(e) => {
                 e.stopPropagation();
                 onViewDetails?.(ward);
               }}
               sx={{ borderRadius: 1, fontWeight: 700, bgcolor: '#EF9146', fontSize: '0.75rem' }}
             >
               Pay now
+            </Button>
+          </Paper>
+        )}
+
+        {showContinueAction && (
+          <Paper
+            sx={{
+              mt: 1,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: '#F0F8FF',
+              border: '1px solid',
+              borderColor: '#B3D9FF',
+              boxShadow: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: '#B3D9FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PendingIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Complete your application
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Continue filling out the form
+                </Typography>
+              </Box>
+            </Box>
+
+            <Button variant="contained" size="small" onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(ward);
+              }}
+              sx={{ borderRadius: 1, fontWeight: 700, fontSize: '0.75rem' }}
+            >
+              Continue
             </Button>
           </Paper>
         )}

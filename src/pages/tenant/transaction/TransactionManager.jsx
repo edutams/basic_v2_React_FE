@@ -1,24 +1,18 @@
-import React, { useState } from 'react';
-
-
-import {
-  Box,
-  Tabs,
-  Tab,
-  Grid,
-  useTheme,
-
-
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Tabs, Tab, Grid, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import StatCard from './components/StatCard';
+import StatCard from '@/components/shared/StatCard';
 import { IconWallet } from '@tabler/icons';
 import Overview from './components/AllTransaction/Overview';
 import Revenue from './components/TransactionByRevenue/Revenue';
+import Settlement from './components/TransactionSettlement/Settlement';
 import SettlementReconcillation from './components/TransactionSettlementReconcillation/SettlementReconcillation';
-
-
+import {
+  fetchTransactionValues,
+  fetchRevenueTransactionValues,
+} from '@/api/tenant/bursary/transactionApi';
+import { set } from 'lodash';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -50,13 +44,33 @@ const TransactionManager = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-
   const [tab, setTab] = useState(0);
+  const [stats, setStats] = useState(null);
+
+  const loadStats = async () => {
+    try {
+      let res;
+      if (tab === 0) {
+        // Overview Tab
+        res = await fetchTransactionValues();
+      } else if (tab === 1) {
+        // Revenue Tab
+        res = await fetchRevenueTransactionValues();
+      }
+      setStats(res?.data || res);
+    } catch (err) {
+      console.error('Failed to load stats', err);
+      setStats(null);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, [tab]);
+
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
   };
-
-
 
   return (
     <PageContainer title="Online Transaction" description="This is the Online transaction">
@@ -65,48 +79,41 @@ const TransactionManager = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction Week"
-              value="₦7,000,234.00"
+              label="Transaction Today"
+              count={`₦${(stats?.today_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#5CB979'}
-              lightColor={'#E3F2FD'}
+              colorIndex={0}
             />
           </Grid>
 
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction Week"
-              value="₦7,000,234.00"
+              label="Transaction This Week"
+              count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#EF5350'}
-              lightColor={'#FDECEA'}
+              colorIndex={1}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction This Month"
-              value="₦7,000,234.00"
+              label="Transaction This Month"
+              count={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#273DA9'}
-              lightColor={'#E3F2FD'}
+              colorIndex={2}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              title="Transaction This Year"
-              value="₦7,000,234.00"
+              label="Transaction This Year"
+              count={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
               icon={IconWallet}
-              color={'#F59E0B'}
-              lightColor={'#FEF3C7'}
+              colorIndex={3}
             />
           </Grid>
-
-
         </Grid>
       </Box>
 
       <Box sx={{ mt: 3 }}>
-
         <Box
           sx={{
             mb: 3,
@@ -127,18 +134,21 @@ const TransactionManager = () => {
             variant="scrollable"
           >
             <Tab
-              label="Overview"
+              label="Transactions"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
-              label="Revenue Transactions"
+              label="Revenue"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
-              label="Settlement Reconcillation"
+              label="Settlement"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
-
+            <Tab
+              label="Reconcillation"
+              sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+            />
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
@@ -150,6 +160,10 @@ const TransactionManager = () => {
         </TabPanel>
 
         <TabPanel value={tab} index={2}>
+          <Settlement />
+        </TabPanel>
+
+        <TabPanel value={tab} index={3}>
           <SettlementReconcillation />
         </TabPanel>
       </Box>

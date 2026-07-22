@@ -20,7 +20,11 @@ import {
   TableRow,
   Divider,
 } from '@mui/material';
-import { Print as PrintIcon, Close as CloseIcon, DescriptionOutlined as InvoiceIcon } from '@mui/icons-material';
+import {
+  Print as PrintIcon,
+  Close as CloseIcon,
+  DescriptionOutlined as InvoiceIcon,
+} from '@mui/icons-material';
 
 const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, categoryId }) => {
   const { tenantInfo } = useContext(TenantAuthContext) || {};
@@ -53,10 +57,10 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
         });
         if (res?.success) {
           if (res?.success && res?.data && !Array.isArray(res.data)) {
-  setInvoiceData(res.data);
-} else {
-  setInvoiceData(null);
-}
+            setInvoiceData(res.data);
+          } else {
+            setInvoiceData(null);
+          }
         } else {
           setError(res?.message || 'Failed to load invoice data');
         }
@@ -102,19 +106,14 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
           )}
         </Box>
         <Box display="flex" gap={1}>
-          <Button
-            variant="contained"
-            startIcon={<PrintIcon />}
+          <Button variant="contained" size="small" startIcon={<PrintIcon />}
             onClick={handlePrint}
-           disabled={loading || !invoiceData}
+            disabled={loading || !invoiceData}
             sx={{ fontWeight: 600 }}
           >
             {loading ? 'Loading...' : 'Print'}
           </Button>
-          <Button
-            variant="outlined"
-            onClick={onClose}
-            startIcon={<CloseIcon />}
+          <Button variant="contained" size="small" onClick={onClose} startIcon={<CloseIcon />}
             sx={{ minWidth: 'auto' }}
           >
             Close
@@ -175,7 +174,12 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
                   <Typography variant="h5" fontWeight={900} sx={{ textTransform: 'uppercase' }}>
                     {schoolName}
                   </Typography>
-                  <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    fontWeight={600}
+                    color="text.secondary"
+                  >
                     {[schoolEmail, schoolPhone].filter(Boolean).join(' · ')}
                   </Typography>
                 </Box>
@@ -248,11 +252,19 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
                 >
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT TYPE</TableCell>
-                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT ITEMS</TableCell>
-                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYABLE (₦)</TableCell>
+                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                        PAYMENT TYPE
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                        PAYMENT ITEMS
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                        PAYABLE (₦)
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAID (₦)</TableCell>
-                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>BALANCE (₦)</TableCell>
+                      <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                        BALANCE (₦)
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -321,7 +333,11 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
 
               {/* ── ISSUED BY ── */}
               <Box sx={{ px: 2, pt: 3, pb: 1 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
                   Issued By
                 </Typography>
                 <Box
@@ -378,11 +394,7 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
               <Typography variant="h6" fontWeight={700} mb={1}>
                 No Invoice Generated
               </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ lineHeight: 1.7 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
                 Invoice has not been generated for this student yet. Please generate an invoice
                 first before printing.
               </Typography>
@@ -392,10 +404,8 @@ const PrintInvoiceModal = ({ open, onClose, student, sessionTermId, classId, cat
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button onClick={onClose}>Close</Button>
-        <Button
-          variant="contained"
-          startIcon={<PrintIcon />}
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={loading || !invoiceData}
           sx={{ fontWeight: 600 }}

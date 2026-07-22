@@ -123,17 +123,13 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          size="small"
-                          startIcon={<UpdateIcon />}
+                        <Button variant="contained" size="small" startIcon={<UpdateIcon />}
                           onClick={() => handleUpdateStatus(transaction)}
                           sx={{ fontSize: '0.75rem', py: 0.25, px: 1 }}
                         >
                           Update Status
                         </Button>
-                        <Button
-                          size="small"
-                          startIcon={<PrintIcon />}
+                        <Button variant="contained" size="small" startIcon={<PrintIcon />}
                           onClick={() => handlePrintReceipt(transaction)}
                           sx={{ fontSize: '0.75rem', py: 0.25, px: 1 }}
                         >
@@ -157,7 +153,7 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
         </TableContainer>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="inherit" onClick={onClose}>
+          <Button variant="contained" size="small" color="inherit" onClick={onClose}>
             Close
           </Button>
         </Box>

@@ -193,7 +193,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

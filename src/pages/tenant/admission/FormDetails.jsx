@@ -58,7 +58,7 @@ const FormDetails = () => {
     );
   }
 
-  const { wardData, academicData, documentsData, selectedBatch } = formData;
+  const { wardData, academicData, documentsData, selectedBatch, admissionId } = formData;
 
   return (
     <PageContainer title="Application Form Details" description="View your submitted application">
@@ -74,11 +74,10 @@ const FormDetails = () => {
           Application Form Details
         </Typography>
         <Box display="flex" gap={1} flexWrap="wrap">
-          <Button startIcon={<PrintIcon />} onClick={handlePrint} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ fontWeight: 600 }}>
             Print Application
           </Button>
-          <Button
-            startIcon={<ArrowBackIcon />}
+          <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
             onClick={handleBack}
             sx={{ color: 'text.secondary', fontWeight: 500 }}
           >
@@ -101,6 +100,7 @@ const FormDetails = () => {
             academicData={academicData}
             documentsData={documentsData}
             selectedBatch={selectedBatch}
+            admissionId={admissionId}
             onBack={handleBack}
             onSubmit={() => {}}
             viewMode={true}

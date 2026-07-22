@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   IconButton,
@@ -21,22 +21,173 @@ import {
   TableRow,
   TableFooter,
   TablePagination,
+  Button,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
-import StandardModal from 'src/components/shared/StandardModal';
-import PrimaryButton from 'src/components/shared/PrimaryButton';
+import { IconUsers, IconDotsVertical } from '@tabler/icons-react';
+import ReusableModal from 'src/components/shared/ReusableModal';
+import StatCard from 'src/components/shared/StatCard';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
+import { useNotification } from '@/hooks/useNotification';
 
-const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
+const predefinedStats = [
+  { label: 'Teacher', searchLabels: ['Teacher'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Learner', searchLabels: ['Learner', 'Student', 'Learners', 'Students'], icon: IconUsers, color: '#10B981' },
+  { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
+  { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
+];
+
+
+
+const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const notify = useNotification();
+  const [data, setData] = useState([]);
+  const [modalStats, setModalStats] = useState(stats);
+  const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const today = new Date().toISOString().split('T')[0];
   const isMenuOpen = Boolean(anchorEl);
+
+  const [filters, setFilters] = useState({
+    accessLevel: 'All',
+    userType: 'All',
+    from: '',
+    to: ''
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    accessLevel: 'All',
+    userType: 'All',
+    from: '',
+    to: ''
+  });
+
+  const [filterOptions, setFilterOptions] = useState({
+    accessLevels: [{ label: 'All Levels', value: 'All' }],
+    userTypes: [{ label: 'All Users', value: 'All' }]
+  });
+
+  useEffect(() => {
+    setModalStats(stats);
+  }, [stats]);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await activityLogApi.getFilterOptions();
+        if (response.status) {
+          setFilterOptions(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter options', error);
+      }
+    };
+    fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchData();
+    }
+  }, [open, appliedFilters]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await activityLogApi.getTenantLoginStats({
+        role: appliedFilters.userType,
+        accessLevel: appliedFilters.accessLevel,
+        from: appliedFilters.from,
+        to: appliedFilters.to,
+      });
+      if (response.status) {
+        setData(response.data);
+      }
+
+      // Fetch dynamic stats card counts matching active filters
+      const statsRes = await activityLogApi.getLoginActivities30Days({
+        accessLevel: appliedFilters.accessLevel,
+        from: appliedFilters.from,
+        to: appliedFilters.to,
+      });
+      if (statsRes.status) {
+        setModalStats(statsRes.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data', error);
+      notify.error('Failed to fetch login statistics.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const hasActiveFilters = filters.accessLevel !== 'All' || filters.userType !== 'All' || filters.from !== '' || filters.to !== '';
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedFilters(filters);
+    setPage(0);
+  };
+
+  const handleResetFilter = () => {
+    const defaultFilters = {
+      accessLevel: 'All',
+      userType: 'All',
+      from: '',
+      to: ''
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters({ accessLevel: 'All', userType: 'All', from: '', to: '' });
+    setPage(0);
+  };
+
+  const handleExportToExcel = async () => {
+    if (!data || data.length === 0) {
+      notify.error('No schools found to export.');
+      return;
+    }
+
+    const headers = ['S/N', 'School Name', 'URL', 'User Type', 'Number of Logged-in Users'];
+    const rows = data.map((row, index) => [
+      index + 1,
+      row.school || '',
+      row.url || '',
+      appliedFilters.userType || 'All',
+      row.number || 0
+    ]);
+
+    try {
+      const response = await activityLogApi.exportExcel({
+        title: 'Logged In Users Report',
+        headers: headers,
+        rows: rows
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Logged_In_Users_Report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export excel', error);
+      notify.error('Failed to export excel.');
+    }
+  };
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -57,96 +208,48 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
     setPage(0);
   };
 
-  const loggedInUsersData = [
-    { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
-    { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
-    { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
-    { id: 4, school: 'KABIRU KIRU MODEL PRIMARY SCHOOL', url: 'https://kkmps.sef.edutams.net', number: 13 },
-    { id: 5, school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL', url: 'https://kksps.sef.edutams.net', number: 33 },
-    { id: 6, school: 'KWALLI SPECIAL PRIMARY SCHOOL', url: 'https://ksps.sef.edutams.net', number: 32 },
-    { id: 7, school: 'Lgea Agabija', url: 'https://las.sef.edutams.net', number: 18 },
-    { id: 8, school: 'Lgea Early Child, Mairafi.', url: 'https://lecm.sef.edutams.net', number: 10 },
-    { id: 9, school: 'Lgea Agudu', url: 'https://lgag.sef.edutams.net', number: 8 },
-  ];
-
-
   return (
     <>
-      <StandardModal
+      <ReusableModal
         open={open}
         onClose={onClose}
-        maxWidth="lg"
-        padding={4}
-        headerBg={isDarkMode ? theme.palette.background.paper : '#f4f6f8'}
-        sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#f4f6f8' }}
-        dividers={false}
-        actions={
-          <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-            <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
-            <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
-          </Stack>
-        }
+        title="Logged in user"
+        size="extraLarge"
+        showDivider={false}
       >
         {/* Top Stat Cards */}
         <Grid container spacing={1.5} mb={3}>
-          {[
-            { label: 'Teacher', count: 20, icon: <IconUsers size={24} />, color: '#3B82F6' },
-            { label: 'Student', count: 20, icon: <IconUsers size={24} />, color: '#10B981' },
-            { label: 'SPA', count: 20, icon: <IconUsers size={24} />, color: '#F59E0B' },
-            { label: 'Parent', count: 20, icon: <IconUsers size={24} />, color: '#EF4444' },
-          ].map((stat, idx) => (
-            <Grid size={{ xs: 6, sm: 6, lg: 3 }} key={idx}>
-              <Card sx={{
-                p: { xs: 1.5, sm: 2 },
-                borderRadius: '12px',
-                boxShadow: theme.shadows[1],
-                border: `1px solid ${theme.palette.divider}`,
-                bgcolor: theme.palette.background.paper,
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme.shadows[3],
-                  borderColor: stat.color
-                }
-              }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: { xs: 32, sm: 40 },
-                    height: { xs: 32, sm: 40 },
-                    borderRadius: '8px',
-                    bgcolor: isDarkMode ? `${stat.color}20` : `${stat.color}15`,
-                    color: stat.color
-                  }}>
-                    {stat.icon}
-                  </Box>
-                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight="700"
-                      color="textSecondary"
-                      sx={{ display: 'block', fontSize: { xs: '10px', sm: '12px' }, textTransform: 'uppercase' }}
-                    >
-                      {stat.label}
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      fontWeight="800"
-                      color="textPrimary"
-                      sx={{ fontSize: { xs: '16px', sm: '20px' } }}
-                    >
-                      {stat.count}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Card>
-            </Grid>
-          ))}
+          {predefinedStats.map((stat, idx) => {
+            const statValue = modalStats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+            const isAgents = stat.label === 'Agents';
+            return (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
+                <Box
+                  onClick={() => {
+                    if (isAgents && onViewUserList) {
+                      onViewUserList(
+                        { id: 'landlord', school: 'Agents' },
+                        {
+                          userType: 'All',
+                          accessLevel: appliedFilters.accessLevel,
+                          from: appliedFilters.from,
+                          to: appliedFilters.to
+                        }
+                      );
+                    }
+                  }}
+                  sx={{ cursor: isAgents ? 'pointer' : 'default', width: '100%' }}
+                >
+                  <StatCard
+                    label={stat.label}
+                    count={statValue}
+                    icon={stat.icon}
+                    colorIndex={idx}
+                  />
+                </Box>
+              </Grid>
+            );
+          })}
         </Grid>
 
         <Card sx={{
@@ -171,19 +274,19 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '4px', p: 0.5, display: 'flex' }}>
                 <GridViewIcon sx={{ color: theme.palette.text.disabled, fontSize: '24px' }} />
               </Box>
-              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
+              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users</Typography>
             </Stack>
-            <PrimaryButton
+
+            <Button
+              variant="contained"
               startIcon={<GetAppIcon />}
+              onClick={handleExportToExcel}
               sx={{
-                color: '#ffffff !important',
-                bgcolor: '#2ca87f !important',
-                '&:hover': { bgcolor: '#238a68 !important' },
-                width: { xs: '100%', sm: 'auto' }
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               Export to Excel
-            </PrimaryButton>
+            </Button>
           </Box>
 
           {/* Filter Bar */}
@@ -197,7 +300,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
             bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5',
             borderTop: `1px solid ${theme.palette.divider}`
           }}>
-            {/* Agent Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -208,14 +310,22 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
+                <Typography variant="body2" fontWeight="600" color="textPrimary">Access Level</Typography>
               </Box>
-              <Select size="small" defaultValue="Agent 2" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
-                <MenuItem value="Agent 2">Agent 2</MenuItem>
+              <Select
+                size="small"
+                value={filters.accessLevel}
+                onChange={(e) => handleFilterChange('accessLevel', e.target.value)}
+                sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
+              >
+                {filterOptions.accessLevels.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
-            {/* User Type Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -228,12 +338,20 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
                 <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
               </Box>
-              <Select size="small" defaultValue="Teacher" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
-                <MenuItem value="Teacher">Teacher</MenuItem>
+              <Select
+                size="small"
+                value={filters.userType}
+                onChange={(e) => handleFilterChange('userType', e.target.value)}
+                sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
+              >
+                {filterOptions.userTypes.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
 
-            {/* From Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -249,6 +367,9 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               <TextField
                 size="small"
                 type="date"
+                value={filters.from}
+                onChange={(e) => handleFilterChange('from', e.target.value)}
+                inputProps={{ max: today }}
                 sx={{
                   '& fieldset': { border: 'none' },
                   '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },
@@ -257,7 +378,6 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               />
             </Box>
 
-            {/* To Filter */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -273,6 +393,9 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               <TextField
                 size="small"
                 type="date"
+                value={filters.to}
+                onChange={(e) => handleFilterChange('to', e.target.value)}
+                inputProps={{ max: today }}
                 sx={{
                   '& fieldset': { border: 'none' },
                   '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },
@@ -281,16 +404,27 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               />
             </Box>
 
-            <PrimaryButton
-              sx={{
-                color: '#ffffff !important',
-                bgcolor: '#2ca87f !important',
-                '&:hover': { bgcolor: '#238a68 !important' },
-                ml: { sm: 'auto' }
-              }}
-            >
-              Filter
-            </PrimaryButton>
+            <Box sx={{ display: 'flex', gap: 1, ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+              {hasActiveFilters && (
+                <Button
+                  variant="outlined"
+                  onClick={handleResetFilter}
+                >
+                  Clear
+                </Button>
+              )}
+
+              <Button
+                onClick={handleApplyFilter}
+                variant="contained"
+                color="primary"
+                sx={{
+                  flex: { xs: 1, sm: 'none' }
+                }}
+              >
+                Fetch
+              </Button>
+            </Box>
           </Box>
 
           <Box sx={{ p: 0 }}>
@@ -298,42 +432,89 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                    {/* <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(rowsPerPage > 0
-                    ? loggedInUsersData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    : loggedInUsersData
-                  ).map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={{ color: theme.palette.text.secondary }}>{row.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                          <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                        </IconButton>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                        <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : data.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <Alert severity="info" sx={{ mt: 2, mb: 2, justifyContent: 'center' }}>
+                          No schools found for the selected filter criteria.
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (rowsPerPage > 0
+                      ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      : data
+                    ).map((row, index) => (
+                      <TableRow
+                        key={row.id || index} hover>
+                        <TableCell sx={{ color: theme.palette.text.secondary }}>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          {row.url ? (
+                            <Typography
+                              component="a"
+                              href={row.url.startsWith('http') ? row.url : `https://${row.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              sx={{
+                                color: 'success.main',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                '&:hover': { textDecoration: 'underline' }
+                              }}
+                            >
+                              {row.url}
+                            </Typography>
+                          ) : (
+                            <Typography sx={{ color: theme.palette.text.disabled, fontSize: '13px' }}>N/A</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            color="primary"
+                            fontWeight="600"
+                            sx={{
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              textAlign: 'center',
+                              '&:hover': { opacity: 0.8 }
+                            }}
+                            onClick={() => onViewUserList && onViewUserList(row, appliedFilters)}
+                          >
+                            {row.number}
+                          </Typography>
+                        </TableCell>
+                        {/* <TableCell align="right">
+                          <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
+                            <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                          </IconButton>
+                        </TableCell> */}
+                      </TableRow>
+                    )))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      count={loggedInUsersData.length}
+                      count={data.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={handleChangePage}
@@ -346,7 +527,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
             </TableContainer>
           </Box>
         </Card>
-      </StandardModal>
+      </ReusableModal>
 
       <Menu
         anchorEl={anchorEl}
@@ -384,7 +565,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            if (onViewUserList) onViewUserList();
+            if (onViewUserList) onViewUserList(selectedRow, appliedFilters);
           }}
         >
           View Users List

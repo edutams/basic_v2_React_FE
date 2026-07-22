@@ -192,25 +192,13 @@ const FilterSideDrawer = ({
       {/* Footer actions */}
       <Box sx={{ px: 2.5, py: 2 }}>
         <Stack direction="row" spacing={1.5}>
-          <Button
-            fullWidth
-            startIcon={<IconRefresh size={16} />}
+          <Button variant="contained" size="small" fullWidth startIcon={<IconRefresh />}
             onClick={handleReset}
             sx={{ textTransform: 'none', borderRadius: 2 }}
           >
             Reset
           </Button>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={handleApply}
-            sx={{
-              textTransform: 'none',
-              borderRadius: 2,
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-          >
+          <Button variant="contained" size="small" fullWidth onClick={handleApply} sx={{ textTransform: 'none', borderRadius: 2, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' }, }}>
             Apply Filters
           </Button>
         </Stack>

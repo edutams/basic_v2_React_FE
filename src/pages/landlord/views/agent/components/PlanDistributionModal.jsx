@@ -14,76 +14,89 @@ import Chart from 'react-apexcharts';
 import StandardModal from '@/components/shared/StandardModal';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconBuildingBank } from '@tabler/icons-react';
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const plans = [
   {
     label: 'Freemium',
     value: '₦7,000,234.00',
-    color: '#3949ab',
-    iconBg: '#e8eaf6',
+    colorIndex: 0,
     schoolCount: 300,
   },
-  { label: 'Basic', value: '₦7,000,234.00', color: '#2196f3', iconBg: '#e3f2fd', schoolCount: 400 },
+  { 
+    label: 'Basic', 
+    value: '₦7,000,234.00', 
+    colorIndex: 1, 
+    schoolCount: 400 
+  },
   {
     label: 'Basic +',
     value: '₦7,000,234.00',
-    color: '#ff4081',
-    iconBg: '#fce4ec',
+    colorIndex: 2,
     schoolCount: 400,
   },
   {
     label: 'Basic ++',
     value: '₦7,000,234.00',
-    color: '#9c27b0',
-    iconBg: '#f3e5f5',
+    colorIndex: 3,
     schoolCount: 50,
   },
 ];
 
 const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
 
-// ── Shared card components matching TotalTransactionModal ──────────────
-const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
+const TopCard = ({ label, value, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  
   return (
     <Card
       sx={{
         p: 2.5,
         borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        boxShadow: isDark
+          ? '0 6px 24px rgba(0,0,0,0.28)'
+          : '0 4px 20px rgba(0,0,0,0.07)',
+        border: `1px solid ${colors.borderColor}`,
+        background: colors.cardBg,
         height: '100%',
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
         <Box
           sx={{
             width: 42,
             height: 42,
             borderRadius: '10px',
-            bgcolor: iconBg,
+            background: colors.iconBg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            boxShadow: isDark
+              ? '0 4px 12px rgba(0,0,0,0.3)'
+              : `0 6px 14px ${colors.iconGlow}`,
           }}
         >
-          <Icon size={20} color={valueColor} />
+          <Icon size={20} color={colors.iconColor || '#fff'} />
         </Box>
-        <Box>
+        <Box sx={{ textAlign: 'right' }}>
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '18px', color: valueColor, lineHeight: 1.2 }}
+            sx={{ fontSize: '18px', color: colors.accentColor, lineHeight: 1.2 }}
           >
             {value}
           </Typography>
-          <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3}>
-            <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: valueColor }} />
+          <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3} justifyContent="flex-end">
+            <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
             <Typography
               variant="caption"
-              sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
+              sx={{ 
+                color: isDark ? '#ffffff' : '#4B5563', 
+                fontWeight: 500, 
+                fontSize: '12px' 
+              }}
             >
               {label}
             </Typography>
@@ -94,9 +107,11 @@ const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
   );
 };
 
-const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
+const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  
   return (
     <Stack
       direction="row"
@@ -105,7 +120,7 @@ const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
       justifyContent="space-between"
       sx={{
         py: 1.2,
-        borderBottom: `1px solid ${isDark ? '#333' : '#f0f0f0'}`,
+        borderBottom: `1px solid ${colors.borderColor}`,
         '&:last-child': { borderBottom: 'none' },
       }}
     >
@@ -115,21 +130,21 @@ const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
             width: 32,
             height: 32,
             borderRadius: '8px',
-            bgcolor: iconBg,
+            background: colors.iconBg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={16} color={valueColor} />
+          <Icon size={16} color={colors.iconColor || '#fff'} />
         </Box>
         <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: valueColor }} />
+          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
           <Typography
             variant="caption"
             fontWeight={700}
-            sx={{ color: isDark ? '#fff' : '#1a3353', fontSize: '12px' }}
+            sx={{ color: isDark ? '#ffffff' : '#4B5563', fontSize: '12px' }}
           >
             {label}
           </Typography>
@@ -137,7 +152,7 @@ const SideStatRow = ({ label, count, valueColor, iconBg, icon: Icon }) => {
       </Stack>
       <Box
         sx={{
-          bgcolor: valueColor,
+          bgcolor: colors.accentColor,
           color: '#fff',
           px: 1.5,
           py: 0.3,
@@ -237,8 +252,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
             <TopCard
               label={plan.label}
               value={plan.value}
-              valueColor={plan.color}
-              iconBg={isDark ? '#2a2a2a' : plan.iconBg}
+              colorIndex={plan.colorIndex}
               icon={IconBuildingBank}
             />
           </Grid>
@@ -318,8 +332,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                 key={i}
                 label={plan.label}
                 count={plan.schoolCount}
-                valueColor={plan.color}
-                iconBg={isDark ? '#2a2a2a' : plan.iconBg}
+                colorIndex={plan.colorIndex}
                 icon={IconBuildingBank}
               />
             ))}

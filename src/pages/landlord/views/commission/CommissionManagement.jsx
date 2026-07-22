@@ -10,17 +10,18 @@ import {
   useTheme,
   TablePagination,
   Button,
+  Stack,
 } from '@mui/material';
 import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
 import PageContainer from '../../../../components/container/PageContainer';
 import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
-import CommissionSummaryCards from './components/CommissionSummaryCards';
 import CommissionTable from './components/CommissionTable';
 import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
 import CommissionDetailsModal from './components/CommissionDetailsModal';
-import { mockCommissionData } from './mockData';
+import { mockCommissionData, mockSummaryStats } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
+import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -105,8 +106,21 @@ const CommissionManagement = () => {
     <PageContainer title="Manage Commission" description="Commission management dashboard">
       <Breadcrumb title="Manage Commission" items={BCrumb} />
 
-      <Box mt={3}>
-        <CommissionSummaryCards />
+      <Box sx={{ mb: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          {mockSummaryStats.map((stat, index) => {
+            const colors = ['primary', 'error', 'success', 'warning'];
+            return (
+              <StatCard
+                key={index}
+                count={stat.value}
+                label={stat.title}
+                icon={stat.icon}
+                colorIndex={index}
+              />
+            );
+          })}
+        </Stack>
       </Box>
 
       <Box
@@ -197,9 +211,7 @@ const CommissionManagement = () => {
             )}
 
             {(value === '3' || value === '4') && (
-              <Button
-                size="small"
-                startIcon={<IconLayoutDashboard size={18} />}
+              <Button variant="contained" size="small" startIcon={<IconLayoutDashboard />}
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }

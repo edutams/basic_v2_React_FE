@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
+import PrintReceipt from '@/pages/tenant/finance/bursary/PrintReceipt';
 
 const SchoolLayout = Loadable(lazy(() => import('@/layouts/tenant/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
@@ -40,12 +41,27 @@ const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/St
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
+const AdmissionProcessing = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionProcessing')),
+);
 const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
 const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
 
 const NewApplication = Loadable(lazy(() => import('@/pages/tenant/admission/NewApplication')));
 const MyApplication = Loadable(lazy(() => import('@/pages/tenant/admission/MyApplication')));
 const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionLetter')));
+const ProcessApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/ProcessApplicationForm')),
+);
+const EditApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/EditApplicationForm')),
+);
+const PrintApplicationForm = Loadable(
+  lazy(() => import('@/pages/tenant/admission/PrintApplicationForm')),
+);
+const ApplicantPaymentHistory = Loadable(
+  lazy(() => import('@/pages/tenant/admission/ApplicantPaymentHistory')),
+);
 const ApplicationTracker = Loadable(
   lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
@@ -56,8 +72,10 @@ const CreateAdmissionBatch = Loadable(
   lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
 );
 
-const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
-const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
+const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/finance/bursary/BursarySetup')));
+const PaymentShedule = Loadable(
+  lazy(() => import('@/pages/tenant/finance/bursary/PaymentShedule')),
+);
 const PrintInvoicePage = Loadable(
   lazy(() => import('@/components/tenant/bursary/payment-shedule/PrintInvoicePage')),
 );
@@ -68,10 +86,27 @@ const InvoiceView = Loadable(
   lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceView')),
 );
 
+const WalletTransactions = Loadable(
+  lazy(() => import('@/pages/tenant/transaction/wallet/WalletTransactions')),
+);
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
+const SubjectRegistration = Loadable(
+  lazy(() => import('@/pages/tenant/subject-registration/SubjectRegistration')),
+);
+const ClassRegister = Loadable(lazy(() => import('@/pages/tenant/class-register/ClassRegister')));
+const AttendancePsychomotor = Loadable(
+  lazy(() => import('@/pages/tenant/attendance/AttendancePsychomotor')),
+);
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
 const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
+const PayInvoice = Loadable(
+  lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')),
+);
+
+const ChartOfAccounts = Loadable(
+  lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
+);
 
 const TenantRoutes = [
   {
@@ -132,6 +167,16 @@ const TenantRoutes = [
     path: '/auth/404',
     element: <BlankLayout />,
     children: [{ index: true, element: <Error /> }],
+  },
+  {
+    path: '/class-ledger/:invoiceId/:user_id/pay-invoice',
+    element: (
+      <TenantProtectedRoute>
+        {/* permission="bursary_manager.ledger.pay_invoice" */}
+        <SchoolLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <PayInvoice /> }],
   },
   {
     path: '/complete-setup',
@@ -302,10 +347,39 @@ const TenantRoutes = [
         path: 'process-applications',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
-            <PageUnderDevelopment
-              title="Process Admission Under Development"
-              subtitle="The Process Admission module is currently under development. Check back soon!"
-            />
+            <AdmissionProcessing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/process-form/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <ProcessApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/edit-form/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <EditApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/print-application/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <PrintApplicationForm />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/payment-history/:form_number',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <ApplicantPaymentHistory />
           </TenantProtectedRoute>
         ),
       },
@@ -344,8 +418,33 @@ const TenantRoutes = [
       {
         path: 'transactions',
         element: (
-          <TenantProtectedRoute permission="bursary_manager.transactions.index">
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
             <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: '/bursary/transactions/print_receipt',
+        element: (
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
+            <PrintReceipt />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: '/bursary/transactions/wallet_transactions',
+        element: (
+          <TenantProtectedRoute permission="walet_manager.transactions.index">
+            <WalletTransactions />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      {
+        path: 'chart-of-accounts',
+        element: (
+          <TenantProtectedRoute permission="chart_of_accounts.index">
+            <ChartOfAccounts />
           </TenantProtectedRoute>
         ),
       },
@@ -381,7 +480,6 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
-
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },
 
@@ -447,6 +545,32 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.tracker.index">
             <FormDetails />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      // ── Class Manager Routes ──
+      {
+        path: 'subject-registration',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.subject_registrar.view">
+            <SubjectRegistration />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-register',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.class_register.view">
+            <ClassRegister />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'attendance-psychomotor',
+        element: (
+          <TenantProtectedRoute permission="manage.class_manager.attendance_psychomotor.view">
+            <AttendancePsychomotor />
           </TenantProtectedRoute>
         ),
       },

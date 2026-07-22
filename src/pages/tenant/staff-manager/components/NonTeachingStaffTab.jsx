@@ -98,24 +98,20 @@ const NonTeachingStaffTab = ({
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            startIcon={<IconPlus size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconPlus />}
             onClick={handleAddStaff}
-            size="small"
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Add Non-Teaching Staff
           </Button>
           <ButtonGroup sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Button
-              startIcon={<IconPlus size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconPlus />}
               sx={{ textTransform: 'none', flex: 1 }}
               onClick={handleUploadStaff}
-              size="small"
             >
               Multiple Non-Teaching Staff Upload
             </Button>
-            <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
+            <Button variant="contained" size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />
             </Button>
           </ButtonGroup>
@@ -125,7 +121,7 @@ const NonTeachingStaffTab = ({
       {/* Table */}
       <TableContainer>
         <Table>
-          <TableHead sx={{ bgcolor: '#fafafa' }}>
+          <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Staff Id</TableCell>
@@ -183,7 +179,7 @@ const NonTeachingStaffTab = ({
                           height: 30,
                           fontSize: '12px',
                           fontWeight: 700,
-                          bgcolor: '#2196f3',
+                          bgcolor: 'primary.main',
                           flexShrink: 0,
                         }}
                       >
@@ -203,8 +199,8 @@ const NonTeachingStaffTab = ({
                       label={staffMember.role || 'N/A'}
                       size="small"
                       sx={{
-                        bgcolor: '#f5f5f5',
-                        color: '#666',
+                        bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : '#f5f5f5',
+                        color: (theme) => theme.palette.mode === 'dark' ? 'text.secondary' : '#666',
                         textTransform: 'capitalize',
                       }}
                     />

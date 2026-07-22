@@ -152,8 +152,8 @@ const SchoolPermissionAttachmentModal = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button color="primary" onClick={onSave}>
+        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
+        <Button size="small" color="primary" onClick={onSave}>
           Save Permissions
         </Button>
       </DialogActions>

@@ -19,6 +19,7 @@ import {
   Menu,
   MenuItem,
   InputAdornment,
+  Alert
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -70,7 +71,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">Manage Subjects</Typography>
-          <Button onClick={onAddSubject}>Add New Subject</Button>
+          <Button variant="contained" size="small" onClick={onAddSubject}>Add New Subject</Button>
         </Box>
       }
     >
@@ -94,13 +95,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
             }}
           />
           {hasActiveFilters && (
-            <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
+            <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
               Clear Filters
             </Button>
           )}
         </Box>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -172,9 +173,9 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} align="center">
-                      <Typography variant="body1" color="textSecondary">
+                      <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
                         No subjects found
-                      </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}
@@ -197,7 +198,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
     </ParentCard>
   );

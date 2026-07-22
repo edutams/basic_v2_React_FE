@@ -77,19 +77,7 @@ const TenantProfile = () => {
     <Box display="flex" gap={1}>
       {lgUp ? <Divider orientation="vertical" variant="middle" /> : null}
 
-      <Button
-        size="large"
-        aria-label="menu"
-        color="inherit"
-        aria-controls="msgs-menu"
-        aria-haspopup="true"
-        sx={{
-          ...(typeof anchorEl2 === 'object' && {
-            borderRadius: '9px',
-          }),
-        }}
-        onClick={handleClick2}
-      >
+      <Button variant="contained" size="small" aria-label="menu" color="inherit" aria-controls="msgs-menu" aria-haspopup="true" sx={{ ...(typeof anchorEl2 === 'object' && { borderRadius: '9px', }), }} onClick={handleClick2}>
         <Avatar
           src={userAvatar}
           alt={'ProfileImg'}
@@ -214,11 +202,7 @@ const TenantProfile = () => {
         ))}
 
         <Box mt={2}>
-          <Button
-            color="secondary"
-            fullWidth
-            onClick={handleLogout}
-            startIcon={<IconLogout width="18" height="18" />}
+          <Button variant="contained" size="small" color="secondary" fullWidth onClick={handleLogout} startIcon={<IconLogout width="18" height="18" />}
           >
             Logout
           </Button>

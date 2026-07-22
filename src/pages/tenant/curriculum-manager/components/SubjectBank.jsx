@@ -606,7 +606,7 @@ const SubjectBank = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: '#f5f7fa',
+                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -619,8 +619,12 @@ const SubjectBank = () => {
                               label={item.status}
                               size="small"
                               sx={{
-                                bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                color: item.status === 'active' ? '#166534' : '#991b1b',
+                                bgcolor: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
+                                  : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
+                                color: (theme) => theme.palette.mode === 'dark'
+                                  ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
+                                  : (item.status === 'active' ? '#166534' : '#991b1b'),
                               }}
                             />
                           </TableCell>
@@ -702,11 +706,7 @@ const SubjectBank = () => {
                   />
                 </Box>
 
-                <Button
-                  size="small"
-                  onClick={handleOpenAddSubjectModal}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
-                >
+                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   Add Subject
                 </Button>
               </Box>
@@ -851,11 +851,7 @@ const SubjectBank = () => {
                     </Select>
                   </FormControl>
 
-                  <Button
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 'auto' } }}
-                    onClick={handleOpenCreateSubjectGroupModal}
-                  >
+                  <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={handleOpenCreateSubjectGroupModal}>
                     Create Group
                   </Button>
                 </Box>
@@ -911,8 +907,8 @@ const SubjectBank = () => {
                                 label={s.subject_name}
                                 size="small"
                                 sx={{
-                                  bgcolor: '#334155',
-                                  color: '#fff',
+                                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'primary.light' : '#334155',
+                                  color: (theme) => theme.palette.mode === 'dark' ? 'primary.contrastText' : '#fff',
                                   fontSize: '0.7rem',
                                 }}
                               />
@@ -928,8 +924,12 @@ const SubjectBank = () => {
                             label={grp.status === 'active' ? 'active' : 'inactive'}
                             size="small"
                             sx={{
-                              bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
-                              color: grp.status === 'active' ? '#166534' : '#991b1b',
+                              bgcolor: (theme) => theme.palette.mode === 'dark'
+                                ? (grp.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
+                                : (grp.status === 'active' ? '#dcfce7' : '#fee2e2'),
+                              color: (theme) => theme.palette.mode === 'dark'
+                                ? (grp.status === 'active' ? '#00c292' : '#fc4b6c')
+                                : (grp.status === 'active' ? '#166534' : '#991b1b'),
                             }}
                           />
                         </TableCell>
@@ -1121,19 +1121,11 @@ const SubjectBank = () => {
           </DialogContent>
 
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseAddSubjectModal}
-              disabled={loadingCreateSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseAddSubjectModal} disabled={loadingCreateSubject}>
               Cancel
             </Button>
 
-            <Button
-              size="small"
-              onClick={handleCreateSubject}
-              disabled={loadingCreateSubject}
-              startIcon={loadingCreateSubject ? <CircularProgress size={16} /> : null}
+            <Button size="small" onClick={handleCreateSubject} disabled={loadingCreateSubject} startIcon={loadingCreateSubject ? <CircularProgress /> : null}
             >
               {loadingCreateSubject ? 'Adding...' : 'Add Subject'}
             </Button>
@@ -1276,18 +1268,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseEditSubjectModal}
-              disabled={loadingUpdateSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal} disabled={loadingUpdateSubject}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleUpdateSubject}
-              disabled={loadingUpdateSubject}
-              startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
+            <Button size="small" onClick={handleUpdateSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
             >
               {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
             </Button>
@@ -1309,19 +1293,10 @@ const SubjectBank = () => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseDeleteSubjectModal}
-              disabled={loadingDeleteSubject}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseDeleteSubjectModal} disabled={loadingDeleteSubject}>
               Cancel
             </Button>
-            <Button
-              color="error"
-              size="small"
-              onClick={handleDeleteSubject}
-              disabled={loadingDeleteSubject}
-              startIcon={loadingDeleteSubject ? <CircularProgress size={16} /> : null}
+            <Button size="small" color="error" onClick={handleDeleteSubject} disabled={loadingDeleteSubject} startIcon={loadingDeleteSubject ? <CircularProgress /> : null}
             >
               {loadingDeleteSubject ? 'Deleting...' : 'Delete'}
             </Button>
@@ -1475,7 +1450,7 @@ const SubjectBank = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   {/* Subject search & selection */}
-                  <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
+                  <Box sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(3, 169, 244, 0.15)' : '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                       Select Subjects
                     </Typography>
@@ -1489,8 +1464,8 @@ const SubjectBank = () => {
                       value={
                         subjectGroupFormData.subject_ids
                           ? subjectGroupModalSubjects.filter((s) =>
-                              subjectGroupFormData.subject_ids.includes(s.id),
-                            )
+                            subjectGroupFormData.subject_ids.includes(s.id),
+                          )
                           : []
                       }
                       onChange={(_, selected) =>
@@ -1510,7 +1485,7 @@ const SubjectBank = () => {
                           {...params}
                           size="small"
                           placeholder="Search for subjects..."
-                          sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                          sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff', borderRadius: 1 }}
                         />
                       )}
                       renderTags={(selected, getTagProps) =>
@@ -1519,7 +1494,10 @@ const SubjectBank = () => {
                             key={s.id}
                             label={s.subject_name}
                             size="small"
-                            sx={{ bgcolor: '#334155', color: '#fff' }}
+                            sx={{
+                              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'primary.light' : '#334155',
+                              color: (theme) => theme.palette.mode === 'dark' ? 'primary.contrastText' : '#fff'
+                            }}
                             {...getTagProps({ index })}
                           />
                         ))
@@ -1531,18 +1509,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseCreateSubjectGroupModal}
-              disabled={loadingCreateGroup}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseCreateSubjectGroupModal} disabled={loadingCreateGroup}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleCreateSubjectGroup}
-              disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2}
-              startIcon={loadingCreateGroup ? <CircularProgress size={16} /> : null}
+            <Button size="small" onClick={handleCreateSubjectGroup} disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingCreateGroup ? <CircularProgress /> : null}
             >
               {loadingCreateGroup ? 'Creating...' : 'Create Group'}
             </Button>
@@ -1696,7 +1666,7 @@ const SubjectBank = () => {
                 </Grid>
                 <Grid size={{ xs: 12, md: 12 }}>
                   {/* Subject search & selection */}
-                  <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
+                  <Box sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(3, 169, 244, 0.15)' : '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                       Select Subjects
                     </Typography>
@@ -1710,8 +1680,8 @@ const SubjectBank = () => {
                       value={
                         subjectGroupFormData.subject_ids
                           ? subjectGroupModalSubjects.filter((s) =>
-                              subjectGroupFormData.subject_ids.includes(s.id),
-                            )
+                            subjectGroupFormData.subject_ids.includes(s.id),
+                          )
                           : []
                       }
                       onChange={(_, selected) =>
@@ -1731,7 +1701,7 @@ const SubjectBank = () => {
                           {...params}
                           size="small"
                           placeholder="Search for subjects..."
-                          sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                          sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff', borderRadius: 1 }}
                         />
                       )}
                       renderTags={(selected, getTagProps) =>
@@ -1740,7 +1710,10 @@ const SubjectBank = () => {
                             key={s.id}
                             label={s.subject_name}
                             size="small"
-                            sx={{ bgcolor: '#334155', color: '#fff' }}
+                            sx={{
+                              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'primary.light' : '#334155',
+                              color: (theme) => theme.palette.mode === 'dark' ? 'primary.contrastText' : '#fff'
+                            }}
                             {...getTagProps({ index })}
                           />
                         ))
@@ -1752,18 +1725,10 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              size="small"
-              onClick={handleCloseEditSubjectGroupModal}
-              disabled={loadingUpdateGroup}
-            >
+            <Button variant="contained" size="small" onClick={handleCloseEditSubjectGroupModal} disabled={loadingUpdateGroup}>
               Cancel
             </Button>
-            <Button
-              size="small"
-              onClick={handleUpdateSubjectGroup}
-              disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2}
-              startIcon={loadingUpdateGroup ? <CircularProgress size={16} /> : null}
+            <Button size="small" onClick={handleUpdateSubjectGroup} disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2} startIcon={loadingUpdateGroup ? <CircularProgress /> : null}
             >
               {loadingUpdateGroup ? 'Updating...' : 'Update Group'}
             </Button>

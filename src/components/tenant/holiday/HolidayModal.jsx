@@ -12,7 +12,7 @@ const HolidayModal = ({
   mode = 'create',
   activeTerm = 'First',
 }) => {
-  useEffect(() => {}, [activeTerm]);
+  useEffect(() => { }, [activeTerm]);
 
   React.useEffect(() => {
     if (mode === 'edit' && initialValues && Object.keys(initialValues).length > 0) {
@@ -89,7 +89,7 @@ const HolidayModal = ({
 
       {mode === 'create' && (
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button onClick={handleAddMore}>Add More</Button>
+          <Button variant="contained" size="small" onClick={handleAddMore}>Add More</Button>
         </Box>
       )}
 
@@ -134,10 +134,8 @@ const HolidayModal = ({
       </Card>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-        <Button onClick={handleCancel}>Cancel</Button>
-        <Button
-          onClick={handleSave}
-          disabled={holidayForms.every((form) => !form.holiday_date || !form.holiday_description)}
+        <Button variant="contained" size="small" onClick={handleCancel}>Cancel</Button>
+        <Button size="small" onClick={handleSave} disabled={holidayForms.every((form) => !form.holiday_date || !form.holiday_description)}
         >
           {mode === 'edit' ? 'Update' : 'Save'}
         </Button>

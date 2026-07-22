@@ -65,8 +65,8 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
         <Typography sx={{ pt: 1 }}>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button color="error" onClick={onConfirm}>
+        <Button variant="contained" size="small" onClick={onCancel}>Cancel</Button>
+        <Button size="small" color="error" onClick={onConfirm}>
           Yes, Proceed
         </Button>
       </DialogActions>
@@ -327,8 +327,7 @@ function SessionsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              startIcon={<IconFilter size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -347,7 +346,7 @@ function SessionsPanel({ isLevel1 }) {
                 />
               )}
             </Button>
-            <Button startIcon={<IconPlus size={16} />} onClick={openCreate}>
+            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
               New Session
             </Button>
           </Box>
@@ -364,7 +363,7 @@ function SessionsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -532,8 +531,8 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
             ) : editTarget ? (
@@ -570,8 +569,8 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
-          <Button onClick={handleSetCurrentSubmit} disabled={submitting}>
+          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
+          <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Update Status'}
           </Button>
         </DialogActions>
@@ -779,8 +778,7 @@ function TermsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              startIcon={<IconFilter size={18} />}
+            <Button variant="contained" size="small" startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -799,7 +797,7 @@ function TermsPanel({ isLevel1 }) {
                 />
               )}
             </Button>
-            <Button startIcon={<IconPlus size={16} />} onClick={openCreate}>
+            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
               New Term
             </Button>
           </Box>
@@ -816,7 +814,7 @@ function TermsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer >
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -937,8 +935,8 @@ function TermsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
             ) : editTarget ? (
@@ -1123,7 +1121,7 @@ function MappingsPanel() {
       </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">My Session–Term Mappings</Typography>
-        <Button startIcon={<IconPlus size={16} />} onClick={() => setDialogOpen(true)}>
+        <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={() => setDialogOpen(true)}>
           Add Mapping
         </Button>
       </Box>
@@ -1132,7 +1130,7 @@ function MappingsPanel() {
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer component={Paper}>
+        <TableContainer >
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -1288,8 +1286,8 @@ function MappingsPanel() {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
           </Button>
         </DialogActions>

@@ -407,7 +407,7 @@ const TeamTab = ({
           </Typography>
         </Stack>
         {!isViewingProfile && (
-          <Button startIcon={<IconUsers size={16} />} onClick={onAddAgent}>
+          <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
             Add New Organization
           </Button>
         )}
@@ -454,14 +454,14 @@ const TeamTab = ({
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 2 }}>
-          <Button fullWidth size="small" onClick={handleSearch}>
+          <Button variant="contained" size="small" fullWidth onClick={handleSearch}>
             Search
           </Button>
         </Grid>
       </Grid>
 
       {/* Table */}
-      <TableContainer component={Paper}>
+      <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -512,11 +512,11 @@ const TeamTab = ({
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join('')
-                      .toUpperCase()
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join('')
+                    .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -752,7 +752,7 @@ const TeamTab = ({
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => {}}
+        handleRefresh={() => { }}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />
@@ -767,8 +767,8 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error">
+          <Button variant="contained" size="small" onClick={handleCancelDelete}>Cancel</Button>
+          <Button size="small" onClick={handleConfirmDelete} color="error">
             Delete
           </Button>
         </DialogActions>

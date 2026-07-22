@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import { fetchStudentPrintInvoice } from '@/api/tenant/bursary/bursarySettingsApi';
 import { useReactToPrint } from 'react-to-print';
@@ -26,6 +26,7 @@ import {
 const PrintInvoicePage = () => {
   const { session_term_id, class_id, id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const printRef = useRef(null);
 
@@ -90,8 +91,24 @@ const PrintInvoicePage = () => {
     );
   }
 
+  const compulsoryPayable = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
+  const compulsoryPaid = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const compulsoryTotal = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+
+  const optionalPayable = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
+  const optionalPaid = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const optionalTotal = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+
+  const currentTermPayable = compulsoryPayable + optionalPayable;
+  const currentTermPaid = compulsoryPaid + optionalPaid;
+  const currentTermTotal = compulsoryTotal + optionalTotal;
+
   const handleGoBack = () => {
-    if (window.history.length > 1) {
+    const source = searchParams.get('source');
+    
+    if (source === 'class-ledger') {
+      navigate('/class-ledger');
+    } else if (window.history.length > 1 && !source) {
       navigate(-1);
     } else {
       navigate(`/payment-schedule/invoice/${session_term_id}/${class_id}`);
@@ -102,7 +119,7 @@ const PrintInvoicePage = () => {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error}</Alert>
-        <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mt: 2 }}>
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mt: 2 }}>
           Go Back
         </Button>
       </Box>
@@ -121,12 +138,10 @@ const PrintInvoicePage = () => {
           gap: 2,
         }}
       >
-        <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
+        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
           Back
         </Button>
-        <Button
-          variant="contained"
-          startIcon={<PrintIcon />}
+        <Button variant="contained" size="small" startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={!invoiceData}
           sx={{ fontWeight: 600 }}
@@ -273,6 +288,23 @@ const PrintInvoicePage = () => {
                   </TableRow>
                 )}
 
+                {invoiceData.compulsory_invoice?.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
+                      COMPULSORY TOTAL
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryPayable)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryPaid)}
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(compulsoryTotal)}
+                    </TableCell>
+                  </TableRow>
+                )}
+
                 {invoiceData.optional_invoice?.length > 0 && (
                   <>
                     {invoiceData.optional_invoice.map((item, i) => (
@@ -292,15 +324,35 @@ const PrintInvoicePage = () => {
                         <TableCell align="center">₦{fmt(item.balance)}</TableCell>
                       </TableRow>
                     ))}
+                    <TableRow>
+                      <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
+                        OPTIONAL TOTAL
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalPayable)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalPaid)}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalTotal)}
+                      </TableCell>
+                    </TableRow>
                   </>
                 )}
 
                 <TableRow>
-                  <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                  <TableCell colSpan={2} align="right" sx={{ fontWeight: 800 }}>
                     TOTAL DUE
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 900 }}>
-                    ₦{fmt(invoiceData.due_balance)}
+                    ₦{fmt(currentTermPayable)}
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 900 }}>
+                    ₦{fmt(currentTermPaid)}
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 900 }}>
+                    ₦{fmt(currentTermTotal)}
                   </TableCell>
                 </TableRow>
               </TableBody>

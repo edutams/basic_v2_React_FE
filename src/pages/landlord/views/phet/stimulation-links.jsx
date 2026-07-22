@@ -18,6 +18,7 @@ import {
   MenuItem,
   InputAdornment,
   Button,
+  Alert
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
@@ -164,14 +165,7 @@ const ManagePhETLinks = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Manage Simulation Links</Typography>
-            <Button
-              color="primary"
-              onClick={handleAddClick}
-              sx={{
-                minWidth: 120,
-                fontSize: { xs: '0.95rem', md: '1rem' },
-              }}
-            >
+            <Button variant="contained" size="small" color="primary" onClick={handleAddClick} sx={{ minWidth: 120, fontSize: { xs: '0.95rem', md: '1rem' }, }}>
               Add New Link
             </Button>
           </Box>
@@ -195,16 +189,16 @@ const ManagePhETLinks = () => {
                   ),
                 },
               }}
-              // sx={{ flexGrow: 1, minWidth: 200 }}
+            // sx={{ flexGrow: 1, minWidth: 200 }}
             />
             {hasActiveFilters && (
-              <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
+              <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
                 Clear Filters
               </Button>
             )}
           </Box>
 
-          <Paper>
+          <Box>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -274,9 +268,9 @@ const ManagePhETLinks = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        <Typography variant="body2" color="textSecondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
                           No records found
-                        </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}
@@ -299,7 +293,7 @@ const ManagePhETLinks = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
+          </Box>
         </Box>
       </ParentCard>
       <StimulationLinkModal

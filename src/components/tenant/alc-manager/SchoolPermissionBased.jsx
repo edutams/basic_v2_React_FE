@@ -115,13 +115,13 @@ const SchoolPermissionBased = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button size="small" onClick={handleSearch} sx={{ height: 35 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 35 }}>
               Search
             </Button>
           </Grid>
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer>
             <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
@@ -230,7 +230,7 @@ const SchoolPermissionBased = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
 
       <SchoolTotalPermissionModal

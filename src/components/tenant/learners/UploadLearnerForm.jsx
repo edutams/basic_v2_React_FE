@@ -52,9 +52,9 @@ const UploadLearnerForm = ({ onUpload, onCancel }) => {
           p: 3,
           textAlign: 'center',
           cursor: 'pointer',
-          bgcolor: selectedFile ? 'primary.lighter' : 'background.default',
+          bgcolor: selectedFile ? 'primary.light' : 'background.default',
           transition: 'all 0.2s',
-          '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.lighter' },
+          '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.light' },
         }}
       >
         <IconFileSpreadsheet size={36} style={{ opacity: 0.6 }} />
@@ -79,11 +79,10 @@ const UploadLearnerForm = ({ onUpload, onCancel }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={uploading}>
+        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={uploading}>
           {result?.severity === 'success' ? 'Close' : 'Cancel'}
         </Button>
-        <Button
-          startIcon={<IconUpload size={16} />}
+        <Button size="small" startIcon={<IconUpload />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
         >

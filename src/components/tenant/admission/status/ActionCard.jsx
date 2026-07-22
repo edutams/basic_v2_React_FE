@@ -28,17 +28,13 @@ const ActionCard = ({ amount, dueLabel, onPay, onViewLetter }) => {
         </Typography>
       </Box>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Button
-          fullWidth
-          startIcon={<CreditCardIcon />}
+        <Button variant="contained" size="small" fullWidth startIcon={<CreditCardIcon />}
           onClick={onPay}
           sx={{ fontWeight: 700, py: 1.25, borderRadius: 2 }}
         >
           Pay acceptance fee
         </Button>
-        <Button
-          fullWidth
-          startIcon={<DescriptionIcon />}
+        <Button variant="contained" size="small" fullWidth startIcon={<DescriptionIcon />}
           onClick={onViewLetter}
           sx={{ fontWeight: 600, py: 1.25, borderRadius: 2 }}
         >

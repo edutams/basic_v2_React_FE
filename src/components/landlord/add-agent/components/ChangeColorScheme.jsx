@@ -87,10 +87,10 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onClose} color="inherit">
+          <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
+          <Button size="small" type="submit" disabled={!formik.isValid || formik.isSubmitting}>
             Apply Color
           </Button>
         </Box>

@@ -56,6 +56,7 @@ import {
   fetchResultPaymentSettings,
   saveResultPaymentSettings,
 } from '@/api/tenant/bursary/bursaryResultSettingsApi';
+import useNotification from '@/hooks/useNotification';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -84,6 +85,8 @@ const BursarySetupTab = ({
   onStatsChange,
   showSnackbar,
 }) => {
+  const notify = useNotification();
+
   const [collectionMethod, setCollectionMethod] = useState('single');
   const [instalmentStyle, setInstalmentStyle] = useState('percentage');
   const [gatewayPayer, setGatewayPayer] = useState('parent');
@@ -132,7 +135,6 @@ const BursarySetupTab = ({
   const loadResultSettings = async () => {
     try {
       const res = await fetchResultPaymentSettings();
-      // console.log(res, 77);
 
       if (res.status) {
         setResultSettings({
@@ -143,10 +145,10 @@ const BursarySetupTab = ({
           optional_pay_method: res.data.optional_pay_method || '',
         });
       } else {
-        showSnackbar(res.message || 'Failed to load result settings', 'error');
+        notify.info(res.message);
       }
     } catch (err) {
-      showSnackbar(err?.response?.data?.message || 'Network error', 'error');
+      notify.info(err?.response?.data?.message);
     }
   };
 
@@ -569,7 +571,7 @@ const BursarySetupTab = ({
                           label={
                             <Box>
                               <Typography variant="body2" fontWeight={600}>
-                                {opt.value === 'parent' ? 'Parent / Student' : 'School'}
+                                {opt.value === 'client' ? 'Parent / Student' : 'School'}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {opt.text}
@@ -621,9 +623,7 @@ const BursarySetupTab = ({
                       </Typography>
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    startIcon={<IconPlus size={18} />}
+                  <Button variant="contained" size="small" startIcon={<IconPlus />}
                     onClick={handleAddCategory}
                     sx={{ fontWeight: 600 }}
                   >
@@ -632,7 +632,7 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer variant="outlined">
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -701,17 +701,11 @@ const BursarySetupTab = ({
                       ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
                       : ''}
                   </Typography>
-                  <Button
-                    size="small"
-                    disabled={!categoryMeta.prev_page_url}
-                    onClick={() => setCategoryPage((p) => p - 1)}
+                  <Button variant="contained" size="small" disabled={!categoryMeta.prev_page_url} onClick={() => setCategoryPage((p) => p - 1)}
                   >
                     Prev
                   </Button>
-                  <Button
-                    size="small"
-                    disabled={!categoryMeta.next_page_url}
-                    onClick={() => setCategoryPage((p) => p + 1)}
+                  <Button variant="contained" size="small" disabled={!categoryMeta.next_page_url} onClick={() => setCategoryPage((p) => p + 1)}
                   >
                     Next
                   </Button>
@@ -746,9 +740,7 @@ const BursarySetupTab = ({
                       </Typography>
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    startIcon={<IconPlus size={18} />}
+                  <Button variant="contained" size="small" startIcon={<IconPlus />}
                     onClick={handleAddInstalment}
                     sx={{ fontWeight: 600 }}
                   >
@@ -757,7 +749,7 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer variant="outlined">
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -824,17 +816,11 @@ const BursarySetupTab = ({
                       ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
                       : ''}
                   </Typography>
-                  <Button
-                    size="small"
-                    disabled={!instalmentMeta.prev_page_url}
-                    onClick={() => setInstalmentPage((p) => p - 1)}
+                  <Button variant="contained" size="small" disabled={!instalmentMeta.prev_page_url} onClick={() => setInstalmentPage((p) => p - 1)}
                   >
                     Prev
                   </Button>
-                  <Button
-                    size="small"
-                    disabled={!instalmentMeta.next_page_url}
-                    onClick={() => setInstalmentPage((p) => p + 1)}
+                  <Button variant="contained" size="small" disabled={!instalmentMeta.next_page_url} onClick={() => setInstalmentPage((p) => p + 1)}
                   >
                     Next
                   </Button>
@@ -944,22 +930,22 @@ const BursarySetupTab = ({
               {/* Pay Method — shown when compulsory or optional */}
               {(resultSettings.pay_type === 'compulsory' ||
                 resultSettings.pay_type === 'optional') && (
-                <FormControl>
-                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                    Payment Method
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={resultSettings.pay_method}
-                    onChange={(e) =>
-                      setResultSettings((prev) => ({ ...prev, pay_method: e.target.value }))
-                    }
-                  >
-                    <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
-                    <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
-                  </RadioGroup>
-                </FormControl>
-              )}
+                  <FormControl>
+                    <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                      Payment Method
+                    </FormLabel>
+                    <RadioGroup
+                      row
+                      value={resultSettings.pay_method}
+                      onChange={(e) =>
+                        setResultSettings((prev) => ({ ...prev, pay_method: e.target.value }))
+                      }
+                    >
+                      <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
+                      <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
+                    </RadioGroup>
+                  </FormControl>
+                )}
 
               {/* Split method — shown when "both" */}
               {resultSettings.pay_type === 'both' && (
@@ -1013,17 +999,7 @@ const BursarySetupTab = ({
 
               {/* Save button */}
               <Box display="flex" justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  disabled={
-                    savingResultSettings ||
-                    !resultSettings.pay_type ||
-                    (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) ||
-                    (resultSettings.pay_type === 'both' &&
-                      (!resultSettings.compulsory_pay_method ||
-                        !resultSettings.optional_pay_method))
-                  }
-                  onClick={() => handleSaveResultSettings(resultSettings)}
+                <Button variant="contained" size="small" disabled={savingResultSettings || !resultSettings.pay_type || (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) || (resultSettings.pay_type === 'both' && (!resultSettings.compulsory_pay_method || !resultSettings.optional_pay_method))} onClick={() => handleSaveResultSettings(resultSettings)}
                   sx={{ fontWeight: 600 }}
                 >
                   {savingResultSettings ? 'Saving...' : 'Save Settings'}
@@ -1134,18 +1110,12 @@ const BursarySetupTab = ({
             the category <strong>"{confirmStatusModal.category?.name}"</strong>?
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button
-              onClick={() => setConfirmStatusModal({ open: false, category: null })}
+            <Button variant="contained" size="small" onClick={() => setConfirmStatusModal({ open: false, category: null })}
               disabled={categoryActionLoading}
             >
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'}
-              onClick={handleToggleCategoryStatus}
-              disabled={categoryActionLoading}
-            >
+            <Button size="small" color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'} onClick={handleToggleCategoryStatus} disabled={categoryActionLoading}>
               {categoryActionLoading
                 ? 'Updating...'
                 : confirmStatusModal.category?.status === 'active'
@@ -1181,20 +1151,12 @@ const BursarySetupTab = ({
             <strong>"{confirmInstalmentStatusModal.instalment?.options}"</strong>?
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button
-              onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+            <Button variant="contained" size="small" onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
               disabled={instalmentActionLoading}
             >
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              color={
-                confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'
-              }
-              onClick={handleToggleInstalmentStatus}
-              disabled={instalmentActionLoading}
-            >
+            <Button size="small" color={confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleInstalmentStatus} disabled={instalmentActionLoading}>
               {instalmentActionLoading
                 ? 'Updating...'
                 : confirmInstalmentStatusModal.instalment?.status === 'active'

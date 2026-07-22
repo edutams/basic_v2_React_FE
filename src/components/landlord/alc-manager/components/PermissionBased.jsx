@@ -187,17 +187,17 @@ const PermissionBased = () => {
               ),
             }}
           />
-          <Button onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
+          <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
             Search
           </Button>
           {/* {hasFilters && (
-            <Button  onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
+            <Button variant="contained" size="small" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
             </Button>
           )} */}
         </Grid>
 
-        <Paper>
+        <Box>
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 600 }}>
               <TableHead>
@@ -306,7 +306,7 @@ const PermissionBased = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Paper>
+        </Box>
       </Box>
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}

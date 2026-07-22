@@ -134,7 +134,7 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button variant="contained" size="small" onClick={onClose} color="primary">
           Close
         </Button>
       </DialogActions>

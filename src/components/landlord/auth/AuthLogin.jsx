@@ -192,13 +192,7 @@ const AuthLogin = ({
           </Stack>
         </Stack>
         <Box mt={2}>
-          <Button
-            color="primary"
-            size="large"
-            fullWidth
-            type="submit"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+          <Button variant="contained" size="small" color="primary" fullWidth type="submit" disabled={isLoading} startIcon={isLoading ? <CircularProgress /> : null}
           >
             {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>

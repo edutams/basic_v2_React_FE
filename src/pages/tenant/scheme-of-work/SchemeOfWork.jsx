@@ -3,6 +3,8 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import { useReactToPrint } from 'react-to-print';
+import StatCard from 'src/components/shared/StatCard';
+
 
 import {
   Box,
@@ -32,6 +34,7 @@ import {
   DialogActions,
   CircularProgress,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -67,6 +70,8 @@ const BCrumb = [
 ];
 
 const SchemeOfWork = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -221,8 +226,8 @@ const SchemeOfWork = () => {
     } catch (error) {
       notify.error(
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Failed to fetch scheme of work',
+        error.response?.data?.message ||
+        'Failed to fetch scheme of work',
       );
     } finally {
       setLoading(false);
@@ -357,7 +362,7 @@ const SchemeOfWork = () => {
     } catch (e) {
       notify.error(
         e.response?.data?.message ||
-          'Upload failed. Check that the file matches the selected filters.',
+        'Upload failed. Check that the file matches the selected filters.',
       );
     } finally {
       setUploading(false);
@@ -565,22 +570,27 @@ const SchemeOfWork = () => {
     {
       title: 'Topics',
       value: analytics.total_topics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: IconFolder,
+      color: 'primary',
     },
     {
       title: 'Sub Topics',
       value: analytics.total_subtopics,
-      icon: <IconFolder color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: IconFolder,
+      color: 'primary',
     },
     {
       title: 'Lesson Content',
       value: '0',
-      icon: <IconFileDescription color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: IconFileDescription,
+      color: 'primary',
     },
-    { title: 'Video Content', value: '0', icon: <IconVideo color="#39b65a" />, bgColor: '#eaf7ee' },
+    {
+      title: 'Video Content',
+      value: '0',
+      icon: IconVideo,
+      color: 'primary',
+    },
   ];
 
   const drawerFilters = [
@@ -595,51 +605,20 @@ const SchemeOfWork = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid #eee',
-                px: 2,
-                py: 3,
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgcolor: stat.bgColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h2" sx={{ fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <StatCard
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              colorIndex={i}
+              loading={loading}
+            />
           </Grid>
         ))}
       </Grid>
 
       {/* Action Buttons */}
       {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        <Button
-          
-          onClick={() => setDlSchemeOpen(true)}
+        <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(true)}
           startIcon={<IconDownload size={18} />}
           sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
         >
@@ -647,9 +626,7 @@ const SchemeOfWork = () => {
         </Button>
       </Box> */}
       {/* <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            
-            startIcon={<IconUpload size={18} />}
+          <Button variant="contained" size="small" startIcon={<IconUpload />}
             onClick={() => setUploadOpen(true)}
             sx={{
               textTransform: 'none',
@@ -663,10 +640,7 @@ const SchemeOfWork = () => {
           >
             Upload Scheme Template
           </Button>
-          <Button
-            
-            color="success"
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" color="success" startIcon={<IconDownload />}
             onClick={() => setDlTemplateOpen(true)}
             sx={{
               textTransform: 'none',
@@ -708,12 +682,12 @@ const SchemeOfWork = () => {
       </Box>
 
       {/* Main Content Area */}
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden' }}>
+      <Card elevation={0} sx={{ borderRadius: 3, border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee', overflow: 'hidden' }}>
         <Box
           sx={{
             p: 3,
-            borderBottom: '1px solid #f0f0f0',
-            bgcolor: '#fff',
+            borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #f0f0f0',
+            bgcolor: isDark ? 'background.paper' : '#fff',
           }}
         >
           <Grid container spacing={2} alignItems="center">
@@ -772,22 +746,17 @@ const SchemeOfWork = () => {
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 1.5 }}>
-              <Button
-                onClick={handleFetch}
-                disabled={!programme || !classLevel || !subject}
-                fullWidth
-                sx={{ height: '40px' }}
-              >
+              <Button variant="contained" size="small" onClick={handleFetch} disabled={!programme || !classLevel || !subject} fullWidth sx={{ height: '40px' }}>
                 Fetch
               </Button>
             </Grid>
           </Grid>
         </Box>
 
-        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
+        <Box sx={{ p: 2, px: 3, bgcolor: isDark ? 'background.default' : '#fafafa', borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #eee' }}>
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}
+            sx={{ fontWeight: 700, letterSpacing: 0.5, color: 'text.primary' }}
           >
             MANAGE SCHEME OF WORK
           </Typography>
@@ -796,28 +765,28 @@ const SchemeOfWork = () => {
         <TableContainer>
           <Table stickyHeader sx={{ whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                <TableCell sx={{ fontWeight: 700, width: '8%', border: '1px solid #dee2e6' }}>
+              <TableRow sx={{ bgcolor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8f9fa' }}>
+                <TableCell sx={{ fontWeight: 700, width: '8%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Week
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Topic
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Sub Topic
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Learning Objectives
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Lesson Content
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                   Video Content
                 </TableCell>
                 <TableCell
                   align="center"
-                  sx={{ fontWeight: 700, width: '7%', border: '1px solid #dee2e6' }}
+                  sx={{ fontWeight: 700, width: '7%', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}
                 >
                   Action
                 </TableCell>
@@ -836,8 +805,8 @@ const SchemeOfWork = () => {
                       <TableCell
                         sx={{
                           verticalAlign: 'top',
-                          border: '1px solid #dee2e6',
-                          bgcolor: isFirstInWeek ? '#fff' : '#fcfcfc',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6',
+                          bgcolor: isFirstInWeek ? (isDark ? 'background.paper' : '#fff') : (isDark ? 'background.default' : '#fcfcfc'),
                         }}
                       >
                         {isFirstInWeek && (
@@ -869,7 +838,7 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Topic Column */}
-                      <TableCell sx={{ verticalAlign: 'top', border: '1px solid #dee2e6' }}>
+                      <TableCell sx={{ verticalAlign: 'top', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {isFirstInTopic && row.topic_name && (
                           <Box
                             sx={{
@@ -890,7 +859,7 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Sub Topic Column */}
-                      <TableCell sx={{ border: '1px solid #dee2e6', verticalAlign: 'top' }}>
+                      <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6', verticalAlign: 'top' }}>
                         {row.subtopic_name && (
                           <Box
                             sx={{
@@ -913,7 +882,7 @@ const SchemeOfWork = () => {
                       {/* Learning Objectives Column */}
                       <TableCell
                         sx={{
-                          border: '1px solid #dee2e6',
+                          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6',
                           whiteSpace: 'normal',
                           minWidth: 200,
                           verticalAlign: 'top',
@@ -929,7 +898,7 @@ const SchemeOfWork = () => {
                                 py: 0.5,
                                 borderBottom:
                                   lidx !== row.learningObjectives.length - 1
-                                    ? '1px dashed #eee'
+                                    ? (isDark ? '1px dashed rgba(255, 255, 255, 0.08)' : '1px dashed #eee')
                                     : 'none',
                               }}
                             >
@@ -959,25 +928,25 @@ const SchemeOfWork = () => {
                       </TableCell>
 
                       {/* Lesson Content Status */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {row.learning_material ? (
-                          <IconCheck size={20} color="green" />
+                          <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
-                          <IconX size={20} color="red" />
+                          <IconX size={20} color={theme.palette.error.main} />
                         )}
                       </TableCell>
 
                       {/* Video Content Status */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         {row.resource_links ? (
-                          <IconCheck size={20} color="green" />
+                          <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
-                          <IconX size={20} color="red" />
+                          <IconX size={20} color={theme.palette.error.main} />
                         )}
                       </TableCell>
 
                       {/* Action Column */}
-                      <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
+                      <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
                         <IconButton size="small" onClick={(e) => handleMenuOpen(e, row, 'row')}>
                           <MoreVertIcon fontSize="small" />
                         </IconButton>
@@ -1047,7 +1016,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingTopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingTopic}>
             {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
@@ -1093,7 +1062,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth disabled={savingSubtopic}>
+          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
             {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
@@ -1198,7 +1167,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" fullWidth>
+          <Button variant="contained" size="small" type="submit" fullWidth>
             Save Objective
           </Button>
         </Box>
@@ -1369,13 +1338,10 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadTemplate}
-            startIcon={<IconDownload size={16} />}
-            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
+          <Button size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
           >
             Download Template
           </Button>
@@ -1470,11 +1436,13 @@ const SchemeOfWork = () => {
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <Box
                 sx={{
-                  border: '2px dashed #e0e0e0',
+                  border: (theme) => theme.palette.mode === 'dark' ? '2px dashed rgba(255, 255, 255, 0.15)' : '2px dashed #e0e0e0',
                   borderRadius: 2,
                   p: 2,
                   textAlign: 'center',
-                  bgcolor: uploadFile ? '#f1f8e9' : '#fafafa',
+                  bgcolor: (theme) => theme.palette.mode === 'dark'
+                    ? (uploadFile ? 'rgba(0, 192, 146, 0.15)' : 'rgba(255, 255, 255, 0.05)')
+                    : (uploadFile ? '#f1f8e9' : '#fafafa'),
                   cursor: 'pointer',
                   '&:hover': { borderColor: '#7cb342' },
                 }}
@@ -1510,19 +1478,14 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setUploadOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setUploadOpen(false)}
             disabled={uploading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleUploadTemplate}
-            disabled={uploading}
-            startIcon={
-              uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />
-            }
+          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1623,24 +1586,17 @@ const SchemeOfWork = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDlSchemeOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(false)}
             disabled={downloading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleDownloadScheme}
-            disabled={downloading}
-            startIcon={
-              downloading ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <IconDownload size={16} />
-              )
-            }
-            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
+          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          ) : (
+            <IconDownload size={16} />
+          )
+          }
           >
             {downloading ? 'Downloading…' : 'Download'}
           </Button>
@@ -1675,9 +1631,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
-          <Button
-            onClick={handlePrint}
-            startIcon={<IconDownload size={18} />}
+          <Button variant="contained" size="small" onClick={handlePrint} startIcon={<IconDownload />}
             sx={{ textTransform: 'none' }}
           >
             Print
@@ -1972,8 +1926,7 @@ const SchemeOfWork = () => {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setViewDetailsModalOpen(false)}
+          <Button variant="contained" size="small" onClick={() => setViewDetailsModalOpen(false)}
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

@@ -228,10 +228,10 @@ const NotificationTab = () => {
       </Grid>
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={3}>
-        <Button size="large" color="primary">
+        <Button size="small" color="primary">
           Save
         </Button>
-        <Button size="large" variant="text" color="error">
+        <Button variant="contained" size="small" color="error">
           Cancel
         </Button>
       </Stack>

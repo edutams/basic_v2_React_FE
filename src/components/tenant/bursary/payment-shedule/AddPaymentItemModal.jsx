@@ -165,7 +165,7 @@ const AddPaymentItemModal = ({ open, onClose, onSave }) => {
             <Typography variant="body2" fontWeight={600}>
               Select Classes <span style={{ color: 'red' }}>*</span>
             </Typography>
-            <Button size="small" onClick={handleSelectAll} variant="outlined">
+            <Button variant="contained" size="small" onClick={handleSelectAll}>
               {allSelected ? 'Deselect All' : 'Select All'}
             </Button>
           </Box>
@@ -252,10 +252,10 @@ const AddPaymentItemModal = ({ open, onClose, onSave }) => {
         </Box>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined">
+          <Button variant="contained" size="small" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+          <Button size="small" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
             Add Payment Item
           </Button>
         </Stack>

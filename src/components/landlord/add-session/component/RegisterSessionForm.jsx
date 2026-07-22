@@ -121,11 +121,11 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
+        <Button variant="contained" size="small" onClick={onCancel} sx={{ mr: 1 }} color="inherit">
           Cancel
         </Button>
         {actionType !== 'view' && (
-          <Button type="submit" disabled={formik.isSubmitting}>
+          <Button size="small" type="submit" disabled={formik.isSubmitting}>
             {actionType === 'update' ? 'Update Session' : 'Save'}
           </Button>
         )}

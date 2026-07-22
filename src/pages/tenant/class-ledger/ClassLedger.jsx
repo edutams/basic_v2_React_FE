@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -29,8 +29,12 @@ import {
   Select,
   InputAdornment,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 
 import {
   Search as SearchIcon,
@@ -50,9 +54,10 @@ import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
 import {
-  fetchClassesByProgramme,
+  fetchClassAndArmsByProgramme,
   fetchProgrammes,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { VisibilityOutlined as VisibilityOutlinedIcon } from '@mui/icons-material';
 import {
   fetchClassLedgerAnalytics,
   fetchDrilldownStudents,
@@ -61,13 +66,14 @@ import {
   printClassLedgerPaymentList,
 } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
+import StudentLedgerModal from './StudentLedgerModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
 const ClassLedger = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
+  const { impersonateStudent } = useContext(TenantAuthContext);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState('');
   const [chartType, setChartType] = useState('bar');
@@ -78,6 +84,13 @@ const ClassLedger = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+
+  const [payForStudentConfirmOpen, setPayForStudentConfirmOpen] = useState(false);
+  const [studentToPayFor, setStudentToPayFor] = useState(null);
+  const [selectedWallet, setSelectedWallet] = useState(null);
+
+  const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
+  const [selectedStudentForLedger, setSelectedStudentForLedger] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -102,12 +115,13 @@ const ClassLedger = () => {
   const handleFilterChange = React.useCallback(async (key, val) => {
     if (key === 'programme') {
       try {
-        const classesRes = await fetchClassesByProgramme(val);
+        const classesRes = await fetchClassAndArmsByProgramme(val);
         setClasses(
           classesRes.data.map((c) => ({
             value: c.class_arm_id,
             label: c.class_code,
             arm_names: c.arm_names,
+            class_id: c.class_id,
           })),
         );
         setClassLevel(''); // reset class when programme changes
@@ -353,7 +367,7 @@ const ClassLedger = () => {
       // handleFilterChange('programme', firstProg);
 
       // Fetch classes for first programme, then auto-select first class
-      fetchClassesByProgramme(firstProg)
+      fetchClassAndArmsByProgramme(firstProg)
         .then((classesRes) => {
           const mapped = classesRes.data.map((c) => ({
             value: c.class_arm_id,
@@ -472,8 +486,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Invoice(Compulsory Bill)"
             value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
-            valueColor="#5CB979"
-            valueBg={isDark ? '#1e2a4a' : '#EEFAF3'}
+            colorIndex={1}
             subStats={[
               {
                 label: 'Total Paid',
@@ -503,8 +516,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Invoice (Optional Bill)"
             value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
-            valueColor="#1F35B6"
-            valueBg={isDark ? '#0d2e1e' : '#ECEFFF'}
+            colorIndex={2}
             subStats={[
               {
                 label: 'Total Paid',
@@ -533,8 +545,7 @@ const ClassLedger = () => {
           <StatCard
             title="Total Payable"
             value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
-            valueColor="#895CB9"
-            valueBg={isDark ? '#0d2e1e' : '#F3EEFA'}
+            colorIndex={0}
             subStats={[
               {
                 label: 'Total Paid',
@@ -581,20 +592,14 @@ const ClassLedger = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handleDownloadExcel}
               >
                 View In CSV Format
               </Button>
 
-              <Button
-                variant="outlined"
-                startIcon={<UploadIcon />}
-                size="small"
+              <Button variant="contained" size="small" startIcon={<UploadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handlePrintPaymentList}
               >
@@ -678,26 +683,20 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ height: '40px' }}
-              onClick={fetchClassLedgerData}
-              disabled={!programme || !classLevel}
-            >
+            <Button variant="contained" size="small" fullWidth onClick={fetchClassLedgerData} disabled={!programme || !classLevel}>
               Fetch
             </Button>
           </Grid>
         </Grid>
 
-        <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
-            <TableHead sx={{ bgcolor: '#fafafa' }}>
+            <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>
                 <TableCell>Student Name</TableCell>
-                <TableCell> Compulsory Bill</TableCell>
-                <TableCell>Optional Bill</TableCell>
+                <TableCell>Total Compulsory Bill</TableCell>
+                <TableCell>Total Optional Bill</TableCell>
                 <TableCell>Total Payable</TableCell>
                 <TableCell>Total Paid</TableCell>
                 <TableCell>Penalty</TableCell>
@@ -746,8 +745,8 @@ const ClassLedger = () => {
                       <TableCell>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
                       <TableCell>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
                       <TableCell>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
-                      <TableCell>₦0</TableCell> {/* Penalty - add if available later */}
-                      <TableCell>₦0</TableCell> {/* Discount - add if available later */}
+                      <TableCell>₦{(student.total_penalty || 0).toLocaleString()}</TableCell>{' '}
+                      <TableCell>₦{(student.total_discount || 0).toLocaleString()}</TableCell>{' '}
                       <TableCell
                         sx={{
                           color: (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
@@ -805,13 +804,26 @@ const ClassLedger = () => {
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
+              setSelectedStudentForLedger(activeRow);
+              setIsLedgerModalOpen(true);
             }}
           >
             <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Student Ledger
           </MenuItem>
 
-          <MenuItem>
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                const sUserId = activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
+                window.open(
+                  `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
+                  '_blank'
+                );
+              }
+            }}
+          >
             <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Pay for Student
           </MenuItem>
@@ -829,6 +841,23 @@ const ClassLedger = () => {
           >
             <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Update Invoice
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                const selectedClassObj = classes.find((c) => c.value === classLevel);
+                const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
+                window.open(
+                  `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
+                  '_blank',
+                );
+              }
+            }}
+          >
+            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+            View Invoice
           </MenuItem>
 
           <MenuItem
@@ -870,6 +899,17 @@ const ClassLedger = () => {
           onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
+
+
+
+      <StudentLedgerModal
+        open={isLedgerModalOpen}
+        onClose={() => {
+          setIsLedgerModalOpen(false);
+          setSelectedStudentForLedger(null);
+        }}
+        student={selectedStudentForLedger}
+      />
     </PageContainer>
   );
 };

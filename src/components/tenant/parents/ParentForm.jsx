@@ -101,18 +101,18 @@ const ParentForm = ({
   const initialValues =
     isEdit && selectedParent
       ? {
-          title: selectedParent.title ?? '',
-          first_name: selectedParent.user?.fname ?? '',
-          last_name: selectedParent.user?.lname ?? '',
-          middle_name: selectedParent.user?.mname ?? '',
-          email: selectedParent.user?.email ?? '',
-          phone: selectedParent.user?.phone ?? '',
-          gender: selectedParent.user?.sex ?? '',
-          occupation: selectedParent.occupation ?? '',
-          relationship: selectedParent.relationship ?? '',
-          address: selectedParent.user?.address ?? '',
-          confirm_password: '',
-        }
+        title: selectedParent.title ?? '',
+        first_name: selectedParent.user?.fname ?? '',
+        last_name: selectedParent.user?.lname ?? '',
+        middle_name: selectedParent.user?.mname ?? '',
+        email: selectedParent.user?.email ?? '',
+        phone: selectedParent.user?.phone ?? '',
+        gender: selectedParent.user?.sex ?? '',
+        occupation: selectedParent.occupation ?? '',
+        relationship: selectedParent.relationship ?? '',
+        address: selectedParent.user?.address ?? '',
+        confirm_password: '',
+      }
       : EMPTY_FORM;
 
   const [wardSearch, setWardSearch] = useState('');
@@ -358,7 +358,6 @@ const ParentForm = ({
             helperText={formik.touched.occupation && formik.errors.occupation} />
         </Grid> */}
 
-        {/* Confirm Password — only shown when explicitly requested (e.g. public registration) */}
         {showConfirmPassword && (
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
@@ -401,7 +400,7 @@ const ParentForm = ({
               }
               helperText={
                 formik.values.confirm_password &&
-                formik.values.password !== formik.values.confirm_password
+                  formik.values.password !== formik.values.confirm_password
                   ? 'Passwords do not match'
                   : ''
               }
@@ -494,11 +493,7 @@ const ParentForm = ({
                 }}
               />
 
-              <Button
-                onClick={handleWardSearch}
-                disabled={wardSearching}
-                sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
-              >
+              <Button variant="contained" size="small" onClick={handleWardSearch} disabled={wardSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
                 {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
               </Button>
             </Box>
@@ -586,10 +581,10 @@ const ParentForm = ({
       {beforeActions && <Box sx={{ mt: 3 }}>{beforeActions}</Box>}
 
       <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button variant="contained" size="small" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button type="submit" disabled={isLoading || !formik.isValid}>
+        <Button size="small" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : submitText || (isEdit ? 'Save Changes' : 'Add Parent')}
         </Button>
       </Box>

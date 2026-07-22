@@ -37,9 +37,6 @@ export default defineConfig({
     },
   },
 
-  // plugins: [react(),svgr({
-  //   exportAsDefault: true
-  // })],
 
   build: {
     target: 'esnext', // enables top-level await

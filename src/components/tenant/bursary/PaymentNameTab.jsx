@@ -22,6 +22,8 @@ import {
   ListItemIcon,
   ListItemText,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 
 import {
@@ -52,6 +54,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmStatusModal, setConfirmStatusModal] = useState({ open: false, payment: null });
+  const [currentTab, setCurrentTab] = useState('bursary'); // 'bursary' or 'admission'
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
@@ -70,9 +73,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
         showSnackbar?.('Payment name added successfully');
       }
 
+      // Switch to the tab matching the payment type that was just saved
+      if (paymentData.pay_type && paymentData.pay_type !== currentTab) {
+        setCurrentTab(paymentData.pay_type);
+      }
+
       setModalOpen(false);
       setEditingPayment(null);
       setPage(0);
+
+      // Reload payment names for the appropriate tab
       await loadPaymentNames(1, searchQuery, rowsPerPage);
       onStatsRefresh?.();
     } catch (err) {
@@ -113,7 +123,12 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
   const loadPaymentNames = async (pg = 1, search = '', per_page = 10) => {
     setLoading(true);
     try {
-      const res = await fetchPaymentNames(pg, search, per_page);
+      const res = await fetchPaymentNames({
+        page: pg,
+        search,
+        per_page,
+        pay_type: currentTab
+      });
       setPaymentNames(res.data?.data || []);
       setMeta(res.data);
     } catch {
@@ -125,7 +140,14 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
 
   useEffect(() => {
     loadPaymentNames(page + 1, searchQuery, rowsPerPage);
-  }, [page, searchQuery, rowsPerPage]);
+  }, [page, searchQuery, rowsPerPage, currentTab]);
+
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+    setPage(0);
+    setSearchInput('');
+    setSearchQuery('');
+  };
 
   const handleAddPayment = () => {
     setEditingPayment(null);
@@ -155,8 +177,9 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 </Typography>
               </Box>
               <Button
+                variant="contained"
                 size="small"
-                startIcon={<IconPlus size={18} />}
+                startIcon={<IconPlus />}
                 onClick={handleAddPayment}
                 sx={{ fontWeight: 600 }}
               >
@@ -165,6 +188,22 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             </Box>
           }
         >
+          {/* Tabs for Bursary and Admission */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={currentTab} onChange={handleTabChange}>
+              <Tab
+                label="Bursary Payments"
+                value="bursary"
+                sx={{ fontWeight: 600, textTransform: 'none' }}
+              />
+              <Tab
+                label="Admission Payments"
+                value="admission"
+                sx={{ fontWeight: 600, textTransform: 'none' }}
+              />
+            </Tabs>
+          </Box>
+
           <Box display="flex" gap={2} mb={3} flexWrap="wrap">
             <TextField
               placeholder="Search Payment Items"
@@ -192,6 +231,8 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
               }}
             />
             <Button
+              variant="contained"
+              size="small"
               onClick={handleSearch}
               sx={{ minWidth: 100, width: { xs: '100%', sm: 'auto' } }}
             >
@@ -199,6 +240,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             </Button>
             {hasFilters && (
               <Button
+                variant="contained"
                 size="small"
                 onClick={resetFilters}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -208,16 +250,17 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             )}
           </Box>
 
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer variant="outlined">
             <Table>
               <TableHead>
-                <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableRow >
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Pay Option</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    {currentTab === 'bursary' ? 'Pay Option' : 'Application Stage'}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Settlement Account</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Fee Bearer</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Modules</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>
                     Status
                   </TableCell>
@@ -229,7 +272,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
               <TableBody>
                 {paymentNames.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Alert
                         severity="info"
                         sx={{
@@ -241,7 +284,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       >
                         {hasFilters
                           ? 'No payment names found matching your search'
-                          : 'No payment names added yet'}
+                          : `No ${currentTab} payment names added yet`}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -251,20 +294,39 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       <TableCell>{(meta?.from || 0) + index}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{payment.name}</TableCell>
 
-                      {/* Pay Option */}
+                      {/* Pay Option or Application Stage */}
                       <TableCell>
-                        <Chip
-                          label={payment.pay_option?.toUpperCase() || 'N/A'}
-                          size="small"
-                          sx={{
-                            bgcolor:
-                              payment.pay_option === 'OPTIONAL' ? 'warning.light' : 'primary.light',
-                            color:
-                              payment.pay_option === 'OPTIONAL' ? 'warning.dark' : 'primary.dark',
-                            fontWeight: 600,
-                            fontSize: 10,
-                          }}
-                        />
+                        {currentTab === 'bursary' ? (
+                          <Chip
+                            label={payment.pay_option?.toUpperCase() || 'N/A'}
+                            size="small"
+                            sx={{
+                              bgcolor:
+                                payment.pay_option === 'OPTIONAL' ? 'warning.light' : 'primary.light',
+                              color:
+                                payment.pay_option === 'OPTIONAL' ? 'warning.dark' : 'primary.dark',
+                              fontWeight: 600,
+                              fontSize: 10,
+                            }}
+                          />
+                        ) : (
+                          <Chip
+                            label={payment.application_stage?.replace('-', ' ').toUpperCase() || 'N/A'}
+                            size="small"
+                            sx={{
+                              bgcolor:
+                                payment.application_stage === 'pre-application'
+                                  ? 'info.light'
+                                  : 'success.light',
+                              color:
+                                payment.application_stage === 'pre-application'
+                                  ? 'info.dark'
+                                  : 'success.dark',
+                              fontWeight: 600,
+                              fontSize: 10,
+                            }}
+                          />
+                        )}
                       </TableCell>
 
                       {/* Settlement Account */}
@@ -278,9 +340,6 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                             size="small"
                             sx={{ bgcolor: 'error.light', fontSize: 10 }}
                           />
-                          {/* <Typography variant="caption" display="block" color="textSecondary">
-                            {payment.account_name || 'No account name'}
-                          </Typography> */}
                           <Typography variant="caption" display="block" color="textSecondary">
                             {payment.rev_code}
                           </Typography>
@@ -290,31 +349,13 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       {/* Fee Bearer */}
                       <TableCell>
                         <Chip
-                          label={payment.fee_bearer?.toUpperCase() || 'N/A'}
+                          label={(payment.fee_bearer === 'client' ? 'Parent' : 'School').toUpperCase()}
                           size="small"
                           sx={{
                             bgcolor:
-                              payment.fee_bearer === 'parent' ? 'success.light' : 'warning.light',
+                              payment.fee_bearer === 'client' ? 'success.light' : 'warning.light',
                             color:
-                              payment.fee_bearer === 'parent' ? 'success.dark' : 'warning.dark',
-                            fontWeight: 600,
-                            fontSize: 10,
-                          }}
-                        />
-                      </TableCell>
-
-                      {/* Modules */}
-                      <TableCell>
-                        <Chip
-                          label={
-                            payment.modules
-                              ? JSON.parse(payment.modules).join(', ') || 'NONE'
-                              : 'N/A'
-                          }
-                          size="small"
-                          sx={{
-                            bgcolor: 'secondary.light',
-                            color: 'secondary.dark',
+                              payment.fee_bearer === 'client' ? 'success.dark' : 'warning.dark',
                             fontWeight: 600,
                             fontSize: 10,
                           }}
@@ -407,18 +448,12 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 <strong>"{confirmStatusModal.payment?.name}"</strong>?
               </Typography>
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button
-                  onClick={() => setConfirmStatusModal({ open: false, payment: null })}
+                <Button variant="contained" size="small" onClick={() => setConfirmStatusModal({ open: false, payment: null })}
                   disabled={actionLoading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  variant="contained"
-                  color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'}
-                  onClick={handleToggleStatus}
-                  disabled={actionLoading}
-                >
+                <Button size="small" color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleStatus} disabled={actionLoading}>
                   {actionLoading
                     ? 'Updating...'
                     : confirmStatusModal.payment?.status === 'active'

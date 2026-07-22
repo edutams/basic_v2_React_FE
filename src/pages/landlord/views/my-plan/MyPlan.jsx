@@ -405,11 +405,7 @@ const MyPlan = () => {
               {selectedPlan?.display_name?.toUpperCase()} (₦
               {parseFloat(selectedPlan?.price || 0).toLocaleString()})
             </Typography>
-            <Button
-              variant="text"
-              color="primary"
-              sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }}
-              onClick={() => setShowModules((prev) => !prev)}
+            <Button variant="contained" size="small" color="primary" sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }} onClick={() => setShowModules((prev) => !prev)}
             >
               {showModules ? 'Hide Modules' : 'View Modules'}
             </Button>
@@ -468,10 +464,10 @@ const MyPlan = () => {
               inputProps={{ min: 0, step: '0.01' }}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-              <Button onClick={() => setOpenEditModal(false)} color="inherit">
+              <Button variant="contained" size="small" onClick={() => setOpenEditModal(false)} color="inherit">
                 Cancel
               </Button>
-              <Button type="submit" color="primary">
+              <Button size="small" type="submit" color="primary">
                 Save
               </Button>
             </Box>
@@ -484,9 +480,8 @@ const MyPlan = () => {
         onClose={() => setOpenDeactivateDialog(false)}
         onConfirm={handleDeactivatePlan}
         title={planToDeactivate?.status === 'active' ? 'Deactivate Plan' : 'Activate Plan'}
-        message={`Are you sure you want to ${
-          planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
-        } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
+        message={`Are you sure you want to ${planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
+          } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
         confirmText={planToDeactivate?.status === 'active' ? 'Deactivate' : 'Activate'}
         cancelText="Cancel"
         confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'primary'}

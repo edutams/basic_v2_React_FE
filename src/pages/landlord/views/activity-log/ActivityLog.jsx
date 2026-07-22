@@ -167,21 +167,11 @@ const ActivityLog = () => {
               inputProps={{ min: dateFrom || undefined }}
               sx={{ width: { xs: '100%', sm: '160px' } }}
             />
-            <Button
-              color="primary"
-              size="small"
-              onClick={handleSearch}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
+            <Button variant="contained" size="small" color="primary" onClick={handleSearch} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Search
             </Button>
             {(search || dateFrom || dateTo) && (
-              <Button
-                color="secondary"
-                size="small"
-                onClick={handleClearFilters}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-              >
+              <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 Clear
               </Button>
             )}
@@ -195,7 +185,7 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper}>
+              <TableContainer >
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -258,9 +248,7 @@ const ActivityLog = () => {
                             </Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Button
-                              size="small"
-                              startIcon={<IconEye size={18} />}
+                            <Button variant="contained" size="small" startIcon={<IconEye />}
                               onClick={() => handleOpenModal(log)}
                               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                             >
@@ -306,9 +294,9 @@ const ActivityLog = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedLog &&
-          selectedLog.properties &&
-          Object.keys(selectedLog.properties).length > 0 ? (
-            <TableContainer component={Paper}>
+            selectedLog.properties &&
+            Object.keys(selectedLog.properties).length > 0 ? (
+            <TableContainer >
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -351,7 +339,7 @@ const ActivityLog = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal} color="primary">
+          <Button variant="contained" size="small" onClick={handleCloseModal} color="primary">
             Close
           </Button>
         </DialogActions>

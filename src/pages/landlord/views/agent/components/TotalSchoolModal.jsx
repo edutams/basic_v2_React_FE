@@ -17,46 +17,57 @@ import Chart from 'react-apexcharts';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar, IconBuildingCommunity } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
+import { getStatCardColor } from '@/utils/statCardColors';
 
-const TopCard = ({ label, value, icon: Icon, iconBg, valueColor }) => {
+const TopCard = ({ label, value, icon: Icon, colorIndex = 0 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
+    getStatCardColor(null, colorIndex, isDark, theme);
   return (
     <Card
+      elevation={0}
       sx={{
         p: 2.5,
         borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        background: isDark ? theme.palette.background.paper : cardBg,
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : borderColor}`,
+        boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
       }}
     >
       <Stack direction="row" spacing={2} alignItems="center">
         <Box
           sx={{
-            width: 44,
-            height: 44,
-            borderRadius: '10px',
-            bgcolor: iconBg,
+            width: 46,
+            height: 46,
+            borderRadius: '50%',
+            background: iconBg,
+            color: iconColor,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            boxShadow: isDark ? '0 6px 16px rgba(0,0,0,.3)' : `0 8px 22px -2px ${iconGlow}`,
           }}
         >
-          <Icon size={22} color={valueColor} />
+          <Icon size={22} color={iconColor} />
         </Box>
-        <Box>
+        <Box
+          sx={{
+            flex: 1,
+            textAlign: 'right',
+          }}
+        >
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '26px', color: valueColor, lineHeight: 1.1 }}
+            sx={{ fontSize: '22px', color: isDark ? '#fff' : accentColor, lineHeight: 1.1 }}
           >
             {value}
           </Typography>
           <Typography
             variant="caption"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500 }}
+            sx={{ color: isDark ? 'rgba(255,255,255,.72)' : '#64748B', fontWeight: 500 }}
           >
             {label}
           </Typography>
@@ -239,36 +250,32 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
           <TopCard
             label="Total School"
             value={stats?.totalSchools ?? 0}
-            valueColor="#4a3aff"
-            iconBg={isDark ? '#1e2a4a' : '#e8e6ff'}
             icon={IconSchool}
+            colorIndex={0}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
             label="Approved Schools"
             value={stats?.activeSchools ?? 0}
-            valueColor="#16a34a"
-            iconBg={isDark ? '#0d2e1e' : '#dcfee6'}
             icon={IconBuildingCommunity}
+            colorIndex={1}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
             label="Pending Schools"
             value={stats?.pendingSchools ?? 0}
-            valueColor="#dae11d"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
             icon={IconBuildingCommunity}
+            colorIndex={3}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
             label="Rejected Schools"
             value={stats?.rejected ?? stats?.rejectedSchools ?? 0}
-            valueColor="#e11d48"
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
             icon={IconBuildingCommunity}
+            colorIndex={4}
           />
         </Grid>
       </Grid>

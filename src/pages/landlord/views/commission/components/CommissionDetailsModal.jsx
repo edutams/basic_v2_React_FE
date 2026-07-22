@@ -148,8 +148,9 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               sx={{ flex: 2, minWidth: { xs: '100%', sm: 180 } }}
             />
             <Button
-              onClick={handleFilter}
+              variant="contained"
               size="small"
+              onClick={handleFilter}
               sx={{
                 bgcolor: '#3949ab',
                 textTransform: 'none',
@@ -161,9 +162,10 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               Filter
             </Button>
             <Button
-              startIcon={<IconDownload size={18} />}
-              onClick={handleExport}
+              variant="contained"
               size="small"
+              startIcon={<IconDownload />}
+              onClick={handleExport}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Export
@@ -247,11 +249,10 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
 
       <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
         <Button
+          variant="contained"
+          size="small"
           onClick={onClose}
-          sx={{
-            textTransform: 'none',
-            borderRadius: '8px',
-          }}
+          sx={{ textTransform: 'none', borderRadius: '8px' }}
         >
           Close
         </Button>

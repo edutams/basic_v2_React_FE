@@ -221,7 +221,6 @@ export const TenantAuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setIsImpersonated(false);
       setImpersonatorId(null);
-      setPrimaryColor(null);
       // TenantProtectedRoute will catch isAuthenticated: false
       // and redirect to /login with state={{ from: location }}
     };
@@ -316,7 +315,6 @@ export const TenantAuthProvider = ({ children }) => {
       setError(msg);
       return { success: false, error: msg };
     } finally {
-      setPrimaryColor(null);
       setIsLoading(false);
     }
   };

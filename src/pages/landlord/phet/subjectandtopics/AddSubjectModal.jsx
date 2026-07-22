@@ -77,10 +77,10 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           <MenuItem value="inactive">Inactive</MenuItem>
         </CustomTextField>
         <Box display="flex" justifyContent="flex-end" mt={2}>
-          <Button size="small" onClick={onClose} sx={{ mr: 1 }} color="inherit" type="button">
+          <Button variant="contained" size="small" onClick={onClose} sx={{ mr: 1 }} color="inherit" type="button">
             Cancel
           </Button>
-          <Button type="submit" size="small" color="primary">
+          <Button size="small" type="submit" color="primary">
             Add Subject
           </Button>
         </Box>

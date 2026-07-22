@@ -16,7 +16,7 @@ import {
 import {
   BarChart as BarChartIcon,
   GridView as GridViewIcon,
-  School as SchoolIcon,
+  PeopleOutline as PeopleOutlineIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
@@ -48,7 +48,7 @@ const OPTIONAL_SUBJECTS_DATA = [
 ];
 
 // ── Theme-aware stat card component ─────────────────────────────
-const AnalyticsStatCard = ({ icon: Icon, value, label, subtitle, colorName, colorIndex = 0, children }) => {
+const AnalyticsStatCard = ({ icon: Icon, value, label, subtitle, subtitleIcon: SubtitleIcon, colorName, colorIndex = 0, children }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
@@ -90,7 +90,7 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, subtitle, colorName, colo
       >
         {Icon && <Icon sx={{ fontSize: 26, color: colors.iconColor }} />}
       </Box>
-      <Box>
+      <Box sx={{ flexGrow: 1 }}>
         <Typography
           variant="h4"
           fontWeight={700}
@@ -110,9 +110,14 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, subtitle, colorName, colo
           {label}
         </Typography>
         {subtitle && (
-          <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#9CA3AF' }}>
-            {subtitle}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.25 }}>
+            <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#9CA3AF' }}>
+              {subtitle}
+            </Typography>
+            {SubtitleIcon && (
+              <SubtitleIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.4)' : '#9CA3AF' }} />
+            )}
+          </Stack>
         )}
         {children}
       </Box>
@@ -177,8 +182,16 @@ const LearnerProgressCard = ({ theme }) => {
       <LinearProgress
         variant="determinate"
         value={98}
-        color="success"
-        sx={{ my: 1, height: 6, borderRadius: 3 }}
+        sx={{
+          my: 1,
+          height: 7,
+          borderRadius: 3,
+          bgcolor: isDark ? 'rgba(255,255,255,0.15)' : '#e0e0e0',
+          '& .MuiLinearProgress-bar': {
+            bgcolor: colors.accentColor,
+            borderRadius: 3,
+          },
+        }}
       />
       <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#9CA3AF' }}>
         107 out of 109 Learners
@@ -204,66 +217,19 @@ const SubjectRegistration = () => {
 
       {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }} alignItems="stretch">
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: '16px',
-              background: isDark ? theme.palette.background.paper : '#fff',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.12)'
-                : `1px solid ${theme.palette.grey[200]}`,
-              boxShadow: isDark
-                ? '0 10px 30px rgba(0,0,0,0.35)'
-                : '0 4px 20px rgba(0,0,0,0.07)',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            <Stack direction="row" alignItems="center" gap={1.5} mb={1}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #1e4db7 0%, #3b82f6 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <SchoolIcon sx={{ color: '#fff', fontSize: 20 }} />
-              </Box>
-              <Typography variant="h5" fontWeight={700} color="text.primary" sx={{ fontSize: { xs: '18px', md: '22px' } }}>
-                Unity High School (junior), Ijoko
-              </Typography>
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-              <Box component="span" color="success.main" fontWeight={600}>
-                Active Term:
-              </Box>{' '}
-              {session} | {term} | Week 13
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <AnalyticsStatCard
             icon={BarChartIcon}
             value={totalSubjects}
             label="Registered Subjects"
             subtitle="Male 52 | Female 55"
+            subtitleIcon={PeopleOutlineIcon}
             colorName="success"
             colorIndex={1}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <LearnerProgressCard theme={theme} isDark={isDark} />
         </Grid>
       </Grid>

@@ -73,13 +73,18 @@ const ClassEnrollmentCard = ({ onClassClick }) => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
+                   transform: 'translateY(-3px)',
                     boxShadow: isDark
                       ? '0 8px 20px rgba(0,0,0,0.35)'
                       : '0 6px 16px rgba(0,0,0,0.12)',
                     borderColor: itemColors.accentColor,
-                  },
+                  // '&:hover': {
+                  //   transform: 'translateY(-3px)',
+                  //   boxShadow: isDark
+                  //     ? '0 8px 20px rgba(0,0,0,0.35)'
+                  //     : '0 6px 16px rgba(0,0,0,0.12)',
+                  //   borderColor: itemColors.accentColor,
+                  // },
                 }}
               >
                 <Box sx={{ flexGrow: 1 }}>

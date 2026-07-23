@@ -5,7 +5,7 @@ const attendanceApi = {
   getSessions: () => tenantApi.get('/sessions'),
   getTerms: (sessionId = null) =>
     tenantApi.get('/terms', { params: sessionId ? { session_id: sessionId } : {} }),
-  getWeeks: (termId) => tenantApi.get('/weeks', { params: { term_id: termId } }),
+  getWeeks: (sessionTermId) => tenantApi.get(`/weeks/${sessionTermId}`),
   getProgrammes: () => tenantApi.get('/programmes'),
   getClassesByProgramme: (programmeId) =>
     tenantApi.get(`/classes/by-programme/${programmeId}`),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -7,6 +7,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 import MarkAttendanceTab from './components/MarkAttendanceTab';
 import MarkPsychomotorTab from './components/MarkPsychomotorTab';
@@ -20,46 +21,85 @@ const BCrumb = [
 ];
 
 const AttendancePsychomotor = () => {
-  const [activeTab, setActiveTab] = useState(0); // 0 = Mark Attendance, 1 = Mark Psychomotor
+  const [activeTab, setActiveTab] = useState(0);
 
   // ── Metrics that respond to filter changes ──────────────────
   const [attendanceMetrics, setAttendanceMetrics] = useState({
-    daysOpen: 97,
-    weekRate: 56,
-    termRate: 44,
-    totalAbsentees: 72,
-    atRisk: 1,
+    daysOpen: 0,
+    weekRate: 0,
+    termRate: 0,
+    totalAbsentees: 0,
+    atRisk: 0,
   });
 
   const [psychomotorMetrics, setPsychomotorMetrics] = useState({
-    avgAffective: 4.2,
-    avgPsychomotor: 3.8,
-    needingSupport: 12,
-    maleRating: 4.1,
-    femaleRating: 4.3,
+    avgAffective: 0,
+    avgPsychomotor: 0,
+    needingSupport: 0,
+    maleRating: 0,
+    femaleRating: 0,
   });
 
+  const [loading, setLoading] = useState(false);
+
+  // ── Fetch Attendance Stats from API ─────────────────────────
+  const fetchAttendanceStats = useCallback(async (params = {}) => {
+    setLoading(true);
+    try {
+      const res = await attendanceApi.getAttendanceStats(params);
+      if (res.data?.data) {
+        const stats = res.data.data;
+        setAttendanceMetrics({
+          daysOpen: stats.days_open || 0,
+          weekRate: stats.week_rate || 0,
+          termRate: stats.term_rate || 0,
+          totalAbsentees: stats.total_absentees || 0,
+          atRisk: stats.at_risk || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch attendance stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ── Fetch Psychomotor Stats from API ────────────────────────
+  const fetchPsychomotorStats = useCallback(async (params = {}) => {
+    try {
+      const [statsRes, genderRes] = await Promise.all([
+        attendanceApi.getPsychomotorStats(params),
+        attendanceApi.getRatingByGender(params).catch(() => ({ data: { data: {} } })),
+      ]);
+
+      const stats = statsRes.data?.data || {};
+      const genderData = genderRes.data?.data || {};
+
+      setPsychomotorMetrics({
+        avgAffective: stats.avg_affective || 0,
+        avgPsychomotor: stats.avg_psychomotor || 0,
+        needingSupport: stats.needing_support || 0,
+        maleRating: genderData.male_rating || 0,
+        femaleRating: genderData.female_rating || 0,
+      });
+    } catch (error) {
+      console.error('Failed to fetch psychomotor stats:', error);
+    }
+  }, []);
+
+  // ── Initial load ────────────────────────────────────────────
+  useEffect(() => {
+    fetchAttendanceStats();
+    fetchPsychomotorStats();
+  }, [fetchAttendanceStats, fetchPsychomotorStats]);
+
   // ── Filter update callbacks from child tabs ─────────────────
-  const handleAttendanceFilter = (programme) => {
-    const isJS = programme === 'Junior Secondary';
-    setAttendanceMetrics({
-      daysOpen: 97,
-      weekRate: isJS ? 56 : 64,
-      termRate: isJS ? 44 : 52,
-      totalAbsentees: isJS ? 72 : 48,
-      atRisk: isJS ? 1 : 0,
-    });
+  const handleAttendanceFilter = (classArmId) => {
+    fetchAttendanceStats({ class_arm_id: classArmId || undefined });
   };
 
-  const handlePsychomotorFilter = (term) => {
-    const isThirdTerm = term === 'Third Term';
-    setPsychomotorMetrics({
-      avgAffective: isThirdTerm ? 4.2 : 4.0,
-      avgPsychomotor: isThirdTerm ? 3.8 : 3.6,
-      needingSupport: isThirdTerm ? 12 : 8,
-      maleRating: 4.1,
-      femaleRating: 4.3,
-    });
+  const handlePsychomotorFilter = (classArmId) => {
+    fetchPsychomotorStats({ class_arm_id: classArmId || undefined });
   };
 
   return (

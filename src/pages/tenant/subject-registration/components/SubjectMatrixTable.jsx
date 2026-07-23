@@ -12,6 +12,7 @@ import {
   IconButton,
   Tooltip,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -21,6 +22,7 @@ import {
 const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnregisterAll }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
@@ -31,10 +33,9 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               sx={{
                 minWidth: 240,
                 fontWeight: 700,
-                position: 'sticky',
-                left: 0,
+                ...(!isMobile && { position: 'sticky', left: 0 }),
                 bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
-                zIndex: 2,
+                ...(!isMobile && { zIndex: 2 }),
                 borderRight: '1px solid',
                 borderColor: 'divider',
               }}
@@ -70,10 +71,9 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
             <TableRow key={learner.id} hover>
               <TableCell
                 sx={{
-                  position: 'sticky',
-                  left: 0,
+                  ...(!isMobile && { position: 'sticky', left: 0 }),
                   bgcolor: 'background.paper',
-                  zIndex: 1,
+                  ...(!isMobile && { zIndex: 1 }),
                   borderRight: '1px solid',
                   borderColor: 'divider',
                 }}

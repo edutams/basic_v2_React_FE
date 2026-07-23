@@ -5,7 +5,7 @@ const attendanceApi = {
   getSessions: () => tenantApi.get('/sessions'),
   getTerms: (sessionId = null) =>
     tenantApi.get('/terms', { params: sessionId ? { session_id: sessionId } : {} }),
-  getWeeks: (termId) => tenantApi.get('/weeks', { params: { term_id: termId } }),
+  getWeeks: (sessionTermId) => tenantApi.get(`/weeks/${sessionTermId}`),
   getProgrammes: () => tenantApi.get('/programmes'),
   getClassesByProgramme: (programmeId) =>
     tenantApi.get(`/classes/by-programme/${programmeId}`),
@@ -20,8 +20,8 @@ const attendanceApi = {
 
   markAttendance: (data) =>
     tenantApi.post('/attendance/mark', data),
-  markBulkAttendance: (day, status, data) =>
-    tenantApi.post('/attendance/bulk-mark', { day, status, ...data }),
+  markBulkAttendance: (day, period, status, data) =>
+    tenantApi.post('/attendance/bulk-mark', { date: day, period, status, ...data }),
   updateAttendance: (id, data) =>
     tenantApi.put(`/attendance/${id}`, data),
   submitAttendance: (data) =>
@@ -38,10 +38,16 @@ const attendanceApi = {
     tenantApi.get('/attendance/absentees', { params }),
   getAtRiskLearners: (params = {}) =>
     tenantApi.get('/attendance/at-risk', { params }),
+  getDailyBreakdown: (params = {}) =>
+    tenantApi.get('/attendance/daily-breakdown', { params }),
+  getWeeklyTrend: (params = {}) =>
+    tenantApi.get('/attendance/weekly-trend', { params }),
 
   // ── Psychomotor / Affective ──────────────────────────────
   getPsychomotorLearners: (params = {}) =>
     tenantApi.get('/psychomotor/learners', { params }),
+  getPsychomotorDomains: (params = {}) =>
+    tenantApi.get('/psychomotor/domains', { params }),
   getPsychomotorAssessments: (classId, params = {}) =>
     tenantApi.get(`/psychomotor/by-class/${classId}`, { params }),
 
@@ -57,6 +63,8 @@ const attendanceApi = {
     tenantApi.get('/psychomotor/rating-by-gender', { params }),
   getLearnersNeedingSupport: (params = {}) =>
     tenantApi.get('/psychomotor/needing-support', { params }),
+  getTraitBreakdown: (params = {}) =>
+    tenantApi.get('/psychomotor/trait-breakdown', { params }),
 
   // ── Alerts / Notifications ───────────────────────────────
   sendAttendanceAlerts: (learnerIds) =>

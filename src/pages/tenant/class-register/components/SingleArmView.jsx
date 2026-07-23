@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -22,7 +22,9 @@ import {
   InputAdornment,
   Menu,
   TablePagination,
+  CircularProgress,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,52 +35,44 @@ import {
   VisibilityOutlined as ViewDetailIcon,
   SwapHoriz as ChangeClassIcon,
 } from '@mui/icons-material';
+import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
+import learnerApi from '@/api/tenant/learners/learnerApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { useNotification } from '@/hooks/useNotification';
 import StudentDetailModal from './StudentDetailModal';
 import ChangeClassModal from './ChangeClassModal';
-
-const SINGLE_ARM_STUDENTS = [
-  {
-    id: 1,
-    sn: '01',
-    name: 'ABANISE Akorede Micheal',
-    admissionNo: '2019A110510094',
-    gender: 'MALE',
-    classArm: 'Pry 4 (Diamond)',
-    guardianName: 'Mr. Micheal Abanise',
-    guardianPhone: '+234 802 345 6789',
-  },
-  {
-    id: 2,
-    sn: '02',
-    name: 'ABDRAMON Temitope Hasanat',
-    admissionNo: '2020A110510008',
-    gender: 'FEMALE',
-    classArm: 'Pry 4 (No class arm)',
-    guardianName: 'Mrs. Hasanat Abdramon',
-    guardianPhone: '+234 809 123 4567',
-  },
-  {
-    id: 3,
-    sn: '03',
-    name: 'ABDUL HAMMED Muhammed',
-    admissionNo: '2020A110510101',
-    gender: 'MALE',
-    classArm: 'Pry 4 (Diamond)',
-    guardianName: 'Alhaji Hammed Abdul',
-    guardianPhone: '+234 703 987 6543',
-  },
-];
 
 const SingleArmView = () => {
   const theme = useTheme();
 
   // ── Filter States ─────────────────────────────────────────
-  const [saSession, setSaSession] = useState('2024/2025');
-  const [saTerm, setSaTerm] = useState('Third Term');
-  const [saProgramme, setSaProgramme] = useState('Primary');
-  const [saClass, setSaClass] = useState('Pry 4');
-  const [saArm, setSaArm] = useState('A (Diamond)');
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [arms, setArms] = useState([]);
+
+  const [saSession, setSaSession] = useState('');
+  const [saTerm, setSaTerm] = useState('');
+  const [saProgramme, setSaProgramme] = useState('');
+  const [saClass, setSaClass] = useState('');
+  const [saArm, setSaArm] = useState('');
   const [saSearch, setSaSearch] = useState('');
+
+  // ── Student Data States ───────────────────────────────────
+  const [students, setStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingFilters, setLoadingFilters] = useState(true);
+  const [meta, setMeta] = useState(null);
+
+  // ── Parent Data (fetched separately per student) ─────────
+  const [parentsMap, setParentsMap] = useState({});
 
   // ── Menu / Modal States ───────────────────────────────────
   const [anchorEl, setAnchorEl] = useState(null);
@@ -87,16 +81,163 @@ const SingleArmView = () => {
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false);
 
   // ── Pagination ────────────────────────────────────────────
-  const [saPage, setSaPage] = useState(0);
-  const [saRowsPerPage, setSaRowsPerPage] = useState(10);
+  const notify = useNotification();
 
-  // ── Filtered Students ─────────────────────────────────────
-  const filteredStudents = SINGLE_ARM_STUDENTS.filter(
-    (s) =>
-      saSearch === '' ||
-      s.name.toLowerCase().includes(saSearch.toLowerCase()) ||
-      s.admissionNo.includes(saSearch),
-  );
+  const [saPage, setSaPage] = useState(0);
+  const [saRowsPerPage, setSaRowsPerPage] = useState(15);
+
+  // ── Load Filter Data ──────────────────────────────────────
+  const loadFilterData = useCallback(async () => {
+    setLoadingFilters(true);
+    try {
+      const [sessRes, progRes] = await Promise.all([
+        fetchSessions(),
+        fetchProgrammes(),
+      ]);
+
+      const sessionsData = sessRes.data?.data || sessRes.data || [];
+      const programmesData = progRes.data?.data || progRes.data || [];
+
+      setSessions(Array.isArray(sessionsData) ? sessionsData : []);
+      setProgrammes(Array.isArray(programmesData) ? programmesData : []);
+    } catch (error) {
+      console.error('Failed to load filter data:', error);
+    } finally {
+      setLoadingFilters(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFilterData();
+  }, [loadFilterData]);
+
+  // ── Load Terms when Session changes ───────────────────────
+  useEffect(() => {
+    if (!saSession) return;
+    const loadTerms = async () => {
+      try {
+        const res = await fetchTerms(saSession);
+        const termsData = res.data?.data || res.data || [];
+        setTerms(Array.isArray(termsData) ? termsData : []);
+      } catch (error) {
+        console.error('Failed to load terms:', error);
+      }
+    };
+    loadTerms();
+  }, [saSession]);
+
+  // ── Load Classes when Programme changes ───────────────────
+  useEffect(() => {
+    if (!saProgramme) return;
+    const loadClasses = async () => {
+      try {
+        const res = await fetchClassesByProgramme(saProgramme);
+        const classesData = res.data?.data || res.data || [];
+        setClasses(Array.isArray(classesData) ? classesData : []);
+        setSaClass('');
+        setSaArm('');
+      } catch (error) {
+        console.error('Failed to load classes:', error);
+      }
+    };
+    loadClasses();
+  }, [saProgramme]);
+
+  // ── Load Arms when Class changes ──────────────────────────
+  useEffect(() => {
+    if (!saClass) return;
+    const loadArms = async () => {
+      try {
+        const res = await fetchClassArmsByClass(saClass);
+        const armsData = res.data?.data || res.data || [];
+        setArms(Array.isArray(armsData) ? armsData : []);
+        setSaArm('');
+      } catch (error) {
+        console.error('Failed to load arms:', error);
+      }
+    };
+    loadArms();
+  }, [saClass]);
+
+  // ── Fetch Students ────────────────────────────────────────
+  const fetchStudents = useCallback(async () => {
+    if (!saArm) return;
+
+    setLoadingStudents(true);
+    try {
+      const params = {
+        class_arm_id: saArm,
+        search: saSearch,
+        page: saPage + 1,
+        per_page: saRowsPerPage,
+      };
+      const res = await classRegisterApi.getStudentsByClassArm(params);
+      if (res.data?.status && res.data?.data) {
+        setStudents(res.data.data);
+        setMeta(res.data.meta);
+      }
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      setStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  }, [saArm, saSearch, saPage, saRowsPerPage]);
+
+  // ── Fetch parent/guardian data for each student ──────────
+  useEffect(() => {
+    if (students.length === 0) {
+      setParentsMap({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchParents = async () => {
+      // Pre-fill with null so cells show '—' while loading doesn't stick
+      const initialMap = {};
+      students.forEach((s) => { initialMap[s.student_reg_id] = null; });
+      // Don't set yet, wait for results so we don't flash
+
+      const results = await Promise.allSettled(
+        students.map((s) => {
+          const learnerId = s.user_id || s.users?.id || s.student_reg_id;
+          return learnerApi.getParents(learnerId);
+        })
+      );
+
+      if (cancelled) return;
+
+      const map = { ...initialMap };
+      results.forEach((result, idx) => {
+        const s = students[idx];
+        if (result.status === 'fulfilled') {
+          const res = result.value;
+          const parents = Array.isArray(res.data?.data) ? res.data.data : [];
+          const sid = s.student_reg_id;
+          // Show up to 2 guardians
+          const displayParents = parents.slice(0, 2).map((p) => {
+            const u = p.user || {};
+            const fullName = [u.fname, u.lname].filter(Boolean).join(' ');
+            return {
+              name: fullName || null,
+              phone: u.phone || null,
+              email: u.email || null,
+              relationship: p.relationship || null,
+            };
+          });
+          map[sid] = displayParents.length > 0 ? displayParents : null;
+        } else {
+          console.warn(`[ClassRegister] Failed to fetch parents for ${s.name}:`, result.reason);
+        }
+      });
+      setParentsMap(map);
+    };
+
+    fetchParents();
+
+    return () => { cancelled = true; };
+  }, [students]);
 
   // ── Handlers ──────────────────────────────────────────────
   const handleMenuOpen = (e, row) => {
@@ -116,12 +257,29 @@ const SingleArmView = () => {
   };
 
   const handleApplyFilter = () => {
-    // Will integrate with API in future implementation
-    // Fetches students based on filter params
+    setSaPage(0);
+    fetchStudents();
   };
 
-  const handleExport = () => {
-    // Will integrate with API export endpoint
+  const handleExport = async () => {
+    if (!saArm) {
+      notify.warning('Please select a class and arm, then click Apply Filter first.');
+      return;
+    }
+    try {
+      const res = await classRegisterApi.exportStudentList({ class_arm_id: saArm });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student_list.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Student list exported successfully');
+    } catch {
+      notify.error('Failed to export student list');
+    }
   };
 
   return (
@@ -132,8 +290,9 @@ const SingleArmView = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={saSession} label="Session" onChange={(e) => setSaSession(e.target.value)}>
-              <MenuItem value="2024/2025">2024/2025</MenuItem>
-              <MenuItem value="2025/2026">2025/2026</MenuItem>
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -141,9 +300,9 @@ const SingleArmView = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
             <Select value={saTerm} label="Term" onChange={(e) => setSaTerm(e.target.value)}>
-              <MenuItem value="Third Term">Third Term</MenuItem>
-              <MenuItem value="Second Term">Second Term</MenuItem>
-              <MenuItem value="First Term">First Term</MenuItem>
+              {terms.map((t) => (
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -151,9 +310,9 @@ const SingleArmView = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
             <Select value={saProgramme} label="Programme" onChange={(e) => setSaProgramme(e.target.value)}>
-              <MenuItem value="Primary">Primary</MenuItem>
-              <MenuItem value="Junior Secondary">Junior Secondary</MenuItem>
-              <MenuItem value="Senior Secondary">Senior Secondary</MenuItem>
+              {programmes.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -161,8 +320,8 @@ const SingleArmView = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Class</InputLabel>
             <Select value={saClass} label="Class" onChange={(e) => setSaClass(e.target.value)}>
-              {['Pry 1', 'Pry 2', 'Pry 3', 'Pry 4', 'Pry 5', 'Pry 6'].map((c) => (
-                <MenuItem key={c} value={c}>{c}</MenuItem>
+              {classes.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -171,9 +330,9 @@ const SingleArmView = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Arm</InputLabel>
             <Select value={saArm} label="Arm" onChange={(e) => setSaArm(e.target.value)}>
-              <MenuItem value="A (Diamond)">A (Diamond)</MenuItem>
-              <MenuItem value="B (Gold)">B (Gold)</MenuItem>
-              <MenuItem value="C (Silver)">C (Silver)</MenuItem>
+              {arms.map((a) => (
+                <MenuItem key={a.id} value={a.id}>{a.arm_names || a.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -188,6 +347,7 @@ const SingleArmView = () => {
             placeholder="Search by learner name or ID..."
             value={saSearch}
             onChange={(e) => setSaSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -202,14 +362,13 @@ const SingleArmView = () => {
             <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={handleApplyFilter}>
               Apply Filter
             </Button>
-            <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<ExportIcon />} onClick={handleExport}>
+            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<ExportIcon />} onClick={handleExport}>
               Export List
             </Button>
           </Stack>
         </Grid>
       </Grid>
 
-      {/* ── Table ────────────────────────────────────────── */}
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 700 }}>
           <TableHead>
@@ -218,79 +377,174 @@ const SingleArmView = () => {
               <TableCell>Student Info</TableCell>
               <TableCell>Gender</TableCell>
               <TableCell>Class/Arm</TableCell>
-              <TableCell>Parent / Guardian</TableCell>
+              <TableCell>Parent/Guardian</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow key={student.id} hover>
-                <TableCell>{student.sn}</TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Avatar sx={{ width: 38, height: 38, bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}>
-                      {student.name.charAt(0)}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {student.name}
-                      </Typography>
-                      <Chip
-                        label={student.admissionNo}
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                        sx={{ height: 20, fontSize: '11px', fontWeight: 600, mt: 0.25 }}
-                      />
-                    </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={student.gender}
-                    size="small"
-                    color={student.gender === 'MALE' ? 'primary' : 'success'}
-                    variant="soft"
-                    sx={{ fontWeight: 700, px: 0.5 }}
-                  />
-                </TableCell>
-                <TableCell>{student.classArm}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {student.guardianName}
-                  </Typography>
-                  <Stack direction="row" alignItems="center" gap={0.5}>
-                    <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">
-                      {student.guardianPhone}
-                    </Typography>
-                  </Stack>
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
+            {loadingStudents ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <CircularProgress size={28} />
                 </TableCell>
               </TableRow>
-            ))}
+            ) : students.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      '& .MuiAlert-icon': { mr: 1.5 },
+                    }}
+                  >
+                    {saArm
+                      ? 'No students found for the selected class/arm.'
+                      : 'Please select a class and arm, then click Apply Filter.'}
+                  </Alert>
+                </TableCell>
+              </TableRow>
+            ) : (
+              students.map((student, index) => (
+                <TableRow key={student.student_reg_id || index} hover>
+                  <TableCell>{(meta?.current_page - 1) * meta?.per_page + index + 1}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Avatar
+                        src={student.avatar}
+                        sx={{ width: 38, height: 38, bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
+                      >
+                        {(student.name || '?').charAt(0)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {student.name}
+                        </Typography>
+                        <Chip
+                          label={student.admission_no}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            mt: 0.25,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={student.gender}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        px: 0.5,
+                        bgcolor:
+                          student.gender?.toUpperCase() === 'MALE'
+                            ? 'info.light'
+                            : 'success.light',
+                        color:
+                          student.gender?.toUpperCase() === 'MALE'
+                            ? 'info.main'
+                            : 'success.main',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{student.class_arm || `${student.class_name} (${student.arm_name})`}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const guardians = parentsMap[student.student_reg_id];
+                      if (guardians === undefined) {
+                        return (
+                          <Typography variant="body2" color="text.disabled">
+                            Loading...
+                          </Typography>
+                        );
+                      }
+                      if (!guardians || guardians.length === 0) {
+                        return (
+                          <Typography variant="body2" color="text.disabled">
+                            —
+                          </Typography>
+                        );
+                      }
+                      return (
+                        <Box sx={{ minWidth: 0 }}>
+                          {guardians.map((g, i) => (
+                            <Box key={i} sx={{ mb: i < guardians.length - 1 ? 0.75 : 0 }}>
+                              <Typography variant="body2" noWrap fontWeight={500}>
+                                {g.name || '—'}
+                                {g.relationship && (
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ ml: 0.5, fontStyle: 'italic' }}
+                                  >
+                                    ({g.relationship})
+                                  </Typography>
+                                )}
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems="center"
+                                flexWrap="wrap"
+                              >
+                                {g.phone && (
+                                  <Typography variant="caption" color="text.secondary" noWrap>
+                                    {g.phone}
+                                  </Typography>
+                                )}
+                                {g.email && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    noWrap
+                                    sx={{ fontStyle: 'italic' }}
+                                  >
+                                    {g.email}
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Box>
+                          ))}
+                        </Box>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* ── Pagination ──────────────────────────────────── */}
-      <Box sx={{ pt: 2 }}>
-        <TablePagination
-          component="div"
-          count={42}
-          page={saPage}
-          onPageChange={(_, newPage) => setSaPage(newPage)}
-          rowsPerPage={saRowsPerPage}
-          onRowsPerPageChange={(e) => {
-            setSaRowsPerPage(parseInt(e.target.value, 10));
-            setSaPage(0);
-          }}
-        />
-      </Box>
+      {meta && (
+        <Box sx={{ pt: 2 }}>
+          <TablePagination
+            component="div"
+            count={meta.total || 0}
+            page={saPage}
+            onPageChange={(_, newPage) => setSaPage(newPage)}
+            rowsPerPage={saRowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setSaRowsPerPage(parseInt(e.target.value, 10));
+              setSaPage(0);
+            }}
+          />
+        </Box>
+      )}
 
       {/* ── Context Menu ────────────────────────────────── */}
       <Menu
@@ -319,6 +573,7 @@ const SingleArmView = () => {
         open={changeClassModalOpen}
         onClose={() => setChangeClassModalOpen(false)}
         student={selectedRow}
+        onSuccess={fetchStudents}
       />
     </Box>
   );

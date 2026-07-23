@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -8,85 +8,164 @@ import {
   InputLabel,
   Stack,
   Grid,
-  Tooltip,
-  IconButton,
+  CircularProgress,
+  Typography,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
 } from '@mui/icons-material';
+import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
-const GENERAL_SUBJECTS = [
-  { id: 'bs', name: 'BUSINESS STUDIES', count: 107 },
-  { id: 'crs', name: 'CHRISTIAN RELIGIOUS STUDIES', count: 57 },
-  { id: 'cca', name: 'CULTURE & CREATIVE ARTS', count: 107 },
-  { id: 'dt', name: 'DIGITAL TECHNOLOGIES', count: 107 },
-  { id: 'eng', name: 'ENGLISH LANGUAGE', count: 107 },
-  { id: 'fr', name: 'FRENCH LANGUAGE', count: 0 },
-  { id: 'math', name: 'MATHEMATICS', count: 107 },
-  { id: 'bsc', name: 'BASIC SCIENCE', count: 104 },
-];
-
-const INITIAL_LEARNERS = [
-  {
-    id: 1,
-    name: 'ABDULMOJEED Hikmot Oluwakemi',
-    registered: { bs: true, crs: false, cca: true, dt: true, eng: true, fr: false, math: true, bsc: true },
-  },
-  {
-    id: 2,
-    name: 'ABUAZEEZ Abudqudiri Oluwadamilare',
-    registered: { bs: true, crs: false, cca: false, dt: true, eng: true, fr: false, math: true, bsc: true },
-  },
-  {
-    id: 3,
-    name: 'ADEBAYO Olawalarami Loveth',
-    registered: { bs: true, crs: true, cca: true, dt: true, eng: true, fr: false, math: true, bsc: false },
-  },
-  {
-    id: 4,
-    name: 'ADEKUNLE Ibrahim Babatunde',
-    registered: { bs: true, crs: true, cca: true, dt: false, eng: true, fr: true, math: true, bsc: true },
-  },
-  {
-    id: 5,
-    name: 'AKINTOLA Fatimah Oluwaseun',
-    registered: { bs: false, crs: true, cca: true, dt: true, eng: true, fr: false, math: true, bsc: true },
-  },
-];
-
 const GeneralSubjectsTab = () => {
-  const [session, setSession] = useState('2025/2026');
-  const [term, setTerm] = useState('Third Term');
-  const [programme, setProgramme] = useState('Junior Secondary');
-  const [classLevel, setClassLevel] = useState('Junior Secondary 1');
-  const [classArm, setClassArm] = useState('A');
-  const [learners, setLearners] = useState(INITIAL_LEARNERS);
+  // ── Filter States ─────────────────────────────────────────
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [arms, setArms] = useState([]);
 
-  const toggleRegistration = (learnerId, subjectId) => {
+  const [session, setSession] = useState('');
+  const [term, setTerm] = useState('');
+  const [programme, setProgramme] = useState('');
+  const [classLevel, setClassLevel] = useState('');
+  const [classArm, setClassArm] = useState('');
+
+  // ── Data States ───────────────────────────────────────────
+  const [subjects, setSubjects] = useState([]);
+  const [learners, setLearners] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // ── Load Filters ──────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [sessRes, progRes] = await Promise.all([fetchSessions(), fetchProgrammes()]);
+        setSessions(sessRes.data?.data || sessRes.data || []);
+        setProgrammes(progRes.data?.data || progRes.data || []);
+      } catch (e) { console.error(e); }
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    fetchTerms(session).then((r) => setTerms(r.data?.data || r.data || [])).catch(console.error);
+  }, [session]);
+
+  useEffect(() => {
+    if (!programme) return;
+    fetchClassesByProgramme(programme).then((r) => {
+      const d = r.data?.data || r.data || [];
+      setClasses(Array.isArray(d) ? d : []);
+    }).catch(console.error);
+  }, [programme]);
+
+  useEffect(() => {
+    if (!classLevel) return;
+    fetchClassArmsByClass(classLevel).then((r) => {
+      const d = r.data?.data || r.data || [];
+      setArms(Array.isArray(d) ? d : []);
+    }).catch(console.error);
+  }, [classLevel]);
+
+  // ── Fetch Data ────────────────────────────────────────────
+  const fetchData = useCallback(async () => {
+    if (!classLevel) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [subjRes, learnerRes] = await Promise.all([
+        subjectRegistrationApi.getGeneralSubjects(classLevel, { programme_id: programme || undefined }),
+        subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined),
+      ]);
+
+      if (subjRes.data?.data) {
+        setSubjects(Array.isArray(subjRes.data.data) ? subjRes.data.data : []);
+      }
+
+      if (learnerRes.data?.data) {
+        const learnerData = learnerRes.data.data;
+        // Transform to format expected by SubjectMatrixTable
+        const transformed = learnerData.map((l) => ({
+          id: l.student_reg_id,
+          name: l.name,
+          registered: {},
+        }));
+        // Populate registered subjects
+        learnerData.forEach((l) => {
+          const learner = transformed.find((t) => t.id === l.student_reg_id);
+          if (learner) {
+            (l.registered_subjects || []).forEach((rs) => {
+              learner.registered[rs.subject_id] = true;
+            });
+          }
+        });
+        setLearners(transformed);
+      }
+    } catch (e) {
+      console.error('Failed to fetch data:', e);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [classLevel, classArm, programme]);
+
+  // ── Handlers ──────────────────────────────────────────────
+  const toggleRegistration = async (learnerId, subjectId) => {
+    // Determine new state before optimistic update to avoid stale closure
+    const currentLearner = learners.find((l) => l.id === learnerId);
+    const currentlyRegistered = currentLearner?.registered?.[subjectId] ?? false;
+    const newRegistered = !currentlyRegistered;
+
+    // Optimistic update
     setLearners((prev) =>
       prev.map((l) =>
         l.id === learnerId
-          ? { ...l, registered: { ...l.registered, [subjectId]: !l.registered[subjectId] } }
+          ? { ...l, registered: { ...l.registered, [subjectId]: newRegistered } }
           : l,
       ),
     );
+
+    try {
+      await subjectRegistrationApi.toggleRegistration(learnerId, subjectId, newRegistered);
+    } catch (e) {
+      console.error('Toggle failed:', e);
+      // Revert on failure
+      fetchData();
+    }
   };
 
-  const registerAll = (subjectId) => {
-    setLearners((prev) =>
-      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: true } })),
-    );
+  const registerAll = async (subjectId) => {
+    const learnerIds = learners.map((l) => l.id);
+    try {
+      await subjectRegistrationApi.bulkRegisterSubject(subjectId, learnerIds);
+      fetchData();
+    } catch (e) {
+      console.error('Bulk register failed:', e);
+    }
   };
 
-  const unregisterAll = (subjectId) => {
-    setLearners((prev) =>
-      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: false } })),
-    );
+  const unregisterAll = async (subjectId) => {
+    const learnerIds = learners.map((l) => l.id);
+    try {
+      await subjectRegistrationApi.bulkUnregisterSubject(subjectId, learnerIds);
+      fetchData();
+    } catch (e) {
+      console.error('Bulk unregister failed:', e);
+    }
   };
 
   const handleApplyFilter = () => {
-    // Will integrate with API
+    fetchData();
   };
 
   return (
@@ -97,8 +176,9 @@ const GeneralSubjectsTab = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={session} label="Session" onChange={(e) => setSession(e.target.value)}>
-              <MenuItem value="2025/2026">2025/2026</MenuItem>
-              <MenuItem value="2024/2025">2024/2025</MenuItem>
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -106,9 +186,9 @@ const GeneralSubjectsTab = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
             <Select value={term} label="Term" onChange={(e) => setTerm(e.target.value)}>
-              <MenuItem value="Third Term">Third Term</MenuItem>
-              <MenuItem value="Second Term">Second Term</MenuItem>
-              <MenuItem value="First Term">First Term</MenuItem>
+              {terms.map((t) => (
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -116,9 +196,9 @@ const GeneralSubjectsTab = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
             <Select value={programme} label="Programme" onChange={(e) => setProgramme(e.target.value)}>
-              <MenuItem value="Junior Secondary">Junior Secondary</MenuItem>
-              <MenuItem value="Senior Secondary">Senior Secondary</MenuItem>
-              <MenuItem value="Primary">Primary</MenuItem>
+              {programmes.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -126,9 +206,9 @@ const GeneralSubjectsTab = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Class</InputLabel>
             <Select value={classLevel} label="Class" onChange={(e) => setClassLevel(e.target.value)}>
-              <MenuItem value="Junior Secondary 1">Junior Secondary 1</MenuItem>
-              <MenuItem value="Junior Secondary 2">Junior Secondary 2</MenuItem>
-              <MenuItem value="Junior Secondary 3">Junior Secondary 3</MenuItem>
+              {classes.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -136,8 +216,8 @@ const GeneralSubjectsTab = () => {
           <FormControl fullWidth size="small">
             <InputLabel>Arm</InputLabel>
             <Select value={classArm} label="Arm" onChange={(e) => setClassArm(e.target.value)}>
-              {['A', 'B', 'C', 'D'].map((arm) => (
-                <MenuItem key={arm} value={arm}>{arm}</MenuItem>
+              {arms.map((a) => (
+                <MenuItem key={a.id} value={a.id}>{a.arm_names }</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -156,14 +236,24 @@ const GeneralSubjectsTab = () => {
         </Grid>
       </Grid>
 
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+      )}
+
       {/* ── Table ────────────────────────────────────────── */}
-      <SubjectMatrixTable
-        subjects={GENERAL_SUBJECTS}
-        learners={learners}
-        onToggle={toggleRegistration}
-        onRegisterAll={registerAll}
-        onUnregisterAll={unregisterAll}
-      />
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress size={32} />
+        </Box>
+      ) : (
+        <SubjectMatrixTable
+          subjects={subjects}
+          learners={learners}
+          onToggle={toggleRegistration}
+          onRegisterAll={registerAll}
+          onUnregisterAll={unregisterAll}
+        />
+      )}
     </Box>
   );
 };

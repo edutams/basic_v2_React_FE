@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -6,27 +6,22 @@ import {
   Grid,
   LinearProgress,
   Stack,
-  Button,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Chip,
   Tooltip,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import {
-  PeopleOutline as PeopleOutlineIcon,
   WarningAmberOutlined as WarningIcon,
   CalendarMonth as CalendarMonthIcon,
   TrendingFlat as TrendingFlatIcon,
   TrendingUp as TrendingUpIcon,
   EventNote as EventNoteIcon,
+  // AnalyticsOutlined as AnalyticsIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
+import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 // ── Theme-aware stat card ──────────────────────────────────────
 const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
@@ -70,14 +65,145 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const AttendanceAnalyticsCards = ({ metrics }) => {
+const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
+  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
 
   const openCardModal = (cardTitle, modalBody) => {
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
+
+  // Fetch daily breakdown data for week chart
+  const openWeekBreakdown = useCallback(async (classArmId, weekId) => {
+    setAnalyticsModal({ open: true, title: 'Week Attendance Rate Analysis', content: null, loading: true });
+    try {
+      const res = await attendanceApi.getDailyBreakdown({ class_arm_id: classArmId, week_term_id: weekId, session_id: sessionId || undefined, term_id: termId || undefined });
+      const data = res.data?.data || [];
+      openCardModal('Week Attendance Rate Analysis', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Daily learner attendance rate for the selected week.
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'Attendance %', data: data.map((d) => d.rate) }]}
+            categories={data.map((d) => d.day_name)}
+            colors={[theme.palette.warning.main]}
+            height={280}
+            yAxisFormatter={(val) => `${val}%`}
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch daily breakdown:', e);
+      openCardModal('Week Attendance Rate Analysis', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme, sessionId, termId]);
+
+  // Fetch weekly trend data for term chart
+  const openTermTrend = useCallback(async (classArmId) => {
+    setAnalyticsModal({ open: true, title: 'Term Attendance Trend', content: null, loading: true });
+    try {
+      const res = await attendanceApi.getWeeklyTrend({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined });
+      const data = res.data?.data || [];
+      openCardModal('Term Attendance Trend', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Term-to-date attendance performance trend across all weeks.
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'Attendance %', data: data.map((w) => w.rate) }]}
+            categories={data.map((w) => w.week_name)}
+            colors={[theme.palette.info.main]}
+            height={280}
+            yAxisFormatter={(val) => `${val}%`}
+            xAxisTitle="Week"
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch weekly trend:', e);
+      openCardModal('Term Attendance Trend', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme, sessionId, termId]);
+
+  // Fetch real absentees breakdown by class arm
+  const openAbsenteesBreakdown = useCallback(async () => {
+    setAnalyticsModal({ open: true, title: 'Absentees Summary', content: null, loading: true });
+    try {
+      const res = await attendanceApi.getAbsenteesList({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+      const payload = res.data?.data || {};
+      const byArm = payload.by_arm || [];
+
+      if (byArm.length === 0) {
+        openCardModal('Absentees Summary', (
+          <Typography color="text.secondary">No absentees recorded for the selected filters.</Typography>
+        ));
+        return;
+      }
+
+      openCardModal('Absentees Summary', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Absentee counts by class arm — learners with no attendance in the last 3 days.
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'Absences', data: byArm.map((a) => a.count) }]}
+            categories={byArm.map((a) => a.arm_name)}
+            colors={[theme.palette.error.main]}
+            height={280}
+            xAxisTitle="Class Arm"
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch absentees:', e);
+      openCardModal('Absentees Summary', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [classArmId, sessionId, termId]);
+
+  // Fetch real at-risk learners breakdown by class arm
+  const openAtRiskBreakdown = useCallback(async () => {
+    setAnalyticsModal({ open: true, title: 'At-Risk Learners Overview', content: null, loading: true });
+    try {
+      const res = await attendanceApi.getAtRiskLearners({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+      const payload = res.data?.data || {};
+      const byArm = payload.by_arm || [];
+
+      if (byArm.length === 0) {
+        openCardModal('At-Risk Learners Overview', (
+          <Typography color="text.secondary">No at-risk learners for the selected filters.</Typography>
+        ));
+        return;
+      }
+
+      openCardModal('At-Risk Learners Overview', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            At-risk learner counts by class arm — learners with 1+ week consecutive absence.
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'At-Risk Learners', data: byArm.map((a) => a.count) }]}
+            categories={byArm.map((a) => a.arm_name)}
+            colors={[theme.palette.error.main]}
+            height={280}
+            xAxisTitle="Class Arm"
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch at-risk learners:', e);
+      openCardModal('At-Risk Learners Overview', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [classArmId, sessionId, termId]);
 
   const colors = {
     success: getStatCardColor('success', 1, isDark, theme),
@@ -142,34 +268,7 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
             colorName="warning"
             colorIndex={3}
             clickable
-            onClick={() =>
-              openCardModal('Week Attendance Rate Analysis', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Detailed weekly breakdown by days and class arms for selected week.
-                  </Typography>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Day</TableCell>
-                          <TableCell>Present</TableCell>
-                          <TableCell>Absent</TableCell>
-                          <TableCell>Rate</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow><TableCell>Monday</TableCell><TableCell>98</TableCell><TableCell>11</TableCell><TableCell>89.9%</TableCell></TableRow>
-                        <TableRow><TableCell>Tuesday</TableCell><TableCell>105</TableCell><TableCell>4</TableCell><TableCell>96.3%</TableCell></TableRow>
-                        <TableRow><TableCell>Wednesday</TableCell><TableCell>92</TableCell><TableCell>17</TableCell><TableCell>84.4%</TableCell></TableRow>
-                        <TableRow><TableCell>Thursday</TableCell><TableCell>101</TableCell><TableCell>8</TableCell><TableCell>92.6%</TableCell></TableRow>
-                        <TableRow><TableCell>Friday</TableCell><TableCell>99</TableCell><TableCell>10</TableCell><TableCell>90.8%</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ))
-            }
+            onClick={() => openWeekBreakdown(classArmId, undefined)}
           >
             <Typography
               variant="caption"
@@ -221,20 +320,7 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
             colorName="info"
             colorIndex={2}
             clickable
-            onClick={() =>
-              openCardModal('Term Attendance Trend', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Term-to-date attendance performance trend across all weeks.
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 1–4 Average: 88%</Typography><LinearProgress variant="determinate" value={88} color="success" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 5–8 Average: 91%</Typography><LinearProgress variant="determinate" value={91} color="success" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 9–13 Projection: 94%</Typography><LinearProgress variant="determinate" value={94} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                  </Stack>
-                </Box>
-              ))
-            }
+            onClick={() => openTermTrend(classArmId)}
           >
             <Typography
               variant="caption"
@@ -282,31 +368,12 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
 
         {/* Card 4: TOTAL ABSENTEES */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view absentees list" arrow placement="top">
+          <Tooltip title="Click to view absentees breakdown by class arm" arrow placement="top">
             <StatCard
               colorName="error"
               colorIndex={4}
               clickable
-              onClick={() =>
-                openCardModal('Absentees Summary List', (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Total absentees recorded for current term session.
-                    </Typography>
-                    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow><TableCell>Learner Name</TableCell><TableCell>Class</TableCell><TableCell>Absences</TableCell></TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow><TableCell>ABDULMOJEED Hikmot</TableCell><TableCell>JS 1 A</TableCell><TableCell>4 days</TableCell></TableRow>
-                          <TableRow><TableCell>OKONKWO Chidi</TableCell><TableCell>JS 1 B</TableCell><TableCell>3 days</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-                ))
-              }
+              onClick={openAbsenteesBreakdown}
               sx={{ position: 'relative' }}
             >
             <Typography
@@ -354,38 +421,12 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
 
         {/* Card 5: AT-RISK STUDENTS */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view at-risk learners" arrow placement="top">
+          <Tooltip title="Click to view at-risk learners by class arm" arrow placement="top">
             <StatCard
             colorName="error"
             colorIndex={4}
             clickable
-            onClick={() =>
-              openCardModal('At-Risk Learners Alert List', (
-                <Box>
-                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-                    <WarningIcon color="error" />
-                    <Typography variant="body2" color="error.main" fontWeight={600}>
-                      Learners with 1+ Week Consecutive Absence
-                    </Typography>
-                  </Stack>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow><TableCell>Learner</TableCell><TableCell>Class</TableCell><TableCell>Status</TableCell><TableCell>Action</TableCell></TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>ABDULMOJEED Hikmot</TableCell>
-                          <TableCell>JS 1 A</TableCell>
-                          <TableCell><Chip label="DROPOUT RISK" size="small" color="error" sx={{ fontSize: 9, fontWeight: 700 }} /></TableCell>
-                          <TableCell><Button size="small" variant="contained" color="error">Send Alert</Button></TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ))
-            }
+            onClick={openAtRiskBreakdown}
             sx={{
               border: (t) =>
                 t.palette.mode === 'dark'

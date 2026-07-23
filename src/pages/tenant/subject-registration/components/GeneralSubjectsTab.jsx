@@ -72,7 +72,7 @@ const GeneralSubjectsTab = () => {
   useEffect(() => {
     if (!classLevel) return;
     fetchClassArmsByClass(classLevel).then((r) => {
-      const d = r.data?.data || [];
+      const d = r.data?.data || r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
   }, [classLevel]);

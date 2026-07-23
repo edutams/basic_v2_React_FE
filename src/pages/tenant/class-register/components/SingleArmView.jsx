@@ -24,6 +24,7 @@ import {
   TablePagination,
   CircularProgress,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -35,6 +36,7 @@ import {
   SwapHoriz as ChangeClassIcon,
 } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
+import learnerApi from '@/api/tenant/learners/learnerApi';
 import {
   fetchSessions,
   fetchTerms,
@@ -67,6 +69,9 @@ const SingleArmView = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(true);
   const [meta, setMeta] = useState(null);
+
+  // ── Parent Data (fetched separately per student) ─────────
+  const [parentsMap, setParentsMap] = useState({});
 
   // ── Menu / Modal States ───────────────────────────────────
   const [anchorEl, setAnchorEl] = useState(null);
@@ -141,7 +146,7 @@ const SingleArmView = () => {
     const loadArms = async () => {
       try {
         const res = await fetchClassArmsByClass(saClass);
-        const armsData = res.data?.data || [];
+        const armsData = res.data?.data || res.data || [];
         setArms(Array.isArray(armsData) ? armsData : []);
         setSaArm('');
       } catch (error) {
@@ -175,6 +180,54 @@ const SingleArmView = () => {
       setLoadingStudents(false);
     }
   }, [saArm, saSearch, saPage, saRowsPerPage]);
+
+  // ── Fetch parent/guardian data for each student ──────────
+  useEffect(() => {
+    if (students.length === 0) {
+      setParentsMap({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchParents = async () => {
+      // Pre-fill with null so cells show '—' while loading doesn't stick
+      const initialMap = {};
+      students.forEach((s) => { initialMap[s.student_reg_id] = null; });
+      // Don't set yet, wait for results so we don't flash
+
+      const results = await Promise.allSettled(
+        students.map((s) => learnerApi.getParents(s.student_reg_id))
+      );
+
+      if (cancelled) return;
+
+      const map = { ...initialMap };
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          const res = result.value;
+          const parentData = res.data?.data || res.data;
+          if (parentData) {
+            const parents = Array.isArray(parentData) ? parentData : [parentData];
+            const first = parents[0];
+            if (first) {
+              const sid = students[idx].student_reg_id;
+              map[sid] = {
+                name: first.name || first.guardian_name || first.full_name || null,
+                phone: first.phone || first.guardian_phone || first.mobile || null,
+                email: first.email || first.guardian_email || null,
+              };
+            }
+          }
+        }
+      });
+      setParentsMap(map);
+    };
+
+    fetchParents();
+
+    return () => { cancelled = true; };
+  }, [students]);
 
   // ── Handlers ──────────────────────────────────────────────
   const handleMenuOpen = (e, row) => {
@@ -312,22 +365,32 @@ const SingleArmView = () => {
               <TableCell>Student Info</TableCell>
               <TableCell>Gender</TableCell>
               <TableCell>Class/Arm</TableCell>
+              <TableCell>Parent/Guardian</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loadingStudents ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <CircularProgress size={28} />
                 </TableCell>
               </TableRow>
             ) : students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {saArm ? 'No students found for the selected class/arm.' : 'Please select a class and arm, then click Apply Filter.'}
-                  </Typography>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      '& .MuiAlert-icon': { mr: 1.5 },
+                    }}
+                  >
+                    {saArm
+                      ? 'No students found for the selected class/arm.'
+                      : 'Please select a class and arm, then click Apply Filter.'}
+                  </Alert>
                 </TableCell>
               </TableRow>
             ) : (
@@ -366,6 +429,38 @@ const SingleArmView = () => {
                     />
                   </TableCell>
                   <TableCell>{student.class_arm || `${student.class_name} (${student.arm_name})`}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const p = parentsMap[student.student_reg_id];
+                      // undefined = still loading, null = loaded but no parent, object = found
+                      if (p === undefined) {
+                        return (
+                          <Typography variant="body2" color="text.disabled">
+                            Loading...
+                          </Typography>
+                        );
+                      }
+                      if (p === null || (!p.name && !p.phone)) {
+                        return (
+                          <Typography variant="body2" color="text.disabled">
+                            —
+                          </Typography>
+                        );
+                      }
+                      return (
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="body2" noWrap>
+                            {p.name || '—'}
+                          </Typography>
+                          {p.phone && (
+                            <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                              {p.phone}
+                            </Typography>
+                          )}
+                        </Box>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell align="right">
                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
                       <MoreVertIcon fontSize="small" />
@@ -422,6 +517,7 @@ const SingleArmView = () => {
         open={changeClassModalOpen}
         onClose={() => setChangeClassModalOpen(false)}
         student={selectedRow}
+        onSuccess={fetchStudents}
       />
     </Box>
   );

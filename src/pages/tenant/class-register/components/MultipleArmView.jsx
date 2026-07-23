@@ -24,6 +24,7 @@ import {
   TablePagination,
   CircularProgress,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -100,7 +101,7 @@ const MultipleArmView = () => {
   useEffect(() => {
     if (!classLevel) return;
     fetchClassArmsByClass(classLevel).then((res) => {
-      const data = res.data?.data || [];
+      const data = res.data?.data || res.data || [];
       setArms(Array.isArray(data) ? data : []);
     }).catch(console.error);
   }, [classLevel]);
@@ -218,7 +219,7 @@ const MultipleArmView = () => {
             <InputLabel>Term</InputLabel>
             <Select value={term} label="Term" onChange={(e) => setTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.term_name || t.display_name || t.name || t.id}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -269,7 +270,7 @@ const MultipleArmView = () => {
             <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={fetchStudents}>
               Filter Results
             </Button>
-            <Button variant="contained" color="success" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<SaveIcon />} onClick={handleSubmitChanges} disabled={saving}>
+            <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<SaveIcon />} onClick={handleSubmitChanges} disabled={saving}>
               {saving ? 'Saving...' : 'Submit Changes'}
             </Button>
           </Stack>
@@ -312,10 +313,19 @@ const MultipleArmView = () => {
               </TableRow>
             ) : filteredStudents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={arms.length + 1} align="center" sx={{ py: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {classLevel ? 'No students found.' : 'Please select a class and click Filter Results.'}
-                  </Typography>
+                <TableCell colSpan={arms.length + 1} align="center" sx={{ py: 4 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      '& .MuiAlert-icon': { mr: 1.5 },
+                    }}
+                  >
+                    {classLevel
+                      ? 'No students found.'
+                      : 'Please select a class and click Filter Results.'}
+                  </Alert>
                 </TableCell>
               </TableRow>
             ) : (

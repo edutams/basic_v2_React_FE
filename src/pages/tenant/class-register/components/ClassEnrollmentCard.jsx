@@ -52,9 +52,9 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         <Typography variant="h6" fontWeight={700} color="text.primary">
           Class Enrollment Breakdown
         </Typography>
-        <Button size="small" variant="text" sx={{ fontWeight: 600, color: 'primary.main', textTransform: 'none' }}>
+        {/* <Button size="small" variant="text" sx={{ fontWeight: 600, color: 'primary.main', textTransform: 'none' }}>
           View Detailed Report
-        </Button>
+        </Button> */}
       </Stack>
 
       {/* ── Scroll Hint Info ───────────────────────────────── */}

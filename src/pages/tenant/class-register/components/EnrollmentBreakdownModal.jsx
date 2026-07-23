@@ -17,6 +17,7 @@ import {
   TableRow,
   TableCell,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import { School as SchoolIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
@@ -66,7 +67,10 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
     <Dialog open={Boolean(selectedClass)} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
         <SchoolIcon color="primary" />
-        Class Enrollment Breakdown — {selectedClass.class_name}
+        Class Enrollment Breakdown —{' '}
+        <Typography component="span" color="primary" fontWeight={700}>
+          {selectedClass.class_name}
+        </Typography>
       </DialogTitle>
       <DialogContent dividers>
         <Box sx={{ mb: 2 }}>
@@ -112,7 +116,16 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
               ) : students.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">No students found.</Typography>
+                    <Alert
+                      severity="info"
+                      sx={{
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        '& .MuiAlert-icon': { mr: 1.5 },
+                      }}
+                    >
+                      No students found.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               ) : (

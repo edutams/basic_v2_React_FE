@@ -104,7 +104,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   useEffect(() => {
     if (!pClass) return;
     fetchClassArmsByClass(pClass).then((r) => {
-      const d = r.data?.data || [];
+      const d = r.data?.data || r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
   }, [pClass]);

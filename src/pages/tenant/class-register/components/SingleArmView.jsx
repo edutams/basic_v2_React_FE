@@ -235,7 +235,7 @@ const SingleArmView = () => {
             <InputLabel>Term</InputLabel>
             <Select value={saTerm} label="Term" onChange={(e) => setSaTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
             </Select>
           </FormControl>

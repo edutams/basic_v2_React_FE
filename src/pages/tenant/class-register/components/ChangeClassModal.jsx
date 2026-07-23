@@ -141,11 +141,11 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
             </Select>
           </FormControl>
 
-          {!loading && armOptions.length > 0 && (
+          {/* {!loading && armOptions.length > 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
               Format: <strong>Class Name (total)</strong> — Arm Name (count)
             </Typography>
-          )}
+          )} */}
         </Stack>
       </DialogContent>
       <DialogActions>

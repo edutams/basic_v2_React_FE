@@ -44,6 +44,7 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { useNotification } from '@/hooks/useNotification';
 import StudentDetailModal from './StudentDetailModal';
 import ChangeClassModal from './ChangeClassModal';
 
@@ -80,6 +81,8 @@ const SingleArmView = () => {
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false);
 
   // ── Pagination ────────────────────────────────────────────
+  const notify = useNotification();
+
   const [saPage, setSaPage] = useState(0);
   const [saRowsPerPage, setSaRowsPerPage] = useState(15);
 
@@ -197,28 +200,35 @@ const SingleArmView = () => {
       // Don't set yet, wait for results so we don't flash
 
       const results = await Promise.allSettled(
-        students.map((s) => learnerApi.getParents(s.student_reg_id))
+        students.map((s) => {
+          const learnerId = s.user_id || s.users?.id || s.student_reg_id;
+          return learnerApi.getParents(learnerId);
+        })
       );
 
       if (cancelled) return;
 
       const map = { ...initialMap };
       results.forEach((result, idx) => {
+        const s = students[idx];
         if (result.status === 'fulfilled') {
           const res = result.value;
-          const parentData = res.data?.data || res.data;
-          if (parentData) {
-            const parents = Array.isArray(parentData) ? parentData : [parentData];
-            const first = parents[0];
-            if (first) {
-              const sid = students[idx].student_reg_id;
-              map[sid] = {
-                name: first.name || first.guardian_name || first.full_name || null,
-                phone: first.phone || first.guardian_phone || first.mobile || null,
-                email: first.email || first.guardian_email || null,
-              };
-            }
-          }
+          const parents = Array.isArray(res.data?.data) ? res.data.data : [];
+          const sid = s.student_reg_id;
+          // Show up to 2 guardians
+          const displayParents = parents.slice(0, 2).map((p) => {
+            const u = p.user || {};
+            const fullName = [u.fname, u.lname].filter(Boolean).join(' ');
+            return {
+              name: fullName || null,
+              phone: u.phone || null,
+              email: u.email || null,
+              relationship: p.relationship || null,
+            };
+          });
+          map[sid] = displayParents.length > 0 ? displayParents : null;
+        } else {
+          console.warn(`[ClassRegister] Failed to fetch parents for ${s.name}:`, result.reason);
         }
       });
       setParentsMap(map);
@@ -252,11 +262,13 @@ const SingleArmView = () => {
   };
 
   const handleExport = async () => {
-    if (!saArm) return;
+    if (!saArm) {
+      notify.warning('Please select a class and arm, then click Apply Filter first.');
+      return;
+    }
     try {
       const res = await classRegisterApi.exportStudentList({ class_arm_id: saArm });
-      const blob = new Blob([res.data]);
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'student_list.xlsx');
@@ -264,8 +276,9 @@ const SingleArmView = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
+      notify.success('Student list exported successfully');
+    } catch {
+      notify.error('Failed to export student list');
     }
   };
 
@@ -349,14 +362,13 @@ const SingleArmView = () => {
             <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={handleApplyFilter}>
               Apply Filter
             </Button>
-            <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<ExportIcon />} onClick={handleExport}>
+            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<ExportIcon />} onClick={handleExport}>
               Export List
             </Button>
           </Stack>
         </Grid>
       </Grid>
 
-      {/* ── Table ────────────────────────────────────────── */}
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 700 }}>
           <TableHead>
@@ -412,9 +424,14 @@ const SingleArmView = () => {
                         <Chip
                           label={student.admission_no}
                           size="small"
-                          color="success"
-                          variant="outlined"
-                          sx={{ height: 20, fontSize: '11px', fontWeight: 600, mt: 0.25 }}
+                          sx={{
+                            height: 20,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            mt: 0.25,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
                         />
                       </Box>
                     </Box>
@@ -423,24 +440,32 @@ const SingleArmView = () => {
                     <Chip
                       label={student.gender}
                       size="small"
-                      color={student.gender === 'MALE' ? 'primary' : 'success'}
-                      variant="soft"
-                      sx={{ fontWeight: 700, px: 0.5 }}
+                      sx={{
+                        fontWeight: 700,
+                        px: 0.5,
+                        bgcolor:
+                          student.gender?.toUpperCase() === 'MALE'
+                            ? 'info.light'
+                            : 'success.light',
+                        color:
+                          student.gender?.toUpperCase() === 'MALE'
+                            ? 'info.main'
+                            : 'success.main',
+                      }}
                     />
                   </TableCell>
                   <TableCell>{student.class_arm || `${student.class_name} (${student.arm_name})`}</TableCell>
                   <TableCell>
                     {(() => {
-                      const p = parentsMap[student.student_reg_id];
-                      // undefined = still loading, null = loaded but no parent, object = found
-                      if (p === undefined) {
+                      const guardians = parentsMap[student.student_reg_id];
+                      if (guardians === undefined) {
                         return (
                           <Typography variant="body2" color="text.disabled">
                             Loading...
                           </Typography>
                         );
                       }
-                      if (p === null || (!p.name && !p.phone)) {
+                      if (!guardians || guardians.length === 0) {
                         return (
                           <Typography variant="body2" color="text.disabled">
                             —
@@ -449,14 +474,45 @@ const SingleArmView = () => {
                       }
                       return (
                         <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" noWrap>
-                            {p.name || '—'}
-                          </Typography>
-                          {p.phone && (
-                            <Typography variant="caption" color="text.secondary" display="block" noWrap>
-                              {p.phone}
-                            </Typography>
-                          )}
+                          {guardians.map((g, i) => (
+                            <Box key={i} sx={{ mb: i < guardians.length - 1 ? 0.75 : 0 }}>
+                              <Typography variant="body2" noWrap fontWeight={500}>
+                                {g.name || '—'}
+                                {g.relationship && (
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ ml: 0.5, fontStyle: 'italic' }}
+                                  >
+                                    ({g.relationship})
+                                  </Typography>
+                                )}
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems="center"
+                                flexWrap="wrap"
+                              >
+                                {g.phone && (
+                                  <Typography variant="caption" color="text.secondary" noWrap>
+                                    {g.phone}
+                                  </Typography>
+                                )}
+                                {g.email && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    noWrap
+                                    sx={{ fontStyle: 'italic' }}
+                                  >
+                                    {g.email}
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Box>
+                          ))}
                         </Box>
                       );
                     })()}

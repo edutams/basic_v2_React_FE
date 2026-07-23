@@ -14,37 +14,40 @@ import {
 import learnerApi from '@/api/tenant/learners/learnerApi';
 
 const StudentDetailModal = ({ open, onClose, student }) => {
-  const [guardian, setGuardian] = useState(null);
+  const [guardians, setGuardians] = useState([]);
 
   // ── Fetch parent/guardian data for this student ──
   useEffect(() => {
     if (!open || !student) return;
 
     let cancelled = false;
-    setGuardian(null);
+    setGuardians([]);
 
-    const fetchGuardian = async () => {
+    const fetchGuardians = async () => {
       try {
-        const res = await learnerApi.getParents(student.student_reg_id);
+        // Use user_id if available, otherwise fall back to student_reg_id
+        const learnerId = student.user_id || student.users?.id || student.student_reg_id;
+        const res = await learnerApi.getParents(learnerId);
         if (cancelled) return;
-        const parentData = res.data?.data || res.data;
-        if (parentData) {
-          const parents = Array.isArray(parentData) ? parentData : [parentData];
-          const p = parents[0];
-          if (p) {
-            setGuardian({
-              name: p.name || p.guardian_name || p.full_name || null,
-              phone: p.phone || p.guardian_phone || p.mobile || null,
-              email: p.email || p.guardian_email || null,
-            });
-          }
-        }
+        const parents = Array.isArray(res.data?.data) ? res.data.data : [];
+        // Show up to 2 guardians
+        const displayParents = parents.slice(0, 2).map((p) => {
+          const u = p.user || {};
+          const fullName = [u.fname, u.lname].filter(Boolean).join(' ');
+          return {
+            name: fullName || null,
+            phone: u.phone || null,
+            email: u.email || null,
+            relationship: p.relationship || null,
+          };
+        });
+        setGuardians(displayParents);
       } catch (error) {
-        console.error('Failed to fetch guardian:', error);
+        console.error('Failed to fetch guardians:', error);
       }
     };
 
-    fetchGuardian();
+    fetchGuardians();
 
     return () => { cancelled = true; };
   }, [open, student]);
@@ -57,11 +60,17 @@ const StudentDetailModal = ({ open, onClose, student }) => {
       ? `${student.class_name} (${student.arm_name})`
       : '—');
 
-  // Use background-fetched guardian, fall back to student prop data
-  const guardianName = guardian?.name || student.guardian_name || null;
-  const guardianPhone = guardian?.phone || student.guardian_phone || null;
-  const guardianEmail = guardian?.email || student.guardian_email || null;
-  const hasGuardian = !!(guardianName || guardianPhone || guardianEmail);
+  // Use background-fetched guardians, fall back to student prop data
+  const hasGuardian = guardians.length > 0 || !!(student.guardian_name || student.guardian_phone || student.guardian_email);
+  const fallbackGuardian = (student.guardian_name || student.guardian_phone || student.guardian_email)
+    ? [{
+      name: student.guardian_name || null,
+      phone: student.guardian_phone || null,
+      email: student.guardian_email || null,
+      relationship: null,
+    }]
+    : [];
+  const displayGuardians = guardians.length > 0 ? guardians : fallbackGuardian;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -71,20 +80,18 @@ const StudentDetailModal = ({ open, onClose, student }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
               src={student.avatar}
-              sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontSize: 20 }}
+              sx={{ width: 56, height: 56, fontSize: 20 }}
             >
               {(student.name || '?').charAt(0)}
             </Avatar>
             <Box>
-              <Typography variant="h6" fontWeight={700}>
+              <Typography variant="h6" color='primary' fontWeight={700}>
                 {student.name}
               </Typography>
               <Chip
                 label={student.admission_no || '—'}
                 size="small"
-                color="success"
-                variant="outlined"
-                sx={{ mt: 0.5, fontWeight: 600 }}
+                sx={{ mt: 0.5, fontWeight: 600, color: 'primary.main', bgcolor: 'primary.light' }}
               />
             </Box>
           </Box>
@@ -102,29 +109,49 @@ const StudentDetailModal = ({ open, onClose, student }) => {
                 mt: 1,
                 p: 1.5,
                 borderRadius: 2,
-                bgcolor: 'grey.50',
+                bgcolor: 'primary.light',
                 border: '1px solid',
                 borderColor: 'divider',
               }}
             >
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, mb: 1, display: 'block' }}>
-                Parent / Guardian
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                sx={{
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  mb: 1,
+                  display: 'block',
+                }}
+              >
+                {displayGuardians.length > 1 ? 'Parents / Guardians' : 'Parent / Guardian'}
               </Typography>
-              {guardianName && (
-                <Typography variant="body2" fontWeight={600}>
-                  {guardianName}
-                </Typography>
-              )}
-              {guardianPhone && (
-                <Typography variant="body2" color="text.secondary">
-                  📞 {guardianPhone}
-                </Typography>
-              )}
-              {guardianEmail && (
-                <Typography variant="body2" color="text.secondary">
-                  ✉️ {guardianEmail}
-                </Typography>
-              )}
+
+              {displayGuardians.map((g, i) => (
+                <Box key={i} sx={{ mb: i < displayGuardians.length - 1 ? 1.5 : 0 }}>
+                  {g.relationship && (
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize', fontWeight: 500 }}>
+                      {g.relationship}
+                    </Typography>
+                  )}
+                  {g.name && (
+                    <Typography variant="body2" color="primary" fontWeight={600}>
+                      {g.name}
+                    </Typography>
+                  )}
+                  {(g.phone || g.email) && (
+                    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ mt: 0.25 }}>
+                      {g.phone && (
+                        <Typography variant="body2">📞 {g.phone}</Typography>
+                      )}
+                      {g.email && (
+                        <Typography variant="body2" color="text.secondary">✉️ {g.email}</Typography>
+                      )}
+                    </Stack>
+                  )}
+                </Box>
+              ))}
             </Box>
           )}
         </Stack>

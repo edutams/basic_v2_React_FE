@@ -14,6 +14,7 @@ import {
   TableRow,
   TableCell,
   Chip,
+  Tooltip,
   useTheme,
 } from '@mui/material';
 import {
@@ -136,7 +137,8 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
 
         {/* Card 2: WEEK ATTENDANCE RATE */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
+          <Tooltip title="Click to view weekly attendance breakdown" arrow placement="top">
+            <StatCard
             colorName="warning"
             colorIndex={3}
             clickable
@@ -209,11 +211,13 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               <TrendingFlatIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
             </Stack>
           </StatCard>
+          </Tooltip>
         </Grid>
 
         {/* Card 3: TERM ATTENDANCE RATE */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
+          <Tooltip title="Click to view term attendance trend" arrow placement="top">
+            <StatCard
             colorName="info"
             colorIndex={2}
             clickable
@@ -273,36 +277,38 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               <TrendingUpIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
             </Stack>
           </StatCard>
+          </Tooltip>
         </Grid>
 
         {/* Card 4: TOTAL ABSENTEES */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            colorName="error"
-            colorIndex={4}
-            clickable
-            onClick={() =>
-              openCardModal('Absentees Summary List', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Total absentees recorded for current term session.
-                  </Typography>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow><TableCell>Learner Name</TableCell><TableCell>Class</TableCell><TableCell>Absences</TableCell></TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow><TableCell>ABDULMOJEED Hikmot</TableCell><TableCell>JS 1 A</TableCell><TableCell>4 days</TableCell></TableRow>
-                        <TableRow><TableCell>OKONKWO Chidi</TableCell><TableCell>JS 1 B</TableCell><TableCell>3 days</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ))
-            }
-            sx={{ position: 'relative' }}
-          >
+          <Tooltip title="Click to view absentees list" arrow placement="top">
+            <StatCard
+              colorName="error"
+              colorIndex={4}
+              clickable
+              onClick={() =>
+                openCardModal('Absentees Summary List', (
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Total absentees recorded for current term session.
+                    </Typography>
+                    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow><TableCell>Learner Name</TableCell><TableCell>Class</TableCell><TableCell>Absences</TableCell></TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow><TableCell>ABDULMOJEED Hikmot</TableCell><TableCell>JS 1 A</TableCell><TableCell>4 days</TableCell></TableRow>
+                          <TableRow><TableCell>OKONKWO Chidi</TableCell><TableCell>JS 1 B</TableCell><TableCell>3 days</TableCell></TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                ))
+              }
+              sx={{ position: 'relative' }}
+            >
             <Typography
               variant="caption"
               fontWeight={700}
@@ -343,11 +349,13 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               <EventNoteIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
             </Stack>
           </StatCard>
+          </Tooltip>
         </Grid>
 
         {/* Card 5: AT-RISK STUDENTS */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
+          <Tooltip title="Click to view at-risk learners" arrow placement="top">
+            <StatCard
             colorName="error"
             colorIndex={4}
             clickable
@@ -422,6 +430,7 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               <WarningIcon sx={{ fontSize: 13, color: colors.error.accentColor }} />
             </Stack>
           </StatCard>
+          </Tooltip>
         </Grid>
       </Grid>
 

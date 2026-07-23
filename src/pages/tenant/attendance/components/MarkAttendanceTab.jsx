@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -22,6 +22,7 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  CircularProgress,
   useTheme,
 } from '@mui/material';
 import {
@@ -35,61 +36,126 @@ import {
   CancelOutlined as CancelOutlinedIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
 } from '@mui/icons-material';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
-const ATTENDANCE_LEARNERS = [
-  {
-    id: 1,
-    name: 'ABDULMOJEED HIKMOT OLUWAKEMI',
-    gender: 'FEMALE',
-    tags: ['DROPOUT RISK'],
-    attendance: { Monday: 'absent', Tuesday: 'holiday', Wednesday: 'unknown', Thursday: 'present', Friday: 'present' },
-  },
-  {
-    id: 2,
-    name: 'ABUDAZEEZ ABUDQUDIRI OLUWADAMILARE',
-    gender: 'MALE',
-    tags: [],
-    attendance: { Monday: 'present', Tuesday: 'holiday', Wednesday: 'present', Thursday: 'present', Friday: 'present' },
-  },
-  {
-    id: 3,
-    name: 'ADEBAYO Olawalarami Loveth',
-    gender: 'FEMALE',
-    tags: [],
-    attendance: { Monday: 'present', Tuesday: 'holiday', Wednesday: 'present', Thursday: 'present', Friday: 'present' },
-  },
-];
-
-const weeklyTotal = (att) => Object.values(att).filter((v) => v === 'present').length;
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   // ── Filter States ─────────────────────────────────────────
-  const [attSession, setAttSession] = useState('2023/2024');
-  const [attTerm, setAttTerm] = useState('First Term');
-  const [attWeek, setAttWeek] = useState('Week 8');
-  const [attDay, setAttDay] = useState('2023-11-24');
-  const [attProgramme, setAttProgramme] = useState('Junior Secondary');
-  const [attClass, setAttClass] = useState('JS 1 A');
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [weeks, setWeeks] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [arms, setArms] = useState([]);
+
+  const [attSession, setAttSession] = useState('');
+  const [attTerm, setAttTerm] = useState('');
+  const [attWeek, setAttWeek] = useState('');
+  const [attProgramme, setAttProgramme] = useState('');
+  const [attClass, setAttClass] = useState('');
+  const [attArm, setAttArm] = useState('');
   const [attendanceType, setAttendanceType] = useState('morning');
 
-  // ── Attendance Data ───────────────────────────────────────
-  const [attendanceData, setAttendanceData] = useState(
-    ATTENDANCE_LEARNERS.reduce((acc, l) => {
-      acc[l.id] = { ...l.attendance };
-      return acc;
-    }, {}),
-  );
+  // ── Learners & Attendance Data ────────────────────────────
+  const [learners, setLearners] = useState([]);
+  const [attendanceData, setAttendanceData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // ── Load filter options ───────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [sessRes, progRes] = await Promise.all([
+          fetchSessions(),
+          fetchProgrammes(),
+        ]);
+        setSessions(sessRes.data?.data || sessRes.data || []);
+        setProgrammes(progRes.data?.data || progRes.data || []);
+      } catch (e) { console.error(e); }
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (!attSession) return;
+    fetchTerms(attSession).then((r) => setTerms(r.data?.data || r.data || [])).catch(console.error);
+  }, [attSession]);
+
+  useEffect(() => {
+    if (!attProgramme) return;
+    fetchClassesByProgramme(attProgramme).then((r) => {
+      const d = r.data?.data || r.data || [];
+      setClasses(Array.isArray(d) ? d : []);
+    }).catch(console.error);
+  }, [attProgramme]);
+
+  useEffect(() => {
+    if (!attClass) return;
+    fetchClassArmsByClass(attClass).then((r) => {
+      const d = r.data?.data || [];
+      setArms(Array.isArray(d) ? d : []);
+    }).catch(console.error);
+  }, [attClass]);
+
+  // ── Fetch Weeks when term changes ─────────────────────────
+  useEffect(() => {
+    if (!attTerm) return;
+    const fetchWeeks = async () => {
+      try {
+        const res = await attendanceApi.getWeeks(attTerm);
+        const data = res.data?.data || [];
+        setWeeks(Array.isArray(data) ? data : []);
+      } catch (e) { console.error(e); }
+    };
+    fetchWeeks();
+  }, [attTerm]);
+
+  // ── Fetch Learners & Attendance when filter applied ───────
+  const fetchLearners = useCallback(async () => {
+    if (!attArm || !attWeek) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await attendanceApi.getAttendanceLearners({
+        class_arm_id: attArm,
+        week_term_id: attWeek,
+      });
+      if (res.data?.status && res.data?.data) {
+        const data = res.data.data;
+        setLearners(data);
+        // Build attendanceData map from API
+        const attMap = {};
+        data.forEach((learner) => {
+          attMap[learner.student_reg_id] = learner.attendance || {};
+        });
+        setAttendanceData(attMap);
+      }
+    } catch (e) {
+      console.error('Failed to fetch learners:', e);
+      setError('Failed to load learners. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [attArm, attWeek]);
 
   // ── Handlers ──────────────────────────────────────────────
   const setDayStatus = (learnerId, day, status) => {
     setAttendanceData((prev) => ({
       ...prev,
-      [learnerId]: { ...prev[learnerId], [day]: status },
+      [learnerId]: { ...(prev[learnerId] || {}), [day]: status },
     }));
   };
 
@@ -98,7 +164,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       const updated = { ...prev };
       Object.keys(updated).forEach((id) => {
         if (updated[id][day] !== 'holiday') {
-          updated[id][day] = status;
+          updated[id] = { ...updated[id], [day]: status };
         }
       });
       return updated;
@@ -106,19 +172,53 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   const handleApplyFilter = () => {
-    if (onFilter) onFilter(attProgramme);
+    fetchLearners();
+    if (onFilter) onFilter(attArm);
   };
 
-  const handleSubmitAttendance = () => {
-    // Will integrate with API submit endpoint
+  const handleSubmitAttendance = async () => {
+    if (!attArm || !attWeek) return;
+    setSubmitting(true);
+    try {
+      // Group attendance changes by (day, status) and fire concurrently
+      const bulkOps = [];
+      Object.entries(attendanceData).forEach(([learnerId, days]) => {
+        Object.entries(days).forEach(([day, status]) => {
+          if (status && status !== 'unknown' && status !== 'holiday') {
+            bulkOps.push(
+              attendanceApi.markAttendance({
+                student_id: Number(learnerId),
+                week_term_id: Number(attWeek),
+                date: day,
+                status,
+              })
+            );
+          }
+        });
+      });
+
+      // Fire all requests concurrently
+      await Promise.allSettled(bulkOps);
+    } catch (e) {
+      console.error('Failed to submit attendance:', e);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ── Summary Stats ─────────────────────────────────────────
   const totalPresent = Object.values(attendanceData).reduce(
-    (sum, att) => sum + weeklyTotal(att), 0
+    (sum, att) => sum + Object.values(att).filter((v) => v === 'present').length, 0
   );
-  const totalLearners = ATTENDANCE_LEARNERS.length;
-  const attendancePercent = Math.round((totalPresent / (totalLearners * DAYS.length)) * 100);
+  const totalLearners = learners.length;
+  const attendancePercent = totalLearners > 0
+    ? Math.round((totalPresent / (totalLearners * DAY_NAMES.length)) * 100)
+    : 0;
+
+  // ── Derive days from learners' attendance data ────────────
+  const days = learners.length > 0
+    ? Object.keys(Object.values(attendanceData)[0] || {}).filter((d) => d.match(/^\d{4}-\d{2}-\d{2}$/))
+    : DAY_NAMES;
 
   return (
     <Box sx={{ pt: 1 }}>
@@ -128,15 +228,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           Learner Attendance
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<EmailIcon />}>
-            Send Alerts
-          </Button>
-          <Button variant="outlined" color="error" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<NotificationsActiveIcon />}>
-            Risk Alerts
-          </Button>
-          <Button variant="contained" color="success" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<AddIcon />}>
-            Attendance Report
-          </Button>
+          <Button variant="outlined" size="small" startIcon={<EmailIcon />}>Send Alerts</Button>
+          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />}>Risk Alerts</Button>
+          <Button variant="contained" color="success" size="small" startIcon={<AddIcon />}>Attendance Report</Button>
         </Stack>
       </Stack>
 
@@ -146,8 +240,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={attSession} label="Session" onChange={(e) => setAttSession(e.target.value)}>
-              <MenuItem value="2023/2024">2023/2024</MenuItem>
-              <MenuItem value="2024/2025">2024/2025</MenuItem>
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
@@ -155,39 +250,43 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
             <Select value={attTerm} label="Term" onChange={(e) => setAttTerm(e.target.value)}>
-              <MenuItem value="First Term">First Term</MenuItem>
-              <MenuItem value="Second Term">Second Term</MenuItem>
-              <MenuItem value="Third Term">Third Term</MenuItem>
+              {terms.map((t) => (
+                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Weeks</InputLabel>
-            <Select value={attWeek} label="Weeks" onChange={(e) => setAttWeek(e.target.value)}>
-              <MenuItem value="Week 8">Week 8</MenuItem>
-              <MenuItem value="Week 9">Week 9</MenuItem>
+            <InputLabel>Week</InputLabel>
+            <Select value={attWeek} label="Week" onChange={(e) => setAttWeek(e.target.value)}>
+              {weeks.map((w) => (
+                <MenuItem key={w.id} value={w.id}>{w.week_name || `Week ${w.week_id}`}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Days</InputLabel>
-            <Select value={attDay} label="Days" onChange={(e) => setAttDay(e.target.value)}>
-              <MenuItem value="2023-11-24">2023-11-24</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
             <Select value={attProgramme} label="Programme" onChange={(e) => setAttProgramme(e.target.value)}>
-              <MenuItem value="Junior Secondary">Junior Secondary</MenuItem>
-              <MenuItem value="Senior Secondary">Senior Secondary</MenuItem>
+              {programmes.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Class/Arm</InputLabel>
+            <Select value={attArm} label="Class/Arm" onChange={(e) => setAttArm(e.target.value)}>
+              {arms.map((a) => (
+                <MenuItem key={a.id} value={a.id}>{a.arm_names || `Arm ${a.id}`}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <Button variant="contained" size="small" fullWidth startIcon={<FilterIcon />} onClick={handleApplyFilter}>
             Filter
           </Button>
@@ -205,13 +304,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       {/* ── Attendance Table & Summary ──────────────────── */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+          )}
           <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell sx={{ minWidth: 200 }}>Learner's Name</TableCell>
-                  {DAYS.map((day) => (
+                  {days.map((day) => (
                     <TableCell key={day} align="center" sx={{ minWidth: 100 }}>
                       <Typography variant="subtitle2" fontWeight={700}>
                         {day}
@@ -239,68 +341,76 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {ATTENDANCE_LEARNERS.map((learner, idx) => {
-                  const att = attendanceData[learner.id];
-                  return (
-                    <TableRow key={learner.id} hover>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                          <Typography variant="body2" fontWeight={600}>
-                            {learner.name}
-                          </Typography>
-                          <Chip
-                            icon={learner.gender === 'MALE' ? <MaleIcon fontSize="small" /> : <FemaleIcon fontSize="small" />}
-                            label={learner.gender}
-                            size="small"
-                            color={learner.gender === 'MALE' ? 'primary' : 'success'}
-                            variant="soft"
-                            sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
-                          />
-                        </Box>
-                        {learner.tags.map((tag) => (
-                          <Chip
-                            key={tag}
-                            label={tag}
-                            size="small"
-                            color="error"
-                            sx={{ height: 16, fontSize: '9px', fontWeight: 700, mt: 0.25 }}
-                          />
-                        ))}
-                      </TableCell>
-                      {DAYS.map((day) => (
-                        <TableCell key={day} align="center">
-                          {att[day] === 'holiday' ? (
-                            <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
-                          ) : (
-                            <RadioGroup
-                              row
-                              value={att[day]}
-                              onChange={(e) => setDayStatus(learner.id, day, e.target.value)}
-                              sx={{ justifyContent: 'center' }}
-                            >
-                              <FormControlLabel value="present" control={<Radio size="small" color="success" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                              <FormControlLabel value="absent" control={<Radio size="small" color="error" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                              <FormControlLabel value="unknown" control={<Radio size="small" color="default" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                            </RadioGroup>
-                          )}
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                      <CircularProgress size={28} />
+                    </TableCell>
+                  </TableRow>
+                ) : learners.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                      {attArm && attWeek ? 'No learners found. Please apply filters.' : 'Select a class/arm and week, then click Filter.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  learners.map((learner, idx) => {
+                    const att = attendanceData[learner.student_reg_id] || {};
+                    return (
+                      <TableRow key={learner.student_reg_id} hover>
+                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography variant="body2" fontWeight={600}>{learner.name}</Typography>
+                            <Chip
+                              icon={learner.gender === 'MALE' ? <MaleIcon fontSize="small" /> : <FemaleIcon fontSize="small" />}
+                              label={learner.gender}
+                              size="small"
+                              color={learner.gender === 'MALE' ? 'primary' : 'success'}
+                              variant="soft"
+                              sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
+                            />
+                          </Box>
                         </TableCell>
-                      ))}
-                      <TableCell align="center">
-                        <Typography variant="body2" fontWeight={700}>
-                          {weeklyTotal(att)}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        {days.map((day) => (
+                          <TableCell key={day} align="center">
+                            {att[day] === 'holiday' ? (
+                              <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
+                            ) : (
+                              <RadioGroup
+                                row
+                                value={att[day] || 'unknown'}
+                                onChange={(e) => setDayStatus(learner.student_reg_id, day, e.target.value)}
+                                sx={{ justifyContent: 'center' }}
+                              >
+                                <FormControlLabel value="present" control={<Radio size="small" color="success" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
+                                <FormControlLabel value="absent" control={<Radio size="small" color="error" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
+                                <FormControlLabel value="unknown" control={<Radio size="small" color="default" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
+                              </RadioGroup>
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell align="center">
+                          <Typography variant="body2" fontWeight={700}>
+                            {Object.values(att).filter((v) => v === 'present').length}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </TableContainer>
 
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} onClick={handleSubmitAttendance}>
-              Submit Attendance
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSubmitAttendance}
+              disabled={submitting || learners.length === 0}
+            >
+              {submitting ? 'Submitting...' : 'Submit Attendance'}
             </Button>
           </Box>
         </Grid>
@@ -330,13 +440,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               <Typography variant="body2" color="text.secondary">
                 {totalPresent} present out of {totalLearners} learners
               </Typography>
-              <Typography variant="caption" color="success.main" fontWeight={600} sx={{ mt: 0.5, display: 'block' }}>
-                ↑ 90% Higher than yesterday
-              </Typography>
             </Box>
-            <Typography variant="caption" color="text.disabled" sx={{ mt: 3 }}>
-              Powered by EduTAMS
-            </Typography>
           </Paper>
         </Grid>
       </Grid>

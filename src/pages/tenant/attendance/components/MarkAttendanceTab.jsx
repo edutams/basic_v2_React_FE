@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,9 @@ import {
   FormControlLabel,
   CircularProgress,
   useTheme,
+  alpha,
+  Divider,
+  Alert,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -35,7 +38,11 @@ import {
   CheckCircle as CheckCircleIcon,
   CancelOutlined as CancelOutlinedIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  WbSunny as MorningIcon,
+  NightsStay as AfternoonIcon,
+  FileDownload as DownloadIcon
 } from '@mui/icons-material';
+import ReusableDialog from '@/components/shared/ReusableDialog';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
   fetchSessions,
@@ -46,6 +53,78 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+/**
+ * Convert a date string (YYYY-MM-DD) to a weekday name.
+ */
+const formatDayHeader = (day) => {
+  if (typeof day === 'string' && day.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const date = new Date(day + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+  return day;
+};
+
+/**
+ * Generate 5 date strings (Mon–Fri) starting from the week's start_date.
+ */
+const generateWeekDates = (startDate) => {
+  if (!startDate) return [];
+  const dates = [];
+  const start = new Date(startDate + 'T00:00:00');
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    dates.push(`${yyyy}-${mm}-${dd}`);
+  }
+  return dates;
+};
+
+/** Default morning/afternoon entry (mirrors backend). */
+const defaultPeriodEntry = () => ({
+  is_present: null,
+  reason: null,
+  datetime: null,
+});
+
+/** Build a full {morning, afternoon} content object. */
+const defaultDateContent = () => ({
+  morning: defaultPeriodEntry(),
+  afternoon: defaultPeriodEntry(),
+});
+
+/**
+ * Get the effective status string for a given period entry.
+ * Returns 'unknown' if is_present is null.
+ */
+const getPeriodStatus = (periodEntry) => {
+  if (!periodEntry || periodEntry.is_present === null || periodEntry.is_present === undefined) return 'unknown';
+  return periodEntry.is_present;
+};
+
+/**
+ * Deep-merge a new period value into an existing content object.
+ */
+const setPeriodInContent = (content, period, newStatus, reason) => {
+  const base = content && typeof content === 'object' ? { ...content } : defaultDateContent();
+  const morning = { ...(base.morning || defaultPeriodEntry()) };
+  const afternoon = { ...(base.afternoon || defaultPeriodEntry()) };
+
+  if (period === 'morning') {
+    morning.is_present = newStatus;
+    morning.reason = reason || morning.reason;
+    morning.datetime = new Date().toISOString();
+  } else {
+    afternoon.is_present = newStatus;
+    afternoon.reason = reason || afternoon.reason;
+    afternoon.datetime = new Date().toISOString();
+  }
+
+  return { morning, afternoon };
+};
 
 const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
@@ -61,6 +140,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   const [attSession, setAttSession] = useState('');
   const [attTerm, setAttTerm] = useState('');
+  const [attTermId, setAttTermId] = useState('');
   const [attWeek, setAttWeek] = useState('');
   const [attProgramme, setAttProgramme] = useState('');
   const [attClass, setAttClass] = useState('');
@@ -73,6 +153,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const submittingRef = useRef(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  // ── Week metadata from API ────────────────────────────────
+  const [weekDates, setWeekDates] = useState([]);
+  const [holidayDates, setHolidayDates] = useState({});
 
   // ── Load filter options ───────────────────────────────────
   useEffect(() => {
@@ -123,6 +209,19 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     fetchWeeks();
   }, [attTerm]);
 
+  // ── Find selected week object for its start_date ─────────
+  const selectedWeek = React.useMemo(() => {
+    if (!attWeek || weeks.length === 0) return null;
+    return weeks.find((w) => {
+      const weekId = w.wk_id ?? w.week_id ?? w.id;
+      return String(weekId) === String(attWeek);
+    });
+  }, [attWeek, weeks]);
+
+  const fallbackWeekDates = selectedWeek?.start_date
+    ? generateWeekDates(selectedWeek.start_date)
+    : [];
+
   // ── Fetch Learners & Attendance when filter applied ───────
   const fetchLearners = useCallback(async () => {
     if (!attArm || !attWeek) return;
@@ -132,14 +231,55 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       const res = await attendanceApi.getAttendanceLearners({
         class_arm_id: attArm,
         week_term_id: attWeek,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
       });
       if (res.data?.status && res.data?.data) {
-        const data = res.data.data;
-        setLearners(data);
-        // Build attendanceData map from API
+        const {
+          dates = [], holidays = {}, students = [],
+          learners_present_count, total_learners,
+          attendance_percent, comparison_diff, comparison_text,
+        } = res.data.data;
+
+        // Use backend-computed counts when available
+        if (learners_present_count !== undefined) setLearnersPresentCount(learners_present_count);
+        if (total_learners !== undefined) setTotalLearnerCount(total_learners);
+        if (attendance_percent !== undefined) setAttendancePercent(attendance_percent);
+        if (comparison_diff !== undefined) setComparisonDiff(comparison_diff);
+        if (comparison_text !== undefined) setComparisonText(comparison_text);
+
+        setWeekDates(dates.length > 0 ? dates : fallbackWeekDates);
+        setHolidayDates(holidays);
+        setLearners(students);
+
+        // Reset counts if no students returned
+        if (!students || students.length === 0) {
+          setLearnersPresentCount(0);
+          setTotalLearnerCount(0);
+          setAttendancePercent(0);
+          setComparisonDiff(0);
+          setComparisonText('');
+        }
+
+        // Build attendanceData map: learnerId -> { date -> {morning, afternoon} }
+        const dayList = dates.length > 0 ? dates : fallbackWeekDates;
         const attMap = {};
-        data.forEach((learner) => {
-          attMap[learner.student_reg_id] = learner.attendance || {};
+        students.forEach((learner) => {
+          const existing = learner.attendance || {};
+          const seeded = {};
+          dayList.forEach((date) => {
+            if (holidays[date]) {
+              // Holiday — store as special marker
+              seeded[date] = { __holiday: true };
+            } else {
+              // Use existing content from backend or default
+              const content = existing[date] && typeof existing[date] === 'object'
+                ? { ...existing[date] }
+                : defaultDateContent();
+              seeded[date] = content;
+            }
+          });
+          attMap[learner.student_reg_id] = seeded;
         });
         setAttendanceData(attMap);
       }
@@ -149,23 +289,31 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     } finally {
       setLoading(false);
     }
-  }, [attArm, attWeek]);
+  }, [attArm, attWeek]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ──────────────────────────────────────────────
-  const setDayStatus = (learnerId, day, status) => {
-    setAttendanceData((prev) => ({
-      ...prev,
-      [learnerId]: { ...(prev[learnerId] || {}), [day]: status },
-    }));
+
+  /** Update a single learner's attendance for a single date + period. */
+  const setDayStatus = (learnerId, day, status, reason) => {
+    setAttendanceData((prev) => {
+      const learnerAtt = { ...(prev[learnerId] || {}) };
+      const existingContent = learnerAtt[day] || defaultDateContent();
+      learnerAtt[day] = setPeriodInContent(existingContent, attendanceType, status, reason);
+      return { ...prev, [learnerId]: learnerAtt };
+    });
   };
 
+  /** Bulk-set all learners for a given day + period. */
   const bulkSetDayStatus = (day, status) => {
     setAttendanceData((prev) => {
       const updated = { ...prev };
       Object.keys(updated).forEach((id) => {
-        if (updated[id][day] !== 'holiday') {
-          updated[id] = { ...updated[id], [day]: status };
-        }
+        const learnerAtt = { ...(updated[id] || {}) };
+        const entry = learnerAtt[day];
+        // Skip holidays
+        if (entry && entry.__holiday) return;
+        learnerAtt[day] = setPeriodInContent(entry, attendanceType, status, null);
+        updated[id] = learnerAtt;
       });
       return updated;
     });
@@ -173,52 +321,89 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
-    if (onFilter) onFilter(attArm);
+    if (onFilter) onFilter(attArm, attSession, attTermId);
   };
 
+  const openConfirmDialog = () => setConfirmDialogOpen(true);
+  const closeConfirmDialog = () => setConfirmDialogOpen(false);
+
   const handleSubmitAttendance = async () => {
-    if (!attArm || !attWeek) return;
+    // Guard: prevent concurrent execution & double-fire
+    if (!attArm || !attWeek || submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      // Group attendance changes by (day, status) and fire concurrently
       const bulkOps = [];
       Object.entries(attendanceData).forEach(([learnerId, days]) => {
-        Object.entries(days).forEach(([day, status]) => {
-          if (status && status !== 'unknown' && status !== 'holiday') {
+        Object.entries(days).forEach(([day, content]) => {
+          if (!content || content.__holiday) return;
+
+          if (content.morning?.is_present) {
             bulkOps.push(
               attendanceApi.markAttendance({
                 student_id: Number(learnerId),
                 week_term_id: Number(attWeek),
                 date: day,
-                status,
+                period: 'morning',
+                status: content.morning.is_present,
+                reason: content.morning.reason || undefined,
+              })
+            );
+          }
+
+          if (content.afternoon?.is_present) {
+            bulkOps.push(
+              attendanceApi.markAttendance({
+                student_id: Number(learnerId),
+                week_term_id: Number(attWeek),
+                date: day,
+                period: 'afternoon',
+                status: content.afternoon.is_present,
+                reason: content.afternoon.reason || undefined,
               })
             );
           }
         });
       });
 
-      // Fire all requests concurrently
       await Promise.allSettled(bulkOps);
     } catch (e) {
       console.error('Failed to submit attendance:', e);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
   // ── Summary Stats ─────────────────────────────────────────
-  const totalPresent = Object.values(attendanceData).reduce(
-    (sum, att) => sum + Object.values(att).filter((v) => v === 'present').length, 0
-  );
-  const totalLearners = learners.length;
-  const attendancePercent = totalLearners > 0
-    ? Math.round((totalPresent / (totalLearners * DAY_NAMES.length)) * 100)
-    : 0;
+  // Learners present count from backend response (or computed locally as fallback)
+  const [learnersPresentCount, setLearnersPresentCount] = useState(0);
+  const [totalLearnerCount, setTotalLearnerCount] = useState(0);
+  const [attendancePercent, setAttendancePercent] = useState(0);
+  const [comparisonDiff, setComparisonDiff] = useState(0);
+  const [comparisonText, setComparisonText] = useState('');
 
-  // ── Derive days from learners' attendance data ────────────
-  const days = learners.length > 0
-    ? Object.keys(Object.values(attendanceData)[0] || {}).filter((d) => d.match(/^\d{4}-\d{2}-\d{2}$/))
-    : DAY_NAMES;
+  const learnersPresent = learnersPresentCount;
+  const totalLearners = totalLearnerCount || learners.length;
+
+  // ── Derive days ────────────────────────────────────────────
+  const days = React.useMemo(() => {
+    if (weekDates.length > 0) return weekDates;
+    if (learners.length > 0) {
+      const firstLearner = Object.values(attendanceData)[0];
+      if (firstLearner) {
+        const dateKeys = Object.keys(firstLearner)
+          .filter((d) => d.match(/^\d{4}-\d{2}-\d{2}$/))
+          .sort();
+        return dateKeys.length > 0 ? dateKeys : DAY_NAMES;
+      }
+    }
+    return DAY_NAMES;
+  }, [weekDates, learners, attendanceData]);
+
+  // ── Period icon/label helper ───────────────────────────────
+  const periodLabel = attendanceType === 'morning' ? 'Morning' : 'Afternoon';
+  const PeriodIcon = attendanceType === 'morning' ? MorningIcon : AfternoonIcon;
 
   return (
     <Box sx={{ pt: 1 }}>
@@ -230,7 +415,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button variant="outlined" size="small" startIcon={<EmailIcon />}>Send Alerts</Button>
           <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />}>Risk Alerts</Button>
-          <Button variant="contained" color="success" size="small" startIcon={<AddIcon />}>Attendance Report</Button>
+          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />}>Export Attendance Report</Button>
         </Stack>
       </Stack>
 
@@ -249,7 +434,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
-            <Select value={attTerm} label="Term" onChange={(e) => setAttTerm(e.target.value)}>
+            <Select value={attTerm} label="Term" onChange={(e) => {
+              const val = e.target.value;
+              setAttTerm(val);
+              const term = terms.find((t) => t.id === val);
+              if (term) setAttTermId(term.term_id);
+            }}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
@@ -294,7 +484,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={attArm} label="Class/Arm" onChange={(e) => setAttArm(e.target.value)}>
+            <Select value={attArm} label="Class Arm" onChange={(e) => setAttArm(e.target.value)}>
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
               ))}
@@ -309,10 +499,59 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       </Grid>
 
       {/* ── Morning/Afternoon Toggle ─────────────────────── */}
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
-        <RadioGroup row value={attendanceType} onChange={(e) => setAttendanceType(e.target.value)}>
-          <FormControlLabel value="morning" control={<Radio size="small" />} label="Morning" />
-          <FormControlLabel value="afternoon" control={<Radio size="small" />} label="Afternoon" />
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.5,
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1.5,
+            bgcolor: attendanceType === 'morning'
+              ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
+              : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
+            border: `1px solid ${
+              attendanceType === 'morning'
+                ? alpha(theme.palette.warning.main, 0.3)
+                : alpha(theme.palette.info.main, 0.3)
+            }`,
+          }}
+        >
+          <PeriodIcon
+            fontSize="small"
+            color={attendanceType === 'morning' ? 'warning' : 'info'}
+          />
+          <Typography variant="caption" fontWeight={600}>
+            {periodLabel} Session
+          </Typography>
+        </Box>
+        <RadioGroup
+          row
+          value={attendanceType}
+          onChange={(e) => setAttendanceType(e.target.value)}
+          sx={{ ml: 0.5 }}
+        >
+          <FormControlLabel
+            value="morning"
+            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
+            label={<Typography variant="body2">AM</Typography>}
+            sx={{ m: 0, mr: 0.5 }}
+          />
+          <FormControlLabel
+            value="afternoon"
+            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
+            label={<Typography variant="body2">PM</Typography>}
+            sx={{ m: 0 }}
+          />
         </RadioGroup>
       </Box>
 
@@ -328,31 +567,58 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell sx={{ minWidth: 200 }}>Learner's Name</TableCell>
-                  {days.map((day) => (
-                    <TableCell key={day} align="center" sx={{ minWidth: 100 }}>
-                      <Typography variant="subtitle2" fontWeight={700}>
-                        {day}
-                      </Typography>
-                      <Stack direction="row" spacing={0.25} justifyContent="center" mt={0.5}>
-                        <Tooltip title={`Mark all ${day} Present`}>
-                          <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'present')}>
-                            <CheckCircleIcon color="success" fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={`Mark all ${day} Absent`}>
-                          <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'absent')}>
-                            <CancelOutlinedIcon color="error" fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={`Clear all ${day}`}>
-                          <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'unknown')}>
-                            <RadioButtonUncheckedIcon color="action" fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  ))}
-                  <TableCell align="center">Weekly Total</TableCell>
+                  {days.map((day) => {
+                    const dayLabel = formatDayHeader(day);
+                    return (
+                      <TableCell key={day} align="center" sx={{ minWidth: 100 }}>
+                        <Box>
+                          <Typography variant="subtitle2" fontWeight={700}>
+                            {dayLabel}
+                          </Typography>
+                          {day !== dayLabel && (
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
+                              {day}
+                            </Typography>
+                          )}
+                        </Box>
+                        <Stack direction="row" spacing={0.25} justifyContent="center" mt={0.5}>
+                          <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
+                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'present')}>
+                              <CheckCircleIcon color="success" fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
+                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'absent')}>
+                              <CancelOutlinedIcon color="error" fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
+                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, null)}>
+                              <RadioButtonUncheckedIcon color="action" fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                        {/* Period indicator for the column */}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            mt: 0.5,
+                            fontSize: '9px',
+                            fontWeight: 600,
+                            color: attendanceType === 'morning'
+                              ? theme.palette.warning.main
+                              : theme.palette.info.main,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}
+                        >
+                          {periodLabel}
+                        </Typography>
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell align="center">Periods Present</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -365,7 +631,17 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 ) : learners.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
-                      {attArm && attWeek ? 'No learners found. Please apply filters.' : 'Select a class/arm and week, then click Filter.'}
+                      {attArm && attWeek ? (
+                        <Typography variant="body1" color="text.secondary">
+                          No learners found for the selected filters.
+                        </Typography>
+                      ) : (
+                        <Alert severity="info" sx={{ justifyContent: 'center', py: 2 }}>
+                          <Typography variant="body2">
+                            Select a <strong>Session</strong>, <strong>Term</strong>, <strong>Week</strong>, <strong>Programme</strong>, <strong>Class</strong>, and <strong>Class/Arm</strong> from the dropdowns above, then click the <strong>Filter</strong> button to load the attendance list.
+                          </Typography>
+                        </Alert>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -387,27 +663,63 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             />
                           </Box>
                         </TableCell>
-                        {days.map((day) => (
-                          <TableCell key={day} align="center">
-                            {att[day] === 'holiday' ? (
-                              <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
-                            ) : (
-                              <RadioGroup
-                                row
-                                value={att[day] || 'unknown'}
-                                onChange={(e) => setDayStatus(learner.student_reg_id, day, e.target.value)}
-                                sx={{ justifyContent: 'center' }}
-                              >
-                                <FormControlLabel value="present" control={<Radio size="small" color="success" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                                <FormControlLabel value="absent" control={<Radio size="small" color="error" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                                <FormControlLabel value="unknown" control={<Radio size="small" color="default" sx={{ p: 0.25 }} />} label="" sx={{ m: 0 }} />
-                              </RadioGroup>
-                            )}
-                          </TableCell>
-                        ))}
+                        {days.map((day) => {
+                          const content = att[day];
+                          const isHoliday = content?.__holiday;
+
+                          // Get the status for the currently active period
+                          const status = isHoliday
+                            ? 'holiday'
+                            : getPeriodStatus(content?.[attendanceType]);
+
+                          return (
+                            <TableCell key={day} align="center">
+                              {isHoliday ? (
+                                <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
+                              ) : (
+                                <RadioGroup
+                                  row
+                                  value={status}
+                                  onChange={(e) => setDayStatus(learner.student_reg_id, day, e.target.value)}
+                                  sx={{ justifyContent: 'center' }}
+                                >
+                                  <Tooltip title="Present">
+                                    <FormControlLabel
+                                      value="present"
+                                      control={<Radio size="small" color="success" sx={{ p: 0.25 }} />}
+                                      label=""
+                                      sx={{ m: 0 }}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="Absent">
+                                    <FormControlLabel
+                                      value="absent"
+                                      control={<Radio size="small" color="error" sx={{ p: 0.25 }} />}
+                                      label=""
+                                      sx={{ m: 0 }}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip title="Clear">
+                                    <FormControlLabel
+                                      value="unknown"
+                                      control={<Radio size="small" color="default" sx={{ p: 0.25 }} />}
+                                      label=""
+                                      sx={{ m: 0 }}
+                                    />
+                                  </Tooltip>
+                                </RadioGroup>
+                              )}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell align="center">
                           <Typography variant="body2" fontWeight={700}>
-                            {Object.values(att).filter((v) => v === 'present').length}
+                            {Object.values(att).reduce((count, content) => {
+                              if (!content || content.__holiday) return count;
+                              if (content.morning?.is_present === 'present') count++;
+                              if (content.afternoon?.is_present === 'present') count++;
+                              return count;
+                            }, 0)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -422,12 +734,45 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             <Button
               variant="contained"
               size="small"
-              onClick={handleSubmitAttendance}
+              onClick={openConfirmDialog}
               disabled={submitting || learners.length === 0}
             >
               {submitting ? 'Submitting...' : 'Submit Attendance'}
             </Button>
           </Box>
+
+          {/* ── Confirmation Dialog ──────────────────────── */}
+          <ReusableDialog
+            open={confirmDialogOpen}
+            onClose={closeConfirmDialog}
+            title="Submit Attendance"
+            content={
+              <Box sx={{ py: 2 }}>
+                <Typography variant="body1" gutterBottom fontWeight={500}>
+                  You are about to mark the attendance.
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {learners.length} learner(s) • {days.length} day(s) • AM/PM periods will be submitted.
+                </Typography>
+              </Box>
+            }
+            actions={
+              <Stack direction="row" spacing={1}>
+                <Button variant="outlined" size="small" onClick={closeConfirmDialog}>Cancel</Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    closeConfirmDialog();
+                    handleSubmitAttendance();
+                  }}
+                  autoFocus
+                >
+                  Confirm
+                </Button>
+              </Stack>
+            }
+          />
         </Grid>
 
         {/* ── Right Summary Card ─────────────────────────── */}
@@ -447,14 +792,36 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           >
             <Box>
               <Typography variant="caption" fontWeight={700} color="text.secondary">
-                TOTAL ATTENDANCE
+                LEARNER ATTENDANCE
               </Typography>
               <Typography variant="h2" fontWeight={800} color="text.primary" sx={{ my: 1 }}>
                 {attendancePercent}%
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {totalPresent} present out of {totalLearners} learners
+                {learnersPresent} present out of {totalLearners} learners
               </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  mt: 0.5,
+                  fontWeight: 600,
+                  color: comparisonDiff >= 0 ? 'success.main' : 'error.main',
+                }}
+              >
+                {comparisonText || `${attendancePercent}% - No previous week data`}
+              </Typography>
+              <Divider sx={{ my: 1.5 }} />
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">Learners</Typography>
+                  <Typography variant="body2" fontWeight={600}>{totalLearners}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary">School Days</Typography>
+                  <Typography variant="body2" fontWeight={600}>{days.length}</Typography>
+                </Box>
+              </Stack>
             </Box>
           </Paper>
         </Grid>

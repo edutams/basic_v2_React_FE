@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -17,7 +17,9 @@ import {
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
+import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 // ── Theme-aware stat card ──────────────────────────────────────
 const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
@@ -61,7 +63,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const PsychomotorAnalyticsCards = ({ metrics }) => {
+const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
@@ -69,6 +71,118 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
   const openCardModal = (cardTitle, modalBody) => {
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
+
+  // Fetch real per-trait psychomotor breakdown from API
+  const openPsychomotorBreakdown = useCallback(async (params) => {
+    try {
+      const res = await attendanceApi.getTraitBreakdown(params);
+      const data = res.data?.data || {};
+      const psyTraits = data.psychomotor || [];
+
+      if (psyTraits.length === 0) {
+        openCardModal('Psychomotor Rating Breakdown', (
+          <Typography color="text.secondary">No psychomotor assessments found for this class/week.</Typography>
+        ));
+        return;
+      }
+
+      openCardModal('Psychomotor Rating Breakdown', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Average rating per psychomotor trait (out of 5).
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'Avg Rating', data: psyTraits.map((t) => t.avg_rating) }]}
+            categories={psyTraits.map((t) => t.trait)}
+            colors={[theme.palette.primary.main]}
+            height={300}
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch trait breakdown:', e);
+      openCardModal('Psychomotor Rating Breakdown', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
+
+  // Fetch real needing support data from API
+  const openNeedingSupport = useCallback(async (params) => {
+    try {
+      const [statsRes, learnersRes] = await Promise.all([
+        attendanceApi.getPsychomotorStats(params),
+        attendanceApi.getLearnersNeedingSupport(params).catch(() => ({ data: { data: [] } })),
+      ]);
+      const stats = statsRes.data?.data || {};
+      const learners = learnersRes.data?.data || [];
+      const totalRated = stats.total_assessed || 1;
+      const realNeedingSupport = learners.length;
+      const realOnTrack = Math.max(0, totalRated - realNeedingSupport);
+
+      openCardModal('Learners Needing Support', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {realNeedingSupport} out of {totalRated} assessed learners need targeted support (avg rating &lt; 2.5).
+          </Typography>
+          <ReusablePieChart
+            series={[realNeedingSupport, realOnTrack]}
+            labels={['Needing Support', 'On Track']}
+            colors={[theme.palette.warning.main, theme.palette.success.main]}
+            height={400}
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch support data:', e);
+      openCardModal('Learners Needing Support', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
+
+  // Fetch gender rating breakdown from API
+  const openGenderBreakdown = useCallback(async (params) => {
+    try {
+      const res = await attendanceApi.getRatingByGender(params);
+      const genderData = res.data?.data || {};
+      const maleCount = genderData.male_count || 0;
+      const femaleCount = genderData.female_count || 0;
+      const maleAvg = genderData.male_rating || 0;
+      const femaleAvg = genderData.female_rating || 0;
+
+      openCardModal('Gender Rating Comparison', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Distribution of assessed learners by gender (left) and average domain rating (right).
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusablePieChart
+                series={[maleCount, femaleCount]}
+                labels={['Male', 'Female']}
+                colors={[theme.palette.primary.main, theme.palette.success.main]}
+                height={350}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusableBarChart
+                series={[{ name: 'Avg Rating', data: [maleAvg, femaleAvg] }]}
+                categories={['Male', 'Female']}
+                colors={[theme.palette.info.main]}
+                height={300}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch gender breakdown:', e);
+      openCardModal('Gender Rating Comparison', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
 
   const colors = {
     success: getStatCardColor('success', 1, isDark, theme),
@@ -129,21 +243,7 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               colorName="primary"
               colorIndex={0}
               clickable
-              onClick={() =>
-                openCardModal('Psychomotor Rating Breakdown', (
-                  <Box sx={{ py: 1 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Average rating distribution per psychomotor skill.
-                    </Typography>
-                    <ReusablePieChart
-                      series={[82, 72, 74]}
-                      labels={['Handwriting', 'Games & Sports', 'Drawing & Painting']}
-                      colors={[theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main]}
-                      height={300}
-                    />
-                  </Box>
-                ))
-              }
+              onClick={() => openPsychomotorBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
             >
               <Typography
                 variant="caption"
@@ -195,21 +295,7 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               colorName="warning"
               colorIndex={3}
               clickable
-              onClick={() =>
-                openCardModal('Learners Needing Support', (
-                  <Box sx={{ py: 1 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Students with rating scores under 3.0 needing targeted support — breakdown by domain.
-                    </Typography>
-                    <ReusablePieChart
-                      series={[45, 30, 25]}
-                      labels={['Affective Low Score', 'Psychomotor Low Score', 'Both Domains']}
-                      colors={[theme.palette.warning.main, theme.palette.error.main, theme.palette.info.main]}
-                      height={300}
-                    />
-                  </Box>
-                ))
-              }
+              onClick={() => openNeedingSupport({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
             >
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <Typography
@@ -245,21 +331,7 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               colorName="info"
               colorIndex={2}
               clickable
-              onClick={() =>
-                openCardModal('Gender Rating Comparison', (
-                  <Box sx={{ py: 1 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Affective vs psychomotor rating distribution by gender.
-                    </Typography>
-                    <ReusablePieChart
-                      series={[metrics.maleRating ?? 4.1, metrics.femaleRating ?? 4.3]}
-                      labels={['Male Avg Rating', 'Female Avg Rating']}
-                      colors={[theme.palette.primary.main, theme.palette.success.main]}
-                      height={300}
-                    />
-                  </Box>
-                ))
-              }
+              onClick={() => openGenderBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
             >
               <Typography
                 variant="caption"

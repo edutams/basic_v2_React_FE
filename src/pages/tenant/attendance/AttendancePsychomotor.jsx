@@ -61,6 +61,9 @@ const AttendancePsychomotor = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [selectedClassArmId, setSelectedClassArmId] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedTermId, setSelectedTermId] = useState(null);
 
   // ── Fetch Attendance Stats from API ─────────────────────────
   const fetchAttendanceStats = useCallback(async (params = {}) => {
@@ -114,12 +117,18 @@ const AttendancePsychomotor = () => {
   }, [fetchAttendanceStats, fetchPsychomotorStats]);
 
   // ── Filter update callbacks from child tabs ─────────────────
-  const handleAttendanceFilter = (classArmId) => {
-    fetchAttendanceStats({ class_arm_id: classArmId || undefined });
+  const handleAttendanceFilter = (classArmId, sessionId, termId) => {
+    if (classArmId) setSelectedClassArmId(classArmId);
+    if (sessionId) setSelectedSessionId(sessionId);
+    if (termId) setSelectedTermId(termId);
+    fetchAttendanceStats({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
   };
 
-  const handlePsychomotorFilter = (classArmId) => {
-    fetchPsychomotorStats({ class_arm_id: classArmId || undefined });
+  const handlePsychomotorFilter = (classArmId, sessionId, termId) => {
+    if (classArmId) setSelectedClassArmId(classArmId);
+    if (sessionId) setSelectedSessionId(sessionId);
+    if (termId) setSelectedTermId(termId);
+    fetchPsychomotorStats({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
   };
 
   // ── Build available tabs based on permissions (like PackageManager.jsx) ──
@@ -146,7 +155,7 @@ const AttendancePsychomotor = () => {
           onFilter={handleAttendanceFilter}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} />,
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} />,
     });
     counter++;
 
@@ -159,7 +168,7 @@ const AttendancePsychomotor = () => {
           onFilter={handlePsychomotorFilter}
         />
       ),
-      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} />,
+      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} />,
     });
 
     return tabs;

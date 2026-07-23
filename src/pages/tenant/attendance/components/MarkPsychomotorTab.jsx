@@ -26,7 +26,6 @@ import {
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
-  Save as SaveIcon,
   FileDownload as DownloadIcon,
   Male as MaleIcon,
   Female as FemaleIcon,
@@ -40,8 +39,7 @@ import {
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
-const AFFECTIVE_TRAITS = ['Punctuality', 'Neatness', 'Honesty'];
-const PSYCHOMOTOR_TRAITS = ['Handwriting', 'Games & Sports', 'Drawing & Painting'];
+const STORAGE_KEY = 'psychomotor_assessments';
 
 const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
@@ -57,10 +55,15 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   const [pSession, setPSession] = useState('');
   const [pTerm, setPTerm] = useState('');
+  const [pTermId, setPTermId] = useState('');
   const [pProgramme, setPProgramme] = useState('');
   const [pClass, setPClass] = useState('');
   const [pArm, setPArm] = useState('');
   const [pWeek, setPWeek] = useState('');
+
+  // ── Domain traits from API ───────────────────────────────
+  const [affectiveTraits, setAffectiveTraits] = useState([]);
+  const [psychomotorTraits, setPsychomotorTraits] = useState([]);
 
   // ── Assessment Data ───────────────────────────────────────
   const [learners, setLearners] = useState([]);
@@ -68,6 +71,32 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Load saved assessments from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          setAssessments((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved assessments:', e);
+    }
+  }, []);
+
+  // Persist assessments to localStorage on every change
+  useEffect(() => {
+    if (Object.keys(assessments).length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(assessments));
+      } catch (e) {
+        console.error('Failed to save assessments:', e);
+      }
+    }
+  }, [assessments]);
 
   // ── Pagination ────────────────────────────────────────────
   const [pPage, setPPage] = useState(0);
@@ -104,7 +133,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   useEffect(() => {
     if (!pClass) return;
     fetchClassArmsByClass(pClass).then((r) => {
-      const d = r.data?.data || r.data || [];
+      const d = r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
   }, [pClass]);
@@ -117,6 +146,20 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
     }).catch(console.error);
   }, [pTerm]);
 
+  // ── Load domain traits from API ───────────────────────────
+  useEffect(() => {
+    attendanceApi.getPsychomotorDomains({
+      session_id: pSession || undefined,
+      term_id: pTermId || undefined,
+    }).then((r) => {
+      const d = r.data?.data;
+      if (d) {
+        if (Array.isArray(d.affective_traits)) setAffectiveTraits(d.affective_traits);
+        if (Array.isArray(d.psychomotor_traits)) setPsychomotorTraits(d.psychomotor_traits);
+      }
+    }).catch(console.error);
+  }, [pSession, pTermId]);
+
   // ── Fetch Learners ────────────────────────────────────────
   const fetchLearners = useCallback(async () => {
     if (!pArm || !pWeek) return;
@@ -126,13 +169,21 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       const res = await attendanceApi.getPsychomotorLearners({
         class_arm_id: pArm,
         week_term_id: pWeek,
+        session_id: pSession || undefined,
+        term_id: pTermId || undefined,
       });
       if (res.data?.status && res.data?.data) {
-        const data = res.data.data;
-        setLearners(data);
+        const payload = res.data.data;
+        const students = payload.students || payload;
+
+        // Update domain traits from response payload
+        if (Array.isArray(payload.affective_traits)) setAffectiveTraits(payload.affective_traits);
+        if (Array.isArray(payload.psychomotor_traits)) setPsychomotorTraits(payload.psychomotor_traits);
+
+        setLearners(students);
         // Build assessments map
         const assMap = {};
-        data.forEach((l) => {
+        students.forEach((l) => {
           assMap[l.student_reg_id] = {
             affective: l.affective || {},
             psychomotor: l.psychomotor || {},
@@ -164,10 +215,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
-    if (onFilter) onFilter(pArm);
+    if (onFilter) onFilter(pArm, pSession, pTermId);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitFinal = async () => {
     setSubmitting(true);
     try {
       const assessmentData = Object.entries(assessments).map(([studentId, data]) => ({
@@ -179,8 +230,13 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       await attendanceApi.submitAssessments({
         class_arm_id: Number(pArm),
         week_term_id: Number(pWeek),
+        session_id: Number(pSession) || undefined,
+        term_id: Number(pTermId) || undefined,
         assessments: assessmentData,
       });
+
+      // Clear localStorage after successful submission
+      localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.error('Failed to submit assessments:', e);
     } finally {
@@ -188,14 +244,31 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
     }
   };
 
-  const handleExport = () => {
-    // Will integrate with export API
+  const handleExport = async () => {
+    try {
+      const res = await attendanceApi.exportPsychomotorReport({
+        class_arm_id: pArm || undefined,
+        week_term_id: pWeek || undefined,
+        session_id: pSession || undefined,
+        term_id: pTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'psychomotor-report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed:', e);
+    }
   };
 
   return (
     <Box sx={{ pt: 1 }}>
-      {/* ── Filters ─────────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+      {/* ── Filters Row ─────────────────────────────────── */}
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
@@ -209,7 +282,12 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
-            <Select value={pTerm} label="Term" onChange={(e) => setPTerm(e.target.value)}>
+            <Select value={pTerm} label="Term" onChange={(e) => {
+              const val = e.target.value;
+              setPTerm(val);
+              const term = terms.find((t) => t.id === val);
+              if (term) setPTermId(term.term_id);
+            }}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
@@ -231,7 +309,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
             <Select value={pProgramme} label="Programme" onChange={(e) => setPProgramme(e.target.value)}>
@@ -246,7 +324,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             <InputLabel>Class</InputLabel>
             <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+                <MenuItem key={c.id} value={c.id}>{c.class_name }</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -254,27 +332,28 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={pArm} label="Class/Arm" onChange={(e) => setPArm(e.target.value)}>
+            <Select value={pArm} label="Class Arm" onChange={(e) => setPArm(e.target.value)}>
               {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names || `Arm ${a.id}`}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
       </Grid>
 
-      {/* ── Action Buttons ───────────────────────────────── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 3 }} flexWrap="wrap">
-        <Button variant="contained" size="small" startIcon={<FilterIcon />} onClick={handleApplyFilter}>
-          Filter Results
-        </Button>
-        <Button variant="contained" color="success" size="small" startIcon={<SaveIcon />} onClick={handleSubmit} disabled={submitting || learners.length === 0}>
-          {submitting ? 'Saving...' : 'Save Selections'}
-        </Button>
-        <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
-          Export Report
-        </Button>
-      </Stack>
+      {/* ── Action Buttons Row (right-aligned) ─────────── */}
+      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center" justifyContent="flex-end">
+        <Grid size={{ xs: 12, sm: 'auto' }}>
+          <Button variant="contained" size="small" startIcon={<FilterIcon />} onClick={handleApplyFilter}>
+            Filter Results
+          </Button>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 'auto' }}>
+          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
+            Export Report
+          </Button>
+        </Grid>
+      </Grid>
 
       {error && (
         <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
@@ -333,7 +412,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                     {/* Affective domain */}
                     <TableCell>
                       <Stack spacing={1}>
-                        {AFFECTIVE_TRAITS.map((trait) => (
+                        {affectiveTraits.length > 0 ? affectiveTraits.map((trait) => (
                           <Stack key={trait} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1}>
                             <Typography variant="caption" sx={{ minWidth: 80, color: 'text.secondary', fontWeight: 500 }}>
                               {trait}
@@ -355,13 +434,17 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                               ))}
                             </RadioGroup>
                           </Stack>
-                        ))}
+                        )) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No affective domains configured.
+                          </Typography>
+                        )}
                       </Stack>
                     </TableCell>
                     {/* Psychomotor domain */}
                     <TableCell>
                       <Stack spacing={1}>
-                        {PSYCHOMOTOR_TRAITS.map((trait) => (
+                        {psychomotorTraits.length > 0 ? psychomotorTraits.map((trait) => (
                           <Stack key={trait} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1}>
                             <Typography variant="caption" sx={{ minWidth: 110, color: 'text.secondary', fontWeight: 500 }}>
                               {trait}
@@ -383,7 +466,11 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                               ))}
                             </RadioGroup>
                           </Stack>
-                        ))}
+                        )) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No psychomotor domains configured.
+                          </Typography>
+                        )}
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -426,7 +513,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Typography variant="body2" color="text.secondary">
           {learners.length > 0 ? `${learners.length} learners loaded.` : 'No data loaded.'}
         </Typography>
-        <Button variant="contained" size="small" onClick={handleSubmit} disabled={submitting || learners.length === 0}>
+        <Button variant="contained" size="small" onClick={handleSubmitFinal} disabled={submitting || learners.length === 0}>
           {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
         </Button>
       </Box>

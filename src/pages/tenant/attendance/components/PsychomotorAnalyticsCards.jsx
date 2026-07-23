@@ -8,12 +8,6 @@ import {
   Stack,
   Button,
   Chip,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Tooltip,
   useTheme,
 } from '@mui/material';
@@ -22,6 +16,7 @@ import {
   CheckCircleOutline as CheckCircleIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
+import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import AnalyticsModal from './AnalyticsModal';
 
 // ── Theme-aware stat card ──────────────────────────────────────
@@ -136,15 +131,16 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               clickable
               onClick={() =>
                 openCardModal('Psychomotor Rating Breakdown', (
-                  <Box>
+                  <Box sx={{ py: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Average rating distribution per psychomotor skill.
                     </Typography>
-                    <Stack spacing={1.5}>
-                      <Box><Typography variant="caption" fontWeight={700}>Handwriting: 4.1 / 5</Typography><LinearProgress variant="determinate" value={82} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                      <Box><Typography variant="caption" fontWeight={700}>Games & Sports: 3.6 / 5</Typography><LinearProgress variant="determinate" value={72} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                      <Box><Typography variant="caption" fontWeight={700}>Drawing & Painting: 3.7 / 5</Typography><LinearProgress variant="determinate" value={74} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    </Stack>
+                    <ReusablePieChart
+                      series={[82, 72, 74]}
+                      labels={['Handwriting', 'Games & Sports', 'Drawing & Painting']}
+                      colors={[theme.palette.primary.main, theme.palette.success.main, theme.palette.warning.main]}
+                      height={300}
+                    />
                   </Box>
                 ))
               }
@@ -200,22 +196,17 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               colorIndex={3}
               clickable
               onClick={() =>
-                openCardModal('Learners Needing Support List', (
-                  <Box>
+                openCardModal('Learners Needing Support', (
+                  <Box sx={{ py: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Students with rating scores under 3.0 needing targeted support.
+                      Students with rating scores under 3.0 needing targeted support — breakdown by domain.
                     </Typography>
-                    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow><TableCell>Learner</TableCell><TableCell>Weak Domain</TableCell><TableCell>Score</TableCell></TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow><TableCell>BALOGUN Joseph</TableCell><TableCell>Punctuality</TableCell><TableCell>2 / 5</TableCell></TableRow>
-                          <TableRow><TableCell>ADEKUNLE Ibrahim</TableCell><TableCell>Games & Sports</TableCell><TableCell>2 / 5</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <ReusablePieChart
+                      series={[45, 30, 25]}
+                      labels={['Affective Low Score', 'Psychomotor Low Score', 'Both Domains']}
+                      colors={[theme.palette.warning.main, theme.palette.error.main, theme.palette.info.main]}
+                      height={300}
+                    />
                   </Box>
                 ))
               }
@@ -255,22 +246,17 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
               colorIndex={2}
               clickable
               onClick={() =>
-                openCardModal('Gender Rating Detailed Comparison', (
-                  <Box>
+                openCardModal('Gender Rating Comparison', (
+                  <Box sx={{ py: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Detailed affective vs psychomotor comparison by gender.
+                      Affective vs psychomotor rating distribution by gender.
                     </Typography>
-                    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow><TableCell>Gender</TableCell><TableCell>Affective Avg</TableCell><TableCell>Psychomotor Avg</TableCell></TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow><TableCell>Male</TableCell><TableCell>4.1 / 5</TableCell><TableCell>3.7 / 5</TableCell></TableRow>
-                          <TableRow><TableCell>Female</TableCell><TableCell>4.3 / 5</TableCell><TableCell>3.9 / 5</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <ReusablePieChart
+                      series={[metrics.maleRating ?? 4.1, metrics.femaleRating ?? 4.3]}
+                      labels={['Male Avg Rating', 'Female Avg Rating']}
+                      colors={[theme.palette.primary.main, theme.palette.success.main]}
+                      height={300}
+                    />
                   </Box>
                 ))
               }

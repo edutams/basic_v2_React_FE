@@ -106,7 +106,7 @@ const SingleArmView = () => {
   // ── Load Terms when Session changes ───────────────────────
   useEffect(() => {
     if (!saSession) return;
-    const fetchTerms = async () => {
+    const loadTerms = async () => {
       try {
         const res = await fetchTerms(saSession);
         const termsData = res.data?.data || res.data || [];
@@ -115,13 +115,13 @@ const SingleArmView = () => {
         console.error('Failed to load terms:', error);
       }
     };
-    fetchTerms();
+    loadTerms();
   }, [saSession]);
 
   // ── Load Classes when Programme changes ───────────────────
   useEffect(() => {
     if (!saProgramme) return;
-    const fetchClasses = async () => {
+    const loadClasses = async () => {
       try {
         const res = await fetchClassesByProgramme(saProgramme);
         const classesData = res.data?.data || res.data || [];
@@ -132,13 +132,13 @@ const SingleArmView = () => {
         console.error('Failed to load classes:', error);
       }
     };
-    fetchClasses();
+    loadClasses();
   }, [saProgramme]);
 
   // ── Load Arms when Class changes ──────────────────────────
   useEffect(() => {
     if (!saClass) return;
-    const fetchArms = async () => {
+    const loadArms = async () => {
       try {
         const res = await fetchClassArmsByClass(saClass);
         const armsData = res.data?.data || [];
@@ -148,7 +148,7 @@ const SingleArmView = () => {
         console.error('Failed to load arms:', error);
       }
     };
-    fetchArms();
+    loadArms();
   }, [saClass]);
 
   // ── Fetch Students ────────────────────────────────────────
@@ -235,7 +235,7 @@ const SingleArmView = () => {
             <InputLabel>Term</InputLabel>
             <Select value={saTerm} label="Term" onChange={(e) => setSaTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>
               ))}
             </Select>
           </FormControl>

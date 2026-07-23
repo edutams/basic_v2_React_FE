@@ -187,7 +187,7 @@ const GeneralSubjectsTab = () => {
             <InputLabel>Term</InputLabel>
             <Select value={term} label="Term" onChange={(e) => setTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -217,7 +217,7 @@ const GeneralSubjectsTab = () => {
             <InputLabel>Arm</InputLabel>
             <Select value={classArm} label="Arm" onChange={(e) => setClassArm(e.target.value)}>
               {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names || `Arm ${a.id}`}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>{a.arm_names }</MenuItem>
               ))}
             </Select>
           </FormControl>

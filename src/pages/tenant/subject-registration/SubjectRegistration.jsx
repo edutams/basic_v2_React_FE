@@ -133,7 +133,7 @@ const LearnerProgressCard = ({ progress = 0, details = '', loading = false }) =>
             textTransform: 'uppercase',
           }}
         >
-          LEARNER PROGRESS
+          LEARNERS REGISTRATION
         </Typography>
         <Box
           sx={{

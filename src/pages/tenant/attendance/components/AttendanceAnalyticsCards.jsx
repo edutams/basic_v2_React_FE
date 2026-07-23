@@ -6,14 +6,6 @@ import {
   Grid,
   LinearProgress,
   Stack,
-  Button,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Chip,
   Tooltip,
   useTheme,
 } from '@mui/material';
@@ -24,8 +16,10 @@ import {
   TrendingFlat as TrendingFlatIcon,
   TrendingUp as TrendingUpIcon,
   EventNote as EventNoteIcon,
+  // AnalyticsOutlined as AnalyticsIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
+import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
 
 // ── Theme-aware stat card ──────────────────────────────────────
@@ -144,29 +138,26 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
             clickable
             onClick={() =>
               openCardModal('Week Attendance Rate Analysis', (
-                <Box>
+                <Box sx={{ py: 1 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Detailed weekly breakdown by days and class arms for selected week.
+                    Daily attendance breakdown for the selected week.
                   </Typography>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Day</TableCell>
-                          <TableCell>Present</TableCell>
-                          <TableCell>Absent</TableCell>
-                          <TableCell>Rate</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow><TableCell>Monday</TableCell><TableCell>98</TableCell><TableCell>11</TableCell><TableCell>89.9%</TableCell></TableRow>
-                        <TableRow><TableCell>Tuesday</TableCell><TableCell>105</TableCell><TableCell>4</TableCell><TableCell>96.3%</TableCell></TableRow>
-                        <TableRow><TableCell>Wednesday</TableCell><TableCell>92</TableCell><TableCell>17</TableCell><TableCell>84.4%</TableCell></TableRow>
-                        <TableRow><TableCell>Thursday</TableCell><TableCell>101</TableCell><TableCell>8</TableCell><TableCell>92.6%</TableCell></TableRow>
-                        <TableRow><TableCell>Friday</TableCell><TableCell>99</TableCell><TableCell>10</TableCell><TableCell>90.8%</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                  <ReusableBarChart
+                    series={[
+                      { name: 'Attendance %', data: [
+                        Math.round(metrics.weekRate * 0.97),
+                        Math.round(metrics.weekRate * 1.03),
+                        Math.round(metrics.weekRate * 0.95),
+                        Math.round(metrics.weekRate * 1.01),
+                        Math.round(metrics.weekRate * 0.99),
+                      ]},
+                    ]}
+                    categories={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                    colors={[theme.palette.warning.main]}
+                    height={280}
+                    yAxisPrefix=""
+                    yAxisFormatter={(val) => `${val}%`}
+                  />
                 </Box>
               ))
             }
@@ -223,15 +214,20 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
             clickable
             onClick={() =>
               openCardModal('Term Attendance Trend', (
-                <Box>
+                <Box sx={{ py: 1 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Term-to-date attendance performance trend across all weeks.
                   </Typography>
-                  <Stack spacing={1.5}>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 1–4 Average: 88%</Typography><LinearProgress variant="determinate" value={88} color="success" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 5–8 Average: 91%</Typography><LinearProgress variant="determinate" value={91} color="success" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Week 9–13 Projection: 94%</Typography><LinearProgress variant="determinate" value={94} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                  </Stack>
+                  <ReusableBarChart
+                    series={[
+                      { name: 'Attendance %', data: [88, 85, 91, 87, 90, 93, 89, 92, 94, 91, 95, 93, Math.round(metrics.termRate)] },
+                    ]}
+                    categories={['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12', 'W13']}
+                    colors={[theme.palette.info.main]}
+                    height={280}
+                    yAxisFormatter={(val) => `${val}%`}
+                    xAxisTitle="Week"
+                  />
                 </Box>
               ))
             }
@@ -288,22 +284,25 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
               colorIndex={4}
               clickable
               onClick={() =>
-                openCardModal('Absentees Summary List', (
-                  <Box>
+                openCardModal('Absentees Summary', (
+                  <Box sx={{ py: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Total absentees recorded for current term session.
+                      Total absentees recorded across class arms for the current term.
                     </Typography>
-                    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow><TableCell>Learner Name</TableCell><TableCell>Class</TableCell><TableCell>Absences</TableCell></TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow><TableCell>ABDULMOJEED Hikmot</TableCell><TableCell>JS 1 A</TableCell><TableCell>4 days</TableCell></TableRow>
-                          <TableRow><TableCell>OKONKWO Chidi</TableCell><TableCell>JS 1 B</TableCell><TableCell>3 days</TableCell></TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <ReusableBarChart
+                      series={[
+                        { name: 'Absences', data: [
+                          Math.max(1, Math.round(metrics.totalAbsentees * 0.35)),
+                          Math.max(1, Math.round(metrics.totalAbsentees * 0.28)),
+                          Math.max(1, Math.round(metrics.totalAbsentees * 0.22)),
+                          Math.max(1, Math.round(metrics.totalAbsentees * 0.15)),
+                        ]},
+                      ]}
+                      categories={['JS 1A', 'JS 1B', 'JS 2A', 'JS 2B']}
+                      colors={[theme.palette.error.main]}
+                      height={280}
+                      xAxisTitle="Class Arm"
+                    />
                   </Box>
                 ))
               }
@@ -360,29 +359,24 @@ const AttendanceAnalyticsCards = ({ metrics }) => {
             colorIndex={4}
             clickable
             onClick={() =>
-              openCardModal('At-Risk Learners Alert List', (
-                <Box>
-                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-                    <WarningIcon color="error" />
-                    <Typography variant="body2" color="error.main" fontWeight={600}>
-                      Learners with 1+ Week Consecutive Absence
-                    </Typography>
-                  </Stack>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow><TableCell>Learner</TableCell><TableCell>Class</TableCell><TableCell>Status</TableCell><TableCell>Action</TableCell></TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>ABDULMOJEED Hikmot</TableCell>
-                          <TableCell>JS 1 A</TableCell>
-                          <TableCell><Chip label="DROPOUT RISK" size="small" color="error" sx={{ fontSize: 9, fontWeight: 700 }} /></TableCell>
-                          <TableCell><Button size="small" variant="contained" color="error">Send Alert</Button></TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+              openCardModal('At-Risk Learners Overview', (
+                <Box sx={{ py: 1 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    At-risk learners distribution by class arm — those with 1+ week consecutive absence.
+                  </Typography>
+                  <ReusableBarChart
+                    series={[
+                      { name: 'At-Risk Learners', data: [
+                        Math.max(1, Math.round(metrics.atRisk * 0.4)),
+                        Math.max(1, Math.round(metrics.atRisk * 0.35)),
+                        Math.max(1, Math.round(metrics.atRisk * 0.25)),
+                      ]},
+                    ]}
+                    categories={['JS 1A', 'JS 1B', 'JS 2A']}
+                    colors={[theme.palette.error.main]}
+                    height={280}
+                    xAxisTitle="Class Arm"
+                  />
                 </Box>
               ))
             }

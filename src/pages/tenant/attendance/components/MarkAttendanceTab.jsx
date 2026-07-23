@@ -105,7 +105,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   useEffect(() => {
     if (!attClass) return;
     fetchClassArmsByClass(attClass).then((r) => {
-      const d = r.data?.data || [];
+      const d = r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
   }, [attClass]);
@@ -236,7 +236,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       {/* ── Filters ─────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={attSession} label="Session" onChange={(e) => setAttSession(e.target.value)}>
@@ -246,27 +246,32 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
             <Select value={attTerm} label="Term" onChange={(e) => setAttTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Week</InputLabel>
             <Select value={attWeek} label="Week" onChange={(e) => setAttWeek(e.target.value)}>
-              {weeks.map((w) => (
-                <MenuItem key={w.id} value={w.id}>{w.week_name || `Week ${w.week_id}`}</MenuItem>
-              ))}
+              {weeks.map((w) => {
+                const weekId = w.wk_id ?? w.week_id ?? w.id;
+                return (
+                  <MenuItem key={weekId} value={weekId}>
+                    {w.week_name || `Week ${weekId}`}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
             <Select value={attProgramme} label="Programme" onChange={(e) => setAttProgramme(e.target.value)}>
@@ -276,17 +281,27 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Class/Arm</InputLabel>
-            <Select value={attArm} label="Class/Arm" onChange={(e) => setAttArm(e.target.value)}>
-              {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names || `Arm ${a.id}`}</MenuItem>
+            <InputLabel>Class</InputLabel>
+            <Select value={attClass} label="Class" onChange={(e) => setAttClass(e.target.value)}>
+              {classes.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Class/Arm</InputLabel>
+            <Select value={attArm} label="Class/Arm" onChange={(e) => setAttArm(e.target.value)}>
+              {arms.map((a) => (
+                <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 1.8 }}>
           <Button variant="contained" size="small" fullWidth startIcon={<FilterIcon />} onClick={handleApplyFilter}>
             Filter
           </Button>

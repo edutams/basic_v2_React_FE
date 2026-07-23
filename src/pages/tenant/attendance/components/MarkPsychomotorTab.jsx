@@ -196,7 +196,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
     <Box sx={{ pt: 1 }}>
       {/* ── Filters ─────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
@@ -206,23 +206,28 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
             <Select value={pTerm} label="Term" onChange={(e) => setPTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Week</InputLabel>
             <Select value={pWeek} label="Week" onChange={(e) => setPWeek(e.target.value)}>
-              {weeks.map((w) => (
-                <MenuItem key={w.id} value={w.id}>{w.week_name || `Week ${w.week_id}`}</MenuItem>
-              ))}
+              {weeks.map((w) => {
+                const weekId = w.wk_id ?? w.week_id ?? w.id;
+                return (
+                  <MenuItem key={weekId} value={weekId}>
+                    {w.week_name || `Week ${weekId}`}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         </Grid>
@@ -236,7 +241,17 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Class</InputLabel>
+            <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
+              {classes.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
             <Select value={pArm} label="Class/Arm" onChange={(e) => setPArm(e.target.value)}>

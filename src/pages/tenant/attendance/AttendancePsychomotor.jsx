@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -6,9 +6,13 @@ import {
   Box,
   Tabs,
   Tab,
+  CardContent,
+  Divider,
 } from '@mui/material';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
+import SetupAffectivePsychomotorTab from './components/SetupAffectivePsychomotorTab';
 import MarkAttendanceTab from './components/MarkAttendanceTab';
 import MarkPsychomotorTab from './components/MarkPsychomotorTab';
 import AttendanceAnalyticsCards from './components/AttendanceAnalyticsCards';
@@ -20,7 +24,23 @@ const BCrumb = [
   { title: 'Attendance & Psychomotor' },
 ];
 
+function TabPanel({ children, value, index, ...other }) {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`psychomotor-tabpanel-${index}`}
+      aria-labelledby={`psychomotor-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
+
 const AttendancePsychomotor = () => {
+  const { can } = usePermissions();
+
   const [activeTab, setActiveTab] = useState(0);
 
   // ── Metrics that respond to filter changes ──────────────────
@@ -102,23 +122,67 @@ const AttendancePsychomotor = () => {
     fetchPsychomotorStats({ class_arm_id: classArmId || undefined });
   };
 
+  // ── Build available tabs based on permissions (like PackageManager.jsx) ──
+  const availableTabs = useMemo(() => {
+    const tabs = [];
+    let counter = 1;
+
+    if (can('manage.class_manager.attendance_psychomotor.setup')) {
+      tabs.push({
+        id: 'setup',
+        label: `${counter}. Setup Affective & Psychomotor Domain`,
+        component: <SetupAffectivePsychomotorTab />,
+        analytics: null, // no analytics on setup tab
+      });
+      counter++;
+    }
+
+    tabs.push({
+      id: 'mark-attendance',
+      label: `${counter}. Mark Attendance`,
+      component: (
+        <MarkAttendanceTab
+          metrics={attendanceMetrics}
+          onFilter={handleAttendanceFilter}
+        />
+      ),
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} />,
+    });
+    counter++;
+
+    tabs.push({
+      id: 'mark-psychomotor',
+      label: `${counter}. Mark Psychomotor`,
+      component: (
+        <MarkPsychomotorTab
+          metrics={psychomotorMetrics}
+          onFilter={handlePsychomotorFilter}
+        />
+      ),
+      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} />,
+    });
+
+    return tabs;
+  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter]);
+
+  // ── Ensure activeTab stays within bounds ────────────────────
+  useEffect(() => {
+    if (activeTab >= availableTabs.length) {
+      setActiveTab(0);
+    }
+  }, [availableTabs.length, activeTab]);
+
   return (
     <PageContainer title="Attendance & Psychomotor" description="Mark attendance and psychomotor assessments">
       <Breadcrumb title="Attendance & Psychomotor" items={BCrumb} />
 
       {/* ── Dynamic Analytics Cards ─────────────────────────── */}
-      {activeTab === 0 ? (
-        <AttendanceAnalyticsCards
-          metrics={attendanceMetrics}
-        />
-      ) : (
-        <PsychomotorAnalyticsCards metrics={psychomotorMetrics} />
-      )}
+      {availableTabs[activeTab]?.analytics}
 
       {/* ── Main Section with Tabs ─────────────────────────────── */}
       <ParentCard
         title={
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <Tabs
               value={activeTab}
               onChange={(_, v) => setActiveTab(v)}
@@ -133,24 +197,26 @@ const AttendancePsychomotor = () => {
                 },
               }}
             >
-              <Tab label="1. Mark Attendance" />
-              <Tab label="2. Mark Psychomotor" />
+              {availableTabs.map((tab, idx) => (
+                <Tab
+                  key={tab.id}
+                  label={tab.label}
+                  id={`psychomotor-tab-${idx}`}
+                  aria-controls={`psychomotor-tabpanel-${idx}`}
+                />
+              ))}
             </Tabs>
+            <Divider />
           </Box>
         }
       >
-        {activeTab === 0 && (
-          <MarkAttendanceTab
-            metrics={attendanceMetrics}
-            onFilter={handleAttendanceFilter}
-          />
-        )}
-        {activeTab === 1 && (
-          <MarkPsychomotorTab
-            metrics={psychomotorMetrics}
-            onFilter={handlePsychomotorFilter}
-          />
-        )}
+        <CardContent>
+          {availableTabs.map((tab, idx) => (
+            <TabPanel key={tab.id} value={activeTab} index={idx}>
+              {tab.component}
+            </TabPanel>
+          ))}
+        </CardContent>
       </ParentCard>
     </PageContainer>
   );

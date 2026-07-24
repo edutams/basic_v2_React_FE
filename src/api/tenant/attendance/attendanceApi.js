@@ -6,6 +6,8 @@ const attendanceApi = {
   getTerms: (sessionId = null) =>
     tenantApi.get('/terms', { params: sessionId ? { session_id: sessionId } : {} }),
   getWeeks: (sessionTermId) => tenantApi.get(`/weeks/${sessionTermId}`),
+  getWeeksBySessionTerm: (params = {}) =>
+    tenantApi.get('/attendance/weeks', { params }),
   getProgrammes: () => tenantApi.get('/programmes'),
   getClassesByProgramme: (programmeId) =>
     tenantApi.get(`/classes/by-programme/${programmeId}`),
@@ -22,6 +24,8 @@ const attendanceApi = {
     tenantApi.post('/attendance/mark', data),
   markBulkAttendance: (day, period, status, data) =>
     tenantApi.post('/attendance/bulk-mark', { date: day, period, status, ...data }),
+  markBatchAttendance: (data) =>
+    tenantApi.post('/attendance/batch-mark', data),
   updateAttendance: (id, data) =>
     tenantApi.put(`/attendance/${id}`, data),
   submitAttendance: (data) =>
@@ -67,10 +71,10 @@ const attendanceApi = {
     tenantApi.get('/psychomotor/trait-breakdown', { params }),
 
   // ── Alerts / Notifications ───────────────────────────────
-  sendAttendanceAlerts: (learnerIds) =>
-    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds }),
-  sendRiskAlerts: (learnerIds) =>
-    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds }),
+  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId) =>
+    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
+  sendRiskAlerts: (learnerIds, weekTermId, classArmId) =>
+    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>

@@ -55,6 +55,18 @@ export const fetchSessions = async () => {
   return response.data;
 };
 
+// Fetch current active session
+export const fetchCurrentSession = async () => {
+  const response = await api.get('/curriculum/current-session');
+  return response.data;
+};
+
+// Fetch active session term (has session_id + term_id for preselection)
+export const fetchActiveSessionTerm = async () => {
+  const response = await api.get('/curriculum/active-session-term');
+  return response.data;
+};
+
 // Fetch terms
 export const fetchTerms = async (sessionId = null) => {
   const params = sessionId ? { session_id: sessionId } : {};

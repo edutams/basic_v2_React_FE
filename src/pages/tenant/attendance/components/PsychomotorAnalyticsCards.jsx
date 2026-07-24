@@ -63,7 +63,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) => {
+const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
@@ -243,7 +243,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =
               colorName="primary"
               colorIndex={0}
               clickable
-              onClick={() => openPsychomotorBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
+              onClick={() => openPsychomotorBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
               <Typography
                 variant="caption"
@@ -295,7 +295,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =
               colorName="warning"
               colorIndex={3}
               clickable
-              onClick={() => openNeedingSupport({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
+              onClick={() => openNeedingSupport({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <Typography
@@ -331,7 +331,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =
               colorName="info"
               colorIndex={2}
               clickable
-              onClick={() => openGenderBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined })}
+              onClick={() => openGenderBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
               <Typography
                 variant="caption"

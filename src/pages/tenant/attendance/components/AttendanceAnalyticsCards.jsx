@@ -65,7 +65,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) => {
+const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
@@ -75,10 +75,10 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =>
   };
 
   // Fetch daily breakdown data for week chart
-  const openWeekBreakdown = useCallback(async (classArmId, weekId) => {
+  const openWeekBreakdown = useCallback(async (classArmId, _weekId) => {
     setAnalyticsModal({ open: true, title: 'Week Attendance Rate Analysis', content: null, loading: true });
     try {
-      const res = await attendanceApi.getDailyBreakdown({ class_arm_id: classArmId, week_term_id: weekId, session_id: sessionId || undefined, term_id: termId || undefined });
+      const res = await attendanceApi.getDailyBreakdown({ class_arm_id: classArmId, week_term_id: _weekId || weekId, session_id: sessionId || undefined, term_id: termId || undefined });
       const data = res.data?.data || [];
       openCardModal('Week Attendance Rate Analysis', (
         <Box sx={{ py: 1 }}>
@@ -135,7 +135,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =>
   const openAbsenteesBreakdown = useCallback(async () => {
     setAnalyticsModal({ open: true, title: 'Absentees Summary', content: null, loading: true });
     try {
-      const res = await attendanceApi.getAbsenteesList({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+      const res = await attendanceApi.getAbsenteesList({ class_arm_id: classArmId || undefined, week_term_id: weekId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
       const payload = res.data?.data || {};
       const byArm = payload.by_arm || [];
 
@@ -172,7 +172,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId }) =>
   const openAtRiskBreakdown = useCallback(async () => {
     setAnalyticsModal({ open: true, title: 'At-Risk Learners Overview', content: null, loading: true });
     try {
-      const res = await attendanceApi.getAtRiskLearners({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+      const res = await attendanceApi.getAtRiskLearners({ class_arm_id: classArmId || undefined, week_term_id: weekId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
       const payload = res.data?.data || {};
       const byArm = payload.by_arm || [];
 

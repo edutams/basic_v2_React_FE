@@ -27,6 +27,7 @@ import {
   alpha,
   Divider,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -50,6 +51,7 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassArmsByClass,
+  fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -155,21 +157,39 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [error, setError] = useState('');
   const submittingRef = useRef(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [alertConfirmOpen, setAlertConfirmOpen] = useState(false);
+  const [alertType, setAlertType] = useState(''); // 'attendance' | 'risk'
+  const [sendingAlert, setSendingAlert] = useState(false);
+  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
   const [holidayDates, setHolidayDates] = useState({});
 
-  // ── Load filter options ───────────────────────────────────
+  // ── Load filter options and auto-select active session/term ──
   useEffect(() => {
     const load = async () => {
       try {
-        const [sessRes, progRes] = await Promise.all([
+        const [sessRes, progRes, activeStRes] = await Promise.all([
           fetchSessions(),
           fetchProgrammes(),
+          fetchActiveSessionTerm(),
         ]);
-        setSessions(sessRes.data?.data || sessRes.data || []);
+        const sessions = sessRes.data?.data || sessRes.data || [];
+        setSessions(sessions);
         setProgrammes(progRes.data?.data || progRes.data || []);
+
+        // Auto-select session from active SessionTerm
+        const activeStData = activeStRes.data?.data || activeStRes.data;
+        if (activeStData?.session_id) {
+          setAttSession(activeStData.session_id);
+          // Also pre-set term_id from the active SessionTerm
+          if (activeStData.term_id) {
+            setAttTermId(activeStData.term_id);
+          }
+        } else if (sessions.length > 0) {
+          setAttSession(sessions[0].id);
+        }
       } catch (e) { console.error(e); }
     };
     load();
@@ -177,7 +197,19 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!attSession) return;
-    fetchTerms(attSession).then((r) => setTerms(r.data?.data || r.data || [])).catch(console.error);
+    fetchTerms(attSession).then((r) => {
+      const termsData = r.data?.data || r.data || [];
+      setTerms(termsData);
+      // Try to preselect the term matching the active SessionTerm's term_id
+      if (Array.isArray(termsData) && termsData.length > 0) {
+        const match = termsData.find((t) => String(t.id) === String(attTermId));
+        if (match) {
+          setAttTerm(match.id);
+        } else {
+          setAttTerm(termsData[0].id);
+        }
+      }
+    }).catch(console.error);
   }, [attSession]);
 
   useEffect(() => {
@@ -190,24 +222,27 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!attClass) return;
-    fetchClassArmsByClass(attClass).then((r) => {
+    fetchClassArmsByClass(attClass, { programme_id: attProgramme || undefined }).then((r) => {
       const d = r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
-  }, [attClass]);
+  }, [attClass, attProgramme]);
 
-  // ── Fetch Weeks when term changes ─────────────────────────
+  // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
-    if (!attTerm) return;
+    if (!attSession || !attTermId) return;
     const fetchWeeks = async () => {
       try {
-        const res = await attendanceApi.getWeeks(attTerm);
+        const res = await attendanceApi.getWeeksBySessionTerm({
+          session_id: attSession,
+          term_id: attTermId,
+        });
         const data = res.data?.data || [];
         setWeeks(Array.isArray(data) ? data : []);
       } catch (e) { console.error(e); }
     };
     fetchWeeks();
-  }, [attTerm]);
+  }, [attSession, attTermId]);
 
   // ── Find selected week object for its start_date ─────────
   const selectedWeek = React.useMemo(() => {
@@ -321,7 +356,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
-    if (onFilter) onFilter(attArm, attSession, attTermId);
+    if (onFilter) onFilter(attArm, attSession, attTermId, attWeek);
   };
 
   const openConfirmDialog = () => setConfirmDialogOpen(true);
@@ -333,40 +368,42 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const bulkOps = [];
+      // Build a single array of records and send ONE batch request
+      const records = [];
       Object.entries(attendanceData).forEach(([learnerId, days]) => {
         Object.entries(days).forEach(([day, content]) => {
           if (!content || content.__holiday) return;
 
-          if (content.morning?.is_present) {
-            bulkOps.push(
-              attendanceApi.markAttendance({
-                student_id: Number(learnerId),
-                week_term_id: Number(attWeek),
-                date: day,
-                period: 'morning',
-                status: content.morning.is_present,
-                reason: content.morning.reason || undefined,
-              })
-            );
+          const morningStatus = content.morning?.is_present;
+          const afternoonStatus = content.afternoon?.is_present;
+
+          if (morningStatus !== null && morningStatus !== undefined) {
+            records.push({
+              student_id: Number(learnerId),
+              week_term_id: Number(attWeek),
+              date: day,
+              period: 'morning',
+              status: morningStatus,
+              reason: content.morning.reason || undefined,
+            });
           }
 
-          if (content.afternoon?.is_present) {
-            bulkOps.push(
-              attendanceApi.markAttendance({
-                student_id: Number(learnerId),
-                week_term_id: Number(attWeek),
-                date: day,
-                period: 'afternoon',
-                status: content.afternoon.is_present,
-                reason: content.afternoon.reason || undefined,
-              })
-            );
+          if (afternoonStatus !== null && afternoonStatus !== undefined) {
+            records.push({
+              student_id: Number(learnerId),
+              week_term_id: Number(attWeek),
+              date: day,
+              period: 'afternoon',
+              status: afternoonStatus,
+              reason: content.afternoon.reason || undefined,
+            });
           }
         });
       });
 
-      await Promise.allSettled(bulkOps);
+      if (records.length > 0) {
+        await attendanceApi.markBatchAttendance({ records });
+      }
     } catch (e) {
       console.error('Failed to submit attendance:', e);
     } finally {
@@ -382,6 +419,65 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [attendancePercent, setAttendancePercent] = useState(0);
   const [comparisonDiff, setComparisonDiff] = useState(0);
   const [comparisonText, setComparisonText] = useState('');
+
+  const handleExport = async () => {
+    try {
+      const res = await attendanceApi.exportAttendanceReport({
+        class_arm_id: attArm || undefined,
+        week_term_id: attWeek || undefined,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'attendance-report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed:', e);
+    }
+  };
+
+  const handleSendAlerts = async () => {
+    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    if (ids.length === 0) {
+      setAlertSnackbar({ open: true, message: 'No learners to send alerts for', severity: 'warning' });
+      return;
+    }
+    setSendingAlert(true);
+    try {
+      const res = await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm);
+      const msg = res.data?.message || 'Alerts sent successfully';
+      setAlertSnackbar({ open: true, message: msg, severity: 'success' });
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Failed to send alerts';
+      setAlertSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setSendingAlert(false);
+    }
+  };
+
+  const handleSendRiskAlerts = async () => {
+    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    if (ids.length === 0) {
+      setAlertSnackbar({ open: true, message: 'No learners to send risk alerts for', severity: 'warning' });
+      return;
+    }
+    setSendingAlert(true);
+    try {
+      const res = await attendanceApi.sendRiskAlerts(ids, attWeek, attArm);
+      const msg = res.data?.message || 'Risk alerts sent successfully';
+      setAlertSnackbar({ open: true, message: msg, severity: 'success' });
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Failed to send risk alerts';
+      setAlertSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setSendingAlert(false);
+    }
+  };
 
   const learnersPresent = learnersPresentCount;
   const totalLearners = totalLearnerCount || learners.length;
@@ -413,9 +509,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           Learner Attendance
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<EmailIcon />}>Send Alerts</Button>
-          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />}>Risk Alerts</Button>
-          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />}>Export Attendance Report</Button>
+          <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Send Alerts'}</Button>
+          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />} onClick={() => { setAlertType('risk'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Risk Alerts'}</Button>
+          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>Export Attendance Report</Button>
         </Stack>
       </Stack>
 
@@ -438,7 +534,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               const val = e.target.value;
               setAttTerm(val);
               const term = terms.find((t) => t.id === val);
-              if (term) setAttTermId(term.term_id);
+              if (term) setAttTermId(term.id);
             }}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
@@ -593,7 +689,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
-                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, null)}>
+                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'unknown')}>
                               <RadioButtonUncheckedIcon color="action" fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -826,6 +922,60 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           </Paper>
         </Grid>
       </Grid>
+
+      <ReusableDialog
+        open={alertConfirmOpen}
+        onClose={() => setAlertConfirmOpen(false)}
+        title={alertType === 'risk' ? 'Send Risk Alerts' : 'Send Attendance Alerts'}
+        content={
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" gutterBottom fontWeight={500}>
+              You are about to send an email alert to the guardian{learners.length > 1 ? 's of ' + learners.length + ' learners' : " of " + (learners[0]?.name || 'this learner')}.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {alertType === 'risk'
+                ? 'Risk alerts notify guardians that their ward is at risk due to poor attendance.'
+                : 'Attendance alerts provide guardians with a weekly attendance summary for their ward.'}
+            </Typography>
+          </Box>
+        }
+        actions={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={() => setAlertConfirmOpen(false)}>Cancel</Button>
+            <Button
+              variant={alertType === 'risk' ? 'contained' : 'contained'}
+              color={alertType === 'risk' ? 'error' : 'primary'}
+              size="small"
+              onClick={() => {
+                setAlertConfirmOpen(false);
+                if (alertType === 'risk') {
+                  handleSendRiskAlerts();
+                } else {
+                  handleSendAlerts();
+                }
+              }}
+              autoFocus
+            >
+              Send
+            </Button>
+          </Stack>
+        }
+      />
+
+      <Snackbar
+        open={alertSnackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={alertSnackbar.severity}
+          onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+          variant="filled"
+        >
+          {alertSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

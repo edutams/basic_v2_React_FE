@@ -30,7 +30,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
     <Paper
       elevation={0}
       sx={{
-        p: 3,
+        p: 2,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
         border: isDark
@@ -52,20 +52,15 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         <Typography variant="h6" fontWeight={700} color="text.primary">
           Class Enrollment Breakdown
         </Typography>
-        {/* <Button size="small" variant="text" sx={{ fontWeight: 600, color: 'primary.main', textTransform: 'none' }}>
-          View Detailed Report
-        </Button> */}
       </Stack>
 
-      {/* ── Scroll Hint Info ───────────────────────────────── */}
       {isScrollable && (
         <Alert
-          icon={<InfoIcon sx={{ fontSize: 16 }} />}
           severity="info"
           sx={{
             py: 0.5,
             px: 1.5,
-            mb: 1.5,
+            mb: 2,
             borderRadius: '8px',
             fontSize: '12px',
             '& .MuiAlert-message': { fontWeight: 500 },
@@ -127,7 +122,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         borderRadius: '12px',
                         border: isDark
                           ? '1px solid rgba(255,255,255,0.08)'
-                          : `1px solid ${itemColors.borderColor}`,
+                          : `1px solid ${itemColors.accentColor}`,
                         background: isDark ? 'rgba(255,255,255,0.02)' : itemColors.cardBg,
                         boxShadow: isDark
                           ? '0 8px 20px rgba(0,0,0,0.35)'
@@ -137,13 +132,6 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: isDark
-                            ? '0 12px 24px rgba(0,0,0,0.45)'
-                            : '0 8px 20px rgba(0,0,0,0.16)',
-                          borderColor: itemColors.accentColor,
-                        },
                       }}
                     >
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>

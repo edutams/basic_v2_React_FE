@@ -51,7 +51,6 @@ import ChangeClassModal from './ChangeClassModal';
 const SingleArmView = () => {
   const theme = useTheme();
 
-  // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [terms, setTerms] = useState([]);
   const [programmes, setProgrammes] = useState([]);
@@ -65,16 +64,13 @@ const SingleArmView = () => {
   const [saArm, setSaArm] = useState('');
   const [saSearch, setSaSearch] = useState('');
 
-  // ── Student Data States ───────────────────────────────────
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(true);
   const [meta, setMeta] = useState(null);
 
-  // ── Parent Data (fetched separately per student) ─────────
   const [parentsMap, setParentsMap] = useState({});
 
-  // ── Menu / Modal States ───────────────────────────────────
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -86,7 +82,6 @@ const SingleArmView = () => {
   const [saPage, setSaPage] = useState(0);
   const [saRowsPerPage, setSaRowsPerPage] = useState(15);
 
-  // ── Load Filter Data ──────────────────────────────────────
   const loadFilterData = useCallback(async () => {
     setLoadingFilters(true);
     try {
@@ -194,7 +189,6 @@ const SingleArmView = () => {
     loadArms();
   }, [saClass, saProgramme]);
 
-  // ── Fetch Students ────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
     if (!saArm) return;
 
@@ -220,12 +214,11 @@ const SingleArmView = () => {
   }, [saArm, saSearch, saPage, saRowsPerPage]);
 
   useEffect(() => {
-    if (saArm) {
+    if (students.length > 0) {
       fetchStudents();
     }
-  }, [saArm, saPage, saRowsPerPage, fetchStudents]);
+  }, [saPage, saRowsPerPage]);
 
-  // ── Fetch parent/guardian data for each student ──────────
   useEffect(() => {
     if (students.length === 0) {
       setParentsMap({});
@@ -235,10 +228,8 @@ const SingleArmView = () => {
     let cancelled = false;
 
     const fetchParents = async () => {
-      // Pre-fill with null so cells show '—' while loading doesn't stick
       const initialMap = {};
       students.forEach((s) => { initialMap[s.student_reg_id] = null; });
-      // Don't set yet, wait for results so we don't flash
 
       const results = await Promise.allSettled(
         students.map((s) => {
@@ -280,7 +271,6 @@ const SingleArmView = () => {
     return () => { cancelled = true; };
   }, [students]);
 
-  // ── Handlers ──────────────────────────────────────────────
   const handleMenuOpen = (e, row) => {
     setAnchorEl(e.currentTarget);
     setSelectedRow(row);
@@ -325,7 +315,6 @@ const SingleArmView = () => {
 
   return (
     <Box sx={{ pt: 1 }}>
-      {/* ── Filter Row ────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <FormControl fullWidth size="small">
@@ -379,7 +368,6 @@ const SingleArmView = () => {
         </Grid>
       </Grid>
 
-      {/* ── Search & Action Row ──────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
@@ -388,7 +376,6 @@ const SingleArmView = () => {
             placeholder="Search by learner name or ID..."
             value={saSearch}
             onChange={(e) => setSaSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -570,7 +557,6 @@ const SingleArmView = () => {
         </Table>
       </TableContainer>
 
-      {/* ── Pagination ──────────────────────────────────── */}
       {meta && (
         <Box sx={{ pt: 2 }}>
           <TablePagination
@@ -587,7 +573,6 @@ const SingleArmView = () => {
         </Box>
       )}
 
-      {/* ── Context Menu ────────────────────────────────── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -604,7 +589,6 @@ const SingleArmView = () => {
         </MenuItem>
       </Menu>
 
-      {/* ── Modals ──────────────────────────────────────── */}
       <StudentDetailModal
         open={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}

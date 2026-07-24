@@ -64,6 +64,7 @@ const AttendancePsychomotor = () => {
   const [selectedClassArmId, setSelectedClassArmId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTermId, setSelectedTermId] = useState(null);
+  const [selectedWeekId, setSelectedWeekId] = useState(null);
 
   // ── Fetch Attendance Stats from API ─────────────────────────
   const fetchAttendanceStats = useCallback(async (params = {}) => {
@@ -117,18 +118,30 @@ const AttendancePsychomotor = () => {
   }, [fetchAttendanceStats, fetchPsychomotorStats]);
 
   // ── Filter update callbacks from child tabs ─────────────────
-  const handleAttendanceFilter = (classArmId, sessionId, termId) => {
+  const handleAttendanceFilter = (classArmId, sessionId, termId, weekId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
-    fetchAttendanceStats({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+    if (weekId) setSelectedWeekId(weekId);
+    fetchAttendanceStats({
+      class_arm_id: classArmId || undefined,
+      session_id: sessionId || undefined,
+      term_id: termId || undefined,
+      week_term_id: weekId || undefined,
+    });
   };
 
-  const handlePsychomotorFilter = (classArmId, sessionId, termId) => {
+  const handlePsychomotorFilter = (classArmId, sessionId, termId, weekId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
-    fetchPsychomotorStats({ class_arm_id: classArmId || undefined, session_id: sessionId || undefined, term_id: termId || undefined });
+    if (weekId) setSelectedWeekId(weekId);
+    fetchPsychomotorStats({
+      class_arm_id: classArmId || undefined,
+      session_id: sessionId || undefined,
+      term_id: termId || undefined,
+      week_term_id: weekId || undefined,
+    });
   };
 
   // ── Build available tabs based on permissions (like PackageManager.jsx) ──
@@ -155,7 +168,7 @@ const AttendancePsychomotor = () => {
           onFilter={handleAttendanceFilter}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} />,
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
     });
     counter++;
 
@@ -168,7 +181,7 @@ const AttendancePsychomotor = () => {
           onFilter={handlePsychomotorFilter}
         />
       ),
-      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} />,
+      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
     });
 
     return tabs;

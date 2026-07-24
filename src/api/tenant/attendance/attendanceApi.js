@@ -6,6 +6,8 @@ const attendanceApi = {
   getTerms: (sessionId = null) =>
     tenantApi.get('/terms', { params: sessionId ? { session_id: sessionId } : {} }),
   getWeeks: (sessionTermId) => tenantApi.get(`/weeks/${sessionTermId}`),
+  getWeeksBySessionTerm: (params = {}) =>
+    tenantApi.get('/attendance/weeks', { params }),
   getProgrammes: () => tenantApi.get('/programmes'),
   getClassesByProgramme: (programmeId) =>
     tenantApi.get(`/classes/by-programme/${programmeId}`),
@@ -22,6 +24,8 @@ const attendanceApi = {
     tenantApi.post('/attendance/mark', data),
   markBulkAttendance: (day, period, status, data) =>
     tenantApi.post('/attendance/bulk-mark', { date: day, period, status, ...data }),
+  markBatchAttendance: (data) =>
+    tenantApi.post('/attendance/batch-mark', data),
   updateAttendance: (id, data) =>
     tenantApi.put(`/attendance/${id}`, data),
   submitAttendance: (data) =>

@@ -50,6 +50,7 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassArmsByClass,
+  fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -160,16 +161,30 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [weekDates, setWeekDates] = useState([]);
   const [holidayDates, setHolidayDates] = useState({});
 
-  // ── Load filter options ───────────────────────────────────
+  // ── Load filter options and auto-select active session/term ──
   useEffect(() => {
     const load = async () => {
       try {
-        const [sessRes, progRes] = await Promise.all([
+        const [sessRes, progRes, activeStRes] = await Promise.all([
           fetchSessions(),
           fetchProgrammes(),
+          fetchActiveSessionTerm(),
         ]);
-        setSessions(sessRes.data?.data || sessRes.data || []);
+        const sessions = sessRes.data?.data || sessRes.data || [];
+        setSessions(sessions);
         setProgrammes(progRes.data?.data || progRes.data || []);
+
+        // Auto-select session from active SessionTerm
+        const activeStData = activeStRes.data?.data || activeStRes.data;
+        if (activeStData?.session_id) {
+          setAttSession(activeStData.session_id);
+          // Also pre-set term_id from the active SessionTerm
+          if (activeStData.term_id) {
+            setAttTermId(activeStData.term_id);
+          }
+        } else if (sessions.length > 0) {
+          setAttSession(sessions[0].id);
+        }
       } catch (e) { console.error(e); }
     };
     load();
@@ -177,7 +192,19 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!attSession) return;
-    fetchTerms(attSession).then((r) => setTerms(r.data?.data || r.data || [])).catch(console.error);
+    fetchTerms(attSession).then((r) => {
+      const termsData = r.data?.data || r.data || [];
+      setTerms(termsData);
+      // Try to preselect the term matching the active SessionTerm's term_id
+      if (Array.isArray(termsData) && termsData.length > 0) {
+        const match = termsData.find((t) => String(t.id) === String(attTermId));
+        if (match) {
+          setAttTerm(match.id);
+        } else {
+          setAttTerm(termsData[0].id);
+        }
+      }
+    }).catch(console.error);
   }, [attSession]);
 
   useEffect(() => {
@@ -190,24 +217,27 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!attClass) return;
-    fetchClassArmsByClass(attClass).then((r) => {
+    fetchClassArmsByClass(attClass, { programme_id: attProgramme || undefined }).then((r) => {
       const d = r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
-  }, [attClass]);
+  }, [attClass, attProgramme]);
 
-  // ── Fetch Weeks when term changes ─────────────────────────
+  // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
-    if (!attTerm) return;
+    if (!attSession || !attTermId) return;
     const fetchWeeks = async () => {
       try {
-        const res = await attendanceApi.getWeeks(attTerm);
+        const res = await attendanceApi.getWeeksBySessionTerm({
+          session_id: attSession,
+          term_id: attTermId,
+        });
         const data = res.data?.data || [];
         setWeeks(Array.isArray(data) ? data : []);
       } catch (e) { console.error(e); }
     };
     fetchWeeks();
-  }, [attTerm]);
+  }, [attSession, attTermId]);
 
   // ── Find selected week object for its start_date ─────────
   const selectedWeek = React.useMemo(() => {
@@ -321,7 +351,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
-    if (onFilter) onFilter(attArm, attSession, attTermId);
+    if (onFilter) onFilter(attArm, attSession, attTermId, attWeek);
   };
 
   const openConfirmDialog = () => setConfirmDialogOpen(true);
@@ -333,40 +363,42 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const bulkOps = [];
+      // Build a single array of records and send ONE batch request
+      const records = [];
       Object.entries(attendanceData).forEach(([learnerId, days]) => {
         Object.entries(days).forEach(([day, content]) => {
           if (!content || content.__holiday) return;
 
-          if (content.morning?.is_present) {
-            bulkOps.push(
-              attendanceApi.markAttendance({
-                student_id: Number(learnerId),
-                week_term_id: Number(attWeek),
-                date: day,
-                period: 'morning',
-                status: content.morning.is_present,
-                reason: content.morning.reason || undefined,
-              })
-            );
+          const morningStatus = content.morning?.is_present;
+          const afternoonStatus = content.afternoon?.is_present;
+
+          if (morningStatus !== null && morningStatus !== undefined) {
+            records.push({
+              student_id: Number(learnerId),
+              week_term_id: Number(attWeek),
+              date: day,
+              period: 'morning',
+              status: morningStatus,
+              reason: content.morning.reason || undefined,
+            });
           }
 
-          if (content.afternoon?.is_present) {
-            bulkOps.push(
-              attendanceApi.markAttendance({
-                student_id: Number(learnerId),
-                week_term_id: Number(attWeek),
-                date: day,
-                period: 'afternoon',
-                status: content.afternoon.is_present,
-                reason: content.afternoon.reason || undefined,
-              })
-            );
+          if (afternoonStatus !== null && afternoonStatus !== undefined) {
+            records.push({
+              student_id: Number(learnerId),
+              week_term_id: Number(attWeek),
+              date: day,
+              period: 'afternoon',
+              status: afternoonStatus,
+              reason: content.afternoon.reason || undefined,
+            });
           }
         });
       });
 
-      await Promise.allSettled(bulkOps);
+      if (records.length > 0) {
+        await attendanceApi.markBatchAttendance({ records });
+      }
     } catch (e) {
       console.error('Failed to submit attendance:', e);
     } finally {
@@ -382,6 +414,27 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [attendancePercent, setAttendancePercent] = useState(0);
   const [comparisonDiff, setComparisonDiff] = useState(0);
   const [comparisonText, setComparisonText] = useState('');
+
+  const handleExport = async () => {
+    try {
+      const res = await attendanceApi.exportAttendanceReport({
+        class_arm_id: attArm || undefined,
+        week_term_id: attWeek || undefined,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'attendance-report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed:', e);
+    }
+  };
 
   const learnersPresent = learnersPresentCount;
   const totalLearners = totalLearnerCount || learners.length;
@@ -415,7 +468,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button variant="outlined" size="small" startIcon={<EmailIcon />}>Send Alerts</Button>
           <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />}>Risk Alerts</Button>
-          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />}>Export Attendance Report</Button>
+          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>Export Attendance Report</Button>
         </Stack>
       </Stack>
 
@@ -438,7 +491,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               const val = e.target.value;
               setAttTerm(val);
               const term = terms.find((t) => t.id === val);
-              if (term) setAttTermId(term.term_id);
+              if (term) setAttTermId(term.id);
             }}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
@@ -593,7 +646,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
-                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, null)}>
+                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'unknown')}>
                               <RadioButtonUncheckedIcon color="action" fontSize="small" />
                             </IconButton>
                           </Tooltip>

@@ -37,6 +37,7 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassArmsByClass,
+  fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const STORAGE_KEY = 'psychomotor_assessments';
@@ -102,16 +103,30 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [pPage, setPPage] = useState(0);
   const [pRowsPerPage, setPRowsPerPage] = useState(10);
 
-  // ── Load Filters ──────────────────────────────────────────
+  // ── Load Filters and auto-select active session/term ────────
   useEffect(() => {
     const load = async () => {
       try {
-        const [sessRes, progRes] = await Promise.all([
+        const [sessRes, progRes, activeStRes] = await Promise.all([
           fetchSessions(),
           fetchProgrammes(),
+          fetchActiveSessionTerm(),
         ]);
-        setSessions(sessRes.data?.data || sessRes.data || []);
+        const sessions = sessRes.data?.data || sessRes.data || [];
+        setSessions(sessions);
         setProgrammes(progRes.data?.data || progRes.data || []);
+
+        // Auto-select session from active SessionTerm
+        const activeStData = activeStRes.data?.data || activeStRes.data;
+        if (activeStData?.session_id) {
+          setPSession(activeStData.session_id);
+          // Also pre-set term_id from the active SessionTerm
+          if (activeStData.term_id) {
+            setPTermId(activeStData.term_id);
+          }
+        } else if (sessions.length > 0) {
+          setPSession(sessions[0].id);
+        }
       } catch (e) { console.error(e); }
     };
     load();
@@ -119,7 +134,19 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!pSession) return;
-    fetchTerms(pSession).then((r) => setTerms(r.data?.data || r.data || [])).catch(console.error);
+    fetchTerms(pSession).then((r) => {
+      const termsData = r.data?.data || r.data || [];
+      setTerms(termsData);
+      // Try to preselect the term matching the active SessionTerm's term_id
+      if (Array.isArray(termsData) && termsData.length > 0) {
+        const match = termsData.find((t) => String(t.id) === String(pTermId));
+        if (match) {
+          setPTerm(match.id);
+        } else {
+          setPTerm(termsData[0].id);
+        }
+      }
+    }).catch(console.error);
   }, [pSession]);
 
   useEffect(() => {
@@ -132,19 +159,23 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   useEffect(() => {
     if (!pClass) return;
-    fetchClassArmsByClass(pClass).then((r) => {
+    fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined }).then((r) => {
       const d = r.data || [];
       setArms(Array.isArray(d) ? d : []);
     }).catch(console.error);
-  }, [pClass]);
+  }, [pClass, pProgramme]);
 
+  // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
-    if (!pTerm) return;
-    attendanceApi.getWeeks(pTerm).then((r) => {
+    if (!pSession || !pTermId) return;
+    attendanceApi.getWeeksBySessionTerm({
+      session_id: pSession,
+      term_id: pTermId,
+    }).then((r) => {
       const d = r.data?.data || [];
       setWeeks(Array.isArray(d) ? d : []);
     }).catch(console.error);
-  }, [pTerm]);
+  }, [pSession, pTermId]);
 
   // ── Load domain traits from API ───────────────────────────
   useEffect(() => {
@@ -215,7 +246,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
-    if (onFilter) onFilter(pArm, pSession, pTermId);
+    if (onFilter) onFilter(pArm, pSession, pTermId, pWeek);
   };
 
   const handleSubmitFinal = async () => {
@@ -255,7 +286,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'psychomotor-report.pdf');
+      link.setAttribute('download', 'psychomotor-report.xlsx');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -286,7 +317,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
               const val = e.target.value;
               setPTerm(val);
               const term = terms.find((t) => t.id === val);
-              if (term) setPTermId(term.term_id);
+              if (term) setPTermId(term.id);
             }}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>

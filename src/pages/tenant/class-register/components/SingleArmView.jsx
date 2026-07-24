@@ -95,11 +95,22 @@ const SingleArmView = () => {
         fetchProgrammes(),
       ]);
 
-      const sessionsData = sessRes.data?.data || sessRes.data || [];
-      const programmesData = progRes.data?.data || progRes.data || [];
+      const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+        ? sessRes.data?.data || sessRes.data
+        : [];
+      const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+        ? progRes.data?.data || progRes.data
+        : [];
 
-      setSessions(Array.isArray(sessionsData) ? sessionsData : []);
-      setProgrammes(Array.isArray(programmesData) ? programmesData : []);
+      setSessions(sessionsData);
+      setProgrammes(programmesData);
+
+      const activeSess =
+        sessionsData.find((s) => s.status === 'active' || s.is_current || s.is_active) ||
+        sessionsData[0];
+      if (activeSess) {
+        setSaSession(activeSess.id);
+      }
     } catch (error) {
       console.error('Failed to load filter data:', error);
     } finally {
@@ -117,8 +128,16 @@ const SingleArmView = () => {
     const loadTerms = async () => {
       try {
         const res = await fetchTerms(saSession);
-        const termsData = res.data?.data || res.data || [];
-        setTerms(Array.isArray(termsData) ? termsData : []);
+        const termsData = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setTerms(termsData);
+        const activeTerm =
+          termsData.find((t) => t.status === 'active' || t.is_current || t.is_active) ||
+          termsData[0];
+        if (activeTerm) {
+          setSaTerm(activeTerm.id);
+        }
       } catch (error) {
         console.error('Failed to load terms:', error);
       }
@@ -128,12 +147,19 @@ const SingleArmView = () => {
 
   // ── Load Classes when Programme changes ───────────────────
   useEffect(() => {
-    if (!saProgramme) return;
+    if (!saProgramme) {
+      setClasses([]);
+      setSaClass('');
+      setSaArm('');
+      return;
+    }
     const loadClasses = async () => {
       try {
         const res = await fetchClassesByProgramme(saProgramme);
-        const classesData = res.data?.data || res.data || [];
-        setClasses(Array.isArray(classesData) ? classesData : []);
+        const classesData = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setClasses(classesData);
         setSaClass('');
         setSaArm('');
       } catch (error) {
@@ -143,21 +169,30 @@ const SingleArmView = () => {
     loadClasses();
   }, [saProgramme]);
 
-  // ── Load Arms when Class changes ──────────────────────────
+  // ── Load Arms when Class or Programme changes ───────────────
   useEffect(() => {
-    if (!saClass) return;
+    if (!saClass) {
+      setArms([]);
+      setSaArm('');
+      return;
+    }
     const loadArms = async () => {
       try {
-        const res = await fetchClassArmsByClass(saClass);
-        const armsData = res.data?.data || res.data || [];
-        setArms(Array.isArray(armsData) ? armsData : []);
+        const res = await fetchClassArmsByClass(
+          saClass,
+          saProgramme ? { programme_id: saProgramme } : {}
+        );
+        const armsData = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setArms(armsData);
         setSaArm('');
       } catch (error) {
         console.error('Failed to load arms:', error);
       }
     };
     loadArms();
-  }, [saClass]);
+  }, [saClass, saProgramme]);
 
   // ── Fetch Students ────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
@@ -183,6 +218,12 @@ const SingleArmView = () => {
       setLoadingStudents(false);
     }
   }, [saArm, saSearch, saPage, saRowsPerPage]);
+
+  useEffect(() => {
+    if (saArm) {
+      fetchStudents();
+    }
+  }, [saArm, saPage, saRowsPerPage, fetchStudents]);
 
   // ── Fetch parent/guardian data for each student ──────────
   useEffect(() => {

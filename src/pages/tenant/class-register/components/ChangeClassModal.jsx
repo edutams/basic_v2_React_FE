@@ -13,12 +13,15 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Paper,
+  Chip,
 } from '@mui/material';
 import { SwapHoriz as ChangeClassIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 
 const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
   const [enrollmentData, setEnrollmentData] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedArmId, setSelectedArmId] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,25 +52,34 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     loadEnrollmentData();
   }, [open]);
 
-  // ── Reset state on open ───────────────────────────────────
+  // ── Pre-select current class/arm on open ──────────────────
   useEffect(() => {
-    if (open) {
-      setSelectedArmId('');
+    if (open && student) {
+      // Find which class entry contains the student's current arm
+      const currentClassEntry = enrollmentData.find((cls) =>
+        (cls.arms || []).some((arm) => Number(arm.arm_id) === Number(student.class_arm_id))
+      );
+      setSelectedClassId(currentClassEntry?.class_id ?? '');
+      setSelectedArmId(student.class_arm_id || '');
       setError('');
     }
-  }, [open]);
+  }, [open, student, enrollmentData]);
 
-  // ── Flatten class + arm into selectable options ────────────
-  const armOptions = enrollmentData.flatMap((cls) =>
-    (cls.arms || []).map((arm) => ({
-      armId: arm.arm_id,
-      label: `${cls.class_name} (${cls.total}) — ${arm.arm_name} (${arm.count})`,
-      className: cls.class_name,
-      classTotal: cls.total,
-      armName: arm.arm_name,
-      armCount: arm.count,
-    }))
+  // ── Arms for the selected class ───────────────────────────
+  const selectedClassEntry = enrollmentData.find(
+    (cls) => String(cls.class_id) === String(selectedClassId)
   );
+  const armOptions = (selectedClassEntry?.arms || []).map((arm) => ({
+    armId: arm.arm_id,
+    armName: arm.arm_name,
+    count: arm.count,
+    isCurrent: Number(arm.arm_id) === Number(student?.class_arm_id),
+  }));
+
+  const handleClassChange = (e) => {
+    setSelectedClassId(e.target.value);
+    setSelectedArmId(''); // reset arm when class changes
+  };
 
   const handleSave = async () => {
     if (!selectedArmId) {
@@ -98,15 +110,49 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
         <ChangeClassIcon color="primary" />
         Change Student Class Arm
       </DialogTitle>
+
       <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
+        <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Transfer{' '}
             <Typography component="span" color="primary" fontWeight={700}>
               {student?.name}
             </Typography>{' '}
-            to a different class arm.
+            to a different class or arm.
           </Typography>
+
+          {/* Current Class & Arm Banner */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={700}
+              sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.5 }}
+            >
+              Current Class &amp; Arm
+            </Typography>
+            <Chip
+              label={
+                student.class_arm ||
+                (student.class_name
+                  ? `${student.class_name} (${student.arm_name || ''})`
+                  : 'Not Assigned')
+              }
+              size="small"
+              color="primary"
+              variant="filled"
+              sx={{ fontWeight: 700 }}
+            />
+          </Paper>
 
           {error && (
             <Alert severity="error" sx={{ '& .MuiAlert-icon': { mr: 1 } }}>
@@ -114,12 +160,13 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
             </Alert>
           )}
 
+          {/* Class filter */}
           <FormControl fullWidth size="small">
-            <InputLabel>New Class &amp; Arm</InputLabel>
+            <InputLabel>Select Class</InputLabel>
             <Select
-              value={selectedArmId}
-              label="New Class & Arm"
-              onChange={(e) => setSelectedArmId(e.target.value)}
+              value={selectedClassId}
+              label="Select Class"
+              onChange={handleClassChange}
               disabled={loading}
             >
               {loading ? (
@@ -127,27 +174,90 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                   <CircularProgress size={16} sx={{ mr: 1 }} />
                   Loading classes...
                 </MenuItem>
-              ) : armOptions.length === 0 ? (
+              ) : enrollmentData.length === 0 ? (
                 <MenuItem disabled value="">
-                  No classes or arms available
+                  No classes available
                 </MenuItem>
               ) : (
-                armOptions.map((opt) => (
-                  <MenuItem key={opt.armId} value={opt.armId}>
-                    {opt.label}
-                  </MenuItem>
-                ))
+                enrollmentData.map((cls) => {
+                  const displayName =
+                    cls.class_display_name || cls.raw_class_name || cls.class_name;
+                  const isCurrentClass = (cls.arms || []).some(
+                    (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
+                  );
+                  return (
+                    <MenuItem key={cls.class_id} value={cls.class_id}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                        <Typography variant="body2" fontWeight={isCurrentClass ? 700 : 400}>
+                          {displayName}
+                        </Typography>
+                        {isCurrentClass && (
+                          <Chip
+                            label="Current"
+                            size="small"
+                            color="primary"
+                            sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
+                          />
+                        )}
+                      </Stack>
+                    </MenuItem>
+                  );
+                })
               )}
             </Select>
           </FormControl>
 
-          {/* {!loading && armOptions.length > 0 && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-              Format: <strong>Class Name (total)</strong> — Arm Name (count)
-            </Typography>
-          )} */}
+          {/* Arm filter — only shown once a class is selected */}
+          {selectedClassId && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Arm</InputLabel>
+              <Select
+                value={selectedArmId}
+                label="Select Arm"
+                onChange={(e) => setSelectedArmId(e.target.value)}
+                disabled={loading}
+              >
+                {armOptions.length === 0 ? (
+                  <MenuItem disabled value="">
+                    No arms available for this class
+                  </MenuItem>
+                ) : (
+                  armOptions.map((opt) => (
+                    <MenuItem
+                      key={opt.armId}
+                      value={opt.armId}
+                      sx={{
+                        fontWeight: opt.isCurrent ? 700 : 400,
+                        bgcolor: opt.isCurrent
+                          ? (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(25, 118, 210, 0.15)'
+                                : '#e3f2fd'
+                          : 'transparent',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                        <Typography variant="body2" fontWeight={opt.isCurrent ? 700 : 400}>
+                          {opt.armName} ({opt.count} students)
+                        </Typography>
+                        {opt.isCurrent && (
+                          <Chip
+                            label="Current"
+                            size="small"
+                            color="primary"
+                            sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
+                          />
+                        )}
+                      </Stack>
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
           Cancel

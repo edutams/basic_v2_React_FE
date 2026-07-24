@@ -27,6 +27,7 @@ import {
   alpha,
   Divider,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -156,6 +157,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [error, setError] = useState('');
   const submittingRef = useRef(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [alertConfirmOpen, setAlertConfirmOpen] = useState(false);
+  const [alertType, setAlertType] = useState(''); // 'attendance' | 'risk'
+  const [sendingAlert, setSendingAlert] = useState(false);
+  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
@@ -436,6 +441,44 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     }
   };
 
+  const handleSendAlerts = async () => {
+    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    if (ids.length === 0) {
+      setAlertSnackbar({ open: true, message: 'No learners to send alerts for', severity: 'warning' });
+      return;
+    }
+    setSendingAlert(true);
+    try {
+      const res = await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm);
+      const msg = res.data?.message || 'Alerts sent successfully';
+      setAlertSnackbar({ open: true, message: msg, severity: 'success' });
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Failed to send alerts';
+      setAlertSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setSendingAlert(false);
+    }
+  };
+
+  const handleSendRiskAlerts = async () => {
+    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    if (ids.length === 0) {
+      setAlertSnackbar({ open: true, message: 'No learners to send risk alerts for', severity: 'warning' });
+      return;
+    }
+    setSendingAlert(true);
+    try {
+      const res = await attendanceApi.sendRiskAlerts(ids, attWeek, attArm);
+      const msg = res.data?.message || 'Risk alerts sent successfully';
+      setAlertSnackbar({ open: true, message: msg, severity: 'success' });
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Failed to send risk alerts';
+      setAlertSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setSendingAlert(false);
+    }
+  };
+
   const learnersPresent = learnersPresentCount;
   const totalLearners = totalLearnerCount || learners.length;
 
@@ -466,8 +509,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           Learner Attendance
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<EmailIcon />}>Send Alerts</Button>
-          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />}>Risk Alerts</Button>
+          <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Send Alerts'}</Button>
+          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />} onClick={() => { setAlertType('risk'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Risk Alerts'}</Button>
           <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>Export Attendance Report</Button>
         </Stack>
       </Stack>
@@ -879,6 +922,60 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           </Paper>
         </Grid>
       </Grid>
+
+      <ReusableDialog
+        open={alertConfirmOpen}
+        onClose={() => setAlertConfirmOpen(false)}
+        title={alertType === 'risk' ? 'Send Risk Alerts' : 'Send Attendance Alerts'}
+        content={
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" gutterBottom fontWeight={500}>
+              You are about to send an email alert to the guardian{learners.length > 1 ? 's of ' + learners.length + ' learners' : " of " + (learners[0]?.name || 'this learner')}.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {alertType === 'risk'
+                ? 'Risk alerts notify guardians that their ward is at risk due to poor attendance.'
+                : 'Attendance alerts provide guardians with a weekly attendance summary for their ward.'}
+            </Typography>
+          </Box>
+        }
+        actions={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={() => setAlertConfirmOpen(false)}>Cancel</Button>
+            <Button
+              variant={alertType === 'risk' ? 'contained' : 'contained'}
+              color={alertType === 'risk' ? 'error' : 'primary'}
+              size="small"
+              onClick={() => {
+                setAlertConfirmOpen(false);
+                if (alertType === 'risk') {
+                  handleSendRiskAlerts();
+                } else {
+                  handleSendAlerts();
+                }
+              }}
+              autoFocus
+            >
+              Send
+            </Button>
+          </Stack>
+        }
+      />
+
+      <Snackbar
+        open={alertSnackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={alertSnackbar.severity}
+          onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+          variant="filled"
+        >
+          {alertSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

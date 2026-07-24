@@ -71,10 +71,10 @@ const attendanceApi = {
     tenantApi.get('/psychomotor/trait-breakdown', { params }),
 
   // ── Alerts / Notifications ───────────────────────────────
-  sendAttendanceAlerts: (learnerIds) =>
-    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds }),
-  sendRiskAlerts: (learnerIds) =>
-    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds }),
+  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId) =>
+    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
+  sendRiskAlerts: (learnerIds, weekTermId, classArmId) =>
+    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>

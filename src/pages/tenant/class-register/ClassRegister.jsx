@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -11,12 +11,14 @@ import {
   Tabs,
   Tab,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
+import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 
 import SingleArmView from './components/SingleArmView';
 import MultipleArmView from './components/MultipleArmView';
@@ -30,7 +32,7 @@ const BCrumb = [
 ];
 
 // ── Local Stat Card using getStatCardColor ──────────────────────
-const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
+const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor('primary', 0, isDark, theme);
@@ -39,7 +41,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 3,
+        p: 2,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
         border: isDark
@@ -81,18 +83,22 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
         >
           Total Students
         </Typography>
-        <Typography
-          variant="h2"
-          fontWeight={800}
-          sx={{
-            my: 1,
-            lineHeight: 1,
-            fontSize: { xs: 36, md: 44 },
-            color: isDark ? '#fff' : colors.accentColor,
-          }}
-        >
-          {totalStudentsCount.toLocaleString()}
-        </Typography>
+        {loading ? (
+          <CircularProgress size={24} sx={{ mt: 1 }} />
+        ) : (
+          <Typography
+            variant="h2"
+            fontWeight={800}
+            sx={{
+              my: 1,
+              lineHeight: 1,
+              fontSize: { xs: 36, md: 44 },
+              color: isDark ? '#fff' : colors.accentColor,
+            }}
+          >
+            {totalStudentsCount.toLocaleString()}
+          </Typography>
+        )}
       </Box>
 
       <Box sx={{ zIndex: 1, mt: 2 }}>
@@ -113,7 +119,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
             >
-              {maleCount.toLocaleString()}
+              {loading ? '...' : maleCount.toLocaleString()}
             </Typography>
           </Box>
           <Box>
@@ -132,15 +138,9 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
             >
-              {femaleCount.toLocaleString()}
+              {loading ? '...' : femaleCount.toLocaleString()}
             </Typography>
           </Box>
-        </Stack>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <TrendingUpIcon sx={{ fontSize: 18, color: '#4caf50' }} />
-          <Typography variant="body2" sx={{ color: '#4caf50', fontWeight: 600 }}>
-            +12% from last term
-          </Typography>
         </Stack>
       </Box>
     </Paper>
@@ -151,10 +151,45 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount }) => {
 const ClassRegister = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [totalStudentsCount] = useState(1284);
-  const [maleCount] = useState(642);
-  const [femaleCount] = useState(642);
+  const [totalStudentsCount, setTotalStudentsCount] = useState(0);
+  const [maleCount, setMaleCount] = useState(0);
+  const [femaleCount, setFemaleCount] = useState(0);
+  const [enrollmentData, setEnrollmentData] = useState([]);
+
+  const fetchEnrollmentStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await classRegisterApi.getEnrollmentStats();
+      if (res.data?.status && res.data?.data) {
+        const stats = res.data.data;
+        setTotalStudentsCount(stats.total_students || 0);
+        setMaleCount(stats.male_count || 0);
+        setFemaleCount(stats.female_count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch enrollment stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchEnrollmentBreakdown = useCallback(async () => {
+    try {
+      const res = await classRegisterApi.getClassEnrollmentBreakdown();
+      if (res.data?.status && res.data?.data) {
+        setEnrollmentData(res.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch enrollment breakdown:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEnrollmentStats();
+    fetchEnrollmentBreakdown();
+  }, [fetchEnrollmentStats, fetchEnrollmentBreakdown]);
 
   return (
     <PageContainer title="Class Register" description="Manage class register and student enrollments">
@@ -167,10 +202,15 @@ const ClassRegister = () => {
             totalStudentsCount={totalStudentsCount}
             maleCount={maleCount}
             femaleCount={femaleCount}
+            loading={loading}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <ClassEnrollmentCard onClassClick={setSelectedEnrollmentClass} />
+          <ClassEnrollmentCard
+            enrollmentData={enrollmentData}
+            onClassClick={setSelectedEnrollmentClass}
+            loading={loading}
+          />
         </Grid>
       </Grid>
 

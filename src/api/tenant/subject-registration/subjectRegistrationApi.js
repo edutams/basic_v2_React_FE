@@ -41,12 +41,14 @@ const subjectRegistrationApi = {
       subject_id: subjectId,
       registered,
     }),
+  bulkToggle: (changes) =>
+    tenantApi.post(`/subject-registration/bulk-toggle`, { changes }),
 
   // ── Stats ────────────────────────────────────────────────
-  getRegistrationStats: (classId, armId) =>
-    tenantApi.get('/subject-registration/stats', { params: { class_id: classId, arm_id: armId } }),
-  getLearnerProgress: (classId, armId) =>
-    tenantApi.get('/subject-registration/learner-progress', { params: { class_id: classId, arm_id: armId } }),
+  getRegistrationStats: (params = {}) =>
+    tenantApi.get('/subject-registration/stats', { params }),
+  getLearnerProgress: (params = {}) =>
+    tenantApi.get('/subject-registration/learner-progress', { params }),
 };
 
 export default subjectRegistrationApi;

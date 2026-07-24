@@ -12,6 +12,7 @@ import {
   IconButton,
   Tooltip,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -21,6 +22,7 @@ import {
 const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnregisterAll }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
@@ -31,10 +33,9 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               sx={{
                 minWidth: 240,
                 fontWeight: 700,
-                position: 'sticky',
-                left: 0,
+                ...(!isMobile && { position: 'sticky', left: 0 }),
                 bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
-                zIndex: 2,
+                ...(!isMobile && { zIndex: 2 }),
                 borderRight: '1px solid',
                 borderColor: 'divider',
               }}
@@ -42,9 +43,8 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               Learner's Name
             </TableCell>
             {subjects.map((subj) => (
-              <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>
-                <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
-                  {subj.name}
+              <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>                  <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
+                  {subj.subject_name || subj.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                   ({subj.count} learners)
@@ -70,10 +70,9 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
             <TableRow key={learner.id} hover>
               <TableCell
                 sx={{
-                  position: 'sticky',
-                  left: 0,
+                  ...(!isMobile && { position: 'sticky', left: 0 }),
                   bgcolor: 'background.paper',
-                  zIndex: 1,
+                  ...(!isMobile && { zIndex: 1 }),
                   borderRight: '1px solid',
                   borderColor: 'divider',
                 }}

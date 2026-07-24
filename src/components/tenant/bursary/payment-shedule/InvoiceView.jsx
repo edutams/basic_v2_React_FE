@@ -17,6 +17,7 @@ import {
   TableRow,
   CircularProgress,
   Alert,
+  Divider,
 } from '@mui/material';
 import {
   Print as PrintIcon,
@@ -159,7 +160,11 @@ const InvoiceView = () => {
             and generate invoices for the selected students before viewing them here.
           </Typography>
 
-          <Button variant="contained" size="small" onClick={handleBack} startIcon={<ArrowBackIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleBack}
+            startIcon={<ArrowBackIcon />}
             sx={{ fontWeight: 600, px: 4 }}
           >
             Back to Invoice List
@@ -190,7 +195,10 @@ const InvoiceView = () => {
           </Typography>
         </Box>
         <Box display="flex" gap={1}>
-          <Button variant="contained" size="small" startIcon={<PrintIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PrintIcon />}
             onClick={handlePrintAll}
             disabled={studentsData.length === 0}
             sx={{ fontWeight: 600 }}
@@ -311,12 +319,25 @@ const InvoiceView = () => {
               >
                 <Box>
                   <Typography fontWeight={700} fontSize={13}>
-                    {student.student?.fname} {student.student?.lname}
+                    {student?.student?.fname} {student?.student?.lname}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {student.student?.learnerId} · {student.student?.class_name} ·{' '}
-                    {student.student?.term_name}
+                    {student?.student?.learnerId} · {student?.student?.class_name} ·{' '}
+                    {student?.student?.term_name}
                   </Typography>
+                  {student?.student?.wallet_no && (
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={700}
+                        mt={0.5}
+                        fontSize={15}
+                      >
+                        Wallet No -: {student?.student?.wallet_no}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
 
                 <Box textAlign="right">
@@ -346,8 +367,13 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">Proceed to Pay</Button>
-                <Button variant="contained" size="small" onClick={() => handleUpdateInvoice(student)}
+                <Button variant="contained" size="small">
+                  Proceed to Pay
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleUpdateInvoice(student)}
                 >
                   Update Invoice
                 </Button>
@@ -498,6 +524,18 @@ const InvoiceView = () => {
                 </Table>
               </TableContainer>
 
+              <Divider sx={{ mt: 3 }} />
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="red"
+                  fontSize={15}
+                  sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Note: A transaction fee of ₦500 applies to all payments.
+                </Typography>
+              </Box>
+
               {/* ── ISSUED BY SECTION ── */}
               <Box sx={{ px: 2, pt: 2, pb: 1 }}>
                 <Typography
@@ -542,8 +580,13 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">Proceed to Pay</Button>
-                <Button variant="contained" size="small" onClick={() => handleUpdateInvoice(student)}
+                <Button variant="contained" size="small">
+                  Proceed to Pay
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleUpdateInvoice(student)}
                 >
                   Update Invoice
                 </Button>

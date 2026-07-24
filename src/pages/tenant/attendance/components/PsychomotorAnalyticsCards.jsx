@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -8,12 +8,7 @@ import {
   Stack,
   Button,
   Chip,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
+  Tooltip,
   useTheme,
 } from '@mui/material';
 import {
@@ -21,7 +16,10 @@ import {
   CheckCircleOutline as CheckCircleIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
+import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
+import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 // ── Theme-aware stat card ──────────────────────────────────────
 const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
@@ -65,7 +63,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const PsychomotorAnalyticsCards = ({ metrics }) => {
+const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
@@ -73,6 +71,118 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
   const openCardModal = (cardTitle, modalBody) => {
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
+
+  // Fetch real per-trait psychomotor breakdown from API
+  const openPsychomotorBreakdown = useCallback(async (params) => {
+    try {
+      const res = await attendanceApi.getTraitBreakdown(params);
+      const data = res.data?.data || {};
+      const psyTraits = data.psychomotor || [];
+
+      if (psyTraits.length === 0) {
+        openCardModal('Psychomotor Rating Breakdown', (
+          <Typography color="text.secondary">No psychomotor assessments found for this class/week.</Typography>
+        ));
+        return;
+      }
+
+      openCardModal('Psychomotor Rating Breakdown', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Average rating per psychomotor trait (out of 5).
+          </Typography>
+          <ReusableBarChart
+            series={[{ name: 'Avg Rating', data: psyTraits.map((t) => t.avg_rating) }]}
+            categories={psyTraits.map((t) => t.trait)}
+            colors={[theme.palette.primary.main]}
+            height={300}
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch trait breakdown:', e);
+      openCardModal('Psychomotor Rating Breakdown', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
+
+  // Fetch real needing support data from API
+  const openNeedingSupport = useCallback(async (params) => {
+    try {
+      const [statsRes, learnersRes] = await Promise.all([
+        attendanceApi.getPsychomotorStats(params),
+        attendanceApi.getLearnersNeedingSupport(params).catch(() => ({ data: { data: [] } })),
+      ]);
+      const stats = statsRes.data?.data || {};
+      const learners = learnersRes.data?.data || [];
+      const totalRated = stats.total_assessed || 1;
+      const realNeedingSupport = learners.length;
+      const realOnTrack = Math.max(0, totalRated - realNeedingSupport);
+
+      openCardModal('Learners Needing Support', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {realNeedingSupport} out of {totalRated} assessed learners need targeted support (avg rating &lt; 2.5).
+          </Typography>
+          <ReusablePieChart
+            series={[realNeedingSupport, realOnTrack]}
+            labels={['Needing Support', 'On Track']}
+            colors={[theme.palette.warning.main, theme.palette.success.main]}
+            height={400}
+          />
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch support data:', e);
+      openCardModal('Learners Needing Support', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
+
+  // Fetch gender rating breakdown from API
+  const openGenderBreakdown = useCallback(async (params) => {
+    try {
+      const res = await attendanceApi.getRatingByGender(params);
+      const genderData = res.data?.data || {};
+      const maleCount = genderData.male_count || 0;
+      const femaleCount = genderData.female_count || 0;
+      const maleAvg = genderData.male_rating || 0;
+      const femaleAvg = genderData.female_rating || 0;
+
+      openCardModal('Gender Rating Comparison', (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Distribution of assessed learners by gender (left) and average domain rating (right).
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusablePieChart
+                series={[maleCount, femaleCount]}
+                labels={['Male', 'Female']}
+                colors={[theme.palette.primary.main, theme.palette.success.main]}
+                height={350}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusableBarChart
+                series={[{ name: 'Avg Rating', data: [maleAvg, femaleAvg] }]}
+                categories={['Male', 'Female']}
+                colors={[theme.palette.info.main]}
+                height={300}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      ));
+    } catch (e) {
+      console.error('Failed to fetch gender breakdown:', e);
+      openCardModal('Gender Rating Comparison', (
+        <Typography color="error">Failed to load data.</Typography>
+      ));
+    }
+  }, [theme]);
 
   const colors = {
     success: getStatCardColor('success', 1, isDark, theme),
@@ -128,189 +238,144 @@ const PsychomotorAnalyticsCards = ({ metrics }) => {
 
         {/* Card 2: AVG. PSYCHOMOTOR RATING */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            colorName="primary"
-            colorIndex={0}
-            clickable
-            onClick={() =>
-              openCardModal('Psychomotor Rating Breakdown', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Average rating distribution per psychomotor skill.
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    <Box><Typography variant="caption" fontWeight={700}>Handwriting: 4.1 / 5</Typography><LinearProgress variant="determinate" value={82} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Games & Sports: 3.6 / 5</Typography><LinearProgress variant="determinate" value={72} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                    <Box><Typography variant="caption" fontWeight={700}>Drawing & Painting: 3.7 / 5</Typography><LinearProgress variant="determinate" value={74} color="primary" sx={{ height: 6, borderRadius: 3 }} /></Box>
-                  </Stack>
-                </Box>
-              ))
-            }
-          >
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{
-                color: isDark ? 'rgba(255,255,255,0.72)' : colors.primary.accentColor,
-                textTransform: 'uppercase',
-              }}
+          <Tooltip title="Click to view psychomotor skills breakdown" arrow placement="top">
+            <StatCard
+              colorName="primary"
+              colorIndex={0}
+              clickable
+              onClick={() => openPsychomotorBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
-              AVG. PSYCHOMOTOR RATING
-            </Typography>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              sx={{ my: 0.5, color: isDark ? '#fff' : colors.primary.accentColor }}
-            >
-              {metrics.avgPsychomotor}/5
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={76}
-              sx={{
-                my: 1,
-                height: 5,
-                borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: colors.primary.accentColor,
-                },
-              }}
-            />
-            <Stack direction="row" alignItems="center" spacing={0.4}>
-              <Typography
-                variant="caption"
-                sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
-              >
-                → Stable performance
-              </Typography>
-              <CheckCircleIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
-            </Stack>
-          </StatCard>
-        </Grid>
-
-        {/* Card 3: NEEDING SUPPORT */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            colorName="warning"
-            colorIndex={3}
-            clickable
-            onClick={() =>
-              openCardModal('Learners Needing Support List', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Students with rating scores under 3.0 needing targeted support.
-                  </Typography>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow><TableCell>Learner</TableCell><TableCell>Weak Domain</TableCell><TableCell>Score</TableCell></TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow><TableCell>BALOGUN Joseph</TableCell><TableCell>Punctuality</TableCell><TableCell>2 / 5</TableCell></TableRow>
-                        <TableRow><TableCell>ADEKUNLE Ibrahim</TableCell><TableCell>Games & Sports</TableCell><TableCell>2 / 5</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ))
-            }
-          >
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography
                 variant="caption"
                 fontWeight={700}
                 sx={{
-                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.primary.accentColor,
                   textTransform: 'uppercase',
                 }}
               >
-                NEEDING SUPPORT
+                AVG. PSYCHOMOTOR RATING
               </Typography>
-              <Chip label="URGENT" size="small" color="error" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
-            </Stack>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{ my: 0.5, color: isDark ? '#fff' : colors.primary.accentColor }}
+              >
+                {metrics.avgPsychomotor}/5
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={76}
+                sx={{
+                  my: 1,
+                  height: 5,
+                  borderRadius: 2,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: colors.primary.accentColor,
+                  },
+                }}
+              />
+              <Stack direction="row" alignItems="center" spacing={0.4}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                >
+                  → Stable performance
+                </Typography>
+                <CheckCircleIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+              </Stack>
+            </StatCard>
+          </Tooltip>
+        </Grid>
+
+        {/* Card 3: NEEDING SUPPORT */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Tooltip title="Click to view learners needing support" arrow placement="top">
+            <StatCard
+              colorName="warning"
+              colorIndex={3}
+              clickable
+              onClick={() => openNeedingSupport({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
-              {metrics.needingSupport}
-            </Typography>
-            <Button size="small" variant="outlined" sx={{ mt: 0.5, textTransform: 'none' }}>
-              View Details
-            </Button>
-          </StatCard>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  NEEDING SUPPORT
+                </Typography>
+                <Chip label="URGENT" size="small" color="error" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
+              </Stack>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+              >
+                {metrics.needingSupport}
+              </Typography>
+              <Button size="small" variant="outlined" sx={{ mt: 0.5, textTransform: 'none' }}>
+                View Details
+              </Button>
+            </StatCard>
+          </Tooltip>
         </Grid>
 
         {/* Card 4: RATING BY GENDER */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            colorName="info"
-            colorIndex={2}
-            clickable
-            onClick={() =>
-              openCardModal('Gender Rating Detailed Comparison', (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Detailed affective vs psychomotor comparison by gender.
-                  </Typography>
-                  <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow><TableCell>Gender</TableCell><TableCell>Affective Avg</TableCell><TableCell>Psychomotor Avg</TableCell></TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow><TableCell>Male</TableCell><TableCell>4.1 / 5</TableCell><TableCell>3.7 / 5</TableCell></TableRow>
-                        <TableRow><TableCell>Female</TableCell><TableCell>4.3 / 5</TableCell><TableCell>3.9 / 5</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ))
-            }
-          >
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor, mb: 1, display: 'block', textTransform: 'uppercase' }}
+          <Tooltip title="Click to view gender rating comparison" arrow placement="top">
+            <StatCard
+              colorName="info"
+              colorIndex={2}
+              clickable
+              onClick={() => openGenderBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
             >
-              RATING BY GENDER
-            </Typography>
-            <Stack spacing={1}>
-              <Box>
-                <Stack direction="row" justifyContent="space-between" mb={0.25}>
-                  <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563' }}>MALE</Typography>
-                  <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? '#fff' : colors.primary.accentColor }}>{metrics.maleRating}</Typography>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={82}
-                  sx={{
-                    height: 4,
-                    borderRadius: 2,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                    '& .MuiLinearProgress-bar': { bgcolor: colors.primary.accentColor },
-                  }}
-                />
-              </Box>
-              <Box>
-                <Stack direction="row" justifyContent="space-between" mb={0.25}>
-                  <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563' }}>FEMALE</Typography>
-                  <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? '#fff' : colors.success.accentColor }}>{metrics.femaleRating}</Typography>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={86}
-                  sx={{
-                    height: 4,
-                    borderRadius: 2,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                    '& .MuiLinearProgress-bar': { bgcolor: colors.success.accentColor },
-                  }}
-                />
-              </Box>
-            </Stack>
-          </StatCard>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor, mb: 1, display: 'block', textTransform: 'uppercase' }}
+              >
+                RATING BY GENDER
+              </Typography>
+              <Stack spacing={1}>
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" mb={0.25}>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563' }}>MALE</Typography>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? '#fff' : colors.primary.accentColor }}>{metrics.maleRating}</Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={82}
+                    sx={{
+                      height: 4,
+                      borderRadius: 2,
+                      bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                      '& .MuiLinearProgress-bar': { bgcolor: colors.primary.accentColor },
+                    }}
+                  />
+                </Box>
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" mb={0.25}>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563' }}>FEMALE</Typography>
+                    <Typography variant="caption" fontWeight={700} sx={{ color: isDark ? '#fff' : colors.success.accentColor }}>{metrics.femaleRating}</Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={86}
+                    sx={{
+                      height: 4,
+                      borderRadius: 2,
+                      bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                      '& .MuiLinearProgress-bar': { bgcolor: colors.success.accentColor },
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </StatCard>
+          </Tooltip>
         </Grid>
       </Grid>
 

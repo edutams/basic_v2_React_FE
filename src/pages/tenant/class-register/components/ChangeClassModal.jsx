@@ -15,13 +15,13 @@ import {
   Alert,
   Paper,
   Chip,
-  Box,
 } from '@mui/material';
 import { SwapHoriz as ChangeClassIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 
 const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
   const [enrollmentData, setEnrollmentData] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedArmId, setSelectedArmId] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,51 +52,38 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     loadEnrollmentData();
   }, [open]);
 
-  // ── Pre-select current class arm on open ───────────────────
+  // ── Pre-select current class/arm on open ──────────────────
   useEffect(() => {
     if (open && student) {
+      // Find which class entry contains the student's current arm
+      const currentClassEntry = enrollmentData.find((cls) =>
+        (cls.arms || []).some((arm) => Number(arm.arm_id) === Number(student.class_arm_id))
+      );
+      setSelectedClassId(currentClassEntry?.class_id ?? '');
       setSelectedArmId(student.class_arm_id || '');
       setError('');
     }
-  }, [open, student]);
+  }, [open, student, enrollmentData]);
 
-  // ── Filter breakdown to only the class the selected student belongs to ──────
-  const studentClassData = enrollmentData.filter((cls) => {
-    const hasArmMatch = (cls.arms || []).some(
-      (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
-    );
-    const hasClassIdMatch =
-      student?.class_id && Number(cls.class_id) === Number(student.class_id);
-    const hasNameMatch =
-      student?.class_name &&
-      (cls.raw_class_name === student.class_name ||
-        cls.class_display_name === student.class_name ||
-        cls.class_name === student.class_name);
-
-    return hasArmMatch || hasClassIdMatch || hasNameMatch;
-  });
-
-  const targetClasses = studentClassData.length > 0 ? studentClassData : enrollmentData;
-
-  const armOptions = targetClasses.flatMap((cls) =>
-    (cls.arms || []).map((arm) => {
-      const isCurrent = Number(arm.arm_id) === Number(student?.class_arm_id);
-      const displayName = cls.class_display_name || cls.raw_class_name || cls.class_name;
-      return {
-        armId: arm.arm_id,
-        isCurrent,
-        label: `${displayName} - ${arm.arm_name} (${arm.count} Students)`,
-        className: cls.class_name,
-        classTotal: cls.total,
-        armName: arm.arm_name,
-        armCount: arm.count,
-      };
-    })
+  // ── Arms for the selected class ───────────────────────────
+  const selectedClassEntry = enrollmentData.find(
+    (cls) => String(cls.class_id) === String(selectedClassId)
   );
+  const armOptions = (selectedClassEntry?.arms || []).map((arm) => ({
+    armId: arm.arm_id,
+    armName: arm.arm_name,
+    count: arm.count,
+    isCurrent: Number(arm.arm_id) === Number(student?.class_arm_id),
+  }));
+
+  const handleClassChange = (e) => {
+    setSelectedClassId(e.target.value);
+    setSelectedArmId(''); // reset arm when class changes
+  };
 
   const handleSave = async () => {
     if (!selectedArmId) {
-      setError('Please select an arm.');
+      setError('Please select a class and arm.');
       return;
     }
 
@@ -123,6 +110,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
         <ChangeClassIcon color="primary" />
         Change Student Class Arm
       </DialogTitle>
+
       <DialogContent dividers>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
@@ -130,7 +118,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
             <Typography component="span" color="primary" fontWeight={700}>
               {student?.name}
             </Typography>{' '}
-            to a different arm.
+            to a different class or arm.
           </Typography>
 
           {/* Current Class & Arm Banner */}
@@ -152,20 +140,18 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
             >
               Current Class &amp; Arm
             </Typography>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Chip
-                label={
-                  student.class_arm ||
-                  (student.class_name
-                    ? `${student.class_name} (${student.arm_name || ''})`
-                    : 'Not Assigned')
-                }
-                size="small"
-                color="primary"
-                variant="filled"
-                sx={{ fontWeight: 700 }}
-              />
-            </Stack>
+            <Chip
+              label={
+                student.class_arm ||
+                (student.class_name
+                  ? `${student.class_name} (${student.arm_name || ''})`
+                  : 'Not Assigned')
+              }
+              size="small"
+              color="primary"
+              variant="filled"
+              sx={{ fontWeight: 700 }}
+            />
           </Paper>
 
           {error && (
@@ -174,65 +160,104 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
             </Alert>
           )}
 
+          {/* Class filter */}
           <FormControl fullWidth size="small">
-            <InputLabel>Select Arm</InputLabel>
+            <InputLabel>Select Class</InputLabel>
             <Select
-              value={selectedArmId}
-              label="Select Arm"
-              onChange={(e) => setSelectedArmId(e.target.value)}
+              value={selectedClassId}
+              label="Select Class"
+              onChange={handleClassChange}
               disabled={loading}
             >
               {loading ? (
                 <MenuItem disabled value="">
                   <CircularProgress size={16} sx={{ mr: 1 }} />
-                  Loading arms...
+                  Loading classes...
                 </MenuItem>
-              ) : armOptions.length === 0 ? (
+              ) : enrollmentData.length === 0 ? (
                 <MenuItem disabled value="">
-                  No arms available for this class
+                  No classes available
                 </MenuItem>
               ) : (
-                armOptions.map((opt) => (
-                  <MenuItem
-                    key={opt.armId}
-                    value={opt.armId}
-                    sx={{
-                      fontWeight: opt.isCurrent ? 700 : 400,
-                      bgcolor: opt.isCurrent
-                        ? (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(25, 118, 210, 0.15)'
-                            : '#e3f2fd'
-                        : 'transparent',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={opt.isCurrent ? 700 : 400}>
-                        {opt.label}
-                      </Typography>
-                      {opt.isCurrent && (
-                        <Chip
-                          label="Current"
-                          size="small"
-                          color="primary"
-                          sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
-                        />
-                      )}
-                    </Box>
-                  </MenuItem>
-                ))
+                enrollmentData.map((cls) => {
+                  const displayName =
+                    cls.class_display_name || cls.raw_class_name || cls.class_name;
+                  const isCurrentClass = (cls.arms || []).some(
+                    (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
+                  );
+                  return (
+                    <MenuItem key={cls.class_id} value={cls.class_id}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                        <Typography variant="body2" fontWeight={isCurrentClass ? 700 : 400}>
+                          {displayName}
+                        </Typography>
+                        {isCurrentClass && (
+                          <Chip
+                            label="Current"
+                            size="small"
+                            color="primary"
+                            sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
+                          />
+                        )}
+                      </Stack>
+                    </MenuItem>
+                  );
+                })
               )}
             </Select>
           </FormControl>
+
+          {/* Arm filter — only shown once a class is selected */}
+          {selectedClassId && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Arm</InputLabel>
+              <Select
+                value={selectedArmId}
+                label="Select Arm"
+                onChange={(e) => setSelectedArmId(e.target.value)}
+                disabled={loading}
+              >
+                {armOptions.length === 0 ? (
+                  <MenuItem disabled value="">
+                    No arms available for this class
+                  </MenuItem>
+                ) : (
+                  armOptions.map((opt) => (
+                    <MenuItem
+                      key={opt.armId}
+                      value={opt.armId}
+                      sx={{
+                        fontWeight: opt.isCurrent ? 700 : 400,
+                        bgcolor: opt.isCurrent
+                          ? (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(25, 118, 210, 0.15)'
+                                : '#e3f2fd'
+                          : 'transparent',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                        <Typography variant="body2" fontWeight={opt.isCurrent ? 700 : 400}>
+                          {opt.armName} ({opt.count} students)
+                        </Typography>
+                        {opt.isCurrent && (
+                          <Chip
+                            label="Current"
+                            size="small"
+                            color="primary"
+                            sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
+                          />
+                        )}
+                      </Stack>
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
           Cancel
@@ -245,7 +270,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
           {saving ? 'Saving...' : 'Save Change'}
         </Button>
       </DialogActions>
-    </Dialog >
+    </Dialog>
   );
 };
 

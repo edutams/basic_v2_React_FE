@@ -41,7 +41,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
     <Paper
       elevation={0}
       sx={{
-        p: 3,
+        p: 2,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
         border: isDark

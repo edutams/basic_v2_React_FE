@@ -219,11 +219,13 @@ const SingleArmView = () => {
     }
   }, [saArm, saSearch, saPage, saRowsPerPage]);
 
+  // ── Only refetch when pagination changes (not on filter changes) ──
   useEffect(() => {
-    if (saArm) {
+    if (students.length > 0) {
       fetchStudents();
     }
-  }, [saArm, saPage, saRowsPerPage, fetchStudents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saPage, saRowsPerPage]);
 
   // ── Fetch parent/guardian data for each student ──────────
   useEffect(() => {
@@ -388,7 +390,6 @@ const SingleArmView = () => {
             placeholder="Search by learner name or ID..."
             value={saSearch}
             onChange={(e) => setSaSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

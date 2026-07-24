@@ -182,6 +182,9 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                 enrollmentData.map((cls) => {
                   const displayName =
                     cls.class_display_name || cls.raw_class_name || cls.class_name;
+                  const label = cls.programme_code
+                    ? `${displayName} (${cls.programme_code})`
+                    : displayName;
                   const isCurrentClass = (cls.arms || []).some(
                     (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
                   );
@@ -189,7 +192,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                     <MenuItem key={cls.class_id} value={cls.class_id}>
                       <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
                         <Typography variant="body2" fontWeight={isCurrentClass ? 700 : 400}>
-                          {displayName}
+                          {label}
                         </Typography>
                         {isCurrentClass && (
                           <Chip

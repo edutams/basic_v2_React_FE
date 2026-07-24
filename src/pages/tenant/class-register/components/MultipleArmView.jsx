@@ -73,8 +73,22 @@ const MultipleArmView = () => {
           fetchSessions(),
           fetchProgrammes(),
         ]);
-        setSessions(sessRes.data?.data || sessRes.data || []);
-        setProgrammes(progRes.data?.data || progRes.data || []);
+        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+          ? sessRes.data?.data || sessRes.data
+          : [];
+        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+          ? progRes.data?.data || progRes.data
+          : [];
+
+        setSessions(sessionsData);
+        setProgrammes(programmesData);
+
+        const activeSess =
+          sessionsData.find((s) => s.status === 'active' || s.is_current || s.is_active) ||
+          sessionsData[0];
+        if (activeSess) {
+          setSession(activeSess.id);
+        }
       } catch (error) {
         console.error('Failed to load filter data:', error);
       }
@@ -84,27 +98,51 @@ const MultipleArmView = () => {
 
   useEffect(() => {
     if (!session) return;
-    fetchTerms(session).then((res) => {
-      setTerms(res.data?.data || res.data || []);
-    }).catch(console.error);
+    fetchTerms(session)
+      .then((res) => {
+        const termsData = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setTerms(termsData);
+        const activeTerm =
+          termsData.find((t) => t.status === 'active' || t.is_current || t.is_active) ||
+          termsData[0];
+        if (activeTerm) {
+          setTerm(activeTerm.id);
+        }
+      })
+      .catch(console.error);
   }, [session]);
 
   useEffect(() => {
-    if (!programme) return;
-    fetchClassesByProgramme(programme).then((res) => {
-      const data = res.data?.data || res.data || [];
-      setClasses(Array.isArray(data) ? data : []);
+    if (!programme) {
+      setClasses([]);
       setClassLevel('');
-    }).catch(console.error);
+      setArms([]);
+      return;
+    }
+    fetchClassesByProgramme(programme)
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setClasses(data);
+        setClassLevel('');
+      })
+      .catch(console.error);
   }, [programme]);
 
   useEffect(() => {
     if (!classLevel) return;
-    fetchClassArmsByClass(classLevel).then((res) => {
-      const data = res.data?.data || res.data || [];
-      setArms(Array.isArray(data) ? data : []);
-    }).catch(console.error);
-  }, [classLevel]);
+    fetchClassArmsByClass(classLevel, programme ? { programme_id: programme } : {})
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data)
+          ? res.data?.data || res.data
+          : [];
+        setArms(data);
+      })
+      .catch(console.error);
+  }, [classLevel, programme]);
 
   // ── Fetch Students ────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
@@ -115,6 +153,7 @@ const MultipleArmView = () => {
         page: maPage + 1,
         per_page: maRowsPerPage,
         search,
+        programme_id: programme,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
@@ -122,10 +161,17 @@ const MultipleArmView = () => {
       }
     } catch (error) {
       console.error('Failed to fetch students:', error);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
-  }, [classLevel, maPage, maRowsPerPage, search]);
+  }, [classLevel, maPage, maRowsPerPage, search, programme]);
+
+  useEffect(() => {
+    if (classLevel) {
+      fetchStudents();
+    }
+  }, [classLevel, maPage, maRowsPerPage, fetchStudents]);
 
   // ── Arm toggle state (local only) ─────────────────────────
   const [armSelections, setArmSelections] = useState({});

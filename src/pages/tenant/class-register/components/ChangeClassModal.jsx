@@ -13,6 +13,9 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Paper,
+  Chip,
+  Box,
 } from '@mui/material';
 import { SwapHoriz as ChangeClassIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
@@ -49,29 +52,51 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     loadEnrollmentData();
   }, [open]);
 
-  // ── Reset state on open ───────────────────────────────────
+  // ── Pre-select current class arm on open ───────────────────
   useEffect(() => {
-    if (open) {
-      setSelectedArmId('');
+    if (open && student) {
+      setSelectedArmId(student.class_arm_id || '');
       setError('');
     }
-  }, [open]);
+  }, [open, student]);
 
-  // ── Flatten class + arm into selectable options ────────────
-  const armOptions = enrollmentData.flatMap((cls) =>
-    (cls.arms || []).map((arm) => ({
-      armId: arm.arm_id,
-      label: `${cls.class_name} (${cls.total}) — ${arm.arm_name} (${arm.count})`,
-      className: cls.class_name,
-      classTotal: cls.total,
-      armName: arm.arm_name,
-      armCount: arm.count,
-    }))
+  // ── Filter breakdown to only the class the selected student belongs to ──────
+  const studentClassData = enrollmentData.filter((cls) => {
+    const hasArmMatch = (cls.arms || []).some(
+      (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
+    );
+    const hasClassIdMatch =
+      student?.class_id && Number(cls.class_id) === Number(student.class_id);
+    const hasNameMatch =
+      student?.class_name &&
+      (cls.raw_class_name === student.class_name ||
+        cls.class_display_name === student.class_name ||
+        cls.class_name === student.class_name);
+
+    return hasArmMatch || hasClassIdMatch || hasNameMatch;
+  });
+
+  const targetClasses = studentClassData.length > 0 ? studentClassData : enrollmentData;
+
+  const armOptions = targetClasses.flatMap((cls) =>
+    (cls.arms || []).map((arm) => {
+      const isCurrent = Number(arm.arm_id) === Number(student?.class_arm_id);
+      const displayName = cls.class_display_name || cls.raw_class_name || cls.class_name;
+      return {
+        armId: arm.arm_id,
+        isCurrent,
+        label: `${displayName} - ${arm.arm_name} (${arm.count} Students)`,
+        className: cls.class_name,
+        classTotal: cls.total,
+        armName: arm.arm_name,
+        armCount: arm.count,
+      };
+    })
   );
 
   const handleSave = async () => {
     if (!selectedArmId) {
-      setError('Please select a class and arm.');
+      setError('Please select an arm.');
       return;
     }
 
@@ -99,14 +124,49 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
         Change Student Class Arm
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
+        <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Transfer{' '}
             <Typography component="span" color="primary" fontWeight={700}>
               {student?.name}
             </Typography>{' '}
-            to a different class arm.
+            to a different arm.
           </Typography>
+
+          {/* Current Class & Arm Banner */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={700}
+              sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.5 }}
+            >
+              Current Class &amp; Arm
+            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Chip
+                label={
+                  student.class_arm ||
+                  (student.class_name
+                    ? `${student.class_name} (${student.arm_name || ''})`
+                    : 'Not Assigned')
+                }
+                size="small"
+                color="primary"
+                variant="filled"
+                sx={{ fontWeight: 700 }}
+              />
+            </Stack>
+          </Paper>
 
           {error && (
             <Alert severity="error" sx={{ '& .MuiAlert-icon': { mr: 1 } }}>
@@ -115,37 +175,62 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
           )}
 
           <FormControl fullWidth size="small">
-            <InputLabel>New Class &amp; Arm</InputLabel>
+            <InputLabel>Select Arm</InputLabel>
             <Select
               value={selectedArmId}
-              label="New Class & Arm"
+              label="Select Arm"
               onChange={(e) => setSelectedArmId(e.target.value)}
               disabled={loading}
             >
               {loading ? (
                 <MenuItem disabled value="">
                   <CircularProgress size={16} sx={{ mr: 1 }} />
-                  Loading classes...
+                  Loading arms...
                 </MenuItem>
               ) : armOptions.length === 0 ? (
                 <MenuItem disabled value="">
-                  No classes or arms available
+                  No arms available for this class
                 </MenuItem>
               ) : (
                 armOptions.map((opt) => (
-                  <MenuItem key={opt.armId} value={opt.armId}>
-                    {opt.label}
+                  <MenuItem
+                    key={opt.armId}
+                    value={opt.armId}
+                    sx={{
+                      fontWeight: opt.isCurrent ? 700 : 400,
+                      bgcolor: opt.isCurrent
+                        ? (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(25, 118, 210, 0.15)'
+                            : '#e3f2fd'
+                        : 'transparent',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={opt.isCurrent ? 700 : 400}>
+                        {opt.label}
+                      </Typography>
+                      {opt.isCurrent && (
+                        <Chip
+                          label="Current"
+                          size="small"
+                          color="primary"
+                          sx={{ height: 18, fontSize: 10, ml: 1, fontWeight: 700 }}
+                        />
+                      )}
+                    </Box>
                   </MenuItem>
                 ))
               )}
             </Select>
           </FormControl>
-
-          {/* {!loading && armOptions.length > 0 && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-              Format: <strong>Class Name (total)</strong> — Arm Name (count)
-            </Typography>
-          )} */}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -160,7 +245,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
           {saving ? 'Saving...' : 'Save Change'}
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog >
   );
 };
 

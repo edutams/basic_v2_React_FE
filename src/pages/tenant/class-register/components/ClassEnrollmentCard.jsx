@@ -129,6 +129,9 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                           ? '1px solid rgba(255,255,255,0.08)'
                           : `1px solid ${itemColors.borderColor}`,
                         background: isDark ? 'rgba(255,255,255,0.02)' : itemColors.cardBg,
+                        boxShadow: isDark
+                          ? '0 8px 20px rgba(0,0,0,0.35)'
+                          : '0 6px 16px rgba(0,0,0,0.12)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -137,8 +140,8 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         '&:hover': {
                           transform: 'translateY(-2px)',
                           boxShadow: isDark
-                            ? '0 8px 20px rgba(0,0,0,0.35)'
-                            : '0 6px 16px rgba(0,0,0,0.12)',
+                            ? '0 12px 24px rgba(0,0,0,0.45)'
+                            : '0 8px 20px rgba(0,0,0,0.16)',
                           borderColor: itemColors.accentColor,
                         },
                       }}

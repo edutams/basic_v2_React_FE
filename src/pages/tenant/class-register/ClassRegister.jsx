@@ -197,7 +197,7 @@ const ClassRegister = () => {
 
       {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 2 }}>
           <TotalStudentsCard
             totalStudentsCount={totalStudentsCount}
             maleCount={maleCount}
@@ -205,7 +205,7 @@ const ClassRegister = () => {
             loading={loading}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
+     <Grid size={{ xs: 12, md: 6, lg: 10 }}>
           <ClassEnrollmentCard
             enrollmentData={enrollmentData}
             onClassClick={setSelectedEnrollmentClass}

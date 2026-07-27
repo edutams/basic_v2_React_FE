@@ -133,6 +133,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const isDark = theme.palette.mode === 'dark';
 
   // ── Filter States ─────────────────────────────────────────
+  const [filterApplied, setFilterApplied] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [terms, setTerms] = useState([]);
   const [weeks, setWeeks] = useState([]);
@@ -356,6 +357,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
+    setFilterApplied(true);
     if (onFilter) onFilter(attArm, attSession, attTermId, attWeek);
   };
 
@@ -511,7 +513,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Send Alerts'}</Button>
           <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />} onClick={() => { setAlertType('risk'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Risk Alerts'}</Button>
-          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>Export Attendance Report</Button>
+          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport} disabled={!filterApplied}>Export Attendance Report</Button>
         </Stack>
       </Stack>
 

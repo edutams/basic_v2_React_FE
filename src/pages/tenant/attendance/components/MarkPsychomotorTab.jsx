@@ -67,6 +67,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [psychomotorTraits, setPsychomotorTraits] = useState([]);
 
   // ── Assessment Data ───────────────────────────────────────
+  const [filterApplied, setFilterApplied] = useState(false);
   const [learners, setLearners] = useState([]);
   const [assessments, setAssessments] = useState({});
   const [loading, setLoading] = useState(false);
@@ -246,6 +247,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
+    setFilterApplied(true);
     if (onFilter) onFilter(pArm, pSession, pTermId, pWeek);
   };
 
@@ -380,7 +382,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           </Button>
         </Grid>
         <Grid size={{ xs: 12, sm: 'auto' }}>
-          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
+          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport} disabled={!filterApplied}>
             Export Report
           </Button>
         </Grid>

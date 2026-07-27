@@ -153,7 +153,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
             series={[realNeedingSupport, realOnTrack]}
             labels={['Needing Support', 'On Track']}
             colors={[theme.palette.warning.main, theme.palette.success.main]}
-            height={400}
+            height={520}
           />
         </Box>
       ));

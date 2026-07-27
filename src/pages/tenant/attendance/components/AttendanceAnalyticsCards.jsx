@@ -516,6 +516,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         onClose={() => setAnalyticsModal({ open: false, title: '', content: null })}
         title={analyticsModal.title}
         content={analyticsModal.content}
+        loading={analyticsModal.loading}
       />
     </>
   );

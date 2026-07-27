@@ -41,6 +41,16 @@ const classRegisterApi = {
   changeStudentClass: (studentId, data) =>
     tenantApi.put(`/students/${studentId}/change-class`, data),
 
+  // ── Student Status & Removal ──────────────────────────────
+  updateStudentStatus: (studentId, status) =>
+    tenantApi.patch(`/students/${studentId}/status`, { status }),
+  removeFromClass: (studentId) =>
+    tenantApi.patch(`/students/${studentId}/remove-from-class`),
+
+  // ── Export PDF ────────────────────────────────────────────
+  exportStudentListPdf: (params = {}) =>
+    tenantApi.get('/students/export-pdf', { params, responseType: 'text' }),
+
   // ── Export ───────────────────────────────────────────────
   exportStudentList: (params = {}) =>
     tenantApi.get('/students/export', { params, responseType: 'blob' }),

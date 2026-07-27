@@ -238,7 +238,14 @@ const ClassRegister = () => {
           </Box>
         }
       >
-        {activeTab === 0 && <SingleArmView />}
+        {activeTab === 0 && (
+          <SingleArmView
+            onEnrollmentChange={() => {
+              fetchEnrollmentStats();
+              fetchEnrollmentBreakdown();
+            }}
+          />
+        )}
         {activeTab === 1 && <MultipleArmView />}
       </ParentCard>
 

@@ -68,7 +68,7 @@ const STATUS_OPTIONS = [
 const getStatusConfig = (status) =>
   STATUS_OPTIONS.find((s) => s.value === status) || STATUS_OPTIONS[0];
 
-const SingleArmView = () => {
+const SingleArmView = ({ onEnrollmentChange }) => {
   const theme = useTheme();
   const notify = useNotification();
 
@@ -281,6 +281,7 @@ const SingleArmView = () => {
       notify.success(`${selectedRow.name} removed from class`);
       setStudents((prev) => prev.filter((s) => s.student_reg_id !== selectedRow.student_reg_id));
       setRemoveModalOpen(false);
+      if (onEnrollmentChange) onEnrollmentChange();
     } catch {
       notify.error('Failed to remove student from class');
     } finally {

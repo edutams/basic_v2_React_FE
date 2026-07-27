@@ -167,11 +167,13 @@ const MultipleArmView = () => {
     }
   }, [classLevel, maPage, maRowsPerPage, search, programme]);
 
+  // ── Only refetch when pagination changes (not on filter changes) ──
   useEffect(() => {
-    if (classLevel) {
+    if (students.length > 0) {
       fetchStudents();
     }
-  }, [classLevel, maPage, maRowsPerPage, fetchStudents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maPage, maRowsPerPage]);
 
   // ── Arm toggle state (local only) ─────────────────────────
   const [armSelections, setArmSelections] = useState({});
@@ -301,7 +303,6 @@ const MultipleArmView = () => {
             placeholder="Search learner..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchStudents()}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -313,7 +314,7 @@ const MultipleArmView = () => {
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={fetchStudents}>
+            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={() => { setMaPage(0); fetchStudents(); }}>
               Filter Results
             </Button>
             <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<SaveIcon />} onClick={handleSubmitChanges} disabled={saving}>

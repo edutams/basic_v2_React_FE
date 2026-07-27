@@ -16,6 +16,7 @@ import {
   TableRow,
   CircularProgress,
   Alert,
+  Divider,
 } from '@mui/material';
 import {
   Print as PrintIcon,
@@ -91,13 +92,20 @@ const PrintInvoicePage = () => {
     );
   }
 
-  const compulsoryPayable = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
-  const compulsoryPaid = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
-  const compulsoryTotal = invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+  const compulsoryPayable =
+    invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) ||
+    0;
+  const compulsoryPaid =
+    invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const compulsoryTotal =
+    invoiceData?.compulsory_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
 
-  const optionalPayable = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
-  const optionalPaid = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
-  const optionalTotal = invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
+  const optionalPayable =
+    invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.schedule_amount || 0), 0) || 0;
+  const optionalPaid =
+    invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0) || 0;
+  const optionalTotal =
+    invoiceData?.optional_invoice?.reduce((sum, i) => sum + Number(i.balance || 0), 0) || 0;
 
   const currentTermPayable = compulsoryPayable + optionalPayable;
   const currentTermPaid = compulsoryPaid + optionalPaid;
@@ -105,7 +113,7 @@ const PrintInvoicePage = () => {
 
   const handleGoBack = () => {
     const source = searchParams.get('source');
-    
+
     if (source === 'class-ledger') {
       navigate('/class-ledger');
     } else if (window.history.length > 1 && !source) {
@@ -119,7 +127,13 @@ const PrintInvoicePage = () => {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">{error}</Alert>
-        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<ArrowBackIcon />}
+          onClick={handleGoBack}
+          sx={{ mt: 2 }}
+        >
           Go Back
         </Button>
       </Box>
@@ -138,10 +152,18 @@ const PrintInvoicePage = () => {
           gap: 2,
         }}
       >
-        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<ArrowBackIcon />}
+          onClick={handleGoBack}
+        >
           Back
         </Button>
-        <Button variant="contained" size="small" startIcon={<PrintIcon />}
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<PrintIcon />}
           onClick={handlePrint}
           disabled={!invoiceData}
           sx={{ fontWeight: 600 }}
@@ -206,6 +228,19 @@ const PrintInvoicePage = () => {
                 {invoiceData.student?.learnerId} · {invoiceData.student?.class_name} ·{' '}
                 {invoiceData.student?.term_name} · {invoiceData.student?.sesname}
               </Typography>
+              {invoiceData.student?.wallet_no && (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={700}
+                    mt={0.5}
+                    fontSize={15}
+                  >
+                    Wallet No -: {invoiceData.student?.wallet_no}
+                  </Typography>
+                </Box>
+              )}
             </Box>
             <Box textAlign="right">
               <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
@@ -358,6 +393,18 @@ const PrintInvoicePage = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Divider sx={{ mt: 3 }} />
+          <Box>
+            <Typography
+              variant="caption"
+              color="red"
+              fontSize={15}
+              sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+            >
+              Note: A transaction fee of ₦500 applies to all payments.
+            </Typography>
+          </Box>
 
           {/* ── ISSUED BY ── */}
           <Box sx={{ px: 2, pt: 3, pb: 1 }}>

@@ -59,9 +59,9 @@ import ChangeClassModal from './ChangeClassModal';
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_OPTIONS = [
-  { value: 'present',   label: 'Present',   color: 'success' },
-  { value: 'absconded', label: 'Absconded', color: 'error'   },
-  { value: 'graduated', label: 'Graduated', color: 'info'    },
+  { value: 'present', label: 'Present', color: 'success' },
+  { value: 'absconded', label: 'Absconded', color: 'error' },
+  { value: 'graduated', label: 'Graduated', color: 'info' },
   { value: 'suspended', label: 'Suspended', color: 'warning' },
 ];
 
@@ -623,7 +623,7 @@ const SingleArmView = () => {
         <DialogContent>
           <Typography variant="body2" sx={{ pt: 1 }}>
             Are you sure you want to remove{' '}
-            <strong>{selectedRow?.name}</strong> from{' '}
+            <strong style={{ color: 'primary' }}>{selectedRow?.name}</strong> from{' '}
             <strong>{selectedRow?.class_arm}</strong>?
             This will unassign them from their current class arm.
           </Typography>

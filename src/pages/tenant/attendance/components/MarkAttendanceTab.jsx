@@ -28,12 +28,15 @@ import {
   Divider,
   Alert,
   Snackbar,
+  Checkbox,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   Email as EmailIcon,
   NotificationsActive as NotificationsActiveIcon,
-  Add as AddIcon,
   Male as MaleIcon,
   Female as FemaleIcon,
   CheckCircle as CheckCircleIcon,
@@ -41,9 +44,13 @@ import {
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
   WbSunny as MorningIcon,
   NightsStay as AfternoonIcon,
-  FileDownload as DownloadIcon
+  FileDownload as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from '@mui/icons-material';
 import ReusableDialog from '@/components/shared/ReusableDialog';
+import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
   fetchSessions,
@@ -159,13 +166,20 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const submittingRef = useRef(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [alertConfirmOpen, setAlertConfirmOpen] = useState(false);
-  const [alertType, setAlertType] = useState(''); // 'attendance' | 'risk'
+  const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
   const [holidayDates, setHolidayDates] = useState({});
+
+  // ── Export dropdown state ─────────────────────────────────
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  // ── Selected weekdays (checkboxes) ────────────────────────
+  const [selectedDays, setSelectedDays] = useState({});
 
   // ── Load filter options and auto-select active session/term ──
   useEffect(() => {
@@ -180,11 +194,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         setSessions(sessions);
         setProgrammes(progRes.data?.data || progRes.data || []);
 
-        // Auto-select session from active SessionTerm
         const activeStData = activeStRes.data?.data || activeStRes.data;
         if (activeStData?.session_id) {
           setAttSession(activeStData.session_id);
-          // Also pre-set term_id from the active SessionTerm
           if (activeStData.term_id) {
             setAttTermId(activeStData.term_id);
           }
@@ -201,7 +213,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     fetchTerms(attSession).then((r) => {
       const termsData = r.data?.data || r.data || [];
       setTerms(termsData);
-      // Try to preselect the term matching the active SessionTerm's term_id
       if (Array.isArray(termsData) && termsData.length > 0) {
         const match = termsData.find((t) => String(t.id) === String(attTermId));
         if (match) {
@@ -258,6 +269,25 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     ? generateWeekDates(selectedWeek.start_date)
     : [];
 
+  // ── Initialize selected days when week changes ───────────
+  // IMPORTANT: preserves existing user toggles — only adds new dates as unchecked
+  useEffect(() => {
+    const dates = weekDates.length > 0 ? weekDates : fallbackWeekDates;
+    if (dates.length > 0) {
+      setSelectedDays((prev) => {
+        const updated = { ...prev };
+        let changed = false;
+        dates.forEach((d) => {
+          if (!(d in updated)) {
+            updated[d] = false; // new dates default to unchecked
+            changed = true;
+          }
+        });
+        return changed ? updated : prev;
+      });
+    }
+  }, [weekDates, fallbackWeekDates]);
+
   // ── Fetch Learners & Attendance when filter applied ───────
   const fetchLearners = useCallback(async () => {
     if (!attArm || !attWeek) return;
@@ -277,7 +307,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           attendance_percent, comparison_diff, comparison_text,
         } = res.data.data;
 
-        // Use backend-computed counts when available
         if (learners_present_count !== undefined) setLearnersPresentCount(learners_present_count);
         if (total_learners !== undefined) setTotalLearnerCount(total_learners);
         if (attendance_percent !== undefined) setAttendancePercent(attendance_percent);
@@ -288,7 +317,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         setHolidayDates(holidays);
         setLearners(students);
 
-        // Reset counts if no students returned
         if (!students || students.length === 0) {
           setLearnersPresentCount(0);
           setTotalLearnerCount(0);
@@ -297,7 +325,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           setComparisonText('');
         }
 
-        // Build attendanceData map: learnerId -> { date -> {morning, afternoon} }
         const dayList = dates.length > 0 ? dates : fallbackWeekDates;
         const attMap = {};
         students.forEach((learner) => {
@@ -305,10 +332,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           const seeded = {};
           dayList.forEach((date) => {
             if (holidays[date]) {
-              // Holiday — store as special marker
               seeded[date] = { __holiday: true };
             } else {
-              // Use existing content from backend or default
               const content = existing[date] && typeof existing[date] === 'object'
                 ? { ...existing[date] }
                 : defaultDateContent();
@@ -346,13 +371,17 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       Object.keys(updated).forEach((id) => {
         const learnerAtt = { ...(updated[id] || {}) };
         const entry = learnerAtt[day];
-        // Skip holidays
         if (entry && entry.__holiday) return;
         learnerAtt[day] = setPeriodInContent(entry, attendanceType, status, null);
         updated[id] = learnerAtt;
       });
       return updated;
     });
+  };
+
+  /** Toggle selected day for checkbox */
+  const toggleDaySelection = (day) => {
+    setSelectedDays((prev) => ({ ...prev, [day]: prev[day] === true ? false : true }));
   };
 
   const handleApplyFilter = () => {
@@ -365,16 +394,15 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const closeConfirmDialog = () => setConfirmDialogOpen(false);
 
   const handleSubmitAttendance = async () => {
-    // Guard: prevent concurrent execution & double-fire
     if (!attArm || !attWeek || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      // Build a single array of records and send ONE batch request
       const records = [];
       Object.entries(attendanceData).forEach(([learnerId, days]) => {
         Object.entries(days).forEach(([day, content]) => {
           if (!content || content.__holiday) return;
+          if (selectedDays[day] === false) return; // Skip unselected days
 
           const morningStatus = content.morning?.is_present;
           const afternoonStatus = content.afternoon?.is_present;
@@ -405,9 +433,25 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       if (records.length > 0) {
         await attendanceApi.markBatchAttendance({ records });
+        setAlertSnackbar({
+          open: true,
+          message: `Attendance submitted successfully — ${records.length} record(s) saved.`,
+          severity: 'success',
+        });
+      } else {
+        setAlertSnackbar({
+          open: true,
+          message: 'No attendance records to submit. Mark at least one student as present or absent on the selected days.',
+          severity: 'warning',
+        });
       }
     } catch (e) {
       console.error('Failed to submit attendance:', e);
+      setAlertSnackbar({
+        open: true,
+        message: e.response?.data?.message || 'Failed to submit attendance. Please try again.',
+        severity: 'error',
+      });
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -415,14 +459,15 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   // ── Summary Stats ─────────────────────────────────────────
-  // Learners present count from backend response (or computed locally as fallback)
   const [learnersPresentCount, setLearnersPresentCount] = useState(0);
   const [totalLearnerCount, setTotalLearnerCount] = useState(0);
   const [attendancePercent, setAttendancePercent] = useState(0);
   const [comparisonDiff, setComparisonDiff] = useState(0);
   const [comparisonText, setComparisonText] = useState('');
 
-  const handleExport = async () => {
+  // ── Export handlers ───────────────────────────────────────
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
     try {
       const res = await attendanceApi.exportAttendanceReport({
         class_arm_id: attArm || undefined,
@@ -439,7 +484,33 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('Export failed:', e);
+      console.error('Export Excel failed:', e);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    setExportingPdf(true);
+    try {
+      const res = await attendanceApi.exportAttendancePdf({
+        class_arm_id: attArm || undefined,
+        week_term_id: attWeek || undefined,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'attendance-report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export PDF failed:', e);
+      setAlertSnackbar({ open: true, message: 'Failed to export PDF report', severity: 'error' });
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -449,9 +520,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       setAlertSnackbar({ open: true, message: 'No learners to send alerts for', severity: 'warning' });
       return;
     }
+    // Get only the checked (selected) days
+    const selectedDaysList = Object.entries(selectedDays)
+      .filter(([, checked]) => checked === true)
+      .map(([day]) => day);
     setSendingAlert(true);
     try {
-      const res = await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm);
+      const res = await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm, selectedDaysList);
       const msg = res.data?.message || 'Alerts sent successfully';
       setAlertSnackbar({ open: true, message: msg, severity: 'success' });
     } catch (e) {
@@ -468,9 +543,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       setAlertSnackbar({ open: true, message: 'No learners to send risk alerts for', severity: 'warning' });
       return;
     }
+    // Get only the checked (selected) days
+    const selectedDaysList = Object.entries(selectedDays)
+      .filter(([, checked]) => checked === true)
+      .map(([day]) => day);
     setSendingAlert(true);
     try {
-      const res = await attendanceApi.sendRiskAlerts(ids, attWeek, attArm);
+      const res = await attendanceApi.sendRiskAlerts(ids, attWeek, attArm, selectedDaysList);
       const msg = res.data?.message || 'Risk alerts sent successfully';
       setAlertSnackbar({ open: true, message: msg, severity: 'success' });
     } catch (e) {
@@ -503,6 +582,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const periodLabel = attendanceType === 'morning' ? 'Morning' : 'Afternoon';
   const PeriodIcon = attendanceType === 'morning' ? MorningIcon : AfternoonIcon;
 
+  // Get gauge color based on percentage
+  const gaugeColorRanges = [
+    { from: 0, to: 25, color: theme.palette.error.main },
+    { from: 26, to: 50, color: theme.palette.warning.main },
+    { from: 51, to: 75, color: theme.palette.info.main },
+    { from: 76, to: 100, color: theme.palette.success.main },
+  ];
+
   return (
     <Box sx={{ pt: 1 }}>
       {/* ── Action Buttons Row ──────────────────────────── */}
@@ -511,9 +598,41 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           Learner Attendance
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Send Alerts'}</Button>
-          <Button variant="outlined" color="error" size="small" startIcon={<NotificationsActiveIcon />} onClick={() => { setAlertType('risk'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>{sendingAlert ? 'Sending...' : 'Risk Alerts'}</Button>
-          <Button variant="contained" color="success" size="small" startIcon={<DownloadIcon />} onClick={handleExport} disabled={!filterApplied}>Export Attendance Report</Button>
+          <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>
+            {sendingAlert ? 'Sending...' : 'Send Alerts'}
+          </Button>
+          {/* Export Dropdown */}
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            startIcon={<DownloadIcon />}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+            disabled={!filterApplied || exportingPdf}
+          >
+            {exportingPdf ? 'Exporting...' : 'Export'}
+          </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={Boolean(exportAnchorEl)}
+            onClose={() => setExportAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleExportExcel}>
+              <ListItemIcon>
+                <ExcelIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Report by Excel</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleExportPdf}>
+              <ListItemIcon>
+                <PdfIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Report by PDF</ListItemText>
+            </MenuItem>
+          </Menu>
         </Stack>
       </Stack>
 
@@ -655,7 +774,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       {/* ── Attendance Table & Summary ──────────────────── */}
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 9 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
           )}
@@ -663,18 +782,51 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>S/N</TableCell>
-                  <TableCell sx={{ minWidth: 200 }}>Learner's Name</TableCell>
+                  <TableCell sx={{
+                    width: 40,
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 2,
+                    bgcolor: isDark ? '#1e1e1e' : '#fff',
+                    borderRight: `1px solid ${theme.palette.divider}`,
+                  }}>S/N</TableCell>
+                  <TableCell sx={{
+                    minWidth: 200,
+                    position: 'sticky',
+                    left: 40,
+                    zIndex: 2,
+                    bgcolor: isDark ? '#1e1e1e' : '#fff',
+                    borderRight: `1px solid ${theme.palette.divider}`,
+                  }}>Learner's Name</TableCell>
                   {days.map((day) => {
                     const dayLabel = formatDayHeader(day);
+                    const isSelected = selectedDays[day] === true;
                     return (
-                      <TableCell key={day} align="center" sx={{ minWidth: 100 }}>
+                      <TableCell key={day} align="center" sx={{
+                        minWidth: 100,
+                        bgcolor: isSelected ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04) : 'transparent',
+                        transition: 'background-color 0.3s ease',
+                      }}>
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700}>
+                          {/* Weekday Checkbox - above the day name */}
+                          <Checkbox
+                            size="small"
+                            checked={isSelected}
+                            onChange={() => toggleDaySelection(day)}
+                            sx={{
+                              p: 0.25,
+                              color: theme.palette.success.main,
+                              '&.Mui-checked': {
+                                color: theme.palette.success.main,
+                              },
+                              mb: 0.25,
+                            }}
+                          />
+                          <Typography variant="subtitle2" fontWeight={700} sx={{ display: 'block' }}>
                             {dayLabel}
                           </Typography>
                           {day !== dayLabel && (
-                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px', display: 'block' }}>
                               {day}
                             </Typography>
                           )}
@@ -696,7 +848,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </IconButton>
                           </Tooltip>
                         </Stack>
-                        {/* Period indicator for the column */}
                         <Typography
                           variant="caption"
                           sx={{
@@ -747,8 +898,20 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                     const att = attendanceData[learner.student_reg_id] || {};
                     return (
                       <TableRow key={learner.student_reg_id} hover>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 1,
+                          bgcolor: isDark ? '#1e1e1e' : '#fff',
+                          borderRight: `1px solid ${theme.palette.divider}`,
+                        }}>{idx + 1}</TableCell>
+                        <TableCell sx={{
+                          position: 'sticky',
+                          left: 40,
+                          zIndex: 1,
+                          bgcolor: isDark ? '#1e1e1e' : '#fff',
+                          borderRight: `1px solid ${theme.palette.divider}`,
+                        }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                             <Typography variant="body2" fontWeight={600}>{learner.name}</Typography>
                             <Chip
@@ -764,46 +927,55 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         {days.map((day) => {
                           const content = att[day];
                           const isHoliday = content?.__holiday;
-
-                          // Get the status for the currently active period
                           const status = isHoliday
                             ? 'holiday'
                             : getPeriodStatus(content?.[attendanceType]);
+                          const isSelected = selectedDays[day] === true;
 
                           return (
-                            <TableCell key={day} align="center">
+                            <TableCell key={day} align="center" sx={{
+                              bgcolor: isSelected ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04) : 'transparent',
+                              transition: 'background-color 0.3s ease',
+                              opacity: isSelected ? 1 : 0.5,
+                            }}>
                               {isHoliday ? (
                                 <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
                               ) : (
                                 <RadioGroup
                                   row
                                   value={status}
-                                  onChange={(e) => setDayStatus(learner.student_reg_id, day, e.target.value)}
+                                  onChange={(e) => isSelected && setDayStatus(learner.student_reg_id, day, e.target.value)}
                                   sx={{ justifyContent: 'center' }}
                                 >
-                                  <Tooltip title="Present">
-                                    <FormControlLabel
-                                      value="present"
-                                      control={<Radio size="small" color="success" sx={{ p: 0.25 }} />}
-                                      label=""
-                                      sx={{ m: 0 }}
-                                    />
+                                  <Tooltip title={isSelected ? 'Present' : 'Select this day first'}>
+                                    <span>
+                                      <FormControlLabel
+                                        value="present"
+                                        control={<Radio size="small" color="success" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        label=""
+                                        sx={{ m: 0 }}
+                                      />
+                                    </span>
                                   </Tooltip>
-                                  <Tooltip title="Absent">
-                                    <FormControlLabel
-                                      value="absent"
-                                      control={<Radio size="small" color="error" sx={{ p: 0.25 }} />}
-                                      label=""
-                                      sx={{ m: 0 }}
-                                    />
+                                  <Tooltip title={isSelected ? 'Absent' : 'Select this day first'}>
+                                    <span>
+                                      <FormControlLabel
+                                        value="absent"
+                                        control={<Radio size="small" color="error" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        label=""
+                                        sx={{ m: 0 }}
+                                      />
+                                    </span>
                                   </Tooltip>
-                                  <Tooltip title="Clear">
-                                    <FormControlLabel
-                                      value="unknown"
-                                      control={<Radio size="small" color="default" sx={{ p: 0.25 }} />}
-                                      label=""
-                                      sx={{ m: 0 }}
-                                    />
+                                  <Tooltip title={isSelected ? 'Clear' : 'Select this day first'}>
+                                    <span>
+                                      <FormControlLabel
+                                        value="unknown"
+                                        control={<Radio size="small" color="default" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        label=""
+                                        sx={{ m: 0 }}
+                                      />
+                                    </span>
                                   </Tooltip>
                                 </RadioGroup>
                               )}
@@ -827,54 +999,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               </TableBody>
             </Table>
           </TableContainer>
-
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={openConfirmDialog}
-              disabled={submitting || learners.length === 0}
-            >
-              {submitting ? 'Submitting...' : 'Submit Attendance'}
-            </Button>
-          </Box>
-
-          {/* ── Confirmation Dialog ──────────────────────── */}
-          <ReusableDialog
-            open={confirmDialogOpen}
-            onClose={closeConfirmDialog}
-            title="Submit Attendance"
-            content={
-              <Box sx={{ py: 2 }}>
-                <Typography variant="body1" gutterBottom fontWeight={500}>
-                  You are about to mark the attendance.
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {learners.length} learner(s) • {days.length} day(s) • AM/PM periods will be submitted.
-                </Typography>
-              </Box>
-            }
-            actions={
-              <Stack direction="row" spacing={1}>
-                <Button variant="outlined" size="small" onClick={closeConfirmDialog}>Cancel</Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => {
-                    closeConfirmDialog();
-                    handleSubmitAttendance();
-                  }}
-                  autoFocus
-                >
-                  Confirm
-                </Button>
-              </Stack>
-            }
-          />
         </Grid>
 
-        {/* ── Right Summary Card ─────────────────────────── */}
-        <Grid size={{ xs: 12, lg: 3 }}>
+        {/* ── Right Summary Card with Gauge & Submit Button ── */}
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper
             elevation={0}
             sx={{
@@ -885,45 +1013,84 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
             }}
           >
-            <Box>
-              <Typography variant="caption" fontWeight={700} color="text.secondary">
-                LEARNER ATTENDANCE
-              </Typography>
-              <Typography variant="h2" fontWeight={800} color="text.primary" sx={{ my: 1 }}>
-                {attendancePercent}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {learnersPresent} present out of {totalLearners} learners
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  display: 'block',
-                  mt: 0.5,
-                  fontWeight: 600,
-                  color: comparisonDiff >= 0 ? 'success.main' : 'error.main',
-                }}
-              >
-                {comparisonText || `${attendancePercent}% - No previous week data`}
-              </Typography>
-              <Divider sx={{ my: 1.5 }} />
-              <Stack spacing={1}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="text.secondary">Learners</Typography>
-                  <Typography variant="body2" fontWeight={600}>{totalLearners}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="caption" color="text.secondary">School Days</Typography>
-                  <Typography variant="body2" fontWeight={600}>{days.length}</Typography>
-                </Box>
-              </Stack>
-            </Box>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', mb: 1 }}>
+              LEARNER ATTENDANCE
+            </Typography>
+
+            {/* Speedometer/Gauge Chart */}
+            <ReusableGaugeChart
+              value={attendancePercent}
+              label="Attendance"
+              subtitle={`${learnersPresent} present out of ${totalLearners} learners`}
+              height={240}
+              colorRanges={gaugeColorRanges}
+            />
+
+            <Divider sx={{ my: 1.5 }} />
+            <Stack spacing={1} sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">Learners</Typography>
+                <Typography variant="body2" fontWeight={600}>{totalLearners}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">School Days</Typography>
+                <Typography variant="body2" fontWeight={600}>{days.length}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">Present</Typography>
+                <Typography variant="body2" fontWeight={600} color="success.main">{learnersPresent}</Typography>
+              </Box>
+            </Stack>
+
+            {/* ── Submit Attendance Button moved here ── */}
+            <Button
+              variant="contained"
+              size="small"
+              fullWidth
+              onClick={openConfirmDialog}
+              disabled={submitting || learners.length === 0}
+              sx={{ mt: 'auto' }}
+            >
+              {submitting ? 'Submitting...' : 'Submit Attendance'}
+            </Button>
           </Paper>
         </Grid>
       </Grid>
+
+      {/* ── Confirmation Dialog ──────────────────────── */}
+      <ReusableDialog
+        open={confirmDialogOpen}
+        onClose={closeConfirmDialog}
+        title="Submit Attendance"
+        content={
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" gutterBottom fontWeight={500}>
+              You are about to mark the attendance.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {learners.length} learner(s) • {days.length} day(s) • AM/PM periods will be submitted.
+            </Typography>
+          </Box>
+        }
+        actions={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={closeConfirmDialog}>Cancel</Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                closeConfirmDialog();
+                handleSubmitAttendance();
+              }}
+              autoFocus
+            >
+              Confirm
+            </Button>
+          </Stack>
+        }
+      />
 
       <ReusableDialog
         open={alertConfirmOpen}

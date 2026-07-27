@@ -397,8 +397,22 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
-              <TableCell>S/N</TableCell>
-              <TableCell sx={{ minWidth: 200 }}>Learner's Name</TableCell>
+              <TableCell sx={{
+                width: 40,
+                position: 'sticky',
+                left: 0,
+                zIndex: 2,
+                bgcolor: isDark ? '#1e1e1e' : '#fff',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}>S/N</TableCell>
+              <TableCell sx={{
+                minWidth: 200,
+                position: 'sticky',
+                left: 40,
+                zIndex: 2,
+                bgcolor: isDark ? '#1e1e1e' : '#fff',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}>Learner's Name</TableCell>
               <TableCell sx={{ minWidth: 280 }}>Mark Affective Domain</TableCell>
               <TableCell sx={{ minWidth: 280 }}>Mark Psychomotor</TableCell>
             </TableRow>
@@ -421,8 +435,20 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                 const studentAssess = assessments[learner.student_reg_id] || { affective: {}, psychomotor: {} };
                 return (
                   <TableRow key={learner.student_reg_id} hover sx={{ verticalAlign: 'top' }}>
-                    <TableCell>{String(idx + 1).padStart(2, '0')}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 1,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}>{String(idx + 1).padStart(2, '0')}</TableCell>
+                    <TableCell sx={{
+                      position: 'sticky',
+                      left: 40,
+                      zIndex: 1,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}>
                       <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Avatar sx={{ width: 36, height: 36, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main' }}>
                           {(learner.name || '?').charAt(0)}

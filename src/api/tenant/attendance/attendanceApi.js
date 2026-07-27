@@ -71,14 +71,16 @@ const attendanceApi = {
     tenantApi.get('/psychomotor/trait-breakdown', { params }),
 
   // ── Alerts / Notifications ───────────────────────────────
-  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId) =>
-    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
-  sendRiskAlerts: (learnerIds, weekTermId, classArmId) =>
-    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
+  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId, selectedDays = []) =>
+    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
+  sendRiskAlerts: (learnerIds, weekTermId, classArmId, selectedDays = []) =>
+    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>
     tenantApi.get('/attendance/export', { params, responseType: 'blob' }),
+  exportAttendancePdf: (params = {}) =>
+    tenantApi.get('/attendance/export-pdf', { params, responseType: 'blob' }),
   exportPsychomotorReport: (params = {}) =>
     tenantApi.get('/psychomotor/export', { params, responseType: 'blob' }),
 };

@@ -179,7 +179,7 @@ const AttendancePsychomotor = () => {
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter]);
+  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {

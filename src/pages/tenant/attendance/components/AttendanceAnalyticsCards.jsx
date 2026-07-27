@@ -80,6 +80,24 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
     try {
       const res = await attendanceApi.getDailyBreakdown({ class_arm_id: classArmId, week_term_id: _weekId || weekId, session_id: sessionId || undefined, term_id: termId || undefined });
       const data = res.data?.data || [];
+
+      // Check if there's any actual attendance data (non-zero rates)
+      const hasData = data.length > 0 && data.some(d => d.rate > 0);
+
+      if (!hasData) {
+        openCardModal('Week Attendance Rate Analysis', (
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+              📊 No attendance data found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+              No attendance records have been recorded for this week. Please mark attendance first to see the daily breakdown.
+            </Typography>
+          </Box>
+        ));
+        return;
+      }
+
       openCardModal('Week Attendance Rate Analysis', (
         <Box sx={{ py: 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -100,7 +118,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         <Typography color="error">Failed to load data.</Typography>
       ));
     }
-  }, [theme, sessionId, termId]);
+  }, [theme, sessionId, termId, weekId]);
 
   // Fetch weekly trend data for term chart
   const openTermTrend = useCallback(async (classArmId) => {
@@ -108,6 +126,24 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
     try {
       const res = await attendanceApi.getWeeklyTrend({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined });
       const data = res.data?.data || [];
+
+      // Check if there's any actual attendance data
+      const hasData = data.length > 0 && data.some(w => w.rate > 0);
+
+      if (!hasData) {
+        openCardModal('Term Attendance Trend', (
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+              📈 No attendance data found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+              No attendance records exist for this term yet. Start marking attendance to see the term trend.
+            </Typography>
+          </Box>
+        ));
+        return;
+      }
+
       openCardModal('Term Attendance Trend', (
         <Box sx={{ py: 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -166,7 +202,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         <Typography color="error">Failed to load data.</Typography>
       ));
     }
-  }, [classArmId, sessionId, termId]);
+  }, [classArmId, sessionId, termId, weekId]);
 
   // Fetch real at-risk learners breakdown by class arm
   const openAtRiskBreakdown = useCallback(async () => {
@@ -203,7 +239,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         <Typography color="error">Failed to load data.</Typography>
       ));
     }
-  }, [classArmId, sessionId, termId]);
+  }, [classArmId, sessionId, termId, weekId]);
 
   const colors = {
     success: getStatCardColor('success', 1, isDark, theme),

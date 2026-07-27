@@ -312,9 +312,15 @@ const SingleArmView = () => {
     if (!saArm) { notify.warning('Please select a class and arm, then click Apply Filter first.'); return; }
     try {
       const res = await classRegisterApi.exportStudentListPdf({ class_arm_id: saArm });
-      const blob = new Blob([res.data], { type: 'text/html' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student_list.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Student list exported as PDF');
     } catch {
       notify.error('Failed to export PDF');
     }

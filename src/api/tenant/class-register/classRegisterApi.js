@@ -49,7 +49,7 @@ const classRegisterApi = {
 
   // ── Export PDF ────────────────────────────────────────────
   exportStudentListPdf: (params = {}) =>
-    tenantApi.get('/students/export-pdf', { params, responseType: 'text' }),
+    tenantApi.get('/students/export-pdf', { params, responseType: 'blob' }),
 
   // ── Export ───────────────────────────────────────────────
   exportStudentList: (params = {}) =>

@@ -12,7 +12,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { tenantValidation } from './routes/Router';
 import './global.css';
 
-const isTenantSubdomain = tenantValidation?.status === true;
+const isTenantSubdomain = tenantValidation !== null;
 
 if (tenantValidation?.status === false && window.location.pathname !== '/school-not-found') {
   window.location.replace('/school-not-found');

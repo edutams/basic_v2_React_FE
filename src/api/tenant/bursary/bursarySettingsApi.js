@@ -125,8 +125,8 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     return res.data;
 };
 
-export const fetchGenerateInvoiceStats = async (sessionTermId, classId) => {
-    const params = { session_term_id: sessionTermId };
+export const fetchGenerateInvoiceStats = async (sessionTermId, classId, payOption = 'compulsory', payType = 'bursary') => {
+    const params = { session_term_id: sessionTermId, pay_option: payOption, pay_type: payType };
     if (classId) {
         params.class_id = classId;
     }

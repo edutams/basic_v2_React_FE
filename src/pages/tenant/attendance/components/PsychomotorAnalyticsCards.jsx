@@ -66,7 +66,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null });
+  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
 
   const openCardModal = (cardTitle, modalBody) => {
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
@@ -74,6 +74,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   // Fetch real per-trait psychomotor breakdown from API
   const openPsychomotorBreakdown = useCallback(async (params) => {
+    setAnalyticsModal({ open: true, title: 'Psychomotor Rating Breakdown', content: null, loading: true });
     try {
       const res = await attendanceApi.getTraitBreakdown(params);
       const data = res.data?.data || {};
@@ -81,7 +82,14 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
       if (psyTraits.length === 0) {
         openCardModal('Psychomotor Rating Breakdown', (
-          <Typography color="text.secondary">No psychomotor assessments found for this class/week.</Typography>
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+              🏋️ No psychomotor data found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+              No psychomotor assessments have been recorded for this class/week.
+            </Typography>
+          </Box>
         ));
         return;
       }
@@ -109,6 +117,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   // Fetch real needing support data from API
   const openNeedingSupport = useCallback(async (params) => {
+    setAnalyticsModal({ open: true, title: 'Learners Needing Support', content: null, loading: true });
     try {
       const [statsRes, learnersRes] = await Promise.all([
         attendanceApi.getPsychomotorStats(params),
@@ -119,6 +128,21 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
       const totalRated = stats.total_assessed || 1;
       const realNeedingSupport = learners.length;
       const realOnTrack = Math.max(0, totalRated - realNeedingSupport);
+
+      // Check if there's actual data
+      if ((stats.total_assessed || 0) === 0 && learners.length === 0) {
+        openCardModal('Learners Needing Support', (
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+              📋 No support data found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+              No learners need support yet. All assessed students are on track.
+            </Typography>
+          </Box>
+        ));
+        return;
+      }
 
       openCardModal('Learners Needing Support', (
         <Box sx={{ py: 1 }}>
@@ -143,6 +167,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   // Fetch gender rating breakdown from API
   const openGenderBreakdown = useCallback(async (params) => {
+    setAnalyticsModal({ open: true, title: 'Gender Rating Comparison', content: null, loading: true });
     try {
       const res = await attendanceApi.getRatingByGender(params);
       const genderData = res.data?.data || {};
@@ -150,6 +175,21 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
       const femaleCount = genderData.female_count || 0;
       const maleAvg = genderData.male_rating || 0;
       const femaleAvg = genderData.female_rating || 0;
+
+      // Check if there's actual assessment data
+      if (maleCount === 0 && femaleCount === 0) {
+        openCardModal('Gender Rating Comparison', (
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+              👥 No gender data found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+              No psychomotor/affective assessments have been recorded yet. Submit assessments first to see the gender distribution.
+            </Typography>
+          </Box>
+        ));
+        return;
+      }
 
       openCardModal('Gender Rating Comparison', (
         <Box sx={{ py: 1 }}>
@@ -216,7 +256,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
             </Typography>
             <LinearProgress
               variant="determinate"
-              value={84}
+              value={Math.min(Math.round((metrics.avgAffective / 5) * 100), 100)}
               sx={{
                 my: 1,
                 height: 5,
@@ -264,16 +304,16 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={76}
-                sx={{
-                  my: 1,
-                  height: 5,
-                  borderRadius: 2,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: colors.primary.accentColor,
-                  },
-                }}
+              value={Math.min(Math.round((metrics.avgPsychomotor / 5) * 100), 100)}
+              sx={{
+                my: 1,
+                height: 5,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: colors.primary.accentColor,
+                },
+              }}
               />
               <Stack direction="row" alignItems="center" spacing={0.4}>
                 <Typography
@@ -348,7 +388,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                   </Stack>
                   <LinearProgress
                     variant="determinate"
-                    value={82}
+                    value={Math.min(Math.round((metrics.maleRating / 5) * 100), 100)}
                     sx={{
                       height: 4,
                       borderRadius: 2,
@@ -364,7 +404,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                   </Stack>
                   <LinearProgress
                     variant="determinate"
-                    value={86}
+                    value={Math.min(Math.round((metrics.femaleRating / 5) * 100), 100)}
                     sx={{
                       height: 4,
                       borderRadius: 2,
@@ -384,6 +424,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
         onClose={() => setAnalyticsModal({ open: false, title: '', content: null })}
         title={analyticsModal.title}
         content={analyticsModal.content}
+        loading={analyticsModal.loading}
       />
     </>
   );

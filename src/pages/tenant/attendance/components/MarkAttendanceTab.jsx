@@ -175,7 +175,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [autoSendReport, setAutoSendReport] = useState(false);
+  const [autoSendReport, setAutoSendReport] = useState(() => {
+    const saved = localStorage.getItem('attendance_autoSendReport');
+    return saved === null ? false : saved === 'true';
+  });
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
@@ -303,23 +306,34 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     : [];
 
   // ── Initialize selected days when week changes ───────────
-  // IMPORTANT: preserves existing user toggles — only adds new dates as unchecked
+  // Restores previously checked days from localStorage for the same arm+week.
   useEffect(() => {
     const dates = weekDates.length > 0 ? weekDates : fallbackWeekDates;
-    if (dates.length > 0) {
-      setSelectedDays((prev) => {
-        const updated = { ...prev };
-        let changed = false;
-        dates.forEach((d) => {
-          if (!(d in updated)) {
-            updated[d] = false; // new dates default to unchecked
-            changed = true;
-          }
-        });
-        return changed ? updated : prev;
-      });
+    if (dates.length === 0) return;
+
+    // Read saved days for this specific arm+week combination
+    const storageKey = attArm && attWeek ? `attendance_selectedDays_${attArm}_${attWeek}` : null;
+    let saved = {};
+    if (storageKey) {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) saved = JSON.parse(raw);
+      } catch { /* ignore */ }
     }
-  }, [weekDates, fallbackWeekDates]);
+
+    setSelectedDays((prev) => {
+      // Use saved as the base (NOT merged with prev) to avoid stale data from other filter combos
+      const updated = { ...saved };
+      let changed = Object.keys(updated).length !== Object.keys(prev).length;
+      dates.forEach((d) => {
+        if (!(d in updated)) {
+          updated[d] = false; // new dates default to unchecked
+          changed = true;
+        }
+      });
+      return changed ? updated : updated;
+    });
+  }, [weekDates, fallbackWeekDates, attArm, attWeek]);
 
   // ── Fetch Learners & Attendance when filter applied ───────
   const fetchLearners = useCallback(async () => {
@@ -412,9 +426,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     });
   };
 
-  /** Toggle selected day for checkbox */
+  /** Toggle selected day for checkbox and persist to localStorage. */
   const toggleDaySelection = (day) => {
-    setSelectedDays((prev) => ({ ...prev, [day]: prev[day] === true ? false : true }));
+    setSelectedDays((prev) => {
+      const next = { ...prev, [day]: prev[day] === true ? false : true };
+      const storageKey = attArm && attWeek ? `attendance_selectedDays_${attArm}_${attWeek}` : null;
+      if (storageKey) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch { /* localStorage full or unavailable */ }
+      }
+      return next;
+    });
   };
 
   const handleApplyFilter = () => {
@@ -827,6 +850,26 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </RadioGroup>
       </Box>
 
+      {/* ── Info Banner: Reminder to Submit ────────────── */}
+      {filterApplied && learners.length > 0 && (
+        <Alert
+          severity="info"
+          variant="outlined"
+          sx={{
+            mb: 2,
+            '& .MuiAlert-message': { width: '100%' },
+          }}
+        >
+          <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <span role="img" aria-label="info">ℹ️</span>
+              Your attendance marks are saved <strong>locally</strong>. Click the{' '}
+              <strong>Submit Attendance</strong> button on the right panel to permanently save them to the system.
+            </Typography>
+          </Stack>
+        </Alert>
+      )}
+
       {/* ── Attendance Table & Summary ──────────────────── */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>
@@ -1091,22 +1134,36 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               </Box>
             </Stack>
 
-            <FormControlLabel
-              control={
+            <Box
+              sx={{
+                p: 1.5,
+                mb: 1.5,
+                borderRadius: 1,
+                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : alpha(theme.palette.primary.main, 0.04),
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : alpha(theme.palette.primary.main, 0.12),
+              }}
+            >
+              <Stack direction="row" alignItems="flex-start" spacing={1}>
                 <Checkbox
                   checked={autoSendReport}
-                  onChange={(e) => setAutoSendReport(e.target.checked)}
+                  onChange={(e) => {
+                    setAutoSendReport(e.target.checked);
+                    localStorage.setItem('attendance_autoSendReport', e.target.checked);
+                  }}
                   size="small"
-                  sx={{ p: 0.25 }}
+                  sx={{ p: 0.25, mt: -0.25 }}
                 />
-              }
-              label={
-                <Typography variant="caption" color="text.secondary">
-                  Send weekly attendance report to guardians
-                </Typography>
-              }
-              sx={{ mb: 1, mt: -0.5 }}
-            />
+                <Box>
+                  <Typography variant="body2" fontWeight={600} sx={{ mb: 0.25 }}>
+                    Weekly Report to Guardians
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Automatically email a weekly attendance summary with PDF and Excel report to parents/guardians after submission.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
 
             {/* ── Submit Attendance Button moved here ── */}
             <Button

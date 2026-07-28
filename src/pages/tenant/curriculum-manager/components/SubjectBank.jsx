@@ -729,6 +729,8 @@ const SubjectBank = () => {
 
                       <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Program</TableCell>
 
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Status</TableCell>
+
                       <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Pass Mark</TableCell>
 
                       <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Unit</TableCell>
@@ -742,7 +744,7 @@ const SubjectBank = () => {
                   <TableBody>
                     {loadingSubjects ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={8} align="center">
                           <CircularProgress size={24} />
                         </TableCell>
                       </TableRow>
@@ -753,6 +755,30 @@ const SubjectBank = () => {
                           <TableCell>{subject.subject_name}</TableCell>
                           <TableCell>{subject.subject_code}</TableCell>
                           <TableCell>{subject.program_name}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={subject.prog_subject_status}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                                bgcolor: (theme) => {
+                                  const mode = theme.palette.mode;
+                                  if (subject.prog_subject_status === 'compulsory') return mode === 'dark' ? 'rgba(0, 194, 146, 0.2)' : '#dcfce7';
+                                  if (subject.prog_subject_status === 'optional') return mode === 'dark' ? 'rgba(33, 150, 243, 0.2)' : '#dbeafe';
+                                  if (subject.prog_subject_status === 'trade') return mode === 'dark' ? 'rgba(156, 39, 176, 0.2)' : '#f3e8ff';
+                                  return mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f5f5f5';
+                                },
+                                color: (theme) => {
+                                  const mode = theme.palette.mode;
+                                  if (subject.prog_subject_status === 'compulsory') return mode === 'dark' ? '#00c292' : '#166534';
+                                  if (subject.prog_subject_status === 'optional') return mode === 'dark' ? '#64b5f6' : '#1e40af';
+                                  if (subject.prog_subject_status === 'trade') return mode === 'dark' ? '#ce93d8' : '#6b21a8';
+                                  return mode === 'dark' ? '#aaa' : '#666';
+                                },
+                              }}
+                            />
+                          </TableCell>
                           <TableCell>{subject.pass_mark}</TableCell>
                           <TableCell>{subject.unit}</TableCell>
                           <TableCell align="center">
@@ -767,7 +793,7 @@ const SubjectBank = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={8} align="center">
                           <Typography color="textSecondary">
                             {selectedCurriculum
                               ? 'No subjects found for this curriculum'
@@ -1070,8 +1096,8 @@ const SubjectBank = () => {
                       name="status"
                     >
                       <MenuItem value="compulsory">Compulsory</MenuItem>
-
                       <MenuItem value="optional">Optional</MenuItem>
+                      <MenuItem value="trade">Trade</MenuItem>
                     </Select>
                     {fieldErrors.status && (
                       <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
@@ -1220,6 +1246,7 @@ const SubjectBank = () => {
                     >
                       <MenuItem value="compulsory">Compulsory</MenuItem>
                       <MenuItem value="optional">Optional</MenuItem>
+                      <MenuItem value="trade">Trade</MenuItem>
                     </Select>
                     {fieldErrors.status && (
                       <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>

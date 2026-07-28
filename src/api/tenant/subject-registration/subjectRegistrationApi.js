@@ -17,6 +17,8 @@ const subjectRegistrationApi = {
     tenantApi.get(`/subjects/general/${classId}`, { params }),
   getOptionalSubjects: (classId, params = {}) =>
     tenantApi.get(`/subjects/optional/${classId}`, { params }),
+  getTradeSubjects: (classId, params = {}) =>
+    tenantApi.get(`/subjects/trade/${classId}`, { params }),
 
   // ── Learner Registration ─────────────────────────────────
   getLearners: (classId, armId, params = {}) =>

@@ -93,20 +93,27 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 
 // ── Reusable filter dropdowns for modals (local state) ────────
 const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arms, initialFilters, onApply, applyLabel = 'Apply Filter' }) => {
-  const [localFilters, setLocalFilters] = useState({
-    session: initialFilters?.session || '',
-    term: initialFilters?.term || '',
-    week: initialFilters?.week || '',
-    programme: initialFilters?.programme || '',
-    class: initialFilters?.class || '',
-    arm: initialFilters?.arm || '',
-  });
+  // Ensure initial filters use string IDs for consistent Select matching
+  const normalizedInitial = {
+    session: String(initialFilters?.session || ''),
+    term: String(initialFilters?.term || ''),
+    week: String(initialFilters?.week || ''),
+    programme: String(initialFilters?.programme || ''),
+    class: String(initialFilters?.class || ''),
+    arm: String(initialFilters?.arm || ''),
+  };
 
-  // Fetch terms when session changes
+  const [localFilters, setLocalFilters] = useState(normalizedInitial);
+
   const [localTerms, setLocalTerms] = useState(terms);
   const [localWeeks, setLocalWeeks] = useState(weeks);
   const [localClasses, setLocalClasses] = useState(classes);
   const [localArms, setLocalArms] = useState(arms);
+
+  // Sync localFilters when initialFilters change (key may not always trigger remount)
+  useEffect(() => {
+    setLocalFilters(normalizedInitial);
+  }, [normalizedInitial.session, normalizedInitial.term, normalizedInitial.week, normalizedInitial.programme, normalizedInitial.class, normalizedInitial.arm]);
 
   useEffect(() => {
     if (!localFilters.session) return;
@@ -157,9 +164,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Session</InputLabel>
-          <Select value={localFilters.session || ''} label="Session" onChange={(e) => handleChange('session', e.target.value)}>
+          <Select value={String(localFilters.session || '')} label="Session" onChange={(e) => handleChange('session', e.target.value)}>
             {sessions.map((s) => (
-              <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+              <MenuItem key={s.id} value={String(s.id)}>{s.sesname || s.name || s.id}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -167,9 +174,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Term</InputLabel>
-          <Select value={localFilters.term || ''} label="Term" onChange={(e) => handleChange('term', e.target.value)}>
+          <Select value={String(localFilters.term || '')} label="Term" onChange={(e) => handleChange('term', e.target.value)}>
             {localTerms.map((t) => (
-              <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+              <MenuItem key={t.id} value={String(t.id)}>{t.term_name}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -177,9 +184,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Week</InputLabel>
-          <Select value={localFilters.week || ''} label="Week" onChange={(e) => handleChange('week', e.target.value)}>
+          <Select value={String(localFilters.week || '')} label="Week" onChange={(e) => handleChange('week', e.target.value)}>
             {localWeeks.map((w) => {
-              const weekId = w.wk_id ?? w.week_id ?? w.id;
+              const weekId = String(w.wk_id ?? w.week_id ?? w.id);
               return (
                 <MenuItem key={weekId} value={weekId}>{w.week_name || `Week ${weekId}`}</MenuItem>
               );
@@ -190,9 +197,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Programme</InputLabel>
-          <Select value={localFilters.programme || ''} label="Programme" onChange={(e) => handleChange('programme', e.target.value)}>
+          <Select value={String(localFilters.programme || '')} label="Programme" onChange={(e) => handleChange('programme', e.target.value)}>
             {programmes.map((p) => (
-              <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+              <MenuItem key={p.id} value={String(p.id)}>{p.programme_name || p.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -200,9 +207,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Class</InputLabel>
-          <Select value={localFilters.class || ''} label="Class" onChange={(e) => handleChange('class', e.target.value)}>
+          <Select value={String(localFilters.class || '')} label="Class" onChange={(e) => handleChange('class', e.target.value)}>
             {localClasses.map((c) => (
-              <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+              <MenuItem key={c.id} value={String(c.id)}>{c.class_name || c.name}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -210,9 +217,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 12, sm: 6, md: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Class/Arm</InputLabel>
-          <Select value={localFilters.arm || ''} label="Class/Arm" onChange={(e) => handleChange('arm', e.target.value)}>
+          <Select value={String(localFilters.arm || '')} label="Class/Arm" onChange={(e) => handleChange('arm', e.target.value)}>
             {localArms.map((a) => (
-              <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+              <MenuItem key={a.id} value={String(a.id)}>{a.arm_names}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -307,13 +314,35 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   // ── Week Attendance Rate Analysis ────────────────────────────
   const openWeekBreakdown = useCallback(async (classArmId, _weekId, localFilters) => {
+    const effectiveArmId = localFilters?.arm || classArmId;
+    const effectiveWeekId = localFilters?.week || _weekId || weekId;
+    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+    const effectiveTerm = localFilters?.term || termId || activeTermId;
+
+    if (!effectiveArmId || !effectiveWeekId) {
+      openCardModal('Week Attendance Rate Analysis', (
+        <Box>
+          <ModalFilterDropdowns key={filterKeyRef.current}
+            sessions={sessions} terms={terms} weeks={weeks}
+            programmes={programmes} classes={classes} arms={arms}
+            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: effectiveArmId }}
+            onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
+          />
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+              Select Filters to View Data
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+              Please select a <strong>Class/Arm</strong> and <strong>Week</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the daily attendance breakdown.
+            </Typography>
+          </Box>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'Week Attendance Rate Analysis', content: null, loading: true });
     try {
-      const effectiveArmId = localFilters?.arm || classArmId;
-      const effectiveWeekId = localFilters?.week || _weekId || weekId;
-      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-      const effectiveTerm = localFilters?.term || termId || activeTermId;
-
       const res = await attendanceApi.getDailyBreakdown({
         class_arm_id: effectiveArmId || undefined,
         week_term_id: effectiveWeekId || undefined,
@@ -363,7 +392,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
-            initialFilters={{ session: localFilters?.session || sessionId, term: localFilters?.term || termId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
+            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
             onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
           />
           <Typography color="error">Failed to load data.</Typography>
@@ -374,12 +403,34 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   // ── Term Attendance Trend ────────────────────────────────────
   const openTermTrend = useCallback(async (classArmId, localFilters) => {
+    const effectiveArmId = localFilters?.arm || classArmId;
+    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+    const effectiveTerm = localFilters?.term || termId || activeTermId;
+
+    if (!effectiveArmId) {
+      openCardModal('Term Attendance Trend', (
+        <Box>
+          <ModalFilterDropdowns key={filterKeyRef.current}
+            sessions={sessions} terms={terms} weeks={weeks}
+            programmes={programmes} classes={classes} arms={arms}
+            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: '', programme: localFilters?.programme || '', class: localFilters?.class || '', arm: effectiveArmId }}
+            onApply={(lf) => openTermTrend(classArmId, lf)}
+          />
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+              Select Filters to View Data
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the term attendance trend.
+            </Typography>
+          </Box>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'Term Attendance Trend', content: null, loading: true });
     try {
-      const effectiveArmId = localFilters?.arm || classArmId;
-      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-      const effectiveTerm = localFilters?.term || termId || activeTermId;
-
       const res = await attendanceApi.getWeeklyTrend({
         class_arm_id: effectiveArmId || undefined,
         session_id: effectiveSession || undefined,
@@ -429,7 +480,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
-            initialFilters={{ session: localFilters?.session || sessionId, term: localFilters?.term || termId, week: localFilters?.week || '', programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
+            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || '', programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
             onApply={(lf) => openTermTrend(classArmId, lf)}
           />
           <Typography color="error">Failed to load data.</Typography>
@@ -440,13 +491,35 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   // ── Absentees Summary (Table) ────────────────────────────────
   const openAbsenteesBreakdown = useCallback(async (localFilters) => {
+    const effectiveArmId = localFilters?.arm || classArmId;
+    const effectiveWeekId = localFilters?.week || weekId;
+    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+    const effectiveTerm = localFilters?.term || termId || activeTermId;
+
+    if (!effectiveArmId) {
+      openCardModal('Absentees Summary', (
+        <Box>
+          <ModalFilterDropdowns key={filterKeyRef.current}
+            sessions={sessions} terms={terms} weeks={weeks}
+            programmes={programmes} classes={classes} arms={arms}
+            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: effectiveArmId }}
+            onApply={openAbsenteesBreakdown}
+          />
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+              Select Filters to View Data
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the absentees list.
+            </Typography>
+          </Box>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'Absentees Summary', content: null, loading: true });
     try {
-      const effectiveArmId = localFilters?.arm || classArmId;
-      const effectiveWeekId = localFilters?.week || weekId;
-      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-      const effectiveTerm = localFilters?.term || termId || activeTermId;
-
       const res = await attendanceApi.getAbsenteesList({
         class_arm_id: effectiveArmId || undefined,
         week_term_id: effectiveWeekId || undefined,
@@ -525,7 +598,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
-            initialFilters={{ session: localFilters?.session || sessionId, term: localFilters?.term || termId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
+            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
             onApply={openAbsenteesBreakdown}
           />
           <Typography color="error">Failed to load data.</Typography>
@@ -536,13 +609,35 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   // ── At-Risk Learners Overview (Table) ────────────────────────
   const openAtRiskBreakdown = useCallback(async (localFilters) => {
+    const effectiveArmId = localFilters?.arm || classArmId;
+    const effectiveWeekId = localFilters?.week || weekId;
+    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+    const effectiveTerm = localFilters?.term || termId || activeTermId;
+
+    if (!effectiveArmId) {
+      openCardModal('At-Risk Learners Overview', (
+        <Box>
+          <ModalFilterDropdowns key={filterKeyRef.current}
+            sessions={sessions} terms={terms} weeks={weeks}
+            programmes={programmes} classes={classes} arms={arms}
+            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: effectiveArmId }}
+            onApply={openAtRiskBreakdown}
+          />
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+              Select Filters to View Data
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the at-risk learners list.
+            </Typography>
+          </Box>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'At-Risk Learners Overview', content: null, loading: true });
     try {
-      const effectiveArmId = localFilters?.arm || classArmId;
-      const effectiveWeekId = localFilters?.week || weekId;
-      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-      const effectiveTerm = localFilters?.term || termId || activeTermId;
-
       const res = await attendanceApi.getAtRiskLearners({
         class_arm_id: effectiveArmId || undefined,
         week_term_id: effectiveWeekId || undefined,
@@ -618,7 +713,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
-            initialFilters={{ session: localFilters?.session || sessionId, term: localFilters?.term || termId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
+            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || '', class: localFilters?.class || '', arm: localFilters?.arm || classArmId }}
             onApply={openAtRiskBreakdown}
           />
           <Typography color="error">Failed to load data.</Typography>

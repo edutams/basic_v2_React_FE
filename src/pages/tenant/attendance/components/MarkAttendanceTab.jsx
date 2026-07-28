@@ -24,6 +24,7 @@ import {
   FormControlLabel,
   CircularProgress,
   useTheme,
+  useMediaQuery,
   alpha,
   Divider,
   Alert,
@@ -60,6 +61,7 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { useTenantAuth } from '@/hooks/useTenantAuth';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -138,6 +140,7 @@ const setPeriodInContent = (content, period, newStatus, reason) => {
 const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // ── Filter States ─────────────────────────────────────────
   const [filterApplied, setFilterApplied] = useState(false);
@@ -157,6 +160,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [attArm, setAttArm] = useState('');
   const [attendanceType, setAttendanceType] = useState('morning');
 
+  const { roles } = useTenantAuth();
+  const isClassTeacher = Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
+
   // ── Learners & Attendance Data ────────────────────────────
   const [learners, setLearners] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
@@ -169,6 +175,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [autoSendReport, setAutoSendReport] = useState(false);
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
@@ -192,7 +199,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         ]);
         const sessions = sessRes.data?.data || sessRes.data || [];
         setSessions(sessions);
-        setProgrammes(progRes.data?.data || progRes.data || []);
+        const programmesData = progRes.data?.data || progRes.data || [];
+        setProgrammes(programmesData);
 
         const activeStData = activeStRes.data?.data || activeStRes.data;
         if (activeStData?.session_id) {
@@ -203,10 +211,35 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         } else if (sessions.length > 0) {
           setAttSession(sessions[0].id);
         }
+
+        // If class teacher, auto-populate programme/class/arm
+        if (isClassTeacher) {
+          try {
+            const tcRes = await attendanceApi.getTeacherClass();
+            const tcData = tcRes.data?.data;
+            if (tcData) {
+              setAttProgramme(tcData.programme_id);
+              // Fetch classes and pre-select
+              const clsRes = await fetchClassesByProgramme(tcData.programme_id);
+              const classesData = clsRes.data?.data || clsRes.data || [];
+              setClasses(Array.isArray(classesData) ? classesData : []);
+              if (tcData.class_id) {
+                setAttClass(tcData.class_id);
+                // Fetch arms and pre-select
+                const armRes = await fetchClassArmsByClass(tcData.class_id, { programme_id: tcData.programme_id || undefined });
+                const armsData = armRes.data || [];
+                setArms(Array.isArray(armsData) ? armsData : []);
+                if (tcData.class_arm_id) {
+                  setAttArm(tcData.class_arm_id);
+                }
+              }
+            }
+          } catch (e) { console.error('Failed to load teacher class:', e); }
+        }
       } catch (e) { console.error(e); }
     };
     load();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!attSession) return;
@@ -433,11 +466,33 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       if (records.length > 0) {
         await attendanceApi.markBatchAttendance({ records });
-        setAlertSnackbar({
-          open: true,
-          message: `Attendance submitted successfully — ${records.length} record(s) saved.`,
-          severity: 'success',
-        });
+
+        if (autoSendReport) {
+          const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+          const selectedDaysList = Object.entries(selectedDays)
+            .filter(([, checked]) => checked === true)
+            .map(([day]) => day);
+          try {
+            await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm, selectedDaysList);
+            setAlertSnackbar({
+              open: true,
+              message: `Attendance submitted successfully — ${records.length} record(s) saved. Weekly report sent to guardians.`,
+              severity: 'success',
+            });
+          } catch (e) {
+            setAlertSnackbar({
+              open: true,
+              message: `Attendance submitted — ${records.length} record(s) saved. Weekly report failed: ${e.response?.data?.message || 'sending error'}.`,
+              severity: 'warning',
+            });
+          }
+        } else {
+          setAlertSnackbar({
+            open: true,
+            message: `Attendance submitted successfully — ${records.length} record(s) saved.`,
+            severity: 'success',
+          });
+        }
       } else {
         setAlertSnackbar({
           open: true,
@@ -599,7 +654,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>
-            {sendingAlert ? 'Sending...' : 'Send Alerts'}
+            {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
           </Button>
           {/* Export Dropdown */}
           <Button
@@ -681,7 +736,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={attProgramme} label="Programme" onChange={(e) => setAttProgramme(e.target.value)}>
+            <Select value={attProgramme} label="Programme" onChange={(e) => setAttProgramme(e.target.value)} disabled={isClassTeacher}>
               {programmes.map((p) => (
                 <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
               ))}
@@ -691,7 +746,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class</InputLabel>
-            <Select value={attClass} label="Class" onChange={(e) => setAttClass(e.target.value)}>
+            <Select value={attClass} label="Class" onChange={(e) => setAttClass(e.target.value)} disabled={isClassTeacher}>
               {classes.map((c) => (
                 <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
               ))}
@@ -701,7 +756,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={attArm} label="Class Arm" onChange={(e) => setAttArm(e.target.value)}>
+            <Select value={attArm} label="Class Arm" onChange={(e) => setAttArm(e.target.value)} disabled={isClassTeacher}>
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
               ))}
@@ -778,23 +833,19 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
           )}
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 650 }}>
+          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 320px)' }}>
+            <Table sx={{ minWidth: 650 }} stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{
                     width: 40,
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 2,
+                    ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
                     bgcolor: isDark ? '#1e1e1e' : '#fff',
                     borderRight: `1px solid ${theme.palette.divider}`,
                   }}>S/N</TableCell>
                   <TableCell sx={{
                     minWidth: 200,
-                    position: 'sticky',
-                    left: 40,
-                    zIndex: 2,
+                    ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
                     bgcolor: isDark ? '#1e1e1e' : '#fff',
                     borderRight: `1px solid ${theme.palette.divider}`,
                   }}>Learner's Name</TableCell>
@@ -899,16 +950,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                     return (
                       <TableRow key={learner.student_reg_id} hover>
                         <TableCell sx={{
-                          position: 'sticky',
-                          left: 0,
-                          zIndex: 1,
+                          ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
                           bgcolor: isDark ? '#1e1e1e' : '#fff',
                           borderRight: `1px solid ${theme.palette.divider}`,
                         }}>{idx + 1}</TableCell>
                         <TableCell sx={{
-                          position: 'sticky',
-                          left: 40,
-                          zIndex: 1,
+                          ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
                           bgcolor: isDark ? '#1e1e1e' : '#fff',
                           borderRight: `1px solid ${theme.palette.divider}`,
                         }}>
@@ -1043,6 +1090,23 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 <Typography variant="body2" fontWeight={600} color="success.main">{learnersPresent}</Typography>
               </Box>
             </Stack>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={autoSendReport}
+                  onChange={(e) => setAutoSendReport(e.target.checked)}
+                  size="small"
+                  sx={{ p: 0.25 }}
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  Send weekly attendance report to guardians
+                </Typography>
+              }
+              sx={{ mb: 1, mt: -0.5 }}
+            />
 
             {/* ── Submit Attendance Button moved here ── */}
             <Button

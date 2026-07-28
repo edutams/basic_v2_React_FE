@@ -57,16 +57,18 @@ import { useNotification } from '@/hooks/useNotification';
 import StudentDetailModal from './StudentDetailModal';
 import ChangeClassModal from './ChangeClassModal';
 
-// ── Status config ─────────────────────────────────────────────
+// ── Status config (from students table) ───────────────────────
 const STATUS_OPTIONS = [
-  { value: 'present', label: 'Present', color: 'success' },
+  { value: 'student', label: 'Student', color: 'success' },
+  { value: 'graduate', label: 'Graduated', color: 'info' },
+  { value: 'transferred', label: 'Transferred', color: 'secondary' },
+  { value: 'withdrawn', label: 'Withdrawn', color: 'warning' },
   { value: 'absconded', label: 'Absconded', color: 'error' },
-  { value: 'graduated', label: 'Graduated', color: 'info' },
   { value: 'suspended', label: 'Suspended', color: 'warning' },
 ];
 
 const getStatusConfig = (status) =>
-  STATUS_OPTIONS.find((s) => s.value === status) || STATUS_OPTIONS[0];
+  STATUS_OPTIONS.find((s) => s.value === status) || { value: status, label: status || 'Unknown', color: 'default' };
 
 const SingleArmView = ({ onEnrollmentChange }) => {
   const theme = useTheme();
@@ -245,7 +247,7 @@ const SingleArmView = ({ onEnrollmentChange }) => {
   const handleOpenChangeClass = () => { handleMenuClose(); setChangeClassModalOpen(true); };
 
   const handleOpenStatusModal = () => {
-    setSelectedStatus(selectedRow?.status || 'present');
+    setSelectedStatus(selectedRow?.status || 'student');
     handleMenuClose();
     setStatusModalOpen(true);
   };
@@ -374,55 +376,89 @@ const SingleArmView = ({ onEnrollmentChange }) => {
       </Grid>
 
       {/* ── Search & Action Row ─────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth size="small"
-            placeholder="Search by learner name or ID..."
-            value={saSearch}
-            onChange={(e) => setSaSearch(e.target.value)}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-            <Button variant="contained" size="small" startIcon={<FilterIcon />} onClick={handleApplyFilter}>
-              Apply Filter
-            </Button>
-            
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<ExportIcon />}
-              endIcon={<ArrowDropDownIcon />}
-              onClick={(e) => setExportAnchorEl(e.currentTarget)}
-            >
-              Export
-            </Button>
+     <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+  {/* Search */}
+  <Grid size={{ xs: 12, md: 4 }}>
+    <TextField
+      fullWidth
+      size="small"
+      placeholder="Search by learner name or ID..."
+      value={saSearch}
+      onChange={(e) => setSaSearch(e.target.value)}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon fontSize="small" />
+          </InputAdornment>
+        ),
+      }}
+    />
+  </Grid>
 
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setAddToClassModalOpen(true)}>
-              Add to Class
-            </Button>
-            <Menu
-              anchorEl={exportAnchorEl}
-              open={Boolean(exportAnchorEl)}
-              onClose={() => setExportAnchorEl(null)}
-              PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
-            >
-              <MenuItem onClick={handleExportExcel}>
-                <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
-                Export Excel
-              </MenuItem>
-              <MenuItem onClick={handleExportPdf}>
-                <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'error.main' }} />
-                Export PDF
-              </MenuItem>
-            </Menu>
-          </Stack>
-        </Grid>
-      </Grid>
+  {/* Action Buttons */}
+  <Grid size={{ xs: 12, md: 8 }}>
+    <Stack
+      direction="row"
+      justifyContent="space-between"
+      alignItems="center"
+      flexWrap="wrap"
+    >
+      {/* Left side */}
+      <Stack direction="row" spacing={1.5}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<FilterIcon />}
+          onClick={handleApplyFilter}
+        >
+          Apply Filter
+        </Button>
+
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<ExportIcon />}
+          endIcon={<ArrowDropDownIcon />}
+          onClick={(e) => setExportAnchorEl(e.currentTarget)}
+        >
+          Export
+        </Button>
+      </Stack>
+
+      {/* Right side */}
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<AddIcon />}
+        onClick={() => setAddToClassModalOpen(true)}
+      >
+        Add to Class
+      </Button>
+    </Stack>
+
+    <Menu
+      anchorEl={exportAnchorEl}
+      open={Boolean(exportAnchorEl)}
+      onClose={() => setExportAnchorEl(null)}
+      PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+    >
+      <MenuItem onClick={handleExportExcel}>
+        <TableChartIcon
+          fontSize="small"
+          sx={{ mr: 1.5, color: "success.main" }}
+        />
+        Export Excel
+      </MenuItem>
+      <MenuItem onClick={handleExportPdf}>
+        <PictureAsPdfIcon
+          fontSize="small"
+          sx={{ mr: 1.5, color: "primary.main" }}
+        />
+        Export PDF
+      </MenuItem>
+    </Menu>
+  </Grid>
+</Grid>
 
       {/* ── Table ───────────────────────────────────────────── */}
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>

@@ -391,9 +391,7 @@ const SingleArmView = ({ onEnrollmentChange }) => {
             <Button variant="contained" size="small" startIcon={<FilterIcon />} onClick={handleApplyFilter}>
               Apply Filter
             </Button>
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setAddToClassModalOpen(true)}>
-              Add to Class
-            </Button>
+            
             <Button
               variant="contained"
               size="small"
@@ -402,6 +400,10 @@ const SingleArmView = ({ onEnrollmentChange }) => {
               onClick={(e) => setExportAnchorEl(e.currentTarget)}
             >
               Export
+            </Button>
+
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setAddToClassModalOpen(true)}>
+              Add to Class
             </Button>
             <Menu
               anchorEl={exportAnchorEl}

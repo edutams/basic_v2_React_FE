@@ -175,10 +175,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [autoSendReport, setAutoSendReport] = useState(() => {
-    const saved = localStorage.getItem('attendance_autoSendReport');
-    return saved === null ? false : saved === 'true';
-  });
+  const [autoSendReport, setAutoSendReport] = useState(false);
+  const [togglingReport, setTogglingReport] = useState(false);
 
   // ── Week metadata from API ────────────────────────────────
   const [weekDates, setWeekDates] = useState([]);
@@ -215,12 +213,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           setAttSession(sessions[0].id);
         }
 
-        // If class teacher, auto-populate programme/class/arm
+        // If class teacher, auto-populate programme/class/arm and load report setting
         if (isClassTeacher) {
           try {
             const tcRes = await attendanceApi.getTeacherClass();
             const tcData = tcRes.data?.data;
             if (tcData) {
+              setAutoSendReport(tcData.auto_send_weekly_report === true);
               setAttProgramme(tcData.programme_id);
               // Fetch classes and pre-select
               const clsRes = await fetchClassesByProgramme(tcData.programme_id);
@@ -444,6 +443,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     fetchLearners();
     setFilterApplied(true);
     if (onFilter) onFilter(attArm, attSession, attTermId, attWeek);
+    // Load weekly report setting from backend when an arm is selected
+    if (attArm) {
+      attendanceApi.getTeacherClass().then((res) => {
+        const tcData = res.data?.data;
+        if (tcData && String(tcData.class_arm_id) === String(attArm)) {
+          setAutoSendReport(tcData.auto_send_weekly_report === true);
+        } else {
+          // For admin-selected arms (not the teacher's own), set to false
+          // The toggle API will properly set it when user interacts with checkbox
+        }
+      }).catch(() => {});
+    }
   };
 
   const openConfirmDialog = () => setConfirmDialogOpen(true);
@@ -490,32 +501,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       if (records.length > 0) {
         await attendanceApi.markBatchAttendance({ records });
 
-        if (autoSendReport) {
-          const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
-          const selectedDaysList = Object.entries(selectedDays)
-            .filter(([, checked]) => checked === true)
-            .map(([day]) => day);
-          try {
-            await attendanceApi.sendAttendanceAlerts(ids, attWeek, attArm, selectedDaysList);
-            setAlertSnackbar({
-              open: true,
-              message: `Attendance submitted successfully — ${records.length} record(s) saved. Weekly report sent to guardians.`,
-              severity: 'success',
-            });
-          } catch (e) {
-            setAlertSnackbar({
-              open: true,
-              message: `Attendance submitted — ${records.length} record(s) saved. Weekly report failed: ${e.response?.data?.message || 'sending error'}.`,
-              severity: 'warning',
-            });
-          }
-        } else {
-          setAlertSnackbar({
-            open: true,
-            message: `Attendance submitted successfully — ${records.length} record(s) saved.`,
-            severity: 'success',
-          });
-        }
+        setAlertSnackbar({
+          open: true,
+          message: `Attendance submitted successfully — ${records.length} record(s) saved.` +
+            (autoSendReport ? ' Weekly report will be sent automatically by the scheduler.' : ''),
+          severity: 'success',
+        });
       } else {
         setAlertSnackbar({
           open: true,
@@ -1142,14 +1133,31 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 bgcolor: isDark ? 'rgba(255,255,255,0.04)' : alpha(theme.palette.primary.main, 0.04),
                 border: '1px solid',
                 borderColor: isDark ? 'rgba(255,255,255,0.08)' : alpha(theme.palette.primary.main, 0.12),
+                opacity: togglingReport ? 0.6 : 1,
+                transition: 'opacity 0.2s',
               }}
             >
               <Stack direction="row" alignItems="flex-start" spacing={1}>
                 <Checkbox
                   checked={autoSendReport}
-                  onChange={(e) => {
-                    setAutoSendReport(e.target.checked);
-                    localStorage.setItem('attendance_autoSendReport', e.target.checked);
+                  disabled={togglingReport || !attArm}
+                  onChange={async (e) => {
+                    const newVal = e.target.checked;
+                    const previousVal = autoSendReport;
+                    setAutoSendReport(newVal);
+                    setTogglingReport(true);
+                    try {
+                      await attendanceApi.toggleWeeklyReport(attArm, newVal);
+                    } catch (err) {
+                      setAutoSendReport(previousVal);
+                      setAlertSnackbar({
+                        open: true,
+                        message: 'Failed to update weekly report setting',
+                        severity: 'error',
+                      });
+                    } finally {
+                      setTogglingReport(false);
+                    }
                   }}
                   size="small"
                   sx={{ p: 0.25, mt: -0.25 }}
@@ -1159,7 +1167,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                     Weekly Report to Guardians
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Automatically email a weekly attendance summary with PDF and Excel report to parents/guardians after submission.
+                    {autoSendReport
+                      ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
+                      : 'Enable to automatically send weekly attendance reports to parents/guardians via the scheduler.'}
                   </Typography>
                 </Box>
               </Stack>

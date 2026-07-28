@@ -47,6 +47,10 @@ const attendanceApi = {
   getWeeklyTrend: (params = {}) =>
     tenantApi.get('/attendance/weekly-trend', { params }),
 
+  // ── Teacher Class ────────────────────────────────────────────
+  getTeacherClass: () =>
+    tenantApi.get('/attendance/teacher-class'),
+
   // ── Psychomotor / Affective ──────────────────────────────
   getPsychomotorLearners: (params = {}) =>
     tenantApi.get('/psychomotor/learners', { params }),
@@ -75,6 +79,8 @@ const attendanceApi = {
     tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
   sendRiskAlerts: (learnerIds, weekTermId, classArmId, selectedDays = []) =>
     tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
+  toggleWeeklyReport: (classArmId, enabled) =>
+    tenantApi.post('/attendance/toggle-weekly-report', { class_arm_id: classArmId, enabled }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>

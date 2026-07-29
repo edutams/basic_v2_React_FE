@@ -58,6 +58,7 @@ const AttendancePsychomotor = () => {
     needingSupport: 0,
     maleRating: 0,
     femaleRating: 0,
+    maxRating: 5,
   });
 
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,8 @@ const AttendancePsychomotor = () => {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTermId, setSelectedTermId] = useState(null);
   const [selectedWeekId, setSelectedWeekId] = useState(null);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState(null);
 
   // ── Fetch Attendance Stats from API ─────────────────────────
   const fetchAttendanceStats = useCallback(async (params = {}) => {
@@ -75,6 +78,8 @@ const AttendancePsychomotor = () => {
         const stats = res.data.data;
         setAttendanceMetrics({
           daysOpen: stats.days_open || 0,
+          daysElapsed: stats.days_elapsed || 0,
+          totalSchoolDays: stats.total_school_days || 0,
           weekRate: stats.week_rate || 0,
           termRate: stats.term_rate || 0,
           totalAbsentees: stats.total_absentees || 0,
@@ -105,18 +110,27 @@ const AttendancePsychomotor = () => {
         needingSupport: stats.needing_support || 0,
         maleRating: genderData.male_rating || 0,
         femaleRating: genderData.female_rating || 0,
+        maxRating: stats.max_rating || 5,
       });
     } catch (error) {
       console.error('Failed to fetch psychomotor stats:', error);
     }
   }, []);
 
+  // ── Initial fetch on mount ────────────────────────────────
+  useEffect(() => {
+    fetchAttendanceStats();
+    fetchPsychomotorStats();
+  }, []);
+
   // ── Filter update callbacks from child tabs ─────────────────
-  const handleAttendanceFilter = (classArmId, sessionId, termId, weekId) => {
+  const handleAttendanceFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
     if (weekId) setSelectedWeekId(weekId);
+    if (programmeId) setSelectedProgrammeId(programmeId);
+    if (classId) setSelectedClassId(classId);
     fetchAttendanceStats({
       class_arm_id: classArmId || undefined,
       session_id: sessionId || undefined,
@@ -125,11 +139,13 @@ const AttendancePsychomotor = () => {
     });
   };
 
-  const handlePsychomotorFilter = (classArmId, sessionId, termId, weekId) => {
+  const handlePsychomotorFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
     if (weekId) setSelectedWeekId(weekId);
+    if (programmeId) setSelectedProgrammeId(programmeId);
+    if (classId) setSelectedClassId(classId);
     fetchPsychomotorStats({
       class_arm_id: classArmId || undefined,
       session_id: sessionId || undefined,
@@ -162,7 +178,7 @@ const AttendancePsychomotor = () => {
           onFilter={handleAttendanceFilter}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} programmeId={selectedProgrammeId} classId={selectedClassId} />,
     });
     counter++;
 
@@ -179,7 +195,7 @@ const AttendancePsychomotor = () => {
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter]);
+  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {

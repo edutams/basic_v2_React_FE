@@ -42,6 +42,20 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
             >
               Learner's Name
             </TableCell>
+            <TableCell
+              align="center"
+              sx={{
+                minWidth: 100,
+                fontWeight: 700,
+                ...(!isMobile && { position: 'sticky', left: 240 }),
+                bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
+                ...(!isMobile && { zIndex: 2 }),
+                borderRight: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              Registered
+            </TableCell>
             {subjects.map((subj) => (
               <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>                  <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
                   {subj.subject_name || subj.name}
@@ -85,6 +99,20 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                     {learner.name}
                   </Typography>
                 </Stack>
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  ...(!isMobile && { position: 'sticky', left: 240 }),
+                  bgcolor: 'background.paper',
+                  ...(!isMobile && { zIndex: 1 }),
+                  borderRight: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {Object.keys(learner.registered).filter((k) => learner.registered[k]).length}
+                </Typography>
               </TableCell>
               {subjects.map((subj) => (
                 <TableCell key={subj.id} align="center">

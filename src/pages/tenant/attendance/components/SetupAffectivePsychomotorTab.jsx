@@ -323,7 +323,7 @@ const SetupAffectivePsychomotorTab = () => {
                 isEmpty={affectives.length === 0}
                 onSync={handleSync}
               >
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                {/* <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
                     size="small"
                     variant="text"
@@ -332,7 +332,7 @@ const SetupAffectivePsychomotorTab = () => {
                   >
                     Add Key
                   </Button>
-                </Box>
+                </Box> */}
                 {affectives.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
                     No affective domain keys configured.
@@ -391,7 +391,7 @@ const SetupAffectivePsychomotorTab = () => {
                 isEmpty={psychomotors.length === 0}
                 onSync={handleSync}
               >
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                {/* <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
                     size="small"
                     variant="text"
@@ -400,7 +400,7 @@ const SetupAffectivePsychomotorTab = () => {
                   >
                     Add Skill
                   </Button>
-                </Box>
+                </Box> */}
                 {psychomotors.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
                     No psychomotor domain keys configured.

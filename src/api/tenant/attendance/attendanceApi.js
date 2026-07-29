@@ -47,6 +47,10 @@ const attendanceApi = {
   getWeeklyTrend: (params = {}) =>
     tenantApi.get('/attendance/weekly-trend', { params }),
 
+  // ── Teacher Class ────────────────────────────────────────────
+  getTeacherClass: () =>
+    tenantApi.get('/attendance/teacher-class'),
+
   // ── Psychomotor / Affective ──────────────────────────────
   getPsychomotorLearners: (params = {}) =>
     tenantApi.get('/psychomotor/learners', { params }),
@@ -71,16 +75,22 @@ const attendanceApi = {
     tenantApi.get('/psychomotor/trait-breakdown', { params }),
 
   // ── Alerts / Notifications ───────────────────────────────
-  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId) =>
-    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
-  sendRiskAlerts: (learnerIds, weekTermId, classArmId) =>
-    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId }),
+  sendAttendanceAlerts: (learnerIds, weekTermId, classArmId, selectedDays = []) =>
+    tenantApi.post('/attendance/send-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
+  sendRiskAlerts: (learnerIds, weekTermId, classArmId, selectedDays = []) =>
+    tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
+  toggleWeeklyReport: (classArmId, enabled) =>
+    tenantApi.post('/attendance/toggle-weekly-report', { class_arm_id: classArmId, enabled }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>
     tenantApi.get('/attendance/export', { params, responseType: 'blob' }),
+  exportAttendancePdf: (params = {}) =>
+    tenantApi.get('/attendance/export-pdf', { params, responseType: 'blob' }),
   exportPsychomotorReport: (params = {}) =>
     tenantApi.get('/psychomotor/export', { params, responseType: 'blob' }),
+  exportPsychomotorPdf: (params = {}) =>
+    tenantApi.get('/psychomotor/export-pdf', { params, responseType: 'blob' }),
 };
 
 export default attendanceApi;

@@ -28,6 +28,9 @@ import {
 import {
   FilterAlt as FilterIcon,
   MenuBook as SubjectIcon,
+  CheckCircle as CompulsoryIcon,
+  Stars as OptionalIcon,
+  Build as TradeIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
@@ -394,6 +397,7 @@ const SubjectRegistration = () => {
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="stretch">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
+            icon={SubjectIcon}
             value={stats.all.total_subjects}
             label={`All Subjects · ${stats.all.registered_learners} registered learners`}
             colorName="success"
@@ -404,6 +408,7 @@ const SubjectRegistration = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
+            icon={CompulsoryIcon}
             value={stats.compulsory.total_subjects}
             label={`Compulsory Subjects · ${stats.compulsory.registered_learners} registered learners`}
             colorName="info"
@@ -414,6 +419,7 @@ const SubjectRegistration = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
+            icon={OptionalIcon}
             value={stats.optional.total_subjects}
             label={`Optional Subjects · ${stats.optional.registered_learners} registered learners`}
             colorName="warning"
@@ -424,6 +430,7 @@ const SubjectRegistration = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
+            icon={TradeIcon}
             value={stats.trade.total_subjects}
             label={`Trade Subjects · ${stats.trade.registered_learners} registered learners`}
             colorName="error"

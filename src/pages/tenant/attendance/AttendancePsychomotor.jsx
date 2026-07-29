@@ -162,7 +162,7 @@ const AttendancePsychomotor = () => {
     if (can('manage.class_manager.attendance_psychomotor.setup')) {
       tabs.push({
         id: 'setup',
-        label: `${counter}. Setup Affective & Psychomotor Domain`,
+        label: `${counter}. Setup`,
         component: <SetupAffectivePsychomotorTab />,
         analytics: null, // no analytics on setup tab
       });

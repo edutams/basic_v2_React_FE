@@ -81,6 +81,8 @@ const attendanceApi = {
     tenantApi.post('/attendance/risk-alerts', { learner_ids: learnerIds, week_term_id: weekTermId, class_arm_id: classArmId, selected_days: selectedDays }),
   toggleWeeklyReport: (classArmId, enabled) =>
     tenantApi.post('/attendance/toggle-weekly-report', { class_arm_id: classArmId, enabled }),
+  getWeeklyReportStatus: (classArmId) =>
+    tenantApi.get('/attendance/weekly-report-status', { params: { class_arm_id: classArmId } }),
 
   // ── Export ───────────────────────────────────────────────
   exportAttendanceReport: (params = {}) =>

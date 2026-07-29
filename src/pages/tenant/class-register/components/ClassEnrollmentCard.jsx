@@ -3,18 +3,14 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   Stack,
   Grid,
   Tooltip,
   useTheme,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
-  InfoOutlined as InfoIcon,
-  KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
@@ -24,7 +20,6 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor('primary', 0, isDark, theme);
-  const isScrollable = enrollmentData.length > 6;
 
   return (
     <Paper
@@ -44,14 +39,12 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         width: '100%',
       }}
     >
-      {/* ── Header Row ──────────────────────────────────────── */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
         <Typography variant="h6" fontWeight={700} color="text.primary">
           Class Enrollment Breakdown
         </Typography>
       </Stack>
 
-      {/* ── Scrollable Content Area ─────────────────────────── */}
       <Box
         sx={{
           flex: 1,
@@ -166,7 +159,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                           justifyContent: 'center',
                           flexShrink: 0,
                           ml: 1,
-                          mt: 3, // adjust until it lines up with the count
+                          mt: 3,
                           boxShadow: isDark
                             ? '0 4px 12px rgba(0,0,0,.3)'
                             : `0 6px 18px -2px ${itemColors.iconGlow}`,

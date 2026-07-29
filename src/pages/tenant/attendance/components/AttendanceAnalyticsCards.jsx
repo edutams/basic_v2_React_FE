@@ -891,11 +891,11 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               fontWeight={700}
               sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
             >
-              {metrics.daysOpen}%
+              {Math.round((metrics.daysElapsed / (metrics.totalSchoolDays || 1)) * 100)}%
             </Typography>
             <LinearProgress
               variant="determinate"
-              value={metrics.daysOpen}
+              value={(metrics.daysElapsed / (metrics.totalSchoolDays || 1)) * 100}
               sx={{
                 my: 1,
                 height: 5,
@@ -908,7 +908,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
             />
             <Stack direction="row" alignItems="center" spacing={0.4}>
               <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                126 out of 130
+                {metrics.daysElapsed} out of {metrics.totalSchoolDays}
               </Typography>
               <CalendarMonthIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
             </Stack>

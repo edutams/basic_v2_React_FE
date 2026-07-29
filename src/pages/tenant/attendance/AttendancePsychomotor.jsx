@@ -78,6 +78,8 @@ const AttendancePsychomotor = () => {
         const stats = res.data.data;
         setAttendanceMetrics({
           daysOpen: stats.days_open || 0,
+          daysElapsed: stats.days_elapsed || 0,
+          totalSchoolDays: stats.total_school_days || 0,
           weekRate: stats.week_rate || 0,
           termRate: stats.term_rate || 0,
           totalAbsentees: stats.total_absentees || 0,
@@ -113,6 +115,12 @@ const AttendancePsychomotor = () => {
     } catch (error) {
       console.error('Failed to fetch psychomotor stats:', error);
     }
+  }, []);
+
+  // ── Initial fetch on mount ────────────────────────────────
+  useEffect(() => {
+    fetchAttendanceStats();
+    fetchPsychomotorStats();
   }, []);
 
   // ── Filter update callbacks from child tabs ─────────────────

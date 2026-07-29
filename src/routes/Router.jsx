@@ -17,9 +17,12 @@ let Router = AgentRoutes;
 
 if (!isCentralDomain) {
   tenantValidation = await validateTenantDomain(hostname);
-  // status: true  → valid tenant
-  // status: false → tenant not found (still need TenantRoutes for /school-not-found)
-  Router = TenantRoutes;
+  // status: true / type: 'tenant'  → valid school → TenantRoutes
+  // status: true / type: 'organization'  → organization domain → AgentRoutes
+  // status: false → unknown domain → AgentRoutes (fallback)
+  if (tenantValidation?.status === true && tenantValidation?.type === 'tenant') {
+    Router = TenantRoutes;
+  }
 }
 
 export { tenantValidation };

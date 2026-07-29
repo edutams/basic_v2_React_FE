@@ -23,7 +23,6 @@ import {
   Menu,
   TablePagination,
   CircularProgress,
-  useTheme,
   Alert,
   Dialog,
   DialogTitle,
@@ -56,6 +55,7 @@ import {
 import { useNotification } from '@/hooks/useNotification';
 import StudentDetailModal from './StudentDetailModal';
 import ChangeClassModal from './ChangeClassModal';
+import AddToClassModal from './AddToClassModal';
 
 // ── Status config (from students table) ───────────────────────
 const STATUS_OPTIONS = [
@@ -71,7 +71,6 @@ const getStatusConfig = (status) =>
   STATUS_OPTIONS.find((s) => s.value === status) || { value: status, label: status || 'Unknown', color: 'default' };
 
 const SingleArmView = ({ onEnrollmentChange }) => {
-  const theme = useTheme();
   const notify = useNotification();
 
   // ── Filter States ─────────────────────────────────────────
@@ -86,12 +85,13 @@ const SingleArmView = ({ onEnrollmentChange }) => {
   const [saProgramme, setSaProgramme] = useState('');
   const [saClass, setSaClass] = useState('');
   const [saArm, setSaArm] = useState('');
-  const [saSearch, setSaSearch] = useState('');
+
+  // ── Separate: table-level search (client-side, no API call) ──
+  const [tableSearch, setTableSearch] = useState('');
 
   // ── Student Data States ───────────────────────────────────
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
-  const [loadingFilters, setLoadingFilters] = useState(true);
   const [meta, setMeta] = useState(null);
 
   // ── Parent Data ───────────────────────────────────────────
@@ -120,9 +120,9 @@ const SingleArmView = ({ onEnrollmentChange }) => {
   const [removingStudent, setRemovingStudent] = useState(false);
 
   // ── Add to Class Modal ────────────────────────────────────
-  const [addToClassModalOpen, setAddToClassModalOpen] = useState(false);
+    const [addToClassModalOpen, setAddToClassModalOpen] = useState(false);
+
   const loadFilterData = useCallback(async () => {
-    setLoadingFilters(true);
     try {
       const [sessRes, progRes] = await Promise.all([fetchSessions(), fetchProgrammes()]);
 
@@ -142,8 +142,6 @@ const SingleArmView = ({ onEnrollmentChange }) => {
       if (activeSess) setSaSession(activeSess.id);
     } catch (error) {
       console.error('Failed to load filter data:', error);
-    } finally {
-      setLoadingFilters(false);
     }
   }, []);
 
@@ -178,18 +176,19 @@ const SingleArmView = ({ onEnrollmentChange }) => {
 
   // ── Fetch Students ────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
-    if (!saArm) return;
+    if (!saClass || !saSession || !saTerm) return;
     setLoadingStudents(true);
     try {
-      const res = await classRegisterApi.getStudentsByClassArm({
-        class_arm_id: saArm,
-        search: saSearch,
+      const res = await classRegisterApi.getStudentsByClass(saClass, saArm || null, {
         page: saPage + 1,
         per_page: saRowsPerPage,
+        programme_id: saProgramme,
+        session_term_id: saTerm,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
         setMeta(res.data.meta);
+        setTableSearch(''); // clear search on fresh fetch
       }
     } catch (error) {
       console.error('Failed to fetch students:', error);
@@ -197,11 +196,38 @@ const SingleArmView = ({ onEnrollmentChange }) => {
     } finally {
       setLoadingStudents(false);
     }
-  }, [saArm, saSearch, saPage, saRowsPerPage]);
+  }, [saClass, saSession, saTerm, saProgramme, saArm, saPage, saRowsPerPage]);
 
-  // Only re-fetch on pagination change if data was already loaded
+  // ── Auto-fetch when core filters (session, term, programme, class) are set ──
   useEffect(() => {
-    if (students.length > 0) fetchStudents();
+    if (saSession && saTerm && saProgramme && saClass) {
+      // If already page 0, fetch directly (setSaPage(0) is a no-op when already 0)
+      if (saPage === 0) {
+        fetchStudents();
+      } else {
+        setSaPage(0); // Triggers pagination effect which fetches
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saSession, saTerm, saProgramme, saClass]);
+
+  // ── Auto-refetch when arm changes ─────────────────────────
+  useEffect(() => {
+    if (saSession && saTerm && saProgramme && saClass) {
+      if (saPage === 0) {
+        fetchStudents();
+      } else {
+        setSaPage(0);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saArm]);
+
+  // ── Re-fetch on pagination change ─────────────────────────
+  useEffect(() => {
+    if (saSession && saTerm && saProgramme && saClass) {
+      fetchStudents();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saPage, saRowsPerPage]);
 
@@ -254,7 +280,10 @@ const SingleArmView = ({ onEnrollmentChange }) => {
 
   const handleOpenRemoveModal = () => { handleMenuClose(); setRemoveModalOpen(true); };
 
-  const handleApplyFilter = () => { setSaPage(0); fetchStudents(); };
+  const handleApplyFilter = () => {
+    setSaPage(0);
+    fetchStudents();
+  };
 
   const handleSaveStatus = async () => {
     if (!selectedRow || !selectedStatus) return;
@@ -377,20 +406,22 @@ const SingleArmView = ({ onEnrollmentChange }) => {
 
       {/* ── Search & Action Row ─────────────────────────────── */}
      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-  {/* Search */}
+  {/* Search — filters loaded table rows client-side */}
   <Grid size={{ xs: 12, md: 4 }}>
     <TextField
       fullWidth
       size="small"
-      placeholder="Search by learner name or ID..."
-      value={saSearch}
-      onChange={(e) => setSaSearch(e.target.value)}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon fontSize="small" />
-          </InputAdornment>
-        ),
+      placeholder="Search loaded students by name, ID, gender, class..."
+      value={tableSearch}
+      onChange={(e) => setTableSearch(e.target.value)}
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon fontSize="small" />
+            </InputAdornment>
+          ),
+        },
       }}
     />
   </Grid>
@@ -461,6 +492,19 @@ const SingleArmView = ({ onEnrollmentChange }) => {
 </Grid>
 
       {/* ── Table ───────────────────────────────────────────── */}
+      {/* Client-side filter on loaded rows */}
+      {(() => {
+        const q = tableSearch.trim().toLowerCase();
+        const filteredStudents = q
+          ? students.filter((s) =>
+              s.name?.toLowerCase().includes(q) ||
+              s.admission_no?.toLowerCase().includes(q) ||
+              s.gender?.toLowerCase().includes(q) ||
+              s.class_arm?.toLowerCase().includes(q)
+            )
+          : students;
+
+        return (
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
@@ -481,16 +525,23 @@ const SingleArmView = ({ onEnrollmentChange }) => {
                   <CircularProgress size={28} />
                 </TableCell>
               </TableRow>
-            ) : students.length === 0 ? (
+            ) : filteredStudents.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                   <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}>
-                    {saArm ? 'No students found for the selected class/arm.' : 'Please select a class and arm, then click Apply Filter.'}
+                    {students.length > 0
+                      ? `No students match "${tableSearch}".`
+                      : saArm
+                        ? 'No students found for the selected class/arm.'
+                        : saClass
+                          ? 'No students found for the selected class.'
+                          : 'Please select session, term, programme, and class.'
+                    }
                   </Alert>
                 </TableCell>
               </TableRow>
             ) : (
-              students.map((student, index) => {
+              filteredStudents.map((student, index) => {
                 const statusCfg = getStatusConfig(student.status);
                 return (
                   <TableRow key={student.student_reg_id || index} hover>
@@ -584,6 +635,8 @@ const SingleArmView = ({ onEnrollmentChange }) => {
           </TableBody>
         </Table>
       </TableContainer>
+        );
+      })()}
 
       {/* ── Pagination ──────────────────────────────────────── */}
       {meta && (
@@ -688,12 +741,14 @@ const SingleArmView = ({ onEnrollmentChange }) => {
         onSuccess={fetchStudents}
       />
 
-      {/* ── Add to Class Modal (reuse ChangeClassModal for unassigned students) ── */}
-      <ChangeClassModal
+      {/* ── Add to Class Modal ── */}
+      <AddToClassModal
         open={addToClassModalOpen}
         onClose={() => setAddToClassModalOpen(false)}
-        student={null}
-        onSuccess={fetchStudents}
+        onSuccess={() => {
+          fetchStudents();
+          if (onEnrollmentChange) onEnrollmentChange();
+        }}
       />
     </Box>
   );

@@ -152,12 +152,12 @@ const MultipleArmView = () => {
       const res = await classRegisterApi.getStudentsByClass(classLevel, null, {
         page: maPage + 1,
         per_page: maRowsPerPage,
-        search,
         programme_id: programme,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
         setMeta(res.data.meta);
+        setSearch(''); // clear search on fresh fetch
       }
     } catch (error) {
       console.error('Failed to fetch students:', error);
@@ -165,15 +165,15 @@ const MultipleArmView = () => {
     } finally {
       setLoading(false);
     }
-  }, [classLevel, maPage, maRowsPerPage, search, programme]);
+  }, [classLevel, maPage, maRowsPerPage, programme]);
 
-  // ── Only refetch when pagination changes (not on filter changes) ──
+  // ── Refetch when search or pagination changes ──
   useEffect(() => {
-    if (students.length > 0) {
+    if (students.length > 0 || search) {
       fetchStudents();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maPage, maRowsPerPage]);
+  }, [maPage, maRowsPerPage, search]);
 
   // ── Arm toggle state (local only) ─────────────────────────
   const [armSelections, setArmSelections] = useState({});
@@ -244,9 +244,7 @@ const MultipleArmView = () => {
     }
   };
 
-  const filteredStudents = students.filter(
-    (s) => search === '' || (s.name || '').toLowerCase().includes(search.toLowerCase()),
-  );
+
 
   return (
     <Box sx={{ pt: 1 }}>
@@ -300,15 +298,17 @@ const MultipleArmView = () => {
           <TextField
             fullWidth
             size="small"
-            placeholder="Search learner..."
+            placeholder="Search loaded students by name, ID, gender..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         </Grid>
@@ -358,7 +358,7 @@ const MultipleArmView = () => {
                   <CircularProgress size={28} />
                 </TableCell>
               </TableRow>
-            ) : filteredStudents.length === 0 ? (
+            ) : students.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={arms.length + 1} align="center" sx={{ py: 4 }}>
                   <Alert
@@ -376,7 +376,7 @@ const MultipleArmView = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredStudents.map((student, idx) => (
+              students.map((student, idx) => (
                 <TableRow key={student.student_reg_id || idx} hover>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1.5}>

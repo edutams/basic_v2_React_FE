@@ -23,12 +23,10 @@ import {
   InputAdornment,
   TablePagination,
   CircularProgress,
-  useTheme,
   Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  FilterAlt as FilterIcon,
   Save as SaveIcon,
   CheckCircle as CheckCircleIcon,
   CancelOutlined as CancelOutlinedIcon,
@@ -55,8 +53,8 @@ const MultipleArmView = () => {
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(''); 
 
-  // ── Data States ───────────────────────────────────────────
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,7 +63,6 @@ const MultipleArmView = () => {
   const [maRowsPerPage, setMaRowsPerPage] = useState(15);
   const [meta, setMeta] = useState(null);
 
-  // ── Load Filter Data ──────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
@@ -144,7 +141,6 @@ const MultipleArmView = () => {
       .catch(console.error);
   }, [classLevel, programme]);
 
-  // ── Fetch Students ────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
     if (!classLevel) return;
     setLoading(true);
@@ -153,11 +149,11 @@ const MultipleArmView = () => {
         page: maPage + 1,
         per_page: maRowsPerPage,
         programme_id: programme,
+        search, 
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
         setMeta(res.data.meta);
-        setSearch(''); // clear search on fresh fetch
       }
     } catch (error) {
       console.error('Failed to fetch students:', error);
@@ -165,17 +161,26 @@ const MultipleArmView = () => {
     } finally {
       setLoading(false);
     }
-  }, [classLevel, maPage, maRowsPerPage, programme]);
+  }, [classLevel, maPage, maRowsPerPage, programme, search]);
 
-  // ── Refetch when search or pagination changes ──
   useEffect(() => {
-    if (students.length > 0 || search) {
+    if (classLevel) {
       fetchStudents();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maPage, maRowsPerPage, search]);
 
-  // ── Arm toggle state (local only) ─────────────────────────
+  useEffect(() => {
+    if (classLevel && programme && session && term) {
+      setMaPage(0);
+      fetchStudents();
+    }
+  }, [classLevel]);
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setMaPage(0);
+  };
+
   const [armSelections, setArmSelections] = useState({});
 
   useEffect(() => {
@@ -192,7 +197,6 @@ const MultipleArmView = () => {
   }, [students, arms]);
 
   const toggleArmEnrollment = (studentRegId, armId) => {
-    // Radio behavior: selecting one arm deselects all others
     setArmSelections((prev) => {
       const updated = {};
       Object.keys(prev[studentRegId] || {}).forEach((key) => {
@@ -225,7 +229,6 @@ const MultipleArmView = () => {
   const handleSubmitChanges = async () => {
     setSaving(true);
     try {
-      // Only submit the single arm selected per student
       const assignments = [];
       Object.entries(armSelections).forEach(([studentRegId, armsMap]) => {
         const selectedArm = Object.entries(armsMap).find(([, selected]) => selected);
@@ -248,7 +251,6 @@ const MultipleArmView = () => {
 
   return (
     <Box sx={{ pt: 1 }}>
-      {/* ── Filters ───────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size="small">
@@ -292,39 +294,51 @@ const MultipleArmView = () => {
         </Grid>
       </Grid>
 
-      {/* ── Search & Action Row ──────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search loaded students by name, ID, gender..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
+          <Stack direction="row" spacing={1}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search by name, ID, gender..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+            >
+              Search
+            </Button>
+          </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-            <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<FilterIcon />} onClick={() => { setMaPage(0); fetchStudents(); }}>
-              Filter Results
-            </Button>
-            <Button variant="outlined" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<SaveIcon />} onClick={handleSubmitChanges} disabled={saving}>
+          <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={handleSubmitChanges}
+              disabled={saving}
+            >
               {saving ? 'Saving...' : 'Submit Changes'}
             </Button>
           </Stack>
         </Grid>
       </Grid>
 
-      {/* ── Table ────────────────────────────────────────── */}
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 600 }}>
           <TableHead>
@@ -424,7 +438,6 @@ const MultipleArmView = () => {
         </Table>
       </TableContainer>
 
-      {/* ── Pagination ──────────────────────────────────── */}
       {meta && (
         <Box sx={{ pt: 2 }}>
           <TablePagination

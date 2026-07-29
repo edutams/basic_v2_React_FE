@@ -89,6 +89,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   const [saArm, setSaArm] = useState('');
 
   const [tableSearch, setTableSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Separate input for controlled search
 
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -322,6 +323,10 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     fetchStudents();
   };
 
+  const handleSearch = () => {
+    setTableSearch(searchInput);
+  };
+
   const handleSaveStatus = async () => {
     if (!selectedRow || !selectedStatus) return;
     setSavingStatus(true);
@@ -475,37 +480,48 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search loaded students by name, ID, gender, class..."
-            value={tableSearch}
-            onChange={(e) => setTableSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack direction="row" spacing={1}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search loaded students by name, ID, gender, class..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              // slotProps={{
+              //   input: {
+              //     startAdornment: (
+              //       <InputAdornment position="start">
+              //         <SearchIcon fontSize="small" />
+              //       </InputAdornment>
+              //     ),
+              //   },
+              // }}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+            >
+              Search
+            </Button>
+          </Stack>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap">
             {/* Left side */}
             <Stack direction="row" spacing={1.5}>
-              <Button
+              {/* <Button
                 variant="contained"
                 size="small"
                 startIcon={<FilterIcon />}
                 onClick={handleApplyFilter}
               >
                 Apply Filter
-              </Button>
+              </Button> */}
 
               <Button
                 variant="contained"

@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
@@ -31,7 +30,6 @@ const BCrumb = [
   { title: 'Class Register' },
 ];
 
-// ── Local Stat Card using getStatCardColor ──────────────────────
 const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -147,16 +145,28 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
   );
 };
 
-// ── Main Page ───────────────────────────────────────────────────
 const ClassRegister = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [classFilterData, setClassFilterData] = useState(null); 
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
   const [enrollmentData, setEnrollmentData] = useState([]);
+
+  const handleClassCardClick = (cls) => {
+    setActiveTab(0);
+    
+    setClassFilterData({
+      programme_id: cls.programme_id,
+      class_id: cls.class_id,
+      timestamp: Date.now(), 
+    });
+
+    setSelectedEnrollmentClass(cls);
+  };
 
   const fetchEnrollmentStats = useCallback(async () => {
     setLoading(true);
@@ -195,9 +205,8 @@ const ClassRegister = () => {
     <PageContainer title="Class Register" description="Manage class register and student enrollments">
       <Breadcrumb title="Class Register" items={BCrumb} />
 
-      {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 2 }}>
           <TotalStudentsCard
             totalStudentsCount={totalStudentsCount}
             maleCount={maleCount}
@@ -205,16 +214,15 @@ const ClassRegister = () => {
             loading={loading}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
+     <Grid size={{ xs: 12, md: 6, lg: 10 }}>
           <ClassEnrollmentCard
             enrollmentData={enrollmentData}
-            onClassClick={setSelectedEnrollmentClass}
+            onClassClick={handleClassCardClick}
             loading={loading}
           />
         </Grid>
       </Grid>
 
-      {/* ── Tabs & Content ─────────────────────────────────────── */}
       <ParentCard
         title={
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
@@ -238,7 +246,15 @@ const ClassRegister = () => {
           </Box>
         }
       >
-        {activeTab === 0 && <SingleArmView />}
+        {activeTab === 0 && (
+          <SingleArmView
+            classFilterData={classFilterData}
+            onEnrollmentChange={() => {
+              fetchEnrollmentStats();
+              fetchEnrollmentBreakdown();
+            }}
+          />
+        )}
         {activeTab === 1 && <MultipleArmView />}
       </ParentCard>
 

@@ -18,13 +18,23 @@ import {
   TableCell,
   CircularProgress,
   Alert,
+  Menu,
+  MenuItem,
 } from '@mui/material';
-import { School as SchoolIcon } from '@mui/icons-material';
+import {
+  School as SchoolIcon,
+  FileDownload as ExportIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+} from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 
 const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!selectedClass) return;
@@ -61,6 +71,49 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
     fetchStudents();
   }, [selectedClass]);
 
+  // ── Export Handlers ────────────────────────────────────────────
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    if (!selectedClass?.class_id) return;
+    setExporting(true);
+    try {
+      const res = await classRegisterApi.exportStudentList({ class_id: selectedClass.class_id });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `student_list_${selectedClass.class_code}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export Excel:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    if (!selectedClass?.class_id) return;
+    setExporting(true);
+    try {
+      const res = await classRegisterApi.exportStudentListPdf({ class_id: selectedClass.class_id });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `student_list_${selectedClass.class_code}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (!selectedClass) return null;
 
   return (
@@ -69,7 +122,7 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
         <SchoolIcon color="primary" />
         Class Enrollment Breakdown —{' '}
         <Typography component="span" color="primary" fontWeight={700}>
-          {selectedClass.class_name}
+          {selectedClass.class_code}
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
@@ -150,8 +203,36 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
           </Table>
         </TableContainer>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+      <DialogActions sx={{ px: 2.5, py: 1.5 }}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<ExportIcon />}
+          endIcon={<ArrowDropDownIcon />}
+          onClick={(e) => setExportAnchorEl(e.currentTarget)}
+          disabled={exporting || students.length === 0}
+          sx={{ mr: 'auto' }}
+        >
+          {exporting ? 'Exporting...' : 'Export'}
+        </Button>
+        <Menu
+          anchorEl={exportAnchorEl}
+          open={Boolean(exportAnchorEl)}
+          onClose={() => setExportAnchorEl(null)}
+          PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+        >
+          <MenuItem onClick={handleExportExcel} disabled={exporting}>
+            <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+            Export Excel
+          </MenuItem>
+          <MenuItem onClick={handleExportPdf} disabled={exporting}>
+            <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'error.main' }} />
+            Export PDF
+          </MenuItem>
+        </Menu>
+        <Button onClick={onClose} disabled={exporting}>
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

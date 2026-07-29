@@ -80,7 +80,7 @@ const ReusablePieChart = ({
 
   const chartContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Chart options={options} series={series} type="donut" height={height} width="100%" />
+      <Chart options={options} series={series} type="donut" height={height} width="200%" />
     </Box>
   );
 

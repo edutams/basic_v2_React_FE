@@ -17,9 +17,17 @@ import {
   InputLabel,
   Button,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
+  MenuBook as SubjectIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
@@ -35,6 +43,7 @@ import {
 import GeneralSubjectsTab from './components/GeneralSubjectsTab';
 import OptionalSubjectsTab from './components/OptionalSubjectsTab';
 import TradeSubjectsTab from './components/TradeSubjectsTab';
+import AnalyticsModal from '@/pages/tenant/attendance/components/AnalyticsModal';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -43,7 +52,7 @@ const BCrumb = [
 ];
 
 // ── Theme-aware stat card component ─────────────────────────────
-const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0, loading = false }) => {
+const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0, loading = false, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
@@ -51,6 +60,7 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0
   return (
     <Paper
       elevation={0}
+      onClick={onClick}
       sx={{
         p: 3,
         borderRadius: '16px',
@@ -65,7 +75,16 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0
         display: 'flex',
         alignItems: 'center',
         gap: 2,
+        cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        ...(onClick ? {
+          '&:hover': {
+            transform: 'translateY(-3px)',
+            boxShadow: isDark
+              ? '0 8px 30px rgba(0,0,0,0.35)'
+              : '0 6px 24px rgba(0,0,0,0.12)',
+          },
+        } : {}),
       }}
     >
       <Box
@@ -144,6 +163,119 @@ const SubjectRegistration = () => {
     optional: { total_subjects: 0, registered_learners: 0 },
     trade: { total_subjects: 0, registered_learners: 0 },
   });
+
+  // ── Analytics Modal ────────────────────────────────────────
+  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
+
+  const openCardModal = (title, content) => {
+    setAnalyticsModal({ open: true, title, content });
+  };
+
+  const fetchAndShowSubjects = useCallback(async (type, title) => {
+    if (!pClass) return;
+    setAnalyticsModal({ open: true, title, content: null, loading: true });
+
+    try {
+      let subjects = [];
+      if (type === 'all') {
+        const [gen, opt, trade] = await Promise.all([
+          subjectRegistrationApi.getGeneralSubjects(pClass, {
+            programme_id: pProgramme || undefined,
+            session_id: pSession || undefined,
+            term_id: pTermId || undefined,
+          }),
+          subjectRegistrationApi.getOptionalSubjects(pClass, {
+            programme_id: pProgramme || undefined,
+            session_id: pSession || undefined,
+            term_id: pTermId || undefined,
+          }),
+          subjectRegistrationApi.getTradeSubjects(pClass, {
+            programme_id: pProgramme || undefined,
+            session_id: pSession || undefined,
+            term_id: pTermId || undefined,
+          }),
+        ]);
+        const genData = gen.data?.data || gen.data || [];
+        const optData = opt.data?.data || opt.data || [];
+        const tradeData = trade.data?.data || trade.data || [];
+        subjects = [
+          ...(Array.isArray(genData) ? genData : []).map(s => ({ ...s, category: 'Compulsory' })),
+          ...(Array.isArray(optData) ? optData : []).map(s => ({ ...s, category: 'Optional' })),
+          ...(Array.isArray(tradeData) ? tradeData : []).map(s => ({ ...s, category: 'Trade' })),
+        ];
+      } else {
+        const apiFn = type === 'compulsory'
+          ? subjectRegistrationApi.getGeneralSubjects
+          : type === 'optional'
+            ? subjectRegistrationApi.getOptionalSubjects
+            : subjectRegistrationApi.getTradeSubjects;
+        const res = await apiFn(pClass, {
+          programme_id: pProgramme || undefined,
+          session_id: pSession || undefined,
+          term_id: pTermId || undefined,
+        });
+        const data = res.data?.data || res.data || [];
+        subjects = Array.isArray(data) ? data.map(s => ({ ...s, category: title })) : [];
+      }
+
+      if (subjects.length === 0) {
+        openCardModal(title, (
+          <Box sx={{ py: 3, textAlign: 'center' }}>
+            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600 }}>
+              No subjects found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              No {title.toLowerCase()} subjects have been configured for this class.
+            </Typography>
+          </Box>
+        ));
+        return;
+      }
+
+      const totalRegistrations = subjects.reduce((sum, s) => sum + (s.registered_count || 0), 0);
+
+      openCardModal(title, (
+        <Box sx={{ py: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {subjects.length} subject(s) · {totalRegistrations} total student registrations
+          </Typography>
+          <TableContainer sx={{ maxHeight: 400 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>SUBJECT NAME</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">SUBJECT CODE</TableCell>
+                  {type === 'all' && <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">CATEGORY</TableCell>}
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">REGISTERED COUNT</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {subjects.map((s, i) => (
+                  <TableRow key={s.id} hover>
+                    <TableCell sx={{ fontSize: '0.8rem' }}>{i + 1}</TableCell>
+                    <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>{s.subject_name}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{s.subject_code || '—'}</TableCell>
+                    {type === 'all' && (
+                      <TableCell align="center">
+                        <Chip label={s.category} size="small" color={s.category === 'Compulsory' ? 'info' : s.category === 'Optional' ? 'warning' : 'error'} sx={{ height: 20, fontSize: 10, fontWeight: 600 }} />
+                      </TableCell>
+                    )}
+                    <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{s.registered_count || 0}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      ));
+    } catch (e) {
+      console.error(`Failed to fetch subjects for ${type}:`, e);
+      openCardModal(title, (
+        <Typography color="error">Failed to load subject data.</Typography>
+      ));
+    }
+  }, [pClass, pProgramme, pSession, pTermId]);
 
   const subjectTypeByTab = ['compulsory', 'optional', 'trade'];
 
@@ -267,15 +399,17 @@ const SubjectRegistration = () => {
             colorName="success"
             colorIndex={1}
             loading={statsLoading}
+            onClick={() => fetchAndShowSubjects('all', 'All Subjects')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
             value={stats.compulsory.total_subjects}
-            label={`General Subjects · ${stats.compulsory.registered_learners} registered learners`}
+            label={`Compulsory Subjects · ${stats.compulsory.registered_learners} registered learners`}
             colorName="info"
             colorIndex={0}
             loading={statsLoading}
+            onClick={() => fetchAndShowSubjects('compulsory', 'Compulsory Subjects')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -285,6 +419,7 @@ const SubjectRegistration = () => {
             colorName="warning"
             colorIndex={0}
             loading={statsLoading}
+            onClick={() => fetchAndShowSubjects('optional', 'Optional Subjects')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -294,6 +429,7 @@ const SubjectRegistration = () => {
             colorName="error"
             colorIndex={0}
             loading={statsLoading}
+            onClick={() => fetchAndShowSubjects('trade', 'Trade Subjects')}
           />
         </Grid>
       </Grid>
@@ -387,7 +523,7 @@ const SubjectRegistration = () => {
                 },
               }}
             >
-              <Tab label="1. General Subjects" />
+              <Tab label="1. Compulsory Subjects" />
               <Tab label="2. Optional Subjects" />
               <Tab label="3. Trade Subjects" />
             </Tabs>
@@ -424,6 +560,14 @@ const SubjectRegistration = () => {
           )}
         </Box>
       </ParentCard>
+      {/* ── Analytics Modal ─────────────────────────────────── */}
+      <AnalyticsModal
+        open={analyticsModal.open}
+        onClose={() => setAnalyticsModal({ open: false, title: '', content: null })}
+        title={analyticsModal.title}
+        content={analyticsModal.content}
+        loading={analyticsModal.loading}
+      />
     </PageContainer>
   );
 };

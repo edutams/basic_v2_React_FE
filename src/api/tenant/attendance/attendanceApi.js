@@ -89,6 +89,8 @@ const attendanceApi = {
     tenantApi.get('/attendance/export-pdf', { params, responseType: 'blob' }),
   exportPsychomotorReport: (params = {}) =>
     tenantApi.get('/psychomotor/export', { params, responseType: 'blob' }),
+  exportPsychomotorPdf: (params = {}) =>
+    tenantApi.get('/psychomotor/export-pdf', { params, responseType: 'blob' }),
 };
 
 export default attendanceApi;

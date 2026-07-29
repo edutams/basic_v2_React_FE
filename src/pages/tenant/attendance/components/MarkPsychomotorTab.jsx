@@ -23,10 +23,16 @@ import {
   TablePagination,
   CircularProgress,
   useTheme,
+  Menu,
+  ListItemIcon,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   FileDownload as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
   Male as MaleIcon,
   Female as FemaleIcon,
 } from '@mui/icons-material';
@@ -67,6 +73,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [psychomotorTraits, setPsychomotorTraits] = useState([]);
 
   // ── Assessment Data ───────────────────────────────────────
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const exportMenuOpen = Boolean(exportAnchorEl);
+  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
   const [filterApplied, setFilterApplied] = useState(false);
   const [learners, setLearners] = useState([]);
   const [assessments, setAssessments] = useState({});
@@ -174,7 +184,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       term_id: pTermId,
     }).then((r) => {
       const d = r.data?.data || [];
-      setWeeks(Array.isArray(d) ? d : []);
+      const weeks = Array.isArray(d) ? d : [];
+      setWeeks(weeks);
+      const active = weeks.find((w) => w.status === 'active');
+      if (active) {
+        setPWeek(active.wk_id ?? active.week_id ?? active.id);
+      } else if (weeks.length > 0) {
+        setPWeek(weeks[weeks.length - 1].wk_id ?? weeks[weeks.length - 1].week_id ?? weeks[weeks.length - 1].id);
+      }
     }).catch(console.error);
   }, [pSession, pTermId]);
 
@@ -268,16 +285,28 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         assessments: assessmentData,
       });
 
+      setAlertSnackbar({
+        open: true,
+        message: `Assessments submitted successfully — ${assessmentData.length} learner(s) saved.`,
+        severity: 'success',
+      });
+
       // Clear localStorage after successful submission
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.error('Failed to submit assessments:', e);
+      setAlertSnackbar({
+        open: true,
+        message: e.response?.data?.message || 'Failed to submit assessments.',
+        severity: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleExport = async () => {
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
     try {
       const res = await attendanceApi.exportPsychomotorReport({
         class_arm_id: pArm || undefined,
@@ -294,7 +323,29 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('Export failed:', e);
+      console.error('Excel export failed:', e);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const res = await attendanceApi.exportPsychomotorPdf({
+        class_arm_id: pArm || undefined,
+        week_term_id: pWeek || undefined,
+        session_id: pSession || undefined,
+        term_id: pTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'psychomotor-report-' + new Date().toISOString().slice(0, 10) + '.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('PDF export failed:', e);
     }
   };
 
@@ -382,9 +433,31 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           </Button>
         </Grid>
         <Grid size={{ xs: 12, sm: 'auto' }}>
-          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport} disabled={!filterApplied}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            disabled={!filterApplied}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+          >
             Export Report
           </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={exportMenuOpen}
+            onClose={() => setExportAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleExportExcel} dense>
+              <ListItemIcon><ExcelIcon fontSize="small" /></ListItemIcon>
+              Export to Excel
+            </MenuItem>
+            <MenuItem onClick={handleExportPdf} dense>
+              <ListItemIcon><PdfIcon fontSize="small" /></ListItemIcon>
+              Export to PDF
+            </MenuItem>
+          </Menu>
         </Grid>
       </Grid>
 
@@ -576,6 +649,21 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
         </Button>
       </Box>
+
+      <Snackbar
+        open={alertSnackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={alertSnackbar.severity}
+          onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+          variant="filled"
+        >
+          {alertSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

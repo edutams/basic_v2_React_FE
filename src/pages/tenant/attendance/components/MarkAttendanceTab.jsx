@@ -285,7 +285,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           term_id: attTermId,
         });
         const data = res.data?.data || [];
-        setWeeks(Array.isArray(data) ? data : []);
+        const weeks = Array.isArray(data) ? data : [];
+        setWeeks(weeks);
+        const active = weeks.find((w) => w.status === 'active');
+        if (active) {
+          setAttWeek(active.wk_id ?? active.week_id ?? active.id);
+        } else if (weeks.length > 0) {
+          setAttWeek(weeks[weeks.length - 1].wk_id ?? weeks[weeks.length - 1].week_id ?? weeks[weeks.length - 1].id);
+        }
       } catch (e) { console.error(e); }
     };
     fetchWeeks();
@@ -300,9 +307,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     });
   }, [attWeek, weeks]);
 
-  const fallbackWeekDates = selectedWeek?.start_date
-    ? generateWeekDates(selectedWeek.start_date)
-    : [];
+  const fallbackWeekDates = React.useMemo(() => {
+    return selectedWeek?.start_date
+      ? generateWeekDates(selectedWeek.start_date)
+      : [];
+  }, [selectedWeek]);
 
   // ── Initialize selected days when week changes ───────────
   // Restores previously checked days from localStorage for the same arm+week.
@@ -330,7 +339,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           changed = true;
         }
       });
-      return changed ? updated : updated;
+      return changed ? updated : prev;
     });
   }, [weekDates, fallbackWeekDates, attArm, attWeek]);
 
@@ -442,7 +451,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const handleApplyFilter = () => {
     fetchLearners();
     setFilterApplied(true);
-    if (onFilter) onFilter(attArm, attSession, attTermId, attWeek);
+    if (onFilter) onFilter(attArm, attSession, attTermId, attWeek, attProgramme, attClass);
     // Load weekly report setting from backend when an arm is selected
     if (attArm) {
       attendanceApi.getTeacherClass().then((res) => {
@@ -667,9 +676,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           Learner Attendance
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<EmailIcon />} onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }} disabled={sendingAlert || learners.length === 0}>
-            {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
-          </Button>
           {/* Export Dropdown */}
           <Button
             variant="contained"
@@ -848,16 +854,33 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           variant="outlined"
           sx={{
             mb: 2,
-            '& .MuiAlert-message': { width: '100%' },
+            '& .MuiAlert-message': { width: '100%', overflow: 'hidden' },
           }}
         >
-          <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <span role="img" aria-label="info">ℹ️</span>
-              Your attendance marks are saved <strong>locally</strong>. Click the{' '}
-              <strong>Submit Attendance</strong> button on the right panel to permanently save them to the system.
-            </Typography>
-          </Stack>
+          <Typography
+            variant="body2"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              flexWrap: 'wrap',
+              wordBreak: 'break-word',
+              lineHeight: 1.5,
+            }}
+          >
+            <Box component="span" sx={{ mr: 0.5 }} role="img" aria-label="info">ℹ️</Box>
+            {isMobile ? (
+              <>
+                Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
+                <strong>Submit Attendance</strong> to save them permanently.
+              </>
+            ) : (
+              <>
+                Your attendance marks are saved <strong>locally</strong>. Click the{' '}
+                <strong>Submit Attendance</strong> button on the right to permanently save them to the system.
+              </>
+            )}
+          </Typography>
         </Alert>
       )}
 
@@ -1083,7 +1106,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
 
         {/* ── Right Summary Card with Gauge & Submit Button ── */}
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: -1, lg: 0 } }}>
           <Paper
             elevation={0}
             sx={{
@@ -1092,6 +1115,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : theme.palette.grey[200]}`,
               bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f9fafb',
               height: '100%',
+              minHeight: { xs: 'auto', lg: '580px' },
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -1102,6 +1126,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
             {/* Speedometer/Gauge Chart */}
             <ReusableGaugeChart
+              key={`gauge-${attendancePercent}-${learnersPresent}`}
               value={attendancePercent}
               label="Attendance"
               subtitle={`${learnersPresent} present out of ${totalLearners} learners`}
@@ -1124,6 +1149,20 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 <Typography variant="body2" fontWeight={600} color="success.main">{learnersPresent}</Typography>
               </Box>
             </Stack>
+
+            {/* ── Send Attendance Notification Button ── */}
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              fullWidth
+              startIcon={<EmailIcon />}
+              onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }}
+              disabled={sendingAlert || learners.length === 0}
+              sx={{ mb: 1 }}
+            >
+              {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
+            </Button>
 
             <Box
               sx={{
@@ -1201,7 +1240,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               You are about to mark the attendance.
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {learners.length} learner(s) • {days.length} day(s) • AM/PM periods will be submitted.
+              {learners.length} learner(s) • {Object.values(selectedDays).filter(Boolean).length} day(s) • {periodLabel} periods will be submitted.
             </Typography>
           </Box>
         }

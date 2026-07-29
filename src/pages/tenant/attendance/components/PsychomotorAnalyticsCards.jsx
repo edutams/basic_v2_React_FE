@@ -9,6 +9,12 @@ import {
   Button,
   Chip,
   Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   useTheme,
 } from '@mui/material';
 import {
@@ -72,48 +78,120 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
 
-  // Fetch real per-trait psychomotor breakdown from API
-  const openPsychomotorBreakdown = useCallback(async (params) => {
-    setAnalyticsModal({ open: true, title: 'Psychomotor Rating Breakdown', content: null, loading: true });
-    try {
-      const res = await attendanceApi.getTraitBreakdown(params);
-      const data = res.data?.data || {};
-      const psyTraits = data.psychomotor || [];
+  // Shared: fetch learners + domain breakdown, show student table + bar chart
+  const openDomainBreakdown = useCallback(async (params, domainType) => {
+    const isAffective = domainType === 'affective';
+    const title = isAffective ? 'Affective Rating Breakdown' : 'Psychomotor Rating Breakdown';
+    const accentColor = isAffective ? theme.palette.success.main : theme.palette.primary.main;
 
-      if (psyTraits.length === 0) {
-        openCardModal('Psychomotor Rating Breakdown', (
+    setAnalyticsModal({ open: true, title, content: null, loading: true });
+    try {
+      const [traitRes, learnersRes] = await Promise.all([
+        attendanceApi.getTraitBreakdown(params),
+        attendanceApi.getPsychomotorLearners(params).catch(() => ({ data: { data: {} } })),
+      ]);
+
+      const traitData = traitRes.data?.data || {};
+      const traits = isAffective ? (traitData.affective || []) : (traitData.psychomotor || []);
+
+      const learnerPayload = learnersRes.data?.data || {};
+      const students = learnerPayload.students || [];
+
+      if (traits.length === 0 && students.length === 0) {
+        openCardModal(title, (
           <Box sx={{ py: 3, textAlign: 'center' }}>
             <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
-              🏋️ No psychomotor data found
+              No {domainType} data found
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-              No psychomotor assessments have been recorded for this class/week.
+              No {domainType} assessments have been recorded for this class/week.
             </Typography>
           </Box>
         ));
         return;
       }
 
-      openCardModal('Psychomotor Rating Breakdown', (
+      // Compute per-student averages
+      const enriched = students.map((s) => {
+        const affVals = Object.values(s.affective || {}).filter((v) => v > 0);
+        const psyVals = Object.values(s.psychomotor || {}).filter((v) => v > 0);
+        const affAvg = affVals.length > 0 ? affVals.reduce((a, b) => a + b, 0) / affVals.length : 0;
+        const psyAvg = psyVals.length > 0 ? psyVals.reduce((a, b) => a + b, 0) / psyVals.length : 0;
+        return {
+          ...s,
+          affAvg: Math.round(affAvg * 10) / 10,
+          psyAvg: Math.round(psyAvg * 10) / 10,
+        };
+      });
+
+      openCardModal(title, (
         <Box sx={{ py: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Average rating per psychomotor trait (out of 5).
-          </Typography>
-          <ReusableBarChart
-            series={[{ name: 'Avg Rating', data: psyTraits.map((t) => t.avg_rating) }]}
-            categories={psyTraits.map((t) => t.trait)}
-            colors={[theme.palette.primary.main]}
-            height={300}
-          />
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Average rating per {domainType} trait (out of {metrics.maxRating}).
+              </Typography>
+              <ReusableBarChart
+                series={[{ name: 'Avg Rating', data: traits.map((t) => t.avg_rating) }]}
+                categories={traits.map((t) => t.trait)}
+                colors={[accentColor]}
+                height={260}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {students.length} learner(s) — per-student averages.
+              </Typography>
+              <TableContainer sx={{ maxHeight: 280 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>NAME</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>GENDER</TableCell>
+                      {isAffective ? (
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: accentColor }} align="center">AFFECTIVE AVG</TableCell>
+                      ) : (
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: accentColor }} align="center">PSYCHOMOTOR AVG</TableCell>
+                      )}
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">OVERALL AVG</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">STATUS</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {enriched.map((s) => (
+                      <TableRow key={s.student_reg_id} hover>
+                        <TableCell sx={{ fontSize: '0.8rem' }}>{s.name}</TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem' }}>{s.gender || '—'}</TableCell>
+                        {isAffective ? (
+                          <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}>{s.affAvg}</TableCell>
+                        ) : (
+                          <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}>{s.psyAvg}</TableCell>
+                        )}
+                        <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{s.average_domain ?? '—'}</TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={s.average_domain < 1.5 ? 'Critical' : s.average_domain < 2.5 ? 'Low' : s.average_domain >= 4 ? 'Excellent' : 'Good'}
+                            size="small"
+                            color={s.average_domain < 1.5 ? 'error' : s.average_domain < 2.5 ? 'warning' : s.average_domain >= 4 ? 'success' : 'info'}
+                            sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          </Grid>
         </Box>
       ));
     } catch (e) {
-      console.error('Failed to fetch trait breakdown:', e);
-      openCardModal('Psychomotor Rating Breakdown', (
+      console.error(`Failed to fetch ${domainType} breakdown:`, e);
+      openCardModal(title, (
         <Typography color="error">Failed to load data.</Typography>
       ));
     }
-  }, [theme]);
+  }, [theme, metrics.maxRating]);
 
   // Fetch real needing support data from API
   const openNeedingSupport = useCallback(async (params) => {
@@ -144,17 +222,65 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
         return;
       }
 
+      const sortedLearners = [...learners].sort((a, b) => b.average_domain - a.average_domain);
+
       openCardModal('Learners Needing Support', (
         <Box sx={{ py: 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {realNeedingSupport} out of {totalRated} assessed learners need targeted support (avg rating &lt; 2.5).
           </Typography>
-          <ReusablePieChart
-            series={[realNeedingSupport, realOnTrack]}
-            labels={['Needing Support', 'On Track']}
-            colors={[theme.palette.warning.main, theme.palette.success.main]}
-            height={520}
-          />
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusablePieChart
+                series={[realNeedingSupport, realOnTrack]}
+                labels={['Needing Support', 'On Track']}
+                colors={[theme.palette.warning.main, theme.palette.success.main]}
+                height={350}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ReusableBarChart
+                series={[{ name: 'Avg Rating', data: sortedLearners.map((l) => l.average_domain) }]}
+                categories={sortedLearners.map((l) => l.name.split(' ').pop())}
+                colors={[theme.palette.warning.main]}
+                height={280}
+                yAxisPrefix=""
+              />
+            </Grid>
+          </Grid>
+          {sortedLearners.length > 0 && (
+            <TableContainer sx={{ mt: 2, maxHeight: 300 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>NAME</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>GENDER</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">AFFECTIVE AVG</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">PSYCHOMOTOR AVG</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">STATUS</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedLearners.map((l) => (
+                    <TableRow key={l.student_reg_id} hover>
+                      <TableCell sx={{ fontSize: '0.8rem' }}>{l.name}</TableCell>
+                      <TableCell sx={{ fontSize: '0.8rem' }}>{l.gender || '—'}</TableCell>
+                      <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{l.affective_avg}</TableCell>
+                      <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{l.psychomotor_avg}</TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={l.average_domain < 1.5 ? 'Critical' : l.average_domain < 2 ? 'Low' : 'Needs Support'}
+                          size="small"
+                          color={l.average_domain < 1.5 ? 'error' : l.average_domain < 2 ? 'warning' : 'info'}
+                          sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       ));
     } catch (e) {
@@ -236,44 +362,51 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Card 1: AVG. AFFECTIVE RATING */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard colorName="success" colorIndex={1}>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{
-                color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
-                textTransform: 'uppercase',
-              }}
+          <Tooltip title="Click to view affective skills breakdown" arrow placement="top">
+            <StatCard
+              colorName="success"
+              colorIndex={1}
+              clickable
+              onClick={() => openDomainBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined }, 'affective')}
             >
-              AVG. AFFECTIVE RATING
-            </Typography>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
-            >
-              {metrics.avgAffective}/5
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(Math.round((metrics.avgAffective / 5) * 100), 100)}
-              sx={{
-                my: 1,
-                height: 5,
-                borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: colors.success.accentColor,
-                },
-              }}
-            />
-            <Stack direction="row" alignItems="center" spacing={0.4}>
-              <Typography variant="caption" fontWeight={600} sx={{ color: colors.success.accentColor }}>
-                +0.4 from last term
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{
+                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
+                  textTransform: 'uppercase',
+                }}
+              >
+                AVG. AFFECTIVE RATING
               </Typography>
-              <TrendingUpIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
-            </Stack>
-          </StatCard>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
+              >
+                {metrics.avgAffective}/{metrics.maxRating}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(Math.round((metrics.avgAffective / metrics.maxRating) * 100), 100)}
+                sx={{
+                  my: 1,
+                  height: 5,
+                  borderRadius: 2,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: colors.success.accentColor,
+                  },
+                }}
+              />
+              <Stack direction="row" alignItems="center" spacing={0.4}>
+                <Typography variant="caption" fontWeight={600} sx={{ color: colors.success.accentColor }}>
+                  +0.4 from last term
+                </Typography>
+                <TrendingUpIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
+              </Stack>
+            </StatCard>
+          </Tooltip>
         </Grid>
 
         {/* Card 2: AVG. PSYCHOMOTOR RATING */}
@@ -283,7 +416,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
               colorName="primary"
               colorIndex={0}
               clickable
-              onClick={() => openPsychomotorBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined })}
+              onClick={() => openDomainBreakdown({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined }, 'psychomotor')}
             >
               <Typography
                 variant="caption"
@@ -300,11 +433,11 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                 fontWeight={700}
                 sx={{ my: 0.5, color: isDark ? '#fff' : colors.primary.accentColor }}
               >
-                {metrics.avgPsychomotor}/5
+                {metrics.avgPsychomotor}/{metrics.maxRating}
               </Typography>
               <LinearProgress
                 variant="determinate"
-              value={Math.min(Math.round((metrics.avgPsychomotor / 5) * 100), 100)}
+              value={Math.min(Math.round((metrics.avgPsychomotor / metrics.maxRating) * 100), 100)}
               sx={{
                 my: 1,
                 height: 5,
@@ -357,7 +490,12 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
               >
                 {metrics.needingSupport}
               </Typography>
-              <Button size="small" variant="outlined" sx={{ mt: 0.5, textTransform: 'none' }}>
+              <Button
+                size="small"
+                variant="outlined"
+                sx={{ mt: 0.5, textTransform: 'none' }}
+                onClick={(e) => { e.stopPropagation(); openNeedingSupport({ class_arm_id: classArmId, session_id: sessionId || undefined, term_id: termId || undefined, week_term_id: weekId || undefined }); }}
+              >
                 View Details
               </Button>
             </StatCard>
@@ -388,7 +526,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                   </Stack>
                   <LinearProgress
                     variant="determinate"
-                    value={Math.min(Math.round((metrics.maleRating / 5) * 100), 100)}
+                    value={Math.min(Math.round((metrics.maleRating / metrics.maxRating) * 100), 100)}
                     sx={{
                       height: 4,
                       borderRadius: 2,
@@ -404,7 +542,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                   </Stack>
                   <LinearProgress
                     variant="determinate"
-                    value={Math.min(Math.round((metrics.femaleRating / 5) * 100), 100)}
+                    value={Math.min(Math.round((metrics.femaleRating / metrics.maxRating) * 100), 100)}
                     sx={{
                       height: 4,
                       borderRadius: 2,

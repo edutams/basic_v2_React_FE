@@ -60,7 +60,6 @@ import AddToClassModal from './AddToClassModal';
 const STATUS_OPTIONS = [
   { value: 'student', label: 'Student', color: 'success' },
   { value: 'graduate', label: 'Graduated', color: 'info' },
-  { value: 'transferred', label: 'Transferred', color: 'secondary' },
   { value: 'withdrawn', label: 'Withdrawn', color: 'warning' },
   { value: 'absconded', label: 'Absconded', color: 'error' },
   { value: 'suspended', label: 'Suspended', color: 'warning' },

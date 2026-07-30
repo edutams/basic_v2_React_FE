@@ -209,13 +209,15 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   }, [saClass, saProgramme]);
 
   const fetchStudents = useCallback(async () => {
-    if (!saClass || !saSession || !saTerm) return;
+    if (!saSession || !saTerm) return;
+    if (!saClass && !tableSearch) return;
+
     setLoadingStudents(true);
     try {
-      const res = await classRegisterApi.getStudentsByClass(saClass, saArm || null, {
+      const res = await classRegisterApi.getStudentsByClass(saClass || 'all', saArm || null, {
         page: saPage + 1,
         per_page: saRowsPerPage,
-        programme_id: saProgramme,
+        programme_id: saProgramme || null,
         session_term_id: saTerm,
         search: tableSearch || null,
       });
@@ -493,7 +495,14 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
               size="small"
               placeholder="Search loaded students by name, ID, gender, class..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === '') {
+                  setTableSearch('');
+                  setSaPage(0);
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             // slotProps={{
             //   input: {

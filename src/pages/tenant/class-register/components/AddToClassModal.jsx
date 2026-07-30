@@ -220,7 +220,14 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
                 size="small"
                 placeholder="Enter student name, admission number..."
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchInput(val);
+                  if (val === '') {
+                    setSearch('');
+                    setPage(0);
+                  }
+                }}
                 onKeyPress={handleSearchKeyPress}
                 slotProps={{
                   input: {

@@ -157,15 +157,17 @@ const MultipleArmView = () => {
   }, [classLevel, programme]);
 
   const fetchStudents = useCallback(async () => {
-    if (!classLevel) return;
+    if (!session || !term) return;
+    if (!classLevel && !search) return;
+
     setLoading(true);
     try {
-      const res = await classRegisterApi.getStudentsByClass(classLevel, null, {
+      const res = await classRegisterApi.getStudentsByClass(classLevel || 'all', null, {
         page: maPage + 1,
         per_page: maRowsPerPage,
-        programme_id: programme,
+        programme_id: programme || null,
         session_term_id: term,
-        search, 
+        search: search || null,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
@@ -177,10 +179,10 @@ const MultipleArmView = () => {
     } finally {
       setLoading(false);
     }
-  }, [classLevel, maPage, maRowsPerPage, programme, term, search]);
+  }, [classLevel, maPage, maRowsPerPage, programme, session, term, search]);
 
   useEffect(() => {
-    if (classLevel) {
+    if (classLevel || search) {
       fetchStudents();
     }
   }, [maPage, maRowsPerPage, search]);
@@ -362,7 +364,14 @@ const MultipleArmView = () => {
               size="small"
               placeholder="Search by name, ID, gender..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === '') {
+                  setSearch('');
+                  setMaPage(0);
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               slotProps={{
                 input: {

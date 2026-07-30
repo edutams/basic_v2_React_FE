@@ -532,8 +532,22 @@ const ClassSubject = () => {
                             label={subject.status}
                             size="small"
                             sx={{
-                              bgcolor: subject.status === 'active' ? '#dcfce7' : '#fee2e2',
-                              color: subject.status === 'active' ? '#166534' : '#991b1b',
+                              fontWeight: 600,
+                              textTransform: 'capitalize',
+                              bgcolor: (theme) => {
+                                const mode = theme.palette.mode;
+                                if (subject.status === 'compulsory') return mode === 'dark' ? 'rgba(0, 194, 146, 0.2)' : '#dcfce7';
+                                if (subject.status === 'optional') return mode === 'dark' ? 'rgba(33, 150, 243, 0.2)' : '#dbeafe';
+                                if (subject.status === 'trade') return mode === 'dark' ? 'rgba(156, 39, 176, 0.2)' : '#f3e8ff';
+                                return mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f5f5f5';
+                              },
+                              color: (theme) => {
+                                const mode = theme.palette.mode;
+                                if (subject.status === 'compulsory') return mode === 'dark' ? '#00c292' : '#166534';
+                                if (subject.status === 'optional') return mode === 'dark' ? '#64b5f6' : '#1e40af';
+                                if (subject.status === 'trade') return mode === 'dark' ? '#ce93d8' : '#6b21a8';
+                                return mode === 'dark' ? '#aaa' : '#666';
+                              },
                             }}
                           />
                         </TableCell>
@@ -693,10 +707,10 @@ const ClassSubject = () => {
                       })
                     }
                     label="Status"
-                  >
-                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                  >                    <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
-                  </Select>
+                    <MenuItem value="trade">Trade</MenuItem>
+                </Select>
                   {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>
@@ -802,10 +816,10 @@ const ClassSubject = () => {
                       })
                     }
                     label="Status"
-                  >
-                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                  >                    <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
-                  </Select>
+                    <MenuItem value="trade">Trade</MenuItem>
+                </Select>
                   {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>

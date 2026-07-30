@@ -214,11 +214,11 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         per_page: saRowsPerPage,
         programme_id: saProgramme,
         session_term_id: saTerm,
+        search: tableSearch || null,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
         setMeta(res.data.meta);
-        setTableSearch(''); 
       }
     } catch (error) {
       console.error('Failed to fetch students:', error);
@@ -226,14 +226,14 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     } finally {
       setLoadingStudents(false);
     }
-  }, [saClass, saSession, saTerm, saProgramme, saArm, saPage, saRowsPerPage]);
+  }, [saClass, saSession, saTerm, saProgramme, saArm, saPage, saRowsPerPage, tableSearch]);
 
   useEffect(() => {
     if (saSession && saTerm && saProgramme && saClass) {
       if (saPage === 0) {
         fetchStudents();
       } else {
-        setSaPage(0); 
+        setSaPage(0);
       }
     }
   }, [saSession, saTerm, saProgramme, saClass]);
@@ -252,7 +252,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     if (saSession && saTerm && saProgramme && saClass) {
       fetchStudents();
     }
-  }, [saPage, saRowsPerPage]);
+  }, [saPage, saRowsPerPage, tableSearch]);
 
   useEffect(() => {
     if (students.length === 0) {
@@ -325,6 +325,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
 
   const handleSearch = () => {
     setTableSearch(searchInput);
+    setSaPage(0);
   };
 
   const handleSaveStatus = async () => {
@@ -364,12 +365,13 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
 
   const handleExportExcel = async () => {
     setExportAnchorEl(null);
-    if (!saArm) {
-      notify.warning('Please select a class and arm, then click Apply Filter first.');
-      return;
-    }
     try {
-      const res = await classRegisterApi.exportStudentList({ class_arm_id: saArm });
+      const res = await classRegisterApi.exportStudentList({
+        class_arm_id: saArm || null,
+        class_id: saClass || null,
+        programme_id: saProgramme || null,
+        session_term_id: saTerm || null,
+      });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -386,12 +388,13 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
 
   const handleExportPdf = async () => {
     setExportAnchorEl(null);
-    if (!saArm) {
-      notify.warning('Please select a class and arm, then click Apply Filter first.');
-      return;
-    }
     try {
-      const res = await classRegisterApi.exportStudentListPdf({ class_arm_id: saArm });
+      const res = await classRegisterApi.exportStudentListPdf({
+        class_arm_id: saArm || null,
+        class_id: saClass || null,
+        programme_id: saProgramme || null,
+        session_term_id: saTerm || null,
+      });
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
@@ -489,21 +492,21 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              // slotProps={{
-              //   input: {
-              //     startAdornment: (
-              //       <InputAdornment position="start">
-              //         <SearchIcon fontSize="small" />
-              //       </InputAdornment>
-              //     ),
-              //   },
-              // }}
+            // slotProps={{
+            //   input: {
+            //     startAdornment: (
+            //       <InputAdornment position="start">
+            //         <SearchIcon fontSize="small" />
+            //       </InputAdornment>
+            //     ),
+            //   },
+            // }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleSearch}
-              // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+            // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
             </Button>
@@ -562,214 +565,199 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         </Grid>
       </Grid>
 
-      {(() => {
-        const q = tableSearch.trim().toLowerCase();
-        const filteredStudents = q
-          ? students.filter(
-              (s) =>
-                s.name?.toLowerCase().includes(q) ||
-                s.admission_no?.toLowerCase().includes(q) ||
-                s.gender?.toLowerCase().includes(q) ||
-                s.class_arm?.toLowerCase().includes(q),
-            )
-          : students;
-
-        return (
-          <TableContainer
-            elevation={0}
-            variant="outlined"
-            sx={{ borderRadius: 2, overflowX: 'auto' }}
-          >
-            <Table sx={{ minWidth: 800 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>S/N</TableCell>
-                  <TableCell>Student Info</TableCell>
-                  <TableCell>Gender</TableCell>
-                  <TableCell>Class/Arm</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Parent/Guardian</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingStudents ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                      <CircularProgress size={28} />
+      <TableContainer
+        elevation={0}
+        variant="outlined"
+        sx={{ borderRadius: 2, overflowX: 'auto' }}
+      >
+        <Table sx={{ minWidth: 800 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell>S/N</TableCell>
+              <TableCell>Student Info</TableCell>
+              <TableCell>Gender</TableCell>
+              <TableCell>Class/Arm</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Parent/Guardian</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loadingStudents ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
+              </TableRow>
+            ) : students.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      '& .MuiAlert-icon': { mr: 1.5 },
+                    }}
+                  >
+                    {tableSearch
+                      ? `No students match "${tableSearch}".`
+                      : saArm
+                        ? 'No students found for the selected class/arm.'
+                        : saClass
+                          ? 'No students found for the selected class.'
+                          : 'Please select session, term, programme, and class.'}
+                  </Alert>
+                </TableCell>
+              </TableRow>
+            ) : (
+              students.map((student, index) => {
+                const statusCfg = getStatusConfig(student.status);
+                return (
+                  <TableRow key={student.student_reg_id || index} hover>
+                    <TableCell>
+                      {(meta?.current_page - 1) * meta?.per_page + index + 1}
                     </TableCell>
-                  </TableRow>
-                ) : filteredStudents.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                      <Alert
-                        severity="info"
-                        sx={{
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': { mr: 1.5 },
-                        }}
-                      >
-                        {students.length > 0
-                          ? `No students match "${tableSearch}".`
-                          : saArm
-                            ? 'No students found for the selected class/arm.'
-                            : saClass
-                              ? 'No students found for the selected class.'
-                              : 'Please select session, term, programme, and class.'}
-                      </Alert>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredStudents.map((student, index) => {
-                    const statusCfg = getStatusConfig(student.status);
-                    return (
-                      <TableRow key={student.student_reg_id || index} hover>
-                        <TableCell>
-                          {(meta?.current_page - 1) * meta?.per_page + index + 1}
-                        </TableCell>
 
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar
-                              src={student.avatar}
-                              sx={{
-                                width: 38,
-                                height: 38,
-                                bgcolor: 'primary.light',
-                                color: 'primary.main',
-                                fontWeight: 700,
-                              }}
-                            >
-                              {(student.name || '?').charAt(0)}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" fontWeight={600}>
-                                {student.name}
-                              </Typography>
-                              <Chip
-                                label={student.admission_no}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  mt: 0.25,
-                                  bgcolor: 'primary.light',
-                                  color: 'primary.main',
-                                }}
-                              />
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar
+                          src={student.avatar}
+                          sx={{
+                            width: 38,
+                            height: 38,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {(student.name || '?').charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {student.name}
+                          </Typography>
                           <Chip
-                            label={student.gender}
+                            label={student.admission_no}
                             size="small"
                             sx={{
-                              fontWeight: 700,
-                              px: 0.5,
-                              bgcolor:
-                                student.gender?.toUpperCase() === 'MALE'
-                                  ? 'info.light'
-                                  : 'success.light',
-                              color:
-                                student.gender?.toUpperCase() === 'MALE'
-                                  ? 'info.main'
-                                  : 'success.main',
+                              height: 20,
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              mt: 0.25,
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
                             }}
                           />
-                        </TableCell>
+                        </Box>
+                      </Box>
+                    </TableCell>
 
-                        <TableCell>
-                          {student.class_arm || `${student.class_name} (${student.arm_name})`}
-                        </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={student.gender}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          px: 0.5,
+                          bgcolor:
+                            student.gender?.toUpperCase() === 'MALE'
+                              ? 'info.light'
+                              : 'success.light',
+                          color:
+                            student.gender?.toUpperCase() === 'MALE'
+                              ? 'info.main'
+                              : 'success.main',
+                        }}
+                      />
+                    </TableCell>
 
-                        <TableCell>
-                          <Chip
-                            label={statusCfg.label}
-                            size="small"
-                            color={statusCfg.color}
-                            sx={{ fontWeight: 700, borderRadius: '6px' }}
-                          />
-                        </TableCell>
+                    <TableCell>
+                      {student.class_arm || `${student.class_name} (${student.arm_name})`}
+                    </TableCell>
 
-                        <TableCell>
-                          {(() => {
-                            const guardians = parentsMap[student.student_reg_id];
-                            if (guardians === undefined)
-                              return (
-                                <Typography variant="body2" color="text.disabled">
-                                  Loading...
-                                </Typography>
-                              );
-                            if (!guardians || guardians.length === 0)
-                              return (
-                                <Typography variant="body2" color="text.disabled">
-                                  —
-                                </Typography>
-                              );
-                            return (
-                              <Box sx={{ minWidth: 0 }}>
-                                {guardians.map((g, i) => (
-                                  <Box key={i} sx={{ mb: i < guardians.length - 1 ? 0.75 : 0 }}>
-                                    <Typography variant="body2" noWrap fontWeight={500}>
-                                      {g.name || '—'}
-                                      {g.relationship && (
-                                        <Typography
-                                          component="span"
-                                          variant="caption"
-                                          color="text.secondary"
-                                          sx={{ ml: 0.5, fontStyle: 'italic' }}
-                                        >
-                                          ({g.relationship})
-                                        </Typography>
-                                      )}
-                                    </Typography>
-                                    <Stack
-                                      direction="row"
-                                      spacing={1.5}
-                                      alignItems="center"
-                                      flexWrap="wrap"
+                    <TableCell>
+                      <Chip
+                        label={statusCfg.label}
+                        size="small"
+                        color={statusCfg.color}
+                        sx={{ fontWeight: 700, borderRadius: '6px' }}
+                      />
+                    </TableCell>
+
+                    <TableCell>
+                      {(() => {
+                        const guardians = parentsMap[student.student_reg_id];
+                        if (guardians === undefined)
+                          return (
+                            <Typography variant="body2" color="text.disabled">
+                              Loading...
+                            </Typography>
+                          );
+                        if (!guardians || guardians.length === 0)
+                          return (
+                            <Typography variant="body2" color="text.disabled">
+                              —
+                            </Typography>
+                          );
+                        return (
+                          <Box sx={{ minWidth: 0 }}>
+                            {guardians.map((g, i) => (
+                              <Box key={i} sx={{ mb: i < guardians.length - 1 ? 0.75 : 0 }}>
+                                <Typography variant="body2" noWrap fontWeight={500}>
+                                  {g.name || '—'}
+                                  {g.relationship && (
+                                    <Typography
+                                      component="span"
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ ml: 0.5, fontStyle: 'italic' }}
                                     >
-                                      {g.phone && (
-                                        <Typography variant="caption" color="text.secondary" noWrap>
-                                          {g.phone}
-                                        </Typography>
-                                      )}
-                                      {g.email && (
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                          noWrap
-                                          sx={{ fontStyle: 'italic' }}
-                                        >
-                                          {g.email}
-                                        </Typography>
-                                      )}
-                                    </Stack>
-                                  </Box>
-                                ))}
+                                      ({g.relationship})
+                                    </Typography>
+                                  )}
+                                </Typography>
+                                <Stack
+                                  direction="row"
+                                  spacing={1.5}
+                                  alignItems="center"
+                                  flexWrap="wrap"
+                                >
+                                  {g.phone && (
+                                    <Typography variant="caption" color="text.secondary" noWrap>
+                                      {g.phone}
+                                    </Typography>
+                                  )}
+                                  {g.email && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      noWrap
+                                      sx={{ fontStyle: 'italic' }}
+                                    >
+                                      {g.email}
+                                    </Typography>
+                                  )}
+                                </Stack>
                               </Box>
-                            );
-                          })()}
-                        </TableCell>
+                            ))}
+                          </Box>
+                        );
+                      })()}
+                    </TableCell>
 
-                        <TableCell align="right">
-                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
-                            <MoreVertIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        );
-      })()}
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, student)}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {meta && (
         <Box sx={{ pt: 2 }}>

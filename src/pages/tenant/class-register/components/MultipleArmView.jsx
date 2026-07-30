@@ -534,6 +534,18 @@ const MultipleArmView = () => {
 
       {meta && (
         <Box sx={{ pt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={handleSubmitChanges}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Submit Changes'}
+            </Button>
+          </Box>
+
           <TablePagination
             component="div"
             count={meta.total || 0}

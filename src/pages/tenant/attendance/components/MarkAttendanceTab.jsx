@@ -61,6 +61,7 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -155,6 +156,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [attTerm, setAttTerm] = useState('');
   const [attTermId, setAttTermId] = useState('');
   const [attWeek, setAttWeek] = useState('');
+  const [activeWeekId, setActiveWeekId] = useState(null);
   const [attProgramme, setAttProgramme] = useState('');
   const [attClass, setAttClass] = useState('');
   const [attArm, setAttArm] = useState('');
@@ -212,6 +214,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         } else if (sessions.length > 0) {
           setAttSession(sessions[0].id);
         }
+
+        // Fetch academic_week_id for week preselection
+        try {
+          const ackRes = await fetchAcademicInfo();
+          if (ackRes?.academic_week_id) {
+            setActiveWeekId(String(ackRes.academic_week_id));
+          }
+        } catch (e) { /* best-effort */ }
 
         // If class teacher, auto-populate programme/class/arm and load report setting
         if (isClassTeacher) {
@@ -287,16 +297,22 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         const data = res.data?.data || [];
         const weeks = Array.isArray(data) ? data : [];
         setWeeks(weeks);
-        const active = weeks.find((w) => w.status === 'active');
-        if (active) {
-          setAttWeek(active.wk_id ?? active.week_id ?? active.id);
-        } else if (weeks.length > 0) {
-          setAttWeek(weeks[weeks.length - 1].wk_id ?? weeks[weeks.length - 1].week_id ?? weeks[weeks.length - 1].id);
+        const match = activeWeekId
+          ? weeks.find((w) => String(w.week_id) === activeWeekId)
+          : null;
+        if (match) {
+          setAttWeek(match.wk_id ?? match.week_id ?? match.id);
+        } else {
+          const fallback = weeks.find((w) => w.status === 'active')
+            || (weeks.length > 0 ? weeks[weeks.length - 1] : null);
+          if (fallback) {
+            setAttWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
+          }
         }
       } catch (e) { console.error(e); }
     };
     fetchWeeks();
-  }, [attSession, attTermId]);
+  }, [attSession, attTermId, activeWeekId]);
 
   // ── Find selected week object for its start_date ─────────
   const selectedWeek = React.useMemo(() => {
@@ -1220,7 +1236,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               size="small"
               fullWidth
               onClick={openConfirmDialog}
-              disabled={submitting || learners.length === 0}
+              disabled={submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)}
               sx={{ mt: 'auto' }}
             >
               {submitting ? 'Submitting...' : 'Submit Attendance'}

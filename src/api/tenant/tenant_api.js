@@ -105,3 +105,8 @@ export const updateSchoolLogo = async (formData) => {
   });
   return response.data;
 };
+
+export const fetchAcademicInfo = async () => {
+  const response = await tenantApi.get('/school_setup/get_academic_info');
+  return response.data;
+};

@@ -54,6 +54,7 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 // ── Theme-aware stat card ──────────────────────────────────────
 const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
@@ -97,8 +98,10 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Reusable filter dropdowns for modals (local state) ────────
-const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arms, initialFilters, onApply, applyLabel = 'Apply Filter' }) => {
-  // Ensure initial filters use string IDs for consistent Select matching
+const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arms, initialFilters, onApply, applyLabel = 'Apply Filter', activeWeekId }) => {
+  const activeWeekIdRef = useRef(activeWeekId);
+  useEffect(() => { activeWeekIdRef.current = activeWeekId; }, [activeWeekId]);
+
   const normalizedInitial = {
     session: String(initialFilters?.session || ''),
     term: String(initialFilters?.term || ''),
@@ -130,12 +133,29 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
 
   useEffect(() => {
     if (!localFilters.session || !localFilters.term) return;
+    let cancelled = false;
     attendanceApi.getWeeksBySessionTerm({ session_id: localFilters.session, term_id: localFilters.term })
       .then((r) => {
+        if (cancelled) return;
         const d = r.data?.data || [];
-        setLocalWeeks(Array.isArray(d) ? d : []);
+        const weeks = Array.isArray(d) ? d : [];
+        setLocalWeeks(weeks);
+        const wkId = activeWeekIdRef.current;
+        if (weeks.length > 0 && !localFilters.week) {
+          const match = wkId
+            ? weeks.find((w) => String(w.week_id) === wkId)
+            : null;
+          const active = match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
+          if (active) {
+            setLocalFilters((prev) => {
+              if (prev.week) return prev;
+              return { ...prev, week: String(active.wk_id ?? active.week_id ?? active.id) };
+            });
+          }
+        }
       })
       .catch(console.error);
+    return () => { cancelled = true; };
   }, [localFilters.session, localFilters.term]);
 
   useEffect(() => {
@@ -343,54 +363,125 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
 const TermTrendContent = ({ weeklyData, theme }) => {
   const isDark = theme.palette.mode === 'dark';
 
+  const fmtPct = (v) => (isNaN(v) ? '—' : `${Math.round(v)}%`);
+
+  const weeklyRates = weeklyData.map((w) => {
+    const rate = w.present + w.absent > 0
+      ? (w.present / (w.present + w.absent)) * 100
+      : 0;
+    const completion = w.total_students * w.total_school_days > 0
+      ? ((w.present + w.absent) / (w.total_students * w.total_school_days)) * 100
+      : 0;
+    return { ...w, rate, completion };
+  });
+
+  const totalPresent = weeklyRates.reduce((s, w) => s + w.present, 0);
+  const totalAbsent = weeklyRates.reduce((s, w) => s + w.absent, 0);
+  const totalPossible = weeklyRates.reduce(
+    (s, w) => s + w.total_students * w.total_school_days, 0
+  );
+  const termRate = totalPresent + totalAbsent > 0
+    ? (totalPresent / (totalPresent + totalAbsent)) * 100
+    : 0;
+  const termCompletion = totalPossible > 0
+    ? ((totalPresent + totalAbsent) / totalPossible) * 100
+    : 0;
+
+  const colorForRate = (rate) =>
+    rate >= 75 ? 'success.main'
+    : rate >= 50 ? 'warning.main'
+    : 'error.main';
+
   return (
     <Box>
+      {/* ── Term Summary ── */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Typography variant="caption" color="text.secondary">Term Attendance Rate</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: colorForRate(termRate) }}>
+              {fmtPct(termRate)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Typography variant="caption" color="text.secondary">Term Completion Rate</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              {fmtPct(termCompletion)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 4, sm: 2 }}>
+            <Typography variant="caption" color="text.secondary">Total Present</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>{totalPresent}</Typography>
+          </Grid>
+          <Grid size={{ xs: 4, sm: 2 }}>
+            <Typography variant="caption" color="text.secondary">Total Absent</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>{totalAbsent}</Typography>
+          </Grid>
+          <Grid size={{ xs: 4, sm: 2 }}>
+            <Typography variant="caption" color="text.secondary">Total Possible</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>{totalPossible}</Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Number of learners present per week and weekly attendance summary for the selected term.
+        Weekly attendance rate trend for the selected term.
       </Typography>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
           <ReusableBarChart
-            series={[{ name: 'Students Present', data: weeklyData.map((w) => w.present) }]}
-            categories={weeklyData.map((w) => w.week_name)}
+            series={[{ name: 'Attendance Rate', data: weeklyRates.map((w) => Math.round(w.rate)) }]}
+            categories={weeklyRates.map((w) => w.week_name)}
             colors={[theme.palette.info.main]}
             height={280}
-            yAxisFormatter={(val) => `${val} / ${weeklyData.length > 0 ? weeklyData[0].total : '—'}`}
+            yAxisFormatter={(val) => `${val}%`}
             xAxisTitle="Week"
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, height: 280, overflow: 'auto' }}>
+          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, height: 320, overflow: 'auto' }}>
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, minWidth: 100, position: 'sticky', left: 0, zIndex: 2, bgcolor: isDark ? '#1e1e1e' : '#fff' }}>
                     Week
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 70 }}>Present</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 60 }}>Total</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 60 }}>Rate</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Present</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Absent</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Not Marked</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Rate</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Completion</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {weeklyData.map((week) => (
-                  <TableRow key={week.week_id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      {week.week_name}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip label={week.present} size="small" color="success" variant="soft" />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2">{week.total}</Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: week.rate >= 75 ? 'success.main' : week.rate >= 50 ? 'warning.main' : 'error.main' }}>
-                        {week.rate}%
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {weeklyRates.map((week) => {
+                  const totalPossibleW = week.total_students * week.total_school_days;
+                  const notMarked = totalPossibleW - week.present - week.absent;
+                  return (
+                    <TableRow key={week.week_id} hover>
+                      <TableCell sx={{ fontWeight: 600 }}>{week.week_name}</TableCell>
+                      <TableCell align="center">
+                        <Chip label={week.present} size="small" color="success" variant="soft" />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label={week.absent} size="small" color="error" variant="soft" />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" color="text.secondary">{notMarked}</Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: colorForRate(week.rate) }}>
+                          {fmtPct(week.rate)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          {fmtPct(week.completion)}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -427,9 +518,10 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
   // Risk modal data (stored separately to avoid stale closures in modal content)
   const [riskModalData, setRiskModalData] = useState(null);
 
-  // Active session / term IDs for pre-filling dropdowns
+  // Active session / term / week IDs for pre-filling dropdowns
   const [activeSessionId, setActiveSessionId] = useState('');
   const [activeTermId, setActiveTermId] = useState('');
+  const [activeWeekId, setActiveWeekId] = useState(null);
 
   // Load filter options
   useEffect(() => {
@@ -473,6 +565,14 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           const termsData = termsRes.data?.data || termsRes.data || [];
           setTerms(termsData);
         }
+
+        // Fetch academic_week_id for week preselection
+        try {
+          const ackRes = await fetchAcademicInfo();
+          if (ackRes?.academic_week_id) {
+            setActiveWeekId(String(ackRes.academic_week_id));
+          }
+        } catch (e) { /* best-effort */ }
       } catch (e) { console.error(e); }
     };
     load();
@@ -496,6 +596,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
           />
@@ -539,6 +640,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
           />
@@ -571,6 +673,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
             onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
           />
@@ -578,7 +681,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [theme, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [theme, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── Term Attendance Trend ────────────────────────────────────
   const openTermTrend = useCallback(async (classArmId, localFilters) => {
@@ -592,6 +695,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={(lf) => openTermTrend(classArmId, lf)}
           />
@@ -623,6 +727,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={(lf) => openTermTrend(classArmId, lf)}
           />
@@ -649,6 +754,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
             onApply={(lf) => openTermTrend(classArmId, lf)}
           />
@@ -656,7 +762,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [theme, sessionId, termId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [theme, sessionId, termId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── Absentees Summary (Table) ────────────────────────────────
   const openAbsenteesBreakdown = useCallback(async (localFilters) => {
@@ -671,6 +777,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={openAbsenteesBreakdown}
           />
@@ -703,6 +810,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={openAbsenteesBreakdown}
           />
@@ -767,6 +875,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
             onApply={openAbsenteesBreakdown}
           />
@@ -774,7 +883,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── At-Risk Learners Overview (Table) ────────────────────────
   const openAtRiskBreakdown = useCallback(async (localFilters) => {
@@ -789,6 +898,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
             onApply={openAtRiskBreakdown}
           />
@@ -829,6 +939,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           <ModalFilterDropdowns key={filterKeyRef.current}
             sessions={sessions} terms={terms} weeks={weeks}
             programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
             initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
             onApply={openAtRiskBreakdown}
           />
@@ -836,7 +947,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   const handleSendRiskAlerts = async () => {
     // Only send alerts for selected learners
@@ -1055,7 +1166,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               />
               <Stack direction="row" alignItems="center" spacing={0.4}>
                 <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                  Current Session
+                  Current Session Term
                 </Typography>
                 <EventNoteIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
               </Stack>
@@ -1129,6 +1240,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
                 <ModalFilterDropdowns key={filterKeyRef.current}
                   sessions={sessions} terms={terms} weeks={weeks}
                   programmes={programmes} classes={classes} arms={arms}
+            activeWeekId={activeWeekId}
                   initialFilters={{ session: sessionId || activeSessionId, term: termId || activeTermId, week: weekId, programme: programmeId || '', class: classId || '', arm: classArmId }}
                   onApply={(lf) => { setRiskModalData(null); openAtRiskBreakdown(lf); }}
                 />

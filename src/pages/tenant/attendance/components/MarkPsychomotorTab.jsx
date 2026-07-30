@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -45,6 +45,7 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 const STORAGE_KEY = 'psychomotor_assessments';
 
@@ -76,6 +77,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [activeWeekId, setActiveWeekId] = useState(null);
+  const activeWeekIdRef = useRef(null);
+  useEffect(() => { activeWeekIdRef.current = activeWeekId; }, [activeWeekId]);
 
   const [filterApplied, setFilterApplied] = useState(false);
   const [learners, setLearners] = useState([]);
@@ -138,6 +143,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         } else if (sessions.length > 0) {
           setPSession(sessions[0].id);
         }
+
+        // Fetch academic_week_id for week preselection
+        try {
+          const ackRes = await fetchAcademicInfo();
+          if (ackRes?.academic_week_id) {
+            setActiveWeekId(String(ackRes.academic_week_id));
+          }
+        } catch (e) { /* best-effort */ }
       } catch (e) { console.error(e); }
     };
     load();
@@ -186,14 +199,27 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       const d = r.data?.data || [];
       const weeks = Array.isArray(d) ? d : [];
       setWeeks(weeks);
-      const active = weeks.find((w) => w.status === 'active');
-      if (active) {
-        setPWeek(active.wk_id ?? active.week_id ?? active.id);
-      } else if (weeks.length > 0) {
-        setPWeek(weeks[weeks.length - 1].wk_id ?? weeks[weeks.length - 1].week_id ?? weeks[weeks.length - 1].id);
+      if (weeks.length > 0 && !pWeek) {
+        const wkId = activeWeekIdRef.current;
+        const match = wkId
+          ? weeks.find((w) => String(w.week_id) === wkId)
+          : null;
+        const active = match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
+        if (active) {
+          setPWeek(active.wk_id ?? active.week_id ?? active.id);
+        }
       }
     }).catch(console.error);
   }, [pSession, pTermId]);
+
+  // Re-select week when activeWeekId or weeks become available and no week is picked yet
+  useEffect(() => {
+    if (!activeWeekId || weeks.length === 0 || pWeek) return;
+    const match = weeks.find((w) => String(w.week_id) === activeWeekId);
+    if (match) {
+      setPWeek(match.wk_id ?? match.week_id ?? match.id);
+    }
+  }, [activeWeekId, weeks, pWeek]);
 
   // ── Load domain traits from API ───────────────────────────
   useEffect(() => {

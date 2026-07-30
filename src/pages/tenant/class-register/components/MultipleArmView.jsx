@@ -24,14 +24,20 @@ import {
   TablePagination,
   CircularProgress,
   Alert,
+  Menu,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Save as SaveIcon,
   CheckCircle as CheckCircleIcon,
   CancelOutlined as CancelOutlinedIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
 } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
+import { useNotification } from '@/hooks/useNotification';
 import {
   fetchSessions,
   fetchTerms,
@@ -41,6 +47,7 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const MultipleArmView = () => {
+  const notify = useNotification();
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -62,6 +69,7 @@ const MultipleArmView = () => {
   const [maPage, setMaPage] = useState(0);
   const [maRowsPerPage, setMaRowsPerPage] = useState(15);
   const [meta, setMeta] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -116,6 +124,7 @@ const MultipleArmView = () => {
       setClasses([]);
       setClassLevel('');
       setArms([]);
+      setStudents([]);
       return;
     }
     fetchClassesByProgramme(programme)
@@ -125,12 +134,18 @@ const MultipleArmView = () => {
           : [];
         setClasses(data);
         setClassLevel('');
+        setArms([]);
+        setStudents([]);
       })
       .catch(console.error);
   }, [programme]);
 
   useEffect(() => {
-    if (!classLevel) return;
+    if (!classLevel) {
+      setArms([]);
+      setStudents([]);
+      return;
+    }
     fetchClassArmsByClass(classLevel, programme ? { programme_id: programme } : {})
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data)
@@ -142,14 +157,17 @@ const MultipleArmView = () => {
   }, [classLevel, programme]);
 
   const fetchStudents = useCallback(async () => {
-    if (!classLevel) return;
+    if (!session || !term) return;
+    if (!classLevel && !search) return;
+
     setLoading(true);
     try {
-      const res = await classRegisterApi.getStudentsByClass(classLevel, null, {
+      const res = await classRegisterApi.getStudentsByClass(classLevel || 'all', null, {
         page: maPage + 1,
         per_page: maRowsPerPage,
-        programme_id: programme,
-        search, 
+        programme_id: programme || null,
+        session_term_id: term,
+        search: search || null,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
@@ -161,10 +179,10 @@ const MultipleArmView = () => {
     } finally {
       setLoading(false);
     }
-  }, [classLevel, maPage, maRowsPerPage, programme, search]);
+  }, [classLevel, maPage, maRowsPerPage, programme, session, term, search]);
 
   useEffect(() => {
-    if (classLevel) {
+    if (classLevel || search) {
       fetchStudents();
     }
   }, [maPage, maRowsPerPage, search]);
@@ -247,6 +265,50 @@ const MultipleArmView = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const res = await classRegisterApi.exportStudentList({
+        class_id: classLevel || null,
+        programme_id: programme || null,
+        session_term_id: term || null,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student_list.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Student list exported successfully');
+    } catch {
+      notify.error('Failed to export student list');
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const res = await classRegisterApi.exportStudentListPdf({
+        class_id: classLevel || null,
+        programme_id: programme || null,
+        session_term_id: term || null,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'student_list.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Student list exported as PDF');
+    } catch {
+      notify.error('Failed to export PDF');
+    }
+  };
+
 
 
   return (
@@ -302,7 +364,14 @@ const MultipleArmView = () => {
               size="small"
               placeholder="Search by name, ID, gender..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === '') {
+                  setSearch('');
+                  setMaPage(0);
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               slotProps={{
                 input: {
@@ -326,6 +395,31 @@ const MultipleArmView = () => {
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<ExportIcon />}
+              endIcon={<ArrowDropDownIcon />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
+            >
+              Export
+            </Button>
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={Boolean(exportAnchorEl)}
+              onClose={() => setExportAnchorEl(null)}
+              PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+            >
+              <MenuItem onClick={handleExportExcel}>
+                <TableChartIcon fontSize="small" sx={{ color: 'success.main', mr: 1.5 }} />
+                Export Excel (.xlsx)
+              </MenuItem>
+              <MenuItem onClick={handleExportPdf}>
+                <PictureAsPdfIcon fontSize="small" sx={{ color: 'error.main', mr: 1.5 }} />
+                Export PDF (.pdf)
+              </MenuItem>
+            </Menu>
+
             <Button
               variant="outlined"
               size="small"
@@ -440,6 +534,18 @@ const MultipleArmView = () => {
 
       {meta && (
         <Box sx={{ pt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={handleSubmitChanges}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Submit Changes'}
+            </Button>
+          </Box>
+
           <TablePagination
             component="div"
             count={meta.total || 0}

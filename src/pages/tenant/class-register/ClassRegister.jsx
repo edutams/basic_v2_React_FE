@@ -79,7 +79,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
             fontWeight: 700,
           }}
         >
-          Total Students
+          Total Student
         </Typography>
         {loading ? (
           <CircularProgress size={24} sx={{ mt: 1 }} />
@@ -113,7 +113,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               MALE
             </Typography>
             <Typography
-              variant="h6"
+              variant="h3"
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
             >
@@ -132,7 +132,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               FEMALE
             </Typography>
             <Typography
-              variant="h6"
+              variant="h3"
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
             >
@@ -149,7 +149,7 @@ const ClassRegister = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [classFilterData, setClassFilterData] = useState(null); 
+  const [classFilterData, setClassFilterData] = useState(null);
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
@@ -158,11 +158,11 @@ const ClassRegister = () => {
 
   const handleClassCardClick = (cls) => {
     setActiveTab(0);
-    
+
     setClassFilterData({
       programme_id: cls.programme_id,
       class_id: cls.class_id,
-      timestamp: Date.now(), 
+      timestamp: Date.now(),
     });
 
     setSelectedEnrollmentClass(cls);
@@ -214,7 +214,7 @@ const ClassRegister = () => {
             loading={loading}
           />
         </Grid>
-     <Grid size={{ xs: 12, md: 6, lg: 10 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 10 }}>
           <ClassEnrollmentCard
             enrollmentData={enrollmentData}
             onClassClick={handleClassCardClick}

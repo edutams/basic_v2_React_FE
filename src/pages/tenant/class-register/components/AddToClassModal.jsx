@@ -102,8 +102,6 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
       .catch(console.error);
   }, [targetClass, targetProgramme]);
 
-  const [hasSearched, setHasSearched] = useState(false);
-
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
@@ -124,10 +122,10 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
   }, [search, page, rowsPerPage]);
 
   useEffect(() => {
-    if (hasSearched) {
+    if (open) {
       fetchStudents();
     }
-  }, [search, page, rowsPerPage, hasSearched, fetchStudents]);
+  }, [open, fetchStudents]);
 
   useEffect(() => {
     if (open) {
@@ -138,15 +136,12 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
       setTargetProgramme('');
       setTargetClass('');
       setTargetArm('');
-      setHasSearched(false);
-      setStudents([]);
     }
   }, [open]);
 
   const handleSearch = () => {
     setSearch(searchInput);
     setPage(0);
-    setHasSearched(true);
   };
 
   const handleSearchKeyPress = (e) => {
@@ -185,7 +180,7 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
         user_ids: selectedIds,
         class_arm_id: targetArm,
       });
-      notify.success(`${selectedIds.length} student(s) added to class`);
+      notify.success(`${selectedIds.length} student(s) added to class successfully`);
       if (onSuccess) onSuccess();
       onClose();
     } catch {
@@ -214,91 +209,25 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
         <Stack spacing={2.5}>
           <Alert severity="info" sx={{ '& .MuiAlert-message': { width: '100%' } }}>
             <Typography variant="body2">
-              Select the class and arm you want to assign students to, then search for unassigned
-              students to add them.
+              Search for unassigned or withdrawn students below, select the learners, and choose the target class and arm to enroll them.
             </Typography>
           </Alert>
 
           <Box>
-            <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-              Target Class & Arm
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Programme</InputLabel>
-                  <Select
-                    value={targetProgramme}
-                    label="Programme"
-                    onChange={(e) => setTargetProgramme(e.target.value)}
-                  >
-                    {programmes.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.programme_name || p.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small" disabled={!targetProgramme}>
-                  <InputLabel>Class</InputLabel>
-                  <Select
-                    value={targetClass}
-                    label="Class"
-                    onChange={(e) => setTargetClass(e.target.value)}
-                  >
-                    {classes.map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.class_name || c.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small" disabled={!targetClass}>
-                  <InputLabel>Arm</InputLabel>
-                  <Select
-                    value={targetArm}
-                    label="Arm"
-                    onChange={(e) => setTargetArm(e.target.value)}
-                  >
-                    {arms.map((a) => (
-                      <MenuItem key={a.id} value={a.id}>
-                        {a.arm_names || a.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-
-            {selectedArmLabel && (
-              <Alert severity="success" sx={{ mt: 1.5, py: 0.5 }}>
-                <Typography variant="body2">
-                  Learner will be added to: <strong>{selectedArmLabel}</strong>
-                </Typography>
-              </Alert>
-            )}
-          </Box>
-
-          <Divider />
-
-          <Box>
-            <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-              Search for Learners
-            </Typography>
-
             <Stack direction="row" spacing={1}>
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Enter student name or admission number..."
+                placeholder="Enter student name, admission number..."
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchInput(val);
+                  if (val === '') {
+                    setSearch('');
+                    setPage(0);
+                  }
+                }}
                 onKeyPress={handleSearchKeyPress}
                 slotProps={{
                   input: {
@@ -314,167 +243,222 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
                 variant="contained"
                 size="small"
                 onClick={handleSearch}
-                disabled={!targetArm}
                 sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
               >
                 Search
               </Button>
             </Stack>
+          </Box>
 
-            {!targetArm && (
-              <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
-                Please select a target class and arm first
-              </Typography>
+          <Box>
+            <TableContainer variant="outlined" sx={{ borderRadius: 2, maxHeight: 320 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={
+                          selectedIds.length > 0 && selectedIds.length < students.length
+                        }
+                        checked={students.length > 0 && selectedIds.length === students.length}
+                        onChange={handleSelectAll}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>Student</TableCell>
+                    <TableCell>Gender</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Withdrawn Session & Term</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                        <CircularProgress size={28} />
+                      </TableCell>
+                    </TableRow>
+                  ) : students.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                          {searchInput
+                            ? `No unassigned students found matching "${searchInput}".`
+                            : 'No unassigned students found.'}
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    students.map((student) => (
+                      <TableRow
+                        key={student.user_id}
+                        hover
+                        selected={selectedIds.includes(student.user_id)}
+                        onClick={() => handleSelectOne(student.user_id)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selectedIds.includes(student.user_id)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Avatar
+                              src={student.avatar}
+                              sx={{
+                                width: 34,
+                                height: 34,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                                fontWeight: 700,
+                                fontSize: 14,
+                              }}
+                            >
+                              {(student.name || '?').charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {student.name}
+                              </Typography>
+                              <Chip
+                                label={student.admission_no}
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  bgcolor: 'primary.light',
+                                  color: 'primary.main',
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={student.gender}
+                            size="small"
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: 11,
+                              bgcolor:
+                                student.gender?.toUpperCase() === 'MALE'
+                                  ? 'info.light'
+                                  : 'success.light',
+                              color:
+                                student.gender?.toUpperCase() === 'MALE'
+                                  ? 'info.main'
+                                  : 'success.main',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={student.status || 'unassigned'}
+                            size="small"
+                            color={student.status === 'withdrawn' ? 'warning' : 'default'}
+                            sx={{ fontWeight: 600, fontSize: 11, textTransform: 'capitalize' }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                            {student.withdrawn_session_term || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {meta && (
+              <TablePagination
+                component="div"
+                count={meta.total || 0}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                rowsPerPageOptions={[5, 10, 25]}
+              />
             )}
           </Box>
 
-          {hasSearched && (
-            <Box>
-              <TableContainer variant="outlined" sx={{ borderRadius: 2, maxHeight: 340 }}>
-                <Table stickyHeader size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          indeterminate={
-                            selectedIds.length > 0 && selectedIds.length < students.length
-                          }
-                          checked={students.length > 0 && selectedIds.length === students.length}
-                          onChange={handleSelectAll}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>Student</TableCell>
-                      <TableCell>Gender</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
-                    ) : students.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                          <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                            {searchInput
-                              ? `No unassigned students found matching "${searchInput}".`
-                              : 'No unassigned students found. All students are already enrolled in a class.'}
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      students.map((student) => (
-                        <TableRow
-                          key={student.user_id}
-                          hover
-                          selected={selectedIds.includes(student.user_id)}
-                          onClick={() => handleSelectOne(student.user_id)}
-                          sx={{ cursor: 'pointer' }}
-                        >
-                          <TableCell padding="checkbox">
-                            <Checkbox
-                              checked={selectedIds.includes(student.user_id)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                              <Avatar
-                                src={student.avatar}
-                                sx={{
-                                  width: 34,
-                                  height: 34,
-                                  bgcolor: 'primary.light',
-                                  color: 'primary.main',
-                                  fontWeight: 700,
-                                  fontSize: 14,
-                                }}
-                              >
-                                {(student.name || '?').charAt(0)}
-                              </Avatar>
-                              <Box>
-                                <Typography variant="body2" fontWeight={600}>
-                                  {student.name}
-                                </Typography>
-                                <Chip
-                                  label={student.admission_no}
-                                  size="small"
-                                  sx={{
-                                    height: 18,
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    bgcolor: 'primary.light',
-                                    color: 'primary.main',
-                                  }}
-                                />
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={student.gender}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: 11,
-                                bgcolor:
-                                  student.gender?.toUpperCase() === 'MALE'
-                                    ? 'info.light'
-                                    : 'success.light',
-                                color:
-                                  student.gender?.toUpperCase() === 'MALE'
-                                    ? 'info.main'
-                                    : 'success.main',
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={student.status || 'present'}
-                              size="small"
-                              color="default"
-                              sx={{ fontWeight: 600, fontSize: 11, textTransform: 'capitalize' }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {meta && (
-                <TablePagination
-                  component="div"
-                  count={meta.total || 0}
-                  page={page}
-                  onPageChange={(_, newPage) => setPage(newPage)}
-                  rowsPerPage={rowsPerPage}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
-                  }}
-                  rowsPerPageOptions={[5, 10, 25]}
-                />
-              )}
-            </Box>
-          )}
-
           {selectedIds.length > 0 && (
-            <Alert severity="success" sx={{ '& .MuiAlert-icon': { mr: 1 } }}>
-              <Typography variant="body2" fontWeight={600}>
-                {selectedIds.length} student{selectedIds.length > 1 ? 's' : ''} selected
-              </Typography>
-              {selectedArmLabel && (
-                <Typography variant="body2">
-                  Ready to add to <strong>{selectedArmLabel}</strong>
+            <>
+              <Divider />
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                  Assign To Class & Arm ({selectedIds.length} student{selectedIds.length > 1 ? 's' : ''} selected)
                 </Typography>
-              )}
-            </Alert>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Programme</InputLabel>
+                      <Select
+                        value={targetProgramme}
+                        label="Programme"
+                        onChange={(e) => setTargetProgramme(e.target.value)}
+                      >
+                        {programmes.map((p) => (
+                          <MenuItem key={p.id} value={p.id}>
+                            {p.programme_name || p.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small" disabled={!targetProgramme}>
+                      <InputLabel>Class</InputLabel>
+                      <Select
+                        value={targetClass}
+                        label="Class"
+                        onChange={(e) => setTargetClass(e.target.value)}
+                      >
+                        {classes.map((c) => (
+                          <MenuItem key={c.id} value={c.id}>
+                            {c.class_name || c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small" disabled={!targetClass}>
+                      <InputLabel>Arm</InputLabel>
+                      <Select
+                        value={targetArm}
+                        label="Arm"
+                        onChange={(e) => setTargetArm(e.target.value)}
+                      >
+                        {arms.map((a) => (
+                          <MenuItem key={a.id} value={a.id}>
+                            {a.arm_names || a.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                {selectedArmLabel && (
+                  <Alert severity="success" sx={{ mt: 1.5, py: 0.5 }}>
+                    <Typography variant="body2">
+                      {selectedIds.length} learner{selectedIds.length > 1 ? 's' : ''} will be added to: <strong>{selectedArmLabel}</strong>
+                    </Typography>
+                  </Alert>
+                )}
+              </Box>
+            </>
           )}
         </Stack>
       </DialogContent>

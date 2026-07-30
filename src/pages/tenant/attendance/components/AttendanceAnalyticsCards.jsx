@@ -99,7 +99,9 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 
 // ── Reusable filter dropdowns for modals (local state) ────────
 const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arms, initialFilters, onApply, applyLabel = 'Apply Filter', activeWeekId }) => {
-  // Ensure initial filters use string IDs for consistent Select matching
+  const activeWeekIdRef = useRef(activeWeekId);
+  useEffect(() => { activeWeekIdRef.current = activeWeekId; }, [activeWeekId]);
+
   const normalizedInitial = {
     session: String(initialFilters?.session || ''),
     term: String(initialFilters?.term || ''),
@@ -138,9 +140,10 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
         const d = r.data?.data || [];
         const weeks = Array.isArray(d) ? d : [];
         setLocalWeeks(weeks);
+        const wkId = activeWeekIdRef.current;
         if (weeks.length > 0 && !localFilters.week) {
-          const match = activeWeekId
-            ? weeks.find((w) => String(w.week_id) === activeWeekId)
+          const match = wkId
+            ? weeks.find((w) => String(w.week_id) === wkId)
             : null;
           const active = match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
           if (active) {
@@ -678,7 +681,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [theme, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [theme, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── Term Attendance Trend ────────────────────────────────────
   const openTermTrend = useCallback(async (classArmId, localFilters) => {
@@ -759,7 +762,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [theme, sessionId, termId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [theme, sessionId, termId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── Absentees Summary (Table) ────────────────────────────────
   const openAbsenteesBreakdown = useCallback(async (localFilters) => {
@@ -880,7 +883,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   // ── At-Risk Learners Overview (Table) ────────────────────────
   const openAtRiskBreakdown = useCallback(async (localFilters) => {
@@ -944,7 +947,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
         </Box>
       ));
     }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, sessions, terms, weeks, programmes, classes, arms]);
+  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
 
   const handleSendRiskAlerts = async () => {
     // Only send alerts for selected learners

@@ -124,6 +124,7 @@ const MultipleArmView = () => {
       setClasses([]);
       setClassLevel('');
       setArms([]);
+      setStudents([]);
       return;
     }
     fetchClassesByProgramme(programme)
@@ -133,12 +134,18 @@ const MultipleArmView = () => {
           : [];
         setClasses(data);
         setClassLevel('');
+        setArms([]);
+        setStudents([]);
       })
       .catch(console.error);
   }, [programme]);
 
   useEffect(() => {
-    if (!classLevel) return;
+    if (!classLevel) {
+      setArms([]);
+      setStudents([]);
+      return;
+    }
     fetchClassArmsByClass(classLevel, programme ? { programme_id: programme } : {})
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data)

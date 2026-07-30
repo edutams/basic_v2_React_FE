@@ -175,6 +175,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       setClasses([]);
       setSaClass('');
       setSaArm('');
+      setStudents([]);
       return;
     }
     // Skip if classFilterData is being applied (it handles its own class loading)
@@ -186,6 +187,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         setClasses(data);
         setSaClass('');
         setSaArm('');
+        setStudents([]);
       })
       .catch(console.error);
   }, [saProgramme, classFilterData]);
@@ -194,6 +196,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     if (!saClass) {
       setArms([]);
       setSaArm('');
+      setStudents([]);
       return;
     }
     fetchClassArmsByClass(saClass, saProgramme ? { programme_id: saProgramme } : {})

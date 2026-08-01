@@ -40,11 +40,6 @@ const classRegisterApi = {
   changeStudentClass: (studentId, data) =>
     tenantApi.put(`/students/${studentId}/change-class`, data),
 
-  getUnassignedStudents: (params = {}) =>
-    tenantApi.get('/students/unassigned', { params }),
-  addStudentsToClass: (data) =>
-    tenantApi.post('/students/add-to-class', data),
-
   updateStudentStatus: (studentId, status) =>
     tenantApi.patch(`/students/${studentId}/status`, { status }),
   removeFromClass: (studentId) =>

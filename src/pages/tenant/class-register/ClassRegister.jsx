@@ -49,6 +49,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           ? '0 10px 30px rgba(0,0,0,0.35)'
           : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
+        maxHeight: 250,
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -66,7 +67,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           color: colors.accentColor,
         }}
       >
-        <PeopleIcon sx={{ fontSize: 150 }} />
+        <PeopleIcon sx={{ fontSize: 130 }} />
       </Box>
 
       <Box sx={{ zIndex: 1 }}>
@@ -82,15 +83,15 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           Total Student
         </Typography>
         {loading ? (
-          <CircularProgress size={24} sx={{ mt: 1 }} />
+          <CircularProgress size={20} sx={{ mt: 0.5 }} />
         ) : (
           <Typography
-            variant="h2"
+            variant="h3"
             fontWeight={800}
             sx={{
-              my: 1,
+              my: 0.5,
               lineHeight: 1,
-              fontSize: { xs: 36, md: 44 },
+              fontSize: { xs: 26, md: 32 },
               color: isDark ? '#fff' : colors.accentColor,
             }}
           >
@@ -99,8 +100,8 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
         )}
       </Box>
 
-      <Box sx={{ zIndex: 1, mt: 2 }}>
-        <Stack direction="row" spacing={3} sx={{ mb: 1.5 }}>
+      <Box sx={{ zIndex: 1 }}>
+        <Stack direction="row" spacing={3}>
           <Box>
             <Typography
               variant="caption"
@@ -108,6 +109,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
                 color: isDark ? 'rgba(255,255,255,0.6)' : '#4B5563',
                 textTransform: 'uppercase',
                 fontWeight: 600,
+                fontSize: '0.65rem',
               }}
             >
               MALE
@@ -115,7 +117,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
             <Typography
               variant="h3"
               fontWeight={700}
-              sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
+              sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
               {loading ? '...' : maleCount.toLocaleString()}
             </Typography>
@@ -127,6 +129,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
                 color: isDark ? 'rgba(255,255,255,0.6)' : '#4B5563',
                 textTransform: 'uppercase',
                 fontWeight: 600,
+                fontSize: '0.65rem',
               }}
             >
               FEMALE
@@ -134,7 +137,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
             <Typography
               variant="h3"
               fontWeight={700}
-              sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
+              sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
               {loading ? '...' : femaleCount.toLocaleString()}
             </Typography>

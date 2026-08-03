@@ -31,7 +31,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
         boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
-        maxHeight: 300,
+        maxHeight: 250,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -39,8 +39,8 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         width: '100%',
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-        <Typography variant="h6" fontWeight={700} color="text.primary">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+        <Typography variant="subtitle1" fontWeight={700} color="text.primary">
           Class Enrollment Breakdown
         </Typography>
       </Stack>
@@ -95,7 +95,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                     <Box
                       onClick={() => onClassClick(cls)}
                       sx={{
-                        p: 1.5,
+                        p: 1,
                         borderRadius: '12px',
                         border: isDark
                           ? '1px solid rgba(255,255,255,0.08)'

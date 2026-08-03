@@ -596,8 +596,8 @@ const CurriculumSetup = () => {
             }
           >
             <Paper sx={{ overflowX: 'auto' }}>
-              <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', minWidth: 400 }}>
+              <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
+                <Table stickyHeader sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
                       <TableCell
@@ -755,8 +755,8 @@ const CurriculumSetup = () => {
             }
           >
             <Paper sx={{ overflowX: 'auto' }}>
-              <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
+              <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
+                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
                       <TableCell

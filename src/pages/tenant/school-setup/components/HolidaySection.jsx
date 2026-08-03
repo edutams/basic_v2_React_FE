@@ -25,6 +25,7 @@ import {
   CircularProgress,
   LinearProgress,
   Grid,
+  Stack,
   useTheme,
 } from '@mui/material';
 import { IconCalendar, IconCalendarX, IconClock, IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
@@ -42,8 +43,6 @@ import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
 import { getStatCardColor } from '@/utils/statCardColors';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
-
-const TOUR_STORAGE_KEY = 'holiday_tour_v1';
 
 const holidayTourSteps = [
   {
@@ -115,15 +114,17 @@ const heroIconBadgeSx = (colorIndex, isDark, theme) => {
 const heroCardSx = (colorIndex, isDark, theme) => {
   const colors = getStatCardColor(null, colorIndex, isDark, theme);
   return {
-    p: 1.5,
+    p: 2,
     borderRadius: '16px',
     height: '100%',
     minHeight: 70,
+    width: '100%',
     position: 'relative',
     overflow: 'hidden',
     background: isDark ? theme.palette.background.paper : colors.cardBg,
-    border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+    border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.accentColor}`,
     boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   };
 };
 
@@ -181,13 +182,11 @@ const HolidaySectionInner = ({ refreshKey }) => {
   const { startTour } = useAclTour();
   const tourStartedRef = useRef(false);
 
-  // Auto-play the tour on first visit once the statistics (tour targets) are loaded
+  // Auto-play the tour every time this tab mounts, once the statistics (tour targets) are loaded
   useEffect(() => {
     if (!statistics || tourStartedRef.current) return;
-    if (localStorage.getItem(TOUR_STORAGE_KEY)) return;
     tourStartedRef.current = true;
     const timer = setTimeout(() => {
-      localStorage.setItem(TOUR_STORAGE_KEY, '1');
       startTour();
     }, 600);
     return () => clearTimeout(timer);
@@ -402,6 +401,13 @@ const HolidaySectionInner = ({ refreshKey }) => {
   // Get session label for modal title
   const sessionLabel = sessions.find((s) => s.id === selectedSessionId)?.sesname || '';
 
+  // Percentages used by the analytics cards
+  const utilizationPercentage = statistics?.holiday_percentage || 0;
+  const daysUsedPercentage =
+    statistics?.holiday_days_allocated > 0
+      ? Math.round((statistics.holiday_days_used / statistics.holiday_days_allocated) * 100)
+      : 0;
+
   return (
     <>
       {statistics && (
@@ -413,33 +419,18 @@ const HolidaySectionInner = ({ refreshKey }) => {
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
               <Paper elevation={0} sx={heroCardSx(0, isDark, theme)}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(0, isDark, theme),
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5,
-                      fontWeight: 700,
-                    }}
-                  >
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                  <Typography variant="h6" fontWeight={700} color="text.primary">
                     Total School Days
                   </Typography>
                   <Box sx={heroIconBadgeSx(0, isDark, theme)}>
                     <IconCalendar size={20} />
                   </Box>
-                </Box>
+                </Stack>
                 <Typography
                   variant="h2"
                   fontWeight={800}
                   sx={{
-                    my: 0.5,
                     lineHeight: 1,
                     fontSize: { xs: 26, md: 32 },
                     color: isDark ? '#fff' : heroAccent(0, isDark, theme),
@@ -462,43 +453,38 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     minHeight: 70,
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(1, isDark, theme),
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        fontWeight: 700,
-                      }}
-                    >
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Typography variant="h6" fontWeight={700} color="text.primary">
                       Holiday Utilization
                     </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography
-                        variant="h4"
-                        fontWeight={800}
-                        sx={{ color: statistics.holiday_percentage > 80 ? 'error.main' : statistics.holiday_percentage > 50 ? 'warning.main' : 'primary.main' }}
-                      >
-                        {statistics.holiday_percentage}%
-                      </Typography>
-                      <Box sx={heroIconBadgeSx(1, isDark, theme)}>
-                        <IconClock size={20} />
-                      </Box>
+                    <Box sx={heroIconBadgeSx(1, isDark, theme)}>
+                      <IconClock size={20} />
                     </Box>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(statistics.holiday_percentage || 0, 100)}
-                    color={statistics.holiday_percentage > 80 ? 'error' : statistics.holiday_percentage > 50 ? 'warning' : 'primary'}
-                    sx={{
-                      height: 5,
-                      borderRadius: 4,
-                      my: 0.75,
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb',
-                    }}
-                  />
-                  <Typography variant="caption" color="text.secondary">
+                  </Stack>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min(utilizationPercentage || 0, 100)}
+                      color={utilizationPercentage > 80 ? 'error' : utilizationPercentage > 50 ? 'warning' : 'primary'}
+                      sx={{
+                        flex: 1,
+                        height: 5,
+                        borderRadius: 4,
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb',
+                      }}
+                    />
+                    <Typography
+                      variant="h4"
+                      fontWeight={800}
+                      sx={{
+                        color: utilizationPercentage > 80 ? 'error.main' : utilizationPercentage > 50 ? 'warning.main' : 'primary.main',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {utilizationPercentage}%
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
                     {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated
                   </Typography>
                 </Box>
@@ -508,64 +494,82 @@ const HolidaySectionInner = ({ refreshKey }) => {
             {/* Card 3: Holiday Summary */}
             <Grid size={{ xs: 12, lg: 5 }} data-tour="holiday-summary">
               <Paper elevation={0} sx={heroCardSx(2, isDark, theme)}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(2, isDark, theme),
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.5,
-                      fontWeight: 700,
-                    }}
-                  >
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                  <Typography variant="h6" fontWeight={700} color="text.primary">
                     Holiday Summary
                   </Typography>
                   <Box sx={heroIconBadgeSx(2, isDark, theme)}>
                     <IconCalendarX size={20} />
                   </Box>
-                </Box>
+                </Stack>
                 <Box
                   sx={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
                     gap: 2,
-                    mt: 1.5,
                   }}
                 >
-                    {[
-                      { label: 'Holiday Count', value: statistics.holiday_count },
-                      {
-                        label: 'Days Used',
-                        value: statistics.holiday_days_allocated > 0
-                          ? `${Math.round((statistics.holiday_days_used / statistics.holiday_days_allocated) * 100)}%`
-                          : '0%',
-                      },
-                    ].map((stat) => (
-                      <Box key={stat.label} data-tour="holiday-analytics">
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
-                          sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
-                        >
-                          {stat.label}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          fontWeight={800}
-                          sx={{ color: isDark ? '#fff' : heroAccent(2, isDark, theme) }}
-                        >
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                    ))}
+                  {/* Holiday Count */}
+                  <Box data-tour="holiday-analytics">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
+                    >
+                      Holiday Count
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      fontWeight={800}
+                      sx={{ color: isDark ? '#fff' : heroAccent(2, isDark, theme) }}
+                    >
+                      {statistics.holiday_count}
+                    </Typography>
                   </Box>
+                  {/* Days Used with progress bar */}
+                  <Box data-tour="holiday-analytics">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
+                    >
+                      Days Used
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.75 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(daysUsedPercentage || 0, 100)}
+                        color={daysUsedPercentage > 80 ? 'error' : daysUsedPercentage > 50 ? 'warning' : 'primary'}
+                        sx={{
+                          flex: 1,
+                          height: 5,
+                          borderRadius: 4,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb',
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        fontWeight={800}
+                        sx={{
+                          color: daysUsedPercentage > 80 ? 'error.main' : daysUsedPercentage > 50 ? 'warning.main' : 'primary.main',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {daysUsedPercentage}%
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ mt: 0.5 }}
+                    >
+                      Used percentage out of 100%
+                    </Typography>
+                  </Box>
+                </Box>
               </Paper>
             </Grid>
           </Grid>

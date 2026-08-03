@@ -873,8 +873,8 @@ const SubjectBank = () => {
 
             <TableContainer
               sx={{
-                height: { xs: 540, md: 560 },
-                maxHeight: { xs: 540, md: 560 },
+                height: 575,
+                maxHeight: 575,
                 overflow: 'auto',
                 width: '100%',
               }}

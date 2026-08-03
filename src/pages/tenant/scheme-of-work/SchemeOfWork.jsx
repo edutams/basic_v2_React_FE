@@ -64,7 +64,7 @@ import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 const BCrumb = [
   {
     to: '/',
-    title: 'School Dashboard',
+    title: 'Dashboard',
   },
   { title: 'Scheme Of Work' },
 ];

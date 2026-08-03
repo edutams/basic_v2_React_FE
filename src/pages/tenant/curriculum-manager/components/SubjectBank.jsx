@@ -548,7 +548,8 @@ const SubjectBank = () => {
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <ParentCard>
+            <Box data-tour="subject-bank-select-curriculum">
+              <ParentCard>
               <TableContainer
                 sx={{
                   height: { xs: 220, md: 230 },
@@ -626,9 +627,11 @@ const SubjectBank = () => {
                 </Table>
               </TableContainer>
             </ParentCard>
+            </Box>
 
             {/* 2. Subject Group Card Below Curriculum */}
-            <ParentCard
+            <Box data-tour="subject-bank-groups-panel">
+              <ParentCard
               title={
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Subject Groups
@@ -800,11 +803,12 @@ const SubjectBank = () => {
                 </Table>
               </TableContainer>
             </ParentCard>
+            </Box>
           </Box>
         </Grid>
 
         {/* RIGHT COLUMN - Subject Bank Panel */}
-        <Grid size={{ xs: 12, md: 12, lg: 6 }}>
+        <Grid size={{ xs: 12, md: 12, lg: 6 }} data-tour="subject-bank-subjects-panel">
           <ParentCard
             title={
               <Typography variant="h6" sx={{ fontWeight: 600 }}>

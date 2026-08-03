@@ -573,7 +573,7 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-setup-panel">
           <ParentCard
             title={
               <Box
@@ -701,7 +701,7 @@ const CurriculumSetup = () => {
         </Box>
 
         {/* RIGHT - Assign to Classes */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-assign-panel">
           <ParentCard
             title={
               <Box

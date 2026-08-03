@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -27,8 +27,10 @@ import {
   Grid,
   useTheme,
 } from '@mui/material';
-import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
+import { IconCalendar, IconCalendarX, IconClock, IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
+import { AclTourProvider, StepContent, useAclTour } from '@/context/AclTourContext';
 import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchHolidays,
@@ -41,7 +43,97 @@ import { getStatCardColor } from '@/utils/statCardColors';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
-const HolidaySection = ({ refreshKey }) => {
+const TOUR_STORAGE_KEY = 'holiday_tour_v1';
+
+const holidayTourSteps = [
+  {
+    selector: '[data-tour="holiday-analytics"]',
+    content: (
+      <StepContent
+        title="Holiday Analytics"
+        body="An overview of your school calendar holidays for the selected session term — total school days, holiday utilization, and a holiday breakdown."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="holiday-total-days"]',
+    content: (
+      <StepContent
+        title="Total School Days"
+        body="The number of school days scheduled for the selected session term on the school calendar."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="holiday-utilization"]',
+    content: (
+      <StepContent
+        title="Holiday Utilization"
+        body="The percentage of the term taken up by holidays. Keep this in check so holidays don't eat too much into teaching time."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="holiday-summary"]',
+    content: (
+      <StepContent
+        title="Holiday Summary"
+        body="A quick summary showing how many holidays are set, the days allocated, the days already used, and the holiday days still upcoming."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="holiday-create"]',
+    content: (
+      <StepContent
+        title="Create Holiday"
+        body="Use the 'Create Holiday' button to add holidays for the selected session and term."
+      />
+    ),
+  },
+];
+
+const heroAccent = (colorIndex, isDark, theme) =>
+  getStatCardColor(null, colorIndex, isDark, theme).accentColor;
+
+const heroIconBadgeSx = (colorIndex, isDark, theme) => {
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  return {
+    width: 32,
+    height: 32,
+    borderRadius: '10px',
+    background: colors.iconBg,
+    color: colors.iconColor,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: isDark ? '0 4px 12px rgba(0,0,0,.3)' : `0 6px 18px -2px ${colors.iconGlow}`,
+  };
+};
+
+const heroCardSx = (colorIndex, isDark, theme) => {
+  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  return {
+    p: 1.5,
+    borderRadius: '16px',
+    height: '100%',
+    minHeight: 70,
+    position: 'relative',
+    overflow: 'hidden',
+    background: isDark ? theme.palette.background.paper : colors.cardBg,
+    border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+  };
+};
+
+const HolidaySection = ({ refreshKey }) => (
+  <AclTourProvider steps={holidayTourSteps}>
+    <HolidaySectionInner refreshKey={refreshKey} />
+  </AclTourProvider>
+);
+
+const HolidaySectionInner = ({ refreshKey }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [sessions, setSessions] = useState([]);
@@ -85,6 +177,21 @@ const HolidaySection = ({ refreshKey }) => {
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
+
+  const { startTour } = useAclTour();
+  const tourStartedRef = useRef(false);
+
+  // Auto-play the tour on first visit once the statistics (tour targets) are loaded
+  useEffect(() => {
+    if (!statistics || tourStartedRef.current) return;
+    if (localStorage.getItem(TOUR_STORAGE_KEY)) return;
+    tourStartedRef.current = true;
+    const timer = setTimeout(() => {
+      localStorage.setItem(TOUR_STORAGE_KEY, '1');
+      startTour();
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [statistics, startTour]);
 
   // Load sessions on mount and when refreshKey changes
   useEffect(() => {
@@ -298,142 +405,170 @@ const HolidaySection = ({ refreshKey }) => {
   return (
     <>
       {statistics && (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(3, 1fr)',
-              sm: 'repeat(4, 1fr)',
-              md: 'repeat(7, 1fr)',
-            },
-            gap: 1,
-            mb: 3,
-          }}
-        >
-          {[
-            {
-              label: 'Total School Days',
-              value: statistics.total_school_days,
-              colorIndex: 0,
-            },
-            {
-              label: 'Holiday Count',
-              value: statistics.holiday_count,
-              colorIndex: 1
-            },
-            {
-              label: 'Days Allocated',
-              value: statistics.holiday_days_allocated,
-              colorIndex: 2,
-            },
-            {
-              label: 'Days Used',
-              value: statistics.holiday_days_used,
-              colorIndex: 3
-            },
-            {
-              label: 'Upcoming Days',
-              value: statistics.upcoming_holiday_days,
-              colorIndex: 4
-            },
-            {
-              label: 'Teaching Days Left',
-              value: statistics.remaining_school_days,
-              colorIndex: 5,
-            },
-          ].map((stat) => {
-            const colors = getStatCardColor(null, stat.colorIndex, isDark, theme);
-
-            return (
-              <Box
-                key={stat.label}
-                sx={{
-                  p: { xs: 1, sm: 2 },
-                  background: colors.cardBg,
-                  border: `1px solid ${colors.borderColor}`,
-                  borderRadius: '16px',
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                  sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' }, lineHeight: 1.3 }}
-                >
-                  {stat.label}
-                </Typography>
-                <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  color={colors.accentColor}
-                  sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-                >
-                  {stat.value}
-                </Typography>
-              </Box>
-            );
-          })}
-
-          {/* Utilization */}
-          <Box
-            sx={{
-              p: { xs: 1, sm: 2 },
-              background: getStatCardColor(null, 0, isDark, theme).cardBg,
-              border: `1px solid ${getStatCardColor(null, 0, isDark, theme).borderColor}`,
-              borderRadius: '16px',
-              gridColumn: { xs: '1 / -1', md: 'auto' },
-              boxShadow: isDark
-                ? '0 6px 24px rgba(0,0,0,0.28)'
-                : '0 4px 20px rgba(0,0,0,0.07)',
-            }}
-          >
-            <Box display="flex" justifyContent="space-between">
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
-              >
-                Holiday Utilization
-              </Typography>
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
-                color={
-                  statistics.holiday_percentage > 80
-                    ? 'error.main'
-                    : statistics.holiday_percentage > 50
-                      ? 'warning.main'
-                      : 'primary.main'
-                }
-              >
-                {statistics.holiday_percentage}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(statistics.holiday_percentage, 100)}
-              color={
-                statistics.holiday_percentage > 80
-                  ? 'error'
-                  : statistics.holiday_percentage > 50
-                    ? 'warning'
-                    : 'primary'
-              }
-              sx={{
-                height: 6, borderRadius: 4, my: 1, backgroundColor: '#FFFFFF',
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 4,
-                },
-              }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated
-            </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Box display="flex" justifyContent="flex-end" alignItems="center" mb={1}>
+            <ShowTourGuideButton data-tour="holiday-analytics" />
           </Box>
+          <Grid container spacing={3}>
+            {/* Card 1: Total School Days */}
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
+              <Paper elevation={0} sx={heroCardSx(0, isDark, theme)}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(0, isDark, theme),
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Total School Days
+                  </Typography>
+                  <Box sx={heroIconBadgeSx(0, isDark, theme)}>
+                    <IconCalendar size={20} />
+                  </Box>
+                </Box>
+                <Typography
+                  variant="h2"
+                  fontWeight={800}
+                  sx={{
+                    my: 0.5,
+                    lineHeight: 1,
+                    fontSize: { xs: 26, md: 32 },
+                    color: isDark ? '#fff' : heroAccent(0, isDark, theme),
+                  }}
+                >
+                  {statistics.total_school_days}
+                </Typography>
+              </Paper>
+            </Grid>
+
+            {/* Card 2: Holiday Utilization */}
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }} data-tour="holiday-utilization">
+              <Paper elevation={0} sx={heroCardSx(1, isDark, theme)}>
+                <Box
+                  sx={{
+                    zIndex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    minHeight: 70,
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(1, isDark, theme),
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Holiday Utilization
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Typography
+                        variant="h4"
+                        fontWeight={800}
+                        sx={{ color: statistics.holiday_percentage > 80 ? 'error.main' : statistics.holiday_percentage > 50 ? 'warning.main' : 'primary.main' }}
+                      >
+                        {statistics.holiday_percentage}%
+                      </Typography>
+                      <Box sx={heroIconBadgeSx(1, isDark, theme)}>
+                        <IconClock size={20} />
+                      </Box>
+                    </Box>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(statistics.holiday_percentage || 0, 100)}
+                    color={statistics.holiday_percentage > 80 ? 'error' : statistics.holiday_percentage > 50 ? 'warning' : 'primary'}
+                    sx={{
+                      height: 5,
+                      borderRadius: 4,
+                      my: 0.75,
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb',
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Card 3: Holiday Summary */}
+            <Grid size={{ xs: 12, lg: 5 }} data-tour="holiday-summary">
+              <Paper elevation={0} sx={heroCardSx(2, isDark, theme)}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isDark ? 'rgba(255,255,255,0.7)' : heroAccent(2, isDark, theme),
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Holiday Summary
+                  </Typography>
+                  <Box sx={heroIconBadgeSx(2, isDark, theme)}>
+                    <IconCalendarX size={20} />
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: 2,
+                    mt: 1.5,
+                  }}
+                >
+                    {[
+                      { label: 'Holiday Count', value: statistics.holiday_count },
+                      {
+                        label: 'Days Used',
+                        value: statistics.holiday_days_allocated > 0
+                          ? `${Math.round((statistics.holiday_days_used / statistics.holiday_days_allocated) * 100)}%`
+                          : '0%',
+                      },
+                    ].map((stat) => (
+                      <Box key={stat.label} data-tour="holiday-analytics">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
+                        >
+                          {stat.label}
+                        </Typography>
+                        <Typography
+                          variant="h4"
+                          fontWeight={800}
+                          sx={{ color: isDark ? '#fff' : heroAccent(2, isDark, theme) }}
+                        >
+                          {stat.value}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+              </Paper>
+            </Grid>
+          </Grid>
         </Box>
       )}
       <ParentCard
@@ -443,6 +578,7 @@ const HolidaySection = ({ refreshKey }) => {
             <Button variant="contained" size="small" startIcon={<IconPlus />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
+              data-tour="holiday-create"
             >
               Create Holiday
             </Button>

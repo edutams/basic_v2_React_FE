@@ -494,7 +494,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const AttendanceAnalyticsCards = ({ metrics, loading = false, classArmId, sessionId, termId, weekId, programmeId, classId }) => {
+const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false, classArmId, sessionId, termId, weekId, programmeId, classId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
@@ -1026,11 +1026,15 @@ const AttendanceAnalyticsCards = ({ metrics, loading = false, classArmId, sessio
               fontWeight={700}
               sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
             >
-              {Math.min(Math.round(metrics.elapsedPercentage), 100)}%
+              {Math.min(Math.round(schoolDaysMetrics?.scope === 'week'
+                ? schoolDaysMetrics.weekElapsedPercentage
+                : schoolDaysMetrics?.termElapsedPercentage || 0), 100)}%
             </Typography>
             <LinearProgress
               variant="determinate"
-              value={Math.min(Math.round(metrics.elapsedPercentage), 100)}
+              value={Math.min(Math.round(schoolDaysMetrics?.scope === 'week'
+                ? schoolDaysMetrics.weekElapsedPercentage
+                : schoolDaysMetrics?.termElapsedPercentage || 0), 100)}
               sx={{
                 my: 1,
                 height: 5,
@@ -1043,7 +1047,15 @@ const AttendanceAnalyticsCards = ({ metrics, loading = false, classArmId, sessio
             />
             <Stack direction="column" alignItems="flex-start" spacing={0.4}>
               <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                {metrics.daysElapsed} used · {metrics.daysRemaining} remaining of {metrics.daysOpen}
+                {schoolDaysMetrics?.scope === 'week' ? (
+                  <>
+                    {schoolDaysMetrics.weekDaysElapsed} used · {schoolDaysMetrics.weekDaysRemaining} remaining of {schoolDaysMetrics.weekDaysOpen} (this week)
+                  </>
+                ) : (
+                  <>
+                    {schoolDaysMetrics?.termDaysElapsed || 0} used · {schoolDaysMetrics?.termDaysRemaining || 0} remaining of {schoolDaysMetrics?.termDaysOpen || 0} (school term)
+                  </>
+                )}
               </Typography>
               <CalendarMonthIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
             </Stack>

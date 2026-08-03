@@ -13,10 +13,10 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import aclApi from '@/api/landlord/acl/aclApi';
+import aclApi from '@/api/tenant/acl/aclApi';
 import { groupPermissionsByModule, prettifyModuleName } from '@/utils/permissionGrouping';
 
-const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSave }) => {
+const SchoolViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSave }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [permissions, setPermissions] = useState([]);
@@ -36,7 +36,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
     setLoading(true);
     try {
       // Get direct + inherited permissions for the user
-      const directRes = await aclApi.getAgentDirectPermissions(currentUser.id);
+      const directRes = await aclApi.getSchoolUserDirectPermissions(currentUser.id);
       const directPerms = directRes?.data?.direct || [];
       const inheritedPerms = directRes?.data?.inherited || [];
 
@@ -49,7 +49,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
       setSelectedPermissions(Array.isArray(directPerms) ? directPerms : []);
 
       // Fetch the full permission catalogue so we can render grouped sections
-      const allRes = await aclApi.getAllPermissions();
+      const allRes = await aclApi.getSchoolAllPermissions();
       setPermissions(allRes?.data || []);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
@@ -117,7 +117,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
 
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
-          Permissions attached to this agent. Uncheck to remove direct permissions or check to add
+          Permissions attached to this user. Uncheck to remove direct permissions or check to add
           new ones:
         </Typography>
 
@@ -294,4 +294,4 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
   );
 };
 
-export default ViewDirectPermissionModal;
+export default SchoolViewDirectPermissionModal;

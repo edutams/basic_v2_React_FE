@@ -23,10 +23,16 @@ import {
   Avatar,
   Grid,
 } from '@mui/material';
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+} from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from '@/components/tenant/alc-manager/RoleAttachmentModal';
 import ViewRoleModal from '@/components/tenant/alc-manager/ViewRoleModal';
+import SchoolDirectPermissionModal from '@/components/tenant/alc-manager/SchoolDirectPermissionModal';
+import SchoolViewDirectPermissionModal from '@/components/tenant/alc-manager/SchoolViewDirectPermissionModal';
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 
@@ -43,6 +49,8 @@ const SchoolAssignmentManagement = () => {
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
+  const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
+  const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
   const getInitials = (name = '') =>
     name
@@ -212,8 +220,40 @@ const SchoolAssignmentManagement = () => {
     } else if (action === 'view') {
       setCurrentUserForRole(row);
       setViewRoleModalOpen(true);
+    } else if (action === 'directPermission') {
+      setCurrentUserForRole(row);
+      setDirectPermissionModalOpen(true);
+    } else if (action === 'viewDirectPermission') {
+      setCurrentUserForRole(row);
+      setViewDirectPermissionModalOpen(true);
     }
     handleMenuClose();
+  };
+
+  const handleDirectPermissionSave = async (permissions) => {
+    if (!currentUserForRole) return;
+
+    try {
+      await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
+      notify.success('Direct permissions assigned successfully!');
+      setDirectPermissionModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to assign direct permissions');
+    }
+  };
+
+  const handleViewDirectPermissionSave = async (permissions) => {
+    if (!currentUserForRole) return;
+
+    try {
+      await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
+      notify.success('Permissions updated successfully!');
+      setViewDirectPermissionModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update permissions');
+    }
   };
 
   const handleSearch = () => {
@@ -247,8 +287,11 @@ const SchoolAssignmentManagement = () => {
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5">Assign Roles/Permission to Users</Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+          <Typography variant="h5" data-tour="acl-assign-heading">
+            Assign Roles/Permission to Users
+          </Typography>
+          <ShowTourGuideButton />
         </Box>
       }
     >
@@ -261,6 +304,7 @@ const SchoolAssignmentManagement = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={handleKeyPress}
+              data-tour="acl-assign-search"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -283,10 +327,10 @@ const SchoolAssignmentManagement = () => {
           <Table sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '10%' }}>#</TableCell>
-                <TableCell sx={{ width: '35%' }}>User Details</TableCell>
-                <TableCell sx={{ width: '35%' }}>Assigned Role</TableCell>
-                <TableCell sx={{ width: '15%' }} align="center">
+                <TableCell sx={{ width: '5%' }}>#</TableCell>
+                <TableCell sx={{ width: '20%' }}>User Details</TableCell>
+                <TableCell sx={{ width: '25%' }}>Assigned Role</TableCell>
+                <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
                   Action
                 </TableCell>
               </TableRow>
@@ -294,7 +338,7 @@ const SchoolAssignmentManagement = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={4} align="center">
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
@@ -339,7 +383,7 @@ const SchoolAssignmentManagement = () => {
                         ))}
                       </Box>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" data-tour="acl-assign-view">
                       <IconButton onClick={(e) => handleMenuOpen(e, user)}>
                         <MoreVertIcon />
                       </IconButton>
@@ -352,13 +396,19 @@ const SchoolAssignmentManagement = () => {
                           Attach Role
                         </MenuItem>
                         <MenuItem onClick={() => handleAction('view', user)}>View Role</MenuItem>
+                        <MenuItem onClick={() => handleAction('directPermission', user)}>
+                          Assign Direct Permission
+                        </MenuItem>
+                        <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                          View Permission
+                        </MenuItem>
                       </Menu>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={4} align="center">
                     <Alert
                       severity="info"
                       sx={{
@@ -390,7 +440,7 @@ const SchoolAssignmentManagement = () => {
                     setRowsPerPage(parseInt(e.target.value, 10));
                     setPage(0);
                   }}
-                  colSpan={5}
+                  colSpan={4}
                 />
               </TableRow>
             </TableFooter>
@@ -409,6 +459,18 @@ const SchoolAssignmentManagement = () => {
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
         currentUser={currentUserForRole}
+      />
+      <SchoolDirectPermissionModal
+        open={directPermissionModalOpen}
+        onClose={() => setDirectPermissionModalOpen(false)}
+        currentUser={currentUserForRole}
+        onPermissionSave={handleDirectPermissionSave}
+      />
+      <SchoolViewDirectPermissionModal
+        open={viewDirectPermissionModalOpen}
+        onClose={() => setViewDirectPermissionModalOpen(false)}
+        currentUser={currentUserForRole}
+        onPermissionSave={handleViewDirectPermissionSave}
       />
     </ParentCard>
   );

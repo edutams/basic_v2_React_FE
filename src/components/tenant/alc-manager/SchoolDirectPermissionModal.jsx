@@ -7,50 +7,35 @@ import {
   Button,
   Typography,
   Box,
-  Chip,
-  CircularProgress,
   TextField,
   InputAdornment,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import aclApi from '@/api/landlord/acl/aclApi';
+import aclApi from '@/api/tenant/acl/aclApi';
 import { groupPermissionsByModule, prettifyModuleName } from '@/utils/permissionGrouping';
 
-const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSave }) => {
+const SchoolDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSave }) => {
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [permissions, setPermissions] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearch, setPermissionSearch] = useState('');
-  const [directPermissions, setDirectPermissions] = useState([]);
-  const [rolePermissions, setRolePermissions] = useState([]);
   const [currentPermissions, setCurrentPermissions] = useState([]);
+  const [directPermissions, setDirectPermissions] = useState([]);
 
   useEffect(() => {
     if (open) {
       fetchPermissions();
+      fetchCurrentPermissions();
     }
   }, [open, currentUser]);
 
   const fetchPermissions = async () => {
     setLoading(true);
     try {
-      // Get direct + inherited permissions for the user
-      const directRes = await aclApi.getAgentDirectPermissions(currentUser.id);
-      const directPerms = directRes?.data?.direct || [];
-      const inheritedPerms = directRes?.data?.inherited || [];
-
-      setDirectPermissions(Array.isArray(directPerms) ? directPerms : []);
-      setRolePermissions(Array.isArray(inheritedPerms) ? inheritedPerms : []);
-
-      const allAttached = [...new Set([...directPerms, ...inheritedPerms])];
-      setCurrentPermissions(allAttached);
-      // Pre-select only direct permissions (role ones are shown but not editable/submittable)
-      setSelectedPermissions(Array.isArray(directPerms) ? directPerms : []);
-
-      // Fetch the full permission catalogue so we can render grouped sections
-      const allRes = await aclApi.getAllPermissions();
-      setPermissions(allRes?.data || []);
+      const res = await aclApi.getSchoolAllPermissions();
+      setPermissions(res?.data || []);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
     } finally {
@@ -58,12 +43,40 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
     }
   };
 
+  const fetchCurrentPermissions = async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      // Get direct and inherited permissions in one call
+      const res = await aclApi.getSchoolUserDirectPermissions(currentUser.id);
+
+      const directPerms = res?.data?.direct || [];
+      const inheritedPerms = res?.data?.inherited || [];
+
+      setDirectPermissions(directPerms);
+
+      // All permissions for the user (direct + inherited)
+      const allPermissions = [...new Set([...directPerms, ...inheritedPerms])];
+      setCurrentPermissions(allPermissions);
+
+      // For the checklist, we only pre-select direct permissions
+      setSelectedPermissions(directPerms);
+    } catch (err) {
+      console.error('Failed to fetch user permissions:', err);
+    }
+  };
+
   const isFromRole = (permissionName) => {
-    return rolePermissions.includes(permissionName) && !directPermissions.includes(permissionName);
+    return (
+      currentPermissions.includes(permissionName) && !directPermissions.includes(permissionName)
+    );
   };
 
   const handleToggle = (permission) => {
-    if (isFromRole(permission.name)) return;
+    // Don't allow toggling if permission comes from a role (only direct permissions can be modified)
+    if (isFromRole(permission.name)) {
+      return;
+    }
     setSelectedPermissions((prev) => {
       const exists = prev.includes(permission.name);
       return exists ? prev.filter((p) => p !== permission.name) : [...prev, permission.name];
@@ -72,11 +85,6 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
 
   const isSelected = (permission) => {
     return selectedPermissions.includes(permission.name);
-  };
-
-  const isChecked = (permission) => {
-    // Role-inherited permissions are always shown as checked (they cannot be modified)
-    return isSelected(permission) || isFromRole(permission.name);
   };
 
   const filteredPermissions = useMemo(() => {
@@ -93,23 +101,15 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
   }, [filteredPermissions]);
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (onPermissionSave) {
-        // selectedPermissions only ever contains direct permissions (role ones are not selectable)
-        await onPermissionSave(selectedPermissions);
-      }
-    } catch (err) {
-      console.error('Failed to save permissions:', err);
-    } finally {
-      setSaving(false);
+    if (onPermissionSave) {
+      onPermissionSave(selectedPermissions);
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Permissions for{' '}
+        Assign Direct Permissions to{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
           "{currentUser?.name}"
         </Box>
@@ -117,11 +117,11 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
 
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
-          Permissions attached to this agent. Uncheck to remove direct permissions or check to add
-          new ones:
+          Permissions are grouped by module. Select the ones to assign directly to this user:
         </Typography>
 
         <TextField
+          autoFocus
           placeholder="Search Permissions"
           type="text"
           fullWidth
@@ -138,17 +138,17 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
         />
 
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
-          Attached: {currentPermissions.length} (Direct: {directPermissions.length} | From roles:{' '}
-          {rolePermissions.length}) - Permissions inherited from roles cannot be modified
+          Current permissions: {currentPermissions.length} (Direct: {directPermissions.length}) -
+          Permissions from roles cannot be modified
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <CircularProgress size={24} />
           </Box>
         ) : groupedPermissions.length === 0 ? (
           <Typography variant="body2" color="textSecondary" sx={{ p: 2 }}>
-            No permissions available.
+            No permissions found.
           </Typography>
         ) : (
           <Box sx={{ maxHeight: 420, overflow: 'auto', pr: 0.5 }}>
@@ -201,8 +201,9 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
                 {/* Permissions of this group */}
                 {group.permissions.map((permission, index) => {
                   const fromRole = isFromRole(permission.name);
+                  const alreadyHasDirect = directPermissions.includes(permission.name);
                   const isDisabled = fromRole;
-                  const showCheck = isChecked(permission);
+                  const showCheck = isSelected(permission) || fromRole;
 
                   return (
                     <Box
@@ -265,7 +266,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
                         >
                           (From role)
                         </Typography>
-                      ) : directPermissions.includes(permission.name) ? (
+                      ) : alreadyHasDirect ? (
                         <Typography
                           variant="caption"
                           sx={{ ml: 'auto', fontSize: 10, color: 'primary.main', flexShrink: 0 }}
@@ -286,12 +287,12 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
         <Button variant="contained" size="small" onClick={onClose}>
           Cancel
         </Button>
-        <Button size="small" onClick={handleSave} color="primary" disabled={saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
+        <Button size="small" onClick={handleSave} color="primary">
+          Save Permissions
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default ViewDirectPermissionModal;
+export default SchoolDirectPermissionModal;

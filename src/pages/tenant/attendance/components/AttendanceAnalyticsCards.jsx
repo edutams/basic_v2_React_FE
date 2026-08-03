@@ -34,6 +34,7 @@ import {
   CalendarMonth as CalendarMonthIcon,
   TrendingFlat as TrendingFlatIcon,
   TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
   EventNote as EventNoteIcon,
   NotificationsActive as NotificationsActiveIcon,
   Male as MaleIcon,
@@ -44,6 +45,7 @@ import {
 import { getStatCardColor } from '@/utils/statCardColors';
 import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import StatCardSkeleton from './StatCardSkeleton';
 import ReusableDialog from '@/components/shared/ReusableDialog';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
@@ -492,7 +494,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId, programmeId, classId }) => {
+const AttendanceAnalyticsCards = ({ metrics, loading = false, classArmId, sessionId, termId, weekId, programmeId, classId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
@@ -517,6 +519,9 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   // Risk modal data (stored separately to avoid stale closures in modal content)
   const [riskModalData, setRiskModalData] = useState(null);
+
+  // Last-applied at-risk filters so the modal dropdowns don't revert to the preselected week
+  const [atRiskFilters, setAtRiskFilters] = useState(null);
 
   // Active session / term / week IDs for pre-filling dropdowns
   const [activeSessionId, setActiveSessionId] = useState('');
@@ -892,6 +897,16 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
     const effectiveSession = localFilters?.session || sessionId || activeSessionId;
     const effectiveTerm = localFilters?.term || termId || activeTermId;
 
+    const appliedFilters = {
+      session: effectiveSession,
+      term: effectiveTerm,
+      week: effectiveWeekId,
+      programme: localFilters?.programme || programmeId || '',
+      class: localFilters?.class || classId || '',
+      arm: effectiveArmId,
+    };
+    setAtRiskFilters(appliedFilters);
+
     if (!effectiveArmId) {
       openCardModal('At-Risk Learners Overview', (
         <Box>
@@ -983,8 +998,17 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
 
   return (
     <>
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Card 1: DAYS SCHOOL OPEN */}
+      {loading ? (
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={`skeleton-${i}`}>
+              <StatCardSkeleton />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Card 1: DAYS SCHOOL OPEN */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard colorName="success" colorIndex={1}>
             <Typography
@@ -1067,9 +1091,15 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               />
               <Stack direction="row" alignItems="center" spacing={0.4}>
                 <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                  0% Same as last week
+                  {metrics.weekTrendText || 'No previous data'}
                 </Typography>
-                <TrendingFlatIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+                {metrics.weekRateChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                ) : metrics.weekRateChange < 0 ? (
+                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                ) : (
+                  <TrendingFlatIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+                )}
               </Stack>
             </StatCard>
           </Tooltip>
@@ -1116,9 +1146,15 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               />
               <Stack direction="row" alignItems="center" spacing={0.4}>
                 <Typography variant="caption" fontWeight={600} sx={{ color: colors.info.accentColor }}>
-                  ↑ 44% Higher last term
+                  {metrics.termTrendText || 'No previous data'}
                 </Typography>
-                <TrendingUpIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
+                {metrics.termRateChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                ) : metrics.termRateChange < 0 ? (
+                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                ) : (
+                  <TrendingFlatIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
+                )}
               </Stack>
             </StatCard>
           </Tooltip>
@@ -1153,7 +1189,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={30}
+                value={metrics.totalStudents > 0 ? Math.round((metrics.totalAbsentees / metrics.totalStudents) * 100) : 0}
                 sx={{
                   my: 1,
                   height: 5,
@@ -1205,7 +1241,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={15}
+                value={metrics.totalStudents > 0 ? Math.round((metrics.atRisk / metrics.totalStudents) * 100) : 0}
                 sx={{
                   my: 1,
                   height: 5,
@@ -1226,6 +1262,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
           </Tooltip>
         </Grid>
       </Grid>
+      )}
 
       {riskModalData ? (
         <AnalyticsModal
@@ -1241,7 +1278,7 @@ const AttendanceAnalyticsCards = ({ metrics, classArmId, sessionId, termId, week
                   sessions={sessions} terms={terms} weeks={weeks}
                   programmes={programmes} classes={classes} arms={arms}
             activeWeekId={activeWeekId}
-                  initialFilters={{ session: sessionId || activeSessionId, term: termId || activeTermId, week: weekId, programme: programmeId || '', class: classId || '', arm: classArmId }}
+                  initialFilters={atRiskFilters || { session: sessionId || activeSessionId, term: termId || activeTermId, week: weekId, programme: programmeId || '', class: classId || '', arm: classArmId }}
                   onApply={(lf) => { setRiskModalData(null); openAtRiskBreakdown(lf); }}
                 />
                 {learners.length === 0 ? (

@@ -34,6 +34,8 @@ const attendanceApi = {
   // ── Attendance Stats ─────────────────────────────────────
   getAttendanceStats: (params = {}) =>
     tenantApi.get('/attendance/stats', { params }),
+  getSchoolDaysOpen: (params = {}) =>
+    tenantApi.get('/attendance/school-days', { params }),
   getWeekAttendanceRate: (params = {}) =>
     tenantApi.get('/attendance/week-rate', { params }),
   getTermAttendanceRate: (params = {}) =>

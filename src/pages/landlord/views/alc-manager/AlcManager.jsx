@@ -39,10 +39,112 @@ import ViewPermissionModal from '@/components/landlord/alc-manager/components/Vi
 import NewRoleModal from '@/components/landlord/alc-manager/components/NewRoleModal';
 import AssignmentManagement from '@/components/landlord/alc-manager/components/AssignmentManagement';
 import AccessAnalysis from '@/components/landlord/alc-manager/components/AccessAnalysis';
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
+import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 
 import aclApi from '@/api/landlord/acl/aclApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'ACL Manager' }];
+
+// ── Tour steps ────────────────────────────────────────────────────────────────
+const roleTourSteps = [
+  {
+    selector: '[data-tour="acl-role-heading"]',
+    content: (
+      <StepContent
+        title="Role Management"
+        body="Create and manage roles here. Use the New Role button to add a role, and the action menu on each row to edit roles or attach/view their permissions."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-role-new"]',
+    content: (
+      <StepContent
+        title="New Role"
+        body="Click 'New Role' to create a new role with a name and description."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-role-filter"]',
+    content: (
+      <StepContent
+        title="Filters"
+        body="Use the Filters button to search for roles by name and narrow down the list."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-role-table"]',
+    content: (
+      <StepContent
+        title="Roles Table"
+        body="Each row shows a role and its description. Use the action menu (⋮) to Edit, Attach Permission, or View Permission."
+      />
+    ),
+  },
+];
+
+const assignTourSteps = [
+  {
+    selector: '[data-tour="acl-assign-heading"]',
+    content: (
+      <StepContent
+        title="Permission Assignment"
+        body="Assign roles and permissions to organizations. Search for an organization, then use the columns to assign roles or direct permissions."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-assign-search"]',
+    content: (
+      <StepContent
+        title="Search"
+        body="Search for an organization by name to quickly find the one you want to manage."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-assign-direct"]',
+    content: (
+      <StepContent
+        title="Assign Direct Permission"
+        body="Open the ⋮ (More) menu on any row and choose 'Assign Direct Permission'. Permissions are grouped by module — tick the ones to assign directly to the organization."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-assign-view"]',
+    content: (
+      <StepContent
+        title="View Permission"
+        body="In the same ⋮ (More) menu, choose 'View Permission' to see all permissions attached to the organization. Check or uncheck permissions, then submit your changes."
+      />
+    ),
+  },
+];
+
+const analysisTourSteps = [
+  {
+    selector: '[data-tour="acl-analysis-tabs"]',
+    content: (
+      <StepContent
+        title="Access Analysis"
+        body="Analyze access across your system using the Role Based or Permission Based views."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="acl-analysis-content"]',
+    content: (
+      <StepContent
+        title="Analysis Views"
+        body="Role Based shows each role with its total permissions and the organizations assigned to it. Permission Based shows each permission with the roles and organization teams that use it. Click the numbers to drill down."
+      />
+    ),
+  },
+];
 
 const AlcManager = () => {
   const notify = useNotification();
@@ -280,26 +382,38 @@ const AlcManager = () => {
         </Tabs>
       </Box>
 
-      {activeTab === 'Assignment Management' && <AssignmentManagement />}
-      {activeTab === 'Analysis Report' && <AccessAnalysis />}
+      {activeTab === 'Assignment Management' && (
+        <AclTourProvider steps={assignTourSteps} autoPlay>
+          <AssignmentManagement />
+        </AclTourProvider>
+      )}
+      {activeTab === 'Analysis Report' && (
+        <AclTourProvider steps={analysisTourSteps} autoPlay>
+          <AccessAnalysis />
+        </AclTourProvider>
+      )}
 
       {activeTab === 'Role Management' && (
-        <ParentCard
-          title={
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="h5">Manage Roles</Typography>
+        <AclTourProvider steps={roleTourSteps} autoPlay>
+          <ParentCard
+            title={
+              <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+                <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
 
-              <Button variant="contained" size="small" color="primary" onClick={() => {
-                setIsEditing(false);
-                setNewRoleForm({ roleName: '', description: '' });
-                setNewRoleModalOpen(true);
-              }}
-              >
-                New Role
-              </Button>
-            </Box>
-          }
-        >
+                <Box display="flex" alignItems="center" gap={1}>
+                  <ShowTourGuideButton />
+                  <Button variant="contained" size="small" color="primary" data-tour="acl-role-new" onClick={() => {
+                    setIsEditing(false);
+                    setNewRoleForm({ roleName: '', description: '' });
+                    setNewRoleModalOpen(true);
+                  }}
+                  >
+                    New Role
+                  </Button>
+                </Box>
+              </Box>
+            }
+          >
           <Box
             sx={{
               mb: 2,
@@ -311,6 +425,7 @@ const AlcManager = () => {
           >
             <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
               onClick={() => setFilterDrawerOpen(true)}
+              data-tour="acl-role-filter"
               sx={{
                 textTransform: 'none',
                 borderRadius: 2,
@@ -343,7 +458,7 @@ const AlcManager = () => {
             </Button>
           </Box>
 
-          <Box>
+          <Box data-tour="acl-role-table">
             <TableContainer>
               <Table>
                 <TableHead>
@@ -442,7 +557,8 @@ const AlcManager = () => {
               </Table>
             </TableContainer>
           </Box>
-        </ParentCard>
+          </ParentCard>
+        </AclTourProvider>
       )}
 
       <PermissionAttachmentModal

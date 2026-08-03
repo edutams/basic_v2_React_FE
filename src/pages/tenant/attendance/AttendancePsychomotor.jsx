@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -77,6 +77,9 @@ const AttendancePsychomotor = () => {
   // Start as loading so the analytics cards show skeletons on first paint
   // until the active tab's stats arrive.
   const [loading, setLoading] = useState(true);
+  // Counter of in-flight stat fetches so overlapping requests (e.g. rapid tab
+  // switches) don't clear the skeleton state before the newest fetch resolves.
+  const pendingFetchesRef = useRef(0);
   const [selectedClassArmId, setSelectedClassArmId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -86,6 +89,7 @@ const AttendancePsychomotor = () => {
 
   // ── Fetch Attendance Stats from API ─────────────────────────
   const fetchAttendanceStats = useCallback(async (params = {}) => {
+    pendingFetchesRef.current += 1;
     setLoading(true);
     try {
       const res = await attendanceApi.getAttendanceStats(params);
@@ -111,12 +115,14 @@ const AttendancePsychomotor = () => {
     } catch (error) {
       console.error('Failed to fetch attendance stats:', error);
     } finally {
-      setLoading(false);
+      pendingFetchesRef.current = Math.max(0, pendingFetchesRef.current - 1);
+      setLoading(pendingFetchesRef.current > 0);
     }
   }, []);
 
   // ── Fetch Psychomotor Stats from API ────────────────────────
   const fetchPsychomotorStats = useCallback(async (params = {}) => {
+    pendingFetchesRef.current += 1;
     setLoading(true);
     try {
       const [statsRes, genderRes] = await Promise.all([
@@ -142,7 +148,8 @@ const AttendancePsychomotor = () => {
     } catch (error) {
       console.error('Failed to fetch psychomotor stats:', error);
     } finally {
-      setLoading(false);
+      pendingFetchesRef.current = Math.max(0, pendingFetchesRef.current - 1);
+      setLoading(pendingFetchesRef.current > 0);
     }
   }, []);
 
@@ -218,7 +225,7 @@ const AttendancePsychomotor = () => {
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
+  }, [can, attendanceMetrics, psychomotorMetrics, loading, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {

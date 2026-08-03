@@ -566,7 +566,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       display="block"
                       sx={{ mt: 0.5 }}
                     >
-                      Used percentage out of 100%
+                      {daysUsedPercentage}% used out of 100%
                     </Typography>
                   </Box>
                 </Box>

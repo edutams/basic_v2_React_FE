@@ -46,6 +46,10 @@ const AttendancePsychomotor = () => {
   // ── Metrics that respond to filter changes ──────────────────
   const [attendanceMetrics, setAttendanceMetrics] = useState({
     daysOpen: 0,
+    daysElapsed: 0,
+    daysRemaining: 0,
+    elapsedPercentage: 0,
+    totalSchoolDays: 0,
     weekRate: 0,
     termRate: 0,
     totalAbsentees: 0,
@@ -79,6 +83,8 @@ const AttendancePsychomotor = () => {
         setAttendanceMetrics({
           daysOpen: stats.days_open || 0,
           daysElapsed: stats.days_elapsed || 0,
+          daysRemaining: stats.days_remaining || 0,
+          elapsedPercentage: stats.elapsed_percentage || 0,
           totalSchoolDays: stats.total_school_days || 0,
           weekRate: stats.week_rate || 0,
           termRate: stats.term_rate || 0,
@@ -115,12 +121,6 @@ const AttendancePsychomotor = () => {
     } catch (error) {
       console.error('Failed to fetch psychomotor stats:', error);
     }
-  }, []);
-
-  // ── Initial fetch on mount ────────────────────────────────
-  useEffect(() => {
-    fetchAttendanceStats();
-    fetchPsychomotorStats();
   }, []);
 
   // ── Filter update callbacks from child tabs ─────────────────

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -79,8 +79,6 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const [activeWeekId, setActiveWeekId] = useState(null);
-  const activeWeekIdRef = useRef(null);
-  useEffect(() => { activeWeekIdRef.current = activeWeekId; }, [activeWeekId]);
 
   const [filterApplied, setFilterApplied] = useState(false);
   const [learners, setLearners] = useState([]);
@@ -199,27 +197,20 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       const d = r.data?.data || [];
       const weeks = Array.isArray(d) ? d : [];
       setWeeks(weeks);
-      if (weeks.length > 0 && !pWeek) {
-        const wkId = activeWeekIdRef.current;
-        const match = wkId
-          ? weeks.find((w) => String(w.week_id) === wkId)
-          : null;
-        const active = match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
-        if (active) {
-          setPWeek(active.wk_id ?? active.week_id ?? active.id);
+      const match = activeWeekId
+        ? weeks.find((w) => String(w.week_id) === activeWeekId)
+        : null;
+      if (match) {
+        setPWeek(match.wk_id ?? match.week_id ?? match.id);
+      } else {
+        const fallback = weeks.find((w) => w.status === 'active')
+          || (weeks.length > 0 ? weeks[weeks.length - 1] : null);
+        if (fallback) {
+          setPWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
         }
       }
     }).catch(console.error);
-  }, [pSession, pTermId]);
-
-  // Re-select week when activeWeekId or weeks become available and no week is picked yet
-  useEffect(() => {
-    if (!activeWeekId || weeks.length === 0 || pWeek) return;
-    const match = weeks.find((w) => String(w.week_id) === activeWeekId);
-    if (match) {
-      setPWeek(match.wk_id ?? match.week_id ?? match.id);
-    }
-  }, [activeWeekId, weeks, pWeek]);
+  }, [pSession, pTermId, activeWeekId]);
 
   // ── Load domain traits from API ───────────────────────────
   useEffect(() => {

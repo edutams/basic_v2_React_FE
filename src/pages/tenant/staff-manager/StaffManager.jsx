@@ -63,7 +63,7 @@ import StatCard from 'src/components/shared/StatCard';
 const BCrumb = [
   {
     to: '/',
-    title: 'School Dashboard',
+    title: 'Dashboard',
   },
   { title: 'Staff Manager' },
 ];

@@ -413,7 +413,7 @@ const ClassSubject = () => {
       }}
     >
       {/* LEFT: Program and Classes */}
-      <Box sx={{ flex: { md: 4 }, width: '100%' }}>
+      <Box sx={{ flex: { md: 4 }, width: '100%' }} data-tour="class-subject-selector">
         <ParentCard
           title={
             <Select
@@ -485,7 +485,7 @@ const ClassSubject = () => {
       </Box>
 
       {/* RIGHT: Subjects */}
-      <Box sx={{ flex: { md: 8 }, width: '100%' }}>
+      <Box sx={{ flex: { md: 8 }, width: '100%' }} data-tour="class-subject-table">
         <ParentCard
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">

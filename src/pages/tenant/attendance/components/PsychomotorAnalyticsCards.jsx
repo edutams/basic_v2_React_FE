@@ -19,12 +19,14 @@ import {
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
-  CheckCircleOutline as CheckCircleIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingFlat as TrendingFlatIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import StatCardSkeleton from './StatCardSkeleton';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 // ── Theme-aware stat card ──────────────────────────────────────
@@ -69,7 +71,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, weekId }) => {
+const PsychomotorAnalyticsCards = ({ metrics, loading = false, classArmId, sessionId, termId, weekId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
@@ -404,8 +406,17 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   return (
     <>
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Card 1: AVG. AFFECTIVE RATING */}
+      {loading ? (
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={`skeleton-${i}`}>
+              <StatCardSkeleton />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Card 1: AVG. AFFECTIVE RATING */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Tooltip title="Click to view affective skills breakdown" arrow placement="top">
             <StatCard
@@ -446,9 +457,15 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
               />
               <Stack direction="row" alignItems="center" spacing={0.4}>
                 <Typography variant="caption" fontWeight={600} sx={{ color: colors.success.accentColor }}>
-                  +0.4 from last term
+                  {metrics.affectiveTrendText || 'No previous data'}
                 </Typography>
-                <TrendingUpIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
+                {metrics.affectiveChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                ) : metrics.affectiveChange < 0 ? (
+                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                ) : (
+                  <TrendingFlatIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
+                )}
               </Stack>
             </StatCard>
           </Tooltip>
@@ -498,9 +515,15 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
                   variant="caption"
                   sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
                 >
-                  → Stable performance
+                  {metrics.psychoTrendText || 'No previous data'}
                 </Typography>
-                <CheckCircleIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+                {metrics.psychoChange > 0 ? (
+                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                ) : metrics.psychoChange < 0 ? (
+                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                ) : (
+                  <TrendingFlatIcon sx={{ fontSize: 14, color: theme.palette.primary.main }} />
+                )}
               </Stack>
             </StatCard>
           </Tooltip>
@@ -601,6 +624,7 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
           </Tooltip>
         </Grid>
       </Grid>
+      )}
 
       <AnalyticsModal
         open={analyticsModal.open}

@@ -84,6 +84,21 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
     const title = isAffective ? 'Affective Rating Breakdown' : 'Psychomotor Rating Breakdown';
     const accentColor = isAffective ? theme.palette.success.main : theme.palette.primary.main;
 
+    // No records until a filter (class/arm) has been applied
+    if (!params?.class_arm_id) {
+      openCardModal(title, (
+        <Box sx={{ py: 3, textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+            No Records
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+            Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click the <strong>Filter Results</strong> button to load records.
+          </Typography>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title, content: null, loading: true });
     try {
       const [traitRes, learnersRes] = await Promise.all([
@@ -195,6 +210,21 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   // Fetch real needing support data from API
   const openNeedingSupport = useCallback(async (params) => {
+    // No records until a filter (class/arm) has been applied
+    if (!params?.class_arm_id) {
+      openCardModal('Learners Needing Support', (
+        <Box sx={{ py: 3, textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+            No Records
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+            Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click the <strong>Filter Results</strong> button to load records.
+          </Typography>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'Learners Needing Support', content: null, loading: true });
     try {
       const [statsRes, learnersRes] = await Promise.all([
@@ -293,6 +323,21 @@ const PsychomotorAnalyticsCards = ({ metrics, classArmId, sessionId, termId, wee
 
   // Fetch gender rating breakdown from API
   const openGenderBreakdown = useCallback(async (params) => {
+    // No records until a filter (class/arm) has been applied
+    if (!params?.class_arm_id) {
+      openCardModal('Gender Rating Comparison', (
+        <Box sx={{ py: 3, textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
+            No Records
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+            Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click the <strong>Filter Results</strong> button to load records.
+          </Typography>
+        </Box>
+      ));
+      return;
+    }
+
     setAnalyticsModal({ open: true, title: 'Gender Rating Comparison', content: null, loading: true });
     try {
       const res = await attendanceApi.getRatingByGender(params);

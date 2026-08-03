@@ -546,15 +546,13 @@ const SubjectBank = () => {
     <>
       <Alert>Select curriculum to upload subjects</Alert>
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
-        {/* LEFT COLUMN - Curriculum (top) & Subject Groups (bottom) */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* 1. Curriculum Panel */}
             <ParentCard>
               <TableContainer
                 sx={{
-                  height: 220,
-                  maxHeight: 220,
+                  height: { xs: 220, md: 230 },
+                  maxHeight: { xs: 220, md: 230 },
                   overflow: 'auto',
                   width: '100%',
                 }}
@@ -637,25 +635,25 @@ const SubjectBank = () => {
                 </Typography>
               }
             >
-              {/* Filter Controls Below Title */}
               <Box
                 sx={{
                   mb: 2,
                   display: 'flex',
                   flexDirection: { xs: 'column', sm: 'row' },
+                  flexWrap: 'wrap',
                   justifyContent: 'space-between',
                   alignItems: { xs: 'stretch', sm: 'center' },
-                  gap: 2,
+                  gap: 1.5,
                 }}
               >
                 <Box
                   display="flex"
                   flexDirection={{ xs: 'column', sm: 'row' }}
                   alignItems={{ xs: 'stretch', sm: 'center' }}
-                  gap={2}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                  gap={1.5}
+                  sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
                 >
-                  <FormControl size="small" sx={{ width: { xs: '100%', sm: 150 } }}>
+                  <FormControl size="small" sx={{ minWidth: 130, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
                     <InputLabel>Curriculum</InputLabel>
                     <Select
                       value={selectedCurriculum}
@@ -682,7 +680,7 @@ const SubjectBank = () => {
                     </Select>
                   </FormControl>
 
-                  <FormControl size="small" sx={{ width: { xs: '100%', sm: 200 } }}>
+                  <FormControl size="small" sx={{ minWidth: 160, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
                     <InputLabel>Programme</InputLabel>
                     <Select
                       value={selectedProgrammeForGroups}
@@ -698,15 +696,15 @@ const SubjectBank = () => {
                   </FormControl>
                 </Box>
 
-                <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={handleOpenCreateSubjectGroupModal}>
+                <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
                   Create Group
                 </Button>
               </Box>
 
               <TableContainer
                 sx={{
-                  height: 250,
-                  maxHeight: 250,
+                  height: { xs: 260, md: 270 },
+                  maxHeight: { xs: 260, md: 270 },
                   overflow: 'auto',
                   width: '100%',
                 }}
@@ -714,19 +712,19 @@ const SubjectBank = () => {
                 <Table
                   stickyHeader
                   sx={{
-                    tableLayout: 'fixed',
-                    minWidth: 800,
+                    tableLayout: 'auto',
+                    minWidth: 650,
                   }}
                 >
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 60 }}>#</TableCell>
-                      <TableCell sx={{ width: 180 }}>Group Name</TableCell>
-                      <TableCell sx={{ width: 260 }}>Subjects</TableCell>
-                      <TableCell sx={{ width: 100 }}>Unit</TableCell>
-                      <TableCell sx={{ width: 120 }}>Pass Mark</TableCell>
-                      <TableCell sx={{ width: 140 }}>Status</TableCell>
-                      <TableCell sx={{ width: 80 }} align="center">
+                      <TableCell sx={{ width: 50 }}>#</TableCell>
+                      <TableCell sx={{ minWidth: 140 }}>Group Name</TableCell>
+                      <TableCell sx={{ minWidth: 200 }}>Subjects</TableCell>
+                      <TableCell sx={{ width: 80 }}>Unit</TableCell>
+                      <TableCell sx={{ width: 100 }}>Pass Mark</TableCell>
+                      <TableCell sx={{ width: 110 }}>Status</TableCell>
+                      <TableCell sx={{ width: 70 }} align="center">
                         Action
                       </TableCell>
                     </TableRow>
@@ -806,7 +804,7 @@ const SubjectBank = () => {
         </Grid>
 
         {/* RIGHT COLUMN - Subject Bank Panel */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <ParentCard
             title={
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -814,25 +812,25 @@ const SubjectBank = () => {
               </Typography>
             }
           >
-            {/* Search and Action Controls Below Title */}
             <Box
               sx={{
                 mb: 2,
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
+                flexWrap: 'wrap',
                 justifyContent: 'space-between',
                 alignItems: { xs: 'stretch', sm: 'center' },
-                gap: 2,
+                gap: 1.5,
               }}
             >
               <Box
                 display="flex"
                 flexDirection={{ xs: 'column', sm: 'row' }}
                 alignItems={{ xs: 'stretch', sm: 'center' }}
-                gap={2}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                gap={1.5}
+                sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
               >
-                <FormControl size="small" sx={{ width: { xs: '100%', sm: '200px' } }}>
+                <FormControl size="small" sx={{ minWidth: 150, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
                   <InputLabel>Curriculum</InputLabel>
                   <Select
                     value={selectedCurriculum}
@@ -864,41 +862,41 @@ const SubjectBank = () => {
                   placeholder="Search subjects..."
                   value={subjectSearch}
                   onChange={(e) => setSubjectSearch(e.target.value)}
-                  sx={{ width: { xs: '100%', sm: 200 } }}
+                  sx={{ minWidth: 150, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}
                 />
               </Box>
 
-              <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+              <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }}>
                 Add Subject
               </Button>
             </Box>
 
             <TableContainer
               sx={{
-                height: 540,
-                maxHeight: 540,
+                height: { xs: 540, md: 560 },
+                maxHeight: { xs: 540, md: 560 },
                 overflow: 'auto',
                 width: '100%',
               }}
             >
-              <Table stickyHeader sx={{ width: '100%' }}>
+              <Table stickyHeader sx={{ tableLayout: 'auto', minWidth: 700, width: '100%' }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.100' }}>
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>S/N</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, width: 50 }}>S/N</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Subject</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, minWidth: 140 }}>Subject</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Subject Code</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, minWidth: 110 }}>Subject Code</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Program</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, minWidth: 120 }}>Program</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, minWidth: 110 }}>Status</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Pass Mark</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, width: 90 }}>Pass Mark</TableCell>
 
-                    <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Unit</TableCell>
+                    <TableCell sx={{ fontWeight: 700, py: 1.5, width: 70 }}>Unit</TableCell>
 
-                    <TableCell align="center" sx={{ fontWeight: 700, py: 1.5 }}>
+                    <TableCell align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
                       Actions
                     </TableCell>
                   </TableRow>

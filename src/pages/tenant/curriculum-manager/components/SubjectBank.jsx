@@ -544,265 +544,265 @@ const SubjectBank = () => {
   }, [subjectSearch]);
   return (
     <>
-      <Alert>Select curriculum to upload subjects</Alert>
+      <Alert severity="info" sx={{ textAlign: "center" }}>Select curriculum to upload subjects</Alert>
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box data-tour="subject-bank-select-curriculum">
               <ParentCard>
-              <TableContainer
-                sx={{
-                  height: { xs: 220, md: 230 },
-                  maxHeight: { xs: 220, md: 230 },
-                  overflow: 'auto',
-                  width: '100%',
-                }}
-              >
-                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
-                        Curriculum Name
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loadingCurriculums ? (
+                <TableContainer
+                  sx={{
+                    height: { xs: 220, md: 230 },
+                    maxHeight: { xs: 220, md: 230 },
+                    overflow: 'auto',
+                    width: '100%',
+                  }}
+                >
+                  <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
-                          <CircularProgress size={24} />
+                        <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
+                          Curriculum Name
                         </TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
                       </TableRow>
-                    ) : curriculumData.length > 0 ? (
-                      curriculumData.map((item, i) => (
-                        <TableRow key={item.id} hover>
-                          <TableCell>
-                            <Radio
-                              size="small"
-                              checked={selectedCurriculum === item.id}
-                              onChange={() => setSelectedCurriculum(item.id)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                px: 2,
-                                py: 0.5,
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
-                                borderRadius: 2,
-                                display: 'inline-block',
-                              }}
-                            >
-                              {item.curriculum_name}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={item.status}
-                              size="small"
-                              sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
-                                  : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
-                                  : (item.status === 'active' ? '#166534' : '#991b1b'),
-                              }}
-                            />
+                    </TableHead>
+                    <TableBody>
+                      {loadingCurriculums ? (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center">
+                            <CircularProgress size={24} />
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} align="center">
-                          <Alert severity="info" sx={{ width: '100%', justifyContent: 'center', py: 0.5, my: 1 }}>
-                            No curriculums found
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </ParentCard>
+                      ) : curriculumData.length > 0 ? (
+                        curriculumData.map((item, i) => (
+                          <TableRow key={item.id} hover>
+                            <TableCell>
+                              <Radio
+                                size="small"
+                                checked={selectedCurriculum === item.id}
+                                onChange={() => setSelectedCurriculum(item.id)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box
+                                sx={{
+                                  px: 2,
+                                  py: 0.5,
+                                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
+                                  borderRadius: 2,
+                                  display: 'inline-block',
+                                }}
+                              >
+                                {item.curriculum_name}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: (theme) => theme.palette.mode === 'dark'
+                                    ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
+                                    : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
+                                  color: (theme) => theme.palette.mode === 'dark'
+                                    ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
+                                    : (item.status === 'active' ? '#166534' : '#991b1b'),
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center">
+                            <Alert severity="info" sx={{ width: '100%', justifyContent: 'center', py: 0.5, my: 1 }}>
+                              No curriculums found
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </ParentCard>
             </Box>
 
             {/* 2. Subject Group Card Below Curriculum */}
             <Box data-tour="subject-bank-groups-panel">
               <ParentCard
-              title={
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Subject Groups
-                </Typography>
-              }
-            >
-              <Box
-                sx={{
-                  mb: 2,
-                  display: 'flex',
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  flexWrap: 'wrap',
-                  justifyContent: 'space-between',
-                  alignItems: { xs: 'stretch', sm: 'center' },
-                  gap: 1.5,
-                }}
+                title={
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Subject Groups
+                  </Typography>
+                }
               >
                 <Box
-                  display="flex"
-                  flexDirection={{ xs: 'column', sm: 'row' }}
-                  alignItems={{ xs: 'stretch', sm: 'center' }}
-                  gap={1.5}
-                  sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
-                >
-                  <FormControl size="small" sx={{ minWidth: 130, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
-                    <InputLabel>Curriculum</InputLabel>
-                    <Select
-                      value={selectedCurriculum}
-                      onChange={(e) => handleCurriculumFilterChange(e.target.value)}
-                      label="Curriculum"
-                      disabled
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.23)',
-                        },
-                        '& .Mui-disabled .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(0, 0, 0, 0.23)',
-                        },
-                        '& .MuiSelect-icon': {
-                          display: 'none',
-                        },
-                      }}
-                    >
-                      {curriculumData.map((curr) => (
-                        <MenuItem key={curr.id} value={curr.id}>
-                          {curr.curriculum_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl size="small" sx={{ minWidth: 160, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
-                    <InputLabel>Programme</InputLabel>
-                    <Select
-                      value={selectedProgrammeForGroups}
-                      onChange={(e) => handleProgrammeFilterChange(e.target.value)}
-                      label="Programme"
-                    >
-                      {programmesList.map((prog) => (
-                        <MenuItem key={prog.id} value={prog.id}>
-                          {prog.programme_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
-                  Create Group
-                </Button>
-              </Box>
-
-              <TableContainer
-                sx={{
-                  height: { xs: 260, md: 270 },
-                  maxHeight: { xs: 260, md: 270 },
-                  overflow: 'auto',
-                  width: '100%',
-                }}
-              >
-                <Table
-                  stickyHeader
                   sx={{
-                    tableLayout: 'auto',
-                    minWidth: 650,
+                    mb: 2,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    gap: 1.5,
                   }}
                 >
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: 50 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 140 }}>Group Name</TableCell>
-                      <TableCell sx={{ minWidth: 200 }}>Subjects</TableCell>
-                      <TableCell sx={{ width: 80 }}>Unit</TableCell>
-                      <TableCell sx={{ width: 100 }}>Pass Mark</TableCell>
-                      <TableCell sx={{ width: 110 }}>Status</TableCell>
-                      <TableCell sx={{ width: 70 }} align="center">
-                        Action
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
+                  <Box
+                    display="flex"
+                    flexDirection={{ xs: 'column', sm: 'row' }}
+                    alignItems={{ xs: 'stretch', sm: 'center' }}
+                    gap={1.5}
+                    sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
+                  >
+                    <FormControl size="small" sx={{ minWidth: 130, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
+                      <InputLabel>Curriculum</InputLabel>
+                      <Select
+                        value={selectedCurriculum}
+                        onChange={(e) => handleCurriculumFilterChange(e.target.value)}
+                        label="Curriculum"
+                        disabled
+                        sx={{
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '& .Mui-disabled .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '& .MuiSelect-icon': {
+                            display: 'none',
+                          },
+                        }}
+                      >
+                        {curriculumData.map((curr) => (
+                          <MenuItem key={curr.id} value={curr.id}>
+                            {curr.curriculum_name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
 
-                  <TableBody>
-                    {loadingSubjectGroups ? (
+                    <FormControl size="small" sx={{ minWidth: 160, flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
+                      <InputLabel>Programme</InputLabel>
+                      <Select
+                        value={selectedProgrammeForGroups}
+                        onChange={(e) => handleProgrammeFilterChange(e.target.value)}
+                        label="Programme"
+                      >
+                        {programmesList.map((prog) => (
+                          <MenuItem key={prog.id} value={prog.id}>
+                            {prog.programme_name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
+                    Create Group
+                  </Button>
+                </Box>
+
+                <TableContainer
+                  sx={{
+                    height: { xs: 260, md: 270 },
+                    maxHeight: { xs: 260, md: 270 },
+                    overflow: 'auto',
+                    width: '100%',
+                  }}
+                >
+                  <Table
+                    stickyHeader
+                    sx={{
+                      tableLayout: 'auto',
+                      minWidth: 650,
+                    }}
+                  >
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          <CircularProgress size={24} />
+                        <TableCell sx={{ width: 50 }}>#</TableCell>
+                        <TableCell sx={{ minWidth: 140 }}>Group Name</TableCell>
+                        <TableCell sx={{ minWidth: 200 }}>Subjects</TableCell>
+                        <TableCell sx={{ width: 80 }}>Unit</TableCell>
+                        <TableCell sx={{ width: 100 }}>Pass Mark</TableCell>
+                        <TableCell sx={{ width: 110 }}>Status</TableCell>
+                        <TableCell sx={{ width: 70 }} align="center">
+                          Action
                         </TableCell>
                       </TableRow>
-                    ) : subjectGroupsList.length > 0 ? (
-                      subjectGroupsList.map((grp, i) => (
-                        <TableRow key={grp.id} hover>
-                          <TableCell>{i + 1}</TableCell>
+                    </TableHead>
 
-                          <TableCell>{grp.group_name}</TableCell>
-
-                          <TableCell>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {grp.subjects?.map((s) => (
-                                <Chip
-                                  key={s.id}
-                                  label={s.subject_name}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'primary.light' : '#334155',
-                                    color: (theme) => theme.palette.mode === 'dark' ? 'primary.contrastText' : '#fff',
-                                    fontSize: '0.7rem',
-                                  }}
-                                />
-                              ))}
-                            </Box>
-                          </TableCell>
-
-                          <TableCell>{grp.unit}</TableCell>
-                          <TableCell>{grp.pass_mark}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={grp.status}
-                              size="small"
-                              sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (grp.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
-                                  : (grp.status === 'active' ? '#dcfce7' : '#fee2e2'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (grp.status === 'active' ? '#00c292' : '#fc4b6c')
-                                  : (grp.status === 'active' ? '#166534' : '#991b1b'),
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleOpenEditSubjectGroupModal(e, grp)}
-                            >
-                              <MoreVertIcon size={18} />
-                            </IconButton>
+                    <TableBody>
+                      {loadingSubjectGroups ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            <CircularProgress size={24} />
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          <Alert severity="info" sx={{ width: '100%', justifyContent: 'center', py: 0.5, my: 1 }}>
-                            No subject groups yet
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </ParentCard>
+                      ) : subjectGroupsList.length > 0 ? (
+                        subjectGroupsList.map((grp, i) => (
+                          <TableRow key={grp.id} hover>
+                            <TableCell>{i + 1}</TableCell>
+
+                            <TableCell>{grp.group_name}</TableCell>
+
+                            <TableCell>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {grp.subjects?.map((s) => (
+                                  <Chip
+                                    key={s.id}
+                                    label={s.subject_name}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'primary.light' : '#334155',
+                                      color: (theme) => theme.palette.mode === 'dark' ? 'primary.contrastText' : '#fff',
+                                      fontSize: '0.7rem',
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            </TableCell>
+
+                            <TableCell>{grp.unit}</TableCell>
+                            <TableCell>{grp.pass_mark}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={grp.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: (theme) => theme.palette.mode === 'dark'
+                                    ? (grp.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
+                                    : (grp.status === 'active' ? '#dcfce7' : '#fee2e2'),
+                                  color: (theme) => theme.palette.mode === 'dark'
+                                    ? (grp.status === 'active' ? '#00c292' : '#fc4b6c')
+                                    : (grp.status === 'active' ? '#166534' : '#991b1b'),
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleOpenEditSubjectGroupModal(e, grp)}
+                              >
+                                <MoreVertIcon size={18} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            <Alert severity="info" sx={{ width: '100%', justifyContent: 'center', py: 0.5, my: 1 }}>
+                              No subject groups yet
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </ParentCard>
             </Box>
           </Box>
         </Grid>

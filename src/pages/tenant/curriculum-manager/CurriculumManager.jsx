@@ -222,6 +222,19 @@ const TourTabSync = ({ setTab }) => {
 const CurriculumManagerContent = ({ tab, setTab }) => {
   const { setIsOpen, setCurrentStep } = useTour();
 
+  // Auto-start tour on first visit
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('curriculum_manager_tour_seen');
+    if (!hasSeenTour) {
+      const timer = setTimeout(() => {
+        setCurrentStep(0);
+        setIsOpen(true);
+        localStorage.setItem('curriculum_manager_tour_seen', 'true');
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [setCurrentStep, setIsOpen]);
+
   const handleStartTour = () => {
     setCurrentStep(0);
     setIsOpen(true);

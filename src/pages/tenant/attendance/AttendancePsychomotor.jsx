@@ -117,12 +117,6 @@ const AttendancePsychomotor = () => {
     }
   }, []);
 
-  // ── Initial fetch on mount ────────────────────────────────
-  useEffect(() => {
-    fetchAttendanceStats();
-    fetchPsychomotorStats();
-  }, []);
-
   // ── Filter update callbacks from child tabs ─────────────────
   const handleAttendanceFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);

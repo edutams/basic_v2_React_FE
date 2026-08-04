@@ -1124,12 +1124,14 @@ const Agent = () => {
             </Box>
           </Box>
 
-          <Box>
+          <Box sx={{ width: '100%' }}>
             <Box
               sx={{
                 height: 160,
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 overflow: 'hidden',
               }}
             >
@@ -1137,7 +1139,8 @@ const Agent = () => {
                 series={planSeries}
                 colors={planColors}
                 labels={planLabels}
-                height={180}
+                height={160}
+                width="100%"
                 hideCard
               />
             </Box>

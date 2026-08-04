@@ -699,9 +699,11 @@ const SubjectBank = () => {
                     </FormControl>
                   </Box>
 
-                  <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
-                    Create Group
-                  </Button>
+                  <Box data-tour="subject-create-group-btn" sx={{ display: 'inline-block', width: { xs: '100%', sm: 'auto' } }}>
+                    <Button variant="contained" size="small" sx={{ width: '100%', whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
+                      Create Group
+                    </Button>
+                  </Box>
                 </Box>
 
                 <TableContainer
@@ -727,7 +729,7 @@ const SubjectBank = () => {
                         <TableCell sx={{ width: 80 }}>Unit</TableCell>
                         <TableCell sx={{ width: 100 }}>Pass Mark</TableCell>
                         <TableCell sx={{ width: 110 }}>Status</TableCell>
-                        <TableCell sx={{ width: 70 }} align="center">
+                        <TableCell data-tour="subject-group-action-btn" sx={{ width: 70 }} align="center">
                           Action
                         </TableCell>
                       </TableRow>
@@ -870,9 +872,11 @@ const SubjectBank = () => {
                 />
               </Box>
 
-              <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }}>
-                Add Subject
-              </Button>
+              <Box data-tour="subject-add-btn" sx={{ display: 'inline-block', width: { xs: '100%', sm: 'auto' } }}>
+                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: '100%', whiteSpace: 'nowrap' }}>
+                  Add Subject
+                </Button>
+              </Box>
             </Box>
 
             <TableContainer
@@ -900,7 +904,7 @@ const SubjectBank = () => {
 
                     <TableCell sx={{ fontWeight: 700, py: 1.5, width: 70 }}>Unit</TableCell>
 
-                    <TableCell align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
+                    <TableCell data-tour="subject-action-btn" align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
                       Actions
                     </TableCell>
                   </TableRow>

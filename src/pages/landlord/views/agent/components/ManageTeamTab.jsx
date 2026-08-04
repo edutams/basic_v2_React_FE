@@ -25,6 +25,7 @@ import {
   Menu,
   Checkbox,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
@@ -353,10 +354,10 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             <TableBody>
               {members.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 5 }}>
-                    <Typography variant="body2" color="text.secondary">
+                  <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 3 }}>
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
                       No team members found.
-                    </Typography>
+                    </Alert>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -784,9 +785,9 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
               {availablePermissions.filter((perm) =>
                 perm.label.toLowerCase().includes(permissionSearch.toLowerCase()),
               ).length === 0 && (
-                  <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ my: 2, justifyContent: 'center' }}>
                     No permissions found.
-                  </Typography>
+                  </Alert>
                 )}
             </Box>
           </Box>

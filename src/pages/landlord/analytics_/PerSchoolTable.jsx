@@ -17,6 +17,7 @@ import {
   CircularProgress,
   Chip,
   Stack,
+  Alert,
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 import { fetchPerSchool } from '../../../api/landlord/analytics/analyticsApi';
@@ -195,8 +196,10 @@ const PerSchoolTable = () => {
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">No schools found.</Typography>
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No schools found.
+                  </Alert>
                 </TableCell>
               </TableRow>
             ) : (

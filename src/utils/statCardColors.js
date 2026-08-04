@@ -34,7 +34,8 @@ export const getStatCardColor = (
       iconGlow: alpha(primaryMain, 0.35),
       iconColor: '#FFFFFF',
       accentColor: primaryMain,
-      borderColor: alpha(primaryMain, 0.18),
+      // borderColor: alpha(primaryMain, 0.18),
+      borderColor: primaryMain
     },
 
     success: {
@@ -44,7 +45,8 @@ export const getStatCardColor = (
       iconGlow: 'rgba(5, 150, 105, 0.4)',
       iconColor: '#FFFFFF',
       accentColor: '#059669',
-      borderColor: '#BBF7D0',
+      // borderColor: '#BBF7D0',
+      borderColor: '#059669',
     },
 
     info: {
@@ -54,7 +56,8 @@ export const getStatCardColor = (
       iconGlow: 'rgba(37, 99, 235, 0.4)',
       iconColor: '#FFFFFF',
       accentColor: '#2563EB',
-      borderColor: '#BFDBFE',
+      // borderColor: '#BFDBFE',
+      borderColor: '#2563EB',
     },
 
     warning: {
@@ -64,7 +67,8 @@ export const getStatCardColor = (
       iconGlow: 'rgba(217, 119, 6, 0.4)',
       iconColor: '#FFFFFF',
       accentColor: '#D97706',
-      borderColor: '#FCD34D',
+      // borderColor: '#FCD34D',
+      borderColor: '#D97706',
     },
 
     error: {
@@ -74,7 +78,8 @@ export const getStatCardColor = (
       iconGlow: 'rgba(220, 38, 38, 0.4)',
       iconColor: '#FFFFFF',
       accentColor: '#DC2626',
-      borderColor: '#FECACA',
+      // borderColor: '#FECACA',
+      borderColor: '#DC2626',
     },
 
     secondary: {
@@ -84,7 +89,8 @@ export const getStatCardColor = (
       iconGlow: 'rgba(147, 51, 234, 0.4)',
       iconColor: '#FFFFFF',
       accentColor: '#9333EA',
-      borderColor: '#E9D5FF',
+      // borderColor: '#E9D5FF',
+      borderColor: '#9333EA',
     },
   };
 
@@ -110,7 +116,8 @@ export const getStatCardColor = (
       iconGlow: alpha(colorProp, 0.35),
       iconColor: '#FFFFFF',
       accentColor: colorProp,
-      borderColor: alpha(colorProp, 0.18),
+      // borderColor: alpha(colorProp, 0.18),
+      borderColor: colorProp,
     };
   } else if (typeof colorProp === 'string' && paletteMap[colorProp]) {
     selected = paletteMap[colorProp];
@@ -134,7 +141,8 @@ export const getStatCardColor = (
       iconGlow: selected.iconGlow,
       iconColor: '#FFFFFF',
       accentColor: '#FFFFFF',
-      borderColor: 'rgba(255,255,255,0.12)',
+      // borderColor: 'rgba(255,255,255,0.12)',
+      borderColor: selected.borderColor,
     };
   }
 

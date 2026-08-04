@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Avatar,
   Link,
+  Alert,
 } from '@mui/material';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -218,8 +219,10 @@ const ApplicationReview = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">No applications found.</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No applications found.
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}

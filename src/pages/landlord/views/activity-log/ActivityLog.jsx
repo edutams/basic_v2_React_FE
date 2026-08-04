@@ -27,6 +27,8 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import api from '@/api/landlord/landlord_api';
 import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
+import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 
 const BCrumb = [
   {
@@ -35,6 +37,54 @@ const BCrumb = [
   },
   {
     title: 'Activity Log',
+  },
+];
+
+const tourSteps = [
+  {
+    selector: '[data-tour="activity-log-header"]',
+    content: (
+      <StepContent
+        title="System Activity Logs"
+        body="Every action performed on the platform is recorded here. Each entry shows who performed it and what they did."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="activity-log-search"]',
+    content: (
+      <StepContent
+        title="Search"
+        body="Search across all activity entries by description or the person who performed them."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="activity-log-date"]',
+    content: (
+      <StepContent
+        title="Date Range"
+        body="Filter the logs by a specific date range to find activity performed within a period."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="activity-log-table"]',
+    content: (
+      <StepContent
+        title="Logs Table"
+        body="Each row shows the activity, who performed it, and when it was performed."
+      />
+    ),
+  },
+  {
+    selector: '[data-tour="activity-log-action"]',
+    content: (
+      <StepContent
+        title="View Details"
+        body="Click View Details to open the full activity record, including exactly what changed."
+      />
+    ),
   },
 ];
 
@@ -125,38 +175,52 @@ const ActivityLog = () => {
   return (
     <PageContainer title="Activity Log" description="View system activity logs">
       <Breadcrumb title="Activity Log" items={BCrumb} />
-      <BlankCard>
-        <CardContent>
-          <Typography variant="h5" mb={3}>
-            System Activity Logs
-          </Typography>
-          <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-            <TextField
-              size="small"
-              placeholder="Search logs..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearch();
-              }}
-              sx={{ flex: 1, minWidth: { xs: '100%', sm: 200 } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size="18" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              size="small"
-              label="Date From"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ width: { xs: '100%', sm: '160px' } }}
-            />
+      <AclTourProvider steps={tourSteps} autoPlay storageKey="activity_log_tour_seen">
+        <BlankCard>
+          <CardContent>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
+              mb={3}
+              data-tour="activity-log-header"
+            >
+              <Typography variant="h5">
+                System Activity Logs
+              </Typography>
+              <ShowTourGuideButton />
+            </Box>
+            <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+              <TextField
+                size="small"
+                placeholder="Search logs..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
+                sx={{ flex: 1, minWidth: { xs: '100%', sm: 200 } }}
+                data-tour="activity-log-search"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size="18" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                size="small"
+                label="Date From"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: { xs: '100%', sm: '160px' } }}
+                data-tour="activity-log-date"
+              />
             <TextField
               size="small"
               label="Date To"
@@ -185,14 +249,14 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer >
+              <TableContainer data-tour="activity-log-table">
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>
+                      <TableCell sx={{ width: "5%" }}>
                         <Typography variant="h6">S/N</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: "50%" }}>
                         <Typography variant="h6">Activity</Typography>
                       </TableCell>
                       {/* <TableCell>
@@ -201,10 +265,16 @@ const ActivityLog = () => {
                       {/* <TableCell>
                         <Typography variant="h6">Subject</Typography>
                       </TableCell> */}
-                      <TableCell>
-                        <Typography variant="h6">Date</Typography>
+                      <TableCell sx={{ width: "35%" }}>
+                        <Typography variant="h6">Date Performed</Typography>
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell
+                        align="right"
+                        sx={{
+                          width: "25%",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         <Typography variant="h6">Action</Typography>
                       </TableCell>
                     </TableRow>
@@ -250,6 +320,7 @@ const ActivityLog = () => {
                           <TableCell align="right">
                             <Button variant="contained" size="small" startIcon={<IconEye />}
                               onClick={() => handleOpenModal(log)}
+                              data-tour="activity-log-action"
                               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                             >
                               View Details
@@ -281,6 +352,7 @@ const ActivityLog = () => {
           )}
         </CardContent>
       </BlankCard>
+      </AclTourProvider>
 
       {/* Details Modal */}
       <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
@@ -301,10 +373,10 @@ const ActivityLog = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>
-                      <Typography variant="subtitle2">Updated Properties</Typography>
+                      <Typography variant="subtitle2">What Changed</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="subtitle2">Value</Typography>
+                      <Typography variant="subtitle2">Value Valued</Typography>
                     </TableCell>
                   </TableRow>
                 </TableHead>

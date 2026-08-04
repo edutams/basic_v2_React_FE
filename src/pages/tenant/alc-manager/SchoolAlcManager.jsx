@@ -391,7 +391,7 @@ const SchoolAlcManager = () => {
       </Box>
 
       {activeTab === 'Role Management' && (
-        <AclTourProvider steps={roleTourSteps} autoPlay>
+        <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
           <ParentCard
             title={
               <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
@@ -543,13 +543,13 @@ const SchoolAlcManager = () => {
       )}
 
       {activeTab === 'Permission Assignment' && (
-        <AclTourProvider steps={assignTourSteps} autoPlay>
+        <AclTourProvider steps={assignTourSteps} autoPlay storageKey="acl_assign_tour_seen">
           <SchoolAssignmentManagement />
         </AclTourProvider>
       )}
 
       {activeTab === 'Access Analysis' && (
-        <AclTourProvider steps={analysisTourSteps} autoPlay>
+        <AclTourProvider steps={analysisTourSteps} autoPlay storageKey="acl_analysis_tour_seen">
           <SchoolAccessAnalysis />
         </AclTourProvider>
       )}

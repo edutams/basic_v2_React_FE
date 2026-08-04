@@ -492,9 +492,11 @@ const ClassSubject = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Class Subjects
               </Typography>
-              <Button data-tour="class-add-subject-btn" variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
-                Add Subject to Class
-              </Button>
+              <Box data-tour="class-add-subject-btn" sx={{ display: 'inline-block' }}>
+                <Button variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+                  Add Subject to Class
+                </Button>
+              </Box>
             </Box>
           }
         >
@@ -508,7 +510,7 @@ const ClassSubject = () => {
                     <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Passmark</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '10%' }} align="center">
+                    <TableCell data-tour="class-subject-action-btn" sx={{ fontWeight: 'bold', width: '10%' }} align="center">
                       Action
                     </TableCell>
                   </TableRow>
@@ -551,7 +553,7 @@ const ClassSubject = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell align="center" data-tour="class-subject-action-btn">
+                        <TableCell align="center">
                           <IconButton size="small" onClick={(e) => handleOpenEditModal(e, subject)}>
                             <MoreVertIcon size={18} />
                           </IconButton>

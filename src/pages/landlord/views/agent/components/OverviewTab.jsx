@@ -446,7 +446,6 @@ const OverviewTab = ({ data }) => {
                   <IconChartBar size={18} strokeWidth={2.5} />
                 </Box>
               </Box>
-              <Divider sx={{ borderColor: creditColors.borderColor, opacity: 0.6 }} />
 
               {/* Content Section */}
               <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>

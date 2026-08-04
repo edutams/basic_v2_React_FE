@@ -22,6 +22,17 @@ const TabPanel = ({ children, value, index }) => {
 // ── Tour Steps Configuration (Covering headers, tabs, and inner tab content) ────
 // ── Tour Steps Configuration per Tab ──────────────────────────────────────────
 
+const withScroll = (step) => ({
+  ...step,
+  action: (node) => {
+    if (node) {
+      setTimeout(() => {
+        node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      }, 60);
+    }
+  },
+});
+
 const tab0Steps = [
   {
     selector: '[data-tour="tab-0"]',
@@ -131,32 +142,6 @@ const tab1Steps = [
     ),
   },
   {
-    selector: '[data-tour="subject-create-group-btn"]',
-    content: (
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Create Subject Group 📦
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Click <b>Create Group</b> to bundle multiple subjects (e.g. Sciences, Trade Subjects) with combined pass marks and credit units.
-        </Typography>
-      </Box>
-    ),
-  },
-  {
-    selector: '[data-tour="subject-group-action-btn"]',
-    content: (
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Subject Group Actions 🛠️
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Click the <b>action button</b> on any group row to edit group details, update subject memberships, or delete the group.
-        </Typography>
-      </Box>
-    ),
-  },
-  {
     selector: '[data-tour="subject-add-btn"]',
     content: (
       <Box sx={{ p: 0.5 }}>
@@ -178,6 +163,32 @@ const tab1Steps = [
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
           Click the <b>3-dots action menu</b> on any subject to edit subject settings or remove it from the subject bank.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="subject-create-group-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Create Subject Group 📦
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click <b>Create Group</b> to bundle multiple subjects (e.g. Sciences, Trade Subjects) with combined pass marks and credit units.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="subject-group-action-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Subject Group Actions 🛠️
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click the <b>action button</b> on any group row to edit group details, update subject memberships, or delete the group.
         </Typography>
       </Box>
     ),
@@ -240,15 +251,20 @@ const tab2Steps = [
 ];
 
 const getStepsForTab = (tabIndex) => {
+  let steps;
   switch (tabIndex) {
     case 1:
-      return tab1Steps;
+      steps = tab1Steps;
+      break;
     case 2:
-      return tab2Steps;
+      steps = tab2Steps;
+      break;
     case 0:
     default:
-      return tab0Steps;
+      steps = tab0Steps;
+      break;
   }
+  return steps.map(withScroll);
 };
 
 // ── Inner Main View ───────────────────────────────────────────────────────────
@@ -310,7 +326,7 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
             <Tab data-tour="tab-2" label="Class Subject" />
           </Tabs>
 
-          <Tooltip title="Select any tab to view its specific guided tour" arrow placement="top">
+          <Tooltip title="Select a tab first, then click to start its guided tour." arrow placement="top">
             <Button
               data-tour="take-tour-btn"
               variant="outlined"

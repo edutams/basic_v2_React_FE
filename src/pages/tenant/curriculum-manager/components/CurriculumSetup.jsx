@@ -585,12 +585,16 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button data-tour="curriculum-import-btn" variant="contained" size="small" onClick={handleOpenImportModal}>
-                    Import
-                  </Button>
-                  <Button data-tour="curriculum-create-btn" variant="contained" size="small" onClick={handleOpenCreateModal}>
-                    Create Curriculum
-                  </Button>
+                  <Box data-tour="curriculum-import-btn" sx={{ display: 'inline-block' }}>
+                    <Button variant="contained" size="small" onClick={handleOpenImportModal}>
+                      Import
+                    </Button>
+                  </Box>
+                  <Box data-tour="curriculum-create-btn" sx={{ display: 'inline-block' }}>
+                    <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
+                      Create Curriculum
+                    </Button>
+                  </Box>
                 </Box>
               </Box>
             }
@@ -612,7 +616,7 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
                         Imported
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
+                      <TableCell data-tour="curriculum-action-btn" align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -669,7 +673,7 @@ const CurriculumSetup = () => {
                               }}
                             />
                           </TableCell>
-                          <TableCell align="center" data-tour="curriculum-action-btn">
+                          <TableCell align="center">
                             <IconButton
                               size="small"
                               onClick={(e) => handleOpenMenu(e, item)}
@@ -747,9 +751,11 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button data-tour="curriculum-assign-update-btn" variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
-                    {loadingSave ? <CircularProgress size={24} /> : 'Update'}
-                  </Button>
+                  <Box data-tour="curriculum-assign-update-btn" sx={{ display: 'inline-block' }}>
+                    <Button variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                      {loadingSave ? <CircularProgress size={24} /> : 'Update'}
+                    </Button>
+                  </Box>
                 </Box>
               </Box>
             }

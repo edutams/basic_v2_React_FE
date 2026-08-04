@@ -585,10 +585,10 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button variant="contained" size="small" onClick={handleOpenImportModal}>
+                  <Button data-tour="curriculum-import-btn" variant="contained" size="small" onClick={handleOpenImportModal}>
                     Import
                   </Button>
-                  <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
+                  <Button data-tour="curriculum-create-btn" variant="contained" size="small" onClick={handleOpenCreateModal}>
                     Create Curriculum
                   </Button>
                 </Box>
@@ -669,7 +669,7 @@ const CurriculumSetup = () => {
                               }}
                             />
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell align="center" data-tour="curriculum-action-btn">
                             <IconButton
                               size="small"
                               onClick={(e) => handleOpenMenu(e, item)}
@@ -747,7 +747,7 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                  <Button data-tour="curriculum-assign-update-btn" variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
                     {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                   </Button>
                 </Box>

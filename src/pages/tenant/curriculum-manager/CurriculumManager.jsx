@@ -5,7 +5,7 @@ import ParentCard from '@/components/shared/ParentCard';
 import CurriculumSetup from './components/CurriculumSetup';
 import SubjectBank from './components/SubjectBank';
 import ClassSubject from './components/ClassSubject';
-import { Box, Tabs, Tab, Button, Typography, useTheme } from '@mui/material';
+import { Box, Tabs, Tab, Button, Typography, Tooltip, useTheme } from '@mui/material';
 import { TourProvider, useTour } from '@reactour/tour';
 import { IconCompass } from '@tabler/icons-react';
 
@@ -31,20 +31,46 @@ const tab0Steps = [
           1. Curriculum Setup ⚙️
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          First, configure your school's active curriculums and assign classes to them.
+          Welcome to Curriculum Setup! Configure your school's active curriculums and map them to class levels.
         </Typography>
       </Box>
     ),
   },
   {
-    selector: '[data-tour="curriculum-setup-panel"]',
+    selector: '[data-tour="curriculum-import-btn"]',
     content: (
       <Box sx={{ p: 0.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Curriculum List & Import 📋
+          Import Curriculums 📥
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          View existing curriculums. Use the <b>Import</b> button to load pre-built national curriculums or <b>Create Curriculum</b> for custom setups.
+          Click <b>Import</b> to pull pre-built national curriculums (with pre-configured subject structures) directly into your school.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="curriculum-create-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Create Custom Curriculum ➕
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click <b>Create Curriculum</b> to build a brand-new custom curriculum tailored to your institution.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="curriculum-action-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Edit & Delete Curriculums ✏️🗑️
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click the <b>3-dots action menu</b> on any curriculum row to edit curriculum details or remove custom curriculums.
         </Typography>
       </Box>
     ),
@@ -57,7 +83,20 @@ const tab0Steps = [
           Assign Classes to Curriculum 🏫
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Select the active academic session & term, then select which curriculum applies to each class level.
+          Select the active Academic Session & Term, then map each class level to its active curriculum.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="curriculum-assign-update-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Save Class Assignments 💾
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click <b>Update</b> to save your class-to-curriculum mappings for the chosen session and term.
         </Typography>
       </Box>
     ),
@@ -73,7 +112,7 @@ const tab1Steps = [
           2. Subject Bank 📚
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Explore managing subjects and subject groups under each curriculum.
+          Manage all subjects and subject groups offered under each active curriculum.
         </Typography>
       </Box>
     ),
@@ -92,27 +131,53 @@ const tab1Steps = [
     ),
   },
   {
-    selector: '[data-tour="subject-bank-subjects-panel"]',
+    selector: '[data-tour="subject-create-group-btn"]',
     content: (
       <Box sx={{ p: 0.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Subject Bank List & Controls 📖
+          Create Subject Group 📦
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Add new subjects, set pass marks and credit units, search subjects, and edit existing subject properties.
+          Click <b>Create Group</b> to bundle multiple subjects (e.g. Sciences, Trade Subjects) with combined pass marks and credit units.
         </Typography>
       </Box>
     ),
   },
   {
-    selector: '[data-tour="subject-bank-groups-panel"]',
+    selector: '[data-tour="subject-group-action-btn"]',
     content: (
       <Box sx={{ p: 0.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Subject Groups 📦
+          Subject Group Actions 🛠️
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Group multiple subjects together (e.g. Sciences, Trade Subjects) with combined pass mark and unit requirements.
+          Click the <b>action button</b> on any group row to edit group details, update subject memberships, or delete the group.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="subject-add-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Add New Subject ➕
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click <b>Add Subject</b> to create new subjects with subject codes, pass marks, credit units, and status (compulsory/optional/trade).
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="subject-action-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Edit & Delete Subjects ✏️🗑️
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click the <b>3-dots action menu</b> on any subject to edit subject settings or remove it from the subject bank.
         </Typography>
       </Box>
     ),
@@ -128,7 +193,7 @@ const tab2Steps = [
           3. Class Subject 🏫
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Assign subjects directly to specific class arms and allocate subject teachers.
+          Assign subjects directly to specific class arms and manage teacher allocations.
         </Typography>
       </Box>
     ),
@@ -147,14 +212,27 @@ const tab2Steps = [
     ),
   },
   {
-    selector: '[data-tour="class-subject-table"]',
+    selector: '[data-tour="class-add-subject-btn"]',
     content: (
       <Box sx={{ p: 0.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Class Subjects & Teacher Allocation 👩‍🏫
+          Add Subject to Class ➕
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Add subjects to the selected class and assign subject teachers to each class arm.
+          Click <b>Add Subject to Class</b> to assign new subjects to the selected class arm.
+        </Typography>
+      </Box>
+    ),
+  },
+  {
+    selector: '[data-tour="class-subject-action-btn"]',
+    content: (
+      <Box sx={{ p: 0.5 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
+          Edit & Delete Class Subjects ✏️🗑️
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
+          Click the <b>3-dots action menu</b> on any class subject row to edit pass mark/units or unassign the subject from the class.
         </Typography>
       </Box>
     ),
@@ -197,54 +275,25 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
 
   return (
     <PageContainer title="Curriculum Manager">
-      {/* HEADER & TAKE TOUR BUTTON */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          mb: 2,
-        }}
-      >
-        <Box data-tour="curriculum-manager-header" sx={{ width: '100%' }}>
-          <Breadcrumb title="Curriculum Manager" items={BCrumb} />
-        </Box>
-
-        <Button
-          data-tour="take-tour-btn"
-          variant="outlined"
-          color="primary"
-          size="small"
-          startIcon={<IconCompass size={18} />}
-          onClick={handleStartTour}
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 2,
-            // py: 0.8,
-            whiteSpace: 'nowrap',
-            alignSelf: { xs: 'flex-end', sm: 'center' },
-          }}
-        >
-          Take Tour
-        </Button>
+      {/* HEADER */}
+      <Box data-tour="curriculum-manager-header" sx={{ mb: 2 }}>
+        <Breadcrumb title="Curriculum Manager" items={BCrumb} />
       </Box>
 
       <Box>
-        {/* TABS */}
+        {/* TABS & TAKE TOUR BUTTON */}
         <Box
           data-tour="curriculum-tabs"
           sx={{
             mb: 2,
             borderBottom: 1,
             borderColor: 'divider',
-            overflowX: 'auto',
-            '& .MuiTabs-root': {
-              minWidth: '300px',
-            },
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            pb: 0.5,
           }}
         >
           <Tabs
@@ -252,11 +301,35 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
             onChange={(e, val) => setTab(val)}
             variant="scrollable"
             scrollButtons="auto"
+            sx={{
+              minWidth: '300px',
+            }}
           >
             <Tab data-tour="tab-0" label="Curriculum Setup" />
             <Tab data-tour="tab-1" label="Subject Bank" />
             <Tab data-tour="tab-2" label="Class Subject" />
           </Tabs>
+
+          <Tooltip title="Select any tab to view its specific guided tour" arrow placement="top">
+            <Button
+              data-tour="take-tour-btn"
+              variant="outlined"
+              color="primary"
+              size="small"
+              startIcon={<IconCompass size={18} />}
+              onClick={handleStartTour}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2,
+                whiteSpace: 'nowrap',
+                mb: 0.5,
+              }}
+            >
+              Take Tour
+            </Button>
+          </Tooltip>
         </Box>
 
         {/* CONTENT */}

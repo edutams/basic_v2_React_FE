@@ -699,7 +699,7 @@ const SubjectBank = () => {
                     </FormControl>
                   </Box>
 
-                  <Button variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
+                  <Button data-tour="subject-create-group-btn" variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
                     Create Group
                   </Button>
                 </Box>
@@ -780,7 +780,7 @@ const SubjectBank = () => {
                                 }}
                               />
                             </TableCell>
-                            <TableCell align="center">
+                            <TableCell align="center" data-tour="subject-group-action-btn">
                               <IconButton
                                 size="small"
                                 onClick={(e) => handleOpenEditSubjectGroupModal(e, grp)}
@@ -870,7 +870,7 @@ const SubjectBank = () => {
                 />
               </Box>
 
-              <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }}>
+              <Button data-tour="subject-add-btn" variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }}>
                 Add Subject
               </Button>
             </Box>
@@ -946,7 +946,7 @@ const SubjectBank = () => {
                         </TableCell>
                         <TableCell>{subject.pass_mark}</TableCell>
                         <TableCell>{subject.unit}</TableCell>
-                        <TableCell align="center">
+                        <TableCell align="center" data-tour="subject-action-btn">
                           <IconButton
                             size="small"
                             onClick={(e) => handleOpenSubjectMenu(e, subject)}

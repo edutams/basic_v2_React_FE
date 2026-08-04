@@ -492,7 +492,7 @@ const ClassSubject = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Class Subjects
               </Typography>
-              <Button variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+              <Button data-tour="class-add-subject-btn" variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
                 Add Subject to Class
               </Button>
             </Box>
@@ -551,7 +551,7 @@ const ClassSubject = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell align="center">
+                        <TableCell align="center" data-tour="class-subject-action-btn">
                           <IconButton size="small" onClick={(e) => handleOpenEditModal(e, subject)}>
                             <MoreVertIcon size={18} />
                           </IconButton>

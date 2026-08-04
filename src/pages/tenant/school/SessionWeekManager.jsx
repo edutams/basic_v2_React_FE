@@ -27,7 +27,7 @@ import HolidayTab from '@/components/tenant/holiday/HolidayTab';
 const BCrumb = [
   {
     to: '/',
-    title: 'School Dashboard',
+    title: 'Dashboard',
   },
   {
     title: 'Session/Term Mapping',
@@ -218,9 +218,8 @@ const SessionWeekManager = () => {
         onClose={handleCloseConfirmDialog}
         onConfirm={handleConfirmStatusChange}
         title={confirmAction === 'activate' ? 'Activate Session' : 'Deactivate Session'}
-        message={`Are you sure you want to ${confirmAction} "${
-          selectedSession?.name || selectedSession?.sessionTerm
-        }"?`}
+        message={`Are you sure you want to ${confirmAction} "${selectedSession?.name || selectedSession?.sessionTerm
+          }"?`}
         confirmText={confirmAction === 'activate' ? 'Activate' : 'Deactivate'}
         cancelText="Cancel"
         severity={confirmAction === 'activate' ? 'primary' : 'error'}

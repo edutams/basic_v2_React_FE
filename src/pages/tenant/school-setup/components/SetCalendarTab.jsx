@@ -72,6 +72,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   // Week Management states
   const [weeks, setWeeks] = useState([]);
+  const [schoolDays, setSchoolDays] = useState(null);
   const [allLandlordTerms, setAllLandlordTerms] = useState([]);
   const [selectedAppTermId, setSelectedAppTermId] = useState('');
   const [autoGenerateConfig, setAutoGenerateConfig] = useState({
@@ -199,6 +200,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       const weeksRes = await fetchWeeks(stId);
       if (weeksRes.status) {
         setWeeks(weeksRes.data);
+        if (weeksRes.stats && weeksRes.stats.remaining_school_days !== undefined) {
+          setSchoolDays(weeksRes.stats.remaining_school_days);
+        }
       }
     } catch (error) {
       showSnackbar('Failed to load weeks', 'error');
@@ -342,6 +346,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       });
       if (response.status) {
         setWeeks(response.data);
+        if (response.stats && response.stats.remaining_school_days !== undefined) {
+          setSchoolDays(response.stats.remaining_school_days);
+        }
 
         setAutoGenerateConfig((prev) => ({
           ...prev,
@@ -381,6 +388,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       const response = await deleteWeek(activeSessionTermId, lastWeek.week_id);
       if (response.status) {
         setWeeks(response.data);
+        if (response.stats && response.stats.remaining_school_days !== undefined) {
+          setSchoolDays(response.stats.remaining_school_days);
+        }
         showSnackbar('Last week removed successfully', 'success');
       } else {
         showSnackbar(response.message || 'Failed to delete week', 'error');
@@ -528,8 +538,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       color: 'primary.main',
                     }}
                   >
+                    {/* <Typography variant="caption">
+                      {weeks.length} Weeks • {schoolDays !== null ? schoolDays : weeks.length * 5} school days
+                    </Typography> */}
                     <Typography variant="caption">
-                      {weeks.length} Weeks • {weeks.length * 5} school days
+                      {weeks.length} Weeks • {schoolDays} school days
                     </Typography>
                   </Box>
                 </Box>
@@ -570,7 +583,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       slotProps={{ inputLabel: { shrink: true } }}
                     />
                     {/* generateBtnRef targets this button exactly */}
-                    <Button variant="contained" size="small" ref={generateBtnRef} onClick={handleAutoGenerate} disabled={loading || !activeSessionTermId} sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      ref={generateBtnRef}
+                      onClick={handleAutoGenerate}
+                      disabled={loading || !activeSessionTermId}
+                      sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
+                    >
                       Generate
                     </Button>
                   </Box>
@@ -699,8 +719,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
-          <Button size="small" onClick={handleSaveDisplayName} disabled={loading || !displayName.trim()}>
+          <Button variant="contained" size="small" onClick={handleCloseEditModal}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            onClick={handleSaveDisplayName}
+            disabled={loading || !displayName.trim()}
+          >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
@@ -720,7 +746,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmSubscribe({ open: false, term: null })}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setConfirmSubscribe({ open: false, term: null })}
+          >
             No, Cancel
           </Button>
           <Button size="small" onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
@@ -752,10 +782,19 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setConfirmStatus({ open: false, term: null })}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleConfirmToggleStatus} color="primary" disabled={loading}>
+          <Button
+            size="small"
+            onClick={handleConfirmToggleStatus}
+            color="primary"
+            disabled={loading}
+          >
             Confirm
           </Button>
         </DialogActions>
@@ -774,10 +813,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button variant="contained" size="small" onClick={() => setConfirmDeleteWeek(false)}>
             Cancel
           </Button>
-          <Button size="small" color="error" disabled={loading} onClick={() => {
-            setConfirmDeleteWeek(false);
-            handleDeleteLastWeek();
-          }}
+          <Button
+            size="small"
+            color="error"
+            disabled={loading}
+            onClick={() => {
+              setConfirmDeleteWeek(false);
+              handleDeleteLastWeek();
+            }}
           >
             Yes, Remove
           </Button>

@@ -20,7 +20,7 @@ export const StepContent = ({ title, body }) => (
 );
 
 // ── Inner provider (needs access to useTour) ──────────────────────────────────
-const InnerProvider = ({ autoPlay, children }) => {
+const InnerProvider = ({ autoPlay, storageKey, children }) => {
   const { setIsOpen, setCurrentStep } = useTour();
 
   const startTour = useCallback(() => {
@@ -32,16 +32,24 @@ const InnerProvider = ({ autoPlay, children }) => {
     setIsOpen(false);
   }, [setIsOpen]);
 
-  // Auto-play the tour every time this provider mounts (e.g. page/tab mount)
+  // Auto-play the tour once per browser (first visit only). Pass a storageKey
+  // so the guide does not replay on every page/tab mount.
   useEffect(() => {
     if (!autoPlay) return;
 
+    if (storageKey && localStorage.getItem(storageKey)) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       startTour();
+      if (storageKey) {
+        localStorage.setItem(storageKey, 'true');
+      }
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [autoPlay, startTour]);
+  }, [autoPlay, storageKey, startTour]);
 
   return (
     <AclTourCtx.Provider value={{ startTour, stopTour }}>{children}</AclTourCtx.Provider>
@@ -49,7 +57,7 @@ const InnerProvider = ({ autoPlay, children }) => {
 };
 
 // ── Public provider ───────────────────────────────────────────────────────────
-export const AclTourProvider = ({ steps, autoPlay = false, children }) => {
+export const AclTourProvider = ({ steps, autoPlay = false, storageKey, children }) => {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
 
@@ -132,7 +140,7 @@ export const AclTourProvider = ({ steps, autoPlay = false, children }) => {
         );
       }}
     >
-      <InnerProvider autoPlay={autoPlay}>{children}</InnerProvider>
+      <InnerProvider autoPlay={autoPlay} storageKey={storageKey}>{children}</InnerProvider>
     </TourProvider>
   );
 };

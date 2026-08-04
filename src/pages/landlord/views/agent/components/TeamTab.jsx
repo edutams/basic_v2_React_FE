@@ -28,6 +28,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import { IconUsers } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
@@ -724,8 +725,10 @@ const TeamTab = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  No organizations found
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No organizations found
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}

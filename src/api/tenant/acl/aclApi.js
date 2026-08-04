@@ -100,6 +100,18 @@ const aclApi = {
         const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions/all`);
         return response.data;
     },
+
+    getSchoolUserDirectPermissions: async (userId) => {
+        const response = await tenantApi.get(`/censis/acl/assignments/users/${userId}/permissions`);
+        return response.data;
+    },
+
+    assignSchoolUserDirectPermissions: async (userId, permissions) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/permissions`, {
+            permissions,
+        });
+        return response.data;
+    },
 };
 
 export default aclApi;

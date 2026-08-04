@@ -45,11 +45,6 @@ const AttendancePsychomotor = () => {
 
   // ── Metrics that respond to filter changes ──────────────────
   const [attendanceMetrics, setAttendanceMetrics] = useState({
-    daysOpen: 0,
-    daysElapsed: 0,
-    daysRemaining: 0,
-    elapsedPercentage: 0,
-    totalSchoolDays: 0,
     weekRate: 0,
     weekRateChange: null,
     weekTrendText: '',
@@ -74,6 +69,18 @@ const AttendancePsychomotor = () => {
     psychoTrendText: '',
   });
 
+  const [schoolDaysMetrics, setSchoolDaysMetrics] = useState({
+    scope: 'term',
+    termDaysOpen: 0,
+    termDaysElapsed: 0,
+    termDaysRemaining: 0,
+    termElapsedPercentage: 0,
+    weekDaysOpen: 0,
+    weekDaysElapsed: 0,
+    weekDaysRemaining: 0,
+    weekElapsedPercentage: 0,
+  });
+
   // Start as loading so the analytics cards show skeletons on first paint
   // until the active tab's stats arrive.
   const [loading, setLoading] = useState(true);
@@ -96,11 +103,6 @@ const AttendancePsychomotor = () => {
       if (res.data?.data) {
         const stats = res.data.data;
         setAttendanceMetrics({
-          daysOpen: stats.days_open || 0,
-          daysElapsed: stats.days_elapsed || 0,
-          daysRemaining: stats.days_remaining || 0,
-          elapsedPercentage: stats.elapsed_percentage || 0,
-          totalSchoolDays: stats.total_school_days || 0,
           weekRate: stats.week_rate || 0,
           weekRateChange: stats.week_rate_change ?? null,
           weekTrendText: stats.week_trend_text || '',
@@ -153,6 +155,29 @@ const AttendancePsychomotor = () => {
     }
   }, []);
 
+  // ── Fetch School Days Open from API ────────────────────────
+  const fetchSchoolDaysOpen = useCallback(async (params = {}) => {
+    try {
+      const res = await attendanceApi.getSchoolDaysOpen(params);
+      if (res.data?.data) {
+        const data = res.data.data;
+        setSchoolDaysMetrics({
+          scope: data.scope || 'term',
+          termDaysOpen: data.term?.days_open || 0,
+          termDaysElapsed: data.term?.days_elapsed || 0,
+          termDaysRemaining: data.term?.days_remaining || 0,
+          termElapsedPercentage: data.term?.elapsed_percentage || 0,
+          weekDaysOpen: data.week?.days_open || 0,
+          weekDaysElapsed: data.week?.days_elapsed || 0,
+          weekDaysRemaining: data.week?.days_remaining || 0,
+          weekElapsedPercentage: data.week?.elapsed_percentage || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch school days:', error);
+    }
+  }, []);
+
   // ── Filter update callbacks from child tabs ─────────────────
   const handleAttendanceFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
@@ -163,6 +188,11 @@ const AttendancePsychomotor = () => {
     if (classId) setSelectedClassId(classId);
     fetchAttendanceStats({
       class_arm_id: classArmId || undefined,
+      session_id: sessionId || undefined,
+      term_id: termId || undefined,
+      week_term_id: weekId || undefined,
+    });
+    fetchSchoolDaysOpen({
       session_id: sessionId || undefined,
       term_id: termId || undefined,
       week_term_id: weekId || undefined,
@@ -208,7 +238,7 @@ const AttendancePsychomotor = () => {
           onFilter={handleAttendanceFilter}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} programmeId={selectedProgrammeId} classId={selectedClassId} />,
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} schoolDaysMetrics={schoolDaysMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} programmeId={selectedProgrammeId} classId={selectedClassId} />,
     });
     counter++;
 
@@ -225,7 +255,7 @@ const AttendancePsychomotor = () => {
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, loading, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
+  }, [can, attendanceMetrics, psychomotorMetrics, schoolDaysMetrics, loading, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {
@@ -252,6 +282,7 @@ const AttendancePsychomotor = () => {
 
     if (tab.id === 'mark-attendance') {
       fetchAttendanceStats(params);
+      fetchSchoolDaysOpen(params);
     } else if (tab.id === 'mark-psychomotor') {
       fetchPsychomotorStats(params);
     }

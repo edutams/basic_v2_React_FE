@@ -27,12 +27,16 @@ import {
   MenuItem as SelectMenuItem,
   Grid,
 } from '@mui/material';
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+} from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import DirectPermissionModal from './DirectPermissionModal';
 import ViewDirectPermissionModal from './ViewDirectPermissionModal';
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/landlord/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
@@ -298,6 +302,19 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
+  const handleViewDirectPermissionSave = async (permissions) => {
+    if (!currentOrganizationForRole) return;
+
+    try {
+      await aclApi.assignAgentDirectPermissions(currentOrganizationForRole.id, permissions);
+      notify.success('Permissions updated successfully!');
+      setViewDirectPermissionModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update permissions');
+    }
+  };
+
   const filteredUsers = useMemo(() => {
     let filtered = users.filter((user) => {
       const term = nameFilter.toLowerCase();
@@ -361,8 +378,11 @@ const AssignmentManagement = () => {
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5">Assign Roles/Permission to Organizations</Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+          <Typography variant="h5" data-tour="acl-assign-heading">
+            Assign Roles/Permission to Organizations
+          </Typography>
+          <ShowTourGuideButton />
         </Box>
       }
     >
@@ -375,6 +395,7 @@ const AssignmentManagement = () => {
             value={nameFilterInput}
             onChange={(e) => setNameFilterInput(e.target.value)}
             onKeyPress={handleKeyPress}
+            data-tour="acl-assign-search"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -423,10 +444,10 @@ const AssignmentManagement = () => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>User Details</TableCell>
-                <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>Organization</TableCell>
-                <TableCell sx={{ width: { xs: '30%', md: '35%' } }}>Assigned Role</TableCell>
-                <TableCell sx={{ width: '15%' }} align="center">
+                <TableCell sx={{ width: { xs: '30%', md: '22%' } }}>User Details</TableCell>
+                <TableCell sx={{ width: { xs: '25%', md: '18%' } }}>Organization</TableCell>
+                <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>Assigned Role</TableCell>
+                <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
                   Action
                 </TableCell>
               </TableRow>
@@ -507,7 +528,7 @@ const AssignmentManagement = () => {
                         ))}
                       </Box>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" data-tour="acl-assign-view">
                       <IconButton onClick={(e) => handleMenuOpen(e, user)}>
                         <MoreVertIcon />
                       </IconButton>
@@ -523,11 +544,11 @@ const AssignmentManagement = () => {
                           View Assigned Roles
                         </MenuItem>
                         <MenuItem onClick={() => handleAction('directPermission', user)}>
-                          Assign Permission
+                          Assign Direct Permission
                         </MenuItem>
-                        {/* <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
-                            View  Permission
-                          </MenuItem> */}
+                        <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                          View Permission
+                        </MenuItem>
                       </Menu>
                     </TableCell>
                   </TableRow>
@@ -596,6 +617,7 @@ const AssignmentManagement = () => {
         open={viewDirectPermissionModalOpen}
         onClose={() => setViewDirectPermissionModalOpen(false)}
         currentUser={currentOrganizationForRole}
+        onPermissionSave={handleViewDirectPermissionSave}
       />
     </ParentCard>
   );

@@ -11,7 +11,7 @@ import { IconCompass } from '@tabler/icons-react';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { title: 'Dashboard' },
+  // { title: 'Dashboard' },
   { title: 'Curriculum Manager' },
 ];
 
@@ -20,35 +20,9 @@ const TabPanel = ({ children, value, index }) => {
 };
 
 // ── Tour Steps Configuration (Covering headers, tabs, and inner tab content) ────
-const tourSteps = [
-  {
-    selector: '[data-tour="curriculum-manager-header"]',
-    content: (
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-          Curriculum Manager Overview 🎓
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Welcome to Curriculum Manager! This module empowers you to define school curriculums, organize subject banks, and map subjects to classes.
-        </Typography>
-      </Box>
-    ),
-  },
-  {
-    selector: '[data-tour="curriculum-tabs"]',
-    content: (
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Module Navigation 📑
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Easily switch between the 3 core tabs: <b>Curriculum Setup</b>, <b>Subject Bank</b>, and <b>Class Subject</b>.
-        </Typography>
-      </Box>
-    ),
-  },
+// ── Tour Steps Configuration per Tab ──────────────────────────────────────────
 
-  // ── TAB 0: Curriculum Setup steps ───────────────────────────────────────────
+const tab0Steps = [
   {
     selector: '[data-tour="tab-0"]',
     content: (
@@ -88,8 +62,9 @@ const tourSteps = [
       </Box>
     ),
   },
+];
 
-  // ── TAB 1: Subject Bank steps ───────────────────────────────────────────────
+const tab1Steps = [
   {
     selector: '[data-tour="tab-1"]',
     content: (
@@ -98,7 +73,7 @@ const tourSteps = [
           2. Subject Bank 📚
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Next, let's explore managing subjects and subject groups under each curriculum.
+          Explore managing subjects and subject groups under each curriculum.
         </Typography>
       </Box>
     ),
@@ -142,8 +117,9 @@ const tourSteps = [
       </Box>
     ),
   },
+];
 
-  // ── TAB 2: Class Subject steps ──────────────────────────────────────────────
+const tab2Steps = [
   {
     selector: '[data-tour="tab-2"]',
     content: (
@@ -152,7 +128,7 @@ const tourSteps = [
           3. Class Subject 🏫
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          Finally, assign subjects directly to specific class arms.
+          Assign subjects directly to specific class arms and allocate subject teachers.
         </Typography>
       </Box>
     ),
@@ -183,39 +159,18 @@ const tourSteps = [
       </Box>
     ),
   },
-
-  // ── Final CTA ───────────────────────────────────────────────────────────────
-  {
-    selector: '[data-tour="take-tour-btn"]',
-    content: (
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          Guided Tour Complete 🎉
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
-          You're all set! Click <b>Take Tour</b> anytime if you ever need a refresher walkthrough.
-        </Typography>
-      </Box>
-    ),
-  },
 ];
 
-// ── Tour Controller Helper (Auto-switches tabs during tour) ────────────────────
-const TourTabSync = ({ setTab }) => {
-  const { currentStep, isOpen } = useTour();
-
-  useEffect(() => {
-    if (isOpen) {
-      // Tab 0 steps: 2, 3, 4
-      if (currentStep >= 2 && currentStep <= 4) setTab(0);
-      // Tab 1 steps: 5, 6, 7, 8
-      if (currentStep >= 5 && currentStep <= 8) setTab(1);
-      // Tab 2 steps: 9, 10, 11
-      if (currentStep >= 9 && currentStep <= 11) setTab(2);
-    }
-  }, [currentStep, isOpen, setTab]);
-
-  return null;
+const getStepsForTab = (tabIndex) => {
+  switch (tabIndex) {
+    case 1:
+      return tab1Steps;
+    case 2:
+      return tab2Steps;
+    case 0:
+    default:
+      return tab0Steps;
+  }
 };
 
 // ── Inner Main View ───────────────────────────────────────────────────────────
@@ -242,8 +197,6 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
 
   return (
     <PageContainer title="Curriculum Manager">
-      <TourTabSync setTab={setTab} />
-
       {/* HEADER & TAKE TOUR BUTTON */}
       <Box
         sx={{
@@ -330,10 +283,12 @@ const CurriculumManager = () => {
   const [tab, setTab] = useState(0);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
+  const currentSteps = getStepsForTab(tab);
 
   return (
     <TourProvider
-      steps={tourSteps}
+      key={tab}
+      steps={currentSteps}
       showBadge={false}
       showDots
       scrollSmooth

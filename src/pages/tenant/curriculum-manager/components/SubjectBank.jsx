@@ -28,6 +28,7 @@ import {
   Autocomplete,
   Grid,
 } from '@mui/material';
+import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
@@ -548,8 +549,8 @@ const SubjectBank = () => {
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box data-tour="subject-bank-select-curriculum">
-              <ParentCard>
+            <Box>
+              <ParentCard title={<Typography variant="h6" sx={{ fontWeight: 600 }}>Curriculum List</Typography>}>
                 <TableContainer
                   sx={{
                     height: { xs: 220, md: 230 },
@@ -578,7 +579,7 @@ const SubjectBank = () => {
                       ) : curriculumData.length > 0 ? (
                         curriculumData.map((item, i) => (
                           <TableRow key={item.id} hover>
-                            <TableCell>
+                            <TableCell data-tour={i === 0 ? CURRICULUM_TOUR_KEYS.SELECT_CURRICULUM_RADIO : undefined}>
                               <Radio
                                 size="small"
                                 checked={selectedCurriculum === item.id}
@@ -630,10 +631,10 @@ const SubjectBank = () => {
             </Box>
 
             {/* 2. Subject Group Card Below Curriculum */}
-            <Box data-tour="subject-bank-groups-panel">
+            <Box>
               <ParentCard
                 title={
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography variant="h6" data-tour="subject-bank-groups-panel" sx={{ fontWeight: 600 }}>
                     Subject Groups
                   </Typography>
                 }
@@ -699,11 +700,9 @@ const SubjectBank = () => {
                     </FormControl>
                   </Box>
 
-                  <Box data-tour="subject-create-group-btn" sx={{ display: 'inline-block', width: { xs: '100%', sm: 'auto' } }}>
-                    <Button variant="contained" size="small" sx={{ width: '100%', whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
-                      Create Group
-                    </Button>
-                  </Box>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.CREATE_GROUP_BTN} variant="contained" size="small" sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }} onClick={handleOpenCreateSubjectGroupModal}>
+                    Create Group
+                  </Button>
                 </Box>
 
                 <TableContainer
@@ -729,9 +728,12 @@ const SubjectBank = () => {
                         <TableCell sx={{ width: 80 }}>Unit</TableCell>
                         <TableCell sx={{ width: 100 }}>Pass Mark</TableCell>
                         <TableCell sx={{ width: 110 }}>Status</TableCell>
-                        <TableCell data-tour="subject-group-action-btn" sx={{ width: 70 }} align="center">
+                        <TableCell sx={{ width: 70 }} align="center">
                           Action
                         </TableCell>
+                        {/* <TableCell data-tour={CURRICULUM_TOUR_KEYS.GROUP_ACTION_HEADER} sx={{ width: 70 }} align="center">
+                          Action
+                        </TableCell> */}
                       </TableRow>
                     </TableHead>
 
@@ -810,10 +812,10 @@ const SubjectBank = () => {
         </Grid>
 
         {/* RIGHT COLUMN - Subject Bank Panel */}
-        <Grid size={{ xs: 12, md: 12, lg: 6 }} data-tour="subject-bank-subjects-panel">
+        <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <ParentCard
             title={
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography variant="h6" data-tour="subject-bank-subjects-panel" sx={{ fontWeight: 600 }}>
                 Subject Bank
               </Typography>
             }
@@ -872,11 +874,9 @@ const SubjectBank = () => {
                 />
               </Box>
 
-              <Box data-tour="subject-add-btn" sx={{ display: 'inline-block', width: { xs: '100%', sm: 'auto' } }}>
-                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: '100%', whiteSpace: 'nowrap' }}>
-                  Add Subject
-                </Button>
-              </Box>
+              <Button data-tour={CURRICULUM_TOUR_KEYS.ADD_SUBJECT_BTN} variant="contained" size="small" onClick={handleOpenAddSubjectModal} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap' }}>
+                Add Subject
+              </Button>
             </Box>
 
             <TableContainer
@@ -904,9 +904,12 @@ const SubjectBank = () => {
 
                     <TableCell sx={{ fontWeight: 700, py: 1.5, width: 70 }}>Unit</TableCell>
 
-                    <TableCell data-tour="subject-action-btn" align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
+                    <TableCell align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
                       Actions
                     </TableCell>
+                    {/* <TableCell data-tour={CURRICULUM_TOUR_KEYS.SUBJECT_ACTION_HEADER} align="center" sx={{ fontWeight: 700, py: 1.5, width: 70 }}>
+                      Actions
+                    </TableCell> */}
                   </TableRow>
                 </TableHead>
 

@@ -31,6 +31,7 @@ import {
   Grid,
   FormHelperText,
 } from '@mui/material';
+import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
@@ -413,10 +414,11 @@ const ClassSubject = () => {
       }}
     >
       {/* LEFT: Program and Classes */}
-      <Box sx={{ flex: { md: 4 }, width: '100%' }} data-tour="class-subject-selector">
+      <Box sx={{ flex: { md: 4 }, width: '100%' }}>
         <ParentCard
           title={
             <Select
+              data-tour={CURRICULUM_TOUR_KEYS.PROGRAMME_SELECT}
               size="small"
               value={program}
               onChange={(e) => setProgram(e.target.value)}
@@ -445,6 +447,7 @@ const ClassSubject = () => {
               </Box>
             ) : (
               <RadioGroup
+                data-tour={CURRICULUM_TOUR_KEYS.CLASS_LIST}
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(Number(e.target.value))}
               >
@@ -485,18 +488,16 @@ const ClassSubject = () => {
       </Box>
 
       {/* RIGHT: Subjects */}
-      <Box sx={{ flex: { md: 8 }, width: '100%' }} data-tour="class-subject-table">
+      <Box sx={{ flex: { md: 8 }, width: '100%' }}>
         <ParentCard
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Class Subjects
               </Typography>
-              <Box data-tour="class-add-subject-btn" sx={{ display: 'inline-block' }}>
-                <Button variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
-                  Add Subject to Class
-                </Button>
-              </Box>
+              <Button data-tour={CURRICULUM_TOUR_KEYS.ADD_CLASS_SUBJECT_BTN} variant="contained" size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+                Add Subject to Class
+              </Button>
             </Box>
           }
         >
@@ -510,7 +511,7 @@ const ClassSubject = () => {
                     <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Passmark</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
-                    <TableCell data-tour="class-subject-action-btn" sx={{ fontWeight: 'bold', width: '10%' }} align="center">
+                    <TableCell data-tour={CURRICULUM_TOUR_KEYS.CLASS_SUBJECT_ACTION_HEADER} sx={{ fontWeight: 'bold', width: '10%' }} align="center">
                       Action
                     </TableCell>
                   </TableRow>

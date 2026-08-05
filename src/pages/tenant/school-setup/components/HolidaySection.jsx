@@ -419,25 +419,38 @@ const HolidaySectionInner = ({ refreshKey }) => {
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
               <Paper elevation={0} sx={heroCardSx(0, isDark, theme)}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-                  <Typography variant="h6" fontWeight={700} color="text.primary">
-                    Total School Days
-                  </Typography>
-                  <Box sx={heroIconBadgeSx(0, isDark, theme)}>
-                    <IconCalendar size={20} />
+                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                    <Typography variant="h6" fontWeight={700} color="text.primary">
+                      Total School Days
+                    </Typography>
+                    <Box sx={heroIconBadgeSx(0, isDark, theme)}>
+                      <IconCalendar size={20} />
+                    </Box>
+                  </Stack>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mt: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h2"
+                      fontWeight={900}
+                      align="center"
+                      sx={{
+                        lineHeight: 1,
+                        fontSize: { xs: 26, md: 32 },
+                        color: isDark ? '#fff' : heroAccent(0, isDark, theme),
+                      }}
+                    >
+                      {statistics.total_school_days}
+                    </Typography>
                   </Box>
-                </Stack>
-                <Typography
-                  variant="h2"
-                  fontWeight={800}
-                  sx={{
-                    lineHeight: 1,
-                    fontSize: { xs: 26, md: 32 },
-                    color: isDark ? '#fff' : heroAccent(0, isDark, theme),
-                  }}
-                >
-                  {statistics.total_school_days}
-                </Typography>
+                </Box>
               </Paper>
             </Grid>
 
@@ -566,7 +579,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       display="block"
                       sx={{ mt: 0.5 }}
                     >
-                      {daysUsedPercentage}% used out of 100%
+                      {statistics.holiday_days_used} of {statistics.holiday_days_allocated} days used
                     </Typography>
                   </Box>
                 </Box>

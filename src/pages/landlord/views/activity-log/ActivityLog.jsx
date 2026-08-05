@@ -187,9 +187,7 @@ const ActivityLog = () => {
               mb={3}
               data-tour="activity-log-header"
             >
-              <Typography variant="h5">
-                System Activity Logs
-              </Typography>
+              <Typography variant="h5">System Activity Logs</Typography>
               <ShowTourGuideButton />
             </Box>
             <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
@@ -221,89 +219,101 @@ const ActivityLog = () => {
                 sx={{ width: { xs: '100%', sm: '160px' } }}
                 data-tour="activity-log-date"
               />
-            <TextField
-              size="small"
-              label="Date To"
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: dateFrom || undefined }}
-              sx={{ width: { xs: '100%', sm: '160px' } }}
-            />
-            <Button variant="contained" size="small" color="primary" onClick={handleSearch} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-              Search
-            </Button>
-            {(search || dateFrom || dateTo) && (
-              <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                Clear
+              <TextField
+                size="small"
+                label="Date To"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: dateFrom || undefined }}
+                sx={{ width: { xs: '100%', sm: '160px' } }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                onClick={handleSearch}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                Search
               </Button>
-            )}
-          </Box>
-
-          {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress />
+              {(search || dateFrom || dateTo) && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="secondary"
+                  onClick={handleClearFilters}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Clear
+                </Button>
+              )}
             </Box>
-          ) : error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : (
-            <>
-              <TableContainer data-tour="activity-log-table">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "5%" }}>
-                        <Typography variant="h6">S/N</Typography>
-                      </TableCell>
-                      <TableCell sx={{ width: "50%" }}>
-                        <Typography variant="h6">Activity</Typography>
-                      </TableCell>
-                      {/* <TableCell>
+
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={5}>
+                <CircularProgress />
+              </Box>
+            ) : error ? (
+              <Alert severity="error">{error}</Alert>
+            ) : (
+              <>
+                <TableContainer sx={{ overflowX: 'auto' }} data-tour="activity-log-table">
+                  <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: '5%' }}>
+                          <Typography variant="h6">S/N</Typography>
+                        </TableCell>
+                        <TableCell sx={{ width: '50%' }}>
+                          <Typography variant="h6">Activity</Typography>
+                        </TableCell>
+                        {/* <TableCell>
                         <Typography variant="h6">Description</Typography>
                       </TableCell> */}
-                      {/* <TableCell>
+                        {/* <TableCell>
                         <Typography variant="h6">Subject</Typography>
                       </TableCell> */}
-                      <TableCell sx={{ width: "35%" }}>
-                        <Typography variant="h6">Date Performed</Typography>
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          width: "25%",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <Typography variant="h6">Action</Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {logs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          No activity logs found
+                        <TableCell sx={{ width: '35%' }}>
+                          <Typography variant="h6">Date Performed</Typography>
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            width: '25%',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <Typography variant="h6">Action</Typography>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      logs.map((log, idx) => (
-                        <TableRow key={log.id}>
-                          <TableCell>
-                            <Typography variant="body1">{idx + 1}</Typography>
+                    </TableHead>
+                    <TableBody>
+                      {logs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center">
+                            No activity logs found
                           </TableCell>
-                          <TableCell>
-                            <Typography variant="body1">
-                              <a href="#" className="text-success">
-                                {log.causer?.full_name || 'System'}
-                              </a>{' '}
-                              {log.description}
-                            </Typography>
-                          </TableCell>
-                          {/* <TableCell>
+                        </TableRow>
+                      ) : (
+                        logs.map((log, idx) => (
+                          <TableRow key={log.id}>
+                            <TableCell>
+                              <Typography variant="body1">{idx + 1}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body1">
+                                <a href="#" className="text-success">
+                                  {log.causer?.full_name || 'System'}
+                                </a>{' '}
+                                {log.description}
+                              </Typography>
+                            </TableCell>
+                            {/* <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
                           </TableCell> */}
-                          {/* <TableCell>
+                            {/* <TableCell>
                             <Chip
                               label={log.subject_type || 'System'}
                               size="small"
@@ -311,47 +321,50 @@ const ActivityLog = () => {
                               
                             />
                           </TableCell> */}
-                          <TableCell>
-                            <Typography variant="body2" color="textSecondary">
-                              {log.my_updated_at}
-                              {/* {dayjs(log.created_at).format('MMM D, YYYY HH:mm')} */}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button variant="contained" size="small" startIcon={<IconEye />}
-                              onClick={() => handleOpenModal(log)}
-                              data-tour="activity-log-action"
-                              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-                            >
-                              View Details
-                            </Button>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenModal(log)}
-                              sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
-                            >
-                              <IconEye size={18} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[10, 20, 50]}
-                component="div"
-                count={total}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </>
-          )}
-        </CardContent>
-      </BlankCard>
+                            <TableCell>
+                              <Typography variant="body2" color="textSecondary">
+                                {log.my_updated_at}
+                                {/* {dayjs(log.created_at).format('MMM D, YYYY HH:mm')} */}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Button
+                                variant="contained"
+                                size="small"
+                                startIcon={<IconEye />}
+                                onClick={() => handleOpenModal(log)}
+                                data-tour="activity-log-action"
+                                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                              >
+                                View Details
+                              </Button>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenModal(log)}
+                                sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                              >
+                                <IconEye size={18} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  rowsPerPageOptions={[10, 20, 50]}
+                  component="div"
+                  count={total}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </>
+            )}
+          </CardContent>
+        </BlankCard>
       </AclTourProvider>
 
       {/* Details Modal */}
@@ -366,9 +379,9 @@ const ActivityLog = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedLog &&
-            selectedLog.properties &&
-            Object.keys(selectedLog.properties).length > 0 ? (
-            <TableContainer >
+          selectedLog.properties &&
+          Object.keys(selectedLog.properties).length > 0 ? (
+            <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow>

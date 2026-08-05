@@ -10,7 +10,7 @@ const TopCard = ({ label, value, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  
+
   return (
     <Card
       sx={{
@@ -51,10 +51,10 @@ const TopCard = ({ label, value, colorIndex, icon: Icon }) => {
           </Typography>
           <Typography
             variant="caption"
-            sx={{ 
-              color: isDark ? '#ffffff' : '#4B5563', 
-              fontWeight: 500, 
-              fontSize: '12px' 
+            sx={{
+              color: isDark ? '#ffffff' : '#4B5563',
+              fontWeight: 500,
+              fontSize: '12px'
             }}
           >
             {label}
@@ -68,7 +68,7 @@ const SideStatRow = ({ label, value, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  
+
   return (
     <Stack
       direction="row"

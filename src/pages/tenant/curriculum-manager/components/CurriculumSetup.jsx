@@ -28,6 +28,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
@@ -585,16 +586,12 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Box data-tour="curriculum-import-btn" sx={{ display: 'inline-block' }}>
-                    <Button variant="contained" size="small" onClick={handleOpenImportModal}>
-                      Import
-                    </Button>
-                  </Box>
-                  <Box data-tour="curriculum-create-btn" sx={{ display: 'inline-block' }}>
-                    <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
-                      Create Curriculum
-                    </Button>
-                  </Box>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN} variant="contained" size="small" onClick={handleOpenImportModal}>
+                    Import
+                  </Button>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN} variant="contained" size="small" onClick={handleOpenCreateModal}>
+                    Create Curriculum
+                  </Button>
                 </Box>
               </Box>
             }
@@ -616,7 +613,7 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
                         Imported
                       </TableCell>
-                      <TableCell data-tour="curriculum-action-btn" align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
+                      <TableCell data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER} align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -705,7 +702,7 @@ const CurriculumSetup = () => {
         </Box>
 
         {/* RIGHT - Assign to Classes */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-assign-panel">
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
             title={
               <Box
@@ -718,6 +715,7 @@ const CurriculumSetup = () => {
                 <Typography variant="h5">Assign to Classes</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
+                    data-tour={CURRICULUM_TOUR_KEYS.ASSIGN_SELECT}
                     size="small"
                     value={selectedSession}
                     onChange={(e) => handleSessionChange(e.target.value)}
@@ -751,11 +749,9 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Box data-tour="curriculum-assign-update-btn" sx={{ display: 'inline-block' }}>
-                    <Button variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
-                      {loadingSave ? <CircularProgress size={24} /> : 'Update'}
-                    </Button>
-                  </Box>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN} variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                    {loadingSave ? <CircularProgress size={24} /> : 'Update'}
+                  </Button>
                 </Box>
               </Box>
             }

@@ -26,7 +26,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import api from '@/api/landlord/landlord_api';
-import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
+import { IconSearch, IconEye, IconX, IconDownload } from '@tabler/icons-react';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 
@@ -170,6 +170,30 @@ const ActivityLog = () => {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedLog(null);
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!selectedLog) return;
+    try {
+      setDownloading(true);
+      const res = await api.get(`/v1/landlord/activity-logs/${selectedLog.id}/pdf`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `activity-log-${selectedLog.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -426,6 +450,15 @@ const ActivityLog = () => {
           )}
         </DialogContent>
         <DialogActions>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconDownload />}
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+          >
+            {downloading ? 'Preparing…' : 'Download PDF'}
+          </Button>
           <Button variant="contained" size="small" onClick={handleCloseModal} color="primary">
             Close
           </Button>

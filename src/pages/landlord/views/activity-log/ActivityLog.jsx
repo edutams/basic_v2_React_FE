@@ -292,8 +292,10 @@ const ActivityLog = () => {
                     <TableBody>
                       {logs.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} align="center">
-                            No activity logs found
+                          <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                            <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                              No activity logs found
+                            </Alert>
                           </TableCell>
                         </TableRow>
                       ) : (

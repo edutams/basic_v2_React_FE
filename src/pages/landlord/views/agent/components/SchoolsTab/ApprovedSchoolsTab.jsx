@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Avatar,
   Link,
+  Alert,
 } from '@mui/material';
 import { Payments as PaymentsIcon } from '@mui/icons-material';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -240,8 +241,10 @@ const ApprovedSchoolsTab = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">No approved schools yet.</Typography>
+                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No approved schools yet.
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}

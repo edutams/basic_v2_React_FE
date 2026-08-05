@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Avatar,
   Link,
+  Alert,
 } from '@mui/material';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -237,8 +238,10 @@ const SetupApprovals = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">No onboarding applications.</Typography>
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No onboarding applications.
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}

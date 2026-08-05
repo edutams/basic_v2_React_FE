@@ -18,6 +18,7 @@ import {
   IconButton,
   useTheme,
   TablePagination,
+  Alert,
 } from '@mui/material';
 import { IconX, IconDownload } from '@tabler/icons-react';
 import { mockCommissionData } from '../mockData';
@@ -224,10 +225,10 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
                 ))}
               {filteredData.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
+                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
                       No records found
-                    </Typography>
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

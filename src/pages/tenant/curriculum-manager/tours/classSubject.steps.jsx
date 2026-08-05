@@ -47,7 +47,7 @@ export const classSubjectSteps = [
     content: (
       <Box sx={{ p: 0.5 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.75, color: 'primary.main' }}>
-          3. Add Subject to Class ➕
+          3. Add Subject to Class
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.6 }}>
           Click <b>Add Subject to Class</b> (select a class level from the left panel to enable this button) to assign new subjects to the class arm.

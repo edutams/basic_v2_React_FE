@@ -88,7 +88,7 @@ const TransactionManager = () => {
 
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              label="This Weeks"
+              label="This Week"
               count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={1}

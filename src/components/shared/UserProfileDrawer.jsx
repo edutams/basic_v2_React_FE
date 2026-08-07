@@ -64,6 +64,7 @@ import {
   prettifyModuleName,
   getPermissionModule,
 } from '@/utils/permissionGrouping';
+import aclApi from '@/api/tenant/acl/aclApi';
 
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) => {
   const theme = useTheme();
@@ -77,6 +78,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [collapsedModules, setCollapsedModules] = useState({});
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [currentUser, setCurrentUser] = useState(user);
+  const [liveUser, setLiveUser] = useState(null);
+  const [livePermissions, setLivePermissions] = useState(null);
+  const [fetchingLiveData, setFetchingLiveData] = useState(false);
 
   const [editForm, setEditForm] = useState({
     fname: '',
@@ -105,9 +109,51 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   useEffect(() => {
     setCurrentUser(user);
+    setLiveUser(null);
+    setLivePermissions(null);
   }, [user]);
 
-  const targetUser = currentUser || user;
+  const targetUser = useMemo(() => {
+    return { ...(currentUser || user || {}), ...(liveUser || {}) };
+  }, [currentUser, user, liveUser]);
+
+  useEffect(() => {
+    const targetId = targetUser?.id || targetUser?.user_id;
+    if (open && targetId && !liveUser && !fetchingLiveData) {
+      setFetchingLiveData(true);
+      Promise.all([
+        aclApi.getSchoolUsers().catch(() => null),
+        aclApi.getSchoolUserDirectPermissions(targetId).catch(() => null),
+      ])
+        .then(([usersRes, permsRes]) => {
+          if (usersRes?.data) {
+            const uList = Array.isArray(usersRes.data)
+              ? usersRes.data
+              : Array.isArray(usersRes.data?.data)
+                ? usersRes.data.data
+                : [];
+            const foundUser = uList.find((u) => String(u.id) === String(targetId));
+            if (foundUser) {
+              setLiveUser(foundUser);
+            }
+          }
+          if (permsRes?.data) {
+            const direct = permsRes.data.direct || [];
+            const inherited = permsRes.data.inherited || [];
+            const combined = [...new Set([...direct, ...inherited])];
+            if (combined.length > 0) {
+              setLivePermissions(combined);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch live user data:', err);
+        })
+        .finally(() => {
+          setFetchingLiveData(false);
+        });
+    }
+  }, [open, targetUser?.id, targetUser?.user_id, liveUser, fetchingLiveData]);
 
   const formatRoleName = (str) => {
     if (!str) return '';
@@ -121,62 +167,43 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       .join(' ');
   };
 
-  // --- Comprehensive Multi-Role Extractor ---
+  // --- Comprehensive Multi-Role Extractor matching SchoolAssignmentManagement ---
   const parsedRoles = useMemo(() => {
     if (!targetUser) return ['User'];
     const rolesSet = new Set();
 
     const addRole = (val) => {
       if (!val) return;
-      if (typeof val === 'object') {
-        const name = val.name || val.user_type_name || val.title || val.role_name;
+      if (typeof val === 'object' && val !== null) {
+        const name = val.name || val.role_name || val.title || val.user_type_name;
         if (name) rolesSet.add(formatRoleName(name));
       } else if (typeof val === 'string' && val.trim()) {
         rolesSet.add(formatRoleName(val));
       }
     };
 
-    // 1. targetUser.roles (Array or string/object)
-    if (Array.isArray(targetUser.roles) && targetUser.roles.length > 0) {
-      targetUser.roles.forEach(addRole);
-    } else if (targetUser.roles) {
-      addRole(targetUser.roles);
+    // Priority 1: Direct Spatie roles from user.roles or user.assignedRoles (as in SchoolAssignmentManagement)
+    const mainRoles = targetUser.roles || targetUser.assignedRoles;
+    if (Array.isArray(mainRoles) && mainRoles.length > 0) {
+      mainRoles.forEach(addRole);
+    } else if (mainRoles && typeof mainRoles === 'object') {
+      addRole(mainRoles);
     }
 
-    // 2. targetUser.role_names / targetUser.roles_list
-    if (Array.isArray(targetUser.role_names)) {
-      targetUser.role_names.forEach(addRole);
-    }
-    if (Array.isArray(targetUser.roles_list)) {
-      targetUser.roles_list.forEach(addRole);
-    }
-
-    // 3. targetUser.user_types (Array)
-    if (Array.isArray(targetUser.user_types)) {
-      targetUser.user_types.forEach(addRole);
-    }
-
-    // 4. targetUser.user_type / targetUser.user_type_name
-    if (targetUser.user_type) {
-      addRole(targetUser.user_type);
-    }
-    if (targetUser.user_type_name) {
-      addRole(targetUser.user_type_name);
-    }
-
-    // 5. targetUser.role
-    if (targetUser.role) {
-      if (Array.isArray(targetUser.role)) {
-        targetUser.role.forEach(addRole);
-      } else {
-        addRole(targetUser.role);
+    // Priority 2: Check role_names or roles_list
+    if (rolesSet.size === 0) {
+      if (Array.isArray(targetUser.role_names)) {
+        targetUser.role_names.forEach(addRole);
+      }
+      if (Array.isArray(targetUser.roles_list)) {
+        targetUser.roles_list.forEach(addRole);
       }
     }
 
-    // 6. Check log properties fallback (targetUser.properties)
-    if (targetUser.properties) {
+    // Priority 3: Check activity log properties
+    if (rolesSet.size === 0 && targetUser.properties) {
       const p = targetUser.properties;
-      const pRoles = p.causer_roles || p.roles || p.role || p.user_roles;
+      const pRoles = p.causer_roles || p.roles || p.role || p.user_roles || p.Roles || p['User Role'];
       if (Array.isArray(pRoles)) {
         pRoles.forEach(addRole);
       } else if (pRoles) {
@@ -184,23 +211,33 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       }
     }
 
-    // 7. Check user_type_id mapping
-    if (targetUser.user_type_id === 1 || targetUser.user_type_id === '1') {
-      rolesSet.add('Super Admin');
+    // Priority 4: Check single role property (e.g. targetUser.role)
+    if (rolesSet.size === 0 && targetUser.role) {
+      if (Array.isArray(targetUser.role)) {
+        targetUser.role.forEach(addRole);
+      } else {
+        addRole(targetUser.role);
+      }
     }
 
-    // 8. Check special flags like is_admin
-    if (targetUser.is_admin === '1' || targetUser.is_admin === 1 || targetUser.is_super_admin) {
-      rolesSet.add('Super Admin');
+    // Priority 5: Fallback to user_type_name or user_type if no Spatie role is attached
+    if (rolesSet.size === 0) {
+      if (targetUser.user_type_name) {
+        addRole(targetUser.user_type_name);
+      } else if (targetUser.user_type) {
+        addRole(targetUser.user_type);
+      }
     }
 
     const list = Array.from(rolesSet).filter(Boolean);
     if (list.length > 0) return list;
-    if (targetUser.organization) return ['Landlord / Agent'];
     return ['User'];
   }, [targetUser]);
 
   const userPermissions = useMemo(() => {
+    if (livePermissions && Array.isArray(livePermissions) && livePermissions.length > 0) {
+      return livePermissions;
+    }
     if (!targetUser) return ['dashboard.index', 'profile.view', 'activity_log.index', 'notifications.read', 'account_settings.update'];
     if (targetUser.permissions && Array.isArray(targetUser.permissions) && targetUser.permissions.length > 0) {
       return targetUser.permissions;
@@ -218,7 +255,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       'tenant.users.manage',
       'reports.export',
     ];
-  }, [targetUser]);
+  }, [livePermissions, targetUser]);
 
   const formattedPermissionsList = useMemo(() => {
     return userPermissions.map((perm) => {
@@ -370,9 +407,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   const fullName = targetUser
     ? targetUser.full_name ||
-      (targetUser.fname && targetUser.lname
-        ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
-        : targetUser.name || 'System User')
+    (targetUser.fname && targetUser.lname
+      ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
+      : targetUser.name || 'System User')
     : 'User Profile';
 
   const organizationName = targetUser?.organization?.organization_name || targetUser?.organization?.name || '—';
@@ -380,10 +417,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const status = String(targetUser?.status || 'active').toLowerCase();
   const createdDate = targetUser?.created_at
     ? new Date(targetUser.created_at).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
     : '—';
 
   const getInitials = () => {
@@ -528,6 +565,77 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     </Box>
   );
 
+  const getRoleSx = (roleName) => {
+    if (!roleName) return {};
+    const normalized = String(roleName).toLowerCase().trim().replace(/[\s-]+/g, '_');
+
+    const roleStyles = {
+      user: {
+        backgroundColor: theme.palette.success?.light || alpha(theme.palette.success.main, 0.15),
+        color: theme.palette.success?.main || 'success.main',
+        borderColor: alpha(theme.palette.success.main, 0.3),
+      },
+      admin: {
+        backgroundColor: theme.palette.error?.light || alpha(theme.palette.error.main, 0.15),
+        color: theme.palette.error?.main || 'error.main',
+        borderColor: alpha(theme.palette.error.main, 0.3),
+      },
+      tenant_admin: {
+        backgroundColor: theme.palette.error?.light || alpha(theme.palette.error.main, 0.15),
+        color: theme.palette.error?.main || 'error.main',
+        borderColor: alpha(theme.palette.error.main, 0.3),
+      },
+      super_admin: {
+        backgroundColor: theme.palette.primary?.light || alpha(theme.palette.primary.main, 0.15),
+        color: theme.palette.primary?.main || 'primary.main',
+        borderColor: alpha(theme.palette.primary.main, 0.3),
+      },
+      teacher: {
+        backgroundColor: theme.palette.warning?.light || alpha(theme.palette.warning.main, 0.15),
+        color: theme.palette.warning?.main || 'warning.main',
+        borderColor: alpha(theme.palette.warning.main, 0.3),
+      },
+      staff: {
+        backgroundColor: theme.palette.info?.light || alpha(theme.palette.info.main, 0.15),
+        color: theme.palette.info?.main || 'info.main',
+        borderColor: alpha(theme.palette.info.main, 0.3),
+      },
+      subject_teacher: {
+        backgroundColor: theme.palette.secondary?.light || alpha(theme.palette.secondary.main, 0.15),
+        color: theme.palette.secondary?.main || 'secondary.main',
+        borderColor: alpha(theme.palette.secondary.main, 0.3),
+      },
+      student: {
+        backgroundColor: alpha(theme.palette.purple?.A50 || theme.palette.primary.main, 0.15),
+        color: theme.palette.purple?.A100 || theme.palette.primary.dark,
+        borderColor: alpha(theme.palette.primary.main, 0.3),
+      },
+      learner: {
+        backgroundColor: alpha(theme.palette.purple?.A50 || theme.palette.primary.main, 0.15),
+        color: theme.palette.purple?.A100 || theme.palette.primary.dark,
+        borderColor: alpha(theme.palette.primary.main, 0.3),
+      },
+      bursar: {
+        backgroundColor: alpha(theme.palette.primary.main, 0.12),
+        color: theme.palette.primary.dark,
+        borderColor: alpha(theme.palette.primary.main, 0.3),
+      },
+      parent: {
+        backgroundColor: alpha(theme.palette.secondary.main, 0.15),
+        color: theme.palette.secondary.main,
+        borderColor: alpha(theme.palette.secondary.main, 0.3),
+      },
+    };
+
+    return (
+      roleStyles[normalized] || {
+        backgroundColor: alpha(theme.palette.primary.main, 0.12),
+        color: theme.palette.primary.main,
+        borderColor: alpha(theme.palette.primary.main, 0.25),
+      }
+    );
+  };
+
   const renderRolesRow = (icon, label, roles) => (
     <Box
       display="flex"
@@ -568,14 +676,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 key={i}
                 size="small"
                 label={roleName}
-                color="primary"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: '0.725rem',
                   height: 22,
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: 'primary.main',
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+                  borderRadius: '8px',
+                  border: '1px solid',
+                  ...getRoleSx(roleName),
                 }}
               />
             ))}
@@ -705,8 +812,14 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                           key={idx}
                           size="small"
                           label={r}
-                          color="primary"
-                          sx={{ fontWeight: 600, fontSize: '0.7rem', height: 22, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            height: 22,
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            ...getRoleSx(r),
+                          }}
                         />
                       ))}
                       <Chip
@@ -772,7 +885,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                     {renderBasicRow(<IconPhone size={18} />, 'Phone Number', phone, 'phone')}
                     {renderBasicRow(<IconCake size={18} />, 'Date of Birth (DOB)', dob, 'dob')}
                     {renderBasicRow(<IconMapPin size={18} />, 'Address', address, 'address')}
-                    {renderBasicRow(<IconGenderGenderless size={18} />, 'Sex / Gender', sex, 'sex')}
+                    {renderBasicRow(<IconGenderGenderless size={18} />, 'Gender', sex, 'sex')}
                   </Stack>
                 </Box>
               </Paper>
@@ -867,8 +980,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 {/* Card Body - Single Container */}
                 <Box p={2}>
                   <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
-                    {renderRolesRow(<IconShieldCheck size={18} />, 'Role / Permission', parsedRoles)}
-                    {username !== '—' && renderBasicRow(<IconId size={18} />, 'Username', username, 'username')}
+                    {renderRolesRow(<IconShieldCheck size={18} />, 'User Role', parsedRoles)}
+                    {username !== '—' && renderBasicRow(<IconId size={18} />, 'User ID', username, 'username')}
                     {organizationName !== '—' && renderBasicRow(<IconBuilding size={18} />, 'Organization', organizationName)}
                     {renderBasicRow(<IconCalendar size={18} />, 'Date Joined', createdDate)}
                   </Stack>
@@ -941,7 +1054,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth size="small" select label="Sex / Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
+              <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
                 <MenuItem value="Male">Male</MenuItem>
                 <MenuItem value="Female">Female</MenuItem>
               </TextField>

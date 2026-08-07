@@ -76,7 +76,6 @@ import aclApi from '@/api/tenant/acl/aclApi';
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) => {
   const theme = useTheme();
 
-  // --- All Hooks at Top Level (Unconditional Execution) ---
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
@@ -252,7 +251,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       .join(' ');
   };
 
-  // --- Comprehensive Multi-Role Extractor matching SchoolAssignmentManagement ---
   const parsedRoles = useMemo(() => {
     if (!targetUser) return ['User'];
     const rolesSet = new Set();
@@ -267,7 +265,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       }
     };
 
-    // Priority 1: Direct Spatie roles from user.roles or user.assignedRoles (as in SchoolAssignmentManagement)
     const mainRoles = targetUser.roles || targetUser.assignedRoles;
     if (Array.isArray(mainRoles) && mainRoles.length > 0) {
       mainRoles.forEach(addRole);
@@ -275,7 +272,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       addRole(mainRoles);
     }
 
-    // Priority 2: Check role_names or roles_list
     if (rolesSet.size === 0) {
       if (Array.isArray(targetUser.role_names)) {
         targetUser.role_names.forEach(addRole);
@@ -285,7 +281,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       }
     }
 
-    // Priority 3: Check activity log properties
     if (rolesSet.size === 0 && targetUser.properties) {
       const p = targetUser.properties;
       const pRoles = p.causer_roles || p.roles || p.role || p.user_roles || p.Roles || p['User Role'];
@@ -296,7 +291,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       }
     }
 
-    // Priority 4: Check single role property (e.g. targetUser.role)
     if (rolesSet.size === 0 && targetUser.role) {
       if (Array.isArray(targetUser.role)) {
         targetUser.role.forEach(addRole);
@@ -305,7 +299,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       }
     }
 
-    // Priority 5: Fallback to user_type_name or user_type if no Spatie role is attached
     if (rolesSet.size === 0) {
       if (targetUser.user_type_name) {
         addRole(targetUser.user_type_name);
@@ -621,7 +614,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       full_name: newFullName,
     };
 
-    // Update local state immediately so UI updates instantly
     setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
     setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
     setActiveModal(null);
@@ -972,7 +964,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 }}
               />
 
-              {/* Header Toolbar */}
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Box display="flex" alignItems="center" gap={1}>
                   <IconUser size={20} style={{ opacity: 0.9 }} />
@@ -995,7 +986,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               </Box>
             </Box>
 
-            {/* Profile Identity Card (Overlapping Hero Banner) */}
+            {/* Profile Card (Overlapping Hero Banner) */}
             <Box px={3} sx={{ mt: -4, mb: 2, position: 'relative', zIndex: 1 }}>
               <Paper
                 elevation={3}
@@ -1061,9 +1052,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               </Paper>
             </Box>
 
-            {/* Drawer Body Scrollable Content */}
             <Box px={3} py={1} flex={1} sx={{ overflowY: 'auto' }}>
-              {/* Unified Single Card for Basic Information */}
               <Paper
                 elevation={0}
                 sx={{
@@ -1073,7 +1062,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   mb: 3,
                 }}
               >
-                {/* Card Header */}
                 <Box
                   display="flex"
                   alignItems="center"
@@ -1100,7 +1088,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   </IconButton>
                 </Box>
 
-                {/* Card Body - Single Container */}
                 <Box p={2}>
                   <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
                     {renderBasicRow(<IconMail size={18} />, 'Email Address', email, 'email')}
@@ -1112,7 +1099,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 </Box>
               </Paper>
 
-              {/* Actions Dropdown Menu */}
               <Menu
                 anchorEl={menuAnchorEl}
                 open={Boolean(menuAnchorEl)}
@@ -1155,7 +1141,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 </MenuItem>
               </Menu>
 
-              {/* Unified Single Card for Account & Role Specs */}
               <Paper
                 elevation={0}
                 sx={{
@@ -1165,7 +1150,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   mb: 3,
                 }}
               >
-                {/* Card Header */}
                 <Box
                   display="flex"
                   alignItems="center"
@@ -1199,7 +1183,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   </Button>
                 </Box>
 
-                {/* Card Body - Single Container */}
                 <Box p={2}>
                   <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
                     {renderRolesRow(<IconShieldCheck size={18} />, 'User Role', parsedRoles)}
@@ -1246,9 +1229,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         )}
       </Drawer>
 
-      {/* --- Action Sub-Modals --- */}
 
-      {/* 1. Edit Profile Details Modal */}
+      {/*  Edit Profile Details Modal */}
       <Dialog open={activeModal === 'edit_profile'} onClose={() => setActiveModal(null)} maxWidth="sm" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Edit Profile Details</Typography>
@@ -1292,7 +1274,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 2. Change Profile Picture Modal */}
+      {/* Change Profile Picture Modal */}
       <Dialog open={activeModal === 'change_picture'} onClose={() => setActiveModal(null)} maxWidth="xs" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Change Profile Picture</Typography>
@@ -1317,7 +1299,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 3. Change Password Modal */}
+      {/* Change Password Modal */}
       <Dialog open={activeModal === 'change_password'} onClose={() => setActiveModal(null)} maxWidth="xs" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Change Password</Typography>
@@ -1377,7 +1359,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 4. View Activity Log Modal */}
+      {/* View Activity Log Modal */}
       <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="lg" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1.5}>
@@ -1547,7 +1529,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 4b. Activity Log Details Dialog matching ActivityLog.jsx */}
+      {/* Activity Log Details Dialog matching ActivityLog.jsx */}
       <Dialog
         open={Boolean(selectedActivityDetail)}
         onClose={() => setSelectedActivityDetail(null)}
@@ -1666,7 +1648,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 5. View User Permissions Modal  */}
+      {/* View User Permissions Modal  */}
       <Dialog open={activeModal === 'view_permissions'} onClose={() => setActiveModal(null)} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1}>

@@ -1115,30 +1115,108 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   },
                 }}
               >
-                <MenuItem onClick={() => handleMenuItemClick('edit_profile')}>
-                  <ListItemIcon><IconEdit size={18} /></ListItemIcon>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('edit_profile')}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    transition: 'all 0.15s ease-in-out',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}><IconEdit size={18} /></ListItemIcon>
                   <ListItemText primary="Edit Profile Details" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                 </MenuItem>
 
-                <MenuItem onClick={() => handleMenuItemClick('change_picture')}>
-                  <ListItemIcon><IconCamera size={18} /></ListItemIcon>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('change_picture')}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    transition: 'all 0.15s ease-in-out',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}><IconCamera size={18} /></ListItemIcon>
                   <ListItemText primary="Change Profile Picture" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                 </MenuItem>
 
-                <MenuItem onClick={() => handleMenuItemClick('change_password')}>
-                  <ListItemIcon><IconLock size={18} /></ListItemIcon>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('change_password')}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    transition: 'all 0.15s ease-in-out',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}><IconLock size={18} /></ListItemIcon>
                   <ListItemText primary="Change Password" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                 </MenuItem>
 
-                <MenuItem onClick={() => handleMenuItemClick('view_activity')}>
-                  <ListItemIcon><IconHistory size={18} /></ListItemIcon>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('view_activity')}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    transition: 'all 0.15s ease-in-out',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}><IconHistory size={18} /></ListItemIcon>
                   <ListItemText primary="View Activity Log" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                 </MenuItem>
 
-                <MenuItem onClick={() => handleMenuItemClick('print_profile')}>
-                  <ListItemIcon><IconPrinter size={18} /></ListItemIcon>
+                <MenuItem
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    transition: 'all 0.15s ease-in-out',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      color: 'primary.main',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}><IconPrinter size={18} /></ListItemIcon>
                   <ListItemText primary="Print Profile" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
                 </MenuItem>
+                {/* <MenuItem onClick={() => handleMenuItemClick('print_profile')}>
+                  <ListItemIcon><IconPrinter size={18} /></ListItemIcon>
+                  <ListItemText primary="Print Profile" primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }} />
+                </MenuItem> */}
               </Menu>
 
               <Paper

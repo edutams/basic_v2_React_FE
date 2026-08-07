@@ -52,6 +52,8 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     loadEnrollmentData();
   }, [open]);
 
+  const getClsKey = (cls) => (cls?.programme_class_id ? String(cls.programme_class_id) : `${cls?.programme_id}_${cls?.class_id}`);
+
   // ── Pre-select current class/arm on open ──────────────────
   useEffect(() => {
     if (open && student) {
@@ -59,7 +61,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
       const currentClassEntry = enrollmentData.find((cls) =>
         (cls.arms || []).some((arm) => Number(arm.arm_id) === Number(student.class_arm_id))
       );
-      setSelectedClassId(currentClassEntry?.class_id ?? '');
+      setSelectedClassId(currentClassEntry ? getClsKey(currentClassEntry) : '');
       setSelectedArmId(student.class_arm_id || '');
       setError('');
     }
@@ -67,7 +69,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
 
   // ── Arms for the selected class ───────────────────────────
   const selectedClassEntry = enrollmentData.find(
-    (cls) => String(cls.class_id) === String(selectedClassId)
+    (cls) => getClsKey(cls) === String(selectedClassId)
   );
   const armOptions = (selectedClassEntry?.arms || []).map((arm) => ({
     armId: arm.arm_id,
@@ -180,6 +182,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                 </MenuItem>
               ) : (
                 enrollmentData.map((cls) => {
+                  const key = getClsKey(cls);
                   const displayName =
                     cls.class_display_name || cls.raw_class_name || cls.class_name;
                   const label = cls.programme_code
@@ -189,7 +192,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                     (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
                   );
                   return (
-                    <MenuItem key={cls.class_id} value={cls.class_id}>
+                    <MenuItem key={key} value={key}>
                       <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
                         <Typography variant="body2" fontWeight={isCurrentClass ? 700 : 400}>
                           {label}

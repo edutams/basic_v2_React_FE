@@ -141,7 +141,7 @@ export default function Dashboard() {
         const response = await agentApi.getAll();
         const paginator = response.status === true ? response.data : response;
         const agentsArray = paginator.data || [];
-        
+
         if (agentsArray.length > 0) {
           const mappedData = agentsArray.slice(0, 10).map((agent) => ({
             s_n: agent.id,
@@ -441,56 +441,56 @@ export default function Dashboard() {
                 >
                   Transaction
                 </Typography>
-             <Stack direction="row" spacing={1}>
-  <Select
-    size="small"
-    value="year"
-    sx={{
-      minWidth: 100,
-      height: '35px',
-      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-      borderRadius: '8px',
-      color: isDark ? '#fff' : 'inherit',
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-      },
-      '& .MuiSelect-icon': {
-        color: isDark ? '#fff' : 'inherit',
-      },
-    }}
-  >
-    <MenuItem value="year">Year</MenuItem>
-  </Select>
+                <Stack direction="row" spacing={1}>
+                  <Select
+                    size="small"
+                    value="year"
+                    sx={{
+                      minWidth: 100,
+                      height: '35px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      borderRadius: '8px',
+                      color: isDark ? '#fff' : 'inherit',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+                      },
+                      '& .MuiSelect-icon': {
+                        color: isDark ? '#fff' : 'inherit',
+                      },
+                    }}
+                  >
+                    <MenuItem value="year">Year</MenuItem>
+                  </Select>
 
-  <Select
-    size="small"
-    value="gateway"
-    sx={{
-      minWidth: 100,
-      height: '35px',
-      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-      borderRadius: '8px',
-      color: isDark ? '#fff' : 'inherit',
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-      },
-      '& .MuiSelect-icon': {
-        color: isDark ? '#fff' : 'inherit',
-      },
-    }}
-  >
-    <MenuItem value="gateway">Gateway</MenuItem>
-  </Select>
-</Stack>
+                  <Select
+                    size="small"
+                    value="gateway"
+                    sx={{
+                      minWidth: 100,
+                      height: '35px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      borderRadius: '8px',
+                      color: isDark ? '#fff' : 'inherit',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
+                      },
+                      '& .MuiSelect-icon': {
+                        color: isDark ? '#fff' : 'inherit',
+                      },
+                    }}
+                  >
+                    <MenuItem value="gateway">Gateway</MenuItem>
+                  </Select>
+                </Stack>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   background: 'transparent',
                   p: 2,
                   '& .apexcharts-canvas': {
@@ -501,7 +501,7 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Chart 
+                <Chart
                   options={{
                     chart: {
                       type: 'bar',
@@ -546,9 +546,9 @@ export default function Dashboard() {
                     },
                   }}
                   series={revenueSeries}
-                  type="bar" 
-                  height={250} 
-                  width="100%" 
+                  type="bar"
+                  height={250}
+                  width="100%"
                 />
               </Box>
             </Card>
@@ -570,22 +570,22 @@ export default function Dashboard() {
               }}
             >
               <Box sx={{ p: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-                  <Typography 
-                    variant="subtitle2" 
-                    fontWeight="600" 
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="600"
                     sx={{ color: 'text.secondary' }}
                   >
                     Login Activities (30 days)
                   </Typography>
-                  <Box 
+                  <Box
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
-                    sx={{ 
+                    sx={{
                       background: getStatCardColor(null, 4, isDark, theme).iconBg,
-                      p: 0.5, 
-                      borderRadius: '4px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                      p: 0.5,
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
                       boxShadow: isDark
@@ -604,22 +604,22 @@ export default function Dashboard() {
                     : loginActivities
                   )?.map((activity, index) => (
                     <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography 
-                        variant="h5" 
-                        fontWeight="500" 
-                        sx={{ 
+                      <Typography
+                        variant="h5"
+                        fontWeight="500"
+                        sx={{
                           color: isDark ? '#fff' : '#1a1a1a',
-                          fontSize: '18px' 
+                          fontSize: '18px'
                         }}
                       >
                         {activity.label}:
                       </Typography>
-                      <Typography 
-                        variant="h5" 
-                        fontWeight="600" 
-                        sx={{ 
+                      <Typography
+                        variant="h5"
+                        fontWeight="600"
+                        sx={{
                           color: getStatCardColor(null, 4, isDark, theme).accentColor,
-                          fontSize: '20px' 
+                          fontSize: '20px'
                         }}
                       >
                         {activity.value}
@@ -650,7 +650,7 @@ export default function Dashboard() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  mb: 2,
+                  mb: 5,
                 }}
               >
                 <Typography
@@ -679,8 +679,8 @@ export default function Dashboard() {
                   <IconChartBar size={20} color={getStatCardColor(null, 5, isDark, theme).iconColor} />
                 </Box>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   '& .apexcharts-canvas': {
                     background: 'transparent !important',
                   },
@@ -689,7 +689,7 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Chart 
+                <Chart
                   options={{
                     chart: {
                       type: 'donut',
@@ -700,9 +700,9 @@ export default function Dashboard() {
                     },
                     labels: planLabels,
                     colors: [
-                      getStatCardColor(null, 5, isDark, theme).accentColor, 
-                      '#2196f3', 
-                      '#ff4081', 
+                      getStatCardColor(null, 5, isDark, theme).accentColor,
+                      '#2196f3',
+                      '#ff4081',
                       '#9c27b0'
                     ],
                     plotOptions: {
@@ -742,9 +742,9 @@ export default function Dashboard() {
                     },
                   }}
                   series={planSeries}
-                  type="donut" 
-                  height={200} 
-                  width="100%" 
+                  type="donut"
+                  height={200}
+                  width="100%"
                 />
               </Box>
             </Card>

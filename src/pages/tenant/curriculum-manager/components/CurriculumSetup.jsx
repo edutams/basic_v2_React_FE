@@ -28,6 +28,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
@@ -573,7 +574,7 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-setup-panel">
           <ParentCard
             title={
               <Box
@@ -585,10 +586,10 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button variant="contained" size="small" onClick={handleOpenImportModal}>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN} variant="contained" size="small" onClick={handleOpenImportModal}>
                     Import
                   </Button>
-                  <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN} variant="contained" size="small" onClick={handleOpenCreateModal}>
                     Create Curriculum
                   </Button>
                 </Box>
@@ -596,8 +597,8 @@ const CurriculumSetup = () => {
             }
           >
             <Paper sx={{ overflowX: 'auto' }}>
-              <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', minWidth: 400 }}>
+              <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
+                <Table stickyHeader sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
                       <TableCell
@@ -612,7 +613,7 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
                         Imported
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
+                      <TableCell data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER} align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -688,8 +689,10 @@ const CurriculumSetup = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          <Typography color="textSecondary">No curriculums found</Typography>
+                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                          <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                            No curriculums found
+                          </Alert>
                         </TableCell>
                       </TableRow>
                     )}
@@ -714,6 +717,7 @@ const CurriculumSetup = () => {
                 <Typography variant="h5">Assign to Classes</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
+                    data-tour={CURRICULUM_TOUR_KEYS.ASSIGN_SELECT}
                     size="small"
                     value={selectedSession}
                     onChange={(e) => handleSessionChange(e.target.value)}
@@ -747,7 +751,7 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                  <Button data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN} variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
                     {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                   </Button>
                 </Box>
@@ -755,8 +759,8 @@ const CurriculumSetup = () => {
             }
           >
             <Paper sx={{ overflowX: 'auto' }}>
-              <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
+              <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
+                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
                       <TableCell

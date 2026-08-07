@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
@@ -31,7 +30,6 @@ const BCrumb = [
   { title: 'Class Register' },
 ];
 
-// ── Local Stat Card using getStatCardColor ──────────────────────
 const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -51,6 +49,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           ? '0 10px 30px rgba(0,0,0,0.35)'
           : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
+        maxHeight: 250,
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
@@ -68,7 +67,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           color: colors.accentColor,
         }}
       >
-        <PeopleIcon sx={{ fontSize: 150 }} />
+        <PeopleIcon sx={{ fontSize: 130 }} />
       </Box>
 
       <Box sx={{ zIndex: 1 }}>
@@ -81,18 +80,18 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
             fontWeight: 700,
           }}
         >
-          Total Students
+          Total Student
         </Typography>
         {loading ? (
-          <CircularProgress size={24} sx={{ mt: 1 }} />
+          <CircularProgress size={20} sx={{ mt: 0.5 }} />
         ) : (
           <Typography
-            variant="h2"
+            variant="h3"
             fontWeight={800}
             sx={{
-              my: 1,
+              my: 0.5,
               lineHeight: 1,
-              fontSize: { xs: 36, md: 44 },
+              fontSize: { xs: 26, md: 32 },
               color: isDark ? '#fff' : colors.accentColor,
             }}
           >
@@ -101,8 +100,8 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
         )}
       </Box>
 
-      <Box sx={{ zIndex: 1, mt: 2 }}>
-        <Stack direction="row" spacing={3} sx={{ mb: 1.5 }}>
+      <Box sx={{ zIndex: 1 }}>
+        <Stack direction="row" spacing={3}>
           <Box>
             <Typography
               variant="caption"
@@ -110,14 +109,15 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
                 color: isDark ? 'rgba(255,255,255,0.6)' : '#4B5563',
                 textTransform: 'uppercase',
                 fontWeight: 600,
+                fontSize: '0.65rem',
               }}
             >
               MALE
             </Typography>
             <Typography
-              variant="h6"
+              variant="h3"
               fontWeight={700}
-              sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
+              sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
               {loading ? '...' : maleCount.toLocaleString()}
             </Typography>
@@ -129,14 +129,15 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
                 color: isDark ? 'rgba(255,255,255,0.6)' : '#4B5563',
                 textTransform: 'uppercase',
                 fontWeight: 600,
+                fontSize: '0.65rem',
               }}
             >
               FEMALE
             </Typography>
             <Typography
-              variant="h6"
+              variant="h3"
               fontWeight={700}
-              sx={{ color: isDark ? '#fff' : '#1a1a1a' }}
+              sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
               {loading ? '...' : femaleCount.toLocaleString()}
             </Typography>
@@ -147,16 +148,28 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
   );
 };
 
-// ── Main Page ───────────────────────────────────────────────────
 const ClassRegister = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [classFilterData, setClassFilterData] = useState(null);
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
   const [femaleCount, setFemaleCount] = useState(0);
   const [enrollmentData, setEnrollmentData] = useState([]);
+
+  const handleClassCardClick = (cls) => {
+    setActiveTab(0);
+
+    setClassFilterData({
+      programme_id: cls.programme_id,
+      class_id: cls.class_id,
+      timestamp: Date.now(),
+    });
+
+    setSelectedEnrollmentClass(cls);
+  };
 
   const fetchEnrollmentStats = useCallback(async () => {
     setLoading(true);
@@ -195,9 +208,8 @@ const ClassRegister = () => {
     <PageContainer title="Class Register" description="Manage class register and student enrollments">
       <Breadcrumb title="Class Register" items={BCrumb} />
 
-      {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 2 }}>
           <TotalStudentsCard
             totalStudentsCount={totalStudentsCount}
             maleCount={maleCount}
@@ -205,16 +217,15 @@ const ClassRegister = () => {
             loading={loading}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 10 }}>
           <ClassEnrollmentCard
             enrollmentData={enrollmentData}
-            onClassClick={setSelectedEnrollmentClass}
+            onClassClick={handleClassCardClick}
             loading={loading}
           />
         </Grid>
       </Grid>
 
-      {/* ── Tabs & Content ─────────────────────────────────────── */}
       <ParentCard
         title={
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
@@ -238,7 +249,15 @@ const ClassRegister = () => {
           </Box>
         }
       >
-        {activeTab === 0 && <SingleArmView />}
+        {activeTab === 0 && (
+          <SingleArmView
+            classFilterData={classFilterData}
+            onEnrollmentChange={() => {
+              fetchEnrollmentStats();
+              fetchEnrollmentBreakdown();
+            }}
+          />
+        )}
         {activeTab === 1 && <MultipleArmView />}
       </ParentCard>
 

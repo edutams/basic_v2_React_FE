@@ -12,6 +12,7 @@ const ReusablePieChart = ({
   labels,
   colors,
   height = 300,
+  width = '100%',
   hideCard = false,
 }) => {
   const theme = useTheme();
@@ -79,8 +80,8 @@ const ReusablePieChart = ({
   };
 
   const chartContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Chart options={options} series={series} type="donut" height={height} width="100%" />
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '100%' }}>
+      <Chart options={options} series={series} type="donut" height={height} width={width} />
     </Box>
   );
 
@@ -102,6 +103,7 @@ ReusablePieChart.propTypes = {
   labels: PropTypes.array.isRequired,
   colors: PropTypes.array,
   height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   hideCard: PropTypes.bool,
 };
 

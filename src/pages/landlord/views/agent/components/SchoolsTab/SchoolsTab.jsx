@@ -839,7 +839,7 @@ const SchoolsTab = ({
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 3,
+                    mb: 5,
                   }}
                 >
                   <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
@@ -913,7 +913,7 @@ const SchoolsTab = ({
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 3,
+                    mb: 5,
                   }}
                 >
                   <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
@@ -955,7 +955,7 @@ const SchoolsTab = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 2,
+                    mb: 5,
                   }}
                 >
                   <Typography variant="subtitle1" fontWeight={700}>

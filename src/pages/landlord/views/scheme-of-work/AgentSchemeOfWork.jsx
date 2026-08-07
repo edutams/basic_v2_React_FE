@@ -36,6 +36,7 @@ import {
   DialogActions,
   CircularProgress,
   Chip,
+  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -998,12 +999,14 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                    <Typography color="textSecondary">
-                      {loading
-                        ? 'Fetching Scheme of Work...'
-                        : 'No records found. Select filters to begin.'}
-                    </Typography>
+                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                    {loading ? (
+                      <CircularProgress size={24} />
+                    ) : (
+                      <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                        No records found. Select filters to begin.
+                      </Alert>
+                    )}
                   </TableCell>
                 </TableRow>
               )}

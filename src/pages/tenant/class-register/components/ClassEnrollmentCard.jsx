@@ -3,18 +3,14 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   Stack,
   Grid,
   Tooltip,
   useTheme,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
-  InfoOutlined as InfoIcon,
-  KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
@@ -24,7 +20,6 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor('primary', 0, isDark, theme);
-  const isScrollable = enrollmentData.length > 6;
 
   return (
     <Paper
@@ -33,49 +28,23 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         p: 2,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark
-          ? '1px solid rgba(255,255,255,0.12)'
-          : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
-        maxHeight: 300,
+        maxHeight: 250,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        width: '100%',
       }}
     >
-      {/* ── Header Row ──────────────────────────────────────── */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-        <Typography variant="h6" fontWeight={700} color="text.primary">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+        <Typography variant="subtitle1" fontWeight={700} color="text.primary">
           Class Enrollment Breakdown
         </Typography>
       </Stack>
 
-      {isScrollable && (
-        <Alert
-          severity="info"
-          sx={{
-            py: 0.5,
-            px: 1.5,
-            mb: 2,
-            borderRadius: '8px',
-            fontSize: '12px',
-            '& .MuiAlert-message': { fontWeight: 500 },
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            <Typography variant="h5" fontWeight={900}>
-              Scroll down to see all classes
-            </Typography>
-            <ArrowDownIcon sx={{ fontSize: 14, animation: 'bounce 1.5s infinite', '@keyframes bounce': { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(4px)' } } }} />
-          </Stack>
-        </Alert>
-      )}
-
-      {/* ── Scrollable Content Area ─────────────────────────── */}
       <Box
         sx={{
           flex: 1,
@@ -83,7 +52,9 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
           pr: 0.5,
           mr: -0.5,
           scrollbarWidth: 'thin',
-          scrollbarColor: isDark ? 'rgba(255,255,255,0.15) transparent' : 'rgba(0,0,0,0.12) transparent',
+          scrollbarColor: isDark
+            ? 'rgba(255,255,255,0.15) transparent'
+            : 'rgba(0,0,0,0.12) transparent',
           '&::-webkit-scrollbar': {
             width: 5,
           },
@@ -111,14 +82,20 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         ) : (
           <Grid container spacing={1.5}>
             {enrollmentData.map((cls, index) => {
-              const itemColors = getStatCardColor(colorNames[index % colorNames.length], index, isDark, theme);
+              const itemColors = getStatCardColor(
+                colorNames[index % colorNames.length],
+                index,
+                isDark,
+                theme,
+              );
+              const isSenior = cls.class_code?.toUpperCase().startsWith('SS');
               return (
-                <Grid size={{ xs: 6, sm: 4 }} key={cls.class_id || index}>
+                <Grid size={{ xs: 6, sm: 2 }} key={cls.class_id || index}>
                   <Tooltip title="Click to view learner breakdown by arm" arrow placement="top">
                     <Box
                       onClick={() => onClassClick(cls)}
                       sx={{
-                        p: 1.5,
+                        p: 1,
                         borderRadius: '12px',
                         border: isDark
                           ? '1px solid rgba(255,255,255,0.08)'
@@ -138,22 +115,37 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         <Typography
                           variant="caption"
                           fontWeight={700}
-                          noWrap
-                          sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : itemColors.accentColor, letterSpacing: 0.5, display: 'block' }}
+                          sx={{
+                            color: isDark ? 'rgba(255,255,255,0.72)' : itemColors.accentColor,
+                            letterSpacing: 0.5,
+                            display: 'block',
+                          }}
                         >
-                          {cls.class_name}
+                          {cls.class_code}
+
+                          {isSenior && cls.programme_code && (
+                            <Typography
+                              component="span"
+                              sx={{
+                                ml: 0.5,
+                                fontSize: '0.65rem',
+                                fontWeight: 500,
+                                color: itemColors.accentColor,
+                              }}
+                            >
+                              ({cls.programme_code})
+                            </Typography>
+                          )}
                         </Typography>
-                        <Typography variant="h5" fontWeight={700} color="text.primary" sx={{ my: 0.25 }}>
+
+                        <Typography
+                          variant="h5"
+                          fontWeight={700}
+                          color="text.primary"
+                          sx={{ mt: 0.5 }}
+                        >
                           {cls.total}
                         </Typography>
-                        <Box
-                          sx={{
-                            height: 3,
-                            width: '40%',
-                            bgcolor: itemColors.accentColor,
-                            borderRadius: 2,
-                          }}
-                        />
                       </Box>
                       <Box
                         sx={{
@@ -167,6 +159,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                           justifyContent: 'center',
                           flexShrink: 0,
                           ml: 1,
+                          mt: 3,
                           boxShadow: isDark
                             ? '0 4px 12px rgba(0,0,0,.3)'
                             : `0 6px 18px -2px ${itemColors.iconGlow}`,

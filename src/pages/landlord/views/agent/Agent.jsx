@@ -876,7 +876,7 @@ const Agent = () => {
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 3,
+              mb: 5,
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
@@ -893,7 +893,7 @@ const Agent = () => {
                 {analytics.activeSchools ?? 0}
               </Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Pending
@@ -902,7 +902,7 @@ const Agent = () => {
                 {analytics.pendingSchools ?? 0}
               </Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Rejected
@@ -966,7 +966,7 @@ const Agent = () => {
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 3,
+              mb: 5,
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
@@ -979,22 +979,23 @@ const Agent = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              gap: 2,
             }}
           >
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Primary School
+                Primary
               </Typography>
               <Typography fontWeight={600}>
                 {schoolSummary.primary}
               </Typography>
             </Box>
 
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor, mx: 2 }} />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Secondary School
+                Secondary
               </Typography>
               <Typography fontWeight={600}>
                 {schoolSummary.secondary}
@@ -1021,7 +1022,7 @@ const Agent = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 5,
             }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
@@ -1124,12 +1125,14 @@ const Agent = () => {
             </Box>
           </Box>
 
-          <Box>
+          <Box sx={{ width: '100%' }}>
             <Box
               sx={{
                 height: 160,
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 overflow: 'hidden',
               }}
             >
@@ -1137,7 +1140,8 @@ const Agent = () => {
                 series={planSeries}
                 colors={planColors}
                 labels={planLabels}
-                height={180}
+                height={160}
+                width="100%"
                 hideCard
               />
             </Box>

@@ -20,13 +20,13 @@ import {
   TextField,
   Menu,
   useTheme,
+  Link,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import { IconDotsVertical } from '@tabler/icons-react';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import SettlementDetailsModal from './SettlementDetailsModal';
 import {
   fetchSettlements,
   fetchSettlementAnalytics,
@@ -37,6 +37,8 @@ import dayjs from 'dayjs';
 import FeeChart from './FeeChart';
 import { usePermissions } from '@/context/TenantContext/permissions';
 import { useNotification } from '@/hooks/useNotification';
+import SettlementRevenueModal from './RevenueModal/SettlementRevenueModal.jsx';
+import SettlementTransactionsModal from './TransactionModal/SettlementTransactionsModal.jsx';
 
 const Settlement = () => {
   const { can } = usePermissions();
@@ -62,7 +64,6 @@ const Settlement = () => {
   const [search, setSearch] = useState('');
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [activeRow, setActiveRow] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [syncFrom, setSyncFrom] = useState('');
@@ -71,6 +72,10 @@ const Settlement = () => {
 
   const [period, setPeriod] = useState('this_week');
   const [periodValue, setPeriodValue] = useState(null);
+
+  const [revenueModalOpen, setRevenueModalOpen] = useState(false);
+  const [transactionsModalOpen, setTransactionsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
@@ -184,25 +189,25 @@ const Settlement = () => {
         title: 'Total Transaction Value',
         items: [
           {
-            label: 'Settlement Today',
+            label: 'Today',
             value: format(d.today_total) ?? 0,
             color: '#4DA3F5',
             bgColor: '#EAF4FF',
           },
           {
-            label: 'Settlement This Week',
+            label: 'This Week',
             value: format(d.this_week_total) ?? 0,
             color: '#6BC68D',
             bgColor: '#EEF9F2',
           },
           {
-            label: 'Settlement This Month',
+            label: 'This Month',
             value: format(d.this_month_total) ?? 0,
             color: '#E95A71',
             bgColor: '#FDF1F3',
           },
           {
-            label: 'Settlement This Year',
+            label: 'This Year',
             value: format(d.this_year_total) ?? 0,
             color: '#3247C6',
             bgColor: '#EEF0FF',
@@ -299,6 +304,16 @@ const Settlement = () => {
     },
   });
 
+  const handleOpenTransactions = (row) => {
+    setSelectedRow(row);
+    setTransactionsModalOpen(true);
+  };
+
+  const handleOpenRevenue = (row) => {
+    setSelectedRow(row);
+    setRevenueModalOpen(true);
+  };
+
   return (
     <PageContainer title="Settlement">
       {can('walet_manager.transactions.fetch_gateway_settlement') && (
@@ -333,7 +348,7 @@ const Settlement = () => {
               disabled={syncing}
               onClick={handleSyncFromGateway}
             >
-              {syncing ? 'Syncing…' : 'Fetch from Gateway'}
+              {syncing ? 'Syncing…' : 'Fetch'}
             </Button>
           </Grid>
         </Grid>
@@ -468,8 +483,26 @@ const Settlement = () => {
                       <TableCell>{(page - 1) * 40 + index + 1}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{row.bank_name}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{row.account_number}</TableCell>
-                      <TableCell>{row.no_of_revenue}</TableCell>
-                      <TableCell>{row.no_of_transaction}</TableCell>
+                      <TableCell>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => handleOpenRevenue(row)}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {row.revenue_count}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => handleOpenTransactions(row)}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {row.transaction_count}
+                        </Link>
+                      </TableCell>
                       <TableCell>{format(row.amount)}</TableCell>
                       <TableCell>{dayjs(row.date_paid).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                       <TableCell align="center">
@@ -477,7 +510,7 @@ const Settlement = () => {
                           size="small"
                           onClick={(e) => {
                             setAnchorEl(e.currentTarget);
-                            setActiveRow(row);
+                            setSelectedRow(row);
                           }}
                         >
                           <IconDotsVertical size={18} />
@@ -514,7 +547,7 @@ const Settlement = () => {
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
-              setDetailsOpen(true);
+              setTransactionsModalOpen(true);
             }}
           >
             <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
@@ -522,11 +555,18 @@ const Settlement = () => {
           </MenuItem>
         </Menu>
 
-        <SettlementDetailsModal
-          open={detailsOpen}
-          onClose={() => setDetailsOpen(false)}
-          settlementId={activeRow?.settlement_id}
-          bankLabel={activeRow ? `${activeRow.bank_name} - ${activeRow.account_number}` : ''}
+        <SettlementRevenueModal
+          open={revenueModalOpen}
+          onClose={() => setRevenueModalOpen(false)}
+          settlementId={selectedRow?.settlement_id}
+          bankLabel={selectedRow ? `${selectedRow.bank_name} - ${selectedRow.account_number}` : ''}
+        />
+
+        <SettlementTransactionsModal
+          open={transactionsModalOpen}
+          onClose={() => setTransactionsModalOpen(false)}
+          settlementId={selectedRow?.settlement_id}
+          bankLabel={selectedRow ? `${selectedRow.bank_name} - ${selectedRow.account_number}` : ''}
         />
       </ParentCard>
     </PageContainer>

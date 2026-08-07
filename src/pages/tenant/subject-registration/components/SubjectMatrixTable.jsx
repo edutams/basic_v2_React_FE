@@ -24,6 +24,14 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const registeredCount = React.useMemo(() => {
+    const counts = {};
+    subjects.forEach((subj) => {
+      counts[subj.id] = learners.filter((l) => l.registered[subj.id]).length;
+    });
+    return counts;
+  }, [subjects, learners]);
+
   return (
     <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
       <Table sx={{ minWidth: 900 }}>
@@ -42,12 +50,27 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
             >
               Learner's Name
             </TableCell>
+            <TableCell
+              align="center"
+              sx={{
+                minWidth: 100,
+                fontWeight: 700,
+                ...(!isMobile && { position: 'sticky', left: 240 }),
+                bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
+                ...(!isMobile && { zIndex: 2 }),
+                borderRight: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              Registered
+            </TableCell>
             {subjects.map((subj) => (
-              <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>                  <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
+              <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>
+                <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
                   {subj.subject_name || subj.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                  ({subj.count} learners)
+                  {registeredCount[subj.id]} learner{registeredCount[subj.id] !== 1 ? 's' : ''}
                 </Typography>
                 <Stack direction="row" spacing={0.5} justifyContent="center">
                   <Tooltip title={`Register all for ${subj.name}`}>
@@ -85,6 +108,20 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                     {learner.name}
                   </Typography>
                 </Stack>
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  ...(!isMobile && { position: 'sticky', left: 240 }),
+                  bgcolor: 'background.paper',
+                  ...(!isMobile && { zIndex: 1 }),
+                  borderRight: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {Object.keys(learner.registered).filter((k) => learner.registered[k]).length}
+                </Typography>
               </TableCell>
               {subjects.map((subj) => (
                 <TableCell key={subj.id} align="center">

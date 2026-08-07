@@ -100,6 +100,38 @@ const aclApi = {
         const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions/all`);
         return response.data;
     },
+
+    getSchoolUserDirectPermissions: async (userId) => {
+        const response = await tenantApi.get(`/censis/acl/assignments/users/${userId}/permissions`);
+        return response.data;
+    },
+
+    assignSchoolUserDirectPermissions: async (userId, permissions) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/permissions`, {
+            permissions,
+        });
+        return response.data;
+    },
+
+    getSchoolUserProfile: async (userId) => {
+        const response = await tenantApi.get(`/users/${userId}/profile`);
+        return response.data;
+    },
+
+    updateSchoolUserProfile: async (userId, data) => {
+        const response = await tenantApi.post(`/users/${userId}/profile`, data);
+        return response.data;
+    },
+
+    changeSchoolUserPassword: async (userId, data) => {
+        const response = await tenantApi.post(`/users/${userId}/password`, data);
+        return response.data;
+    },
+
+    getUserActivityLogs: async (userId, params = {}) => {
+        const response = await tenantApi.get(`/activity-logs/causer/${userId}`, { params });
+        return response.data;
+    },
 };
 
 export default aclApi;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,13 +9,22 @@ import {
   Box,
   Chip,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
+import { Search as SearchIcon } from '@mui/icons-material';
 import aclApi from '@/api/landlord/acl/aclApi';
+import { groupPermissionsByModule, prettifyModuleName } from '@/utils/permissionGrouping';
 
-const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
+const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSave }) => {
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [permissions, setPermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [permissionSearch, setPermissionSearch] = useState('');
   const [directPermissions, setDirectPermissions] = useState([]);
   const [rolePermissions, setRolePermissions] = useState([]);
+  const [currentPermissions, setCurrentPermissions] = useState([]);
 
   useEffect(() => {
     if (open) {
@@ -26,51 +35,22 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
   const fetchPermissions = async () => {
     setLoading(true);
     try {
-      // Get direct permissions
+      // Get direct + inherited permissions for the user
       const directRes = await aclApi.getAgentDirectPermissions(currentUser.id);
-      const directPerms = directRes?.data?.direct || directRes?.data || [];
+      const directPerms = directRes?.data?.direct || [];
+      const inheritedPerms = directRes?.data?.inherited || [];
+
       setDirectPermissions(Array.isArray(directPerms) ? directPerms : []);
+      setRolePermissions(Array.isArray(inheritedPerms) ? inheritedPerms : []);
 
-      // Get permissions from roles
-      const rolesRes = await aclApi.getAgents();
-      let agentData = null;
+      const allAttached = [...new Set([...directPerms, ...inheritedPerms])];
+      setCurrentPermissions(allAttached);
+      // Pre-select only direct permissions (role ones are shown but not editable/submittable)
+      setSelectedPermissions(Array.isArray(directPerms) ? directPerms : []);
 
-      if (Array.isArray(rolesRes.data)) {
-        agentData = rolesRes.data.find((a) => a.id === currentUser.id);
-      } else if (rolesRes.data?.data) {
-        agentData = rolesRes.data.data.find((a) => a.id === currentUser.id);
-      }
-
-      let rolePerms = [];
-      if (agentData?.roles && Array.isArray(agentData.roles)) {
-        for (const role of agentData.roles) {
-          try {
-            // Handle both string role names and role objects
-            const roleId = typeof role === 'object' ? role.id : role;
-            const roleName = typeof role === 'object' ? role.name : role;
-
-            // Get all roles to find the ID if we only have a name
-            const allRolesRes = await aclApi.getRolesList();
-            const allRoles = allRolesRes?.data || [];
-
-            let targetRoleId = roleId;
-            if (!targetRoleId) {
-              const foundRole = allRoles.find((r) => r.name === roleName);
-              targetRoleId = foundRole?.id;
-            }
-
-            if (targetRoleId) {
-              const rolePermsRes = await aclApi.getRolePermissions(targetRoleId);
-              if (rolePermsRes?.data?.permissions) {
-                rolePerms = [...rolePerms, ...rolePermsRes.data.permissions.map((p) => p.name)];
-              }
-            }
-          } catch (err) {
-            console.error('Failed to fetch role permissions:', err);
-          }
-        }
-      }
-      setRolePermissions(Array.isArray(rolePerms) ? rolePerms : []);
+      // Fetch the full permission catalogue so we can render grouped sections
+      const allRes = await aclApi.getAllPermissions();
+      setPermissions(allRes?.data || []);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
     } finally {
@@ -78,29 +58,56 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
     }
   };
 
-  const getChipColor = (permissionName) => {
-    // Check if it's a direct permission
-    if (directPermissions.includes(permissionName)) {
-      return 'primary';
-    }
-    return 'default';
+  const isFromRole = (permissionName) => {
+    return rolePermissions.includes(permissionName) && !directPermissions.includes(permissionName);
   };
 
-  const getChipSx = (permissionName) => {
-    if (directPermissions.includes(permissionName)) {
-      return {
-        backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
-      };
+  const handleToggle = (permission) => {
+    if (isFromRole(permission.name)) return;
+    setSelectedPermissions((prev) => {
+      const exists = prev.includes(permission.name);
+      return exists ? prev.filter((p) => p !== permission.name) : [...prev, permission.name];
+    });
+  };
+
+  const isSelected = (permission) => {
+    return selectedPermissions.includes(permission.name);
+  };
+
+  const isChecked = (permission) => {
+    // Role-inherited permissions are always shown as checked (they cannot be modified)
+    return isSelected(permission) || isFromRole(permission.name);
+  };
+
+  const filteredPermissions = useMemo(() => {
+    const term = permissionSearch?.toLowerCase() || '';
+    return permissions.filter(
+      (permission) =>
+        permission?.name?.toLowerCase()?.includes(term) ||
+        permission?.description?.toLowerCase()?.includes(term),
+    );
+  }, [permissions, permissionSearch]);
+
+  const groupedPermissions = useMemo(() => {
+    return groupPermissionsByModule(filteredPermissions);
+  }, [filteredPermissions]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (onPermissionSave) {
+        // selectedPermissions only ever contains direct permissions (role ones are not selectable)
+        await onPermissionSave(selectedPermissions);
+      }
+    } catch (err) {
+      console.error('Failed to save permissions:', err);
+    } finally {
+      setSaving(false);
     }
-    return {
-      backgroundColor: (theme) => theme.palette.grey[200],
-      color: (theme) => theme.palette.grey[700],
-    };
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         Permissions for{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
@@ -109,91 +116,179 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
       </DialogTitle>
 
       <DialogContent dividers>
+        <Typography variant="body1" gutterBottom>
+          Permissions attached to this agent. Uncheck to remove direct permissions or check to add
+          new ones:
+        </Typography>
+
+        <TextField
+          placeholder="Search Permissions"
+          type="text"
+          fullWidth
+          value={permissionSearch}
+          onChange={(e) => setPermissionSearch(e.target.value)}
+          sx={{ mb: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
+          Attached: {currentPermissions.length} (Direct: {directPermissions.length} | From roles:{' '}
+          {rolePermissions.length}) - Permissions inherited from roles cannot be modified
+        </Typography>
+
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress size={24} />
           </Box>
+        ) : groupedPermissions.length === 0 ? (
+          <Typography variant="body2" color="textSecondary" sx={{ p: 2 }}>
+            No permissions available.
+          </Typography>
         ) : (
-          <>
-            {/* Direct Permissions Section */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                Direct Permissions ({directPermissions.length})
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                Permissions assigned directly to this agent
-              </Typography>
-              {directPermissions.length > 0 ? (
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {directPermissions.map((permission, index) => (
-                    <Chip
-                      key={index}
-                      label={permission}
-                      size="small"
+          <Box sx={{ maxHeight: 420, overflow: 'auto', pr: 0.5 }}>
+            {groupedPermissions.map((group) => (
+              <Box
+                key={group.module}
+                sx={{
+                  mb: 3,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.02)',
+                }}
+              >
+                {/* Group header (group name) */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: 2,
+                    py: 1.25,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
                       sx={{
-                        backgroundColor: (theme) => theme.palette.primary.light,
-                        color: (theme) => theme.palette.primary.main,
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: 'primary.main',
                       }}
                     />
-                  ))}
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}
+                    >
+                      {prettifyModuleName(group.module)}
+                    </Typography>
+                  </Box>
+                  <Chip label={`${group.permissions.length}`} size="small" variant="outlined" />
                 </Box>
-              ) : (
-                <Typography variant="body2" color="textSecondary" fontStyle="italic">
-                  No direct permissions assigned
-                </Typography>
-              )}
-            </Box>
 
-            {/* Role Permissions Section */}
-            <Box>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                Role Permissions ({rolePermissions.length})
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                Permissions inherited from assigned roles
-              </Typography>
-              {rolePermissions.length > 0 ? (
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {rolePermissions.map((permission, index) => (
-                    <Chip
-                      key={index}
-                      label={permission}
-                      size="small"
+                {/* Permissions of this group */}
+                {group.permissions.map((permission, index) => {
+                  const fromRole = isFromRole(permission.name);
+                  const isDisabled = fromRole;
+                  const showCheck = isChecked(permission);
+
+                  return (
+                    <Box
+                      key={permission.id}
+                      onClick={() => handleToggle(permission)}
                       sx={{
-                        backgroundColor: (theme) => theme.palette.grey[200],
-                        color: (theme) => theme.palette.grey[700],
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        backgroundColor: showCheck ? 'primary.light' : 'transparent',
+                        ...(index > 0 && {
+                          borderTop: '1px solid',
+                          borderColor: 'divider',
+                        }),
+                        '&:hover': {
+                          backgroundColor: showCheck ? 'primary.light' : 'action.hover',
+                        },
                       }}
-                    />
-                  ))}
-                </Box>
-              ) : (
-                <Typography variant="body2" color="textSecondary" fontStyle="italic">
-                  No role permissions
-                </Typography>
-              )}
-            </Box>
-
-            {/* Total Summary */}
-            <Box
-              sx={{
-                mt: 3,
-                pt: 2,
-                borderTop: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Typography variant="body2" fontWeight={600}>
-                Total Permissions:{' '}
-                {(directPermissions?.length || 0) + (rolePermissions?.length || 0)} (
-                {directPermissions?.length || 0} direct + {rolePermissions?.length || 0} from roles)
-              </Typography>
-            </Box>
-          </>
+                    >
+                      <Box
+                        sx={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: '4px',
+                          border: '2px solid',
+                          borderColor: showCheck ? 'primary.main' : 'grey.400',
+                          backgroundColor: showCheck ? 'primary.main' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 1.5,
+                          flexShrink: 0,
+                          '&::after': showCheck
+                            ? {
+                              content: '"✓"',
+                              color: '#fff',
+                              fontSize: '12px',
+                            }
+                            : {},
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {permission.description || permission.name}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="textSecondary"
+                          sx={{ fontSize: '10px' }}
+                        >
+                          {permission.name}
+                        </Typography>
+                      </Box>
+                      {fromRole ? (
+                        <Typography
+                          variant="caption"
+                          color="textSecondary"
+                          sx={{ ml: 'auto', fontSize: 10, flexShrink: 0 }}
+                        >
+                          (From role)
+                        </Typography>
+                      ) : directPermissions.includes(permission.name) ? (
+                        <Typography
+                          variant="caption"
+                          sx={{ ml: 'auto', fontSize: 10, color: 'primary.main', flexShrink: 0 }}
+                        >
+                          ✓ Direct
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  );
+                })}
+              </Box>
+            ))}
+          </Box>
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button size="small" onClick={handleSave} color="primary" disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

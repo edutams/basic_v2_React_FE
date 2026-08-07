@@ -23,10 +23,16 @@ import {
   TablePagination,
   CircularProgress,
   useTheme,
+  Menu,
+  ListItemIcon,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   FileDownload as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
   Male as MaleIcon,
   Female as FemaleIcon,
 } from '@mui/icons-material';
@@ -39,6 +45,7 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 const STORAGE_KEY = 'psychomotor_assessments';
 
@@ -67,6 +74,13 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [psychomotorTraits, setPsychomotorTraits] = useState([]);
 
   // ── Assessment Data ───────────────────────────────────────
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const exportMenuOpen = Boolean(exportAnchorEl);
+  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [activeWeekId, setActiveWeekId] = useState(null);
+
+  const [filterApplied, setFilterApplied] = useState(false);
   const [learners, setLearners] = useState([]);
   const [assessments, setAssessments] = useState({});
   const [loading, setLoading] = useState(false);
@@ -127,6 +141,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         } else if (sessions.length > 0) {
           setPSession(sessions[0].id);
         }
+
+        // Fetch academic_week_id for week preselection
+        try {
+          const ackRes = await fetchAcademicInfo();
+          if (ackRes?.academic_week_id) {
+            setActiveWeekId(String(ackRes.academic_week_id));
+          }
+        } catch (e) { /* best-effort */ }
       } catch (e) { console.error(e); }
     };
     load();
@@ -173,9 +195,22 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       term_id: pTermId,
     }).then((r) => {
       const d = r.data?.data || [];
-      setWeeks(Array.isArray(d) ? d : []);
+      const weeks = Array.isArray(d) ? d : [];
+      setWeeks(weeks);
+      const match = activeWeekId
+        ? weeks.find((w) => String(w.week_id) === activeWeekId)
+        : null;
+      if (match) {
+        setPWeek(match.wk_id ?? match.week_id ?? match.id);
+      } else {
+        const fallback = weeks.find((w) => w.status === 'active')
+          || (weeks.length > 0 ? weeks[weeks.length - 1] : null);
+        if (fallback) {
+          setPWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
+        }
+      }
     }).catch(console.error);
-  }, [pSession, pTermId]);
+  }, [pSession, pTermId, activeWeekId]);
 
   // ── Load domain traits from API ───────────────────────────
   useEffect(() => {
@@ -246,6 +281,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
   const handleApplyFilter = () => {
     fetchLearners();
+    setFilterApplied(true);
     if (onFilter) onFilter(pArm, pSession, pTermId, pWeek);
   };
 
@@ -266,16 +302,28 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         assessments: assessmentData,
       });
 
+      setAlertSnackbar({
+        open: true,
+        message: `Assessments submitted successfully — ${assessmentData.length} learner(s) saved.`,
+        severity: 'success',
+      });
+
       // Clear localStorage after successful submission
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.error('Failed to submit assessments:', e);
+      setAlertSnackbar({
+        open: true,
+        message: e.response?.data?.message || 'Failed to submit assessments.',
+        severity: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleExport = async () => {
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
     try {
       const res = await attendanceApi.exportPsychomotorReport({
         class_arm_id: pArm || undefined,
@@ -292,7 +340,29 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('Export failed:', e);
+      console.error('Excel export failed:', e);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const res = await attendanceApi.exportPsychomotorPdf({
+        class_arm_id: pArm || undefined,
+        week_term_id: pWeek || undefined,
+        session_id: pSession || undefined,
+        term_id: pTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'psychomotor-report-' + new Date().toISOString().slice(0, 10) + '.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('PDF export failed:', e);
     }
   };
 
@@ -380,9 +450,31 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           </Button>
         </Grid>
         <Grid size={{ xs: 12, sm: 'auto' }}>
-          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            disabled={!filterApplied}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+          >
             Export Report
           </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={exportMenuOpen}
+            onClose={() => setExportAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleExportExcel} dense>
+              <ListItemIcon><ExcelIcon fontSize="small" /></ListItemIcon>
+              Export to Excel
+            </MenuItem>
+            <MenuItem onClick={handleExportPdf} dense>
+              <ListItemIcon><PdfIcon fontSize="small" /></ListItemIcon>
+              Export to PDF
+            </MenuItem>
+          </Menu>
         </Grid>
       </Grid>
 
@@ -395,8 +487,22 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
-              <TableCell>S/N</TableCell>
-              <TableCell sx={{ minWidth: 200 }}>Learner's Name</TableCell>
+              <TableCell sx={{
+                width: 40,
+                position: 'sticky',
+                left: 0,
+                zIndex: 2,
+                bgcolor: isDark ? '#1e1e1e' : '#fff',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}>S/N</TableCell>
+              <TableCell sx={{
+                minWidth: 200,
+                position: 'sticky',
+                left: 40,
+                zIndex: 2,
+                bgcolor: isDark ? '#1e1e1e' : '#fff',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}>Learner's Name</TableCell>
               <TableCell sx={{ minWidth: 280 }}>Mark Affective Domain</TableCell>
               <TableCell sx={{ minWidth: 280 }}>Mark Psychomotor</TableCell>
             </TableRow>
@@ -419,8 +525,20 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                 const studentAssess = assessments[learner.student_reg_id] || { affective: {}, psychomotor: {} };
                 return (
                   <TableRow key={learner.student_reg_id} hover sx={{ verticalAlign: 'top' }}>
-                    <TableCell>{String(idx + 1).padStart(2, '0')}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 1,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}>{String(idx + 1).padStart(2, '0')}</TableCell>
+                    <TableCell sx={{
+                      position: 'sticky',
+                      left: 40,
+                      zIndex: 1,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}>
                       <Stack direction="row" alignItems="center" spacing={1.5}>
                         <Avatar sx={{ width: 36, height: 36, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main' }}>
                           {(learner.name || '?').charAt(0)}
@@ -548,6 +666,21 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
         </Button>
       </Box>
+
+      <Snackbar
+        open={alertSnackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={alertSnackbar.severity}
+          onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+          variant="filled"
+        >
+          {alertSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

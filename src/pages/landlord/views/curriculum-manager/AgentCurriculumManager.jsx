@@ -611,8 +611,10 @@ const AgentCurriculumManager = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={4} align="center">
-                                <Typography color="textSecondary">No curriculums found</Typography>
+                              <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                                <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                                  No curriculums found
+                                </Alert>
                               </TableCell>
                             </TableRow>
                           )}

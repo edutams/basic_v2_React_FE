@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -45,11 +45,15 @@ const AttendancePsychomotor = () => {
 
   // ── Metrics that respond to filter changes ──────────────────
   const [attendanceMetrics, setAttendanceMetrics] = useState({
-    daysOpen: 0,
     weekRate: 0,
+    weekRateChange: null,
+    weekTrendText: '',
     termRate: 0,
+    termRateChange: null,
+    termTrendText: '',
     totalAbsentees: 0,
     atRisk: 0,
+    totalStudents: 0,
   });
 
   const [psychomotorMetrics, setPsychomotorMetrics] = useState({
@@ -58,38 +62,70 @@ const AttendancePsychomotor = () => {
     needingSupport: 0,
     maleRating: 0,
     femaleRating: 0,
+    maxRating: 5,
+    affectiveChange: null,
+    affectiveTrendText: '',
+    psychoChange: null,
+    psychoTrendText: '',
   });
 
-  const [loading, setLoading] = useState(false);
+  const [schoolDaysMetrics, setSchoolDaysMetrics] = useState({
+    scope: 'term',
+    termDaysOpen: 0,
+    termDaysElapsed: 0,
+    termDaysRemaining: 0,
+    termElapsedPercentage: 0,
+    weekDaysOpen: 0,
+    weekDaysElapsed: 0,
+    weekDaysRemaining: 0,
+    weekElapsedPercentage: 0,
+  });
+
+  // Start as loading so the analytics cards show skeletons on first paint
+  // until the active tab's stats arrive.
+  const [loading, setLoading] = useState(true);
+  // Counter of in-flight stat fetches so overlapping requests (e.g. rapid tab
+  // switches) don't clear the skeleton state before the newest fetch resolves.
+  const pendingFetchesRef = useRef(0);
   const [selectedClassArmId, setSelectedClassArmId] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTermId, setSelectedTermId] = useState(null);
   const [selectedWeekId, setSelectedWeekId] = useState(null);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState(null);
 
   // ── Fetch Attendance Stats from API ─────────────────────────
   const fetchAttendanceStats = useCallback(async (params = {}) => {
+    pendingFetchesRef.current += 1;
     setLoading(true);
     try {
       const res = await attendanceApi.getAttendanceStats(params);
       if (res.data?.data) {
         const stats = res.data.data;
         setAttendanceMetrics({
-          daysOpen: stats.days_open || 0,
           weekRate: stats.week_rate || 0,
+          weekRateChange: stats.week_rate_change ?? null,
+          weekTrendText: stats.week_trend_text || '',
           termRate: stats.term_rate || 0,
+          termRateChange: stats.term_rate_change ?? null,
+          termTrendText: stats.term_trend_text || '',
           totalAbsentees: stats.total_absentees || 0,
           atRisk: stats.at_risk || 0,
+          totalStudents: stats.total_students || 0,
         });
       }
     } catch (error) {
       console.error('Failed to fetch attendance stats:', error);
     } finally {
-      setLoading(false);
+      pendingFetchesRef.current = Math.max(0, pendingFetchesRef.current - 1);
+      setLoading(pendingFetchesRef.current > 0);
     }
   }, []);
 
   // ── Fetch Psychomotor Stats from API ────────────────────────
   const fetchPsychomotorStats = useCallback(async (params = {}) => {
+    pendingFetchesRef.current += 1;
+    setLoading(true);
     try {
       const [statsRes, genderRes] = await Promise.all([
         attendanceApi.getPsychomotorStats(params),
@@ -105,31 +141,71 @@ const AttendancePsychomotor = () => {
         needingSupport: stats.needing_support || 0,
         maleRating: genderData.male_rating || 0,
         femaleRating: genderData.female_rating || 0,
+        maxRating: stats.max_rating || 5,
+        affectiveChange: stats.affective_change ?? null,
+        affectiveTrendText: stats.affective_trend_text || '',
+        psychoChange: stats.psycho_change ?? null,
+        psychoTrendText: stats.psycho_trend_text || '',
       });
     } catch (error) {
       console.error('Failed to fetch psychomotor stats:', error);
+    } finally {
+      pendingFetchesRef.current = Math.max(0, pendingFetchesRef.current - 1);
+      setLoading(pendingFetchesRef.current > 0);
+    }
+  }, []);
+
+  // ── Fetch School Days Open from API ────────────────────────
+  const fetchSchoolDaysOpen = useCallback(async (params = {}) => {
+    try {
+      const res = await attendanceApi.getSchoolDaysOpen(params);
+      if (res.data?.data) {
+        const data = res.data.data;
+        setSchoolDaysMetrics({
+          scope: data.scope || 'term',
+          termDaysOpen: data.term?.days_open || 0,
+          termDaysElapsed: data.term?.days_elapsed || 0,
+          termDaysRemaining: data.term?.days_remaining || 0,
+          termElapsedPercentage: data.term?.elapsed_percentage || 0,
+          weekDaysOpen: data.week?.days_open || 0,
+          weekDaysElapsed: data.week?.days_elapsed || 0,
+          weekDaysRemaining: data.week?.days_remaining || 0,
+          weekElapsedPercentage: data.week?.elapsed_percentage || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch school days:', error);
     }
   }, []);
 
   // ── Filter update callbacks from child tabs ─────────────────
-  const handleAttendanceFilter = (classArmId, sessionId, termId, weekId) => {
+  const handleAttendanceFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
     if (weekId) setSelectedWeekId(weekId);
+    if (programmeId) setSelectedProgrammeId(programmeId);
+    if (classId) setSelectedClassId(classId);
     fetchAttendanceStats({
       class_arm_id: classArmId || undefined,
       session_id: sessionId || undefined,
       term_id: termId || undefined,
       week_term_id: weekId || undefined,
     });
+    fetchSchoolDaysOpen({
+      session_id: sessionId || undefined,
+      term_id: termId || undefined,
+      week_term_id: weekId || undefined,
+    });
   };
 
-  const handlePsychomotorFilter = (classArmId, sessionId, termId, weekId) => {
+  const handlePsychomotorFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
     if (sessionId) setSelectedSessionId(sessionId);
     if (termId) setSelectedTermId(termId);
     if (weekId) setSelectedWeekId(weekId);
+    if (programmeId) setSelectedProgrammeId(programmeId);
+    if (classId) setSelectedClassId(classId);
     fetchPsychomotorStats({
       class_arm_id: classArmId || undefined,
       session_id: sessionId || undefined,
@@ -146,7 +222,7 @@ const AttendancePsychomotor = () => {
     if (can('manage.class_manager.attendance_psychomotor.setup')) {
       tabs.push({
         id: 'setup',
-        label: `${counter}. Setup Affective & Psychomotor Domain`,
+        label: `${counter}. Setup`,
         component: <SetupAffectivePsychomotorTab />,
         analytics: null, // no analytics on setup tab
       });
@@ -162,7 +238,7 @@ const AttendancePsychomotor = () => {
           onFilter={handleAttendanceFilter}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
+      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} schoolDaysMetrics={schoolDaysMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} programmeId={selectedProgrammeId} classId={selectedClassId} />,
     });
     counter++;
 
@@ -175,11 +251,11 @@ const AttendancePsychomotor = () => {
           onFilter={handlePsychomotorFilter}
         />
       ),
-      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
+      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, handleAttendanceFilter, handlePsychomotorFilter]);
+  }, [can, attendanceMetrics, psychomotorMetrics, schoolDaysMetrics, loading, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {
@@ -187,6 +263,30 @@ const AttendancePsychomotor = () => {
       setActiveTab(0);
     }
   }, [availableTabs.length, activeTab]);
+
+  // ── Load stats for the currently active tab only ─────────────
+  // Fires on mount and whenever the user switches tabs so the
+  // analytics cards always reflect the tab currently in view.
+  // Filters already trigger their own fetch inside the handlers,
+  // so this intentionally only re-runs when the tab changes.
+  useEffect(() => {
+    const tab = availableTabs[activeTab];
+    if (!tab) return;
+
+    const params = {
+      class_arm_id: selectedClassArmId || undefined,
+      session_id: selectedSessionId || undefined,
+      term_id: selectedTermId || undefined,
+      week_term_id: selectedWeekId || undefined,
+    };
+
+    if (tab.id === 'mark-attendance') {
+      fetchAttendanceStats(params);
+      fetchSchoolDaysOpen(params);
+    } else if (tab.id === 'mark-psychomotor') {
+      fetchPsychomotorStats(params);
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <PageContainer title="Attendance & Psychomotor" description="Mark attendance and psychomotor assessments">

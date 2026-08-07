@@ -325,10 +325,12 @@ const PaymentShedule = () => {
   // Fetch invoice stats when session term changes or when Generate Invoice tab is active
   useEffect(() => {
     if (!selectedSessionTerm || actionTab !== 1) return;
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+
     const loadInvoiceStats = async () => {
       try {
         setLoadingInvoiceStats(true);
-        const res = await fetchGenerateInvoiceStats(selectedSessionTerm, selectedClass);
+        const res = await fetchGenerateInvoiceStats(selectedSessionTerm, selectedClass, payOption);
         if (res?.success && res.data) {
           const { invoice_generated, total_amount, payment_names, categories } = res.data;
           setInvoiceStats({
@@ -442,7 +444,9 @@ const PaymentShedule = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -503,7 +507,9 @@ const PaymentShedule = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -540,7 +546,15 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+                    <Typography
+                      variant="h3"
+                      fontWeight={700}
+                      sx={{
+                        lineHeight: 1,
+                        mb: 0.5,
+                        color: isDark ? '#ffffff' : statColor1.accentColor,
+                      }}
+                    >
                       ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -555,7 +569,15 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+                    <Typography
+                      variant="h3"
+                      fontWeight={700}
+                      sx={{
+                        lineHeight: 1,
+                        mb: 0.5,
+                        color: isDark ? '#ffffff' : statColor1.accentColor,
+                      }}
+                    >
                       ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -574,7 +596,9 @@ const PaymentShedule = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -611,7 +635,15 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                    <Typography
+                      variant="h3"
+                      fontWeight={700}
+                      sx={{
+                        lineHeight: 1,
+                        mb: 0.5,
+                        color: isDark ? '#ffffff' : statColor2.accentColor,
+                      }}
+                    >
                       ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -626,7 +658,15 @@ const PaymentShedule = () => {
                   {loadingStats ? (
                     <Skeleton width={120} height={40} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                    <Typography
+                      variant="h3"
+                      fontWeight={700}
+                      sx={{
+                        lineHeight: 1,
+                        mb: 0.5,
+                        color: isDark ? '#ffffff' : statColor2.accentColor,
+                      }}
+                    >
                       ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
                     </Typography>
                   )}
@@ -650,7 +690,9 @@ const PaymentShedule = () => {
                 p: 2,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -678,7 +720,11 @@ const PaymentShedule = () => {
                   {loadingInvoiceStats ? (
                     <Skeleton width={80} height={36} />
                   ) : (
-                    <Typography variant="h2" fontWeight={700} sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}>
+                    <Typography
+                      variant="h2"
+                      fontWeight={700}
+                      sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}
+                    >
                       {invoiceStats.invoiceGenerated}
                     </Typography>
                   )}
@@ -706,7 +752,9 @@ const PaymentShedule = () => {
                 p: 2,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -773,7 +821,9 @@ const PaymentShedule = () => {
                 p: 2,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -1189,7 +1239,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-      // fullWidth
+        // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

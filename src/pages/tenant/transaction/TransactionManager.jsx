@@ -79,7 +79,7 @@ const TransactionManager = () => {
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              label="Transaction Today"
+              label="Today"
               count={`₦${(stats?.today_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={0}
@@ -88,7 +88,7 @@ const TransactionManager = () => {
 
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              label="Transaction This Week"
+              label="This Week"
               count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={1}
@@ -96,7 +96,7 @@ const TransactionManager = () => {
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              label="Transaction This Month"
+              label="This Month"
               count={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={2}
@@ -104,7 +104,7 @@ const TransactionManager = () => {
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
-              label="Transaction This Year"
+              label="This Year"
               count={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={3}

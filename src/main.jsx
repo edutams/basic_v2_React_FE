@@ -12,11 +12,10 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { tenantValidation } from './routes/Router';
 import './global.css';
 
-const isTenantSubdomain = tenantValidation?.status === true;
-
-if (tenantValidation?.status === false && window.location.pathname !== '/school-not-found') {
-  window.location.replace('/school-not-found');
-}
+// Only treat as tenant subdomain when validation returns type 'tenant'
+// For organization domains (type: 'organization') or unknown domains (status: false),
+// the Router.jsx already routes to AgentRoutes — no redirect needed.
+const isTenantSubdomain = tenantValidation?.status === true && tenantValidation?.type === 'tenant';
 
 // Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain

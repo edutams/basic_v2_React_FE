@@ -70,7 +70,8 @@ const GenerateInvoiceTab = ({
   const [loadingCounts, setLoadingCounts] = useState(false);
 
   // True when at least one bursary schedule exists for the selected class & session
-  const hasSchedules = !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
+  const hasSchedules =
+    !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
@@ -133,10 +134,12 @@ const GenerateInvoiceTab = ({
         return;
       }
 
+      const payOption = 'compulsory';
+
       const classStatuses = await Promise.all(
         classes.map(async (cls) => {
           try {
-            const res = await fetchGenerateInvoiceStats(selectedSessionTermId, cls.id);
+            const res = await fetchGenerateInvoiceStats(selectedSessionTermId, cls.id, payOption);
             const invoiceGenerated = Number(res?.data?.invoice_generated ?? 0);
             return {
               ...cls,
@@ -322,7 +325,12 @@ const GenerateInvoiceTab = ({
               sx={{ width: 250 }}
             />
 
-            <Button variant="contained" size="small" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleFetch}
+              sx={{ fontWeight: 600, minWidth: 100 }}
+            >
               Fetch
             </Button>
           </Stack>
@@ -359,9 +367,7 @@ const GenerateInvoiceTab = ({
                     label={cls.class_name}
                     onClick={() => setSelectedClass(cls.id)}
                     icon={
-                      hasInvoiceGenerated ? (
-                        <CheckCircleIcon sx={{ fontSize: 18 }} />
-                      ) : undefined
+                      hasInvoiceGenerated ? <CheckCircleIcon sx={{ fontSize: 18 }} /> : undefined
                     }
                     sx={{
                       // bgcolor: isSelected
@@ -369,7 +375,7 @@ const GenerateInvoiceTab = ({
                       //   : hasInvoiceGenerated
                       //     ? 'primary.light'
                       //     : 'white',
-                      bgcolor: isSelected ? 'primary.main' : (isDark ? 'background.paper' : '#fff'),
+                      bgcolor: isSelected ? 'primary.main' : isDark ? 'background.paper' : '#fff',
                       color: isSelected
                         ? '#fff'
                         : hasInvoiceGenerated
@@ -383,9 +389,7 @@ const GenerateInvoiceTab = ({
                           ? 'primary.main'
                           : 'divider',
                       '&:hover': {
-                        bgcolor: isSelected
-                          ? 'primary.dark'
-                          : 'primary.light',
+                        bgcolor: isSelected ? 'primary.dark' : 'primary.light',
                       },
                       '& .MuiChip-icon': {
                         color: isSelected ? '#fff' : 'success.dark',
@@ -475,7 +479,13 @@ const GenerateInvoiceTab = ({
               <Alert
                 severity="warning"
                 action={
-                  <Button variant="contained" size="small" color="warning" onClick={handleGenerateForPending} sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="warning"
+                    onClick={handleGenerateForPending}
+                    sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}
+                  >
                     Generate Now
                   </Button>
                 }
@@ -500,32 +510,32 @@ const GenerateInvoiceTab = ({
         )}
 
         {/* Empty state - no bursary schedules configured */}
-        {!loadingScheduleData && !errorScheduleData && !hasSchedules && selectedClass && selectedSessionTermId && (
-          <Alert
-            severity="info"
-            sx={{
-              mb: 2,
-              '& .MuiAlert-message': { width: '100%' },
-            }}
-          >
-            <Typography variant="body2" fontWeight={600}>
-              No payment schedules found for {selectedClassName} in {selectedSessionLabel} - {selectedTermLabel}.
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Please ensure at least one bursary schedule has been set up for this class and session term
-              before generating invoices. Go to the{' '}
-              <Typography
-                component="span"
-                variant="body2"
-                fontWeight={600}
-                color="primary.main"
-              >
-                Payment Schedule
-              </Typography>{' '}
-              section to add a schedule first.
-            </Typography>
-          </Alert>
-        )}
+        {!loadingScheduleData &&
+          !errorScheduleData &&
+          !hasSchedules &&
+          selectedClass &&
+          selectedSessionTermId && (
+            <Alert
+              severity="info"
+              sx={{
+                mb: 2,
+                '& .MuiAlert-message': { width: '100%' },
+              }}
+            >
+              <Typography variant="body2" fontWeight={600}>
+                No payment schedules found for {selectedClassName} in {selectedSessionLabel} -{' '}
+                {selectedTermLabel}.
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Please ensure at least one bursary schedule has been set up for this class and
+                session term before generating invoices. Go to the{' '}
+                <Typography component="span" variant="body2" fontWeight={600} color="primary.main">
+                  Payment Schedule
+                </Typography>{' '}
+                section to add a schedule first.
+              </Typography>
+            </Alert>
+          )}
 
         {hasSchedules && (
           <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>

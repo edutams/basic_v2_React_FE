@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableRow, TableCell, Box, Typography, Stack } from '@mui/material';
+import { TableRow, TableCell, Box, Typography, Stack, Alert } from '@mui/material';
 import { IconDatabaseOff, IconSearch, IconFileX } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
@@ -55,26 +55,25 @@ const EmptyTableState = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            height: height,
-            textAlign: 'center',
+            py: 2,
+            width: '100%',
           }}
         >
-          <Stack spacing={2} alignItems="center">
-            {showIcon && (
-              <Box
-                sx={{
-                  color: 'text.secondary',
-                  opacity: 0.6,
-                }}
-              >
-                {getIcon()}
-              </Box>
-            )}
-            
+          <Alert severity="info" sx={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
             <Stack spacing={1} alignItems="center">
+              {showIcon && (
+                <Box
+                  sx={{
+                    color: 'inherit',
+                    opacity: 0.8,
+                  }}
+                >
+                  {getIcon()}
+                </Box>
+              )}
               <Typography 
                 variant="h6" 
-                color="text.secondary"
+                color="inherit"
                 fontWeight={500}
               >
                 {getDefaultMessage()}
@@ -82,13 +81,13 @@ const EmptyTableState = ({
               
               <Typography 
                 variant="body2" 
-                color="text.secondary"
+                color="inherit"
                 sx={{ maxWidth: 400, opacity: 0.8 }}
               >
                 {getDefaultDescription()}
               </Typography>
             </Stack>
-          </Stack>
+          </Alert>
         </Box>
       </TableCell>
     </TableRow>

@@ -37,11 +37,22 @@ const classRegisterApi = {
   bulkAssignArm: (data) =>
     tenantApi.post('/students/bulk-assign-arm', data),
 
-  // ── Student Transfers (Change Class) ─────────────────────
   changeStudentClass: (studentId, data) =>
     tenantApi.put(`/students/${studentId}/change-class`, data),
 
-  // ── Export ───────────────────────────────────────────────
+  updateStudentStatus: (studentId, status) =>
+    tenantApi.patch(`/students/${studentId}/status`, { status }),
+  removeFromClass: (studentId) =>
+    tenantApi.patch(`/students/${studentId}/remove-from-class`),
+
+  getUnassignedStudents: (params = {}) =>
+    tenantApi.get('/students/unassigned', { params }),
+  addStudentsToClass: (data) =>
+    tenantApi.post('/students/add-to-class', data),
+
+  exportStudentListPdf: (params = {}) =>
+    tenantApi.get('/students/export-pdf', { params, responseType: 'blob' }),
+
   exportStudentList: (params = {}) =>
     tenantApi.get('/students/export', { params, responseType: 'blob' }),
 };

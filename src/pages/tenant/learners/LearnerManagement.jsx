@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import SchoolIcon from '@mui/icons-material/School';
 
 import learnerApi from '@/api/tenant/learners/learnerApi';
 import { getClassesWithDivisions, createLearner } from '@/api/tenant/set-up/tenant-setup';
@@ -81,7 +81,7 @@ const LearnerManagement = () => {
 
   const [classes, setClasses] = useState([]);
 
-  const [stats, setStats] = useState({ total: 0, active: 0, transferred: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, graduate: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -160,7 +160,7 @@ const LearnerManagement = () => {
     try {
       setStatsLoading(true);
       const res = await learnerApi.getStats();
-      setStats(res?.data?.data ?? { total: 0, active: 0, transferred: 0 });
+      setStats(res?.data?.data ?? { total: 0, active: 0, graduate: 0 });
     } catch {
       notify.error('Failed to fetch stats');
     } finally {
@@ -359,9 +359,9 @@ const LearnerManagement = () => {
             loading={statsLoading}
           />
           <StatCard
-            count={stats.transferred}
-            label="Transferred Learners"
-            icon={SwapHorizIcon}
+            count={stats.graduate ?? stats.graduated ?? 0}
+            label="Graduated Learners"
+            icon={SchoolIcon}
             colorIndex={2}
             loading={statsLoading}
           />

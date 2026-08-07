@@ -25,7 +25,6 @@ const StudentDetailModal = ({ open, onClose, student }) => {
 
     const fetchGuardians = async () => {
       try {
-        // Use user_id if available, otherwise fall back to student_reg_id
         const learnerId = student.user_id || student.users?.id || student.student_reg_id;
         const res = await learnerApi.getParents(learnerId);
         if (cancelled) return;
@@ -60,6 +59,11 @@ const StudentDetailModal = ({ open, onClose, student }) => {
       ? `${student.class_name} (${student.arm_name})`
       : '—');
 
+  const programmeDisplay =
+    student.programme_name ||
+    student.programme_code ||
+    (typeof student.programme === 'string' ? student.programme : student.programme?.programme_name || student.programme?.name);
+
   // Use background-fetched guardians, fall back to student prop data
   const hasGuardian = guardians.length > 0 || !!(student.guardian_name || student.guardian_phone || student.guardian_email);
   const fallbackGuardian = (student.guardian_name || student.guardian_phone || student.guardian_email)
@@ -85,7 +89,7 @@ const StudentDetailModal = ({ open, onClose, student }) => {
               {(student.name || '?').charAt(0)}
             </Avatar>
             <Box>
-              <Typography variant="h6" color='primary' fontWeight={700}>
+              <Typography variant="h6" fontWeight={700}>
                 {student.name}
               </Typography>
               <Chip
@@ -98,11 +102,15 @@ const StudentDetailModal = ({ open, onClose, student }) => {
           <Typography variant="body2">
             <strong>Gender:</strong> {student.gender || '—'}
           </Typography>
+          {programmeDisplay && (
+            <Typography variant="body2">
+              <strong>Programme:</strong> {programmeDisplay}
+            </Typography>
+          )}
           <Typography variant="body2">
             <strong>Current Class/Arm:</strong> {classArmDisplay}
           </Typography>
 
-          {/* ── Guardian Section ───────────────────────────── */}
           {hasGuardian && (
             <Box
               sx={{

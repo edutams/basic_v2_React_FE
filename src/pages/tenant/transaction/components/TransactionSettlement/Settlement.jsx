@@ -189,25 +189,25 @@ const Settlement = () => {
         title: 'Total Transaction Value',
         items: [
           {
-            label: 'Settlement Today',
+            label: 'Today',
             value: format(d.today_total) ?? 0,
             color: '#4DA3F5',
             bgColor: '#EAF4FF',
           },
           {
-            label: 'Settlement This Week',
+            label: 'This Week',
             value: format(d.this_week_total) ?? 0,
             color: '#6BC68D',
             bgColor: '#EEF9F2',
           },
           {
-            label: 'Settlement This Month',
+            label: 'This Month',
             value: format(d.this_month_total) ?? 0,
             color: '#E95A71',
             bgColor: '#FDF1F3',
           },
           {
-            label: 'Settlement This Year',
+            label: 'This Year',
             value: format(d.this_year_total) ?? 0,
             color: '#3247C6',
             bgColor: '#EEF0FF',
@@ -348,7 +348,7 @@ const Settlement = () => {
               disabled={syncing}
               onClick={handleSyncFromGateway}
             >
-              {syncing ? 'Syncing…' : 'Fetch from Gateway'}
+              {syncing ? 'Syncing…' : 'Fetch'}
             </Button>
           </Grid>
         </Grid>

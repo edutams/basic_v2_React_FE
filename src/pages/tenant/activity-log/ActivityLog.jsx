@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -278,171 +279,173 @@ const ActivityLog = () => {
                 sx={{ width: { xs: '100%', sm: '160px' } }}
                 data-tour="activity-log-date"
               />
-            <TextField
-              size="small"
-              label="Date To"
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: dateFrom || undefined }}
-              sx={{ width: { xs: '100%', sm: '160px' } }}
-            />
-            <Button variant="contained" size="small" color="primary" onClick={handleSearch} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-              Search
-            </Button>
-            {(search || dateFrom || dateTo) && (
-              <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                Clear
+              <TextField
+                size="small"
+                label="Date To"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: dateFrom || undefined }}
+                sx={{ width: { xs: '100%', sm: '160px' } }}
+              />
+              <Button variant="contained" size="small" color="primary" onClick={handleSearch} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                Search
               </Button>
-            )}
-          </Box>
-
-          {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress />
+              {(search || dateFrom || dateTo) && (
+                <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                  Clear
+                </Button>
+              )}
             </Box>
-          ) : error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : (
-            <>
-              <TableContainer sx={{ overflowX: "auto" }} data-tour="activity-log-table">
-                <Table sx={{ tableLayout: "fixed", width: "100%" }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "5%" }}>
-                        <Typography variant="h6">S/N</Typography>
-                      </TableCell>
 
-                      <TableCell sx={{ width: "50%" }}>
-                        <Typography variant="h6">Activity</Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ width: "35%" }}>
-                        <Typography variant="h6">Date Performed</Typography>
-                      </TableCell>
-
-                      <TableCell
-                        align="right"
-                        sx={{
-                          width: "25%",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <Typography variant="h6">Action</Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {logs.length === 0 ? (
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={5}>
+                <CircularProgress />
+              </Box>
+            ) : error ? (
+              <Alert severity="error">{error}</Alert>
+            ) : (
+              <>
+                <TableContainer sx={{ overflowX: "auto" }} data-tour="activity-log-table">
+                  <Table sx={{ tableLayout: "fixed", width: "100%" }}>
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                          <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                            No activity logs found
-                          </Alert>
+                        <TableCell sx={{ width: "5%" }}>
+                          <Typography variant="h6">S/N</Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ width: "50%" }}>
+                          <Typography variant="h6">Activity</Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ width: "35%" }}>
+                          <Typography variant="h6">Date Performed</Typography>
+                        </TableCell>
+
+                        <TableCell
+                          align="right"
+                          sx={{
+                            width: "25%",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <Typography variant="h6">Action</Typography>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      logs.map((log, idx) => (
-                        <TableRow key={log.id}>
-                          <TableCell>
-                            <Typography variant="body1">
-                              {idx + 1 + page * rowsPerPage}
-                            </Typography>
-                          </TableCell>
+                    </TableHead>
 
-                          <TableCell>
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                wordBreak: 'break-word',
-                              }}
-                            >
-                              {log.causer ? (
-                                <Typography
-                                  component="span"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleCauserClick(log.causer);
-                                  }}
-                                  sx={{
-                                    color: 'primary.main',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    '&:hover': { textDecoration: 'underline' },
-                                  }}
-                                >
-                                  {log.causer?.full_name ||
-                                    (log.causer?.fname && log.causer?.lname
-                                      ? `${log.causer.fname} ${log.causer.lname}`
-                                      : log.causer?.name || 'System')}
-                                </Typography>
-                              ) : (
-                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                                  System
-                                </Typography>
-                              )}{' '}
-                              {log.description}
-                            </Typography>
-                          </TableCell>
-
-                          <TableCell>
-                            <Typography
-                              variant="body2"
-                              color="textSecondary"
-                              sx={{ whiteSpace: "nowrap" }}
-                            >
-                              {log.my_updated_at}
-                            </Typography>
-                          </TableCell>
-
-                          <TableCell
-                            align="right"
-                            sx={{ whiteSpace: "nowrap" }}
-                          >
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<IconEye />}
-                              onClick={() => handleOpenModal(log)}
-                              data-tour="activity-log-action"
-                              sx={{
-                                display: { xs: "none", md: "inline-flex" },
-                              }}
-                            >
-                              View Details
-                            </Button>
-
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenModal(log)}
-                              sx={{
-                                display: { xs: "inline-flex", md: "none" },
-                              }}
-                            >
-                              <IconEye size={18} />
-                            </IconButton>
+                    <TableBody>
+                      {logs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                            <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                              No activity logs found
+                            </Alert>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[10, 20, 50]}
-                component="div"
-                count={total}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </>
-          )}
-        </CardContent>
-      </BlankCard>
+                      ) : (
+                        logs.map((log, idx) => (
+                          <TableRow key={log.id}>
+                            <TableCell>
+                              <Typography variant="body1">
+                                {idx + 1 + page * rowsPerPage}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                {log.causer ? (
+                                  <Tooltip title="Click to View User Profile" arrow placement="top">
+                                    <Typography
+                                      component="span"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleCauserClick(log.causer);
+                                      }}
+                                      sx={{
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        '&:hover': { textDecoration: 'underline' },
+                                      }}
+                                    >
+                                      {log.causer?.full_name ||
+                                        (log.causer?.fname && log.causer?.lname
+                                          ? `${log.causer.fname} ${log.causer.lname}`
+                                          : log.causer?.name || 'System')}
+                                    </Typography>
+                                  </Tooltip>
+                                ) : (
+                                  <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                    System
+                                  </Typography>
+                                )}{' '}
+                                {log.description}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell>
+                              <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                sx={{ whiteSpace: "nowrap" }}
+                              >
+                                {log.my_updated_at}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell
+                              align="right"
+                              sx={{ whiteSpace: "nowrap" }}
+                            >
+                              <Button
+                                variant="contained"
+                                size="small"
+                                startIcon={<IconEye />}
+                                onClick={() => handleOpenModal(log)}
+                                data-tour="activity-log-action"
+                                sx={{
+                                  display: { xs: "none", md: "inline-flex" },
+                                }}
+                              >
+                                View Details
+                              </Button>
+
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenModal(log)}
+                                sx={{
+                                  display: { xs: "inline-flex", md: "none" },
+                                }}
+                              >
+                                <IconEye size={18} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  rowsPerPageOptions={[10, 20, 50]}
+                  component="div"
+                  count={total}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </>
+            )}
+          </CardContent>
+        </BlankCard>
       </AclTourProvider>
 
       {/* Details Modal */}

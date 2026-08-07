@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -363,24 +364,26 @@ const ActivityLog = () => {
                             <TableCell>
                               <Typography variant="body1">
                                 {log.causer ? (
-                                  <Typography
-                                    component="span"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      handleCauserClick(log.causer);
-                                    }}
-                                    sx={{
-                                      color: 'primary.main',
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                      '&:hover': { textDecoration: 'underline' },
-                                    }}
-                                  >
-                                    {log.causer?.full_name ||
-                                      (log.causer?.fname && log.causer?.lname
-                                        ? `${log.causer.fname} ${log.causer.lname}`
-                                        : log.causer?.name || 'System')}
-                                  </Typography>
+                                  <Tooltip title="View User Profile" arrow placement="top">
+                                    <Typography
+                                      component="span"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleCauserClick(log.causer);
+                                      }}
+                                      sx={{
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        '&:hover': { textDecoration: 'underline' },
+                                      }}
+                                    >
+                                      {log.causer?.full_name ||
+                                        (log.causer?.fname && log.causer?.lname
+                                          ? `${log.causer.fname} ${log.causer.lname}`
+                                          : log.causer?.name || 'System')}
+                                    </Typography>
+                                  </Tooltip>
                                 ) : (
                                   <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
                                     System

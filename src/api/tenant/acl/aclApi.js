@@ -114,17 +114,17 @@ const aclApi = {
     },
 
     getSchoolUserProfile: async (userId) => {
-        const response = await tenantApi.get(`/censis/acl/assignments/users/${userId}/profile`);
+        const response = await tenantApi.get(`/users/${userId}/profile`);
         return response.data;
     },
 
     updateSchoolUserProfile: async (userId, data) => {
-        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/profile`, data);
+        const response = await tenantApi.post(`/users/${userId}/profile`, data);
         return response.data;
     },
 
     changeSchoolUserPassword: async (userId, data) => {
-        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/password`, data);
+        const response = await tenantApi.post(`/users/${userId}/password`, data);
         return response.data;
     },
 

@@ -26,6 +26,13 @@ import {
   Collapse,
   Snackbar,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -78,9 +85,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [collapsedModules, setCollapsedModules] = useState({});
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [currentUser, setCurrentUser] = useState(user);
-  const [liveUser, setLiveUser] = useState(null);
-  const [livePermissions, setLivePermissions] = useState(null);
-  const [fetchingLiveData, setFetchingLiveData] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [fetchingProfile, setFetchingProfile] = useState(false);
+  const [userActivities, setUserActivities] = useState([]);
+  const [fetchingActivities, setFetchingActivities] = useState(false);
+  const [activitySearch, setActivitySearch] = useState('');
+  const [activityPage, setActivityPage] = useState(0);
+  const [activityRowsPerPage, setActivityRowsPerPage] = useState(10);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [selectedActivityDetail, setSelectedActivityDetail] = useState(null);
 
   const [editForm, setEditForm] = useState({
     fname: '',
@@ -109,51 +122,70 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   useEffect(() => {
     setCurrentUser(user);
-    setLiveUser(null);
-    setLivePermissions(null);
+    setProfileData(null);
   }, [user]);
 
   const targetUser = useMemo(() => {
-    return { ...(currentUser || user || {}), ...(liveUser || {}) };
-  }, [currentUser, user, liveUser]);
+    return { ...(currentUser || user || {}), ...(profileData || {}) };
+  }, [currentUser, user, profileData]);
+
+  const targetId = targetUser?.id || targetUser?.user_id;
 
   useEffect(() => {
-    const targetId = targetUser?.id || targetUser?.user_id;
-    if (open && targetId && !liveUser && !fetchingLiveData) {
-      setFetchingLiveData(true);
-      Promise.all([
-        aclApi.getSchoolUsers().catch(() => null),
-        aclApi.getSchoolUserDirectPermissions(targetId).catch(() => null),
-      ])
-        .then(([usersRes, permsRes]) => {
-          if (usersRes?.data) {
-            const uList = Array.isArray(usersRes.data)
-              ? usersRes.data
-              : Array.isArray(usersRes.data?.data)
-                ? usersRes.data.data
-                : [];
-            const foundUser = uList.find((u) => String(u.id) === String(targetId));
-            if (foundUser) {
-              setLiveUser(foundUser);
-            }
-          }
-          if (permsRes?.data) {
-            const direct = permsRes.data.direct || [];
-            const inherited = permsRes.data.inherited || [];
-            const combined = [...new Set([...direct, ...inherited])];
-            if (combined.length > 0) {
-              setLivePermissions(combined);
-            }
+    if (open && targetId && !profileData && !fetchingProfile) {
+      setFetchingProfile(true);
+      aclApi
+        .getSchoolUserProfile(targetId)
+        .then((res) => {
+          if (res?.data) {
+            setProfileData(res.data);
           }
         })
         .catch((err) => {
-          console.error('Failed to fetch live user data:', err);
+          console.error('Failed to fetch user profile:', err);
         })
         .finally(() => {
-          setFetchingLiveData(false);
+          setFetchingProfile(false);
         });
     }
-  }, [open, targetUser?.id, targetUser?.user_id, liveUser, fetchingLiveData]);
+  }, [open, targetId, profileData, fetchingProfile]);
+
+  useEffect(() => {
+    if (activeModal === 'view_activity' && targetId) {
+      setFetchingActivities(true);
+      aclApi
+        .getUserActivityLogs(targetId, {
+          page: activityPage + 1,
+          limit: activityRowsPerPage,
+        })
+        .then((res) => {
+          const list = Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res?.data?.data)
+              ? res.data.data
+              : Array.isArray(res)
+                ? res
+                : [];
+          setUserActivities(list);
+          setActivityTotal(res?.total || res?.data?.total || list.length);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch user activity logs:', err);
+        })
+        .finally(() => {
+          setFetchingActivities(false);
+        });
+    }
+  }, [activeModal, targetId, activityPage, activityRowsPerPage]);
+
+  const handleChangeActivityPage = (event, newPage) => {
+    setActivityPage(newPage);
+  };
+
+  const handleChangeActivityRowsPerPage = (event) => {
+    setActivityRowsPerPage(parseInt(event.target.value, 10));
+    setActivityPage(0);
+  };
 
   const formatRoleName = (str) => {
     if (!str) return '';
@@ -235,8 +267,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   }, [targetUser]);
 
   const userPermissions = useMemo(() => {
-    if (livePermissions && Array.isArray(livePermissions) && livePermissions.length > 0) {
-      return livePermissions;
+    if (profileData?.all_permissions && Array.isArray(profileData.all_permissions) && profileData.all_permissions.length > 0) {
+      return profileData.all_permissions;
     }
     if (!targetUser) return ['dashboard.index', 'profile.view', 'activity_log.index', 'notifications.read', 'account_settings.update'];
     if (targetUser.permissions && Array.isArray(targetUser.permissions) && targetUser.permissions.length > 0) {
@@ -255,7 +287,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       'tenant.users.manage',
       'reports.export',
     ];
-  }, [livePermissions, targetUser]);
+  }, [profileData, targetUser]);
 
   const formattedPermissionsList = useMemo(() => {
     return userPermissions.map((perm) => {
@@ -323,6 +355,50 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     if (s.toLowerCase() === 'm' || s.toLowerCase() === 'male') return 'Male';
     if (s.toLowerCase() === 'f' || s.toLowerCase() === 'female') return 'Female';
     return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+
+  const getOrdinalSuffix = (day) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1:  return 'st';
+      case 2:  return 'nd';
+      case 3:  return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const getRelativeTime = (date) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    if (diffSecs < 60) return 'just now';
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'min' : 'mins'} ago`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+    if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
+    return `${diffYears} ${diffYears === 1 ? 'year' : 'years'} ago`;
+  };
+
+  const formatActivityDate = (dateStr, fallbackRelative) => {
+    if (!dateStr) return fallbackRelative || '—';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return fallbackRelative || dateStr;
+
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = daysOfWeek[d.getDay()];
+    const dayOfMonth = d.getDate();
+    const ordinal = getOrdinalSuffix(dayOfMonth);
+    const year = d.getFullYear();
+    const relative = getRelativeTime(d);
+
+    return `${dayName} ${dayOfMonth}${ordinal}, ${year} (${relative})`;
   };
 
   const getRawValue = (keys) => {
@@ -883,9 +959,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                   <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
                     {renderBasicRow(<IconMail size={18} />, 'Email Address', email, 'email')}
                     {renderBasicRow(<IconPhone size={18} />, 'Phone Number', phone, 'phone')}
-                    {renderBasicRow(<IconCake size={18} />, 'Date of Birth (DOB)', dob, 'dob')}
-                    {renderBasicRow(<IconMapPin size={18} />, 'Address', address, 'address')}
-                    {renderBasicRow(<IconGenderGenderless size={18} />, 'Gender', sex, 'sex')}
+                    {renderBasicRow(<IconCake size={18} />, 'Date of Birth (DOB)', dob)}
+                    {renderBasicRow(<IconMapPin size={18} />, 'Address', address)}
+                    {renderBasicRow(<IconGenderGenderless size={18} />, 'Gender', sex)}
                   </Stack>
                 </Box>
               </Paper>
@@ -990,7 +1066,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
             </Box>
 
             {/* Footer Bar */}
-            <Box
+            {/* <Box
               p={2.5}
               sx={{
                 borderTop: `1px solid ${theme.palette.divider}`,
@@ -1019,7 +1095,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               >
                 Done
               </Button>
-            </Box>
+            </Box> */}
           </Box>
         )}
       </Drawer>
@@ -1164,24 +1240,252 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       </Dialog>
 
       {/* 4. View Activity Log Modal */}
-      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="sm" fullWidth>
+      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="lg" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight={700}>User Activity History</Typography>
-          <IconButton onClick={() => setActiveModal(null)} size="small"><IconX size={20} /></IconButton>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: 'primary.main',
+                p: 1,
+                borderRadius: 2,
+                display: 'flex',
+              }}
+            >
+              <IconHistory size={22} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                User Activity Log
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Audit trail of system activities performed by {fullName}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={() => setActiveModal(null)} size="small">
+            <IconX size={20} />
+          </IconButton>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ p: 3 }}>
-          <Box p={2.5} sx={{ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05), borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
-            <Typography variant="subtitle1" fontWeight={700} color="primary" gutterBottom>
-              {fullName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Viewing audit trail and system activity entries associated with <strong>{fullName}</strong> ({email}).
-            </Typography>
+          {/* Search bar */}
+          <Box mb={2} display="flex" gap={1.5} alignItems="center">
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search user activities..."
+              value={activitySearch}
+              onChange={(e) => setActivitySearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Chip
+              label={`${activityTotal} Total`}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: '8px', flexShrink: 0 }}
+            />
           </Box>
+
+          {fetchingActivities ? (
+            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : userActivities.length === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: 'center',
+                bgcolor: alpha(theme.palette.background.paper, 0.5),
+                border: `1px dashed ${theme.palette.divider}`,
+                borderRadius: 2,
+              }}
+            >
+              <IconHistory size={40} color={theme.palette.text.disabled} />
+              <Typography variant="subtitle1" fontWeight={600} mt={1} color="text.secondary">
+                No Activity Records Found
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                There are no recorded system actions for this user yet.
+              </Typography>
+            </Paper>
+          ) : (
+            <Paper elevation={0} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, overflow: 'hidden' }}>
+              <TableContainer sx={{ maxHeight: 380 }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, width: 60, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>S/N</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Date Performed</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {userActivities
+                      .filter((act) => {
+                        if (!activitySearch.trim()) return true;
+                        const q = activitySearch.toLowerCase();
+                        return (
+                          (act.description && act.description.toLowerCase().includes(q)) ||
+                          (act.log_name && act.log_name.toLowerCase().includes(q)) ||
+                          (act.event && act.event.toLowerCase().includes(q))
+                        );
+                      })
+                      .map((item, idx) => (
+                        <TableRow key={item.id || idx} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.8rem' }}>
+                            {activityPage * activityRowsPerPage + idx + 1}
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                              <Chip
+                                size="small"
+                                label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
+                                color="primary"
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  borderRadius: '6px',
+                                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                  color: 'primary.main',
+                                }}
+                              />
+                              <Typography variant="body2" fontWeight={600} color="text.primary">
+                                {item.description || 'System Activity Executed'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                            {formatActivityDate(item.created_at, item.my_updated_at)}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              startIcon={<IconEye size={15} />}
+                              onClick={() => setSelectedActivityDetail(item)}
+                              sx={{
+                                borderRadius: '8px',
+                                fontSize: '0.725rem',
+                                textTransform: 'none',
+                                py: 0.25,
+                                px: 1.25,
+                                fontWeight: 600,
+                              }}
+                            >
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={activityTotal}
+                rowsPerPage={activityRowsPerPage}
+                page={activityPage}
+                onPageChange={handleChangeActivityPage}
+                onRowsPerPageChange={handleChangeActivityRowsPerPage}
+              />
+            </Paper>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Button onClick={() => setActiveModal(null)} variant="contained" size="small" color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 4b. Activity Log Details Dialog */}
+      <Dialog
+        open={Boolean(selectedActivityDetail)}
+        onClose={() => setSelectedActivityDetail(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" fontWeight={700}>Activity Details</Typography>
+          <IconButton onClick={() => setSelectedActivityDetail(null)} size="small">
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3 }}>
+          {selectedActivityDetail && (
+            <Stack spacing={2}>
+              <Box p={2} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
+                  ACTION DESCRIPTION
+                </Typography>
+                <Typography variant="body1" fontWeight={700} color="primary.main">
+                  {selectedActivityDetail.description || '—'}
+                </Typography>
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
+                    MODULE / LOG NAME
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={(selectedActivityDetail.log_name || 'SYSTEM').toUpperCase()}
+                    color="primary"
+                    sx={{ mt: 0.5, fontWeight: 700 }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
+                    DATE & TIME
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                    {formatActivityDate(selectedActivityDetail.created_at, selectedActivityDetail.my_updated_at)}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              {selectedActivityDetail.properties && Object.keys(selectedActivityDetail.properties).length > 0 && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
+                    PROPERTIES / ATTRIBUTES
+                  </Typography>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+                      borderRadius: 2,
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                    }}
+                  >
+                    <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+                      {JSON.stringify(selectedActivityDetail.properties, null, 2)}
+                    </pre>
+                  </Paper>
+                </Box>
+              )}
+            </Stack>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setActiveModal(null)} variant="contained" size="small" color="primary">Close</Button>
+          <Button onClick={() => setSelectedActivityDetail(null)} variant="contained" size="small" color="primary">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 

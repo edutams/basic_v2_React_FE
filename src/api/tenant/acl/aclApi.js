@@ -112,6 +112,16 @@ const aclApi = {
         });
         return response.data;
     },
+
+    getSchoolUserProfile: async (userId) => {
+        const response = await tenantApi.get(`/censis/acl/assignments/users/${userId}/profile`);
+        return response.data;
+    },
+
+    getUserActivityLogs: async (userId, params = {}) => {
+        const response = await tenantApi.get(`/activity-logs/causer/${userId}`, { params });
+        return response.data;
+    },
 };
 
 export default aclApi;

@@ -80,7 +80,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
-  const [permissionSearch, setPermissionSearch] = useState('');
+  const [permissionSearchInput, setPermissionSearchInput] = useState('');
+  const [permissionSearchQuery, setPermissionSearchQuery] = useState('');
   const [selectedModuleTab, setSelectedModuleTab] = useState('ALL');
   const [collapsedModules, setCollapsedModules] = useState({});
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
@@ -95,6 +96,34 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [activityRowsPerPage, setActivityRowsPerPage] = useState(10);
   const [activityTotal, setActivityTotal] = useState(0);
   const [selectedActivityDetail, setSelectedActivityDetail] = useState(null);
+
+  const handlePermissionSearchChange = (e) => {
+    const val = e.target.value;
+    setPermissionSearchInput(val);
+    if (!val.trim()) {
+      setPermissionSearchQuery('');
+    }
+  };
+
+  const handleExecutePermissionSearch = () => {
+    setPermissionSearchQuery(permissionSearchInput.trim());
+  };
+
+  const handlePermissionSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleExecutePermissionSearch();
+    }
+  };
+
+  const handleActivitySearchChange = (e) => {
+    const val = e.target.value;
+    setActivitySearchInput(val);
+    if (!val.trim()) {
+      setActivitySearchQuery('');
+      setActivityPage(0);
+    }
+  };
 
   const handleExecuteActivitySearch = () => {
     setActivitySearchQuery(activitySearchInput.trim());
@@ -136,7 +165,17 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   useEffect(() => {
     setCurrentUser(user);
     setProfileData(null);
+    setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+    setShowPasswords({ current: false, new: false, confirm: false });
   }, [user]);
+
+  useEffect(() => {
+    if (activeModal === 'change_password') {
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+      setShowPasswords({ current: false, new: false, confirm: false });
+      setPasswordError('');
+    }
+  }, [activeModal]);
 
   const targetUser = useMemo(() => {
     return { ...(currentUser || user || {}), ...(profileData || {}) };
@@ -303,23 +342,39 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     ];
   }, [profileData, targetUser]);
 
+  const directPermissionsSet = useMemo(() => {
+    const list = profileData?.direct_permissions || targetUser?.direct_permissions || targetUser?.user_permissions || [];
+    const set = new Set();
+    if (Array.isArray(list)) {
+      list.forEach((p) => {
+        if (typeof p === 'string') set.add(p);
+        else if (p && p.name) set.add(p.name);
+      });
+    }
+    return set;
+  }, [profileData, targetUser]);
+
   const formattedPermissionsList = useMemo(() => {
     return userPermissions.map((perm) => {
+      const permName = typeof perm === 'object' && perm !== null ? (perm.name || perm.title || String(perm)) : String(perm);
+      const isDirect = directPermissionsSet.has(permName);
+
       if (typeof perm === 'object' && perm !== null) {
         return {
-          name: perm.name || perm.title || String(perm),
-          description: perm.description || perm.label || perm.name || String(perm),
+          name: permName,
+          description: perm.description || perm.label || permName,
           module: perm.module || perm.group_name || perm.module_name || getPermissionModule(perm),
+          isDirect,
         };
       }
-      const str = String(perm);
       return {
-        name: str,
-        description: str.replace(/[._-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        module: getPermissionModule({ name: str }),
+        name: permName,
+        description: permName.replace(/[._-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        module: getPermissionModule({ name: permName }),
+        isDirect,
       };
     });
-  }, [userPermissions]);
+  }, [userPermissions, directPermissionsSet]);
 
   const filteredUserActivities = useMemo(() => {
     if (!activitySearchQuery.trim()) return userActivities;
@@ -341,7 +396,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     if (selectedModuleTab !== 'ALL') {
       list = list.filter((p) => p.module === selectedModuleTab);
     }
-    const term = permissionSearch?.toLowerCase() || '';
+    const term = permissionSearchQuery?.toLowerCase() || '';
     if (!term) return list;
     return list.filter(
       (permission) =>
@@ -349,7 +404,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         permission?.description?.toLowerCase()?.includes(term) ||
         permission?.module?.toLowerCase()?.includes(term),
     );
-  }, [formattedPermissionsList, selectedModuleTab, permissionSearch]);
+  }, [formattedPermissionsList, selectedModuleTab, permissionSearchQuery]);
 
   const groupedPermissions = useMemo(() => {
     return groupPermissionsByModule(filteredPermissions);
@@ -626,30 +681,45 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     }
   };
 
+  const [passwordError, setPasswordError] = useState('');
+  const [submittingPassword, setSubmittingPassword] = useState(false);
+
   const handleSavePassword = () => {
-    if (!passwordForm.new_password || passwordForm.new_password.length < 6) {
-      showToast('New password must be at least 6 characters long.', 'error');
+    setPasswordError('');
+    if (!passwordForm.new_password) {
+      setPasswordError('Please enter a new password.');
+      return;
+    }
+    if (passwordForm.new_password.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
       return;
     }
     if (passwordForm.new_password !== passwordForm.confirm_password) {
-      showToast('New passwords do not match.', 'error');
+      setPasswordError('New passwords do not match.');
       return;
     }
 
     const targetId = targetUser?.id || targetUser?.user_id;
     if (targetId) {
+      setSubmittingPassword(true);
       aclApi
         .changeSchoolUserPassword(targetId, {
           new_password: passwordForm.new_password,
         })
         .then(() => {
           setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+          setPasswordError('');
           setActiveModal(null);
           showToast('Password changed successfully!');
         })
         .catch((err) => {
           console.error('Failed to change password:', err);
-          showToast(err.response?.data?.message || 'Failed to update password', 'error');
+          const msg = err.response?.data?.message || 'Failed to update password. Please try again.';
+          setPasswordError(msg);
+          showToast(msg, 'error');
+        })
+        .finally(() => {
+          setSubmittingPassword(false);
         });
     } else {
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
@@ -1255,24 +1325,12 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2, fontSize: '0.8rem' }}>
+              {passwordError}
+            </Alert>
+          )}
           <Stack spacing={2}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Current Password"
-              type={showPasswords.current ? 'text' : 'password'}
-              value={passwordForm.current_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}>
-                      {showPasswords.current ? <IconEyeOff size={18} /> : <IconEye size={18} />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
             <TextField
               fullWidth
               size="small"
@@ -1280,6 +1338,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               type={showPasswords.new ? 'text' : 'password'}
               value={passwordForm.new_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+              inputProps={{ autoComplete: 'new-password' }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -1297,6 +1356,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               type={showPasswords.confirm ? 'text' : 'password'}
               value={passwordForm.confirm_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+              inputProps={{ autoComplete: 'new-password' }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -1310,8 +1370,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small">Cancel</Button>
-          <Button onClick={handleSavePassword} variant="contained" size="small" color="primary">Update Password</Button>
+          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small" disabled={submittingPassword}>Cancel</Button>
+          <Button onClick={handleSavePassword} variant="contained" size="small" color="primary" disabled={submittingPassword}>
+            {submittingPassword ? 'Updating...' : 'Update Password'}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1355,7 +1417,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
               fullWidth
               placeholder="Search user activities..."
               value={activitySearchInput}
-              onChange={(e) => setActivitySearchInput(e.target.value)}
+              onChange={handleActivitySearchChange}
               onKeyDown={handleActivitySearchKeyDown}
               InputProps={{
                 startAdornment: (
@@ -1604,7 +1666,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 5. View User Permissions Modal (Clean & Simple) */}
+      {/* 5. View User Permissions Modal  */}
       <Dialog open={activeModal === 'view_permissions'} onClose={() => setActiveModal(null)} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1}>
@@ -1617,30 +1679,35 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ p: 3 }}>
-          {/* Simple Search Input */}
-          <TextField
-            placeholder="Search permissions..."
-            type="text"
-            fullWidth
-            size="small"
-            value={permissionSearch}
-            onChange={(e) => setPermissionSearch(e.target.value)}
-            sx={{ mb: 2.5 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={18} />
-                </InputAdornment>
-              ),
-              endAdornment: permissionSearch ? (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={() => setPermissionSearch('')}>
-                    <IconX size={16} />
-                  </IconButton>
-                </InputAdornment>
-              ) : null,
-            }}
-          />
+          {/* Search bar */}
+          <Box mb={2.5} display="flex" gap={1} alignItems="center">
+            <TextField
+              placeholder="Search permissions..."
+              type="text"
+              fullWidth
+              size="small"
+              value={permissionSearchInput}
+              onChange={handlePermissionSearchChange}
+              onKeyDown={handlePermissionSearchKeyDown}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleExecutePermissionSearch}
+              startIcon={<IconSearch size={16} />}
+              sx={{ height: 38, px: 2.5, fontWeight: 600, flexShrink: 0, borderRadius: '8px', textTransform: 'none' }}
+            >
+              Search
+            </Button>
+          </Box>
 
           {/* Clean Grouped Permissions */}
           {groupedPermissions.length === 0 ? (
@@ -1734,7 +1801,33 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                             </Typography>
                           </Box>
                         </Box>
-                        <Chip label="Granted" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20, fontWeight: 700, bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main' }} />
+                        {permission.isDirect ? (
+                          <Chip
+                            label="Direct Permission"
+                            size="small"
+                            sx={{
+                              fontSize: '0.65rem',
+                              height: 20,
+                              fontWeight: 700,
+                              bgcolor: alpha(theme.palette.secondary.main, 0.12),
+                              color: 'secondary.main',
+                              border: `1px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
+                            }}
+                          />
+                        ) : (
+                          <Chip
+                            label="From Role"
+                            size="small"
+                            sx={{
+                              fontSize: '0.65rem',
+                              height: 20,
+                              fontWeight: 700,
+                              bgcolor: alpha(theme.palette.primary.main, 0.12),
+                              color: 'primary.main',
+                              border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                            }}
+                          />
+                        )}
                       </Box>
                     ))}
                   </Stack>

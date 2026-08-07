@@ -27,8 +27,10 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import tenantApi from '@/api/tenant/tenant_api';
 import { IconSearch, IconEye, IconX, IconDownload } from '@tabler/icons-react';
+import { useSearchParams } from 'react-router-dom';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
+import UserProfileDrawer from '@/components/shared/UserProfileDrawer';
 
 const BCrumb = [
   {
@@ -98,8 +100,38 @@ const ActivityLog = () => {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLog, setSelectedLog] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+
+  const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
+
+  const activeUser = React.useMemo(() => {
+    if (!activeUserId) return null;
+    const logWithUser = logs.find(
+      (l) => l.causer && String(l.causer.id) === String(activeUserId)
+    );
+    return logWithUser ? { ...logWithUser.causer, properties: logWithUser.properties } : null;
+  }, [activeUserId, logs]);
+
+  const handleCauserClick = (causer) => {
+    if (!causer || !causer.id) return;
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set('user_id', causer.id);
+      return p;
+    });
+  };
+
+  const handleCloseProfileDrawer = () => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.delete('user_id');
+      p.delete('causer_id');
+      p.delete('profile_id');
+      return p;
+    });
+  };
 
   const fetchLogs = async (
     currentPage,
@@ -324,14 +356,33 @@ const ActivityLog = () => {
                             <Typography
                               variant="body1"
                               sx={{
-                                wordBreak: "break-word",
+                                wordBreak: 'break-word',
                               }}
                             >
-                              <a href="#" className="text-success">
-                                {log.causer?.fname && log.causer?.lname
-                                  ? `${log.causer.fname} ${log.causer.lname}`
-                                  : log.causer?.name || "System"}
-                              </a>{" "}
+                              {log.causer ? (
+                                <Typography
+                                  component="span"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleCauserClick(log.causer);
+                                  }}
+                                  sx={{
+                                    color: 'primary.main',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    '&:hover': { textDecoration: 'underline' },
+                                  }}
+                                >
+                                  {log.causer?.full_name ||
+                                    (log.causer?.fname && log.causer?.lname
+                                      ? `${log.causer.fname} ${log.causer.lname}`
+                                      : log.causer?.name || 'System')}
+                                </Typography>
+                              ) : (
+                                <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                  System
+                                </Typography>
+                              )}{' '}
                               {log.description}
                             </Typography>
                           </TableCell>
@@ -428,9 +479,26 @@ const ActivityLog = () => {
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Action By</TableCell>
                       <TableCell>
-                        {selectedLog.causer?.fname && selectedLog.causer?.lname
-                          ? `${selectedLog.causer.fname} ${selectedLog.causer.lname}`
-                          : selectedLog.causer?.name || 'System'} ({selectedLog.causer.email})
+                        {selectedLog.causer ? (
+                          <Typography
+                            component="span"
+                            onClick={() => handleCauserClick(selectedLog.causer)}
+                            sx={{
+                              color: 'primary.main',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              '&:hover': { textDecoration: 'underline' },
+                            }}
+                          >
+                            {selectedLog.causer?.full_name ||
+                              (selectedLog.causer?.fname && selectedLog.causer?.lname
+                                ? `${selectedLog.causer.fname} ${selectedLog.causer.lname}`
+                                : selectedLog.causer?.name || 'System')}
+                          </Typography>
+                        ) : (
+                          'System'
+                        )}
+                        {selectedLog.causer?.email ? ` (${selectedLog.causer.email})` : ''}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -512,6 +580,13 @@ const ActivityLog = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* User Profile Side Drawer */}
+      <UserProfileDrawer
+        open={Boolean(activeUserId)}
+        onClose={handleCloseProfileDrawer}
+        user={activeUser}
+      />
     </PageContainer>
   );
 };

@@ -27,8 +27,10 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import api from '@/api/landlord/landlord_api';
 import { IconSearch, IconEye, IconX, IconDownload } from '@tabler/icons-react';
+import { useSearchParams } from 'react-router-dom';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
+import UserProfileDrawer from '@/components/shared/UserProfileDrawer';
 
 const BCrumb = [
   {
@@ -98,8 +100,38 @@ const ActivityLog = () => {
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLog, setSelectedLog] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+
+  const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
+
+  const activeUser = React.useMemo(() => {
+    if (!activeUserId) return null;
+    const logWithUser = logs.find(
+      (l) => l.causer && String(l.causer.id) === String(activeUserId)
+    );
+    return logWithUser ? { ...logWithUser.causer, properties: logWithUser.properties } : null;
+  }, [activeUserId, logs]);
+
+  const handleCauserClick = (causer) => {
+    if (!causer || !causer.id) return;
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set('user_id', causer.id);
+      return p;
+    });
+  };
+
+  const handleCloseProfileDrawer = () => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.delete('user_id');
+      p.delete('causer_id');
+      p.delete('profile_id');
+      return p;
+    });
+  };
 
   const fetchLogs = async (
     currentPage,
@@ -330,9 +362,30 @@ const ActivityLog = () => {
                             </TableCell>
                             <TableCell>
                               <Typography variant="body1">
-                                <a href="#" className="text-success">
-                                  {log.causer?.full_name || 'System'}
-                                </a>{' '}
+                                {log.causer ? (
+                                  <Typography
+                                    component="span"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleCauserClick(log.causer);
+                                    }}
+                                    sx={{
+                                      color: 'primary.main',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      '&:hover': { textDecoration: 'underline' },
+                                    }}
+                                  >
+                                    {log.causer?.full_name ||
+                                      (log.causer?.fname && log.causer?.lname
+                                        ? `${log.causer.fname} ${log.causer.lname}`
+                                        : log.causer?.name || 'System')}
+                                  </Typography>
+                                ) : (
+                                  <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                    System
+                                  </Typography>
+                                )}{' '}
                                 {log.description}
                               </Typography>
                             </TableCell>
@@ -404,49 +457,97 @@ const ActivityLog = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {selectedLog &&
-          selectedLog.properties &&
-          Object.keys(selectedLog.properties).length > 0 ? (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <Typography variant="subtitle2">What Changed</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2">Value Valued</Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(selectedLog.properties).map(([key, value]) => (
-                    <TableRow key={key}>
-                      <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{key}</TableCell>
+          {selectedLog && (
+            <Box>
+              <Box mb={2}>
+                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                  Basic Information
+                </Typography>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, width: '150px' }}>Description</TableCell>
+                      <TableCell>{selectedLog.description}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Action By</TableCell>
                       <TableCell>
-                        {typeof value === 'object' && value !== null ? (
-                          <pre
-                            style={{
-                              margin: 0,
-                              fontFamily: 'monospace',
-                              fontSize: '12px',
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
+                        {selectedLog.causer ? (
+                          <Typography
+                            component="span"
+                            onClick={() => handleCauserClick(selectedLog.causer)}
+                            sx={{
+                              color: 'primary.main',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              '&:hover': { textDecoration: 'underline' },
                             }}
                           >
-                            {JSON.stringify(value, null, 2)}
-                          </pre>
+                            {selectedLog.causer?.full_name ||
+                              (selectedLog.causer?.fname && selectedLog.causer?.lname
+                                ? `${selectedLog.causer.fname} ${selectedLog.causer.lname}`
+                                : selectedLog.causer?.name || 'System')}
+                          </Typography>
                         ) : (
-                          String(value)
+                          'System'
                         )}
+                        {selectedLog.causer?.email ? ` (${selectedLog.causer.email})` : ''}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Typography>No additional properties available for this activity.</Typography>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                      <TableCell>{selectedLog.my_updated_at}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
+
+              {selectedLog.properties && Object.keys(selectedLog.properties).length > 0 && (
+                <Box mt={2}>
+                  <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                    What Changed
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2">Property</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2">Value</Typography>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(selectedLog.properties).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{key}</TableCell>
+                            <TableCell>
+                              {typeof value === 'object' && value !== null ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    fontFamily: 'monospace',
+                                    fontSize: '12px',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  {JSON.stringify(value, null, 2)}
+                                </pre>
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
@@ -464,6 +565,13 @@ const ActivityLog = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* User Profile Side Drawer */}
+      <UserProfileDrawer
+        open={Boolean(activeUserId)}
+        onClose={handleCloseProfileDrawer}
+        user={activeUser}
+      />
     </PageContainer>
   );
 };

@@ -23,6 +23,7 @@ import {
   DialogActions,
   TextField,
   InputAdornment,
+  Collapse,
   Snackbar,
   Alert,
   useTheme,
@@ -51,7 +52,18 @@ import {
   IconEye,
   IconEyeOff,
   IconUpload,
+  IconSearch,
+  IconLockAccess,
+  IconFolder,
+  IconChevronDown,
+  IconChevronUp,
+  IconFilter,
 } from '@tabler/icons-react';
+import {
+  groupPermissionsByModule,
+  prettifyModuleName,
+  getPermissionModule,
+} from '@/utils/permissionGrouping';
 
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) => {
   const theme = useTheme();
@@ -60,6 +72,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [selectedModuleTab, setSelectedModuleTab] = useState('ALL');
+  const [collapsedModules, setCollapsedModules] = useState({});
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [currentUser, setCurrentUser] = useState(user);
 
@@ -186,7 +201,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   }, [targetUser]);
 
   const userPermissions = useMemo(() => {
-    if (!targetUser) return ['Default Access Permissions'];
+    if (!targetUser) return ['dashboard.index', 'profile.view', 'activity_log.index', 'notifications.read', 'account_settings.update'];
     if (targetUser.permissions && Array.isArray(targetUser.permissions) && targetUser.permissions.length > 0) {
       return targetUser.permissions;
     }
@@ -199,8 +214,56 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       'activity_log.index',
       'notifications.read',
       'account_settings.update',
+      'tenant.setup.index',
+      'tenant.users.manage',
+      'reports.export',
     ];
   }, [targetUser]);
+
+  const formattedPermissionsList = useMemo(() => {
+    return userPermissions.map((perm) => {
+      if (typeof perm === 'object' && perm !== null) {
+        return {
+          name: perm.name || perm.title || String(perm),
+          description: perm.description || perm.label || perm.name || String(perm),
+          module: perm.module || perm.group_name || perm.module_name || getPermissionModule(perm),
+        };
+      }
+      const str = String(perm);
+      return {
+        name: str,
+        description: str.replace(/[._-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        module: getPermissionModule({ name: str }),
+      };
+    });
+  }, [userPermissions]);
+
+  const allModuleGroups = useMemo(() => {
+    return groupPermissionsByModule(formattedPermissionsList);
+  }, [formattedPermissionsList]);
+
+  const filteredPermissions = useMemo(() => {
+    let list = formattedPermissionsList;
+    if (selectedModuleTab !== 'ALL') {
+      list = list.filter((p) => p.module === selectedModuleTab);
+    }
+    const term = permissionSearch?.toLowerCase() || '';
+    if (!term) return list;
+    return list.filter(
+      (permission) =>
+        permission?.name?.toLowerCase()?.includes(term) ||
+        permission?.description?.toLowerCase()?.includes(term) ||
+        permission?.module?.toLowerCase()?.includes(term),
+    );
+  }, [formattedPermissionsList, selectedModuleTab, permissionSearch]);
+
+  const groupedPermissions = useMemo(() => {
+    return groupPermissionsByModule(filteredPermissions);
+  }, [filteredPermissions]);
+
+  const toggleModuleCollapse = (moduleKey) => {
+    setCollapsedModules((prev) => ({ ...prev, [moduleKey]: !prev[moduleKey] }));
+  };
 
   const formatDOB = (val) => {
     if (!val || val === '—') return '—';
@@ -307,9 +370,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   const fullName = targetUser
     ? targetUser.full_name ||
-    (targetUser.fname && targetUser.lname
-      ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
-      : targetUser.name || 'System User')
+      (targetUser.fname && targetUser.lname
+        ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
+        : targetUser.name || 'System User')
     : 'User Profile';
 
   const organizationName = targetUser?.organization?.organization_name || targetUser?.organization?.name || '—';
@@ -317,10 +380,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const status = String(targetUser?.status || 'active').toLowerCase();
   const createdDate = targetUser?.created_at
     ? new Date(targetUser.created_at).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
     : '—';
 
   const getInitials = () => {
@@ -1009,8 +1072,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 5. View User Permissions Modal */}
-      <Dialog open={activeModal === 'view_permissions'} onClose={() => setActiveModal(null)} maxWidth="sm" fullWidth>
+      {/* 5. View User Permissions Modal (Clean & Simple) */}
+      <Dialog open={activeModal === 'view_permissions'} onClose={() => setActiveModal(null)} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1}>
             <IconShieldCheck size={22} color={theme.palette.primary.main} />
@@ -1022,39 +1085,131 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ p: 3 }}>
-          {/* <Box mb={2.5} p={2} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
-            <Typography variant="subtitle1" fontWeight={700} color="primary.main" gutterBottom>
-              {fullName}
+          {/* Simple Search Input */}
+          <TextField
+            placeholder="Search permissions..."
+            type="text"
+            fullWidth
+            size="small"
+            value={permissionSearch}
+            onChange={(e) => setPermissionSearch(e.target.value)}
+            sx={{ mb: 2.5 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconSearch size={18} />
+                </InputAdornment>
+              ),
+              endAdornment: permissionSearch ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setPermissionSearch('')}>
+                    <IconX size={16} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            }}
+          />
+
+          {/* Clean Grouped Permissions */}
+          {groupedPermissions.length === 0 ? (
+            <Typography variant="body2" color="textSecondary" sx={{ p: 3, textAlign: 'center' }}>
+              No matching permissions found.
             </Typography>
+          ) : (
+            <Box sx={{ maxHeight: 420, overflowY: 'auto', pr: 0.5 }}>
+              {groupedPermissions.map((group) => (
+                <Box
+                  key={group.module}
+                  sx={{
+                    mb: 2.5,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.02)',
+                  }}
+                >
+                  {/* Module Header */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      px: 2,
+                      py: 1.25,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.main',
+                        }}
+                      />
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.75rem' }}
+                      >
+                        {prettifyModuleName(group.module)}
+                      </Typography>
+                    </Box>
+                    <Chip label={`${group.permissions.length} Permissions`} size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
+                  </Box>
 
-            <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                Assigned Roles:
-              </Typography>
-              <Box display="flex" flexWrap="wrap" gap={0.5}>
-                {parsedRoles.map((r, i) => (
-                  <Chip key={i} size="small" label={r} color="primary" sx={{ fontWeight: 600, fontSize: '0.7rem', height: 20 }} />
-                ))}
-              </Box>
+                  {/* Module Item List */}
+                  <Stack divider={<Divider flexItem />}>
+                    {group.permissions.map((permission, index) => (
+                      <Box
+                        key={permission.name || index}
+                        sx={{
+                          px: 2,
+                          py: 1.25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
+                          <Box
+                            sx={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: '4px',
+                              bgcolor: 'primary.main',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
+                          >
+                            ✓
+                          </Box>
+                          <Box minWidth={0} flex={1}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                              {permission.description || permission.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }} noWrap display="block">
+                              {permission.name}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Chip label="Granted" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20, fontWeight: 700, bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main' }} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              ))}
             </Box>
-          </Box> */}
-
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom sx={{ mb: 1.5 }}>
-            Granted Permissions ({userPermissions.length})
-          </Typography>
-
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {userPermissions.map((perm, idx) => (
-              <Chip
-                key={idx}
-                size="small"
-                label={typeof perm === 'object' ? perm.name || perm.title : String(perm)}
-                color="primary"
-                variant="outlined"
-                sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-              />
-            ))}
-          </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setActiveModal(null)} variant="contained" size="small" color="primary">

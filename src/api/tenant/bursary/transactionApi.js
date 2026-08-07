@@ -99,10 +99,8 @@ export const fetchSettlementReconciliationRevenues = async (payload) => {
     return res.data;
 };
 
-export const exportSettlementReconciliationCsv = async (payload) => {
-    const res = await api.post('/bursary/transactions/settlement_reconciliation/export_csv_settlement_reconciliation', payload);
-    return res.data;
-}
+export const exportSettlementReconciliationCsv = (data, config = {}) =>
+    api.post('/bursary/transactions/settlement_reconciliation/export_csv_settlement_reconciliation', data, { responseType: 'blob', ...config },);
 
 export const fetchWalletTransactions = async (wallet_account_no) => {
     const res = await api.get('/bursary/transactions/wallet_transactions', {

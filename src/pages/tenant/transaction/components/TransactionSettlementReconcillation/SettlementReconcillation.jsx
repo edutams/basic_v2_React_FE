@@ -36,7 +36,7 @@ import { IconDotsVertical } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import FeeChart from './FeeChart';
-import SettlementModal from './SettlementModal';
+import ReconcileSettlementsModal from './ReconcileSettlementsModal';
 import dayjs from 'dayjs';
 
 import TransactionsModal from './ReconciliationModals/TransactionsModal';
@@ -44,7 +44,9 @@ import RevenuesModal from './ReconciliationModals/RevenuesModal';
 import {
   fetchSettlementReconciliationData,
   fetchSettlementReconciliationAnalytics,
+  exportSettlementReconciliationCsv,
 } from '@/api/tenant/bursary/transactionApi';
+import SettlementsModal from './ReconciliationModals/SettlementsModal';
 
 const fmtNaira = (val) => `₦${Number(val || 0).toLocaleString()}`;
 
@@ -313,6 +315,31 @@ const SettlementReconcillation = () => {
     },
   });
 
+  const downloadReconciliation = async (extraFilters = {}) => {
+    try {
+      const res = await exportSettlementReconciliationCsv(
+        {
+          filters: {
+            from: filters.from || undefined,
+            to: filters.to || undefined,
+            search: filters.search || undefined,
+            ...extraFilters,
+          },
+        },
+        { responseType: 'blob' },
+      );
+
+      const url = URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `settlement_reconciliation_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download reconciliation failed', err);
+    }
+  };
+
   return (
     <PageContainer title="Settlement Reconciliation">
       <FeeChart
@@ -349,7 +376,12 @@ const SettlementReconcillation = () => {
               >
                 Upload Bank Statement
               </Button>
-              <Button variant="outlined" startIcon={<DownloadIcon />} size="small">
+              <Button
+                variant="outlined"
+                onClick={() => downloadReconciliation()}
+                startIcon={<DownloadIcon />}
+                size="small"
+              >
                 Download Reconciliation
               </Button>
             </Box>
@@ -508,10 +540,17 @@ const SettlementReconcillation = () => {
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => handleViewSettlements(menuRow)}>Reconcile Settlements</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Download Reconciliation</MenuItem>
+        <MenuItem
+          onClick={() => {
+            downloadReconciliation({ payment_name_ids: menuRow?.payment_name_ids });
+            handleMenuClose();
+          }}
+        >
+          Download Reconciliation
+        </MenuItem>
       </Menu>
 
-      <SettlementModal
+      <ReconcileSettlementsModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         settlementData={activeRow}
@@ -527,7 +566,13 @@ const SettlementReconcillation = () => {
         open={revenueModalOpen}
         onClose={() => setRevenueModalOpen(false)}
         rowData={selectedRow}
-        onOpenRevenueTransactions={handleOpenRevenueTransactions} // optional for now
+        onOpenRevenueTransactions={handleOpenRevenueTransactions}
+      />
+
+      <SettlementsModal
+        open={settlementsModalOpen}
+        onClose={() => setSettlementsModalOpen(false)}
+        rowData={selectedRow}
       />
 
       <Dialog

@@ -191,13 +191,16 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
   const targetId = targetUser?.id || targetUser?.user_id;
 
   useEffect(() => {
-    if (open && targetId && !profileData && !fetchingProfile && !isLandlordView) {
+    if (open && targetId && !profileData && !fetchingProfile) {
       setFetchingProfile(true);
-      aclApi
-        .getSchoolUserProfile(targetId)
+      const fetchPromise = isLandlordView
+        ? api.get(`/v1/landlord/users/${targetId}/profile`)
+        : aclApi.getSchoolUserProfile(targetId);
+
+      fetchPromise
         .then((res) => {
           if (res?.data) {
-            setProfileData(res.data);
+            setProfileData(res.data?.data || res.data);
           }
         })
         .catch((err) => {

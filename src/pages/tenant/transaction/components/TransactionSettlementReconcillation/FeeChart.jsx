@@ -1,24 +1,6 @@
 import React from 'react';
-import {
-  Grid,
-  Box,
-  Typography,
-  Button,
-  useTheme,
-  TableContainer,
-  TableRow,
-  TableHead,
-  Table,
-  TableCell,
-  TableBody,
-  FormControl,
-  Select,
-  MenuItem,
-  TextField,
-} from '@mui/material';
-import StandardModal from '@/components/shared/StandardModal';
+import { Grid, Box, Typography, useTheme, FormControl, Select, MenuItem } from '@mui/material';
 import Chart from 'react-apexcharts';
-import { IconDownload } from '@tabler/icons';
 import StatusBreakdownCard from './StatusBreakdownCard';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -28,8 +10,6 @@ import dayjs from 'dayjs';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const FeeChart = ({
-  open,
-  onClose,
   title = 'Chart',
   chartOptions,
   chartSeries,
@@ -182,11 +162,7 @@ const FeeChart = ({
           }}
         >
           {/* Header row */}
-          <StatusBreakdownCard
-            title={statusData?.title}
-            items={statusData?.items}
-            metrics={statusData?.metrics}
-          />
+          <StatusBreakdownCard title={statusData?.title} items={statusData?.items} />
         </Box>
       </Grid>
     </Grid>

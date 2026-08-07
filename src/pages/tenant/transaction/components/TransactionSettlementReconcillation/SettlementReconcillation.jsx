@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -11,6 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   TextField,
   InputAdornment,
@@ -23,6 +24,7 @@ import {
   MenuItem,
   Alert,
   Link,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,168 +39,58 @@ import FeeChart from './FeeChart';
 import SettlementModal from './SettlementModal';
 import dayjs from 'dayjs';
 
-import RevenueTransactionsModal from '../TransactionByRevenue/RevenueTransactionsModal';
 import TransactionsModal from './ReconciliationModals/TransactionsModal';
-import SettlementsModal from './ReconciliationModals/SettlementsModal';
+import RevenuesModal from './ReconciliationModals/RevenuesModal';
+import {
+  fetchSettlementReconciliationData,
+  fetchSettlementReconciliationAnalytics,
+} from '@/api/tenant/bursary/transactionApi';
 
-// Define transactionStatusData here
-export const transactionStatusData = {
-  title: 'TOTAL RECONCILIATION',
-  items: [
-    {
-      label: 'Total Revenue',
-      value: '₦127,450,890',
-      color: '#4DA3F5',
-      icon: 'revenue',
-    },
-    {
-      label: 'Total Settlement',
-      value: '₦98,765,430',
-      color: '#10B981',
-      icon: 'settlement',
-    },
-    {
-      label: 'Total Reconciled',
-      value: '₦28,685,460',
-      color: '#EF4444',
-      icon: 'balance',
-    },
-    {
-      label: 'Wallet Balance',
-      value: '₦45,230,000',
-      color: '#3247C6',
-      icon: 'wallet',
-    },
-  ],
-};
-
-const dummyData = [
-  {
-    id: 1,
-    bank_name: 'Guaranty Trust Bank',
-    account_number: '0145678901',
-    no_of_transactions: 145,
-    no_of_revenue: 12,
-    no_of_settlements: 128,
-    expected_amount: '87,450,000',
-    reconciled_amount: '72,340,000',
-    balance: '15,110,000',
-    outstanding_trns: 17,
-  },
-  {
-    id: 2,
-    bank_name: 'Zenith Bank Plc',
-    account_number: '0987654321',
-    no_of_transactions: 98,
-    no_of_revenue: 9,
-    no_of_settlements: 85,
-    expected_amount: '64,230,000',
-    reconciled_amount: '58,900,000',
-    balance: '5,330,000',
-    outstanding_trns: 13,
-  },
-  {
-    id: 3,
-    bank_name: 'Access Bank',
-    account_number: '5678901234',
-    no_of_transactions: 76,
-    no_of_revenue: 8,
-    no_of_settlements: 70,
-    expected_amount: '45,890,000',
-    reconciled_amount: '42,100,000',
-    balance: '3,790,000',
-    outstanding_trns: 6,
-  },
-  {
-    id: 4,
-    bank_name: 'First Bank of Nigeria',
-    account_number: '1122334455',
-    no_of_transactions: 112,
-    no_of_revenue: 15,
-    no_of_settlements: 95,
-    expected_amount: '98,760,000',
-    reconciled_amount: '81,450,000',
-    balance: '17,310,000',
-    outstanding_trns: 17,
-  },
-];
+const fmtNaira = (val) => `₦${Number(val || 0).toLocaleString()}`;
 
 const SettlementReconcillation = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  // ---------- Table filters / data ----------
+  const [filters, setFilters] = useState({ from: '', to: '', search: '' });
+  const [page, setPage] = useState(0); // zero-based for TablePagination
+  const [perPage, setPerPage] = useState(10);
+  const [rows, setRows] = useState([]);
+  const [totalRows, setTotalRows] = useState(0);
+  const [tableLoading, setTableLoading] = useState(false);
+
+  // ---------- Chart / analytics ----------
+  const [period, setPeriod] = useState('this_month');
+  const [periodValue, setPeriodValue] = useState(null);
+  const [chartTitle] = useState('Settlement Recon.');
+  const [chartType] = useState('bar');
+  const [chartData, setChartData] = useState({ categories: [], series: [] });
+  const [statusData, setStatusData] = useState({ title: 'TOTAL RECONCILIATION', items: [] });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // ---------- Row menu ----------
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuRow, setMenuRow] = useState(null);
+
+  // ---------- Modals ----------
   const [activeRow, setActiveRow] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [selectedRow, setSelectedRow] = useState(null);
   const [transactionsModalOpen, setTransactionsModalOpen] = useState(false);
   const [revenueModalOpen, setRevenueModalOpen] = useState(false);
   const [settlementsModalOpen, setSettlementsModalOpen] = useState(false);
 
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [revenueTxnModalOpen, setRevenueTxnModalOpen] = useState(false);
+  const [selectedRevenue, setSelectedRevenue] = useState(null);
 
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [menuRow, setMenuRow] = useState(null);
-
+  // ---------- Upload dialog (unwired, unchanged) ----------
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const [period, setPeriod] = useState('this_month');
-  const [periodValue, setPeriodValue] = useState(null);
-
-  const [chartTitle, setChartTitle] = useState('Settlement Recon.');
-  const [chartType, setChartType] = useState('bar');
-  const [chartData, setChartData] = useState({
-    categories: [
-      ['Zenith Bank Plc', '0199118232'],
-      ['Guaranty Trust Bank', '0145678901'],
-      ['Access Bank', '5678901234'],
-      ['First Bank of Nigeria', '1122334455'],
-      ['Guaranty Trust Bank', '0145678901'],
-      ['Zenith Bank Plc', '0199118232'],
-    ],
-    series: [
-      {
-        name: 'Settlement Amount',
-        data: [500000, 1000000, 1500000, 2000000, 2500000, 3000000],
-      },
-      {
-        name: 'Reconciled Amount',
-        data: [450000, 950000, 1400000, 1800000, 2300000, 2800000],
-      },
-    ],
-  });
-
-  const handleMenuOpen = (event, row) => {
-    setAnchorEl(event.currentTarget);
-    setMenuRow(row);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setMenuRow(null);
-  };
-
-  const handleViewSettlements = (row) => {
-    setActiveRow(row);
-    setModalOpen(true);
-    handleMenuClose();
-  };
-
-  const handleOpenTransactions = (row) => {
-    setSelectedRow(row);
-    setTransactionsModalOpen(true);
-  };
-
-  const handleOpenRevenue = (row) => {
-    setSelectedRow(row);
-    setRevenueModalOpen(true);
-  };
-
-  const handleOpenSettlements = (row) => {
-    setSelectedRow(row);
-    setSettlementsModalOpen(true);
-  };
-
+  // ---- Analytics: chart + status breakdown for the current period ----
   const loadAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
     try {
       let from, to;
 
@@ -230,12 +122,15 @@ const SettlementReconcillation = () => {
         to = dayjs().year(year).endOf('year').format('YYYY-MM-DD');
       }
 
-      //  const res = await fetchSettlementAnalytics({ filters: { from, to } });
-      //  if (res.success) {
-      //    setChartData(res.chart || { categories: [], series: [] });
-      //  }
+      const res = await fetchSettlementReconciliationAnalytics({ filters: { from, to } });
+      if (res?.success) {
+        setChartData(res.chart || { categories: [], series: [] });
+        setStatusData(res.status_breakdown);
+      }
     } catch (err) {
-      console.error('Failed to fetch settlement analytics', err);
+      console.error('Failed to load settlement reconciliation analytics', err);
+    } finally {
+      setAnalyticsLoading(false);
     }
   }, [period, periodValue]);
 
@@ -243,6 +138,91 @@ const SettlementReconcillation = () => {
     loadAnalytics();
   }, [period, periodValue, loadAnalytics]);
 
+  // ---- Main (bank-grouped) table ----
+  const loadTableData = useCallback(
+    async (targetPage = page, targetPerPage = perPage) => {
+      setTableLoading(true);
+      try {
+        const res = await fetchSettlementReconciliationData({
+          filters: {
+            from: filters.from || undefined,
+            to: filters.to || undefined,
+            search: filters.search || undefined,
+            page: targetPage + 1, // API is 1-based
+            per_page: targetPerPage,
+          },
+        });
+        if (res?.success) {
+          setRows(res.data || []);
+          setTotalRows(res.total || 0);
+        }
+      } catch (err) {
+        console.error('Failed to load settlement reconciliation data', err);
+      } finally {
+        setTableLoading(false);
+      }
+    },
+    [filters, page, perPage],
+  );
+
+  useEffect(() => {
+    loadTableData(page, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage]);
+
+  const handleFetchClick = () => {
+    setPage(0);
+    loadTableData(0, perPage);
+  };
+
+  const handleChangePage = (_e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
+
+  // ---- Row menu ----
+  const handleMenuOpen = (event, row) => {
+    setAnchorEl(event.currentTarget);
+    setMenuRow(row);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuRow(null);
+  };
+
+  const handleViewSettlements = (row) => {
+    setActiveRow({ ...row, from: filters.from, to: filters.to });
+    setModalOpen(true);
+    handleMenuClose();
+  };
+
+  // rowData passed to every modal is the full bank row:
+  // { bank_name, account_number, payment_name_ids, no_of_transactions,
+  //   no_of_revenue, no_of_settlements, expected_amount, reconciled_amount,
+  //   balance, outstanding_trns } — plus the current from/to filters, since the
+  // details endpoint needs both payment_name_ids and a date range.
+  const handleOpenTransactions = (row) => {
+    setSelectedRow({ ...row, from: filters.from, to: filters.to });
+    setTransactionsModalOpen(true);
+  };
+
+  const handleOpenRevenue = (row) => {
+    setSelectedRow({ ...row, from: filters.from, to: filters.to });
+    setRevenueModalOpen(true);
+  };
+
+  const handleOpenRevenueTransactions = ({ paymentId, revenueName, from, to }) => {
+    setSelectedRevenue({ paymentId, revenueName, from, to });
+    setRevenueTxnModalOpen(true);
+  };
+
+  const handleOpenSettlements = (row) => {
+    setSelectedRow({ ...row, from: filters.from, to: filters.to });
+    setSettlementsModalOpen(true);
+  };
+
+  // ---- Chart options ----
   const buildChartOptions = (categories) => ({
     chart: {
       type: chartType,
@@ -277,7 +257,6 @@ const SettlementReconcillation = () => {
     },
 
     colors: ['#3949AB', '#10B981'],
-    // colors: [theme.palette.primary.main, theme.palette.success.main],
 
     plotOptions: {
       bar: {
@@ -341,12 +320,21 @@ const SettlementReconcillation = () => {
         chartType={chartType}
         chartOptions={buildChartOptions(chartData?.categories || [])}
         chartSeries={chartData?.series || []}
-        statusData={transactionStatusData}
+        statusData={statusData}
         period={period}
         periodValue={periodValue}
-        setPeriod={setPeriod}
-        setPeriodValue={setPeriodValue}
+        onPeriodChange={(p) => {
+          setPeriod(p);
+          setPeriodValue(null);
+        }}
+        onPeriodValueChange={(v) => setPeriodValue(v)}
       />
+
+      {analyticsLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <CircularProgress size={20} />
+        </Box>
+      )}
 
       <ParentCard
         title={
@@ -385,22 +373,28 @@ const SettlementReconcillation = () => {
               label="From"
               type="date"
               InputLabelProps={{ shrink: true }}
+              value={filters.from}
+              onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={2} lg={4}>
             <TextField
               fullWidth
               size="small"
               label="To"
               type="date"
               InputLabelProps={{ shrink: true }}
+              value={filters.to}
+              onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} lg={4}>
             <TextField
               fullWidth
               size="small"
               placeholder="Search by bank or account"
+              value={filters.search}
+              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -411,8 +405,13 @@ const SettlementReconcillation = () => {
             />
           </Grid>
           <Grid item xs={12} md={1}>
-            <Button variant="contained" fullWidth>
-              Fetch
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleFetchClick}
+              disabled={tableLoading}
+            >
+              {tableLoading ? <CircularProgress size={18} color="inherit" /> : 'Fetch'}
             </Button>
           </Grid>
         </Grid>
@@ -435,9 +434,9 @@ const SettlementReconcillation = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {dummyData.map((row, index) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{index + 1}</TableCell>
+              {rows.map((row, index) => (
+                <TableRow key={`${row.bank_name}-${row.account_number}-${index}`} hover>
+                  <TableCell>{page * perPage + index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{row.bank_name}</TableCell>
                   <TableCell>{row.account_number}</TableCell>
                   <TableCell>
@@ -470,9 +469,13 @@ const SettlementReconcillation = () => {
                       {row.no_of_settlements}
                     </Link>
                   </TableCell>
-                  <TableCell>₦{row.expected_amount}</TableCell>
-                  <TableCell>₦{row.reconciled_amount}</TableCell>
-                  <TableCell sx={{ color: '#ef4444', fontWeight: 600 }}>₦{row.balance}</TableCell>
+                  <TableCell>{fmtNaira(row.expected_amount)}</TableCell>
+                  <TableCell>{fmtNaira(row.reconciled_amount)}</TableCell>
+                  <TableCell
+                    sx={{ color: row.balance > 0 ? '#ef4444' : '#10B981', fontWeight: 600 }}
+                  >
+                    {fmtNaira(row.balance)}
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton onClick={(e) => handleMenuOpen(e, row)}>
                       <IconDotsVertical size={18} />
@@ -480,14 +483,32 @@ const SettlementReconcillation = () => {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {!tableLoading && rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                    No reconciliation records found for the selected filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+
+          <TablePagination
+            component="div"
+            count={totalRows}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={perPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[10, 20, 50]}
+          />
         </TableContainer>
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => handleViewSettlements(menuRow)}>Reconcile Settlements</MenuItem>
-        <MenuItem onClick={() => handleViewSettlements(menuRow)}>Download Reconciliation</MenuItem>
+        <MenuItem onClick={handleMenuClose}>Download Reconciliation</MenuItem>
       </Menu>
 
       <SettlementModal
@@ -496,25 +517,17 @@ const SettlementReconcillation = () => {
         settlementData={activeRow}
       />
 
-      {/* New Modals */}
       <TransactionsModal
         open={transactionsModalOpen}
         onClose={() => setTransactionsModalOpen(false)}
         rowData={selectedRow}
       />
 
-      <RevenueTransactionsModal
+      <RevenuesModal
         open={revenueModalOpen}
         onClose={() => setRevenueModalOpen(false)}
-        // Pass appropriate props - adjust according to your API needs
-        paymentId={selectedRow?.id} // or whatever identifier you use
-        revenueName={selectedRow?.bank_name}
-      />
-
-      <SettlementsModal
-        open={settlementsModalOpen}
-        onClose={() => setSettlementsModalOpen(false)}
         rowData={selectedRow}
+        onOpenRevenueTransactions={handleOpenRevenueTransactions} // optional for now
       />
 
       <Dialog

@@ -16,14 +16,12 @@ import {
   useTheme,
   Link,
 } from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
 import StandardModal from '@/components/shared/StandardModal';
-import { fetchSettlementReconciliationDetails } from '@/api/tenant/bursary/transactionApi';
-import dayjs from 'dayjs';
+import { fetchSettlementReconciliationRevenues } from '@/api/tenant/bursary/transactionApi';
 
 const fmt = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
-const TransactionsModal = ({ open, onClose, rowData }) => {
+const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -32,48 +30,50 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [status, setStatus] = useState('all'); // all | outstanding
 
   const loadData = useCallback(async () => {
     if (!rowData?.payment_name_ids?.length) return;
+
     setLoading(true);
     try {
-      const res = await fetchSettlementReconciliationDetails({
+      const res = await fetchSettlementReconciliationRevenues({
         payment_name_ids: rowData.payment_name_ids,
         filters: {
           from: fromDate || rowData.from || undefined,
           to: toDate || rowData.to || undefined,
-          status,
           page,
           per_page: 15,
         },
       });
+
       if (res?.success) {
         setData(res.data || []);
         setLastPage(res.last_page || 1);
         setTotal(res.total || 0);
       }
     } catch (err) {
-      console.error('Failed to load transactions', err);
+      console.error('Failed to load revenues', err);
     } finally {
       setLoading(false);
     }
-  }, [rowData, fromDate, toDate, status, page]);
+  }, [rowData, fromDate, toDate, page]);
 
   useEffect(() => {
     if (open && rowData) {
       setPage(1);
       setFromDate(rowData.from || '');
       setToDate(rowData.to || '');
-      setStatus('all');
     }
   }, [open, rowData]);
 
   useEffect(() => {
-    if (open && rowData) loadData();
-  }, [open, rowData, page, status, loadData]);
+    if (open && rowData) {
+      loadData();
+    }
+  }, [open, rowData, page, loadData]);
 
   const handleSearch = () => {
     setPage(1);
@@ -85,7 +85,7 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
       open={open}
       onClose={onClose}
       maxWidth="lg"
-      title={`All Transactions — ${rowData?.bank_name || ''} (${rowData?.account_number || ''})`}
+      title={`Revenues — ${rowData?.bank_name || ''} (${rowData?.account_number || ''})`}
     >
       <Box sx={{ p: 3 }}>
         <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
@@ -116,18 +116,6 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
               Search
             </Button>
           </Grid>
-          <Grid item xs={6} sm={2}>
-            <Button
-              variant={status === 'outstanding' ? 'contained' : 'outlined'}
-              fullWidth
-              onClick={() => {
-                setStatus((s) => (s === 'outstanding' ? 'all' : 'outstanding'));
-                setPage(1);
-              }}
-            >
-              {status === 'outstanding' ? 'Show All' : 'Outstanding only'}
-            </Button>
-          </Grid>
         </Grid>
 
         {loading ? (
@@ -141,56 +129,64 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            <Table>
+            <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Transaction ID</TableCell>
-                  <TableCell>Paid By</TableCell>
-                  <TableCell>Revenue</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Amount ₦</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Date</TableCell>
+                  <TableCell>Revenue Code</TableCell>
+                  <TableCell>Revenue Name</TableCell>
+                  <TableCell>No. of Transactions</TableCell>
+                  <TableCell>Expected (₦)</TableCell>
+                  <TableCell>Settled (₦)</TableCell>
+                  <TableCell>Outstanding (₦)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      No transactions found.
+                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                      No revenues found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 180 }}>
-                        {row.transaction_id}
-                      </TableCell>
+                      <TableCell>{row.revenue_code ?? '—'}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{row.revenue_name}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {row.paid_by}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.class}
-                        </Typography>
+                        {onOpenRevenueTransactions ? (
+                          <Link
+                            component="button"
+                            variant="body2"
+                            onClick={() =>
+                              onOpenRevenueTransactions({
+                                paymentId: row.id,
+                                revenueName: row.revenue_name,
+                                from: fromDate || rowData.from,
+                                to: toDate || rowData.to,
+                              })
+                            }
+                            sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                          >
+                            {row.transaction_count}
+                          </Link>
+                        ) : (
+                          row.transaction_count
+                        )}
                       </TableCell>
-                      <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell>{fmt(row.amount_paid)}</TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          color={
-                            row.settlement_status === 'Settled' ? 'success.main' : 'error.main'
-                          }
-                          fontWeight={600}
-                        >
-                          {row.settlement_status}
-                        </Typography>
+                      <TableCell>{fmt(row.expected_amount)}</TableCell>
+                      <TableCell sx={{ color: 'success.main', fontWeight: 600 }}>
+                        {fmt(row.settled_amount)}
                       </TableCell>
-                      <TableCell>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm')}</TableCell>
+                      <TableCell
+                        sx={{
+                          color: Number(row.outstanding_amount) > 0 ? 'error.main' : 'success.main',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {fmt(row.outstanding_amount)}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -199,9 +195,16 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
           </TableContainer>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: 2,
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
-            Showing {data.length} of {total}
+            Showing {data.length} of {total} revenues
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
@@ -217,4 +220,4 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
   );
 };
 
-export default TransactionsModal;
+export default RevenuesModal;

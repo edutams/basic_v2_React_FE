@@ -94,6 +94,11 @@ export const fetchSettlementReconciliationDetails = async (payload) => {
     return res.data;
 }
 
+export const fetchSettlementReconciliationRevenues = async (payload) => {
+    const res = await api.post('/bursary/transactions/settlement_reconciliation/fetch_settlement_reconciliation_revenues', { payload });
+    return res.data;
+};
+
 export const exportSettlementReconciliationCsv = async (payload) => {
     const res = await api.post('/bursary/transactions/settlement_reconciliation/export_csv_settlement_reconciliation', payload);
     return res.data;

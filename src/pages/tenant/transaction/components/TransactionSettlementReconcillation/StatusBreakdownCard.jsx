@@ -8,7 +8,7 @@ import {
   TrendingUp as TotalIcon,
 } from '@mui/icons-material';
 
-const StatusBreakdownCard = ({ items = [] }) => {
+const StatusBreakdownCard = ({ items = [], title }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -27,13 +27,15 @@ const StatusBreakdownCard = ({ items = [] }) => {
   };
 
   return (
-    <Box>
-      <Typography
-        variant="subtitle1"
-        fontWeight={700}
-        sx={{ mb: 3, color: isDark ? '#fff' : '#1f2937' }}
-      >
-        TOTAL SETTLEMENT
+    <Box
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <Typography variant="subtitle1" fontWeight={700} sx={{ color: isDark ? '#fff' : '#1f2937' }}>
+        {title}
       </Typography>
 
       {items.map((item, index) => {
@@ -46,19 +48,19 @@ const StatusBreakdownCard = ({ items = [] }) => {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 2.5,
-              py: 1,
-              px: 2,
-              mb: 1,
-              borderRadius: 3,
+              gap: 2,
+              p: 2,
+              borderRadius: 1,
               bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
               border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              mb: index === items.length - 1 ? 0 : 1,
             }}
           >
             {/* Icon */}
             <Box
               sx={{
-                borderRadius: 2.5,
+                flexShrink: 0,
+                borderRadius: 0.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -69,7 +71,7 @@ const StatusBreakdownCard = ({ items = [] }) => {
             </Box>
 
             {/* Content */}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{
                   fontSize: '1.45rem',

@@ -659,11 +659,14 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
     const targetId = targetUser?.id || targetUser?.user_id;
     if (targetId) {
-      aclApi
-        .updateSchoolUserProfile(targetId, editForm)
+      const updatePromise = isLandlordView
+        ? api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
+        : aclApi.updateSchoolUserProfile(targetId, editForm);
+
+      updatePromise
         .then((res) => {
           if (res?.data) {
-            setProfileData(res.data);
+            setProfileData(res.data?.data || res.data);
           }
           showToast('Profile details updated successfully!');
         })
@@ -695,10 +698,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
       const targetId = targetUser?.id || targetUser?.user_id;
       if (targetId) {
-        aclApi
-          .updateSchoolUserProfile(targetId, { avatar: imagePreview })
+        const updatePromise = isLandlordView
+          ? api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
+          : aclApi.updateSchoolUserProfile(targetId, { avatar: imagePreview });
+
+        updatePromise
           .then((res) => {
-            if (res?.data) setProfileData(res.data);
+            if (res?.data) setProfileData(res.data?.data || res.data);
             showToast('Profile picture updated successfully!');
           })
           .catch((err) => {
@@ -733,10 +739,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     const targetId = targetUser?.id || targetUser?.user_id;
     if (targetId) {
       setSubmittingPassword(true);
-      aclApi
-        .changeSchoolUserPassword(targetId, {
-          new_password: passwordForm.new_password,
-        })
+      const updatePromise = isLandlordView
+        ? api.post(`/v1/landlord/users/${targetId}/password`, {
+            new_password: passwordForm.new_password,
+          })
+        : aclApi.changeSchoolUserPassword(targetId, {
+            new_password: passwordForm.new_password,
+          });
+
+      updatePromise
         .then(() => {
           setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
           setPasswordError('');
@@ -1131,9 +1142,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                   <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
                     {renderBasicRow(<IconMail size={18} />, 'Email Address', email, 'email')}
                     {renderBasicRow(<IconPhone size={18} />, 'Phone Number', phone, 'phone')}
-                    {renderBasicRow(<IconCake size={18} />, 'Date of Birth (DOB)', dob)}
+                    {!isLandlordView && renderBasicRow(<IconCake size={18} />, 'Date of Birth (DOB)', dob)}
                     {renderBasicRow(<IconMapPin size={18} />, 'Address', address)}
-                    {renderBasicRow(<IconGenderGenderless size={18} />, 'Gender', sex)}
+                    {!isLandlordView && renderBasicRow(<IconGenderGenderless size={18} />, 'Gender', sex)}
                   </Stack>
                 </Box>
               </Paper>
@@ -1371,15 +1382,19 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Phone Number" name="phone" value={editForm.phone} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} />
-            </Grid>
-            <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-              <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </TextField>
-            </Grid>
+            {!isLandlordView && (
+              <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
+                <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} />
+              </Grid>
+            )}
+            {!isLandlordView && (
+              <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
+                <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </TextField>
+              </Grid>
+            )}
             <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
               <TextField fullWidth multiline rows={2} size="small" label="Address" name="address" value={editForm.address} onChange={handleEditFormChange} />
             </Grid>

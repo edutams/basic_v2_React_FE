@@ -72,8 +72,9 @@ import {
   getPermissionModule,
 } from '@/utils/permissionGrouping';
 import aclApi from '@/api/tenant/acl/aclApi';
+import api from '@/api/landlord/landlord_api';
 
-const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) => {
+const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isLandlord = false }) => {
   const theme = useTheme();
 
   const [copiedField, setCopiedField] = useState(null);
@@ -95,6 +96,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [activityRowsPerPage, setActivityRowsPerPage] = useState(10);
   const [activityTotal, setActivityTotal] = useState(0);
   const [selectedActivityDetail, setSelectedActivityDetail] = useState(null);
+
+  const isLandlordView = useMemo(() => {
+    if (isLandlord) return true;
+    if (typeof window !== 'undefined' && window.location.pathname.includes('/landlord')) return true;
+    if (user?.causer_type?.includes('Landlord') || user?.is_landlord) return true;
+    return false;
+  }, [isLandlord, user]);
 
   const handlePermissionSearchChange = (e) => {
     const val = e.target.value;
@@ -183,7 +191,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const targetId = targetUser?.id || targetUser?.user_id;
 
   useEffect(() => {
-    if (open && targetId && !profileData && !fetchingProfile) {
+    if (open && targetId && !profileData && !fetchingProfile && !isLandlordView) {
       setFetchingProfile(true);
       aclApi
         .getSchoolUserProfile(targetId)
@@ -199,36 +207,64 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
           setFetchingProfile(false);
         });
     }
-  }, [open, targetId, profileData, fetchingProfile]);
+  }, [open, targetId, profileData, fetchingProfile, isLandlordView]);
 
   useEffect(() => {
     if (activeModal === 'view_activity' && targetId) {
       setFetchingActivities(true);
-      aclApi
-        .getUserActivityLogs(targetId, {
-          page: activityPage + 1,
-          limit: activityRowsPerPage,
-          search: activitySearchQuery,
-        })
-        .then((res) => {
-          const list = Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res?.data?.data)
-              ? res.data.data
-              : Array.isArray(res)
-                ? res
+      if (isLandlordView) {
+        api
+          .get('/v1/landlord/activity-logs', {
+            params: {
+              causer_id: targetId,
+              page: activityPage + 1,
+              limit: activityRowsPerPage,
+              search: activitySearchQuery,
+            },
+          })
+          .then((res) => {
+            const data = res?.data;
+            const list = Array.isArray(data?.data)
+              ? data.data
+              : Array.isArray(data)
+                ? data
                 : [];
-          setUserActivities(list);
-          setActivityTotal(res?.total || res?.data?.total || list.length);
-        })
-        .catch((err) => {
-          console.error('Failed to fetch user activity logs:', err);
-        })
-        .finally(() => {
-          setFetchingActivities(false);
-        });
+            setUserActivities(list);
+            setActivityTotal(data?.total || list.length);
+          })
+          .catch((err) => {
+            console.error('Failed to fetch landlord user activity logs:', err);
+          })
+          .finally(() => {
+            setFetchingActivities(false);
+          });
+      } else {
+        aclApi
+          .getUserActivityLogs(targetId, {
+            page: activityPage + 1,
+            limit: activityRowsPerPage,
+            search: activitySearchQuery,
+          })
+          .then((res) => {
+            const list = Array.isArray(res?.data)
+              ? res.data
+              : Array.isArray(res?.data?.data)
+                ? res.data.data
+                : Array.isArray(res)
+                  ? res
+                  : [];
+            setUserActivities(list);
+            setActivityTotal(res?.total || res?.data?.total || list.length);
+          })
+          .catch((err) => {
+            console.error('Failed to fetch user activity logs:', err);
+          })
+          .finally(() => {
+            setFetchingActivities(false);
+          });
+      }
     }
-  }, [activeModal, targetId, activityPage, activityRowsPerPage, activitySearchQuery]);
+  }, [activeModal, targetId, activityPage, activityRowsPerPage, activitySearchQuery, isLandlordView]);
 
   const handleChangeActivityPage = (event, newPage) => {
     setActivityPage(newPage);

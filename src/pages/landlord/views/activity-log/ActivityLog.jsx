@@ -571,6 +571,7 @@ const ActivityLog = () => {
         open={Boolean(activeUserId)}
         onClose={handleCloseProfileDrawer}
         user={activeUser}
+        isLandlord={true}
       />
     </PageContainer>
   );

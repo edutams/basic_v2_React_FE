@@ -89,11 +89,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [userActivities, setUserActivities] = useState([]);
   const [fetchingActivities, setFetchingActivities] = useState(false);
-  const [activitySearch, setActivitySearch] = useState('');
+  const [activitySearchInput, setActivitySearchInput] = useState('');
+  const [activitySearchQuery, setActivitySearchQuery] = useState('');
   const [activityPage, setActivityPage] = useState(0);
   const [activityRowsPerPage, setActivityRowsPerPage] = useState(10);
   const [activityTotal, setActivityTotal] = useState(0);
   const [selectedActivityDetail, setSelectedActivityDetail] = useState(null);
+
+  const handleExecuteActivitySearch = () => {
+    setActivitySearchQuery(activitySearchInput.trim());
+    setActivityPage(0);
+  };
+
+  const handleActivitySearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleExecuteActivitySearch();
+    }
+  };
 
   const [editForm, setEditForm] = useState({
     fname: '',
@@ -157,6 +170,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         .getUserActivityLogs(targetId, {
           page: activityPage + 1,
           limit: activityRowsPerPage,
+          search: activitySearchQuery,
         })
         .then((res) => {
           const list = Array.isArray(res?.data)
@@ -176,7 +190,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
           setFetchingActivities(false);
         });
     }
-  }, [activeModal, targetId, activityPage, activityRowsPerPage]);
+  }, [activeModal, targetId, activityPage, activityRowsPerPage, activitySearchQuery]);
 
   const handleChangeActivityPage = (event, newPage) => {
     setActivityPage(newPage);
@@ -307,6 +321,17 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     });
   }, [userPermissions]);
 
+  const filteredUserActivities = useMemo(() => {
+    if (!activitySearchQuery.trim()) return userActivities;
+    const q = activitySearchQuery.toLowerCase();
+    return userActivities.filter(
+      (act) =>
+        (act.description && act.description.toLowerCase().includes(q)) ||
+        (act.log_name && act.log_name.toLowerCase().includes(q)) ||
+        (act.event && act.event.toLowerCase().includes(q))
+    );
+  }, [userActivities, activitySearchQuery]);
+
   const allModuleGroups = useMemo(() => {
     return groupPermissionsByModule(formattedPermissionsList);
   }, [formattedPermissionsList]);
@@ -360,9 +385,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   const getOrdinalSuffix = (day) => {
     if (day > 3 && day < 21) return 'th';
     switch (day % 10) {
-      case 1:  return 'st';
-      case 2:  return 'nd';
-      case 3:  return 'rd';
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
       default: return 'th';
     }
   };
@@ -527,8 +552,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   };
 
   const handleSaveProfile = () => {
-    setCurrentUser((prev) => ({
-      ...prev,
+    const newFullName = `${editForm.fname} ${editForm.mname ? editForm.mname + ' ' : ''}${editForm.lname}`.trim();
+
+    const updatedObj = {
       fname: editForm.fname,
       mname: editForm.mname,
       lname: editForm.lname,
@@ -537,10 +563,31 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       dob: editForm.dob,
       sex: editForm.sex,
       address: editForm.address,
-      full_name: `${editForm.fname} ${editForm.mname ? editForm.mname + ' ' : ''}${editForm.lname}`.trim(),
-    }));
+      full_name: newFullName,
+    };
+
+    // Update local state immediately so UI updates instantly
+    setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
+    setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
     setActiveModal(null);
-    showToast('Profile details updated successfully!');
+
+    const targetId = targetUser?.id || targetUser?.user_id;
+    if (targetId) {
+      aclApi
+        .updateSchoolUserProfile(targetId, editForm)
+        .then((res) => {
+          if (res?.data) {
+            setProfileData(res.data);
+          }
+          showToast('Profile details updated successfully!');
+        })
+        .catch((err) => {
+          console.error('Failed to save profile changes to database:', err);
+          showToast('Failed to save profile changes on server', 'error');
+        });
+    } else {
+      showToast('Profile details updated successfully!');
+    }
   };
 
   const handleImageChange = (e) => {
@@ -556,18 +603,30 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   const handleSavePicture = () => {
     if (imagePreview) {
-      setCurrentUser((prev) => ({ ...prev, avatar: imagePreview }));
-      setImagePreview(null);
+      setProfileData((prev) => ({ ...(prev || {}), avatar: imagePreview }));
+      setCurrentUser((prev) => ({ ...(prev || {}), avatar: imagePreview }));
       setActiveModal(null);
-      showToast('Profile picture updated successfully!');
+
+      const targetId = targetUser?.id || targetUser?.user_id;
+      if (targetId) {
+        aclApi
+          .updateSchoolUserProfile(targetId, { avatar: imagePreview })
+          .then((res) => {
+            if (res?.data) setProfileData(res.data);
+            showToast('Profile picture updated successfully!');
+          })
+          .catch((err) => {
+            console.error('Failed to update picture on server:', err);
+            showToast('Failed to update picture on server', 'error');
+          });
+      } else {
+        showToast('Profile picture updated successfully!');
+      }
+      setImagePreview(null);
     }
   };
 
   const handleSavePassword = () => {
-    if (!passwordForm.current_password) {
-      showToast('Please enter your current password.', 'error');
-      return;
-    }
     if (!passwordForm.new_password || passwordForm.new_password.length < 6) {
       showToast('New password must be at least 6 characters long.', 'error');
       return;
@@ -577,9 +636,26 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
       return;
     }
 
-    setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-    setActiveModal(null);
-    showToast('Password changed successfully!');
+    const targetId = targetUser?.id || targetUser?.user_id;
+    if (targetId) {
+      aclApi
+        .changeSchoolUserPassword(targetId, {
+          new_password: passwordForm.new_password,
+        })
+        .then(() => {
+          setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+          setActiveModal(null);
+          showToast('Password changed successfully!');
+        })
+        .catch((err) => {
+          console.error('Failed to change password:', err);
+          showToast(err.response?.data?.message || 'Failed to update password', 'error');
+        });
+    } else {
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+      setActiveModal(null);
+      showToast('Password changed successfully!');
+    }
   };
 
   const renderBasicRow = (icon, label, value, copyableKey = null) => (
@@ -1111,31 +1187,31 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="First Name" name="fname" value={editForm.fname} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Middle Name" name="mname" value={editForm.mname} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Last Name" name="lname" value={editForm.lname} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Email Address" type="email" name="email" value={editForm.email} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Phone Number" name="phone" value={editForm.phone} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
               <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
               <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
                 <MenuItem value="Male">Male</MenuItem>
                 <MenuItem value="Female">Female</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
               <TextField fullWidth multiline rows={2} size="small" label="Address" name="address" value={editForm.address} onChange={handleEditFormChange} />
             </Grid>
           </Grid>
@@ -1259,7 +1335,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 User Activity Log
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Audit trail of system activities performed by {fullName}
+                Audit trail of system activities performed by{' '}
+                <Typography component="span" variant="caption" color="primary.main" fontWeight={700}>
+                  {fullName}
+                </Typography>
               </Typography>
             </Box>
           </Box>
@@ -1270,13 +1349,14 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         <Divider />
         <DialogContent sx={{ p: 3 }}>
           {/* Search bar */}
-          <Box mb={2} display="flex" gap={1.5} alignItems="center">
+          <Box mb={2} display="flex" gap={1} alignItems="center">
             <TextField
               size="small"
               fullWidth
               placeholder="Search user activities..."
-              value={activitySearch}
-              onChange={(e) => setActivitySearch(e.target.value)}
+              value={activitySearchInput}
+              onChange={(e) => setActivitySearchInput(e.target.value)}
+              onKeyDown={handleActivitySearchKeyDown}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1285,19 +1365,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 ),
               }}
             />
-            <Chip
-              label={`${activityTotal} Total`}
+            <Button
+              variant="contained"
               color="primary"
-              variant="outlined"
-              sx={{ fontWeight: 700, borderRadius: '8px', flexShrink: 0 }}
-            />
+              size="small"
+              onClick={handleExecuteActivitySearch}
+              startIcon={<IconSearch size={16} />}
+              sx={{ height: 38, px: 2.5, fontWeight: 600, flexShrink: 0, borderRadius: '8px', textTransform: 'none' }}
+            >
+              Search
+            </Button>
+
           </Box>
 
           {fetchingActivities ? (
             <Box display="flex" justifyContent="center" alignItems="center" py={6}>
               <CircularProgress size={32} />
             </Box>
-          ) : userActivities.length === 0 ? (
+          ) : filteredUserActivities.length === 0 ? (
             <Paper
               elevation={0}
               sx={{
@@ -1310,10 +1395,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
             >
               <IconHistory size={40} color={theme.palette.text.disabled} />
               <Typography variant="subtitle1" fontWeight={600} mt={1} color="text.secondary">
-                No Activity Records Found
+                {activitySearchQuery ? `No Activity Records Found for "${activitySearchQuery}"` : 'No Activity Records Found'}
               </Typography>
               <Typography variant="body2" color="text.disabled">
-                There are no recorded system actions for this user yet.
+                {activitySearchQuery ? 'Try searching for a different keyword or module name.' : 'There are no recorded system actions for this user yet.'}
               </Typography>
             </Paper>
           ) : (
@@ -1329,65 +1414,55 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {userActivities
-                      .filter((act) => {
-                        if (!activitySearch.trim()) return true;
-                        const q = activitySearch.toLowerCase();
-                        return (
-                          (act.description && act.description.toLowerCase().includes(q)) ||
-                          (act.log_name && act.log_name.toLowerCase().includes(q)) ||
-                          (act.event && act.event.toLowerCase().includes(q))
-                        );
-                      })
-                      .map((item, idx) => (
-                        <TableRow key={item.id || idx} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                          <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.8rem' }}>
-                            {activityPage * activityRowsPerPage + idx + 1}
-                          </TableCell>
-                          <TableCell>
-                            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                              <Chip
-                                size="small"
-                                label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
-                                color="primary"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '0.65rem',
-                                  fontWeight: 700,
-                                  borderRadius: '6px',
-                                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                  color: 'primary.main',
-                                }}
-                              />
-                              <Typography variant="body2" fontWeight={600} color="text.primary">
-                                {item.description || 'System Activity Executed'}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                            {formatActivityDate(item.created_at, item.my_updated_at)}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Button
+                    {filteredUserActivities.map((item, idx) => (
+                      <TableRow key={item.id || idx} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.8rem' }}>
+                          {activityPage * activityRowsPerPage + idx + 1}
+                        </TableCell>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                            <Chip
                               size="small"
-                              variant="outlined"
+                              label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
                               color="primary"
-                              startIcon={<IconEye size={15} />}
-                              onClick={() => setSelectedActivityDetail(item)}
                               sx={{
-                                borderRadius: '8px',
-                                fontSize: '0.725rem',
-                                textTransform: 'none',
-                                py: 0.25,
-                                px: 1.25,
-                                fontWeight: 600,
+                                height: 20,
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                borderRadius: '6px',
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: 'primary.main',
                               }}
-                            >
-                              View Details
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            />
+                            <Typography variant="body2" fontWeight={600} color="text.primary">
+                              {item.description || 'System Activity Executed'}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                          {formatActivityDate(item.created_at, item.my_updated_at)}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<IconEye size={15} />}
+                            onClick={() => setSelectedActivityDetail(item)}
+                            sx={{
+                              borderRadius: '8px',
+                              fontSize: '0.725rem',
+                              textTransform: 'none',
+                              py: 0.25,
+                              px: 1.25,
+                              fontWeight: 600,
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1410,80 +1485,120 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogActions>
       </Dialog>
 
-      {/* 4b. Activity Log Details Dialog */}
+      {/* 4b. Activity Log Details Dialog matching ActivityLog.jsx */}
       <Dialog
         open={Boolean(selectedActivityDetail)}
         onClose={() => setSelectedActivityDetail(null)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight={700}>Activity Details</Typography>
-          <IconButton onClick={() => setSelectedActivityDetail(null)} size="small">
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          Activity Details
+          <IconButton onClick={() => setSelectedActivityDetail(null)}>
             <IconX size={20} />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent dividers>
           {selectedActivityDetail && (
-            <Stack spacing={2}>
-              <Box p={2} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
-                  ACTION DESCRIPTION
+            <Box>
+              <Box mb={2}>
+                <Typography variant="subtitle2" gutterBottom fontWeight={700}>
+                  Basic Information
                 </Typography>
-                <Typography variant="body1" fontWeight={700} color="primary.main">
-                  {selectedActivityDetail.description || '—'}
-                </Typography>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, width: '150px' }}>Description</TableCell>
+                      <TableCell>{selectedActivityDetail.description || '—'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Action By</TableCell>
+                      <TableCell>
+                        <Typography
+                          component="span"
+                          sx={{
+                            color: 'primary.main',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedActivityDetail.causer?.full_name ||
+                            (selectedActivityDetail.causer?.fname && selectedActivityDetail.causer?.lname
+                              ? `${selectedActivityDetail.causer.fname} ${selectedActivityDetail.causer.lname}`
+                              : selectedActivityDetail.causer?.name || fullName || 'System')}
+                        </Typography>
+                        {(selectedActivityDetail.causer?.email || email) ? ` (${selectedActivityDetail.causer?.email || email})` : ''}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                      <TableCell>
+                        {formatActivityDate(selectedActivityDetail.created_at, selectedActivityDetail.my_updated_at)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </Box>
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
-                    MODULE / LOG NAME
-                  </Typography>
-                  <Chip
-                    size="small"
-                    label={(selectedActivityDetail.log_name || 'SYSTEM').toUpperCase()}
-                    color="primary"
-                    sx={{ mt: 0.5, fontWeight: 700 }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
-                    DATE & TIME
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                    {formatActivityDate(selectedActivityDetail.created_at, selectedActivityDetail.my_updated_at)}
-                  </Typography>
-                </Grid>
-              </Grid>
 
               {selectedActivityDetail.properties && Object.keys(selectedActivityDetail.properties).length > 0 && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
-                    PROPERTIES / ATTRIBUTES
+                  <Typography variant="subtitle2" gutterBottom fontWeight={700}>
+                    Additional Information
                   </Typography>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
-                      borderRadius: 2,
-                      maxHeight: 200,
-                      overflowY: 'auto',
-                    }}
-                  >
-                    <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(selectedActivityDetail.properties, null, 2)}
-                    </pre>
-                  </Paper>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>What changed</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>Value Changed</Typography>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(selectedActivityDetail.properties).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              {key}
+                            </TableCell>
+                            <TableCell>
+                              {typeof value === 'object' && value !== null ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    fontFamily: 'monospace',
+                                    fontSize: '12px',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  {JSON.stringify(value, null, 2)}
+                                </pre>
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Box>
               )}
-            </Stack>
+
+              {(!selectedActivityDetail.properties || Object.keys(selectedActivityDetail.properties).length === 0) && (
+                <Typography color="text.secondary" fontStyle="italic">
+                  No additional properties available for this activity.
+                </Typography>
+              )}
+            </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setSelectedActivityDetail(null)} variant="contained" size="small" color="primary">
+        <DialogActions>
+          <Button variant="contained" size="small" onClick={() => setSelectedActivityDetail(null)} color="primary">
             Close
           </Button>
         </DialogActions>

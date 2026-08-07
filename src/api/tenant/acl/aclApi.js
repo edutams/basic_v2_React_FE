@@ -118,6 +118,16 @@ const aclApi = {
         return response.data;
     },
 
+    updateSchoolUserProfile: async (userId, data) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/profile`, data);
+        return response.data;
+    },
+
+    changeSchoolUserPassword: async (userId, data) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/password`, data);
+        return response.data;
+    },
+
     getUserActivityLogs: async (userId, params = {}) => {
         const response = await tenantApi.get(`/activity-logs/causer/${userId}`, { params });
         return response.data;

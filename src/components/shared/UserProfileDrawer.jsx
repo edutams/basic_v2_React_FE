@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Drawer,
   Box,
@@ -56,7 +56,7 @@ import {
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) => {
   const theme = useTheme();
 
-  // --- All Hooks at Top Level ---
+  // --- All Hooks at Top Level (Unconditional Execution) ---
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
@@ -93,6 +93,114 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
   }, [user]);
 
   const targetUser = currentUser || user;
+
+  const formatRoleName = (str) => {
+    if (!str) return '';
+    const clean = String(str).trim();
+    if (!clean) return '';
+    return clean
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // --- Comprehensive Multi-Role Extractor ---
+  const parsedRoles = useMemo(() => {
+    if (!targetUser) return ['User'];
+    const rolesSet = new Set();
+
+    const addRole = (val) => {
+      if (!val) return;
+      if (typeof val === 'object') {
+        const name = val.name || val.user_type_name || val.title || val.role_name;
+        if (name) rolesSet.add(formatRoleName(name));
+      } else if (typeof val === 'string' && val.trim()) {
+        rolesSet.add(formatRoleName(val));
+      }
+    };
+
+    // 1. targetUser.roles (Array or string/object)
+    if (Array.isArray(targetUser.roles) && targetUser.roles.length > 0) {
+      targetUser.roles.forEach(addRole);
+    } else if (targetUser.roles) {
+      addRole(targetUser.roles);
+    }
+
+    // 2. targetUser.role_names / targetUser.roles_list
+    if (Array.isArray(targetUser.role_names)) {
+      targetUser.role_names.forEach(addRole);
+    }
+    if (Array.isArray(targetUser.roles_list)) {
+      targetUser.roles_list.forEach(addRole);
+    }
+
+    // 3. targetUser.user_types (Array)
+    if (Array.isArray(targetUser.user_types)) {
+      targetUser.user_types.forEach(addRole);
+    }
+
+    // 4. targetUser.user_type / targetUser.user_type_name
+    if (targetUser.user_type) {
+      addRole(targetUser.user_type);
+    }
+    if (targetUser.user_type_name) {
+      addRole(targetUser.user_type_name);
+    }
+
+    // 5. targetUser.role
+    if (targetUser.role) {
+      if (Array.isArray(targetUser.role)) {
+        targetUser.role.forEach(addRole);
+      } else {
+        addRole(targetUser.role);
+      }
+    }
+
+    // 6. Check log properties fallback (targetUser.properties)
+    if (targetUser.properties) {
+      const p = targetUser.properties;
+      const pRoles = p.causer_roles || p.roles || p.role || p.user_roles;
+      if (Array.isArray(pRoles)) {
+        pRoles.forEach(addRole);
+      } else if (pRoles) {
+        addRole(pRoles);
+      }
+    }
+
+    // 7. Check user_type_id mapping
+    if (targetUser.user_type_id === 1 || targetUser.user_type_id === '1') {
+      rolesSet.add('Super Admin');
+    }
+
+    // 8. Check special flags like is_admin
+    if (targetUser.is_admin === '1' || targetUser.is_admin === 1 || targetUser.is_super_admin) {
+      rolesSet.add('Super Admin');
+    }
+
+    const list = Array.from(rolesSet).filter(Boolean);
+    if (list.length > 0) return list;
+    if (targetUser.organization) return ['Landlord / Agent'];
+    return ['User'];
+  }, [targetUser]);
+
+  const userPermissions = useMemo(() => {
+    if (!targetUser) return ['Default Access Permissions'];
+    if (targetUser.permissions && Array.isArray(targetUser.permissions) && targetUser.permissions.length > 0) {
+      return targetUser.permissions;
+    }
+    if (targetUser.all_permissions && Array.isArray(targetUser.all_permissions) && targetUser.all_permissions.length > 0) {
+      return targetUser.all_permissions;
+    }
+    return [
+      'dashboard.index',
+      'profile.view',
+      'activity_log.index',
+      'notifications.read',
+      'account_settings.update',
+    ];
+  }, [targetUser]);
 
   const formatDOB = (val) => {
     if (!val || val === '—') return '—';
@@ -172,8 +280,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     }
   }, [activeModal, targetUser, email, phone, rawDob, sex, address]);
 
-  if (!open && !activeModal) return null;
-
   const handleOpenMenu = (e) => {
     e.stopPropagation();
     setMenuAnchorEl(e.currentTarget);
@@ -201,26 +307,20 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
 
   const fullName = targetUser
     ? targetUser.full_name ||
-      (targetUser.fname && targetUser.lname
-        ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
-        : targetUser.name || 'System User')
+    (targetUser.fname && targetUser.lname
+      ? `${targetUser.fname} ${targetUser.mname ? targetUser.mname + ' ' : ''}${targetUser.lname}`.trim()
+      : targetUser.name || 'System User')
     : 'User Profile';
 
-  const userType = targetUser
-    ? targetUser.user_type?.user_type_name ||
-      targetUser.role ||
-      targetUser.user_type_name ||
-      (targetUser.organization ? 'Landlord / Agent User' : 'Tenant User')
-    : '—';
   const organizationName = targetUser?.organization?.organization_name || targetUser?.organization?.name || '—';
 
   const status = String(targetUser?.status || 'active').toLowerCase();
   const createdDate = targetUser?.created_at
     ? new Date(targetUser.created_at).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
     : '—';
 
   const getInitials = () => {
@@ -365,6 +465,63 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
     </Box>
   );
 
+  const renderRolesRow = (icon, label, roles) => (
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="space-between"
+      py={1.25}
+      px={1}
+      sx={{
+        transition: 'all 0.2s ease',
+        borderRadius: 1.5,
+        '&:hover': {
+          bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.5) : 'grey.50',
+        },
+      }}
+    >
+      <Box display="flex" alignItems="center" gap={1.75} flex={1} minWidth={0}>
+        <Box
+          sx={{
+            color: 'primary.main',
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            p: 1,
+            borderRadius: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+        <Box minWidth={0} flex={1}>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.675rem' }}>
+            {label}
+          </Typography>
+          <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
+            {roles.map((roleName, i) => (
+              <Chip
+                key={i}
+                size="small"
+                label={roleName}
+                color="primary"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.725rem',
+                  height: 22,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+
   return (
     <>
       <Drawer
@@ -480,12 +637,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                       {email}
                     </Typography>
                     <Box display="flex" flexWrap="wrap" gap={0.75} alignItems="center">
-                      <Chip
-                        size="small"
-                        label={userType}
-                        color="primary"
-                        sx={{ fontWeight: 600, fontSize: '0.7rem', height: 22, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}
-                      />
+                      {parsedRoles.map((r, idx) => (
+                        <Chip
+                          key={idx}
+                          size="small"
+                          label={r}
+                          color="primary"
+                          sx={{ fontWeight: 600, fontSize: '0.7rem', height: 22, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}
+                        />
+                      ))}
                       <Chip
                         size="small"
                         label={status.toUpperCase()}
@@ -597,16 +757,60 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
                 </MenuItem>
               </Menu>
 
-              {/* Account & Role Specifications Section */}
-              <Typography variant="overline" color="text.secondary" fontWeight={700} sx={{ letterSpacing: 1, mb: 1.5, display: 'block' }}>
-                Account & Role Specs
-              </Typography>
-              <Stack spacing={1.5} mb={3}>
-                {renderBasicRow(<IconShieldCheck size={18} />, 'System Role / Guard', userType)}
-                {username !== '—' && renderBasicRow(<IconId size={18} />, 'Username', username, 'username')}
-                {organizationName !== '—' && renderBasicRow(<IconBuilding size={18} />, 'Organization', organizationName)}
-                {renderBasicRow(<IconCalendar size={18} />, 'Date Joined', createdDate)}
-              </Stack>
+              {/* Unified Single Card for Account & Role Specs */}
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  border: `1px solid ${theme.palette.divider}`,
+                  overflow: 'hidden',
+                  mb: 3,
+                }}
+              >
+                {/* Card Header */}
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  px={2.5}
+                  py={1.5}
+                  sx={{
+                    bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.6) : 'grey.50',
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.75rem' }}>
+                    Account & Role Specs
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<IconShieldCheck size={16} />}
+                    onClick={() => setActiveModal('view_permissions')}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: 1.5,
+                      fontWeight: 600,
+                      fontSize: '0.725rem',
+                      py: 0.25,
+                      px: 1.25,
+                    }}
+                  >
+                    View Permissions
+                  </Button>
+                </Box>
+
+                {/* Card Body - Single Container */}
+                <Box p={2}>
+                  <Stack spacing={1} divider={<Divider flexItem sx={{ borderStyle: 'dashed' }} />}>
+                    {renderRolesRow(<IconShieldCheck size={18} />, 'Role / Permission', parsedRoles)}
+                    {username !== '—' && renderBasicRow(<IconId size={18} />, 'Username', username, 'username')}
+                    {organizationName !== '—' && renderBasicRow(<IconBuilding size={18} />, 'Organization', organizationName)}
+                    {renderBasicRow(<IconCalendar size={18} />, 'Date Joined', createdDate)}
+                  </Stack>
+                </Box>
+              </Paper>
             </Box>
 
             {/* Footer Bar */}
@@ -802,6 +1006,60 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction }) =
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setActiveModal(null)} variant="contained" size="small" color="primary">Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 5. View User Permissions Modal */}
+      <Dialog open={activeModal === 'view_permissions'} onClose={() => setActiveModal(null)} maxWidth="sm" fullWidth>
+        <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" alignItems="center" gap={1}>
+            <IconShieldCheck size={22} color={theme.palette.primary.main} />
+            <Typography variant="h6" fontWeight={700}>
+              Permissions Granted to - <Box component="span" color="primary.main">{fullName}</Box>
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setActiveModal(null)} size="small"><IconX size={20} /></IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3 }}>
+          {/* <Box mb={2.5} p={2} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06), borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+            <Typography variant="subtitle1" fontWeight={700} color="primary.main" gutterBottom>
+              {fullName}
+            </Typography>
+
+            <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                Assigned Roles:
+              </Typography>
+              <Box display="flex" flexWrap="wrap" gap={0.5}>
+                {parsedRoles.map((r, i) => (
+                  <Chip key={i} size="small" label={r} color="primary" sx={{ fontWeight: 600, fontSize: '0.7rem', height: 20 }} />
+                ))}
+              </Box>
+            </Box>
+          </Box> */}
+
+          <Typography variant="subtitle2" fontWeight={700} gutterBottom sx={{ mb: 1.5 }}>
+            Granted Permissions ({userPermissions.length})
+          </Typography>
+
+          <Box display="flex" flexWrap="wrap" gap={1}>
+            {userPermissions.map((perm, idx) => (
+              <Chip
+                key={idx}
+                size="small"
+                label={typeof perm === 'object' ? perm.name || perm.title : String(perm)}
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+              />
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setActiveModal(null)} variant="contained" size="small" color="primary">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -29,6 +29,8 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,8 +39,11 @@ import {
   PeopleAltOutlined as AgentsIcon,
   KeyboardArrowDown as ExpandIcon,
   KeyboardArrowUp as CollapseIconUp,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import aclApi from '@/api/landlord/acl/aclApi';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import { useNotification } from '@/hooks/useNotification';
 
 /**
  * RoleOrganizationsModal
@@ -54,7 +59,7 @@ import aclApi from '@/api/landlord/acl/aclApi';
  *   onClose  {function}
  *   roleId   {number|string|null}
  */
-const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
+const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -63,6 +68,12 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const notify = useNotification();
 
   useEffect(() => {
     if (open && roleId) {
@@ -108,7 +119,37 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
     setSearchInput('');
     setPage(0);
     setError(null);
+    setAnchorEl(null);
+    setSelectedUser(null);
+    setConfirmOpen(false);
     onClose();
+  };
+
+  const handleMenuOpen = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleRemoveRole = async () => {
+    if (!selectedUser || !roleId || removing) return;
+    setRemoving(true);
+    try {
+      await aclApi.unassignAgentRole(selectedUser.id, [roleId], { target_type: 'user' });
+      notify.success('User removed from role successfully!');
+      handleMenuClose();
+      setConfirmOpen(false);
+      setSelectedUser(null);
+      fetchData();
+      onUserRemoved?.();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to remove user from role');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   const handleSearch = () => {
@@ -199,10 +240,13 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '35%' }}>Team Name</TableCell>
+                <TableCell sx={{ width: '33%' }}>Team Name</TableCell>
                 <TableCell sx={{ width: '25%' }}>Organization</TableCell>
-                <TableCell sx={{ width: '15%' }} align="center">
+                <TableCell sx={{ width: '13%' }} align="center">
                   Status
+                </TableCell>
+                <TableCell sx={{ width: '12%' }} align="center">
+                  Action
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -291,6 +335,12 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
                         color={user.status === 'active' ? 'success' : 'default'}
                       />
                     </TableCell>
+
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -327,6 +377,25 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
             </TableFooter>
           </Table>
         </TableContainer>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              setConfirmOpen(true);
+            }}
+            disabled={removing}
+            sx={{ color: 'error.main' }}
+          >
+            Remove Role
+          </MenuItem>
+        </Menu>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
@@ -334,6 +403,17 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
           Close
         </Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleRemoveRole}
+        title="Remove user from role?"
+        message={`Are you sure you want to remove ${selectedUser?.full_name ?? ''} from this role?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        severity="error"
+      />
     </Dialog>
   );
 };

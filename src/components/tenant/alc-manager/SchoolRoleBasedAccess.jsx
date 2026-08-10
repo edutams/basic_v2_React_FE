@@ -235,6 +235,7 @@ const SchoolRoleBasedAccess = () => {
         open={usersModalOpen}
         onClose={() => setUsersModalOpen(false)}
         role={selectedRole}
+        onUserRemoved={fetchRoles}
       />
     </Box>
   );

@@ -239,6 +239,7 @@ const RoleBasedAcess = () => {
         open={organizationsModalOpen}
         onClose={() => setOrganizationsModalOpen(false)}
         roleId={selectedRoleId}
+        onUserRemoved={fetchRoles}
       />
     </Box>
   );

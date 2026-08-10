@@ -55,13 +55,6 @@ const aclApi = {
     return response.data;
   },
 
-  unassignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/unassign`, {
-      roles: roleIds,
-    });
-    return response.data;
-  },
-
   getAgentDirectPermissions: async (agentId) => {
     const response = await api.get(`/v1/landlord/acl/assignments/agents/${agentId}/permissions`);
     return response.data;
@@ -70,6 +63,22 @@ const aclApi = {
   assignAgentDirectPermissions: async (agentId, permissions) => {
     const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/permissions`, {
       permissions,
+    });
+    return response.data;
+  },
+
+  revokeAgentDirectPermissions: async (agentId, permissions, params) => {
+    const response = await api.post(
+      `/v1/landlord/acl/assignments/agents/${agentId}/permissions/revoke`,
+      { permissions, ...params },
+    );
+    return response.data;
+  },
+
+  unassignAgentRole: async (agentId, roleIds, params) => {
+    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/unassign`, {
+      roles: roleIds,
+      ...params,
     });
     return response.data;
   },

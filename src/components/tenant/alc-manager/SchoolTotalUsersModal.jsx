@@ -22,15 +22,21 @@ import {
   Avatar,
   Chip,
   IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
   VpnKeyOutlined as PermissionIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import aclApi from '@/api/tenant/acl/aclApi';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import { useNotification } from '@/hooks/useNotification';
 
-const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
+const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,6 +45,12 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const notify = useNotification();
 
   const getInitials = (name = '') =>
     name
@@ -47,6 +59,11 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
       .map((n) => n[0])
       .join('')
       .toUpperCase();
+
+  // A user may hold a permission directly OR inherit it via a role.
+  // Only explicit 0 means "inherited only" — missing flag (older API) is treated as direct.
+  const isDirectHolder = (user) =>
+    user?.direct_holder === undefined ? true : Boolean(user.direct_holder);
 
   useEffect(() => {
     if (open && permission) {
@@ -106,7 +123,37 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
     setSearchInput('');
     setPage(0);
     setError(null);
+    setAnchorEl(null);
+    setSelectedUser(null);
+    setConfirmOpen(false);
     onClose();
+  };
+
+  const handleMenuOpen = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleRemovePermission = async () => {
+    if (!selectedUser || !permission || removing) return;
+    setRemoving(true);
+    try {
+      await aclApi.revokeSchoolUserDirectPermissions(selectedUser.id, [permission.name]);
+      notify.success('Permission removed from user successfully!');
+      handleMenuClose();
+      setConfirmOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+      onUserRemoved?.();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to remove permission from user');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   return (
@@ -164,15 +211,19 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '10%' }}>#</TableCell>
+                <TableCell sx={{ width: '8%' }}>#</TableCell>
                 <TableCell sx={{ width: '40%' }}>User Details</TableCell>
-                <TableCell sx={{ width: '20%' }}>Status</TableCell>
+                <TableCell sx={{ width: '20%' }}>Source</TableCell>
+                <TableCell sx={{ width: '18%' }}>Status</TableCell>
+                <TableCell sx={{ width: '12%' }} align="center">
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -209,16 +260,31 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
 
                     <TableCell>
                       <Chip
+                        label={isDirectHolder(user) ? 'Direct' : 'Via Role'}
+                        size="small"
+                        color={isDirectHolder(user) ? 'primary' : 'default'}
+                        variant={isDirectHolder(user) ? 'filled' : 'outlined'}
+                      />
+                    </TableCell>
+
+                    <TableCell>
+                      <Chip
                         label={user.status}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
                       />
                     </TableCell>
+
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <Alert
                       severity="info"
                       sx={{
@@ -250,6 +316,36 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           }}
           rowsPerPageOptions={[5, 10, 25]}
         />
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Tooltip
+            title={
+              selectedUser && !isDirectHolder(selectedUser)
+                ? 'This permission is inherited via a role. Remove the user from the role instead.'
+                : ''
+            }
+            placement="left"
+          >
+            <span>
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  setConfirmOpen(true);
+                }}
+                disabled={removing || !isDirectHolder(selectedUser)}
+                sx={{ color: 'error.main' }}
+              >
+                Remove Permission
+              </MenuItem>
+            </span>
+          </Tooltip>
+        </Menu>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
@@ -257,6 +353,19 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           Close
         </Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleRemovePermission}
+        title="Remove permission from user?"
+        message={`Are you sure you want to remove "${
+          permission?.description ?? permission?.name ?? ''
+        }" from ${selectedUser?.full_name ?? ''}?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        severity="error"
+      />
     </Dialog>
   );
 };

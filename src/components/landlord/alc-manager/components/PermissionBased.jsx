@@ -329,6 +329,7 @@ const PermissionBased = () => {
         open={orgsModalOpen}
         onClose={() => setOrgsModalOpen(false)}
         permissionId={selectedPermissionId}
+        onUserRemoved={fetchPermissions}
       />
     </Box>
   );

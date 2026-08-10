@@ -113,6 +113,16 @@ const aclApi = {
         return response.data;
     },
 
+    revokeSchoolUserDirectPermissions: async (userId, permissions) => {
+        const response = await tenantApi.post(
+            `/censis/acl/assignments/users/${userId}/permissions/revoke`,
+            {
+                permissions,
+            },
+        );
+        return response.data;
+    },
+
     getSchoolUserProfile: async (userId) => {
         const response = await tenantApi.get(`/users/${userId}/profile`);
         return response.data;

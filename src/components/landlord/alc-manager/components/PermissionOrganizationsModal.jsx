@@ -22,6 +22,9 @@ import {
   InputAdornment,
   TextField,
   IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,8 +33,11 @@ import {
   PeopleAltOutlined as AgentsIcon,
   KeyboardArrowDown as ExpandIcon,
   KeyboardArrowUp as CollapseIconUp,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import aclApi from '@/api/landlord/acl/aclApi';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import { useNotification } from '@/hooks/useNotification';
 
 /**
  * PermissionOrganizationsModal
@@ -45,7 +51,7 @@ import aclApi from '@/api/landlord/acl/aclApi';
  *   onClose      {function}
  *   permissionId {number|string|null}
  */
-const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
+const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -54,6 +60,12 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const notify = useNotification();
 
   useEffect(() => {
     if (open && permissionId) {
@@ -99,7 +111,39 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
     setSearchInput('');
     setPage(0);
     setError(null);
+    setAnchorEl(null);
+    setSelectedUser(null);
+    setConfirmOpen(false);
     onClose();
+  };
+
+  const handleMenuOpen = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleRemovePermission = async () => {
+    if (!selectedUser || !permissionId || removing) return;
+    setRemoving(true);
+    try {
+      await aclApi.revokeAgentDirectPermissions(selectedUser.id, [permissionId], {
+        target_type: 'user',
+      });
+      notify.success('Permission removed from user successfully!');
+      handleMenuClose();
+      setConfirmOpen(false);
+      setSelectedUser(null);
+      fetchData();
+      onUserRemoved?.();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to remove permission from user');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   const handleSearch = () => {
@@ -194,11 +238,14 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '35%' }}>Organization Name</TableCell>
-                <TableCell sx={{ width: '25%' }}>Organization</TableCell>
-                <TableCell sx={{ width: '20%' }}>Email</TableCell>
-                <TableCell sx={{ width: '15%' }} align="center">
+                <TableCell sx={{ width: '33%' }}>Organization Name</TableCell>
+                <TableCell sx={{ width: '22%' }}>Organization</TableCell>
+                <TableCell sx={{ width: '18%' }}>Email</TableCell>
+                <TableCell sx={{ width: '12%' }} align="center">
                   Status
+                </TableCell>
+                <TableCell sx={{ width: '10%' }} align="center">
+                  Action
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -206,7 +253,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -264,11 +311,17 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
                         color={user.status === 'active' ? 'success' : 'default'}
                       />
                     </TableCell>
+
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Alert
                       severity="info"
                       sx={{
@@ -294,12 +347,31 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
                   rowsPerPage={rowsPerPage}
                   page={page}
                   onPageChange={(_, newPage) => setPage(newPage)}
-                  colSpan={5}
+                  colSpan={6}
                 />
               </TableRow>
             </TableFooter>
           </Table>
         </TableContainer>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              setConfirmOpen(true);
+            }}
+            disabled={removing}
+            sx={{ color: 'error.main' }}
+          >
+            Remove Permission
+          </MenuItem>
+        </Menu>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
@@ -307,6 +379,19 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
           Close
         </Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleRemovePermission}
+        title="Remove permission from user?"
+        message={`Are you sure you want to remove this permission from ${
+          selectedUser?.full_name ?? ''
+        }?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        severity="error"
+      />
     </Dialog>
   );
 };

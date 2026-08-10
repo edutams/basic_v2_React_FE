@@ -243,6 +243,7 @@ const SchoolPermissionBased = () => {
         open={usersModalOpen}
         onClose={() => setUsersModalOpen(false)}
         permission={selectedPermission}
+        onUserRemoved={fetchPermissions}
       />
     </Box>
   );

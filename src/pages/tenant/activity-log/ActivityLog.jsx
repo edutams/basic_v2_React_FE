@@ -293,7 +293,7 @@ const ActivityLog = () => {
                 Search
               </Button>
               {(search || dateFrom || dateTo) && (
-                <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                <Button variant="outlined" size="small" color="primary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
                   Clear
                 </Button>
               )}

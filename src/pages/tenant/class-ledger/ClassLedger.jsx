@@ -721,8 +721,8 @@ const ClassLedger = () => {
                       <TableCell>{(meta?.from || 0) + index}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar src={user.avatar} sx={{ width: 36, height: 36 }}>
-                            {user.fname?.[0] || '?'}
+                          <Avatar src={user.avatar || user.image} sx={{ width: 36, height: 36 }}>
+                            <PersonOutlineIcon sx={{ fontSize: 20 }} />
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>

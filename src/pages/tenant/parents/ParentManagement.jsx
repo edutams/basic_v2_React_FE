@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Icon,
+  Avatar,
 } from '@mui/material';
 
 import {
@@ -42,6 +42,7 @@ import {
   MoreVert as MoreVertIcon,
   CloudUpload as UploadIcon,
   Download as DownloadIcon,
+  PersonOutline as PersonOutlineIcon,
 } from '@mui/icons-material';
 import {
   IconUsers,
@@ -442,14 +443,25 @@ const ParentManagement = () => {
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
 
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {row.user
-                            ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}`
-                            : '—'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {relationshipLabel(row.relationship)}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={row.user?.avatar || row.user?.image || ''}
+                            alt={row.user?.fname}
+                            sx={{ width: 36, height: 36 }}
+                          >
+                            <PersonOutlineIcon sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {row.user
+                                ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}`
+                                : '—'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {relationshipLabel(row.relationship)}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </TableCell>
 
                       <TableCell align="center" sx={{ verticalAlign: 'middle' }}>

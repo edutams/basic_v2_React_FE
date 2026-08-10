@@ -349,16 +349,11 @@ const SchoolAssignmentManagement = () => {
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar
-                          src={user.avatar}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
+                          src={user.avatar || user.image || ''}
+                          alt={user.name}
+                          sx={{ width: 36, height: 36 }}
                         >
-                          {!user.avatar && getInitials(user.name)}
+                          {user.name?.[0]?.toUpperCase() ?? '?'}
                         </Avatar>
                         <Box>
                           <Typography variant="subtitle2">{user.name}</Typography>

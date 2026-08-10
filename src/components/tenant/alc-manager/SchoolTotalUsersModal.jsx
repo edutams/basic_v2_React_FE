@@ -234,7 +234,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar
-                          src={user.avatar}
+                          src={user.avatar || user.image || ''}
                           sx={{
                             width: 30,
                             height: 30,

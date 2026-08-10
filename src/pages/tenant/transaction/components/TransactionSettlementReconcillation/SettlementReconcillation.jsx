@@ -83,10 +83,6 @@ const SettlementReconcillation = () => {
   const [revenueModalOpen, setRevenueModalOpen] = useState(false);
   const [settlementsModalOpen, setSettlementsModalOpen] = useState(false);
 
-  const [revenueTxnModalOpen, setRevenueTxnModalOpen] = useState(false);
-  const [selectedRevenue, setSelectedRevenue] = useState(null);
-
-  // ---------- Upload dialog (unwired, unchanged) ----------
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -212,11 +208,6 @@ const SettlementReconcillation = () => {
   const handleOpenRevenue = (row) => {
     setSelectedRow({ ...row, from: filters.from, to: filters.to });
     setRevenueModalOpen(true);
-  };
-
-  const handleOpenRevenueTransactions = ({ paymentId, revenueName, from, to }) => {
-    setSelectedRevenue({ paymentId, revenueName, from, to });
-    setRevenueTxnModalOpen(true);
   };
 
   const handleOpenSettlements = (row) => {
@@ -566,7 +557,6 @@ const SettlementReconcillation = () => {
         open={revenueModalOpen}
         onClose={() => setRevenueModalOpen(false)}
         rowData={selectedRow}
-        onOpenRevenueTransactions={handleOpenRevenueTransactions}
       />
 
       <SettlementsModal

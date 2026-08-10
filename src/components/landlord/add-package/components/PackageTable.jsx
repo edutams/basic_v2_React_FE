@@ -123,7 +123,10 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
         >
           <Typography variant="h5">All Packages</Typography>
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
@@ -137,7 +140,10 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                 />
               )}
             </Button>
-            <Button variant="contained" size="small" startIcon={<AddIcon />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
               onClick={() => onPackageAction('create')}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
@@ -165,7 +171,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', minWidth: '200px' }}>Description</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                     Actions
@@ -194,7 +200,12 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell
+                        sx={{
+                          whiteSpace: 'wrap',
+                          maxWidth: '200px',
+                        }}
+                      >
                         <Typography variant="body2">
                           {pkg.package_description || pkg.pac_description}
                         </Typography>

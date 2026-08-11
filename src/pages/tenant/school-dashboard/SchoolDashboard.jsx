@@ -5,6 +5,7 @@ import PageUnderDevelopment from '@/components/shared/PageUnderDevelopment';
 import ParentDashboard from '@/pages/tenant/admission/ParentDashboard';
 import AdmissionOfficerDashboard from '@/pages/tenant/admission/AdmissionOfficerDashboard';
 import BursaryOfficerDashboard from '@/pages/tenant/finance/BursaryOfficerDashboard';
+import AdminDashboard from '@/pages/tenant/school-dashboard/AdminDashboard';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -30,7 +31,9 @@ export default function SchoolDashboard() {
     role => role.name === 'bursar'
   );
 
-  console.log({ isAdmissionOfficer, isBursaryOfficer });
+  const isAdmin = roles.some(role =>
+    ['super_admin', 'school_owner', 'school_head'].includes(role.name)
+  );
 
 
   /**
@@ -38,35 +41,41 @@ export default function SchoolDashboard() {
    */
   const dashboardTitle = isParent
     ? 'Parent Dashboard'
-    : isAdmissionOfficer
-      ? 'Admission Officer Dashboard'
-      : isBursaryOfficer
-        ? 'Bursary Officer Dashboard'
-        : isStaff
-          ? 'Staff Dashboard'
-          : isLearner
-            ? 'Student Dashboard'
-            : 'Dashboard';
+    : isAdmin
+      ? 'Admin Dashboard'
+      : isAdmissionOfficer
+        ? 'Admission Officer Dashboard'
+        : isBursaryOfficer
+          ? 'Bursary Officer Dashboard'
+          : isStaff
+            ? 'Staff Dashboard'
+            : isLearner
+              ? 'Student Dashboard'
+              : 'Dashboard';
 
   /**
    * Dashboard Description
    */
   const dashboardDescription = isParent
     ? 'Parent portal'
-    : isAdmissionOfficer
-      ? 'Admission management portal'
-      : isBursaryOfficer
-        ? 'Revenue and collections portal'
-        : isStaff
-          ? 'Staff portal'
-          : isLearner
-            ? 'Student portal'
-            : 'Dashboard';
+    : isAdmin
+      ? 'School-wide overview portal'
+      : isAdmissionOfficer
+        ? 'Admission management portal'
+        : isBursaryOfficer
+          ? 'Revenue and collections portal'
+          : isStaff
+            ? 'Staff portal'
+            : isLearner
+              ? 'Student portal'
+              : 'Dashboard';
 
   return (
     <PageContainer title={dashboardTitle} description={dashboardDescription}>
       {isParent ? (
         <ParentDashboard />
+      ) : isAdmin ? (
+        <AdminDashboard />
       ) : isAdmissionOfficer ? (
         <AdmissionOfficerDashboard />
       ) : isBursaryOfficer ? (

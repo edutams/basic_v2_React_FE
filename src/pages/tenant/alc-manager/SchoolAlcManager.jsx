@@ -56,6 +56,7 @@ import {
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import PermissionAttachmentModal from '@/components/tenant/alc-manager/SchoolPermissionAttachmentModal';
 import ViewPermissionModal from '@/components/tenant/alc-manager/SchoolViewPermissionModal';
 import NewRoleModal from '@/components/tenant/alc-manager/SchoolNewRoleModal';
@@ -441,6 +442,35 @@ const SchoolAlcManager = () => {
     }
   };
 
+  const [convertConfirmOpen, setConvertConfirmOpen] = useState(false);
+  const [roleToConvert, setRoleToConvert] = useState(null);
+  const [converting, setConverting] = useState(false);
+
+  const handleOpenConvertConfirm = (row) => {
+    setRoleToConvert(row);
+    setConvertConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmConvertToSystem = async () => {
+    if (!roleToConvert || converting) return;
+    setConverting(true);
+    try {
+      await aclApi.updateSchoolRole(roleToConvert.id, {
+        name: roleToConvert.name,
+        is_sys: 'yes',
+      });
+      notify.success(`Role "${roleToConvert.name}" converted to System Role successfully!`);
+      setConvertConfirmOpen(false);
+      setRoleToConvert(null);
+      await fetchRoles();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to convert role to System Role');
+    } finally {
+      setConverting(false);
+    }
+  };
+
   const handleCreateRole = async () => {
     try {
       await aclApi.createSchoolRole({
@@ -520,15 +550,11 @@ const SchoolAlcManager = () => {
       }
 
       if (typeFilter !== 'all') {
-        const isCustom = row?.guard_name === 'web' || row?.type === 'Custom' || row?.is_system === false;
-        const isProtected =
-          row?.is_protected ||
-          row?.is_system ||
-          ['super admin', 'admin', 'bursar'].some((p) => row?.name?.toLowerCase()?.includes(p));
+        const isSystem = row?.is_sys === 'yes' || row?.is_system === true;
+        const isCustom = row?.is_sys === 'no' || (!isSystem && (row?.guard_name === 'web' || row?.type === 'Custom' || row?.is_system === false));
 
         if (typeFilter === 'custom' && !isCustom) return false;
-        if (typeFilter === 'system' && isCustom) return false;
-        if (typeFilter === 'protected' && !isProtected) return false;
+        if (typeFilter === 'system' && !isSystem) return false;
       }
 
       return true;
@@ -774,11 +800,10 @@ const SchoolAlcManager = () => {
                     <MenuItem value="all">Type: All</MenuItem>
                     <MenuItem value="system">System</MenuItem>
                     <MenuItem value="custom">Custom</MenuItem>
-                    <MenuItem value="protected">Protected</MenuItem>
                   </Select>
                 </FormControl>
 
-                <Button
+                {/* <Button
                   variant="outlined"
                   size="small"
                   startIcon={<IconAdjustmentsHorizontal size={18} />}
@@ -811,36 +836,58 @@ const SchoolAlcManager = () => {
                       {activeFilterCount}
                     </Box>
                   )}
-                </Button>
+                </Button> */}
 
                 {hasFilters && (
                   <Button
                     variant="text"
                     size="small"
                     onClick={handleFilterReset}
-                    sx={{ color: 'error.main', fontSize: '13px' }}
                   >
-                    Reset
+                    Clear Filter
                   </Button>
                 )}
+
               </Box>
 
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ExportIcon fontSize="small" />}
-                onClick={handleExportRoles}
-                sx={{
-                  px: 2,
-                  py: 0.8,
-                  borderColor: 'divider',
-                  color: 'text.primary',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                }}
-              >
-                Export
-              </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  startIcon={<IconUserPlus size={18} />}
+                  onClick={() => setNewRoleModalOpen(true)}
+                  data-tour="acl-role-create"
+                  sx={{
+                    px: 2,
+                    py: 0.8,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                  }}
+                >
+                  New Role
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ExportIcon fontSize="small" />}
+                  onClick={handleExportRoles}
+                  sx={{
+                    px: 2,
+                    py: 0.8,
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                  }}
+                >
+                  Export
+                </Button>
+
+              </Box>
             </Box>
 
             {/* Table Container */}
@@ -941,7 +988,15 @@ const SchoolAlcManager = () => {
                             </TableCell>
 
                             <TableCell sx={{ maxWidth: 280 }}>
-                              <Typography variant="body2" color="text.secondary" noWrap>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  whiteSpace: 'normal',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.5,
+                                }}
+                              >
                                 {row.description || '—'}
                               </Typography>
                             </TableCell>
@@ -1027,6 +1082,11 @@ const SchoolAlcManager = () => {
                                 <MenuItem onClick={() => handleViewUsers(row)}>
                                   View Users
                                 </MenuItem>
+                                {isCustomRole && (
+                                  <MenuItem onClick={() => handleOpenConvertConfirm(row)} sx={{ color: 'error.main' }}>
+                                    Make System Role
+                                  </MenuItem>
+                                )}
                                 {row.status === 'Inactive' || row.status === 'inactive' ? (
                                   <MenuItem onClick={() => handleToggleRoleStatus(row)} sx={{ color: 'success.main' }}>
                                     Activate Role
@@ -1139,6 +1199,47 @@ const SchoolAlcManager = () => {
         activeFilters={activeFilters}
         onApply={handleFilterApply}
         onReset={handleFilterReset}
+      />
+
+      <ConfirmationDialog
+        open={convertConfirmOpen}
+        onClose={() => {
+          setConvertConfirmOpen(false);
+          setRoleToConvert(null);
+        }}
+        onConfirm={handleConfirmConvertToSystem}
+        title="Convert to System Role?"
+        message={
+          <Typography component="span" variant="body2" color="text.secondary">
+            Are you sure you want to convert{' '}
+            <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+              {roleToConvert?.name} Role
+            </Typography>{' '}
+            to a System Role? This action cannot be undone.
+          </Typography>
+        }
+        confirmText="Make System Role"
+        cancelText="Cancel"
+        severity="error"
+        cancelButtonSx={{
+          border: '1px solid #D1D5DB',
+          bgcolor: 'transparent',
+          color: '#374151',
+          boxShadow: 'none',
+          '&:hover': {
+            bgcolor: '#F9FAFB',
+            borderColor: '#9CA3AF',
+            boxShadow: 'none',
+          },
+        }}
+        confirmButtonSx={{
+          bgcolor: 'error.main',
+          color: '#ffffff',
+          '&:hover': {
+            bgcolor: 'error.dark',
+          },
+        }}
+        loading={converting}
       />
     </PageContainer>
   );

@@ -162,8 +162,8 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <UsersIcon fontSize="small" color="primary" />
-          <Typography variant="h6" component="span">
-            Users with this Role
+          <Typography variant="h6" component="span" sx={{ fontWeight: 700 }}>
+            Users with Role{role?.name ? <> - <Box component="span" sx={{ color: 'primary.main' }}>{role.name}</Box></> : ' this Role'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>

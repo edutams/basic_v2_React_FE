@@ -46,6 +46,7 @@ import RoleAttachmentModal from '@/components/tenant/alc-manager/RoleAttachmentM
 import ViewRoleModal from '@/components/tenant/alc-manager/ViewRoleModal';
 import SchoolDirectPermissionModal from '@/components/tenant/alc-manager/SchoolDirectPermissionModal';
 import SchoolViewDirectPermissionModal from '@/components/tenant/alc-manager/SchoolViewDirectPermissionModal';
+import SchoolRecentChangesModal from '@/components/tenant/alc-manager/SchoolRecentChangesModal';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
@@ -68,6 +69,7 @@ const SchoolAssignmentManagement = () => {
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
   const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
+  const [recentChangesModalOpen, setRecentChangesModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
   const [statsApiData, setStatsApiData] = useState(null);
 
@@ -449,14 +451,27 @@ const SchoolAssignmentManagement = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={userStats.recentChanges}
-            label="Recent Changes"
-            subtitle="In the last 7 days"
-            icon={IconUserPlus}
-            colorIndex={4}
-            loading={loading}
-          />
+          <Tooltip title="Click to view breakdown of recent changes">
+            <Box
+              onClick={() => setRecentChangesModalOpen(true)}
+              sx={{
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              <StatCard
+                count={userStats.recentChanges}
+                label="Recent Changes"
+                subtitle="In the last 7 days"
+                icon={IconUserPlus}
+                colorIndex={4}
+                loading={loading}
+              />
+            </Box>
+          </Tooltip>
         </Grid>
       </Grid>
 
@@ -830,6 +845,11 @@ const SchoolAssignmentManagement = () => {
             />
           );
         })()}
+
+        <SchoolRecentChangesModal
+          open={recentChangesModalOpen}
+          onClose={() => setRecentChangesModalOpen(false)}
+        />
       </ParentCard>
     </Box>
   );

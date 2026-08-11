@@ -73,6 +73,11 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolRecentChangesLog: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/recent_changes', { params });
+        return response.data;
+    },
+
     toggleSchoolUserStatus: async (userId) => {
         const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/toggle_status`);
         return response.data;

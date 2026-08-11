@@ -416,6 +416,14 @@ const SchoolAlcManager = () => {
   const handleToggleRoleStatus = async (row) => {
     const isCurrentlyActive = row.status !== 'Inactive' && row.status !== 'inactive';
     const newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
+    const assignedUsers = Number(row.users_count ?? row.totalUsers ?? row.total_users ?? (Array.isArray(row.users) ? row.users.length : 0));
+
+    if (isCurrentlyActive && assignedUsers > 0) {
+      notify.error(`Cannot deactivate "${row.name}". Please remove all assigned users from this role first.`);
+      handleMenuClose();
+      return;
+    }
+
     try {
       if (row.id) {
         await aclApi.updateSchoolRole(row.id, {
@@ -992,8 +1000,8 @@ const SchoolAlcManager = () => {
                                   {dateFormatted}
                                 </Typography>
                                 {updatedByPerson && (
-                                  <Typography variant="caption" color="text.secondary">
-                                    by {updatedByPerson}
+                                  <Typography variant="caption" color="text.secondary" display="block">
+                                    By {updatedByPerson}
                                   </Typography>
                                 )}
                               </Box>

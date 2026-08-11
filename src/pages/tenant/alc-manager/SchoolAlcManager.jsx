@@ -1001,7 +1001,7 @@ const SchoolAlcManager = () => {
                                 </Typography>
                                 {updatedByPerson && (
                                   <Typography variant="caption" color="text.secondary" display="block">
-                                    By {updatedByPerson}
+                                    by {updatedByPerson}
                                   </Typography>
                                 )}
                               </Box>

@@ -41,6 +41,7 @@ import {
 } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import RoleAttachmentModal from '@/components/tenant/alc-manager/RoleAttachmentModal';
 import ViewRoleModal from '@/components/tenant/alc-manager/ViewRoleModal';
 import SchoolDirectPermissionModal from '@/components/tenant/alc-manager/SchoolDirectPermissionModal';
@@ -69,6 +70,10 @@ const SchoolAssignmentManagement = () => {
   const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
   const [statsApiData, setStatsApiData] = useState(null);
+
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [userToToggleStatus, setUserToToggleStatus] = useState(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -205,16 +210,26 @@ const SchoolAssignmentManagement = () => {
     };
   }, [statsApiData, users]);
 
-  const handleToggleUserStatus = async (user) => {
+  const handleOpenStatusConfirm = (user) => {
+    setUserToToggleStatus(user);
+    setStatusConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmToggleUserStatus = async () => {
+    if (!userToToggleStatus || togglingStatus) return;
+    setTogglingStatus(true);
     try {
-      const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
-      await aclApi.toggleSchoolUserStatus(user.id);
-      notify.success(`User "${user.name}" ${isCurrentActive ? 'deactivated' : 'activated'} successfully!`);
-      handleMenuClose();
+      const isCurrentActive = (userToToggleStatus.status || (userToToggleStatus.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
+      await aclApi.toggleSchoolUserStatus(userToToggleStatus.id);
+      notify.success(`User "${userToToggleStatus.name}" ${isCurrentActive ? 'deactivated' : 'activated'} successfully!`);
+      setStatusConfirmOpen(false);
+      setUserToToggleStatus(null);
       await Promise.all([fetchUsers(), fetchStats()]);
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to update user status');
-      handleMenuClose();
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -693,11 +708,11 @@ const SchoolAssignmentManagement = () => {
                             {(() => {
                               const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
                               return isCurrentActive ? (
-                                <MenuItem onClick={() => handleToggleUserStatus(user)} sx={{ color: 'error.main' }}>
+                                <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'error.main' }}>
                                   Deactivate User
                                 </MenuItem>
                               ) : (
-                                <MenuItem onClick={() => handleToggleUserStatus(user)} sx={{ color: 'success.main' }}>
+                                <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'success.main' }}>
                                   Activate User
                                 </MenuItem>
                               );
@@ -769,6 +784,52 @@ const SchoolAssignmentManagement = () => {
           currentUser={currentUserForRole}
           onPermissionSave={handleViewDirectPermissionSave}
         />
+
+        {(() => {
+          const isTargetActive = (userToToggleStatus?.status || (userToToggleStatus?.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
+
+          return (
+            <ConfirmationDialog
+              open={statusConfirmOpen}
+              onClose={() => {
+                setStatusConfirmOpen(false);
+                setUserToToggleStatus(null);
+              }}
+              onConfirm={handleConfirmToggleUserStatus}
+              title={isTargetActive ? 'Deactivate User?' : 'Activate User?'}
+              message={
+                <Typography component="span" variant="body2" color="text.secondary">
+                  Are you sure you want to {isTargetActive ? 'deactivate' : 'activate'}{' '}
+                  <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+                    {userToToggleStatus?.name}
+                  </Typography>?
+                </Typography>
+              }
+              confirmText={isTargetActive ? 'Deactivate' : 'Activate'}
+              cancelText="Cancel"
+              severity={isTargetActive ? 'error' : 'info'}
+              cancelButtonSx={{
+                border: '1px solid #D1D5DB',
+                bgcolor: 'transparent',
+                color: '#374151',
+                boxShadow: 'none',
+                '&:hover': {
+                  bgcolor: '#F9FAFB',
+                  borderColor: '#9CA3AF',
+                  boxShadow: 'none',
+                },
+              }}
+              confirmButtonSx={{
+                bgcolor: isTargetActive ? 'error.main' : 'primary.main',
+                color: '#ffffff',
+                '&:hover': {
+                  bgcolor: isTargetActive ? 'error.dark' : 'primary.dark',
+                },
+              }}
+              loading={togglingStatus}
+            />
+          );
+        })()}
       </ParentCard>
     </Box>
   );

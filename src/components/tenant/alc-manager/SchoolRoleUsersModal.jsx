@@ -33,6 +33,7 @@ import {
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
+import { getFullImageUrl } from '@/helpers/ImageHelper';
 
 const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
@@ -219,51 +220,74 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
                   </TableCell>
                 </TableRow>
               ) : users.length > 0 ? (
-                users.map((user, index) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user.avatar || user.image || ''}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        >
-                          {!user.avatar &&
-                            getInitials(user.full_name ?? `${user.fname} ${user.lname}`)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {user.full_name ?? `${user.fname} ${user.lname}`}
-                          </Typography>
+                users.map((item, index) => {
+                  const u = item.users || item.user || item;
+                  const rawAvatar =
+                    item.avatar ||
+                    item.users?.avatar ||
+                    item.user?.avatar ||
+                    u.avatar ||
+                    u.image ||
+                    item.image ||
+                    item.profile_picture ||
+                    item.profile_photo_url ||
+                    item.photo ||
+                    '';
+                  const avatarSrc = rawAvatar ? getFullImageUrl(rawAvatar) : '';
+                  const fname = u.fname || u.first_name || item.fname || item.first_name || (typeof u.name === 'string' ? u.name.split(' ')[0] : '') || '';
+                  const lname = u.lname || u.last_name || item.lname || item.last_name || (typeof u.name === 'string' ? u.name.split(' ').slice(1).join(' ') : '') || '';
+                  const displayName = u.full_name || item.full_name || (fname ? `${fname} ${lname}`.trim() : (u.name || item.name || '—'));
+                  const email = u.email || item.email || '—';
+                  const rawStatus = item.status || u.status || (u.is_active === false ? 'Inactive' : 'Active');
+                  const statusLabel = rawStatus ? (rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase()) : 'Active';
+                  const isInactive = statusLabel === 'Inactive' || statusLabel === 'Disabled';
 
-                          <Typography variant="small" color="text.secondary">
-                            {user.email}
-                          </Typography>
+                  return (
+                    <TableRow key={item.id || index} hover>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={avatarSrc}
+                            alt={fname || displayName}
+                            sx={{ width: 36, height: 36 }}
+                          >
+                            {fname?.[0]?.toUpperCase() ?? displayName?.[0]?.toUpperCase() ?? '?'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600} noWrap>
+                              {displayName}
+                            </Typography>
+
+                            <Typography variant="caption" color="text.secondary">
+                              {email}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={user.status}
-                        size="small"
-                        color={user.status === 'active' ? 'success' : 'default'}
-                      />
-                    </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={statusLabel}
+                          size="small"
+                          sx={{
+                            bgcolor: isInactive ? '#FEF2F2' : '#DCFCE7',
+                            color: isInactive ? '#DC2626' : '#16A34A',
+                            fontWeight: 600,
+                            borderRadius: '12px',
+                            px: 1,
+                          }}
+                        />
+                      </TableCell>
 
-                    <TableCell align="center">
-                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      <TableCell align="center">
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
@@ -323,18 +347,38 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
         </Button>
       </DialogActions>
 
-      <ConfirmationDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={handleRemoveFromRole}
-        title="Remove user from role?"
-        message={`Are you sure you want to remove ${selectedUser?.full_name ?? ''} from the "${
-          role?.role ?? ''
-        }" role?`}
-        confirmText="Remove"
-        cancelText="Cancel"
-        severity="error"
-      />
+      {(() => {
+        const u = selectedUser?.users || selectedUser?.user || selectedUser;
+        const fname = u?.fname || u?.first_name || u?.name || selectedUser?.fname || '';
+        const lname = u?.lname || u?.last_name || selectedUser?.lname || '';
+        const targetName = selectedUser?.full_name || (fname ? `${fname} ${lname}`.trim() : (u?.name || 'this user'));
+        const roleName = role?.role || role?.name || '';
+
+        return (
+          <ConfirmationDialog
+            open={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            onConfirm={handleRemoveFromRole}
+            title="Remove user from role?"
+            message={
+              <Typography component="span" variant="body2" color="text.secondary">
+                Are you sure you want to remove{' '}
+                <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+                  {targetName}
+                </Typography>{' '}
+                from the "
+                <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+                  {roleName}
+                </Typography>
+                " role?
+              </Typography>
+            }
+            confirmText="Remove"
+            cancelText="Cancel"
+            severity="error"
+          />
+        );
+      })()}
     </Dialog>
   );
 };

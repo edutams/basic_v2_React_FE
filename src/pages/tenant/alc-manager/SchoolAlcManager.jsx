@@ -202,6 +202,8 @@ const SchoolAlcManager = () => {
   const [typeFilter, setTypeFilter] = useState('all');
 
   const [totalRoles, setTotalRoles] = useState(0);
+  const [roleStats, setRoleStats] = useState(null);
+  const [allSystemRoles, setAllSystemRoles] = useState([]);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -242,12 +244,65 @@ const SchoolAlcManager = () => {
         }
       });
 
-      const res = await aclApi.getSchoolRoles(params);
+      const [res, analyticsRes, allRolesRes, summaryStatsRes] = await Promise.allSettled([
+        aclApi.getSchoolRoles(params),
+        aclApi.getSchoolRoleAnalytics({ per_page: 100 }),
+        aclApi.getSchoolRoles({ without_pagination: true }),
+        aclApi.getSchoolRoleSummaryStats(),
+      ]);
 
-      const rolesArray = res?.data?.data ?? [];
-      const total = res?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
+      const rolesResponse = res.status === 'fulfilled' ? res.value : null;
+      const analyticsResponse = analyticsRes.status === 'fulfilled' ? analyticsRes.value : null;
+      const allRolesResponse = allRolesRes.status === 'fulfilled' ? allRolesRes.value : null;
+      const summaryStatsResponse = summaryStatsRes.status === 'fulfilled' ? summaryStatsRes.value : null;
 
-      setRows(Array.isArray(rolesArray) ? rolesArray : []);
+      if (summaryStatsResponse?.data) {
+        setRoleStats(summaryStatsResponse.data);
+      }
+
+      let rolesArray = rolesResponse?.data?.data ?? rolesResponse?.data ?? [];
+      const total = rolesResponse?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
+
+      if (!Array.isArray(rolesArray)) rolesArray = [];
+
+      let fetchedAllRoles = allRolesResponse?.data?.data ?? allRolesResponse?.data ?? [];
+      if (!Array.isArray(fetchedAllRoles)) fetchedAllRoles = [];
+      setAllSystemRoles(fetchedAllRoles);
+
+      const analyticsData = analyticsResponse?.data?.data ?? analyticsResponse?.data ?? [];
+      const analyticsMap = {};
+      if (Array.isArray(analyticsData)) {
+        analyticsData.forEach((item) => {
+          if (item.id) analyticsMap[item.id] = item;
+          if (item.role) analyticsMap[item.role.toLowerCase()] = item;
+          if (item.name) analyticsMap[item.name.toLowerCase()] = item;
+        });
+      }
+
+      const enrichedRoles = rolesArray.map((role) => {
+        const match =
+          analyticsMap[role.id] ||
+          (role.name ? analyticsMap[role.name.toLowerCase()] : null);
+
+        const count =
+          role.users_count ??
+          role.totalUsers ??
+          role.total_users ??
+          role.user_count ??
+          role.assigned_users_count ??
+          match?.totalUsers ??
+          match?.users_count ??
+          match?.total_users ??
+          (Array.isArray(role.users) ? role.users.length : 0);
+
+        return {
+          ...role,
+          users_count: count,
+          totalUsers: count,
+        };
+      });
+
+      setRows(enrichedRoles);
       setTotalRoles(total);
     } catch (error) {
       setRows([]);
@@ -363,17 +418,16 @@ const SchoolAlcManager = () => {
     const newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
     try {
       if (row.id) {
-        await aclApi.updateSchoolRole(row.id, { status: newStatus.toLowerCase(), is_active: !isCurrentlyActive });
+        await aclApi.updateSchoolRole(row.id, {
+          name: row.name,
+          status: newStatus.toLowerCase(),
+          is_active: !isCurrentlyActive,
+        });
       }
-      setRows((prevRows) =>
-        prevRows.map((r) => ((r.id === row.id || r.name === row.name) ? { ...r, status: newStatus } : r)),
-      );
       notify.success(`Role ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully!`);
+      await fetchRoles();
     } catch (err) {
-      setRows((prevRows) =>
-        prevRows.map((r) => ((r.id === row.id || r.name === row.name) ? { ...r, status: newStatus } : r)),
-      );
-      notify.success(`Role ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully!`);
+      notify.error(err?.response?.data?.message || 'Failed to update role status');
     } finally {
       handleMenuClose();
     }
@@ -405,26 +459,31 @@ const SchoolAlcManager = () => {
 
   // ── Stat calculations ──────────────────────────────────────────────────────
   const statsData = useMemo(() => {
-    const total = totalRoles || rows.length || 0;
+    if (roleStats) {
+      return roleStats;
+    }
 
-    const active =
-      rows.filter((r) => r.status !== 'Inactive' && r.status !== 'inactive' && r.is_active !== false).length ||
-      Math.max(0, total - 2);
+    const source = allSystemRoles.length > 0 ? allSystemRoles : rows;
+    const total = totalRoles || source.length || 0;
 
-    const inactive = Math.max(0, total - active);
+    const active = source.filter(
+      (r) => r.status === 'Active' || r.status === 'active' || r.is_active === true || (r.status === undefined && r.is_active === undefined),
+    ).length;
 
-    const custom =
-      rows.filter((r) => r.guard_name === 'web' || r.type === 'Custom' || r.is_system === false).length ||
-      (total > 0 ? 6 : 0);
+    const inactive = source.filter(
+      (r) => r.status === 'Inactive' || r.status === 'inactive' || r.is_active === false,
+    ).length;
 
-    const protectedCount =
-      rows.filter(
-        (r) =>
-          r.is_protected ||
-          r.is_system ||
-          r.name?.toLowerCase().includes('admin') ||
-          r.name?.toLowerCase().includes('bursar'),
-      ).length || (total > 0 ? 5 : 0);
+    const custom = source.filter(
+      (r) => r.guard_name === 'web' || r.type === 'Custom' || r.is_system === false,
+    ).length;
+
+    const protectedCount = source.filter(
+      (r) =>
+        r.is_protected ||
+        r.is_system ||
+        ['super admin', 'admin', 'school admin', 'bursar', 'teacher', 'student', 'parent'].some((p) => r.name?.toLowerCase()?.includes(p)),
+    ).length;
 
     return {
       total,
@@ -433,7 +492,7 @@ const SchoolAlcManager = () => {
       custom,
       protectedCount,
     };
-  }, [rows, totalRoles]);
+  }, [roleStats, allSystemRoles, rows, totalRoles]);
 
   // ── Filtered Rows ──────────────────────────────────────────────────────────
   const filteredRows = useMemo(() => {
@@ -448,16 +507,16 @@ const SchoolAlcManager = () => {
       }
 
       if (statusFilter !== 'all') {
-        const rowStatus = (row?.status || 'active').toLowerCase();
+        const rowStatus = (row?.status || (row?.is_active === false ? 'inactive' : 'active')).toLowerCase();
         if (rowStatus !== statusFilter.toLowerCase()) return false;
       }
 
       if (typeFilter !== 'all') {
-        const isCustom = row?.guard_name === 'web' || row?.type === 'Custom';
+        const isCustom = row?.guard_name === 'web' || row?.type === 'Custom' || row?.is_system === false;
         const isProtected =
           row?.is_protected ||
-          row?.name?.toLowerCase().includes('admin') ||
-          row?.name?.toLowerCase().includes('bursar');
+          row?.is_system ||
+          ['super admin', 'admin', 'bursar'].some((p) => row?.name?.toLowerCase()?.includes(p));
 
         if (typeFilter === 'custom' && !isCustom) return false;
         if (typeFilter === 'system' && isCustom) return false;
@@ -474,17 +533,26 @@ const SchoolAlcManager = () => {
       return;
     }
 
-    const dataToExport = filteredRows.map((row, index) => ({
-      'S/N': index + 1,
-      'Role Name': row.name,
-      Description: row.description || '',
-      Type: row.guard_name === 'web' ? 'Custom' : row.type || 'System',
-      Users: row.users_count ?? 0,
-      Status: row.status || 'Active',
-      'Last Updated': row.updated_at
+    const dataToExport = filteredRows.map((row, index) => {
+      const isCustom = row.guard_name === 'web' || row.type === 'Custom' || row.is_system === false;
+      const uCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
+      const rStatus = row.status || (row.is_active === false ? 'Inactive' : 'Active');
+      const uDate = row.updated_at
         ? new Date(row.updated_at).toLocaleDateString()
-        : 'May 5, 2025',
-    }));
+        : row.created_at
+          ? new Date(row.created_at).toLocaleDateString()
+          : '—';
+
+      return {
+        'S/N': index + 1,
+        'Role Name': row.name,
+        Description: row.description || '—',
+        Type: isCustom ? 'Custom' : 'System',
+        Users: uCount,
+        Status: rStatus,
+        'Last Updated': uDate,
+      };
+    });
 
     const headers = Object.keys(dataToExport[0]).join(',');
     const csvRows = dataToExport.map((r) =>
@@ -564,7 +632,7 @@ const SchoolAlcManager = () => {
               data-tour="acl-role-new"
               onClick={() => setNewRoleModalOpen(true)}
               sx={{
-                borderRadius: 1.5,
+                borderRadius: 2,
                 px: 2.5,
                 py: 0.8,
                 textTransform: 'none',
@@ -572,7 +640,7 @@ const SchoolAlcManager = () => {
                 fontSize: '13px',
               }}
             >
-              + New Role
+              New Role
             </Button>
           </Box>
         )}
@@ -607,12 +675,13 @@ const SchoolAlcManager = () => {
                 <StatCard
                   count={statsData.inactive}
                   label="Inactive Roles"
-                  subtitle="Temporarily disabled"
+                  subtitle="Temp. disabled"
                   icon={IconUserOff}
                   colorIndex={2}
                   loading={loading}
                 />
               </Grid>
+
               <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <StatCard
                   count={statsData.custom}
@@ -664,6 +733,8 @@ const SchoolAlcManager = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{
                     minWidth: { xs: '100%', sm: 280, md: 320 },
+                    '& .MuiOutlinedInput-root': {
+                    },
                   }}
                   slotProps={{
                     input: {
@@ -792,13 +863,32 @@ const SchoolAlcManager = () => {
                       </TableRow>
                     ) : filteredRows.length > 0 ? (
                       filteredRows.map((row, index) => {
+                        const isSystemRole = row.is_sys === 'yes' || row.is_system === true;
                         const isProtectedRole =
+                          isSystemRole ||
                           row.is_protected ||
-                          row.name?.toLowerCase().includes('admin') ||
-                          row.name?.toLowerCase().includes('bursar');
+                          ['super admin', 'admin', 'bursar', 'school admin', 'teacher', 'student', 'parent'].some((p) => row.name?.toLowerCase()?.includes(p));
 
-                        const isCustomRole = row.guard_name === 'web' || row.type === 'Custom';
+                        const isCustomRole = row.is_sys === 'no' || (!isSystemRole && (row.guard_name === 'web' || row.type === 'Custom' || row.is_system === false));
                         const colorTheme = avatarColors[index % avatarColors.length];
+                        const userCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
+                        const roleStatusLabel = row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase()) : (row.is_active === false ? 'Inactive' : 'Active');
+
+                        const dateFormatted = row.updated_at
+                          ? new Date(row.updated_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                          : row.created_at
+                            ? new Date(row.created_at).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                            : '—';
+
+                        const updatedByPerson = row.updated_by || row.created_by || row.updater?.name || '';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -841,17 +931,17 @@ const SchoolAlcManager = () => {
 
                             <TableCell sx={{ maxWidth: 280 }}>
                               <Typography variant="body2" color="text.secondary" noWrap>
-                                {row.description || 'Manages role operations and privileges.'}
+                                {row.description || '—'}
                               </Typography>
                             </TableCell>
 
                             <TableCell>
                               <Chip
-                                label={isCustomRole ? 'Custom' : 'System'}
+                                label={row.is_sys === 'yes' ? 'System' : (row.is_sys === 'no' ? 'Custom' : (isCustomRole ? 'Custom' : 'System'))}
                                 size="small"
                                 sx={{
-                                  bgcolor: isCustomRole ? '#EFF6FF' : '#E6F7F0',
-                                  color: isCustomRole ? '#2563EB' : '#059669',
+                                  bgcolor: (row.is_sys === 'no' || isCustomRole) ? '#EFF6FF' : '#E6F7F0',
+                                  color: (row.is_sys === 'no' || isCustomRole) ? '#2563EB' : '#059669',
                                   fontWeight: 600,
                                   borderRadius: '12px',
                                   px: 1,
@@ -864,16 +954,7 @@ const SchoolAlcManager = () => {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                   <IconUsers size={16} style={{ color: '#6B7280' }} />
                                   <Typography variant="subtitle2" fontWeight={600}>
-                                    {row.users_count ??
-                                      (index === 0
-                                        ? 2
-                                        : index === 1
-                                          ? 18
-                                          : index === 2
-                                            ? 4
-                                            : index === 3
-                                              ? 1245
-                                              : 320)}
+                                    {userCount}
                                   </Typography>
                                 </Box>
                                 <Typography
@@ -893,11 +974,11 @@ const SchoolAlcManager = () => {
 
                             <TableCell>
                               <Chip
-                                label={row.status || 'Active'}
+                                label={roleStatusLabel}
                                 size="small"
                                 sx={{
-                                  bgcolor: row.status === 'Inactive' ? '#FEF2F2' : '#DCFCE7',
-                                  color: row.status === 'Inactive' ? '#DC2626' : '#16A34A',
+                                  bgcolor: roleStatusLabel === 'Inactive' ? '#FEF2F2' : '#DCFCE7',
+                                  color: roleStatusLabel === 'Inactive' ? '#DC2626' : '#16A34A',
                                   fontWeight: 600,
                                   borderRadius: '12px',
                                   px: 1,
@@ -908,17 +989,13 @@ const SchoolAlcManager = () => {
                             <TableCell>
                               <Box>
                                 <Typography variant="body2" fontWeight={500}>
-                                  {row.updated_at
-                                    ? new Date(row.updated_at).toLocaleDateString('en-US', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                    })
-                                    : `May ${5 - (index % 5)}, 2025`}
+                                  {dateFormatted}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  by {row.updated_by || (index % 2 === 0 ? 'Super Admin' : 'Admin')}
-                                </Typography>
+                                {updatedByPerson && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    by {updatedByPerson}
+                                  </Typography>
+                                )}
                               </Box>
                             </TableCell>
 

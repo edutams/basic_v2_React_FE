@@ -68,6 +68,16 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolAssignmentSummaryStats: async () => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/summary_stats');
+        return response.data;
+    },
+
+    toggleSchoolUserStatus: async (userId) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/toggle_status`);
+        return response.data;
+    },
+
     getSchoolPermissionAnalytics: async (params) => {
         const response = await tenantApi.get('/censis/acl/permissions/analytics', {
             params,

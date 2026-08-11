@@ -664,9 +664,6 @@ const SchoolAlcManager = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{
                     minWidth: { xs: '100%', sm: 280, md: 320 },
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                    },
                   }}
                   slotProps={{
                     input: {
@@ -683,7 +680,6 @@ const SchoolAlcManager = () => {
                   <Select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    sx={{ borderRadius: 2 }}
                   >
                     <MenuItem value="all">Status: All</MenuItem>
                     <MenuItem value="active">Active</MenuItem>
@@ -695,7 +691,6 @@ const SchoolAlcManager = () => {
                   <Select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    sx={{ borderRadius: 2 }}
                   >
                     <MenuItem value="all">Type: All</MenuItem>
                     <MenuItem value="system">System</MenuItem>
@@ -711,7 +706,6 @@ const SchoolAlcManager = () => {
                   onClick={() => setFilterDrawerOpen(true)}
                   data-tour="acl-role-filter"
                   sx={{
-                    borderRadius: 2,
                     px: 2,
                     py: 0.8,
                     color: 'text.primary',
@@ -758,7 +752,6 @@ const SchoolAlcManager = () => {
                 startIcon={<ExportIcon fontSize="small" />}
                 onClick={handleExportRoles}
                 sx={{
-                  borderRadius: 2,
                   px: 2,
                   py: 0.8,
                   borderColor: 'divider',
@@ -875,12 +868,12 @@ const SchoolAlcManager = () => {
                                       (index === 0
                                         ? 2
                                         : index === 1
-                                        ? 18
-                                        : index === 2
-                                        ? 4
-                                        : index === 3
-                                        ? 1245
-                                        : 320)}
+                                          ? 18
+                                          : index === 2
+                                            ? 4
+                                            : index === 3
+                                              ? 1245
+                                              : 320)}
                                   </Typography>
                                 </Box>
                                 <Typography
@@ -917,10 +910,10 @@ const SchoolAlcManager = () => {
                                 <Typography variant="body2" fontWeight={500}>
                                   {row.updated_at
                                     ? new Date(row.updated_at).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                      })
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })
                                     : `May ${5 - (index % 5)}, 2025`}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">

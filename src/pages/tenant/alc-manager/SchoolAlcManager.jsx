@@ -896,7 +896,10 @@ const SchoolAlcManager = () => {
                             })
                             : '—';
 
-                        const updatedByPerson = row.updated_by || row.created_by || row.updater?.name || '';
+                        const rawUpdater = row.updated_by || row.created_by || row.updater?.name || row.updater_role;
+                        const updatedByPerson = rawUpdater
+                          ? (rawUpdater.toLowerCase().startsWith('by ') ? rawUpdater.slice(3) : rawUpdater)
+                          : 'Super Admin';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -999,11 +1002,9 @@ const SchoolAlcManager = () => {
                                 <Typography variant="body2" fontWeight={500}>
                                   {dateFormatted}
                                 </Typography>
-                                {updatedByPerson && (
-                                  <Typography variant="caption" color="text.secondary" display="block">
-                                    by {updatedByPerson}
-                                  </Typography>
-                                )}
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  by {updatedByPerson}
+                                </Typography>
                               </Box>
                             </TableCell>
 

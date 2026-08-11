@@ -15,6 +15,7 @@ const StatCard = ({
   color,
   colorIndex = 0,
   loading,
+  subtitle,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
@@ -29,7 +30,7 @@ const StatCard = ({
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
         borderRadius: 1,
-        p: 3,
+        p: 2.5,
         width: '100%',
         background: `${cardBg} !important`,
         display: 'flex',
@@ -45,39 +46,13 @@ const StatCard = ({
             : '0 4px 20px rgba(0,0,0,0.07)',
 
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
-
-        // '&:hover': {
-        //   transform: 'translateY(-6px)',
-        //   boxShadow: (theme) =>
-        //     theme.palette.mode === 'dark'
-        //       ? '0 18px 40px rgba(0,0,0,.45)'
-        //       : '0 10px 30px rgba(0,0,0,.15)',
-        // },
       }}
     >
-      {/* Background Watermark Icon */}
-      {/* {Icon && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: -10,
-            bottom: -15,
-            opacity: 0.08,
-            pointerEvents: 'none',
-            color: accentColor,
-            display: 'flex',
-            transform: 'rotate(-10deg)',
-          }}
-        >
-          <Icon size={84} />
-        </Box>
-      )} */}
-
       {/* Icon Badge */}
       <Box
         sx={{
-          width: 48,
-          height: 48,
+          width: 44,
+          height: 44,
           borderRadius: '50%',
           background: iconBg,
           color: iconColor || '#fff',
@@ -93,14 +68,14 @@ const StatCard = ({
             : `0 8px 22px -2px ${iconGlow}`,
         }}
       >
-        {Icon && <Icon size={24} />}
+        {Icon && <Icon size={22} />}
       </Box>
 
       {/* Content */}
       <Box
         sx={{
           flexGrow: 1,
-          pl: 2.5,
+          pl: 2,
           textAlign: 'right',
           position: 'relative',
           zIndex: 1,
@@ -108,7 +83,7 @@ const StatCard = ({
       >
         {loading ? (
           <CircularProgress
-            size={24}
+            size={22}
             sx={{
               color: accentColor,
             }}
@@ -117,7 +92,7 @@ const StatCard = ({
           <>
             <Typography
               sx={{
-                fontSize: 23,
+                fontSize: 22,
                 fontWeight: 800,
                 lineHeight: 1,
                 letterSpacing: '-0.02em',
@@ -129,7 +104,7 @@ const StatCard = ({
 
             <Typography
               sx={{
-                mt: 0.75,
+                mt: 0.5,
                 fontSize: 13,
                 fontWeight: 600,
                 color: isDark
@@ -139,6 +114,19 @@ const StatCard = ({
             >
               {label}
             </Typography>
+
+            {subtitle && (
+              <Typography
+                sx={{
+                  mt: 0.25,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+                }}
+              >
+                {subtitle}
+              </Typography>
+            )}
           </>
         )}
       </Box>
@@ -149,6 +137,7 @@ const StatCard = ({
 StatCard.propTypes = {
   count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   label: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string,
   colorIndex: PropTypes.number,

@@ -32,8 +32,8 @@ const aclApi = {
         return response.data;
     },
 
-    getSchoolUsers: async () => {
-        const response = await tenantApi.get('/censis/acl/assignments/users/list');
+    getSchoolUsers: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/list', { params });
         return response.data;
     },
 
@@ -63,10 +63,40 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolRoleSummaryStats: async () => {
+        const response = await tenantApi.get('/censis/acl/roles/summary_stats');
+        return response.data;
+    },
+
+    getSchoolRoleAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/roles/analysis_stats');
+        return response.data;
+    },
+
+    getSchoolAssignmentSummaryStats: async () => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/summary_stats');
+        return response.data;
+    },
+
+    getSchoolRecentChangesLog: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/recent_changes', { params });
+        return response.data;
+    },
+
+    toggleSchoolUserStatus: async (userId) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/toggle_status`);
+        return response.data;
+    },
+
     getSchoolPermissionAnalytics: async (params) => {
         const response = await tenantApi.get('/censis/acl/permissions/analytics', {
             params,
         });
+        return response.data;
+    },
+
+    getSchoolPermissionAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/permissions/analysis_stats');
         return response.data;
     },
 

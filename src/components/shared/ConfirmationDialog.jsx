@@ -14,6 +14,8 @@ const ConfirmationDialog = ({
   cancelText = 'Cancel',
   severity = 'info',
   maxWidth = 'xs',
+  confirmButtonSx = {},
+  cancelButtonSx = {},
   ...dialogProps
 }) => {
   const theme = useTheme();
@@ -23,10 +25,11 @@ const ConfirmationDialog = ({
   };
 
   const actions = (
-    <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
+    <Box sx={{ display: 'flex', gap: 1.5, p: 0 }}>
       <PrimaryButton
         onClick={onClose}
         variant="secondary"
+        sx={{ px: 2, py: 0.6, fontSize: '13px', borderRadius: '8px', ...cancelButtonSx }}
       >
         {cancelText}
       </PrimaryButton>
@@ -35,10 +38,15 @@ const ConfirmationDialog = ({
         variant="primary"
         autoFocus
         sx={{
+          px: 2,
+          py: 0.6,
+          fontSize: '13px',
+          borderRadius: '8px',
           bgcolor: severity === 'error' ? theme.palette.error.main : theme.palette.warning.main,
           '&:hover': {
             bgcolor: severity === 'error' ? theme.palette.error.dark : theme.palette.warning.dark,
-          }
+          },
+          ...confirmButtonSx,
         }}
       >
         {confirmText}
@@ -64,13 +72,15 @@ ConfirmationDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   title: PropTypes.string,
-  message: PropTypes.string,
+  message: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   confirmText: PropTypes.string,
   cancelText: PropTypes.string,
   confirmColor: PropTypes.string,
   confirmVariant: PropTypes.string,
   cancelColor: PropTypes.string,
   cancelVariant: PropTypes.string,
+  confirmButtonSx: PropTypes.object,
+  cancelButtonSx: PropTypes.object,
   severity: PropTypes.oneOf(['info', 'warning', 'error', 'success']),
   maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', false]),
 };

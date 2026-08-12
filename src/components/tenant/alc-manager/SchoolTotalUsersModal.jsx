@@ -35,6 +35,7 @@ import {
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
+import { getFullImageUrl } from '@/helpers/ImageHelper';
 
 const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
@@ -228,60 +229,74 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                   </TableCell>
                 </TableRow>
               ) : users.length > 0 ? (
-                users.map((user, index) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user.avatar || user.image || ''}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        >
-                          {!user.avatar &&
-                            getInitials(user.full_name ?? `${user.fname} ${user.lname}`)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {user.full_name ?? `${user.fname} ${user.lname}`}
-                          </Typography>
+                users.map((item, index) => {
+                  const u = item.users || item.user || item;
+                  const rawAvatar =
+                    item.avatar ||
+                    item.users?.avatar ||
+                    item.user?.avatar ||
+                    u.avatar ||
+                    u.image ||
+                    item.image ||
+                    item.profile_picture ||
+                    item.profile_photo_url ||
+                    item.photo ||
+                    '';
+                  const avatarSrc = rawAvatar ? getFullImageUrl(rawAvatar) : '';
+                  const fname = u.fname || u.first_name || u.name || item.fname || item.name || '';
+                  const lname = u.lname || u.last_name || item.lname || '';
+                  const displayName = u.full_name || (fname ? `${fname} ${lname}`.trim() : item.full_name || '—');
+                  const email = u.email || item.email || '—';
 
-                          <Typography variant="small" color="text.secondary">
-                            {user.email}
-                          </Typography>
+                  return (
+                    <TableRow key={item.id || index} hover>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={avatarSrc}
+                            alt={fname || displayName}
+                            sx={{ width: 36, height: 36 }}
+                          >
+                            {fname?.[0]?.toUpperCase() ?? displayName?.[0]?.toUpperCase() ?? '?'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600} noWrap>
+                              {displayName}
+                            </Typography>
+
+                            <Typography variant="caption" color="text.secondary">
+                              {email}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={isDirectHolder(user) ? 'Direct' : 'Via Role'}
-                        size="small"
-                        color={isDirectHolder(user) ? 'primary' : 'default'}
-                        variant={isDirectHolder(user) ? 'filled' : 'outlined'}
-                      />
-                    </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={isDirectHolder(item) ? 'Direct' : 'Via Role'}
+                          size="small"
+                          color={isDirectHolder(item) ? 'primary' : 'default'}
+                          variant={isDirectHolder(item) ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={user.status}
-                        size="small"
-                        color={user.status === 'active' ? 'success' : 'default'}
-                      />
-                    </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.status || u.status || 'Active'}
+                          size="small"
+                          color={(item.status === 'active' || u.status === 'active') ? 'success' : 'default'}
+                        />
+                      </TableCell>
 
-                    <TableCell align="center">
-                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      <TableCell align="center">
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 4 }}>

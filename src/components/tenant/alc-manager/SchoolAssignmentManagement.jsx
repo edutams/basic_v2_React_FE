@@ -22,28 +22,57 @@ import {
   CircularProgress,
   Avatar,
   Grid,
+  FormControl,
+  Select,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
+  Visibility as EyeIcon,
+  Edit as EditIcon,
+  FileDownload as ExportIcon,
 } from '@mui/icons-material';
-import ParentCard from 'src/components/shared/ParentCard';
+import {
+  IconUsers,
+  IconUserCheck,
+  IconUserOff,
+  IconUserPlus,
+} from '@tabler/icons-react';
+import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import RoleAttachmentModal from '@/components/tenant/alc-manager/RoleAttachmentModal';
 import ViewRoleModal from '@/components/tenant/alc-manager/ViewRoleModal';
 import SchoolDirectPermissionModal from '@/components/tenant/alc-manager/SchoolDirectPermissionModal';
 import SchoolViewDirectPermissionModal from '@/components/tenant/alc-manager/SchoolViewDirectPermissionModal';
+import SchoolRecentChangesModal from '@/components/tenant/alc-manager/SchoolRecentChangesModal';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
+import { getFullImageUrl } from '@/helpers/ImageHelper';
+import { formatRoleName } from '@/pages/tenant/alc-manager/SchoolAlcManager';
 
 const SchoolAssignmentManagement = () => {
   const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [totalRows, setTotalRows] = useState(0);
+
   const [searchInput, setSearchInput] = useState('');
-  const [nameFilter, setNameFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [availableRoles, setAvailableRoles] = useState([]);
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    role: 'all',
+    status: 'all',
+  });
+
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -51,19 +80,26 @@ const SchoolAssignmentManagement = () => {
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
   const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
+  const [recentChangesModalOpen, setRecentChangesModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
-  const getInitials = (name = '') =>
-    name
-      .split(' ')
-      .slice(0, 2)
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase();
+  const [statsApiData, setStatsApiData] = useState(null);
+
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [userToToggleStatus, setUserToToggleStatus] = useState(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await aclApi.getSchoolUsers();
+      const params = {
+        page: page + 1,
+        per_page: rowsPerPage,
+        search: appliedFilters.search || undefined,
+        role: appliedFilters.role !== 'all' ? appliedFilters.role : undefined,
+        status: appliedFilters.status !== 'all' ? appliedFilters.status : undefined,
+      };
+
+      const res = await aclApi.getSchoolUsers(params);
 
       let usersData = [];
       if (Array.isArray(res.data)) {
@@ -71,6 +107,9 @@ const SchoolAssignmentManagement = () => {
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
       }
+
+      const meta = res.meta || res.data?.meta || {};
+      setTotalRows(meta.total ?? (Array.isArray(usersData) ? usersData.length : 0));
 
       const normalized = (usersData || []).map((u) => ({
         ...u,
@@ -86,8 +125,35 @@ const SchoolAssignmentManagement = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await aclApi.getSchoolAssignmentSummaryStats();
+      if (res?.data) {
+        setStatsApiData(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch assignment summary stats:', err);
+    }
+  };
+
+  const fetchRolesList = async () => {
+    try {
+      const res = await aclApi.getSchoolRolesList();
+      if (res?.data && Array.isArray(res.data)) {
+        setAvailableRoles(res.data.map((r) => r.name));
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles list:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+  }, [appliedFilters, page, rowsPerPage]);
+
+  useEffect(() => {
+    fetchStats();
+    fetchRolesList();
   }, []);
 
   const handleMenuOpen = (event, row) => {
@@ -123,13 +189,17 @@ const SchoolAssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
+      'super admin': {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.main,
+      },
       subject_teacher: {
         backgroundColor: (theme) => theme.palette.secondary.light,
         color: (theme) => theme.palette.secondary.main,
       },
       student: {
-        backgroundColor: (theme) => theme.palette.purple.A50,
-        color: (theme) => theme.palette.purple.A100,
+        backgroundColor: (theme) => theme.palette.purple?.A50 || '#F3E8FF',
+        color: (theme) => theme.palette.purple?.A100 || '#7C3AED',
       },
       bursar: {
         backgroundColor: (theme) => theme.palette.primary.light,
@@ -153,10 +223,71 @@ const SchoolAssignmentManagement = () => {
     );
   };
 
+  const userStats = useMemo(() => {
+    if (statsApiData) {
+      return {
+        total: statsApiData.total ?? 0,
+        assigned: statsApiData.assigned ?? 0,
+        unassigned: statsApiData.unassigned ?? 0,
+        multiRole: statsApiData.multi_role ?? statsApiData.multiRole ?? 0,
+        recentChanges: statsApiData.recent_changes ?? statsApiData.recentChanges ?? 0,
+      };
+    }
+
+    const total = users.length;
+    const assigned = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 0).length;
+    const unassigned = total - assigned;
+    const multiRole = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 1).length;
+    const recentChanges = 24;
+
+    return {
+      total,
+      assigned,
+      unassigned,
+      multiRole,
+      recentChanges,
+    };
+  }, [statsApiData, users]);
+
+  const handleOpenStatusConfirm = (user) => {
+    setUserToToggleStatus(user);
+    setStatusConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmToggleUserStatus = async () => {
+    if (!userToToggleStatus || togglingStatus) return;
+    setTogglingStatus(true);
+    try {
+      const isCurrentActive = (userToToggleStatus.status || (userToToggleStatus.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
+      await aclApi.toggleSchoolUserStatus(userToToggleStatus.id);
+      notify.success(`User "${userToToggleStatus.name}" ${isCurrentActive ? 'deactivated' : 'activated'} successfully!`);
+      setStatusConfirmOpen(false);
+      setUserToToggleStatus(null);
+      await Promise.all([fetchUsers(), fetchStats()]);
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update user status');
+    } finally {
+      setTogglingStatus(false);
+    }
+  };
+
+  const allRolesList = useMemo(() => {
+    const rolesSet = new Set();
+    users.forEach((u) => {
+      if (Array.isArray(u.assignedRoles)) {
+        u.assignedRoles.forEach((r) => {
+          const rName = typeof r === 'object' ? r.name : r;
+          if (rName) rolesSet.add(rName);
+        });
+      }
+    });
+    return Array.from(rolesSet);
+  }, [users]);
+
   const handleRoleSelection = async (roleIds) => {
     if (!currentUserForRole) return;
 
-    // Determine if we're adding or removing roles
     const currentRoleIds = currentUserForRole.assignedRoles?.map((r) => r.id) || [];
     const addedRoles = roleIds.filter((id) => !currentRoleIds.includes(id));
     const removedRoles = currentRoleIds.filter((id) => !roleIds.includes(id));
@@ -172,28 +303,8 @@ const SchoolAssignmentManagement = () => {
 
     try {
       await aclApi.assignSchoolUserRole(currentUserForRole.id, roleIds);
+      await fetchUsers();
 
-      const res = await aclApi.getSchoolUsers();
-      let usersData = [];
-      if (Array.isArray(res.data)) {
-        usersData = res.data;
-      } else if (res.data?.data && Array.isArray(res.data.data)) {
-        usersData = res.data.data;
-      }
-
-      const normalized = (usersData || []).map((u) => ({
-        ...u,
-        assignedRoles: u.roles || [],
-      }));
-
-      setUsers(normalized);
-
-      const updatedCurrentUser = normalized.find((u) => u.id === currentUserForRole.id);
-      if (updatedCurrentUser) {
-        setCurrentUserForRole(updatedCurrentUser);
-      }
-
-      // Show appropriate success message
       if (actionType === 'added') {
         notify.success('Role(s) attached successfully!');
       } else if (actionType === 'removed') {
@@ -204,12 +315,7 @@ const SchoolAssignmentManagement = () => {
       setRoleAttachmentModalOpen(false);
     } catch (err) {
       console.error('Failed to assign roles:', err);
-      // Show appropriate error message
-      if (actionType === 'removed') {
-        notify.error(err?.response?.data?.message || 'Failed to remove role(s)');
-      } else {
-        notify.error(err?.response?.data?.message || 'Failed to attach role(s)');
-      }
+      notify.error(err?.response?.data?.message || 'Failed to update roles');
     }
   };
 
@@ -256,218 +362,526 @@ const SchoolAssignmentManagement = () => {
     }
   };
 
-  const handleSearch = () => {
-    setNameFilter(searchInput);
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
     setPage(0);
+    setAppliedFilters({
+      search: searchInput,
+      role: roleFilter,
+      status: statusFilter,
+    });
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+    setPage(0);
+    setAppliedFilters({
+      search: '',
+      role: 'all',
+      status: 'all',
+    });
+  };
+
+  const filteredUsers = users;
+  const paginatedFilteredUsers = users;
+
+  const handleExportUsers = () => {
+    if (!filteredUsers || filteredUsers.length === 0) {
+      notify.error('No users available to export');
+      return;
     }
+
+    const dataToExport = filteredUsers.map((u, index) => {
+      const rolesString = u.assignedRoles
+        ? u.assignedRoles.map((r) => (typeof r === 'object' ? r.name : r)).join(', ')
+        : 'None';
+      const statusLabel = u.status || (u.is_active === false ? 'Inactive' : 'Active');
+      return {
+        'S/N': index + 1,
+        Name: u.name,
+        Email: u.email,
+        'Assigned Roles': rolesString,
+        Status: statusLabel,
+      };
+    });
+
+    const headers = Object.keys(dataToExport[0]).join(',');
+    const rows = dataToExport.map((row) =>
+      Object.values(row)
+        .map((val) => `"${String(val).replace(/"/g, '""')}"`)
+        .join(','),
+    );
+    const csvContent = [headers, ...rows].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_roles_assignment_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
-  const filteredUsers = users.filter((user) => {
-    const term = nameFilter.toLowerCase();
-    return user.name?.toLowerCase().includes(term) || user.email?.toLowerCase().includes(term);
-  });
-
-  const paginatedFilteredUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredUsers.slice(start, start + rowsPerPage);
-  }, [filteredUsers, page, rowsPerPage]);
-
-  const resetFilters = () => {
-    setNameFilter('');
-    setPage(0);
-  };
-
-  const hasFilters = nameFilter !== '';
 
   return (
-    <ParentCard
-      title={
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-          <Typography variant="h5" data-tour="acl-assign-heading">
-            Assign Roles/Permission to Users
-          </Typography>
-          <ShowTourGuideButton />
-        </Box>
-      }
-    >
-      <Box sx={{ p: 0 }}>
-        <Grid container spacing={1} mb={3} alignItems="center">
-          <Grid size={{ xs: 12, md: 'auto' }}>
-            <TextField
-              placeholder="Search by name"
-              size="small"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              data-tour="acl-assign-search"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-
-          <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 35 }}>
-              Search
-            </Button>
-          </Grid>
+    <Box sx={{ width: '100%' }}>
+      {/* ── Top Summary Stat Cards ────────────────────────────────────────── */}
+      <Grid container spacing={2.5} mb={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={userStats.total}
+            label="Total Users"
+            subtitle="All registered users"
+            icon={IconUsers}
+            colorIndex={0}
+            loading={loading}
+          />
         </Grid>
 
-        {/* <Paper> */}
-        <TableContainer>
-          <Table sx={{ tableLayout: 'fixed' }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '20%' }}>User Details</TableCell>
-                <TableCell sx={{ width: '25%' }}>Assigned Role</TableCell>
-                <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
-                  Action
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={userStats.assigned}
+            label="Roles Assigned"
+            subtitle="Assigned Users"
+            icon={IconUserCheck}
+            colorIndex={1}
+            loading={loading}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={userStats.unassigned}
+            label="Unassigned Users"
+            subtitle="No role assigned"
+            icon={IconUserOff}
+            colorIndex={2}
+            loading={loading}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard
+            count={userStats.multiRole}
+            label="Multi-role"
+            subtitle="Users with multiple roles"
+            icon={IconUsers}
+            colorIndex={3}
+            loading={loading}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Tooltip title="Click to view breakdown of recent changes" placement="top">
+            <Box
+              onClick={() => setRecentChangesModalOpen(true)}
+              sx={{
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              <StatCard
+                count={userStats.recentChanges}
+                label="Recent Changes"
+                subtitle="In the last 7 days"
+                icon={IconUserPlus}
+                colorIndex={4}
+                loading={loading}
+              />
+            </Box>
+          </Tooltip>
+        </Grid>
+      </Grid>
+
+      {/* ── Main ParentCard Table Section ─────────────────────────────────── */}
+      <ParentCard
+        title={
+          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+            <Typography variant="h5" data-tour="acl-assign-heading" fontWeight={700}>
+              Users and Their Roles
+            </Typography>
+            <ShowTourGuideButton />
+          </Box>
+        }
+      >
+        <Box sx={{ p: 0 }}>
+          {/* Controls Bar */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 2,
+              mb: 2.5,
+            }}
+          >
+            <Box
+              component="form"
+              onSubmit={handleSearchSubmit}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                flexWrap: 'wrap',
+                flexGrow: 1,
+              }}
+            >
+              <TextField
+                placeholder="Search users by name, email or ID..."
+                size="small"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Roles</MenuItem>
+                  {availableRoles.map((r) => (
+                    <MenuItem key={r} value={r}>
+                      {formatRoleName(r)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                type="submit"
+                sx={{ px: 2.5, py: 0.8, textTransform: 'none', fontWeight: 600 }}
+              >
+                Search
+              </Button>
+
+              {(appliedFilters.search || appliedFilters.role !== 'all' || appliedFilters.status !== 'all' || searchInput || roleFilter !== 'all' || statusFilter !== 'all') && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={handleClearFilters}
+                  sx={{ px: 2, py: 0.8, textTransform: 'none', fontWeight: 600 }}
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </Box>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ExportIcon fontSize="small" />}
+              onClick={handleExportUsers}
+              sx={{
+                px: 2,
+                py: 0.8,
+                borderColor: 'divider',
+                color: 'text.primary',
+                fontWeight: 600,
+                textTransform: 'none',
+              }}
+            >
+              Export
+            </Button>
+          </Box>
+
+          {/* Table Container */}
+          <TableContainer>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    <CircularProgress size={24} />
+                  <TableCell sx={{ width: 60, fontWeight: 700 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Assigned Roles</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Last Active</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>
+                    Action
                   </TableCell>
                 </TableRow>
-              ) : paginatedFilteredUsers.length > 0 ? (
-                paginatedFilteredUsers.map((user, index) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user.avatar || user.image || ''}
-                          alt={user.name}
-                          sx={{ width: 36, height: 36 }}
-                        >
-                          {user.name?.[0]?.toUpperCase() ?? '?'}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2">{user.name}</Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {user.email}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {user.assignedRoles?.map((role, i) => (
-                          <Chip
-                            key={i}
-                            label={typeof role === 'object' ? role.name : role}
-                            size="small"
-                            sx={{
-                              borderRadius: '8px',
-                              ...getRoleSx(typeof role === 'object' ? role.name : role),
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center" data-tour="acl-assign-view">
-                      <IconButton onClick={(e) => handleMenuOpen(e, user)}>
-                        <MoreVertIcon />
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl) && selectedRow?.id === user.id}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={() => handleAction('edit', user)}>
-                          Attach Role
-                        </MenuItem>
-                        <MenuItem onClick={() => handleAction('view', user)}>View Role</MenuItem>
-                        <MenuItem onClick={() => handleAction('directPermission', user)}>
-                          Assign Direct Permission
-                        </MenuItem>
-                        <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
-                          View Permission
-                        </MenuItem>
-                      </Menu>
+              </TableHead>
+
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <CircularProgress size={28} />
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    <Alert
-                      severity="info"
-                      sx={{
-                        mb: 3,
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        '& .MuiAlert-icon': {
-                          mr: 1.5,
-                        },
-                      }}
-                    >
-                      {hasFilters
-                        ? 'No users match the current filters.'
-                        : 'No users available. Add new users or adjust filters.'}
-                    </Alert>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                  count={filteredUsers.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={(_, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
-                  }}
-                  colSpan={4}
-                />
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
-        {/* </Paper> */}
-      </Box>
+                ) : paginatedFilteredUsers.length > 0 ? (
+                  paginatedFilteredUsers.map((user, index) => {
+                    const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');
 
-      <RoleAttachmentModal
-        open={roleAttachmentModalOpen}
-        onClose={() => setRoleAttachmentModalOpen(false)}
-        currentUser={currentUserForRole}
-        onRoleSelection={handleRoleSelection}
-      />
-      <ViewRoleModal
-        open={viewRoleModalOpen}
-        onClose={() => setViewRoleModalOpen(false)}
-        currentUser={currentUserForRole}
-      />
-      <SchoolDirectPermissionModal
-        open={directPermissionModalOpen}
-        onClose={() => setDirectPermissionModalOpen(false)}
-        currentUser={currentUserForRole}
-        onPermissionSave={handleDirectPermissionSave}
-      />
-      <SchoolViewDirectPermissionModal
-        open={viewDirectPermissionModalOpen}
-        onClose={() => setViewDirectPermissionModalOpen(false)}
-        currentUser={currentUserForRole}
-        onPermissionSave={handleViewDirectPermissionSave}
-      />
-    </ParentCard>
+                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.updated_at || user.created_at;
+                    const lastActiveDate = lastActiveRaw
+                      ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : '—';
+                    const lastActiveTime = lastActiveRaw
+                      ? new Date(lastActiveRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                      : '';
+
+                    return (
+                      <TableRow key={user.id || index} hover>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Avatar
+                              src={getFullImageUrl(user.avatar || user.image || user.profile_picture || '')}
+                              alt={user.name}
+                              sx={{ width: 36, height: 36 }}
+                            >
+                              {user.name?.[0]?.toUpperCase() ?? '?'}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                                {user.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {user.email || 'No email added yet'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                            {user.assignedRoles && user.assignedRoles.length > 0 ? (
+                              user.assignedRoles.map((role, i) => {
+                                const rName = typeof role === 'object' ? role.name : role;
+                                return (
+                                  <Chip
+                                    key={i}
+                                    label={formatRoleName(rName)}
+                                    size="small"
+                                    sx={{
+                                      borderRadius: '12px',
+                                      fontWeight: 600,
+                                      px: 0.5,
+                                      ...getRoleSx(rName),
+                                    }}
+                                  />
+                                );
+                              })
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No Role
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={userStatus}
+                            size="small"
+                            sx={{
+                              bgcolor: userStatus === 'Inactive' ? '#FEF2F2' : '#DCFCE7',
+                              color: userStatus === 'Inactive' ? '#DC2626' : '#16A34A',
+                              fontWeight: 600,
+                              borderRadius: '12px',
+                              px: 1,
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {lastActiveDate}
+                            </Typography>
+                            {lastActiveTime && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {lastActiveTime}
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === user.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleAction('edit', user)}>
+                              Attach Role
+                            </MenuItem>
+                            <MenuItem onClick={() => handleAction('view', user)}>
+                              View Role
+                            </MenuItem>
+                            <MenuItem onClick={() => handleAction('directPermission', user)}>
+                              Assign Direct Permission
+                            </MenuItem>
+                            <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              View Permission
+                            </MenuItem>
+                            {(() => {
+                              const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
+                              return isCurrentActive ? (
+                                <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'error.main' }}>
+                                  Deactivate User
+                                </MenuItem>
+                              ) : (
+                                <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'success.main' }}>
+                                  Activate User
+                                </MenuItem>
+                              );
+                            })()}
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 3,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        {searchInput || roleFilter !== 'all' || statusFilter !== 'all'
+                          ? 'No users match the current filters.'
+                          : 'No users available.'}
+                      </Alert>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50, 100]}
+            component="div"
+            count={totalRows}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </Box>
+
+        <RoleAttachmentModal
+          open={roleAttachmentModalOpen}
+          onClose={() => setRoleAttachmentModalOpen(false)}
+          currentUser={currentUserForRole}
+          onRoleSelection={handleRoleSelection}
+        />
+        <ViewRoleModal
+          open={viewRoleModalOpen}
+          onClose={() => setViewRoleModalOpen(false)}
+          currentUser={currentUserForRole}
+        />
+        <SchoolDirectPermissionModal
+          open={directPermissionModalOpen}
+          onClose={() => setDirectPermissionModalOpen(false)}
+          currentUser={currentUserForRole}
+          onPermissionSave={handleDirectPermissionSave}
+        />
+        <SchoolViewDirectPermissionModal
+          open={viewDirectPermissionModalOpen}
+          onClose={() => setViewDirectPermissionModalOpen(false)}
+          currentUser={currentUserForRole}
+          onPermissionSave={handleViewDirectPermissionSave}
+        />
+
+        {(() => {
+          const isTargetActive = (userToToggleStatus?.status || (userToToggleStatus?.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
+
+          return (
+            <ConfirmationDialog
+              open={statusConfirmOpen}
+              onClose={() => {
+                setStatusConfirmOpen(false);
+                setUserToToggleStatus(null);
+              }}
+              onConfirm={handleConfirmToggleUserStatus}
+              title={isTargetActive ? 'Deactivate User?' : 'Activate User?'}
+              message={
+                <Typography component="span" variant="body2" color="text.secondary">
+                  Are you sure you want to {isTargetActive ? 'deactivate' : 'activate'}{' '}
+                  <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+                    {userToToggleStatus?.name}
+                  </Typography>?
+                </Typography>
+              }
+              confirmText={isTargetActive ? 'Deactivate' : 'Activate'}
+              cancelText="Cancel"
+              severity={isTargetActive ? 'error' : 'info'}
+              cancelButtonSx={{
+                border: '1px solid #D1D5DB',
+                bgcolor: 'transparent',
+                color: '#374151',
+                boxShadow: 'none',
+                '&:hover': {
+                  bgcolor: '#F9FAFB',
+                  borderColor: '#9CA3AF',
+                  boxShadow: 'none',
+                },
+              }}
+              confirmButtonSx={{
+                bgcolor: isTargetActive ? 'error.main' : 'primary.main',
+                color: '#ffffff',
+                '&:hover': {
+                  bgcolor: isTargetActive ? 'error.dark' : 'primary.dark',
+                },
+              }}
+              loading={togglingStatus}
+            />
+          );
+        })()}
+
+        <SchoolRecentChangesModal
+          open={recentChangesModalOpen}
+          onClose={() => setRecentChangesModalOpen(false)}
+        />
+      </ParentCard>
+    </Box>
   );
 };
 

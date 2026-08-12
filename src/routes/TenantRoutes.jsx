@@ -110,6 +110,9 @@ const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/componen
 const PayInvoice = Loadable(
   lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')),
 );
+const PaySchoolFees = Loadable(
+  lazy(() => import('@/pages/tenant/admission/parent-dashboard/PaySchoolFees')),
+);
 
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
@@ -496,6 +499,7 @@ const TenantRoutes = [
       { path: 'dashboard/bursary', element: <BursaryOfficerDashboard /> },
 
       // ── Parent-specific routes ──
+      { path: 'pay-school-fees', element: <PaySchoolFees /> },
       {
         path: 'admission/new-application',
         element: (

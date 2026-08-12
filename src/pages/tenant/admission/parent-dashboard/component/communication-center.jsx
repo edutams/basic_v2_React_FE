@@ -34,11 +34,20 @@ const ContactItem = ({ initial, name, role }) => (
   </Box>
 );
 
-const MessageItem = ({ initial, name, text, time }) => (
+const initialsOf = (name = '') =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'W';
+
+const MessageItem = ({ name, text, time }) => (
   <ListItem sx={{ px: 0, py: 0.75, borderBottom: '1px solid #F3F4F6', '&:last-child': { borderBottom: 0, pb: 0 } }}>
     <ListItemAvatar sx={{ minWidth: 34 }}>
       <Avatar sx={{ width: 26, height: 26, bgcolor: '#E2E8F0', color: '#334155', fontSize: '0.7rem', fontWeight: 700 }}>
-        {initial}
+        {initialsOf(name)}
       </Avatar>
     </ListItemAvatar>
     <ListItemText
@@ -55,7 +64,7 @@ const MessageItem = ({ initial, name, text, time }) => (
   </ListItem>
 );
 
-const CommunicationCenter = () => (
+const CommunicationCenter = ({ contacts = [], messages = [] }) => (
   <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} mb={2} alignItems="stretch">
 
     {/* Communication Center */}
@@ -68,10 +77,15 @@ const CommunicationCenter = () => (
           Stay connected with teachers and school admin
         </Typography>
         <Stack direction="row" spacing={0.5}>
-          <ContactItem initial="O"  name="Mr. Okafor"   role="Mathematics"  />
-          <ContactItem initial="B"  name="Mrs. Bello"   role="Class Teacher"/>
-          <ContactItem initial="A"  name="Mr. Adekunle" role="Principal"    />
-          <ContactItem initial="SA" name="School Admin" role="Admin Office" />
+          {contacts.length > 0 ? (
+            contacts.map((c) => (
+              <ContactItem key={c.id || c.name} initial={initialsOf(c.name)} name={c.name} role={c.role} />
+            ))
+          ) : (
+            <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 1 }}>
+              No teacher contacts yet.
+            </Typography>
+          )}
         </Stack>
       </Box>
     </Card>
@@ -83,8 +97,13 @@ const CommunicationCenter = () => (
           Recent Messages
         </Typography>
         <List disablePadding>
-          <MessageItem initial="B"  name="Mrs. Bello"   text="Amaka's assignment has been graded."     time="1h ago" />
-          <MessageItem initial="SA" name="School Admin" text="Reminder: Please clear outstanding fees." time="1d ago" />
+          {messages.length > 0 ? (
+            messages.map((m, i) => <MessageItem key={i} name={m.name} text={m.text} time={m.time} />)
+          ) : (
+            <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 1 }}>
+              No messages yet.
+            </Typography>
+          )}
         </List>
       </Box>
       <Typography sx={{ fontSize: '0.72rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer', mt: 0.75 }}>

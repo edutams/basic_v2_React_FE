@@ -83,9 +83,22 @@ const KpiCard = ({
           </Box>
         </Box>
       ) : (
-        // Layout for cards with icons: icon top-right, value below label
+        // Layout for cards with icons: number flexes beside the fixed icon
         <>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                color: isDark ? '#fff' : colors.accentColor,
+                fontSize: { xs: 19, md: 22 },
+                lineHeight: 1.1,
+              }}
+            >
+              {value}
+            </Typography>
             {Icon && (
               <Box
                 sx={{
@@ -106,18 +119,6 @@ const KpiCard = ({
               </Box>
             )}
           </Box>
-          <Typography
-            variant="h4"
-            fontWeight={800}
-            sx={{
-              mb: 0.5,
-              color: isDark ? '#fff' : colors.accentColor,
-              fontSize: { xs: 19, md: 22 },
-              lineHeight: 1.1,
-            }}
-          >
-            {value}
-          </Typography>
         </>
       )}
 

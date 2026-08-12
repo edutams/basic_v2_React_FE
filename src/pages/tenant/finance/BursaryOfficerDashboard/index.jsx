@@ -65,9 +65,6 @@ const BursaryOfficerDashboard = () => {
   const [selectedTerm, setSelectedTerm] = useState('');
   const [sessionTermId, setSessionTermId] = useState('');
 
-  // Class matrix status filter
-  const [statusFilter, setStatusFilter] = useState('all');
-
   // Fetch session terms for the selectors
   useEffect(() => {
     const load = async () => {
@@ -169,10 +166,8 @@ const BursaryOfficerDashboard = () => {
   });
 
   const matrixRows = asArray(collectionMatrix.data);
-  const filteredMatrix =
-    statusFilter === 'all' ? matrixRows : matrixRows.filter((r) => r.status === statusFilter);
 
-  const totals = filteredMatrix.reduce(
+  const totals = matrixRows.reduce(
     (acc, row) => ({
       expected: acc.expected + (row.expected_fees || 0),
       collected: acc.collected + (row.collected_fees || 0),
@@ -192,7 +187,7 @@ const BursaryOfficerDashboard = () => {
   const handleExport = () => {
     const rows = [
       ['Class', 'Expected Fees (₦)', 'Collected Fees (₦)', 'Outstanding Fees (₦)', 'Efficiency (%)', 'Status'],
-      ...filteredMatrix.map((r) => [
+      ...matrixRows.map((r) => [
         r.class,
         r.expected_fees,
         r.collected_fees,
@@ -220,13 +215,29 @@ const BursaryOfficerDashboard = () => {
     setSelectedTerm(firstTerm || '');
   };
 
-  // KPI skeleton — mirrors the KPI card grid so the header area
-  // keeps its shape while revenue-performance loads.
+  // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
+  // (uppercase label, icon chip top-right, big value, progress + sublabel) so
+  // the header area keeps its shape while revenue-performance loads.
   const kpiSkeleton = (
     <Grid container columns={10} spacing={2} mb={3}>
       {[0, 1, 2, 3, 4].map((i) => (
         <Grid key={i} size={{ xs: 10, sm: 5, lg: 2 }}>
-          <Skeleton variant="rounded" height={150} sx={{ borderRadius: 3, transform: 'none' }} />
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: '16px',
+              border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${theme.palette.grey[200]}`,
+              background: isDark ? theme.palette.background.paper : '#fff',
+            }}
+          >
+            <Skeleton variant="text" width="60%" height={12} sx={{ mb: 2 }} />
+            <Skeleton variant="rounded" width={70} height={26} sx={{ mb: 1 }} />
+            <Skeleton variant="text" width="100%" height={16} />
+            <Skeleton variant="text" width="80%" height={16} />
+            <Skeleton variant="rounded" width="100%" height={5} sx={{ my: 1 }} />
+            <Skeleton variant="text" width="50%" height={10} />
+          </Paper>
         </Grid>
       ))}
     </Grid>
@@ -243,8 +254,6 @@ const BursaryOfficerDashboard = () => {
         selectedTerm={selectedTerm}
         onTermChange={setSelectedTerm}
         onExport={handleExport}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
       />
 
       {/* ── KPI Cards ──────────────────────────────────────────── */}
@@ -295,7 +304,7 @@ const BursaryOfficerDashboard = () => {
               value={`+${rp.data.revenue_growth}%`}
               sublabel="vs 1st Term"
               colorName="success"
-              rightElement={<GrowthSparkline />}
+              rightElement={<GrowthSparkline data={rp.data.collection_series} />}
             />
           </Grid>
         </Grid>
@@ -338,10 +347,9 @@ const BursaryOfficerDashboard = () => {
             <PanelSkeleton height={420} />
           ) : (
             <CollectionMatrix
-              matrix={filteredMatrix}
+              matrix={matrixRows}
               totals={totals}
               totalEfficiency={totalEfficiency}
-              statusFilter={statusFilter}
               onRowClick={(className) =>
                 notify.info(`Detailed breakdown for ${className} is coming soon`)
               }

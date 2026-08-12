@@ -2,16 +2,15 @@ import React from 'react';
 import { Box } from '@mui/material';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
 
-// Upward trend sparkline — recharts-based, same soft green gradient fill as the
-// original SVG (reuses the shared ReusableSparkline component).
-const GROWTH_SPARK_DATA = Array.from({ length: 10 }, (_, i) => ({
-  v: 8 + i * 2.8,
-}));
-
-const GrowthSparkline = () => (
+/**
+ * Revenue-growth sparkline — real weekly collections from the backend's
+ * collection_series payload ({ label, v } points) on the Revenue Growth KPI
+ * card. Renders flat/empty when the series is empty.
+ */
+const GrowthSparkline = ({ data = [] }) => (
   <Box sx={{ width: 76, flexShrink: 0 }}>
     <ReusableSparkline
-      data={GROWTH_SPARK_DATA}
+      data={data}
       dataKey="v"
       color="#22C55E"
       height={40}

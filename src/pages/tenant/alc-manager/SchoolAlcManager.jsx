@@ -194,7 +194,7 @@ const SchoolAlcManager = () => {
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [activeTab, setActiveTab] = useState('Role Management');
@@ -254,7 +254,8 @@ const SchoolAlcManager = () => {
 
       if (appliedFilters.search) params.search = appliedFilters.search;
       if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
-      if (appliedFilters.type !== 'all') params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
+      if (appliedFilters.type !== 'all')
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
 
       // Add filter parameters
       Object.keys(activeFilters).forEach((key) => {
@@ -269,14 +270,16 @@ const SchoolAlcManager = () => {
       ]);
 
       const rolesResponse = res.status === 'fulfilled' ? res.value : null;
-      const summaryStatsResponse = summaryStatsRes.status === 'fulfilled' ? summaryStatsRes.value : null;
+      const summaryStatsResponse =
+        summaryStatsRes.status === 'fulfilled' ? summaryStatsRes.value : null;
 
       if (summaryStatsResponse?.data) {
         setRoleStats(summaryStatsResponse.data);
       }
 
       let rolesArray = rolesResponse?.data?.data ?? rolesResponse?.data ?? [];
-      const total = rolesResponse?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
+      const total =
+        rolesResponse?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
 
       if (!Array.isArray(rolesArray)) rolesArray = [];
 
@@ -403,7 +406,9 @@ const SchoolAlcManager = () => {
     const assignedUsers = Number(row.users_count ?? 0);
 
     if (isCurrentlyActive && assignedUsers > 0) {
-      notify.error(`Cannot deactivate "${row.name}". Please remove all assigned users from this role first.`);
+      notify.error(
+        `Cannot deactivate "${row.name}". Please remove all assigned users from this role first.`,
+      );
       handleMenuClose();
       return;
     }
@@ -485,20 +490,20 @@ const SchoolAlcManager = () => {
     const total = totalRoles || source.length || 0;
 
     const active = source.filter(
-      (r) => r.status === 'Active' || r.status === 'active' || r.is_active === true || (r.status === undefined && r.is_active === undefined),
+      (r) =>
+        r.status === 'Active' ||
+        r.status === 'active' ||
+        r.is_active === true ||
+        (r.status === undefined && r.is_active === undefined),
     ).length;
 
     const inactive = source.filter(
       (r) => r.status === 'Inactive' || r.status === 'inactive' || r.is_active === false,
     ).length;
 
-    const custom = source.filter(
-      (r) => r.is_sys === 'no',
-    ).length;
+    const custom = source.filter((r) => r.is_sys === 'no').length;
 
-    const protectedCount = source.filter(
-      (r) => r.is_sys === 'yes',
-    ).length;
+    const protectedCount = source.filter((r) => r.is_sys === 'yes').length;
 
     return {
       total,
@@ -520,7 +525,8 @@ const SchoolAlcManager = () => {
 
     const dataToExport = filteredRows.map((row, index) => {
       const isCustom = row.is_sys === 'no';
-      const uCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
+      const uCount =
+        row.users_count ?? (Array.isArray(row.users) ? row.users.length : (row.total_users ?? 0));
       const rStatus = row.status || (row.is_active === false ? 'Inactive' : 'Active');
       const uDate = row.updated_at
         ? new Date(row.updated_at).toLocaleDateString()
@@ -761,10 +767,7 @@ const SchoolAlcManager = () => {
                 />
 
                 <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <Select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
+                  <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                     <MenuItem value="all">Status: All</MenuItem>
                     <MenuItem value="active">Active</MenuItem>
                     <MenuItem value="inactive">Inactive</MenuItem>
@@ -772,10 +775,7 @@ const SchoolAlcManager = () => {
                 </FormControl>
 
                 <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <Select
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value)}
-                  >
+                  <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
                     <MenuItem value="all">Type: All</MenuItem>
                     <MenuItem value="system">System</MenuItem>
                     <MenuItem value="custom">Custom</MenuItem>
@@ -823,7 +823,6 @@ const SchoolAlcManager = () => {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-
                 <Button
                   variant="contained"
                   color="primary"
@@ -858,7 +857,6 @@ const SchoolAlcManager = () => {
                 >
                   Export
                 </Button>
-
               </Box>
             </Box>
 
@@ -895,26 +893,35 @@ const SchoolAlcManager = () => {
 
                         const isCustomRole = row.is_sys === 'no';
                         const colorTheme = avatarColors[index % avatarColors.length];
-                        const userCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
-                        const roleStatusLabel = row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase()) : (row.is_active === false ? 'Inactive' : 'Active');
+                        const userCount =
+                          row.users_count ??
+                          (Array.isArray(row.users) ? row.users.length : (row.total_users ?? 0));
+                        const roleStatusLabel = row.status
+                          ? row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase()
+                          : row.is_active === false
+                            ? 'Inactive'
+                            : 'Active';
 
                         const dateFormatted = row.updated_at
                           ? new Date(row.updated_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                          : row.created_at
-                            ? new Date(row.created_at).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',
                             })
+                          : row.created_at
+                            ? new Date(row.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
                             : '—';
 
-                        const rawUpdater = row.updated_by || row.created_by || row.updater?.name || row.updater_role;
+                        const rawUpdater =
+                          row.updated_by || row.created_by || row.updater?.name || row.updater_role;
                         const updatedByPerson = rawUpdater
-                          ? (rawUpdater.toLowerCase().startsWith('by ') ? rawUpdater.slice(3) : rawUpdater)
+                          ? rawUpdater.toLowerCase().startsWith('by ')
+                            ? rawUpdater.slice(3)
+                            : rawUpdater
                           : 'Super Admin';
 
                         return (
@@ -935,7 +942,11 @@ const SchoolAlcManager = () => {
                                 </Avatar>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight={700}
+                                    color="text.primary"
+                                  >
                                     {formatRoleName(row.name)}
                                   </Typography>
                                   {isProtectedRole && (
@@ -972,11 +983,21 @@ const SchoolAlcManager = () => {
 
                             <TableCell>
                               <Chip
-                                label={row.is_sys === 'yes' ? 'System' : (row.is_sys === 'no' ? 'Custom' : (isCustomRole ? 'Custom' : 'System'))}
+                                label={
+                                  row.is_sys === 'yes'
+                                    ? 'System'
+                                    : row.is_sys === 'no'
+                                      ? 'Custom'
+                                      : isCustomRole
+                                        ? 'Custom'
+                                        : 'System'
+                                }
                                 size="small"
                                 sx={{
-                                  bgcolor: (row.is_sys === 'no' || isCustomRole) ? '#EFF6FF' : '#E6F7F0',
-                                  color: (row.is_sys === 'no' || isCustomRole) ? '#2563EB' : '#059669',
+                                  bgcolor:
+                                    row.is_sys === 'no' || isCustomRole ? '#EFF6FF' : '#E6F7F0',
+                                  color:
+                                    row.is_sys === 'no' || isCustomRole ? '#2563EB' : '#059669',
                                   fontWeight: 600,
                                   borderRadius: '12px',
                                   px: 1,
@@ -1026,7 +1047,11 @@ const SchoolAlcManager = () => {
                                 <Typography variant="body2" fontWeight={500}>
                                   {dateFormatted}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary" display="block">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  display="block"
+                                >
                                   by {updatedByPerson}
                                 </Typography>
                               </Box>
@@ -1048,20 +1073,27 @@ const SchoolAlcManager = () => {
                                 <MenuItem onClick={() => handleViewPermissions(row)}>
                                   View Permission
                                 </MenuItem>
-                                <MenuItem onClick={() => handleViewUsers(row)}>
-                                  View Users
-                                </MenuItem>
+                                <MenuItem onClick={() => handleViewUsers(row)}>View Users</MenuItem>
                                 {isCustomRole && (
-                                  <MenuItem onClick={() => handleOpenConvertConfirm(row)} sx={{ color: 'error.main' }}>
+                                  <MenuItem
+                                    onClick={() => handleOpenConvertConfirm(row)}
+                                    sx={{ color: 'error.main' }}
+                                  >
                                     Make System Role
                                   </MenuItem>
                                 )}
                                 {row.status === 'Inactive' || row.status === 'inactive' ? (
-                                  <MenuItem onClick={() => handleToggleRoleStatus(row)} sx={{ color: 'success.main' }}>
+                                  <MenuItem
+                                    onClick={() => handleToggleRoleStatus(row)}
+                                    sx={{ color: 'success.main' }}
+                                  >
                                     Activate Role
                                   </MenuItem>
                                 ) : (
-                                  <MenuItem onClick={() => handleToggleRoleStatus(row)} sx={{ color: 'error.main' }}>
+                                  <MenuItem
+                                    onClick={() => handleToggleRoleStatus(row)}
+                                    sx={{ color: 'error.main' }}
+                                  >
                                     Deactivate Role
                                   </MenuItem>
                                 )}
@@ -1096,7 +1128,7 @@ const SchoolAlcManager = () => {
                   <TableFooter>
                     <TableRow>
                       <TablePagination
-                        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                        rowsPerPageOptions={[]}
                         count={hasFilters ? filteredRows.length : totalRoles}
                         rowsPerPage={rowsPerPage}
                         page={page}
@@ -1181,7 +1213,12 @@ const SchoolAlcManager = () => {
         message={
           <Typography component="span" variant="body2" color="text.secondary">
             Are you sure you want to convert{' '}
-            <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+            <Typography
+              component="span"
+              variant="body2"
+              fontWeight={700}
+              sx={{ color: 'primary.main' }}
+            >
               {roleToConvert?.name} Role
             </Typography>{' '}
             to a System Role? This action cannot be undone.
@@ -1215,4 +1252,3 @@ const SchoolAlcManager = () => {
 };
 
 export default SchoolAlcManager;
-

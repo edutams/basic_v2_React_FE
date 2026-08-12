@@ -28,9 +28,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import {
-  Search as SearchIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon } from '@mui/icons-material';
 import {
   IconLock,
   IconKey,
@@ -191,10 +189,14 @@ const SchoolPermissionBased = () => {
   const getModuleName = (permission) => {
     if (!permission) return 'General';
     if (permission.module_name) return permission.module_name;
-    const name = typeof permission === 'string' ? permission : permission.name || permission.permission || '';
+    const name =
+      typeof permission === 'string' ? permission : permission.name || permission.permission || '';
     const parts = name.split(/[\._\-:]/);
     if (parts.length > 1 && parts[0].trim()) {
-      return parts[0].trim().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return parts[0]
+        .trim()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
     }
     return 'General';
   };
@@ -210,7 +212,11 @@ const SchoolPermissionBased = () => {
       const roleCount = p.roles_count ?? p.totalRoles ?? 0;
       const pStatus = roleCount > 0 ? 'assigned' : 'unused';
 
-      if (nameFilter && !pName.includes(nameFilter.toLowerCase()) && !pDesc.includes(nameFilter.toLowerCase())) {
+      if (
+        nameFilter &&
+        !pName.includes(nameFilter.toLowerCase()) &&
+        !pDesc.includes(nameFilter.toLowerCase())
+      ) {
         return false;
       }
       if (moduleFilter !== 'all' && modFilterStr !== 'all') {
@@ -232,15 +238,36 @@ const SchoolPermissionBased = () => {
     const rawUnusedP = summaryStats?.unused_permissions ?? summaryStats?.unusedPermissions;
     const rawAffectedU = summaryStats?.affected_users ?? summaryStats?.affectedUsers;
 
-    const totalP = rawTotalP !== undefined && rawTotalP !== null ? Number(rawTotalP) : (totalRows || permissions.length || 0);
-    const assignedP = rawAssignedP !== undefined && rawAssignedP !== null ? Number(rawAssignedP) : permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) > 0).length;
-    const unusedP = rawUnusedP !== undefined && rawUnusedP !== null ? Number(rawUnusedP) : permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) === 0).length;
-    const affectedU = rawAffectedU !== undefined && rawAffectedU !== null ? Number(rawAffectedU) : permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0);
+    const totalP =
+      rawTotalP !== undefined && rawTotalP !== null
+        ? Number(rawTotalP)
+        : totalRows || permissions.length || 0;
+    const assignedP =
+      rawAssignedP !== undefined && rawAssignedP !== null
+        ? Number(rawAssignedP)
+        : permissions.filter((p) => (p.roles_count ?? p.totalRoles ?? 0) > 0).length;
+    const unusedP =
+      rawUnusedP !== undefined && rawUnusedP !== null
+        ? Number(rawUnusedP)
+        : permissions.filter((p) => (p.roles_count ?? p.totalRoles ?? 0) === 0).length;
+    const affectedU =
+      rawAffectedU !== undefined && rawAffectedU !== null
+        ? Number(rawAffectedU)
+        : permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0);
 
     return { totalP, assignedP, unusedP, affectedU };
   }, [summaryStats, permissions, totalRows]);
 
-  const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#0694A2', '#D97706', '#6B7280', '#EC4899', '#8B5CF6'];
+  const COLOR_PALETTE = [
+    '#0E9F6E',
+    '#1A56DB',
+    '#7E3AF2',
+    '#0694A2',
+    '#D97706',
+    '#6B7280',
+    '#EC4899',
+    '#8B5CF6',
+  ];
 
   const distributionData = useMemo(() => {
     const dist = summaryStats?.distribution;
@@ -253,15 +280,17 @@ const SchoolPermissionBased = () => {
     }
     if (permissions && permissions.length > 0) {
       const countsMap = {};
-      permissions.forEach(p => {
+      permissions.forEach((p) => {
         const m = getModuleName(p);
         countsMap[m] = (countsMap[m] || 0) + 1;
       });
-      return Object.entries(countsMap).map(([label, count], idx) => ({
-        label,
-        count,
-        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
-      })).sort((a, b) => b.count - a.count);
+      return Object.entries(countsMap)
+        .map(([label, count], idx) => ({
+          label,
+          count,
+          color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+        }))
+        .sort((a, b) => b.count - a.count);
     }
     return [];
   }, [summaryStats, permissions]);
@@ -270,7 +299,7 @@ const SchoolPermissionBased = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return ['No Permissions'];
-      return distributionData.map(d => d.label);
+      return distributionData.map((d) => d.label);
     }
     return ['No Permissions'];
   }, [distributionData]);
@@ -279,7 +308,7 @@ const SchoolPermissionBased = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return [1];
-      return distributionData.map(d => d.count);
+      return distributionData.map((d) => d.count);
     }
     return [1];
   }, [distributionData]);
@@ -288,66 +317,69 @@ const SchoolPermissionBased = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return ['#9CA3AF'];
-      return distributionData.map(d => d.color);
+      return distributionData.map((d) => d.color);
     }
     return ['#9CA3AF'];
   }, [distributionData]);
 
   // Chart configuration for Permissions by Module
-  const chartOptions = useMemo(() => ({
-    chart: {
-      type: 'donut',
-      fontFamily: 'inherit',
-      toolbar: { show: false },
-    },
-    labels: chartLabels,
-    colors: chartColors,
-    legend: { show: false },
-    dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '11px',
-        fontWeight: '700',
-        colors: ['#ffffff'],
+  const chartOptions = useMemo(
+    () => ({
+      chart: {
+        type: 'donut',
+        fontFamily: 'inherit',
+        toolbar: { show: false },
       },
-      dropShadow: { enabled: false },
-      formatter: (val) => `${Math.round(val)}%`,
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '60%',
-          labels: {
-            show: true,
-            name: {
+      labels: chartLabels,
+      colors: chartColors,
+      legend: { show: false },
+      dataLabels: {
+        enabled: true,
+        style: {
+          fontSize: '11px',
+          fontWeight: '700',
+          colors: ['#ffffff'],
+        },
+        dropShadow: { enabled: false },
+        formatter: (val) => `${Math.round(val)}%`,
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '60%',
+            labels: {
               show: true,
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#64748B',
-              offsetY: 16,
-            },
-            value: {
-              show: true,
-              fontSize: '22px',
-              fontWeight: 800,
-              color: '#1E293B',
-              offsetY: -14,
-              formatter: () => `${stats.totalP.toLocaleString()}`,
-            },
-            total: {
-              show: true,
-              label: 'Total Permissions',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#64748B',
-              formatter: () => `${stats.totalP.toLocaleString()}`,
+              name: {
+                show: true,
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#64748B',
+                offsetY: 16,
+              },
+              value: {
+                show: true,
+                fontSize: '22px',
+                fontWeight: 800,
+                color: '#1E293B',
+                offsetY: -14,
+                formatter: () => `${stats.totalP.toLocaleString()}`,
+              },
+              total: {
+                show: true,
+                label: 'Total Permissions',
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#64748B',
+                formatter: () => `${stats.totalP.toLocaleString()}`,
+              },
             },
           },
         },
       },
-    },
-    stroke: { width: 2, colors: ['#ffffff'] },
-  }), [chartLabels, chartColors, stats.totalP]);
+      stroke: { width: 2, colors: ['#ffffff'] },
+    }),
+    [chartLabels, chartColors, stats.totalP],
+  );
 
   const chartLegendData = distributionData;
 
@@ -356,29 +388,103 @@ const SchoolPermissionBased = () => {
     if (!permissionName) return null;
     const lower = permissionName.toLowerCase();
     if (lower.includes('create') || lower.includes('store') || lower.includes('assign')) {
-      return <Chip label="Create" size="small" sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontSize: '10px', height: '18px', fontWeight: 700 }} />;
+      return (
+        <Chip
+          label="Create"
+          size="small"
+          sx={{
+            bgcolor: '#EFF6FF',
+            color: '#2563EB',
+            fontSize: '10px',
+            height: '18px',
+            fontWeight: 700,
+          }}
+        />
+      );
     }
     if (lower.includes('update') || lower.includes('edit')) {
-      return <Chip label="Update" size="small" sx={{ bgcolor: '#F3E8FF', color: '#7E3AF2', fontSize: '10px', height: '18px', fontWeight: 700 }} />;
+      return (
+        <Chip
+          label="Update"
+          size="small"
+          sx={{
+            bgcolor: '#F3E8FF',
+            color: '#7E3AF2',
+            fontSize: '10px',
+            height: '18px',
+            fontWeight: 700,
+          }}
+        />
+      );
     }
     if (lower.includes('delete') || lower.includes('destroy') || lower.includes('unassign')) {
-      return <Chip label="Delete" size="small" sx={{ bgcolor: '#FEF2F2', color: '#DC2626', fontSize: '10px', height: '18px', fontWeight: 700 }} />;
+      return (
+        <Chip
+          label="Delete"
+          size="small"
+          sx={{
+            bgcolor: '#FEF2F2',
+            color: '#DC2626',
+            fontSize: '10px',
+            height: '18px',
+            fontWeight: 700,
+          }}
+        />
+      );
     }
     if (lower.includes('execute') || lower.includes('generate')) {
-      return <Chip label="Execute" size="small" sx={{ bgcolor: '#FEF3C7', color: '#D97706', fontSize: '10px', height: '18px', fontWeight: 700 }} />;
+      return (
+        <Chip
+          label="Execute"
+          size="small"
+          sx={{
+            bgcolor: '#FEF3C7',
+            color: '#D97706',
+            fontSize: '10px',
+            height: '18px',
+            fontWeight: 700,
+          }}
+        />
+      );
     }
-    return <Chip label="View" size="small" sx={{ bgcolor: '#E6F4EA', color: '#10B981', fontSize: '10px', height: '18px', fontWeight: 700 }} />;
+    return (
+      <Chip
+        label="View"
+        size="small"
+        sx={{
+          bgcolor: '#E6F4EA',
+          color: '#10B981',
+          fontSize: '10px',
+          height: '18px',
+          fontWeight: 700,
+        }}
+      />
+    );
   };
 
   const hasActiveFilters = Boolean(
-    nameFilter || moduleFilter !== 'all' || statusFilter !== 'all' || roleFilter !== 'all' ||
-    searchInput || moduleInput !== 'all' || statusInput !== 'all' || roleInput !== 'all'
+    nameFilter ||
+    moduleFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    roleFilter !== 'all' ||
+    searchInput ||
+    moduleInput !== 'all' ||
+    statusInput !== 'all' ||
+    roleInput !== 'all',
   );
 
   // CSV Export handler
   const handleExportCSV = () => {
     if (!displayPermissions || displayPermissions.length === 0) return;
-    const headers = ['S/N', 'Permission', 'Module', 'Description', 'Total Roles', 'Total Users', 'Status'];
+    const headers = [
+      'S/N',
+      'Permission',
+      'Module',
+      'Description',
+      'Total Roles',
+      'Total Users',
+      'Status',
+    ];
     const csvRows = displayPermissions.map((row, index) => [
       index + 1,
       `"${row.name || row.permission || ''}"`,
@@ -393,7 +499,10 @@ const SchoolPermissionBased = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `permissions_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `permissions_export_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -457,13 +566,37 @@ const SchoolPermissionBased = () => {
         {/* Left Column: Donut Chart Breakdown */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Permissions by Module" sx={{ width: '100%', height: '100%' }}>
-            <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                py: 1,
+                px: 0,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box>
-                <Box sx={{ height: 230, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box
+                  sx={{
+                    height: 230,
+                    my: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   {statsLoading ? (
                     <CircularProgress size={32} />
                   ) : (
-                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={230} />
+                    <Chart
+                      options={chartOptions}
+                      series={chartSeries}
+                      type="donut"
+                      width="100%"
+                      height={230}
+                    />
                   )}
                 </Box>
 
@@ -515,13 +648,8 @@ const SchoolPermissionBased = () => {
                   py: 0.9,
                   borderRadius: '10px',
                   borderColor: 'divider',
-                  color: 'text.primary',
                   fontWeight: 600,
                   textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                    borderColor: 'divider',
-                  },
                 }}
               >
                 View Module Breakdown
@@ -561,7 +689,15 @@ const SchoolPermissionBased = () => {
                   mb: 2,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', flexGrow: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    flexWrap: 'wrap',
+                    flexGrow: 1,
+                  }}
+                >
                   <TextField
                     placeholder="Search by permission..."
                     size="small"
@@ -582,10 +718,7 @@ const SchoolPermissionBased = () => {
 
                   {/* Module Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 150 }}>
-                    <Select
-                      value={moduleInput}
-                      onChange={(e) => setModuleInput(e.target.value)}
-                    >
+                    <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
                       <MenuItem value="all">All Modules</MenuItem>
                       {summaryStats?.distribution?.map((m) => (
                         <MenuItem key={m.id || m.name} value={m.id || m.name}>
@@ -597,10 +730,7 @@ const SchoolPermissionBased = () => {
 
                   {/* Status Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <Select
-                      value={statusInput}
-                      onChange={(e) => setStatusInput(e.target.value)}
-                    >
+                    <Select value={statusInput} onChange={(e) => setStatusInput(e.target.value)}>
                       <MenuItem value="all">All Status</MenuItem>
                       <MenuItem value="assigned">Assigned</MenuItem>
                       <MenuItem value="unused">Unused</MenuItem>
@@ -609,10 +739,7 @@ const SchoolPermissionBased = () => {
 
                   {/* Roles Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <Select
-                      value={roleInput}
-                      onChange={(e) => setRoleInput(e.target.value)}
-                    >
+                    <Select value={roleInput} onChange={(e) => setRoleInput(e.target.value)}>
                       <MenuItem value="all">All Roles</MenuItem>
                       {rolesList.map((r) => (
                         <MenuItem key={r.id} value={r.id}>
@@ -670,10 +797,16 @@ const SchoolPermissionBased = () => {
                 <Table sx={{ minWidth: 960 }} stickyHeader>
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 200, fontWeight: 700, py: 1.5 }}>Permission</TableCell>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
+                        #
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 200, fontWeight: 700, py: 1.5 }}>
+                        Permission
+                      </TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
-                      <TableCell sx={{ minWidth: 220, fontWeight: 700, py: 1.5 }}>Description</TableCell>
+                      <TableCell sx={{ minWidth: 220, fontWeight: 700, py: 1.5 }}>
+                        Description
+                      </TableCell>
                       <TableCell align="center" sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>
                         Total Roles
                       </TableCell>
@@ -681,8 +814,13 @@ const SchoolPermissionBased = () => {
                         Total Users
                       </TableCell>
                       <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 1.5 }}>Status</TableCell>
-                      <TableCell sx={{ minWidth: 140, fontWeight: 700, py: 1.5 }}>Last Updated</TableCell>
-                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ minWidth: 140, fontWeight: 700, py: 1.5 }}>
+                        Last Updated
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}
+                      >
                         Action
                       </TableCell>
                     </TableRow>
@@ -706,10 +844,17 @@ const SchoolPermissionBased = () => {
 
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
                           : 'May 6, 2025';
                         const formattedTime = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                          ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
                           : '10:30 AM';
 
                         return (
@@ -719,7 +864,11 @@ const SchoolPermissionBased = () => {
                             {/* Permission Code + Action Badge */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                                <Typography
+                                  variant="subtitle2"
+                                  fontWeight={700}
+                                  color="text.primary"
+                                >
                                   {permName}
                                 </Typography>
                                 {actionBadge}
@@ -738,7 +887,11 @@ const SchoolPermissionBased = () => {
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
-                                sx={{ whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}
+                                sx={{
+                                  whiteSpace: 'normal',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.4,
+                                }}
                               >
                                 {row.description || 'View the ACL index / dashboard.'}
                               </Typography>
@@ -795,7 +948,12 @@ const SchoolPermissionBased = () => {
 
                             {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
-                              <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color="text.primary"
+                                display="block"
+                              >
                                 {formattedDate}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" fontSize="11px">
@@ -845,10 +1003,20 @@ const SchoolPermissionBased = () => {
 
       {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => { handleTotalRoleClick(activeMenuPerm); handleMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            handleTotalRoleClick(activeMenuPerm);
+            handleMenuClose();
+          }}
+        >
           View Assigned Roles
         </MenuItem>
-        <MenuItem onClick={() => { handleTotalUsersClick(activeMenuPerm); handleMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            handleTotalUsersClick(activeMenuPerm);
+            handleMenuClose();
+          }}
+        >
           View Impacted Users
         </MenuItem>
       </Menu>
@@ -867,8 +1035,15 @@ const SchoolPermissionBased = () => {
       />
 
       {/* Permissions Module Distribution Breakdown Modal */}
-      <Dialog open={breakdownModalOpen} onClose={() => setBreakdownModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Dialog
+        open={breakdownModalOpen}
+        onClose={() => setBreakdownModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Box>
             <Typography variant="h5" fontWeight={700}>
               Permissions Module Breakdown
@@ -882,7 +1057,14 @@ const SchoolPermissionBased = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" p={1.5} sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}>
+          <Box
+            mb={2}
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            p={1.5}
+            sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}
+          >
             <Typography variant="subtitle2" fontWeight={700}>
               Total Permissions
             </Typography>
@@ -900,7 +1082,9 @@ const SchoolPermissionBased = () => {
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Module Name</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Permissions</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    Permissions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -934,7 +1118,12 @@ const SchoolPermissionBased = () => {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setBreakdownModalOpen(false)} color="primary" size="small">
+          <Button
+            variant="contained"
+            onClick={() => setBreakdownModalOpen(false)}
+            color="primary"
+            size="small"
+          >
             Close
           </Button>
         </DialogActions>

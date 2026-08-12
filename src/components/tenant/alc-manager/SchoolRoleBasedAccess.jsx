@@ -30,10 +30,7 @@ import {
   LinearProgress,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import {
-  Search as SearchIcon,
-  Visibility as EyeIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, Visibility as EyeIcon } from '@mui/icons-material';
 import {
   IconUsers,
   IconShieldCheck,
@@ -136,7 +133,7 @@ const SchoolRoleBasedAccess = () => {
   };
 
   const hasActiveFilters = Boolean(
-    nameFilter || statusFilter !== 'all' || searchInput || statusInput !== 'all'
+    nameFilter || statusFilter !== 'all' || searchInput || statusInput !== 'all',
   );
 
   const handleKeyPress = (e) => {
@@ -183,16 +180,42 @@ const SchoolRoleBasedAccess = () => {
     const rawActiveU = summaryStats?.active_access ?? summaryStats?.activeAccess;
     const rawOrphanedR = summaryStats?.orphaned_roles ?? summaryStats?.orphanedRoles;
 
-    const totalR = rawTotalR !== undefined && rawTotalR !== null ? Number(rawTotalR) : (totalRows || roles.length || 0);
-    const totalP = rawTotalP !== undefined && rawTotalP !== null ? Number(rawTotalP) : roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0);
-    const totalU = rawTotalU !== undefined && rawTotalU !== null ? Number(rawTotalU) : roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
-    const activeU = rawActiveU !== undefined && rawActiveU !== null ? Number(rawActiveU) : roles.filter(r => (r.status || 'active').toLowerCase() === 'active').reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
-    const orphanedR = rawOrphanedR !== undefined && rawOrphanedR !== null ? Number(rawOrphanedR) : roles.filter(r => (r.totalUsers ?? r.users_count ?? 0) === 0).length;
+    const totalR =
+      rawTotalR !== undefined && rawTotalR !== null
+        ? Number(rawTotalR)
+        : totalRows || roles.length || 0;
+    const totalP =
+      rawTotalP !== undefined && rawTotalP !== null
+        ? Number(rawTotalP)
+        : roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0);
+    const totalU =
+      rawTotalU !== undefined && rawTotalU !== null
+        ? Number(rawTotalU)
+        : roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+    const activeU =
+      rawActiveU !== undefined && rawActiveU !== null
+        ? Number(rawActiveU)
+        : roles
+            .filter((r) => (r.status || 'active').toLowerCase() === 'active')
+            .reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+    const orphanedR =
+      rawOrphanedR !== undefined && rawOrphanedR !== null
+        ? Number(rawOrphanedR)
+        : roles.filter((r) => (r.totalUsers ?? r.users_count ?? 0) === 0).length;
 
     return { totalR, totalP, totalU, activeU, orphanedR };
   }, [summaryStats, roles, totalRows]);
 
-  const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280', '#EC4899', '#8B5CF6'];
+  const COLOR_PALETTE = [
+    '#0E9F6E',
+    '#1A56DB',
+    '#7E3AF2',
+    '#D97706',
+    '#0694A2',
+    '#6B7280',
+    '#EC4899',
+    '#8B5CF6',
+  ];
 
   const distributionData = useMemo(() => {
     const dist = summaryStats?.distribution;
@@ -205,7 +228,7 @@ const SchoolRoleBasedAccess = () => {
     }
     if (roles && roles.length > 0) {
       return roles.slice(0, 8).map((r, idx) => ({
-        label: r.role ? r.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Role',
+        label: r.role ? r.role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : 'Role',
         count: Number(r.totalUsers ?? r.users_count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
@@ -217,7 +240,7 @@ const SchoolRoleBasedAccess = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return ['No Users Assigned'];
-      return distributionData.map(d => d.label);
+      return distributionData.map((d) => d.label);
     }
     return ['No Users Assigned'];
   }, [distributionData]);
@@ -226,7 +249,7 @@ const SchoolRoleBasedAccess = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return [1];
-      return distributionData.map(d => d.count);
+      return distributionData.map((d) => d.count);
     }
     return [1];
   }, [distributionData]);
@@ -235,66 +258,69 @@ const SchoolRoleBasedAccess = () => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
       if (total === 0) return ['#9CA3AF'];
-      return distributionData.map(d => d.color);
+      return distributionData.map((d) => d.color);
     }
     return ['#9CA3AF'];
   }, [distributionData]);
 
   // Chart configuration for Access Distribution
-  const chartOptions = useMemo(() => ({
-    chart: {
-      type: 'donut',
-      fontFamily: 'inherit',
-      toolbar: { show: false },
-    },
-    labels: chartLabels,
-    colors: chartColors,
-    legend: { show: false },
-    dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '11px',
-        fontWeight: '700',
-        colors: ['#ffffff'],
+  const chartOptions = useMemo(
+    () => ({
+      chart: {
+        type: 'donut',
+        fontFamily: 'inherit',
+        toolbar: { show: false },
       },
-      dropShadow: { enabled: false },
-      formatter: (val) => `${Math.round(val)}%`,
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '50%',
-          labels: {
-            show: true,
-            name: {
+      labels: chartLabels,
+      colors: chartColors,
+      legend: { show: false },
+      dataLabels: {
+        enabled: true,
+        style: {
+          fontSize: '11px',
+          fontWeight: '700',
+          colors: ['#ffffff'],
+        },
+        dropShadow: { enabled: false },
+        formatter: (val) => `${Math.round(val)}%`,
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '50%',
+            labels: {
               show: true,
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#64748B',
-              offsetY: 16,
-            },
-            value: {
-              show: true,
-              fontSize: '22px',
-              fontWeight: 800,
-              color: '#1E293B',
-              offsetY: -14,
-              formatter: () => `${stats.totalU.toLocaleString()}`,
-            },
-            total: {
-              show: true,
-              label: 'Total Users',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#64748B',
-              formatter: () => `${stats.totalU.toLocaleString()}`,
+              name: {
+                show: true,
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#64748B',
+                offsetY: 16,
+              },
+              value: {
+                show: true,
+                fontSize: '22px',
+                fontWeight: 800,
+                color: '#1E293B',
+                offsetY: -14,
+                formatter: () => `${stats.totalU.toLocaleString()}`,
+              },
+              total: {
+                show: true,
+                label: 'Total Users',
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#64748B',
+                formatter: () => `${stats.totalU.toLocaleString()}`,
+              },
             },
           },
         },
       },
-    },
-    stroke: { width: 2, colors: ['#ffffff'] },
-  }), [chartLabels, chartColors, stats.totalU]);
+      stroke: { width: 2, colors: ['#ffffff'] },
+    }),
+    [chartLabels, chartColors, stats.totalU],
+  );
 
   const chartLegendData = distributionData;
 
@@ -380,13 +406,37 @@ const SchoolRoleBasedAccess = () => {
         {/* Left Column: Donut Chart Breakdown */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
-            <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                py: 1,
+                px: 0,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box>
-                <Box sx={{ height: 230, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box
+                  sx={{
+                    height: 230,
+                    my: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   {statsLoading ? (
                     <CircularProgress size={32} />
                   ) : (
-                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={230} />
+                    <Chart
+                      options={chartOptions}
+                      series={chartSeries}
+                      type="donut"
+                      width="100%"
+                      height={230}
+                    />
                   )}
                 </Box>
 
@@ -438,13 +488,8 @@ const SchoolRoleBasedAccess = () => {
                   py: 0.9,
                   borderRadius: '10px',
                   borderColor: 'divider',
-                  color: 'text.primary',
                   fontWeight: 600,
                   textTransform: 'none',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                    borderColor: 'divider',
-                  },
                 }}
               >
                 View Full Breakdown
@@ -484,7 +529,15 @@ const SchoolRoleBasedAccess = () => {
                   mb: 2,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', flexGrow: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    flexWrap: 'wrap',
+                    flexGrow: 1,
+                  }}
+                >
                   <TextField
                     placeholder="Search role..."
                     size="small"
@@ -504,10 +557,7 @@ const SchoolRoleBasedAccess = () => {
                   />
 
                   <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <Select
-                      value={statusInput}
-                      onChange={(e) => setStatusInput(e.target.value)}
-                    >
+                    <Select value={statusInput} onChange={(e) => setStatusInput(e.target.value)}>
                       <MenuItem value="all">All Status</MenuItem>
                       <MenuItem value="active">Active</MenuItem>
                       <MenuItem value="inactive">Inactive</MenuItem>
@@ -543,9 +593,15 @@ const SchoolRoleBasedAccess = () => {
                 <Table sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 260, fontWeight: 700, py: 1.5 }}>Role Name</TableCell>
-                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Description</TableCell>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
+                        #
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 260, fontWeight: 700, py: 1.5 }}>
+                        Role Name
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>
+                        Description
+                      </TableCell>
                       <TableCell align="center" sx={{ minWidth: 170, fontWeight: 700, py: 1.5 }}>
                         Total Permissions
                       </TableCell>
@@ -553,8 +609,13 @@ const SchoolRoleBasedAccess = () => {
                         Total Users
                       </TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Status</TableCell>
-                      <TableCell sx={{ minWidth: 140, fontWeight: 700, py: 1.5 }}>Last Updated</TableCell>
-                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ minWidth: 140, fontWeight: 700, py: 1.5 }}>
+                        Last Updated
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}
+                      >
                         Action
                       </TableCell>
                     </TableRow>
@@ -574,17 +635,26 @@ const SchoolRoleBasedAccess = () => {
                         const formattedName = formatRoleName(roleNameStr);
                         const permCount = row.totalPermissions ?? row.permissions_count ?? 0;
                         const userCount = row.totalUsers ?? row.users_count ?? 0;
-                        const rawStatus = (row.status || (row.is_active === false ? 'inactive' : 'active')).toLowerCase();
+                        const rawStatus = (
+                          row.status || (row.is_active === false ? 'inactive' : 'active')
+                        ).toLowerCase();
                         const isInactive = rawStatus === 'inactive';
                         const avatarStyle = getRoleAvatarStyle(index);
                         const IconComp = avatarStyle.icon;
 
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
                           : 'May 6, 2025';
                         const formattedTime = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                          ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
                           : '10:30 AM';
 
                         return (
@@ -606,7 +676,11 @@ const SchoolRoleBasedAccess = () => {
                                 </Avatar>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight={700}
+                                    color="text.primary"
+                                  >
                                     {formattedName}
                                   </Typography>
                                   {isSystemRole && (
@@ -631,7 +705,11 @@ const SchoolRoleBasedAccess = () => {
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
-                                sx={{ whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}
+                                sx={{
+                                  whiteSpace: 'normal',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.4,
+                                }}
                               >
                                 {row.description || 'N/A'}
                               </Typography>
@@ -688,7 +766,12 @@ const SchoolRoleBasedAccess = () => {
 
                             {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
-                              <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
+                              <Typography
+                                variant="caption"
+                                fontWeight={600}
+                                color="text.primary"
+                                display="block"
+                              >
                                 {formattedDate}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" fontSize="11px">
@@ -738,10 +821,20 @@ const SchoolRoleBasedAccess = () => {
 
       {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => { handleTotalPermissionClick(activeMenuRole); handleMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            handleTotalPermissionClick(activeMenuRole);
+            handleMenuClose();
+          }}
+        >
           View Permissions
         </MenuItem>
-        <MenuItem onClick={() => { handleTotalUsersClick(activeMenuRole); handleMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            handleTotalUsersClick(activeMenuRole);
+            handleMenuClose();
+          }}
+        >
           View Assigned Users
         </MenuItem>
       </Menu>
@@ -760,8 +853,15 @@ const SchoolRoleBasedAccess = () => {
       />
 
       {/* Access Distribution Breakdown Modal */}
-      <Dialog open={breakdownModalOpen} onClose={() => setBreakdownModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Dialog
+        open={breakdownModalOpen}
+        onClose={() => setBreakdownModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Box>
             <Typography variant="h5" fontWeight={700}>
               Access Distribution Breakdown
@@ -775,7 +875,14 @@ const SchoolRoleBasedAccess = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" p={1.5} sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}>
+          <Box
+            mb={2}
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            p={1.5}
+            sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}
+          >
             <Typography variant="subtitle2" fontWeight={700}>
               Total Assigned Users
             </Typography>
@@ -793,7 +900,9 @@ const SchoolRoleBasedAccess = () => {
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Users</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    Users
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -827,7 +936,12 @@ const SchoolRoleBasedAccess = () => {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setBreakdownModalOpen(false)} color="primary" size="small">
+          <Button
+            variant="contained"
+            onClick={() => setBreakdownModalOpen(false)}
+            color="primary"
+            size="small"
+          >
             Close
           </Button>
         </DialogActions>

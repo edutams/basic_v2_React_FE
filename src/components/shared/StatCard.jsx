@@ -30,7 +30,9 @@ const StatCard = ({
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
         borderRadius: 1,
-        p: 1.6,
+        px: 1.6,
+        py: 2.5
+        ,
         width: '100%',
         background: `${cardBg} !important`,
         display: 'flex',

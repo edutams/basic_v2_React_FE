@@ -86,7 +86,7 @@ const SchoolPermissionBased = () => {
         per_page: rowsPerPage,
         search: nameFilter,
       };
-      const res = await aclApi.getSchoolPermissions(params);
+      const res = await aclApi.getSchoolPermissionAnalytics(params);
 
       if (res?.data) {
         const fetched = res.data.data || res.data || [];
@@ -537,7 +537,7 @@ const SchoolPermissionBased = () => {
                     }}
                   />
 
-                  {/* Module Select Dropdown */}
+                  {/* Module Select Dropdown - Commented out for now
                   <FormControl size="small" sx={{ minWidth: 130 }}>
                     <Select
                       value={moduleInput}
@@ -551,6 +551,7 @@ const SchoolPermissionBased = () => {
                       <MenuItem value="Reports">Reports</MenuItem>
                     </Select>
                   </FormControl>
+                  */}
 
                   {/* Status Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 120 }}>

@@ -465,7 +465,7 @@ const SchoolAlcManager = () => {
 
       setNewRoleForm({
         roleName: '',
-        guardName: 'web',
+        guardName: 'tenant',
         description: '',
       });
 

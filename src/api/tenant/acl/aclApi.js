@@ -95,6 +95,11 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolPermissionAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/permissions/analysis_stats');
+        return response.data;
+    },
+
     // Modal-specific API functions
     getSchoolRoleUsers: async (roleId, params) => {
         const response = await tenantApi.get(`/censis/acl/roles/${roleId}/users`, {

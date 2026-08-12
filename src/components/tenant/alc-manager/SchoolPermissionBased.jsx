@@ -74,6 +74,28 @@ const SchoolPermissionBased = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
+  const [summaryStats, setSummaryStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSummaryStats();
+  }, []);
+
+  const fetchSummaryStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await aclApi.getSchoolPermissionAnalysisStats();
+      const payload = res?.data?.data || res?.data || res;
+      if (payload && typeof payload === 'object') {
+        setSummaryStats(payload);
+      }
+    } catch (error) {
+      console.error('Failed to fetch permission summary stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPermissions();
   }, [page, rowsPerPage, nameFilter]);
@@ -190,17 +212,30 @@ const SchoolPermissionBased = () => {
 
   // Stat calculations
   const stats = useMemo(() => {
-    const totalP = totalRows || permissions.length || 0;
-    const assignedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) > 0).length;
-    const unusedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) === 0).length;
-    const affectedU = permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0);
+    const rawTotalP = summaryStats?.total_permissions ?? summaryStats?.totalPermissions;
+    const rawAssignedP = summaryStats?.assigned_permissions ?? summaryStats?.assignedPermissions;
+    const rawUnusedP = summaryStats?.unused_permissions ?? summaryStats?.unusedPermissions;
+    const rawAffectedU = summaryStats?.affected_users ?? summaryStats?.affectedUsers;
+
+    const totalP = rawTotalP !== undefined && rawTotalP !== null ? Number(rawTotalP) : (totalRows || permissions.length || 0);
+    const assignedP = rawAssignedP !== undefined && rawAssignedP !== null ? Number(rawAssignedP) : permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) > 0).length;
+    const unusedP = rawUnusedP !== undefined && rawUnusedP !== null ? Number(rawUnusedP) : permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) === 0).length;
+    const affectedU = rawAffectedU !== undefined && rawAffectedU !== null ? Number(rawAffectedU) : permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0);
 
     return { totalP, assignedP, unusedP, affectedU };
-  }, [permissions, totalRows]);
+  }, [summaryStats, permissions, totalRows]);
 
   const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#0694A2', '#D97706', '#6B7280', '#EC4899', '#8B5CF6'];
 
   const distributionData = useMemo(() => {
+    const dist = summaryStats?.distribution;
+    if (Array.isArray(dist) && dist.length > 0) {
+      return dist.map((item, idx) => ({
+        label: item.name || item.label || 'Module',
+        count: Number(item.count ?? item.users_count ?? 0),
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+    }
     if (permissions && permissions.length > 0) {
       const countsMap = {};
       permissions.forEach(p => {
@@ -213,15 +248,8 @@ const SchoolPermissionBased = () => {
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       })).sort((a, b) => b.count - a.count);
     }
-    return [
-      { label: 'User Management', count: 118, color: '#0E9F6E' },
-      { label: 'Academic', count: 90, color: '#1A56DB' },
-      { label: 'Finance', count: 70, color: '#7E3AF2' },
-      { label: 'Students', count: 55, color: '#0694A2' },
-      { label: 'Reports', count: 34, color: '#D97706' },
-      { label: 'Others', count: 19, color: '#6B7280' },
-    ];
-  }, [permissions]);
+    return [];
+  }, [summaryStats, permissions]);
 
   const chartLabels = useMemo(() => {
     if (distributionData && distributionData.length > 0) {
@@ -368,7 +396,7 @@ const SchoolPermissionBased = () => {
             subtitle="Across all roles"
             icon={IconLock}
             colorIndex={0}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -380,7 +408,7 @@ const SchoolPermissionBased = () => {
             subtitle="In use by roles"
             icon={IconShieldCheck}
             colorIndex={1}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -392,7 +420,7 @@ const SchoolPermissionBased = () => {
             subtitle="Not assigned to any role"
             icon={IconKey}
             colorIndex={3}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -404,7 +432,7 @@ const SchoolPermissionBased = () => {
             subtitle="Users impacted by permissions"
             icon={IconUsers}
             colorIndex={2}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
       </Grid>
@@ -417,7 +445,7 @@ const SchoolPermissionBased = () => {
             <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <Box>
                 <Box sx={{ height: 230, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {loading ? (
+                  {statsLoading ? (
                     <CircularProgress size={32} />
                   ) : (
                     <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={230} />

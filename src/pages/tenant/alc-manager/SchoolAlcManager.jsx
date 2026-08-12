@@ -198,9 +198,14 @@ const SchoolAlcManager = () => {
   const [roleUsersModalOpen, setRoleUsersModalOpen] = useState(false);
   const [selectedRoleForUsers, setSelectedRoleForUsers] = useState(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    status: 'all',
+    type: 'all',
+  });
 
   const [totalRoles, setTotalRoles] = useState(0);
   const [roleStats, setRoleStats] = useState(null);
@@ -216,7 +221,6 @@ const SchoolAlcManager = () => {
     { key: 'name', label: 'Role Name', type: 'text', placeholder: 'Search by role name…' },
     { key: 'description', label: 'Description', type: 'text', placeholder: 'Search description…' },
   ];
-
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
     guardName: 'web',
@@ -238,6 +242,10 @@ const SchoolAlcManager = () => {
         per_page: rowsPerPage,
       };
 
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
+      if (appliedFilters.type !== 'all') params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
+
       // Add filter parameters
       Object.keys(activeFilters).forEach((key) => {
         if (activeFilters[key]) {
@@ -245,16 +253,12 @@ const SchoolAlcManager = () => {
         }
       });
 
-      const [res, analyticsRes, allRolesRes, summaryStatsRes] = await Promise.allSettled([
+      const [res, summaryStatsRes] = await Promise.allSettled([
         aclApi.getSchoolRoles(params),
-        aclApi.getSchoolRoleAnalytics({ per_page: 100 }),
-        aclApi.getSchoolRoles({ without_pagination: true }),
         aclApi.getSchoolRoleSummaryStats(),
       ]);
 
       const rolesResponse = res.status === 'fulfilled' ? res.value : null;
-      const analyticsResponse = analyticsRes.status === 'fulfilled' ? analyticsRes.value : null;
-      const allRolesResponse = allRolesRes.status === 'fulfilled' ? allRolesRes.value : null;
       const summaryStatsResponse = summaryStatsRes.status === 'fulfilled' ? summaryStatsRes.value : null;
 
       if (summaryStatsResponse?.data) {
@@ -266,42 +270,11 @@ const SchoolAlcManager = () => {
 
       if (!Array.isArray(rolesArray)) rolesArray = [];
 
-      let fetchedAllRoles = allRolesResponse?.data?.data ?? allRolesResponse?.data ?? [];
-      if (!Array.isArray(fetchedAllRoles)) fetchedAllRoles = [];
-      setAllSystemRoles(fetchedAllRoles);
-
-      const analyticsData = analyticsResponse?.data?.data ?? analyticsResponse?.data ?? [];
-      const analyticsMap = {};
-      if (Array.isArray(analyticsData)) {
-        analyticsData.forEach((item) => {
-          if (item.id) analyticsMap[item.id] = item;
-          if (item.role) analyticsMap[item.role.toLowerCase()] = item;
-          if (item.name) analyticsMap[item.name.toLowerCase()] = item;
-        });
-      }
-
-      const enrichedRoles = rolesArray.map((role) => {
-        const match =
-          analyticsMap[role.id] ||
-          (role.name ? analyticsMap[role.name.toLowerCase()] : null);
-
-        const count =
-          role.users_count ??
-          role.totalUsers ??
-          role.total_users ??
-          role.user_count ??
-          role.assigned_users_count ??
-          match?.totalUsers ??
-          match?.users_count ??
-          match?.total_users ??
-          (Array.isArray(role.users) ? role.users.length : 0);
-
-        return {
-          ...role,
-          users_count: count,
-          totalUsers: count,
-        };
-      });
+      const enrichedRoles = rolesArray.map((role) => ({
+        ...role,
+        users_count: role.users_count ?? 0,
+        totalUsers: role.users_count ?? 0,
+      }));
 
       setRows(enrichedRoles);
       setTotalRoles(total);
@@ -316,7 +289,7 @@ const SchoolAlcManager = () => {
   useEffect(() => {
     fetchRoles();
     fetchAllPermissions();
-  }, [page, rowsPerPage, activeFilters]);
+  }, [page, rowsPerPage, activeFilters, appliedFilters]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -416,8 +389,8 @@ const SchoolAlcManager = () => {
 
   const handleToggleRoleStatus = async (row) => {
     const isCurrentlyActive = row.status !== 'Inactive' && row.status !== 'inactive';
-    const newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
-    const assignedUsers = Number(row.users_count ?? row.totalUsers ?? row.total_users ?? (Array.isArray(row.users) ? row.users.length : 0));
+    const newStatus = isCurrentlyActive ? 'inactive' : 'active';
+    const assignedUsers = Number(row.users_count ?? 0);
 
     if (isCurrentlyActive && assignedUsers > 0) {
       notify.error(`Cannot deactivate "${row.name}". Please remove all assigned users from this role first.`);
@@ -428,9 +401,7 @@ const SchoolAlcManager = () => {
     try {
       if (row.id) {
         await aclApi.updateSchoolRole(row.id, {
-          name: row.name,
-          status: newStatus.toLowerCase(),
-          is_active: !isCurrentlyActive,
+          status: newStatus,
         });
       }
       notify.success(`Role ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully!`);
@@ -457,7 +428,6 @@ const SchoolAlcManager = () => {
     setConverting(true);
     try {
       await aclApi.updateSchoolRole(roleToConvert.id, {
-        name: roleToConvert.name,
         is_sys: 'yes',
       });
       notify.success(`Role "${roleToConvert.name}" converted to System Role successfully!`);
@@ -533,33 +503,7 @@ const SchoolAlcManager = () => {
   }, [roleStats, allSystemRoles, rows, totalRoles]);
 
   // ── Filtered Rows ──────────────────────────────────────────────────────────
-  const filteredRows = useMemo(() => {
-    if (!rows || !Array.isArray(rows)) return [];
-
-    return rows.filter((row) => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const nameMatch = row?.name?.toLowerCase()?.includes(q);
-        const descMatch = row?.description?.toLowerCase()?.includes(q);
-        if (!nameMatch && !descMatch) return false;
-      }
-
-      if (statusFilter !== 'all') {
-        const rowStatus = (row?.status || (row?.is_active === false ? 'inactive' : 'active')).toLowerCase();
-        if (rowStatus !== statusFilter.toLowerCase()) return false;
-      }
-
-      if (typeFilter !== 'all') {
-        const isSystem = row?.is_sys === 'yes' || row?.is_system === true;
-        const isCustom = row?.is_sys === 'no' || (!isSystem && (row?.guard_name === 'web' || row?.type === 'Custom' || row?.is_system === false));
-
-        if (typeFilter === 'custom' && !isCustom) return false;
-        if (typeFilter === 'system' && !isSystem) return false;
-      }
-
-      return true;
-    });
-  }, [rows, searchQuery, statusFilter, typeFilter]);
+  const filteredRows = rows;
 
   const handleExportRoles = () => {
     if (!filteredRows || filteredRows.length === 0) {
@@ -605,6 +549,16 @@ const SchoolAlcManager = () => {
     notify.success('Roles exported successfully!');
   };
 
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    setAppliedFilters({
+      search: searchInput.trim(),
+      status: statusFilter,
+      type: typeFilter,
+    });
+    setPage(0);
+  };
+
   const handleFilterApply = (filters) => {
     setActiveFilters(filters);
     setPage(0);
@@ -612,13 +566,25 @@ const SchoolAlcManager = () => {
 
   const handleFilterReset = () => {
     setActiveFilters({});
-    setSearchQuery('');
+    setSearchInput('');
     setStatusFilter('all');
     setTypeFilter('all');
+    setAppliedFilters({
+      search: '',
+      status: 'all',
+      type: 'all',
+    });
     setPage(0);
   };
 
-  const hasFilters = searchQuery !== '' || statusFilter !== 'all' || typeFilter !== 'all' || activeFilterCount > 0;
+  const hasFilters =
+    appliedFilters.search !== '' ||
+    appliedFilters.status !== 'all' ||
+    appliedFilters.type !== 'all' ||
+    searchInput !== '' ||
+    statusFilter !== 'all' ||
+    typeFilter !== 'all' ||
+    activeFilterCount > 0;
 
   return (
     <PageContainer title="Acl Manager" description="Access Control List Management for School">
@@ -752,6 +718,8 @@ const SchoolAlcManager = () => {
               }}
             >
               <Box
+                component="form"
+                onSubmit={handleSearchSubmit}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -763,12 +731,16 @@ const SchoolAlcManager = () => {
                 <TextField
                   placeholder="Search roles by name or description..."
                   size="small"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearchSubmit();
+                    }
+                  }}
                   sx={{
                     minWidth: { xs: '100%', sm: 280, md: 320 },
-                    '& .MuiOutlinedInput-root': {
-                    },
                   }}
                   slotProps={{
                     input: {
@@ -803,51 +775,44 @@ const SchoolAlcManager = () => {
                   </Select>
                 </FormControl>
 
-                {/* <Button
-                  variant="outlined"
+                <Button
+                  variant="contained"
+                  color="primary"
                   size="small"
-                  startIcon={<IconAdjustmentsHorizontal size={18} />}
-                  onClick={() => setFilterDrawerOpen(true)}
-                  data-tour="acl-role-filter"
+                  onClick={handleSearchSubmit}
+                  startIcon={<SearchIcon fontSize="small" />}
                   sx={{
-                    px: 2,
+                    px: 2.5,
                     py: 0.8,
-                    color: 'text.primary',
-                    borderColor: 'divider',
-                    fontWeight: activeFilterCount > 0 ? 700 : 500,
+                    whiteSpace: 'nowrap',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    height: 40,
+                    borderRadius: 1.5,
                   }}
                 >
-                  More Filters
-                  {activeFilterCount > 0 && (
-                    <Box
-                      component="span"
-                      sx={{
-                        ml: 1,
-                        px: 0.8,
-                        py: 0.1,
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        borderRadius: '10px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {activeFilterCount}
-                    </Box>
-                  )}
-                </Button> */}
+                  Search
+                </Button>
 
                 {hasFilters && (
                   <Button
-                    variant="text"
+                    variant="outlined"
+                    color="primary"
                     size="small"
                     onClick={handleFilterReset}
+                    sx={{
+                      px: 2,
+                      py: 0.8,
+                      whiteSpace: 'nowrap',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      height: 40,
+                      borderRadius: 1.5,
+                    }}
                   >
                     Clear Filter
                   </Button>
                 )}
-
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

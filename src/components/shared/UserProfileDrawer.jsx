@@ -741,11 +741,11 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       setSubmittingPassword(true);
       const updatePromise = isLandlordView
         ? api.post(`/v1/landlord/users/${targetId}/password`, {
-            new_password: passwordForm.new_password,
-          })
+          new_password: passwordForm.new_password,
+        })
         : aclApi.changeSchoolUserPassword(targetId, {
-            new_password: passwordForm.new_password,
-          });
+          new_password: passwordForm.new_password,
+        });
 
       updatePromise
         .then(() => {
@@ -1322,37 +1322,6 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
               </Paper>
             </Box>
 
-            {/* Footer Bar */}
-            {/* <Box
-              p={2.5}
-              sx={{
-                borderTop: `1px solid ${theme.palette.divider}`,
-                bgcolor: 'background.paper',
-              }}
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Button
-                variant="outlined"
-                size="medium"
-                color="inherit"
-                onClick={() => handleCopy(email, 'footer_email')}
-                startIcon={copiedField === 'footer_email' ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                sx={{ borderRadius: 2 }}
-              >
-                {copiedField === 'footer_email' ? 'Email Copied' : 'Copy Email'}
-              </Button>
-              <Button
-                variant="contained"
-                size="medium"
-                onClick={onClose}
-                color="primary"
-                sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
-              >
-                Done
-              </Button>
-            </Box> */}
           </Box>
         )}
       </Drawer>

@@ -57,12 +57,22 @@ const SchoolAssignmentManagement = () => {
   const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [totalRows, setTotalRows] = useState(0);
+
   const [searchInput, setSearchInput] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [availableRoles, setAvailableRoles] = useState([]);
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    role: 'all',
+    status: 'all',
+  });
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -81,7 +91,15 @@ const SchoolAssignmentManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await aclApi.getSchoolUsers();
+      const params = {
+        page: page + 1,
+        per_page: rowsPerPage,
+        search: appliedFilters.search || undefined,
+        role: appliedFilters.role !== 'all' ? appliedFilters.role : undefined,
+        status: appliedFilters.status !== 'all' ? appliedFilters.status : undefined,
+      };
+
+      const res = await aclApi.getSchoolUsers(params);
 
       let usersData = [];
       if (Array.isArray(res.data)) {
@@ -89,6 +107,9 @@ const SchoolAssignmentManagement = () => {
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
       }
+
+      const meta = res.meta || res.data?.meta || {};
+      setTotalRows(meta.total ?? (Array.isArray(usersData) ? usersData.length : 0));
 
       const normalized = (usersData || []).map((u) => ({
         ...u,
@@ -115,9 +136,24 @@ const SchoolAssignmentManagement = () => {
     }
   };
 
+  const fetchRolesList = async () => {
+    try {
+      const res = await aclApi.getSchoolRolesList();
+      if (res?.data && Array.isArray(res.data)) {
+        setAvailableRoles(res.data.map((r) => r.name));
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles list:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+  }, [appliedFilters, page, rowsPerPage]);
+
+  useEffect(() => {
     fetchStats();
+    fetchRolesList();
   }, []);
 
   const handleMenuOpen = (event, row) => {
@@ -326,44 +362,30 @@ const SchoolAssignmentManagement = () => {
     }
   };
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      if (searchInput) {
-        const term = searchInput.toLowerCase();
-        const nameMatch = user.name?.toLowerCase().includes(term);
-        const emailMatch = user.email?.toLowerCase().includes(term);
-        const idMatch = user.id?.toString().includes(term);
-        if (!nameMatch && !emailMatch && !idMatch) return false;
-      }
-
-      if (roleFilter !== 'all') {
-        const hasRole = user.assignedRoles?.some((r) => {
-          const rName = typeof r === 'object' ? r.name : r;
-          return rName === roleFilter;
-        });
-        if (!hasRole) return false;
-      }
-
-      if (statusFilter !== 'all') {
-        const uStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase();
-        if (uStatus !== statusFilter.toLowerCase()) return false;
-      }
-
-      return true;
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    setPage(0);
+    setAppliedFilters({
+      search: searchInput,
+      role: roleFilter,
+      status: statusFilter,
     });
-  }, [users, searchInput, roleFilter, statusFilter]);
+  };
 
-  const paginatedFilteredUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredUsers.slice(start, start + rowsPerPage);
-  }, [filteredUsers, page, rowsPerPage]);
-
-  const resetFilters = () => {
+  const handleClearFilters = () => {
     setSearchInput('');
     setRoleFilter('all');
     setStatusFilter('all');
     setPage(0);
+    setAppliedFilters({
+      search: '',
+      role: 'all',
+      status: 'all',
+    });
   };
+
+  const filteredUsers = users;
+  const paginatedFilteredUsers = users;
 
   const handleExportUsers = () => {
     if (!filteredUsers || filteredUsers.length === 0) {
@@ -452,7 +474,7 @@ const SchoolAssignmentManagement = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view breakdown of recent changes">
+          <Tooltip title="Click to view breakdown of recent changes" placement="top">
             <Box
               onClick={() => setRecentChangesModalOpen(true)}
               sx={{
@@ -500,6 +522,8 @@ const SchoolAssignmentManagement = () => {
             }}
           >
             <Box
+              component="form"
+              onSubmit={handleSearchSubmit}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -513,7 +537,7 @@ const SchoolAssignmentManagement = () => {
                 size="small"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                sx={{ minWidth: { xs: '100%', sm: 260, md: 300 } }}
+                sx={{ minWidth: { xs: '100%', sm: 240, md: 280 } }}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -528,13 +552,10 @@ const SchoolAssignmentManagement = () => {
               <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select
                   value={roleFilter}
-                  onChange={(e) => {
-                    setRoleFilter(e.target.value);
-                    setPage(0);
-                  }}
+                  onChange={(e) => setRoleFilter(e.target.value)}
                 >
                   <MenuItem value="all">All Roles</MenuItem>
-                  {allRolesList.map((r) => (
+                  {availableRoles.map((r) => (
                     <MenuItem key={r} value={r}>
                       {formatRoleName(r)}
                     </MenuItem>
@@ -545,10 +566,7 @@ const SchoolAssignmentManagement = () => {
               <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select
                   value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setPage(0);
-                  }}
+                  onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -556,12 +574,23 @@ const SchoolAssignmentManagement = () => {
                 </Select>
               </FormControl>
 
-              {(searchInput || roleFilter !== 'all' || statusFilter !== 'all') && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                type="submit"
+                sx={{ px: 2.5, py: 0.8, textTransform: 'none', fontWeight: 600 }}
+              >
+                Search
+              </Button>
+
+              {(appliedFilters.search || appliedFilters.role !== 'all' || appliedFilters.status !== 'all' || searchInput || roleFilter !== 'all' || statusFilter !== 'all') && (
                 <Button
-                  variant="text"
+                  variant="outlined"
+                  color="error"
                   size="small"
-                  onClick={resetFilters}
-                  sx={{ color: 'error.main', fontSize: '13px' }}
+                  onClick={handleClearFilters}
+                  sx={{ px: 2, py: 0.8, textTransform: 'none', fontWeight: 600 }}
                 >
                   Clear Filters
                 </Button>
@@ -766,7 +795,7 @@ const SchoolAssignmentManagement = () => {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25, 50, 100]}
             component="div"
-            count={filteredUsers.length}
+            count={totalRows}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(_, newPage) => setPage(newPage)}

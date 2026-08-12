@@ -32,8 +32,8 @@ const aclApi = {
         return response.data;
     },
 
-    getSchoolUsers: async () => {
-        const response = await tenantApi.get('/censis/acl/assignments/users/list');
+    getSchoolUsers: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/list', { params });
         return response.data;
     },
 

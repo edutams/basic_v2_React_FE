@@ -23,7 +23,7 @@ const SetupRedirectHandler = () => {
     // ── APPROVED → free to go anywhere except setup pages
     if (onboarding_status === 'approved') {
       if (isSetupPage) {
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
       return;
     }

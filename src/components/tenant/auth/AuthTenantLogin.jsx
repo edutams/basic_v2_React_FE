@@ -35,7 +35,10 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  // After login, always land on a /dashboard-prefixed URL — never the bare
+  // root. Other protected pages (class-ledger, etc.) still return as before.
+  const from = location.state?.from?.pathname;
+  const redirectTo = !from || from === '/' ? '/dashboard' : from;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -78,7 +81,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      navigate(from, { replace: true });
+      navigate(redirectTo, { replace: true });
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }

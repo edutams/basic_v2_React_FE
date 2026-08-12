@@ -43,7 +43,7 @@ const CompleteSetup = () => {
   }, []); // ← runs once on mount
 
   // Poll every 15s while waiting for approval
-  // SetupRedirectHandler will auto-navigate to '/' once approved
+  // SetupRedirectHandler will auto-navigate to '/dashboard' once approved
   useEffect(() => {
     if (isApproved) return;
     const interval = setInterval(refreshTenantInfo, 15000);
@@ -56,7 +56,7 @@ const CompleteSetup = () => {
   // "Welcome! Continue to Dashboard"
 
   const handleContinue = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const handleBack = () => navigate('/school-profile?stage=1&edit=true'); // or stage=1

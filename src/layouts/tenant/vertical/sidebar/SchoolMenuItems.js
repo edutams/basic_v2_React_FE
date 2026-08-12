@@ -20,7 +20,7 @@ const SchoolMenuItems = [
   {
     title: 'Dashboard',
     icon: IconChartPie,
-    href: '/',
+    href: '/dashboard',
     permission: ['dashboard.view'],
   },
   {

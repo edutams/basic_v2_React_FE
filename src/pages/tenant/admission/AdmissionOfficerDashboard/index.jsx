@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Grid, Stack, Typography, Paper, Skeleton, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Paper, Skeleton, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchClasses } from '@/api/tenant/bursary/bursarySettingsApi';
@@ -242,31 +242,19 @@ const AdmissionOfficerDashboard = () => {
       <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 14, mb: 1.5 }}>
         Enrollment Insights
       </Typography>
-      <Grid container spacing={3} mb={3}>
-        {/* Left column (~42%): two stacked cards — bar chart, then ratio + funnel */}
+      <Grid container spacing={3}>
+        {/* Left column: Enrollment Across Classes (with its own class filter) */}
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Stack spacing={3} sx={{ height: '100%' }}>
-            {enrollmentByClass.loading ? (
-              <PanelSkeleton height={300} />
-            ) : (
-              <EnrollmentAcrossClasses
-                byClass={byClass}
-                classes={classes}
-                selectedClass={selectedClass}
-                onClassChange={setSelectedClass}
-              />
-            )}
-            {conversionFunnel.loading ? (
-              <PanelSkeleton height={220} />
-            ) : (
-              <RatioAndFunnel
-                overallRatio={overallRatio}
-                conversionFunnel={conversionFunnel.data}
-                funnelAdmittedRate={funnelAdmittedRate}
-                enrollmentRate={enrollmentRate}
-              />
-            )}
-          </Stack>
+          {enrollmentByClass.loading ? (
+            <PanelSkeleton height={300} />
+          ) : (
+            <EnrollmentAcrossClasses
+              byClass={byClass}
+              classes={classes}
+              selectedClass={selectedClass}
+              onClassChange={setSelectedClass}
+            />
+          )}
         </Grid>
 
         {/* Enrollment Across Sessions (middle ~33%) */}
@@ -295,6 +283,25 @@ const AdmissionOfficerDashboard = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* ── Full-width row: Enrollment Ratio + Conversion Funnel ────────
+          The funnel spans most of the dashboard so every step is clearly
+          visible, with each card on its own soft-colored background.
+          It reads overallRatio from the insights section, so it waits for
+          both sections (same pattern as Financial Metrics) to avoid a
+          flash of 0% while one of them is still loading. */}
+      <Box mb={3}>
+        {conversionFunnel.loading || enrollmentByClass.loading ? (
+          <PanelSkeleton height={190} />
+        ) : (
+          <RatioAndFunnel
+            overallRatio={overallRatio}
+            conversionFunnel={conversionFunnel.data}
+            funnelAdmittedRate={funnelAdmittedRate}
+            enrollmentRate={enrollmentRate}
+          />
+        )}
+      </Box>
 
       <DashboardFooter lastUpdated={lastUpdated} />
     </PageContainer>

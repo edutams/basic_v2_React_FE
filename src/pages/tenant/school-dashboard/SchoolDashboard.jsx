@@ -3,6 +3,7 @@ import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import PageUnderDevelopment from '@/components/shared/PageUnderDevelopment';
 import ParentDashboard from '@/pages/tenant/admission/ParentDashboard';
+import ParentDashboard2 from '@/pages/tenant/admission/parent-dashboard/ParentDashboard2';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -42,7 +43,8 @@ export default function SchoolDashboard() {
   return (
     <PageContainer title={dashboardTitle} description={dashboardDescription}>
       {isParent ? (
-        <ParentDashboard />
+        <ParentDashboard2 />
+        // <ParentDashboard />
       ) : isStaff ? (
         <PageUnderDevelopment
           title="Staff Dashboard Under Development"

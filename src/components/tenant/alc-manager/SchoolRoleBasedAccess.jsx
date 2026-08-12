@@ -64,6 +64,27 @@ const SchoolRoleBasedAccess = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuRole, setActiveMenuRole] = useState(null);
 
+  const [summaryStats, setSummaryStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSummaryStats();
+  }, []);
+
+  const fetchSummaryStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await aclApi.getSchoolRoleAnalysisStats();
+      if (res?.data) {
+        setSummaryStats(res.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch summary stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
   }, [page, rowsPerPage, nameFilter]);
@@ -146,16 +167,16 @@ const SchoolRoleBasedAccess = () => {
     });
   }, [roles, statusFilter]);
 
-  // Stat calculations
+  // Stat calculations from API or fallbacks
   const stats = useMemo(() => {
-    const totalR = totalRows || roles.length || 12;
-    const totalP = roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0) || 386;
-    const totalU = roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1248;
-    const activeU = roles.filter(r => (r.status || 'active').toLowerCase() === 'active').reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1106;
-    const orphanedR = roles.filter(r => (r.totalUsers ?? r.users_count ?? 0) === 0).length || 2;
+    const totalR = summaryStats?.total_roles ?? (totalRows || roles.length || 12);
+    const totalP = summaryStats?.total_permissions ?? (roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0) || 386);
+    const totalU = summaryStats?.total_users ?? (roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1248);
+    const activeU = summaryStats?.active_access ?? (roles.filter(r => (r.status || 'active').toLowerCase() === 'active').reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1106);
+    const orphanedR = summaryStats?.orphaned_roles ?? (roles.filter(r => (r.totalUsers ?? r.users_count ?? 0) === 0).length || 2);
 
     return { totalR, totalP, totalU, activeU, orphanedR };
-  }, [roles, totalRows]);
+  }, [summaryStats, roles, totalRows]);
 
   // Chart configuration for Access Distribution
   const chartOptions = {
@@ -238,7 +259,7 @@ const SchoolRoleBasedAccess = () => {
             subtitle="Across the system"
             icon={IconUserCheck}
             colorIndex={0}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -250,7 +271,7 @@ const SchoolRoleBasedAccess = () => {
             subtitle="System permissions"
             icon={IconLock}
             colorIndex={1}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -262,7 +283,7 @@ const SchoolRoleBasedAccess = () => {
             subtitle="Across all roles"
             icon={IconUsers}
             colorIndex={2}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -274,7 +295,7 @@ const SchoolRoleBasedAccess = () => {
             subtitle="Users with active roles"
             icon={IconKey}
             colorIndex={3}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
 
@@ -286,7 +307,7 @@ const SchoolRoleBasedAccess = () => {
             subtitle="No users assigned"
             icon={IconRefresh}
             colorIndex={4}
-            loading={loading}
+            loading={statsLoading}
           />
         </Grid>
       </Grid>

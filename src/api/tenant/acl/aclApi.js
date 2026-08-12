@@ -68,6 +68,11 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolRoleAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/roles/analysis_stats');
+        return response.data;
+    },
+
     getSchoolAssignmentSummaryStats: async () => {
         const response = await tenantApi.get('/censis/acl/assignments/users/summary_stats');
         return response.data;

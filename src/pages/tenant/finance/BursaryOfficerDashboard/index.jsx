@@ -37,7 +37,9 @@ const PanelSkeleton = ({ height = 240 }) => {
         p: 2.5,
         borderRadius: 3,
         background: isDark ? theme.palette.background.paper : '#fff',
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${theme.palette.grey[200]}`,
+        border: isDark
+          ? '1px solid rgba(255,255,255,0.12)'
+          : `1px solid ${theme.palette.grey[200]}`,
         boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
       }}
     >
@@ -186,7 +188,14 @@ const BursaryOfficerDashboard = () => {
 
   const handleExport = () => {
     const rows = [
-      ['Class', 'Expected Fees (₦)', 'Collected Fees (₦)', 'Outstanding Fees (₦)', 'Efficiency (%)', 'Status'],
+      [
+        'Class',
+        'Expected Fees (₦)',
+        'Collected Fees (₦)',
+        'Outstanding Fees (₦)',
+        'Efficiency (%)',
+        'Status',
+      ],
       ...matrixRows.map((r) => [
         r.class,
         r.expected_fees,
@@ -210,14 +219,17 @@ const BursaryOfficerDashboard = () => {
 
   const handleSessionChange = (value) => {
     setSelectedSession(value);
-    const firstTerm = sessionTerms.find((s) => s.session?.sesname === value)
-      ?.display_term?.display_name;
+    const firstTerm = sessionTerms.find((s) => s.session?.sesname === value)?.display_term
+      ?.display_name;
     setSelectedTerm(firstTerm || '');
   };
 
   // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
   // (uppercase label, icon chip top-right, big value, progress + sublabel) so
   // the header area keeps its shape while revenue-performance loads.
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const kpiSkeleton = (
     <Grid container columns={10} spacing={2} mb={3}>
       {[0, 1, 2, 3, 4].map((i) => (
@@ -227,7 +239,9 @@ const BursaryOfficerDashboard = () => {
             sx={{
               p: 2.5,
               borderRadius: '16px',
-              border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${theme.palette.grey[200]}`,
+              border: isDark
+                ? '1px solid rgba(255,255,255,0.12)'
+                : `1px solid ${theme.palette.grey[200]}`,
               background: isDark ? theme.palette.background.paper : '#fff',
             }}
           >
@@ -244,7 +258,10 @@ const BursaryOfficerDashboard = () => {
   );
 
   return (
-    <PageContainer title="Bursary Dashboard" description="Overview of revenue performance and collections">
+    <PageContainer
+      title="Bursary Dashboard"
+      description="Overview of revenue performance and collections"
+    >
       <DashboardHeader
         dataAsOf={dataAsOf}
         sessions={sessions}

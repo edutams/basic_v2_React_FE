@@ -116,7 +116,7 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   sx={{
-                    fontSize: { xs: 20, sm: 22 },
+                    fontSize: { xs: 16, sm: 18 },
                     fontWeight: 800,
                     color: BLUE,
                     lineHeight: 1,

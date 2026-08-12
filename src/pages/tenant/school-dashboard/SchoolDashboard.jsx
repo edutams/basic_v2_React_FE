@@ -6,6 +6,7 @@ import ParentDashboard from '@/pages/tenant/admission/ParentDashboard';
 import AdmissionOfficerDashboard from '@/pages/tenant/admission/AdmissionOfficerDashboard';
 import BursaryOfficerDashboard from '@/pages/tenant/finance/BursaryOfficerDashboard';
 import AdminDashboard from '@/pages/tenant/school-dashboard/AdminDashboard';
+import ParentDashboard2 from '../admission/parent-dashboard/ParentDashboard2';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -73,7 +74,7 @@ export default function SchoolDashboard() {
   return (
     <PageContainer title={dashboardTitle} description={dashboardDescription}>
       {isParent ? (
-        <ParentDashboard />
+        <ParentDashboard2 />
       ) : isAdmin ? (
         <AdminDashboard />
       ) : isAdmissionOfficer ? (

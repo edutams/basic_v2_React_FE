@@ -247,7 +247,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
                   const fname = u.fname || u.first_name || item.fname || item.first_name || (typeof u.name === 'string' ? u.name.split(' ')[0] : '') || '';
                   const lname = u.lname || u.last_name || item.lname || item.last_name || (typeof u.name === 'string' ? u.name.split(' ').slice(1).join(' ') : '') || '';
                   const displayName = u.full_name || item.full_name || (fname ? `${fname} ${lname}`.trim() : (u.name || item.name || '—'));
-                  const email = u.email || item.email || '—';
+                  const email = u.email || item.email || 'No email added yet';
                   const rawStatus = item.status || u.status || (u.is_active === false ? 'Inactive' : 'Active');
                   const statusLabel = rawStatus ? (rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase()) : 'Active';
                   const isInactive = statusLabel === 'Inactive' || statusLabel === 'Disabled';

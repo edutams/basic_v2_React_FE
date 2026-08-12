@@ -82,8 +82,9 @@ const SchoolRoleBasedAccess = () => {
     setStatsLoading(true);
     try {
       const res = await aclApi.getSchoolRoleAnalysisStats();
-      if (res?.data) {
-        setSummaryStats(res.data);
+      const payload = res?.data?.data || res?.data || res;
+      if (payload && typeof payload === 'object') {
+        setSummaryStats(payload);
       }
     } catch (error) {
       console.error('Failed to fetch summary stats:', error);
@@ -174,13 +175,19 @@ const SchoolRoleBasedAccess = () => {
     });
   }, [roles, statusFilter]);
 
-  // Stat calculations from API or fallbacks
+  // Stat calculations from API
   const stats = useMemo(() => {
-    const totalR = summaryStats?.total_roles ?? (totalRows || roles.length || 12);
-    const totalP = summaryStats?.total_permissions ?? (roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0) || 386);
-    const totalU = summaryStats?.total_users ?? (roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1248);
-    const activeU = summaryStats?.active_access ?? (roles.filter(r => (r.status || 'active').toLowerCase() === 'active').reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0) || 1106);
-    const orphanedR = summaryStats?.orphaned_roles ?? (roles.filter(r => (r.totalUsers ?? r.users_count ?? 0) === 0).length || 2);
+    const rawTotalR = summaryStats?.total_roles ?? summaryStats?.totalRoles;
+    const rawTotalP = summaryStats?.total_permissions ?? summaryStats?.totalPermissions;
+    const rawTotalU = summaryStats?.total_users ?? summaryStats?.totalUsers;
+    const rawActiveU = summaryStats?.active_access ?? summaryStats?.activeAccess;
+    const rawOrphanedR = summaryStats?.orphaned_roles ?? summaryStats?.orphanedRoles;
+
+    const totalR = rawTotalR !== undefined && rawTotalR !== null ? Number(rawTotalR) : (totalRows || roles.length || 0);
+    const totalP = rawTotalP !== undefined && rawTotalP !== null ? Number(rawTotalP) : roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0);
+    const totalU = rawTotalU !== undefined && rawTotalU !== null ? Number(rawTotalU) : roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+    const activeU = rawActiveU !== undefined && rawActiveU !== null ? Number(rawActiveU) : roles.filter(r => (r.status || 'active').toLowerCase() === 'active').reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+    const orphanedR = rawOrphanedR !== undefined && rawOrphanedR !== null ? Number(rawOrphanedR) : roles.filter(r => (r.totalUsers ?? r.users_count ?? 0) === 0).length;
 
     return { totalR, totalP, totalU, activeU, orphanedR };
   }, [summaryStats, roles, totalRows]);
@@ -188,55 +195,53 @@ const SchoolRoleBasedAccess = () => {
   const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280', '#EC4899', '#8B5CF6'];
 
   const distributionData = useMemo(() => {
-    if (summaryStats?.distribution && summaryStats.distribution.length > 0) {
-      return summaryStats.distribution.map((item, idx) => ({
-        label: item.name,
-        count: item.users_count,
+    const dist = summaryStats?.distribution;
+    if (Array.isArray(dist) && dist.length > 0) {
+      return dist.map((item, idx) => ({
+        label: item.name || item.label || 'Role',
+        count: Number(item.users_count ?? item.count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
     }
     if (roles && roles.length > 0) {
       return roles.slice(0, 8).map((r, idx) => ({
         label: r.role ? r.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Role',
-        count: r.totalUsers ?? r.users_count ?? 0,
+        count: Number(r.totalUsers ?? r.users_count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
     }
-    return [
-      { label: 'Super Admin', count: 439, color: '#0E9F6E' },
-      { label: 'Teachers', count: 260, color: '#1A56DB' },
-      { label: 'Students', count: 200, color: '#7E3AF2' },
-      { label: 'School Staff', count: 150, color: '#D97706' },
-      { label: 'Parents', count: 100, color: '#0694A2' },
-      { label: 'Others', count: 99, color: '#6B7280' },
-    ];
+    return [];
   }, [summaryStats, roles]);
 
-  const hasPositiveData = useMemo(() => distributionData.some(d => d.count > 0), [distributionData]);
-
   const chartLabels = useMemo(() => {
-    if (!hasPositiveData) {
-      return ['Super Admin', 'Teachers', 'Students', 'School Staff', 'Parents', 'Others'];
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return ['No Users Assigned'];
+      return distributionData.map(d => d.label);
     }
-    return distributionData.map(d => d.label);
-  }, [distributionData, hasPositiveData]);
+    return ['No Users Assigned'];
+  }, [distributionData]);
 
   const chartSeries = useMemo(() => {
-    if (!hasPositiveData) {
-      return [439, 260, 200, 150, 100, 99];
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return [1];
+      return distributionData.map(d => d.count);
     }
-    return distributionData.map(d => d.count);
-  }, [distributionData, hasPositiveData]);
+    return [1];
+  }, [distributionData]);
 
   const chartColors = useMemo(() => {
-    if (!hasPositiveData) {
-      return ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280'];
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return ['#9CA3AF'];
+      return distributionData.map(d => d.color);
     }
-    return distributionData.map(d => d.color);
-  }, [distributionData, hasPositiveData]);
+    return ['#9CA3AF'];
+  }, [distributionData]);
 
   // Chart configuration for Access Distribution
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     chart: {
       type: 'donut',
       fontFamily: 'inherit',
@@ -280,7 +285,7 @@ const SchoolRoleBasedAccess = () => {
       },
     },
     stroke: { width: 3, colors: ['#ffffff'] },
-  };
+  }), [chartLabels, chartColors, stats.totalU]);
 
   const chartLegendData = distributionData;
 
@@ -368,8 +373,12 @@ const SchoolRoleBasedAccess = () => {
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <Box>
-                <Box sx={{ height: 210, my: 1, display: 'flex', justifyContent: 'center' }}>
-                  <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={210} />
+                <Box sx={{ height: 210, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {statsLoading ? (
+                    <CircularProgress size={32} />
+                  ) : (
+                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={210} />
+                  )}
                 </Box>
 
                 {/* Custom Legend List (Show Top 4 items on card) */}

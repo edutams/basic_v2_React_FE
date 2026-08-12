@@ -8,7 +8,14 @@ import { BLUE, GREEN, PURPLE, formatCurrency, num } from '../constants';
 /**
  * Row 2: Financial Metrics — three fee cards + revenue breakdown donut card.
  */
-const FinancialMetrics = ({ financial_metrics, totalFees, total_applicants, total_accepted, prevSessionLabel, donutData }) => (
+const FinancialMetrics = ({
+  financial_metrics = {},
+  totalFees,
+  total_applicants = {},
+  total_accepted = {},
+  prevSessionLabel,
+  donutData,
+}) => (
   <Grid container spacing={2} mb={3}>
     <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
       <FeeCard

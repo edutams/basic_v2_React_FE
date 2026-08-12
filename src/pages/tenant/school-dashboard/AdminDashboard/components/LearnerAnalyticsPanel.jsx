@@ -120,7 +120,7 @@ const LearnerAnalyticsPanel = ({ la, attendanceDonut, examData, onViewAll }) => 
                   innerRadius={34}
                   outerRadius={50}
                   centerValue={`${num(la.attendance_rate)}%`}
-                  centerTitle="Average Attendance"
+                  centerTitle="Avg. Atten."
                 />
               </Box>
               <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>

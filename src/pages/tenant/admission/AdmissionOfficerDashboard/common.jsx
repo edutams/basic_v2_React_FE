@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, Stack } from '@mui/material';
+import { Box, Typography, Paper, Stack } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { TrendingUp, TrendingDown, Male, Female } from '@mui/icons-material';
 import { BLUE, GREEN, MAGENTA, num } from './constants';
@@ -20,25 +20,6 @@ export const CardShell = ({ children, sx = {} }) => (
   >
     {children}
   </Paper>
-);
-
-// Decorative "All Classes ⌄" dropdown used on chart cards
-export const ClassSelect = () => (
-  <FormControl size="small" sx={{ minWidth: 128 }}>
-    <Select
-      value="all"
-      displayEmpty
-      onChange={() => {}}
-      sx={{
-        height: 30,
-        fontSize: 10.5,
-        fontWeight: 600,
-        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
-      }}
-    >
-      <MenuItem value="all">All Classes</MenuItem>
-    </Select>
-  </FormControl>
 );
 
 // Growth footer: "↑ 18% vs 2023/24" (green on increase, red on decrease)

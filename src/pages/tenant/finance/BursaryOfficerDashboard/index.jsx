@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Grid, Typography } from '@mui/material';
+import { Grid, Paper, Skeleton, useTheme, Box, Typography } from '@mui/material';
 import { ReceiptLong, AccountBalanceWallet, ErrorOutline } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from 'src/hooks/useNotification';
@@ -17,14 +17,46 @@ import CollectionMatrix from './components/CollectionMatrix';
 import OperationalAlerts from './components/OperationalAlerts';
 
 /**
+ * Skeleton placeholder that mirrors the dashboard panel layout
+ * (icon + title bar, then content) while a section is being fetched.
+ */
+/**
+ * Sections that return arrays may briefly hold {} (initial state, or after a
+ * failed request) — coerce to [] so reducers/maps never crash during render.
+ */
+const asArray = (data) => (Array.isArray(data) ? data : []);
+
+const PanelSkeleton = ({ height = 240 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2.5,
+        borderRadius: 3,
+        background: isDark ? theme.palette.background.paper : '#fff',
+        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${theme.palette.grey[200]}`,
+        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+        <Skeleton variant="rounded" width={36} height={36} />
+        <Skeleton variant="text" width={160} height={16} />
+      </Box>
+      <Skeleton variant="rounded" height={height} sx={{ width: '100%' }} />
+    </Paper>
+  );
+};
+
+/**
  * ── Bursary Officer Dashboard ─────────────────────────────────────────
- * Fetches bursary stats and composes the section components.
+ * Each analytics section is fetched from its own endpoint and loads
+ * independently, so panels appear as soon as their data is ready.
  */
 const BursaryOfficerDashboard = () => {
   const notify = useNotification();
-
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState(null);
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -84,29 +116,51 @@ const BursaryOfficerDashboard = () => {
     [sessionTerms, selectedSession],
   );
 
-  // Fetch stats whenever a term is selected (skip until terms resolve)
-  useEffect(() => {
-    if (!sessionTermsLoaded) return;
+  // Each section manages its own { data, loading } state; requests wait
+  // until the term resolves so the first fetch already carries the filter.
+  const params = useMemo(
+    () => (sessionTermId ? { session_term_id: sessionTermId } : {}),
+    [sessionTermId],
+  );
+  const paramsKey = JSON.stringify(params);
+  const enabled = sessionTermsLoaded && !!sessionTermId;
 
-    const fetchDashboardStats = async () => {
-      setLoading(true);
-      try {
-        const params = sessionTermId ? { session_term_id: sessionTermId } : {};
-        const response = await tenantApi.get('/dashboard/bursary/stats', { params });
+  const useSection = (path) => {
+    const [data, setData] = useState({});
+    const [loading, setLoading] = useState(true);
 
-        if (response.data.status) {
-          setDashboardData(response.data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard stats:', error);
-        notify.error('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+    useEffect(() => {
+      if (!enabled) {
+        return;
       }
-    };
+      let mounted = true;
+      setLoading(true);
+      tenantApi
+        .get(path, { params })
+        .then((res) => {
+          if (mounted) setData(res.data?.status ? res.data.data : {});
+        })
+        .catch(() => {
+          if (mounted) setData({});
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
+      return () => {
+        mounted = false;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [path, paramsKey, enabled]);
 
-    fetchDashboardStats();
-  }, [sessionTermId, sessionTermsLoaded, notify]);
+    return { data, loading };
+  };
+
+  const rp = useSection('/dashboard/bursary/revenue-performance');
+  const feeIntelligence = useSection('/dashboard/bursary/fee-intelligence');
+  const revenueDistribution = useSection('/dashboard/bursary/revenue-distribution');
+  const paymentCategories = useSection('/dashboard/bursary/payment-categories');
+  const collectionMatrix = useSection('/dashboard/bursary/collection-matrix');
+  const operationalAlerts = useSection('/dashboard/bursary/operational-alerts');
 
   const dataAsOf = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -114,27 +168,9 @@ const BursaryOfficerDashboard = () => {
     year: 'numeric',
   });
 
-  if (loading || !dashboardData) {
-    return (
-      <PageContainer title="Bursary Dashboard" description="Overview of revenue performance and collections">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <Typography>Loading...</Typography>
-        </Box>
-      </PageContainer>
-    );
-  }
-
-  const {
-    revenue_performance: rp = {},
-    fee_intelligence = [],
-    revenue_distribution = [],
-    payment_categories = [],
-    operational_alerts = [],
-    class_level_collection_matrix: matrix = [],
-  } = dashboardData;
-
+  const matrixRows = asArray(collectionMatrix.data);
   const filteredMatrix =
-    statusFilter === 'all' ? matrix : matrix.filter((r) => r.status === statusFilter);
+    statusFilter === 'all' ? matrixRows : matrixRows.filter((r) => r.status === statusFilter);
 
   const totals = filteredMatrix.reduce(
     (acc, row) => ({
@@ -148,7 +184,10 @@ const BursaryOfficerDashboard = () => {
     ? ((totals.collected / totals.expected) * 100).toFixed(1)
     : '0.0';
 
-  const totalRevenue = revenue_distribution.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalRevenue = asArray(revenueDistribution.data).reduce(
+    (sum, item) => sum + (item.amount || 0),
+    0,
+  );
 
   const handleExport = () => {
     const rows = [
@@ -181,6 +220,18 @@ const BursaryOfficerDashboard = () => {
     setSelectedTerm(firstTerm || '');
   };
 
+  // KPI skeleton — mirrors the KPI card grid so the header area
+  // keeps its shape while revenue-performance loads.
+  const kpiSkeleton = (
+    <Grid container columns={10} spacing={2} mb={3}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Grid key={i} size={{ xs: 10, sm: 5, lg: 2 }}>
+          <Skeleton variant="rounded" height={150} sx={{ borderRadius: 3, transform: 'none' }} />
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
     <PageContainer title="Bursary Dashboard" description="Overview of revenue performance and collections">
       <DashboardHeader
@@ -197,89 +248,113 @@ const BursaryOfficerDashboard = () => {
       />
 
       {/* ── KPI Cards ──────────────────────────────────────────── */}
-      <Grid container columns={10} spacing={2} mb={3}>
-        <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-          <KpiCard
-            label="Total Expected Income"
-            value={formatCurrency(rp.total_expected_income)}
-            sublabel="Projected for term"
-            icon={ReceiptLong}
-            colorName="info"
-          />
+      {rp.loading ? (
+        kpiSkeleton
+      ) : (
+        <Grid container columns={10} spacing={2} mb={3}>
+          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+            <KpiCard
+              label="Total Expected Income"
+              value={formatCurrency(rp.data.total_expected_income)}
+              sublabel="Projected for term"
+              icon={ReceiptLong}
+              colorName="info"
+            />
+          </Grid>
+          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+            <KpiCard
+              label="Total Collected Income"
+              value={formatCurrency(rp.data.total_collected_income)}
+              sublabel="Actual collected"
+              icon={AccountBalanceWallet}
+              colorName="success"
+              trend={rp.data.revenue_growth}
+            />
+          </Grid>
+          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+            <KpiCard
+              label="Total Outstanding Balance"
+              value={formatCurrency(rp.data.total_outstanding_balance)}
+              sublabel="Remaining unpaid"
+              icon={ErrorOutline}
+              colorName="warning"
+            />
+          </Grid>
+          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+            <KpiCard
+              label="Collection Efficiency"
+              value={`${rp.data.collection_efficiency}%`}
+              sublabel="Collected vs Expected"
+              colorName="primary"
+              rightElement={<EfficiencyRing value={rp.data.collection_efficiency} />}
+            />
+          </Grid>
+          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+            <KpiCard
+              label="Revenue Growth"
+              value={`+${rp.data.revenue_growth}%`}
+              sublabel="vs 1st Term"
+              colorName="success"
+              rightElement={<GrowthSparkline />}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-          <KpiCard
-            label="Total Collected Income"
-            value={formatCurrency(rp.total_collected_income)}
-            sublabel="Actual collected"
-            icon={AccountBalanceWallet}
-            colorName="success"
-            trend={rp.revenue_growth}
-          />
-        </Grid>
-        <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-          <KpiCard
-            label="Total Outstanding Balance"
-            value={formatCurrency(rp.total_outstanding_balance)}
-            sublabel="Remaining unpaid"
-            icon={ErrorOutline}
-            colorName="warning"
-          />
-        </Grid>
-        <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-          <KpiCard
-            label="Collection Efficiency"
-            value={`${rp.collection_efficiency}%`}
-            sublabel="Collected vs Expected"
-            colorName="primary"
-            rightElement={<EfficiencyRing value={rp.collection_efficiency} />}
-          />
-        </Grid>
-        <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-          <KpiCard
-            label="Revenue Growth"
-            value={`+${rp.revenue_growth}%`}
-            sublabel="vs 1st Term"
-            colorName="success"
-            rightElement={<GrowthSparkline />}
-          />
-        </Grid>
-      </Grid>
+      )}
 
       {/* ── Fee Intelligence, Revenue Distribution, Payment Categories ─── */}
       <Grid container spacing={3} mb={3}>
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <FeeIntelligence fee_intelligence={fee_intelligence} />
+          {feeIntelligence.loading ? (
+            <PanelSkeleton height={380} />
+          ) : (
+            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} />
+          )}
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <RevenueDistribution
-            revenue_distribution={revenue_distribution}
-            totalRevenue={totalRevenue}
-          />
+          {revenueDistribution.loading ? (
+            <PanelSkeleton height={380} />
+          ) : (
+            <RevenueDistribution
+              revenue_distribution={asArray(revenueDistribution.data)}
+              totalRevenue={totalRevenue}
+            />
+          )}
         </Grid>
 
         <Grid size={{ xs: 12, md: 12, lg: 4 }}>
-          <PaymentCategories payment_categories={payment_categories} />
+          {paymentCategories.loading ? (
+            <PanelSkeleton height={380} />
+          ) : (
+            <PaymentCategories payment_categories={asArray(paymentCategories.data)} />
+          )}
         </Grid>
       </Grid>
 
       {/* ── Class-Level Collection Matrix + Operational Alerts ─────── */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <CollectionMatrix
-            matrix={filteredMatrix}
-            totals={totals}
-            totalEfficiency={totalEfficiency}
-            statusFilter={statusFilter}
-            onRowClick={(className) =>
-              notify.info(`Detailed breakdown for ${className} is coming soon`)
-            }
-          />
+          {collectionMatrix.loading ? (
+            <PanelSkeleton height={420} />
+          ) : (
+            <CollectionMatrix
+              matrix={filteredMatrix}
+              totals={totals}
+              totalEfficiency={totalEfficiency}
+              statusFilter={statusFilter}
+              onRowClick={(className) =>
+                notify.info(`Detailed breakdown for ${className} is coming soon`)
+              }
+            />
+          )}
         </Grid>
 
         <Grid size={{ xs: 12, lg: 3 }}>
-          <OperationalAlerts operational_alerts={operational_alerts} />
+          {operationalAlerts.loading ? (
+            <PanelSkeleton height={420} />
+          ) : (
+            <OperationalAlerts operational_alerts={asArray(operationalAlerts.data)} />
+          )}
         </Grid>
       </Grid>
     </PageContainer>

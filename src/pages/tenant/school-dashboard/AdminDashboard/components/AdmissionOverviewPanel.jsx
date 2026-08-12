@@ -89,20 +89,40 @@ const AdmissionOverviewPanel = ({
               p: 1.75,
               borderRadius: '14px',
               border: (t) => `1px solid ${t.palette.divider}`,
+              boxShadow: (t) =>
+                t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
             }}
           >
-            <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 1.5 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 1 }}>
               Enrollment Across Classes
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.25 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: 0.5, bgcolor: BLUE, flexShrink: 0 }} />
+                <Typography variant="caption" sx={{ fontSize: 10, fontWeight: 600, color: 'text.secondary' }}>
+                  Applications
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: 0.5, bgcolor: GREEN, flexShrink: 0 }} />
+                <Typography variant="caption" sx={{ fontSize: 10, fontWeight: 600, color: 'text.secondary' }}>
+                  Enrollments
+                </Typography>
+              </Box>
+            </Box>
             <HBarChart
               data={enrollmentByClass}
               dataKey="enrollments"
               nameKey="class_name"
-              color={BLUE}
+              color={GREEN}
               height={210}
               formatter={(v) => num(v).toLocaleString()}
               domain={[0, maxEnrollment]}
+              series={[
+                { dataKey: 'applications', name: 'Applications', color: BLUE },
+                { dataKey: 'enrollments', name: 'Enrollments', color: GREEN },
+              ]}
             />
           </Box>
         </Grid>
@@ -113,20 +133,37 @@ const AdmissionOverviewPanel = ({
               p: 1.75,
               borderRadius: '14px',
               border: (t) => `1px solid ${t.palette.divider}`,
+              boxShadow: (t) =>
+                t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
             }}
           >
-            <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 1.5 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 1 }}>
               Enrollment Across Sessions
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.25 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: BLUE, flexShrink: 0 }} />
+                <Typography variant="caption" sx={{ fontSize: 10, fontWeight: 600, color: 'text.secondary' }}>
+                  Applications
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: GREEN, flexShrink: 0 }} />
+                <Typography variant="caption" sx={{ fontSize: 10, fontWeight: 600, color: 'text.secondary' }}>
+                  Enrollments
+                </Typography>
+              </Box>
+            </Box>
             <ReusableAreaChart
               data={enrollmentBySession}
-              dataKey="enrollments"
               nameKey="session"
-              name="Enrollments"
-              color={GREEN}
               height={210}
               valueFormatter={(v) => num(v).toLocaleString()}
+              series={[
+                { dataKey: 'applications', name: 'Applications', color: BLUE, labelPosition: 'top', dotRadius: 3.5 },
+                { dataKey: 'enrollments', name: 'Enrollments', color: GREEN, labelPosition: 'bottom', dotRadius: 3.5 },
+              ]}
             />
           </Box>
         </Grid>

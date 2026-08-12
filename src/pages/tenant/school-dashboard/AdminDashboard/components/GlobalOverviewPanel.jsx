@@ -23,6 +23,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             title="Total Students"
             value={num(go.total_students).toLocaleString()}
             trend={go.student_growth}
+            sparkData={go.student_series}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -32,6 +33,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             title="Teaching Staff"
             value={num(go.teaching_staff).toLocaleString()}
             trend={go.teaching_growth}
+            sparkData={go.teaching_series}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -42,6 +44,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             value={num(go.non_teaching_staff).toLocaleString()}
             trend={go.non_teaching_growth}
             down
+            sparkData={go.non_teaching_series}
           />
         </Grid>
 

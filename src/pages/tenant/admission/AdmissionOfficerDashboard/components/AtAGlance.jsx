@@ -18,7 +18,7 @@ const AtAGlance = ({ at_a_glance, onViewFullReports }) => (
         color={GREEN}
         label="Acceptance Rate"
         sub="(Admitted → Accepted)"
-        value={`${at_a_glance.acceptance_rate}%`}
+        value={`${num(at_a_glance.acceptance_rate)}%`}
         valueColor={GREEN}
       />
       <GlanceRow
@@ -26,7 +26,7 @@ const AtAGlance = ({ at_a_glance, onViewFullReports }) => (
         color={BLUE}
         label="Enrollment Rate"
         sub="(Applicants → Accepted)"
-        value={`${at_a_glance.enrollment_rate}%`}
+        value={`${num(at_a_glance.enrollment_rate)}%`}
         valueColor={BLUE}
       />
       <GlanceRow

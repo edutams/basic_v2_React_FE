@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, FormControl, Select, MenuItem } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -10,19 +10,38 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
-import { CardShell, ClassSelect, LegendItem } from '../common';
+import { CardShell, LegendItem } from '../common';
 import { BLUE, GREEN } from '../constants';
 
 /**
  * Enrollment Across Classes — grouped bar chart (Applications vs Enrollments).
+ * The class dropdown filters the chart via the enrollment-insights endpoint.
  */
-const EnrollmentAcrossClasses = ({ byClass }) => (
+const EnrollmentAcrossClasses = ({ byClass, classes = [], selectedClass = 'all', onClassChange }) => (
   <CardShell sx={{ p: 2.5, height: 'auto' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: 12.5 }}>
         Enrollment Across Classes
       </Typography>
-      <ClassSelect />
+      <FormControl size="small" sx={{ minWidth: 140 }}>
+        <Select
+          value={selectedClass}
+          onChange={(e) => onClassChange(e.target.value)}
+          sx={{
+            height: 30,
+            fontSize: 10.5,
+            fontWeight: 600,
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
+          }}
+        >
+          <MenuItem value="all">All Classes</MenuItem>
+          {classes.map((c) => (
+            <MenuItem key={c.id} value={c.id}>
+              {c.class_name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </Box>
 
     <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>

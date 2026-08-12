@@ -7,13 +7,17 @@ import { GREEN, makeSparkData, num } from '../constants';
 
 /**
  * Global overview card — circular icon top-left, title, big value, trend, sparkline.
+ *
+ * sparkData is real month-by-month history from the backend; when it is empty
+ * (e.g. an older cached payload) a deterministic placeholder is used.
  */
-const OverviewCard = ({ icon: Icon, colorName, title, value, trend, down }) => {
+const OverviewCard = ({ icon: Icon, colorName, title, value, trend, down, sparkData }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
   const trendUp = num(trend) >= 0;
-  const sparkData = makeSparkData(down || !trendUp);
+  const sparkDataResolved =
+    sparkData && sparkData.length > 0 ? sparkData : makeSparkData(down || !trendUp);
 
   return (
     <Paper
@@ -99,11 +103,14 @@ const OverviewCard = ({ icon: Icon, colorName, title, value, trend, down }) => {
       {/* Sparkline */}
       <Box sx={{ mt: 'auto', pt: 1, height: 34 }}>
         <ReusableSparkline
-          data={sparkData}
+          data={sparkDataResolved}
           dataKey="v"
           color={colors.accentColor}
           height={34}
           gradientOpacity={0.3}
+          showTooltip
+          labelKey="label"
+          tooltipValueFormatter={(v) => `${num(v).toLocaleString()} ${title.toLowerCase()}`}
         />
       </Box>
     </Paper>

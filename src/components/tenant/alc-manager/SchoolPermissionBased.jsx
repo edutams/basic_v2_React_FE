@@ -74,12 +74,26 @@ const SchoolPermissionBased = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
+  const [rolesList, setRolesList] = useState([]);
   const [summaryStats, setSummaryStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     fetchSummaryStats();
+    fetchRolesList();
   }, []);
+
+  const fetchRolesList = async () => {
+    try {
+      const res = await aclApi.getSchoolRolesList();
+      const fetched = res?.data?.data || res?.data || res || [];
+      if (Array.isArray(fetched)) {
+        setRolesList(fetched);
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles list:', err);
+    }
+  };
 
   const fetchSummaryStats = async () => {
     setStatsLoading(true);
@@ -98,7 +112,7 @@ const SchoolPermissionBased = () => {
 
   useEffect(() => {
     fetchPermissions();
-  }, [page, rowsPerPage, nameFilter]);
+  }, [page, rowsPerPage, nameFilter, moduleFilter, statusFilter, roleFilter]);
 
   const fetchPermissions = async () => {
     setLoading(true);
@@ -107,6 +121,9 @@ const SchoolPermissionBased = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        module_id: moduleFilter,
+        status: statusFilter,
+        role_id: roleFilter,
       };
       const res = await aclApi.getSchoolPermissionAnalytics(params);
 
@@ -170,21 +187,16 @@ const SchoolPermissionBased = () => {
     setActiveMenuPerm(null);
   };
 
-  // Extract module name from permission string
+  // Extract module name from permission object
   const getModuleName = (permission) => {
     if (!permission) return 'General';
+    if (permission.module_name) return permission.module_name;
     const name = typeof permission === 'string' ? permission : permission.name || permission.permission || '';
     const parts = name.split(/[\._\-:]/);
-    if (parts.length > 1) {
-      const mod = parts[0].toLowerCase();
-      if (mod.includes('user') || mod.includes('role') || mod.includes('auth')) return 'User Management';
-      if (mod.includes('class') || mod.includes('subject') || mod.includes('exam') || mod.includes('grade')) return 'Academic';
-      if (mod.includes('fee') || mod.includes('payment') || mod.includes('finance') || mod.includes('invoice')) return 'Finance';
-      if (mod.includes('student') || mod.includes('guardian') || mod.includes('parent')) return 'Students';
-      if (mod.includes('report') || mod.includes('result') || mod.includes('analytics')) return 'Reports';
-      return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    if (parts.length > 1 && parts[0].trim()) {
+      return parts[0].trim().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
-    return 'User Management';
+    return 'General';
   };
 
   // Filtered display permissions
@@ -194,16 +206,19 @@ const SchoolPermissionBased = () => {
       const pName = (p.name || p.permission || '').toLowerCase();
       const pDesc = (p.description || '').toLowerCase();
       const pModule = getModuleName(p).toLowerCase();
+      const modFilterStr = String(moduleFilter || '').toLowerCase();
       const roleCount = p.roles_count ?? p.totalRoles ?? 0;
       const pStatus = roleCount > 0 ? 'assigned' : 'unused';
 
       if (nameFilter && !pName.includes(nameFilter.toLowerCase()) && !pDesc.includes(nameFilter.toLowerCase())) {
         return false;
       }
-      if (moduleFilter !== 'all' && pModule !== moduleFilter.toLowerCase()) {
-        return false;
+      if (moduleFilter !== 'all' && modFilterStr !== 'all') {
+        const isModIdMatch = p.module_id && String(p.module_id) === String(moduleFilter);
+        const isModNameMatch = pModule === modFilterStr;
+        if (!isModIdMatch && !isModNameMatch) return false;
       }
-      if (statusFilter !== 'all' && pStatus !== statusFilter.toLowerCase()) {
+      if (statusFilter !== 'all' && pStatus !== String(statusFilter).toLowerCase()) {
         return false;
       }
       return true;
@@ -565,21 +580,20 @@ const SchoolPermissionBased = () => {
                     }}
                   />
 
-                  {/* Module Select Dropdown - Commented out for now
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                  {/* Module Select Dropdown */}
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
                     <Select
                       value={moduleInput}
                       onChange={(e) => setModuleInput(e.target.value)}
                     >
                       <MenuItem value="all">All Modules</MenuItem>
-                      <MenuItem value="User Management">User Management</MenuItem>
-                      <MenuItem value="Academic">Academic</MenuItem>
-                      <MenuItem value="Finance">Finance</MenuItem>
-                      <MenuItem value="Students">Students</MenuItem>
-                      <MenuItem value="Reports">Reports</MenuItem>
+                      {summaryStats?.distribution?.map((m) => (
+                        <MenuItem key={m.id || m.name} value={m.id || m.name}>
+                          {m.name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
-                  */}
 
                   {/* Status Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -594,14 +608,17 @@ const SchoolPermissionBased = () => {
                   </FormControl>
 
                   {/* Roles Select Dropdown */}
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <FormControl size="small" sx={{ minWidth: 140 }}>
                     <Select
                       value={roleInput}
                       onChange={(e) => setRoleInput(e.target.value)}
                     >
                       <MenuItem value="all">All Roles</MenuItem>
-                      <MenuItem value="super_admin">Super Admin</MenuItem>
-                      <MenuItem value="class_teacher">Class Teacher</MenuItem>
+                      {rolesList.map((r) => (
+                        <MenuItem key={r.id} value={r.id}>
+                          {formatRoleName(r.name || r.role)}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 

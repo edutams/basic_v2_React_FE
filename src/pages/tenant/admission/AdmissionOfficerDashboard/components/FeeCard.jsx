@@ -1,28 +1,18 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { AccountBalanceWallet } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
-import { formatCurrency, SPARK_MAX, sparkSeries } from '../constants';
+import { formatCurrency } from '../constants';
 
 /**
- * Financial fee card — stat-card treatment (gradient bg + icon tile) with a mini sparkline.
+ * Financial fee card — stat-card treatment (gradient bg + icon tile) with a mini
+ * sparkline fed by the backend's weekly fee_trend series ({ label, v } points).
  */
-const FeeCard = ({ color, colorName = 'primary', title, value, sub, total }) => {
+const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
-
-  // Scale the deterministic weekly series to the card's real total so the hover
-  // tooltip shows realistic per-period amounts.
-  const sparkData = useMemo(
-    () =>
-      sparkSeries.map((p) => ({
-        ...p,
-        v: Math.round((Number(total || 0) * p.v) / SPARK_MAX),
-      })),
-    [total],
-  );
 
   return (
     <Paper

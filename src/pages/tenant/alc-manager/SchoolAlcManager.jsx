@@ -223,7 +223,7 @@ const SchoolAlcManager = () => {
   ];
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
-    guardName: 'web',
+    guardName: 'tenant',
     description: '',
   });
 
@@ -483,14 +483,11 @@ const SchoolAlcManager = () => {
     ).length;
 
     const custom = source.filter(
-      (r) => r.guard_name === 'web' || r.type === 'Custom' || r.is_system === false,
+      (r) => r.is_sys === 'no',
     ).length;
 
     const protectedCount = source.filter(
-      (r) =>
-        r.is_protected ||
-        r.is_system ||
-        ['super admin', 'admin', 'school admin', 'bursar', 'teacher', 'student', 'parent'].some((p) => r.name?.toLowerCase()?.includes(p)),
+      (r) => r.is_sys === 'yes',
     ).length;
 
     return {
@@ -512,7 +509,7 @@ const SchoolAlcManager = () => {
     }
 
     const dataToExport = filteredRows.map((row, index) => {
-      const isCustom = row.guard_name === 'web' || row.type === 'Custom' || row.is_system === false;
+      const isCustom = row.is_sys === 'no';
       const uCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
       const rStatus = row.status || (row.is_active === false ? 'Inactive' : 'Active');
       const uDate = row.updated_at
@@ -883,13 +880,10 @@ const SchoolAlcManager = () => {
                       </TableRow>
                     ) : filteredRows.length > 0 ? (
                       filteredRows.map((row, index) => {
-                        const isSystemRole = row.is_sys === 'yes' || row.is_system === true;
-                        const isProtectedRole =
-                          isSystemRole ||
-                          row.is_protected ||
-                          ['super admin', 'admin', 'bursar', 'school admin', 'teacher', 'student', 'parent'].some((p) => row.name?.toLowerCase()?.includes(p));
+                        const isSystemRole = row.is_sys === 'yes';
+                        const isProtectedRole = isSystemRole;
 
-                        const isCustomRole = row.is_sys === 'no' || (!isSystemRole && (row.guard_name === 'web' || row.type === 'Custom' || row.is_system === false));
+                        const isCustomRole = row.is_sys === 'no';
                         const colorTheme = avatarColors[index % avatarColors.length];
                         const userCount = row.users_count ?? (Array.isArray(row.users) ? row.users.length : row.total_users ?? 0);
                         const roleStatusLabel = row.status ? (row.status.charAt(0).toUpperCase() + row.status.slice(1).toLowerCase()) : (row.is_active === false ? 'Inactive' : 'Active');

@@ -22,58 +22,58 @@ const FinancialMetrics = ({
   const seriesFor = (key) => trend.map((p) => ({ label: p.label, v: Number(p[key] || 0) }));
 
   return (
-  <Grid container spacing={2} mb={3}>
-    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-      <FeeCard
-        color={BLUE}
-        colorName="info"
-        title="Pre-Application Fees"
-        value={formatCurrency(financial_metrics.pre_application_fees)}
-        sparkData={seriesFor('pre_application')}
-        sub={
-          <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>
-            from {num(total_applicants.count).toLocaleString()} forms
-          </Typography>
-        }
-      />
-    </Grid>
+    <Grid container spacing={2} mb={3}>
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <FeeCard
+          color={BLUE}
+          colorName="info"
+          title="Pre-Application Fees"
+          value={formatCurrency(financial_metrics.pre_application_fees)}
+          sparkData={seriesFor('pre_application')}
+          sub={
+            <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>
+              from {num(total_applicants.count).toLocaleString()} forms
+            </Typography>
+          }
+        />
+      </Grid>
 
-    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-      <FeeCard
-        color={GREEN}
-        colorName="success"
-        title="Post-Application Fees"
-        value={formatCurrency(financial_metrics.post_application_fees)}
-        sparkData={seriesFor('post_application')}
-        sub={
-          <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>
-            from {num(total_accepted.count).toLocaleString()} acceptances
-          </Typography>
-        }
-      />
-    </Grid>
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <FeeCard
+          color={GREEN}
+          colorName="success"
+          title="Post-Application Fees"
+          value={formatCurrency(financial_metrics.post_application_fees)}
+          sparkData={seriesFor('post_application')}
+          sub={
+            <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>
+              from {num(total_accepted.count).toLocaleString()} acceptances
+            </Typography>
+          }
+        />
+      </Grid>
 
-    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-      <FeeCard
-        color={PURPLE}
-        colorName="secondary"
-        title="Total Fees Collected"
-        value={formatCurrency(totalFees)}
-        sparkData={seriesFor('total')}
-        sub={
-          <GrowthRow
-            pct={financial_metrics.growth_percentage}
-            type={financial_metrics.growth_percentage >= 0 ? 'increase' : 'decrease'}
-            label={prevSessionLabel}
-          />
-        }
-      />
-    </Grid>
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <FeeCard
+          color={PURPLE}
+          colorName="secondary"
+          title="Total Fees Collected"
+          value={formatCurrency(totalFees)}
+          sparkData={seriesFor('total')}
+          sub={
+            <GrowthRow
+              pct={financial_metrics.growth_percentage}
+              type={financial_metrics.growth_percentage >= 0 ? 'increase' : 'decrease'}
+              label={prevSessionLabel}
+            />
+          }
+        />
+      </Grid>
 
-    <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-      <RevenueBreakdownCard donutData={donutData} totalFees={totalFees} />
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <RevenueBreakdownCard donutData={donutData} totalFees={totalFees} />
+      </Grid>
     </Grid>
-  </Grid>
   );
 };
 

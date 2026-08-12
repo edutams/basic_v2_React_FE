@@ -23,6 +23,11 @@ import {
   FormControl,
   Menu,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -39,6 +44,7 @@ import {
   IconDotsVertical,
   IconArrowRight,
   IconUserCheck,
+  IconX,
 } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ParentCard from '@/components/shared/ParentCard';
@@ -60,6 +66,7 @@ const SchoolRoleBasedAccess = () => {
 
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [breakdownModalOpen, setBreakdownModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuRole, setActiveMenuRole] = useState(null);
@@ -178,6 +185,56 @@ const SchoolRoleBasedAccess = () => {
     return { totalR, totalP, totalU, activeU, orphanedR };
   }, [summaryStats, roles, totalRows]);
 
+  const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280', '#EC4899', '#8B5CF6'];
+
+  const distributionData = useMemo(() => {
+    if (summaryStats?.distribution && summaryStats.distribution.length > 0) {
+      return summaryStats.distribution.map((item, idx) => ({
+        label: item.name,
+        count: item.users_count,
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+    }
+    if (roles && roles.length > 0) {
+      return roles.slice(0, 8).map((r, idx) => ({
+        label: r.role ? r.role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Role',
+        count: r.totalUsers ?? r.users_count ?? 0,
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+    }
+    return [
+      { label: 'Super Admin', count: 439, color: '#0E9F6E' },
+      { label: 'Teachers', count: 260, color: '#1A56DB' },
+      { label: 'Students', count: 200, color: '#7E3AF2' },
+      { label: 'School Staff', count: 150, color: '#D97706' },
+      { label: 'Parents', count: 100, color: '#0694A2' },
+      { label: 'Others', count: 99, color: '#6B7280' },
+    ];
+  }, [summaryStats, roles]);
+
+  const hasPositiveData = useMemo(() => distributionData.some(d => d.count > 0), [distributionData]);
+
+  const chartLabels = useMemo(() => {
+    if (!hasPositiveData) {
+      return ['Super Admin', 'Teachers', 'Students', 'School Staff', 'Parents', 'Others'];
+    }
+    return distributionData.map(d => d.label);
+  }, [distributionData, hasPositiveData]);
+
+  const chartSeries = useMemo(() => {
+    if (!hasPositiveData) {
+      return [439, 260, 200, 150, 100, 99];
+    }
+    return distributionData.map(d => d.count);
+  }, [distributionData, hasPositiveData]);
+
+  const chartColors = useMemo(() => {
+    if (!hasPositiveData) {
+      return ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280'];
+    }
+    return distributionData.map(d => d.color);
+  }, [distributionData, hasPositiveData]);
+
   // Chart configuration for Access Distribution
   const chartOptions = {
     chart: {
@@ -185,8 +242,8 @@ const SchoolRoleBasedAccess = () => {
       fontFamily: 'inherit',
       toolbar: { show: false },
     },
-    labels: ['Super Admin', 'Teachers', 'Students', 'School Staff', 'Parents', 'Others'],
-    colors: ['#0E9F6E', '#1A56DB', '#7E3AF2', '#D97706', '#0694A2', '#6B7280'],
+    labels: chartLabels,
+    colors: chartColors,
     legend: { show: false },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -225,15 +282,7 @@ const SchoolRoleBasedAccess = () => {
     stroke: { width: 3, colors: ['#ffffff'] },
   };
 
-  const chartSeries = [439, 260, 200, 150, 100, 99];
-  const chartLegendData = [
-    { label: 'Super Admin', count: 439, color: '#0E9F6E' },
-    { label: 'Teachers', count: 260, color: '#1A56DB' },
-    { label: 'Students', count: 200, color: '#7E3AF2' },
-    { label: 'School Staff', count: 150, color: '#D97706' },
-    { label: 'Parents', count: 100, color: '#0694A2' },
-    { label: 'Others', count: 99, color: '#6B7280' },
-  ];
+  const chartLegendData = distributionData;
 
   // Helper avatar styling for roles
   const getRoleAvatarStyle = (index) => {
@@ -323,38 +372,41 @@ const SchoolRoleBasedAccess = () => {
                   <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={210} />
                 </Box>
 
-                {/* Custom Legend List */}
+                {/* Custom Legend List (Show Top 4 items on card) */}
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.map((item, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        py: 0.6,
-                        borderBottom: idx === chartLegendData.length - 1 ? 'none' : '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: '50%',
-                            bgcolor: item.color,
-                          }}
-                        />
-                        <Typography variant="body2" fontWeight={600} color="text.primary">
-                          {item.label}
+                  {chartLegendData.slice(0, 4).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 4) - 1;
+                    return (
+                      <Box
+                        key={idx}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          py: 0.6,
+                          borderBottom: isLast ? 'none' : '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              bgcolor: item.color,
+                            }}
+                          />
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.label}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" fontWeight={700} color="text.secondary">
+                          {item.count}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" fontWeight={700} color="text.secondary">
-                        {item.count}
-                      </Typography>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
               </Box>
 
@@ -362,6 +414,7 @@ const SchoolRoleBasedAccess = () => {
                 variant="outlined"
                 fullWidth
                 endIcon={<IconArrowRight size={16} />}
+                onClick={() => setBreakdownModalOpen(true)}
                 sx={{
                   mt: 2,
                   py: 0.9,
@@ -469,12 +522,12 @@ const SchoolRoleBasedAccess = () => {
 
               {/* Roles Table */}
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
-                <Table sx={{ minWidth: 960 }} stickyHeader>
+                <Table sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 180, fontWeight: 700, py: 1.5 }}>Role Name</TableCell>
-                      <TableCell sx={{ minWidth: 220, fontWeight: 700, py: 1.5 }}>Description</TableCell>
+                      <TableCell sx={{ minWidth: 260, fontWeight: 700, py: 1.5 }}>Role Name</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Description</TableCell>
                       <TableCell align="center" sx={{ minWidth: 170, fontWeight: 700, py: 1.5 }}>
                         Total Permissions
                       </TableCell>
@@ -521,7 +574,7 @@ const SchoolRoleBasedAccess = () => {
                             <TableCell sx={{ py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
 
                             {/* Role Name + Icon + Protected Tag */}
-                            <TableCell sx={{ py: 1.5 }}>
+                            <TableCell sx={{ py: 1.5, minWidth: 260 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   sx={{
@@ -556,13 +609,13 @@ const SchoolRoleBasedAccess = () => {
                             </TableCell>
 
                             {/* Description Snippet */}
-                            <TableCell sx={{ py: 1.5, minWidth: 220, maxWidth: 300 }}>
+                            <TableCell sx={{ py: 1.5, minWidth: 250, maxWidth: 320 }}>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
                                 sx={{ whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}
                               >
-                                {row.description || 'Full access to all system modules and settings.'}
+                                {row.description || 'N/A'}
                               </Typography>
                             </TableCell>
 
@@ -687,6 +740,105 @@ const SchoolRoleBasedAccess = () => {
         role={selectedRole}
         onUserRemoved={fetchRoles}
       />
+
+      {/* Access Distribution Breakdown Modal */}
+      <Dialog open={breakdownModalOpen} onClose={() => setBreakdownModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h5" fontWeight={700}>
+              Access Distribution Breakdown
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Full breakdown of user allocations by role
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setBreakdownModalOpen(false)}>
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" p={1.5} sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}>
+            <Typography variant="subtitle2" fontWeight={700}>
+              Total Assigned Users
+            </Typography>
+            <Chip
+              label={`${stats.totalU.toLocaleString()} Users`}
+              color="primary"
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+          </Box>
+
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Users</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>% of Total</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {distributionData.map((item, idx) => {
+                  const percentage = stats.totalU > 0 ? ((item.count / stats.totalU) * 100).toFixed(1) : '0.0';
+                  return (
+                    <TableRow key={idx} hover>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              bgcolor: item.color,
+                            }}
+                          />
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            {item.label}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="subtitle2" fontWeight={700}>
+                          {item.count.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
+                          <Typography variant="caption" fontWeight={700} color="text.secondary">
+                            {percentage}%
+                          </Typography>
+                          <Box sx={{ width: 45 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.min(100, Number(percentage))}
+                              sx={{
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: '#F1F5F9',
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: item.color,
+                                },
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setBreakdownModalOpen(false)} color="primary" size="small">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

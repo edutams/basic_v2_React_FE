@@ -51,6 +51,7 @@ import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
+import { formatRoleName } from '@/pages/tenant/alc-manager/SchoolAlcManager';
 
 const SchoolAssignmentManagement = () => {
   const notify = useNotification();
@@ -535,7 +536,7 @@ const SchoolAssignmentManagement = () => {
                   <MenuItem value="all">All Roles</MenuItem>
                   {allRolesList.map((r) => (
                     <MenuItem key={r} value={r}>
-                      {r}
+                      {formatRoleName(r)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -638,7 +639,7 @@ const SchoolAssignmentManagement = () => {
                                 {user.name}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {user.email}
+                                {user.email || 'No email added yet'}
                               </Typography>
                             </Box>
                           </Box>
@@ -652,7 +653,7 @@ const SchoolAssignmentManagement = () => {
                                 return (
                                   <Chip
                                     key={i}
-                                    label={rName}
+                                    label={formatRoleName(rName)}
                                     size="small"
                                     sx={{
                                       borderRadius: '12px',

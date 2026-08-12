@@ -35,6 +35,16 @@ import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
 
+const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -163,7 +173,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <UsersIcon fontSize="small" color="primary" />
           <Typography variant="h6" component="span" sx={{ fontWeight: 700 }}>
-            Users with Role{role?.name ? <> - <Box component="span" sx={{ color: 'primary.main' }}>{role.name}</Box></> : ' this Role'}
+            Users with Role{role?.name ? <> - <Box component="span" sx={{ color: 'primary.main' }}>{formatRoleName(role.name)}</Box></> : ' this Role'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
@@ -368,7 +378,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
                 </Typography>{' '}
                 from the "
                 <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
-                  {roleName}
+                  {formatRoleName(roleName)}
                 </Typography>
                 " role?
               </Typography>

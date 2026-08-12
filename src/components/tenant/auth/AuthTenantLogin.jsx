@@ -209,7 +209,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
         </Box>
 
         <Box mt={1.5}>
-          <Button variant="contained" size="small" {...(onCreateAccount ? { onClick: onCreateAccount } : { component: Link, to: '/admission/apply' })} fullWidth color="primary" disabled={isLoading}>
+          <Button variant="outlined" size="small" {...(onCreateAccount ? { onClick: onCreateAccount } : { component: Link, to: '/admission/apply' })} fullWidth color="primary" disabled={isLoading}>
             Create Parent Account
           </Button>
         </Box>

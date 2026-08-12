@@ -79,6 +79,16 @@ const avatarColors = [
   { bg: '#FCE7F3', color: '#EC4899' },
 ];
 
+export const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const roleTourSteps = [
   {
@@ -520,7 +530,7 @@ const SchoolAlcManager = () => {
 
       return {
         'S/N': index + 1,
-        'Role Name': row.name,
+        'Role Name': formatRoleName(row.name),
         Description: row.description || '—',
         Type: isCustom ? 'Custom' : 'System',
         Users: uCount,
@@ -926,7 +936,7 @@ const SchoolAlcManager = () => {
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                   <Typography variant="subtitle2" fontWeight={700} color="text.primary">
-                                    {row.name}
+                                    {formatRoleName(row.name)}
                                   </Typography>
                                   {isProtectedRole && (
                                     <Chip

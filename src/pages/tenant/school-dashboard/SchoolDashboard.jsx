@@ -7,6 +7,7 @@ import AdmissionOfficerDashboard from '@/pages/tenant/admission/AdmissionOfficer
 import BursaryOfficerDashboard from '@/pages/tenant/finance/BursaryOfficerDashboard';
 import AdminDashboard from '@/pages/tenant/school-dashboard/AdminDashboard';
 import ParentDashboard2 from '../admission/parent-dashboard/ParentDashboard2';
+import LearnerDashboard from '@/pages/tenant/learners/dashboard/LearnerDashboard';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -88,11 +89,7 @@ export default function SchoolDashboard() {
           showImage={false}
         />
       ) : isLearner ? (
-        <PageUnderDevelopment
-          title="Student Dashboard Under Development"
-          subtitle="We're creating an interactive learning portal for students. Check back soon!"
-          showImage={false}
-        />
+        <LearnerDashboard />
       ) : (
         <PageUnderDevelopment
           title="Dashboard Under Development"

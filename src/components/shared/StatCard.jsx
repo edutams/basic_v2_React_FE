@@ -30,7 +30,7 @@ const StatCard = ({
       variant={!isCardShadow ? 'outlined' : undefined}
       sx={{
         borderRadius: 1,
-        p: 2.5,
+        p: 1.6,
         width: '100%',
         background: `${cardBg} !important`,
         display: 'flex',
@@ -51,8 +51,8 @@ const StatCard = ({
       {/* Icon Badge */}
       <Box
         sx={{
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           borderRadius: '50%',
           background: iconBg,
           color: iconColor || '#fff',
@@ -75,7 +75,7 @@ const StatCard = ({
       <Box
         sx={{
           flexGrow: 1,
-          pl: 2,
+          pl: 1,
           textAlign: 'right',
           position: 'relative',
           zIndex: 1,

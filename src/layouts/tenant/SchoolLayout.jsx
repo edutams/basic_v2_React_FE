@@ -66,7 +66,7 @@ const SchoolLayout = () => {
               px: { xs: 2, sm: 3 },
             }}
           >
-            <Box sx={{ flex: 1, overflowX: 'auto', py: 3, px: { xs: 1, sm: 2 } }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', py: 3, }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

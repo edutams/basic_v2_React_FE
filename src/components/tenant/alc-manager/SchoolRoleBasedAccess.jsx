@@ -250,26 +250,35 @@ const SchoolRoleBasedAccess = () => {
     labels: chartLabels,
     colors: chartColors,
     legend: { show: false },
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: true,
+      style: {
+        fontSize: '11px',
+        fontWeight: '700',
+        colors: ['#ffffff'],
+      },
+      dropShadow: { enabled: false },
+      formatter: (val) => `${Math.round(val)}%`,
+    },
     plotOptions: {
       pie: {
         donut: {
-          size: '76%',
+          size: '50%',
           labels: {
             show: true,
             name: {
               show: true,
               fontSize: '12px',
               fontWeight: 500,
-              color: '#6B7280',
-              offsetY: -5,
+              color: '#64748B',
+              offsetY: 16,
             },
             value: {
               show: true,
-              fontSize: '24px',
+              fontSize: '22px',
               fontWeight: 800,
-              color: '#111827',
-              offsetY: 5,
+              color: '#1E293B',
+              offsetY: -14,
               formatter: () => `${stats.totalU.toLocaleString()}`,
             },
             total: {
@@ -277,14 +286,14 @@ const SchoolRoleBasedAccess = () => {
               label: 'Total Users',
               fontSize: '12px',
               fontWeight: 500,
-              color: '#6B7280',
+              color: '#64748B',
               formatter: () => `${stats.totalU.toLocaleString()}`,
             },
           },
         },
       },
     },
-    stroke: { width: 3, colors: ['#ffffff'] },
+    stroke: { width: 2, colors: ['#ffffff'] },
   }), [chartLabels, chartColors, stats.totalU]);
 
   const chartLegendData = distributionData;
@@ -373,11 +382,11 @@ const SchoolRoleBasedAccess = () => {
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <Box>
-                <Box sx={{ height: 210, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ height: 230, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {statsLoading ? (
                     <CircularProgress size={32} />
                   ) : (
-                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={210} />
+                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={230} />
                   )}
                 </Box>
 
@@ -785,59 +794,34 @@ const SchoolRoleBasedAccess = () => {
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Users</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>% of Total</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {distributionData.map((item, idx) => {
-                  const percentage = stats.totalU > 0 ? ((item.count / stats.totalU) * 100).toFixed(1) : '0.0';
-                  return (
-                    <TableRow key={idx} hover>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Box
-                            sx={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              bgcolor: item.color,
-                            }}
-                          />
-                          <Typography variant="subtitle2" fontWeight={600}>
-                            {item.label}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="subtitle2" fontWeight={700}>
-                          {item.count.toLocaleString()}
+                {distributionData.map((item, idx) => (
+                  <TableRow key={idx} hover>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: item.color,
+                          }}
+                        />
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {item.label}
                         </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
-                          <Typography variant="caption" fontWeight={700} color="text.secondary">
-                            {percentage}%
-                          </Typography>
-                          <Box sx={{ width: 45 }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={Math.min(100, Number(percentage))}
-                              sx={{
-                                height: 6,
-                                borderRadius: 3,
-                                bgcolor: '#F1F5F9',
-                                '& .MuiLinearProgress-bar': {
-                                  bgcolor: item.color,
-                                },
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {item.count.toLocaleString()}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>

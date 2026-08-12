@@ -22,6 +22,10 @@ import {
   FormControl,
   Menu,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -36,6 +40,7 @@ import {
   IconArrowRight,
   IconShieldCheck,
   IconDownload,
+  IconX,
 } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ParentCard from '@/components/shared/ParentCard';
@@ -64,6 +69,7 @@ const SchoolPermissionBased = () => {
 
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [breakdownModalOpen, setBreakdownModalOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuPerm, setActiveMenuPerm] = useState(null);
@@ -80,17 +86,12 @@ const SchoolPermissionBased = () => {
         per_page: rowsPerPage,
         search: nameFilter,
       };
-      const res = await aclApi.getSchoolPermissionAnalytics(params);
+      const res = await aclApi.getSchoolPermissions(params);
 
-      if (res?.data?.data) {
-        setPermissions(res.data.data || []);
-        setTotalRows(res.data.total || 0);
-      } else if (res?.current_page) {
-        setPermissions(res.data || []);
-        setTotalRows(res.total || 0);
-      } else if (Array.isArray(res?.data)) {
-        setPermissions(res.data);
-        setTotalRows(res.data.length);
+      if (res?.data) {
+        const fetched = res.data.data || res.data || [];
+        setPermissions(Array.isArray(fetched) ? fetched : []);
+        setTotalRows(res.data.total || (Array.isArray(fetched) ? fetched.length : 0));
       }
     } catch (error) {
       console.error('Failed to fetch permissions:', error);
@@ -105,7 +106,7 @@ const SchoolPermissionBased = () => {
     setNameFilter(searchInput);
     setModuleFilter(moduleInput);
     setStatusFilter(statusInput);
-    setRoleFilter(roleInput);
+    setRoleInput(roleInput);
     setPage(0);
   };
 
@@ -114,7 +115,6 @@ const SchoolPermissionBased = () => {
     setModuleInput('all');
     setStatusInput('all');
     setRoleInput('all');
-
     setNameFilter('');
     setModuleFilter('all');
     setStatusFilter('all');
@@ -128,19 +128,19 @@ const SchoolPermissionBased = () => {
     }
   };
 
-  const handleTotalRoleClick = (permission) => {
-    setSelectedPermission(permission);
+  const handleTotalRoleClick = (perm) => {
+    setSelectedPermission(perm);
     setPermissionModalOpen(true);
   };
 
-  const handleTotalUsersClick = (permission) => {
-    setSelectedPermission(permission);
+  const handleTotalUsersClick = (perm) => {
+    setSelectedPermission(perm);
     setUsersModalOpen(true);
   };
 
-  const handleMenuOpen = (event, permission) => {
+  const handleMenuOpen = (event, perm) => {
     setAnchorEl(event.currentTarget);
-    setActiveMenuPerm(permission);
+    setActiveMenuPerm(perm);
   };
 
   const handleMenuClose = () => {
@@ -148,15 +148,20 @@ const SchoolPermissionBased = () => {
     setActiveMenuPerm(null);
   };
 
-  // Helper to infer module name from permission code
-  const getModuleName = (item) => {
-    if (item.module) return item.module;
-    const name = (item.name || item.permission || '').toLowerCase();
-    if (name.includes('user') || name.includes('acl') || name.includes('role')) return 'User Management';
-    if (name.includes('student')) return 'Students';
-    if (name.includes('acad') || name.includes('class') || name.includes('subject')) return 'Academic';
-    if (name.includes('fin') || name.includes('pay') || name.includes('fee')) return 'Finance';
-    if (name.includes('report') || name.includes('stat')) return 'Reports';
+  // Extract module name from permission string
+  const getModuleName = (permission) => {
+    if (!permission) return 'General';
+    const name = typeof permission === 'string' ? permission : permission.name || permission.permission || '';
+    const parts = name.split(/[\._\-:]/);
+    if (parts.length > 1) {
+      const mod = parts[0].toLowerCase();
+      if (mod.includes('user') || mod.includes('role') || mod.includes('auth')) return 'User Management';
+      if (mod.includes('class') || mod.includes('subject') || mod.includes('exam') || mod.includes('grade')) return 'Academic';
+      if (mod.includes('fee') || mod.includes('payment') || mod.includes('finance') || mod.includes('invoice')) return 'Finance';
+      if (mod.includes('student') || mod.includes('guardian') || mod.includes('parent')) return 'Students';
+      if (mod.includes('report') || mod.includes('result') || mod.includes('analytics')) return 'Reports';
+      return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    }
     return 'User Management';
   };
 
@@ -185,44 +190,105 @@ const SchoolPermissionBased = () => {
 
   // Stat calculations
   const stats = useMemo(() => {
-    const totalP = totalRows || permissions.length || 386;
-    const assignedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 1) > 0).length || 362;
-    const unusedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) === 0).length || 24;
-    const affectedU = permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0) || 1248;
+    const totalP = totalRows || permissions.length || 0;
+    const assignedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) > 0).length;
+    const unusedP = permissions.filter(p => (p.roles_count ?? p.totalRoles ?? 0) === 0).length;
+    const affectedU = permissions.reduce((acc, p) => acc + (p.users_count ?? p.totalUsers ?? 0), 0);
 
     return { totalP, assignedP, unusedP, affectedU };
   }, [permissions, totalRows]);
 
+  const COLOR_PALETTE = ['#0E9F6E', '#1A56DB', '#7E3AF2', '#0694A2', '#D97706', '#6B7280', '#EC4899', '#8B5CF6'];
+
+  const distributionData = useMemo(() => {
+    if (permissions && permissions.length > 0) {
+      const countsMap = {};
+      permissions.forEach(p => {
+        const m = getModuleName(p);
+        countsMap[m] = (countsMap[m] || 0) + 1;
+      });
+      return Object.entries(countsMap).map(([label, count], idx) => ({
+        label,
+        count,
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      })).sort((a, b) => b.count - a.count);
+    }
+    return [
+      { label: 'User Management', count: 118, color: '#0E9F6E' },
+      { label: 'Academic', count: 90, color: '#1A56DB' },
+      { label: 'Finance', count: 70, color: '#7E3AF2' },
+      { label: 'Students', count: 55, color: '#0694A2' },
+      { label: 'Reports', count: 34, color: '#D97706' },
+      { label: 'Others', count: 19, color: '#6B7280' },
+    ];
+  }, [permissions]);
+
+  const chartLabels = useMemo(() => {
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return ['No Permissions'];
+      return distributionData.map(d => d.label);
+    }
+    return ['No Permissions'];
+  }, [distributionData]);
+
+  const chartSeries = useMemo(() => {
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return [1];
+      return distributionData.map(d => d.count);
+    }
+    return [1];
+  }, [distributionData]);
+
+  const chartColors = useMemo(() => {
+    if (distributionData && distributionData.length > 0) {
+      const total = distributionData.reduce((acc, d) => acc + d.count, 0);
+      if (total === 0) return ['#9CA3AF'];
+      return distributionData.map(d => d.color);
+    }
+    return ['#9CA3AF'];
+  }, [distributionData]);
+
   // Chart configuration for Permissions by Module
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     chart: {
       type: 'donut',
       fontFamily: 'inherit',
       toolbar: { show: false },
     },
-    labels: ['User Management', 'Academic', 'Finance', 'Students', 'Reports', 'Others'],
-    colors: ['#0E9F6E', '#1A56DB', '#7E3AF2', '#0694A2', '#D97706', '#6B7280'],
+    labels: chartLabels,
+    colors: chartColors,
     legend: { show: false },
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: true,
+      style: {
+        fontSize: '11px',
+        fontWeight: '700',
+        colors: ['#ffffff'],
+      },
+      dropShadow: { enabled: false },
+      formatter: (val) => `${Math.round(val)}%`,
+    },
     plotOptions: {
       pie: {
         donut: {
-          size: '76%',
+          size: '60%',
           labels: {
             show: true,
             name: {
               show: true,
               fontSize: '12px',
               fontWeight: 500,
-              color: '#6B7280',
-              offsetY: -5,
+              color: '#64748B',
+              offsetY: 16,
             },
             value: {
               show: true,
-              fontSize: '24px',
+              fontSize: '22px',
               fontWeight: 800,
-              color: '#111827',
-              offsetY: 5,
+              color: '#1E293B',
+              offsetY: -14,
               formatter: () => `${stats.totalP.toLocaleString()}`,
             },
             total: {
@@ -230,25 +296,17 @@ const SchoolPermissionBased = () => {
               label: 'Total Permissions',
               fontSize: '12px',
               fontWeight: 500,
-              color: '#6B7280',
+              color: '#64748B',
               formatter: () => `${stats.totalP.toLocaleString()}`,
             },
           },
         },
       },
     },
-    stroke: { width: 3, colors: ['#ffffff'] },
-  };
+    stroke: { width: 2, colors: ['#ffffff'] },
+  }), [chartLabels, chartColors, stats.totalP]);
 
-  const chartSeries = [118, 90, 70, 55, 34, 19];
-  const chartLegendData = [
-    { label: 'User Management', count: 118, color: '#0E9F6E' },
-    { label: 'Academic', count: 90, color: '#1A56DB' },
-    { label: 'Finance', count: 70, color: '#7E3AF2' },
-    { label: 'Students', count: 55, color: '#0694A2' },
-    { label: 'Reports', count: 34, color: '#D97706' },
-    { label: 'Others', count: 19, color: '#6B7280' },
-  ];
+  const chartLegendData = distributionData;
 
   // Helper chip for permission action type
   const getPermissionActionChip = (permissionName) => {
@@ -358,48 +416,56 @@ const SchoolPermissionBased = () => {
           <ParentCard title="Permissions by Module" sx={{ width: '100%', height: '100%' }}>
             <Box sx={{ py: 1, px: 0, textAlign: 'center', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               <Box>
-                <Box sx={{ height: 210, my: 1, display: 'flex', justifyContent: 'center' }}>
-                  <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={210} />
+                <Box sx={{ height: 230, my: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {loading ? (
+                    <CircularProgress size={32} />
+                  ) : (
+                    <Chart options={chartOptions} series={chartSeries} type="donut" width="100%" height={230} />
+                  )}
                 </Box>
 
-                {/* Custom Legend List */}
+                {/* Custom Legend List (Show Top 4 items on card) */}
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.map((item, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        py: 0.6,
-                        borderBottom: idx === chartLegendData.length - 1 ? 'none' : '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: '50%',
-                            bgcolor: item.color,
-                          }}
-                        />
-                        <Typography variant="body2" fontWeight={600} color="text.primary">
-                          {item.label}
+                  {chartLegendData.slice(0, 4).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 4) - 1;
+                    return (
+                      <Box
+                        key={idx}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          py: 0.6,
+                          borderBottom: isLast ? 'none' : '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              bgcolor: item.color,
+                            }}
+                          />
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.label}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" fontWeight={700} color="text.secondary">
+                          {item.count}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" fontWeight={700} color="text.secondary">
-                        {item.count}
-                      </Typography>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
               </Box>
 
               <Button
                 variant="outlined"
                 fullWidth
+                onClick={() => setBreakdownModalOpen(true)}
                 endIcon={<IconArrowRight size={16} />}
                 sx={{
                   mt: 2,
@@ -753,6 +819,80 @@ const SchoolPermissionBased = () => {
         permission={selectedPermission}
         onUserRemoved={fetchPermissions}
       />
+
+      {/* Permissions Module Distribution Breakdown Modal */}
+      <Dialog open={breakdownModalOpen} onClose={() => setBreakdownModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h5" fontWeight={700}>
+              Permissions Module Breakdown
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Full breakdown of permission counts by module
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setBreakdownModalOpen(false)}>
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" p={1.5} sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}>
+            <Typography variant="subtitle2" fontWeight={700}>
+              Total Permissions
+            </Typography>
+            <Chip
+              label={`${stats.totalP.toLocaleString()} Permissions`}
+              color="primary"
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+          </Box>
+
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Module Name</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Permissions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {distributionData.map((item, idx) => (
+                  <TableRow key={idx} hover>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: item.color,
+                          }}
+                        />
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {item.label}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {item.count.toLocaleString()}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setBreakdownModalOpen(false)} color="primary" size="small">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

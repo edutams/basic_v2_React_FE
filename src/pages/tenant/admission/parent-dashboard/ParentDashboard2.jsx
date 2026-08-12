@@ -17,7 +17,7 @@ const ParentDashboard2 = () => {
     <PageContainer title="Parent Dashboard" description="Parent portal">
       {/* Greeting */}
       <Box mb={2}>
-        <Typography fontWeight="800" sx={{ fontSize: '1.4rem', color: '#111827', lineHeight: 1.2 }}>
+        <Typography fontWeight="800" sx={{ fontSize: { xs: '1.15rem', md: '1.4rem' }, color: '#111827', lineHeight: 1.2 }}>
           Good morning, {userName} 👋
         </Typography>
         <Typography sx={{ fontSize: '0.85rem', color: '#6B7280', mt: 0.5 }}>
@@ -25,17 +25,29 @@ const ParentDashboard2 = () => {
         </Typography>
       </Box>
 
-      {/* Two-column dashboard layout */}
-      <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'flex-start' }}>
-        {/* ─── MAIN CONTENT (left, ~70%) ─── */}
-        <Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+      {/* Two-column layout: stacks vertically on mobile, side-by-side on lg+ */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2.5,
+          alignItems: 'flex-start',
+          flexDirection: { xs: 'column', lg: 'row' },
+        }}
+      >
+        {/* ─── MAIN CONTENT ─── */}
+        <Box sx={{ flex: '1 1 0', minWidth: 0, width: { xs: '100%', lg: 'auto' } }}>
           <MyWards />
           <Analytics />
           <CommunicationCenter />
         </Box>
 
-        {/* ─── RIGHT SIDEBAR (~290px fixed) ─── */}
-        <Box sx={{ width: 290, flexShrink: 0 }}>
+        {/* ─── RIGHT SIDEBAR ─── */}
+        <Box
+          sx={{
+            width: { xs: '100%', lg: 290 },
+            flexShrink: 0,
+          }}
+        >
           <QuickActions />
           <Notifications />
         </Box>

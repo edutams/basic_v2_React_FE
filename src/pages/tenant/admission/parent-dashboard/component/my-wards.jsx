@@ -51,7 +51,8 @@ const WardCard = ({ ward }) => (
   <Card
     elevation={0}
     sx={{
-      width: CARD_WIDTH,
+      width: { xs: 240, sm: CARD_WIDTH },
+      minWidth: { xs: 240, sm: CARD_WIDTH },
       flexShrink: 0,
       borderRadius: '8px',
       bgcolor: ward.bgColor,
@@ -61,6 +62,7 @@ const WardCard = ({ ward }) => (
       display: 'flex',
       flexDirection: 'column',
       gap: 1.25,
+      scrollSnapAlign: 'start',
     }}
   >
     {/* Top: avatar + info + badge */}
@@ -226,7 +228,13 @@ const MyWards = () => {
           sx={{
             display: 'flex',
             gap: `${CARD_GAP}px`,
-            overflow: 'hidden',
+            overflowX: { xs: 'auto', lg: 'hidden' },
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': { display: 'none' },
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+            pb: { xs: 0.5, lg: 0 },
           }}
         >
           {mockWards.map((ward) => (

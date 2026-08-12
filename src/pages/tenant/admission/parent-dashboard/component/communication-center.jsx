@@ -56,10 +56,10 @@ const MessageItem = ({ initial, name, text, time }) => (
 );
 
 const CommunicationCenter = () => (
-  <Stack direction="row" spacing={1.5} mb={2} alignItems="stretch">
+  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} mb={2} alignItems="stretch">
 
     {/* Communication Center */}
-    <Card elevation={0} sx={{ ...cardSx, flex: '1.2 1 0', p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: '1.2 1 0' }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
       <Box>
         <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827' }}>
           Communication Center
@@ -77,7 +77,7 @@ const CommunicationCenter = () => (
     </Card>
 
     {/* Recent Messages */}
-    <Card elevation={0} sx={{ ...cardSx, flex: '1 1 0', p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: '1 1 0' }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
       <Box>
         <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827', mb: 0.6 }}>
           Recent Messages
@@ -97,7 +97,7 @@ const CommunicationCenter = () => (
       elevation={0}
       sx={{
         ...cardSx,
-        flex: '0.85 1 0',
+        flex: { xs: '1 1 100%', md: '0.85 1 0' },
         p: '12px 14px',
         borderColor: '#BFDBFE',
         bgcolor: '#EFF6FF',

@@ -32,7 +32,7 @@ const financeCards = [
 const FINANCE_GAP = 10;
 
 const FinanceCard = ({ title, subtitle, amount, amountColor, iconBg, iconColor, borderColor, icon: Icon, isLink }) => (
-  <Card elevation={0} sx={{ flex: 1, minWidth: 0, p: '12px', display: 'flex', flexDirection: 'column', gap: 0.4, bgcolor: '#fff', border: `1.5px solid ${borderColor}`, borderRadius: '8px', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+  <Card elevation={0} sx={{ flex: { xs: '1 1 140px', sm: '1 1 0' }, minWidth: 0, p: '12px', display: 'flex', flexDirection: 'column', gap: 0.4, bgcolor: '#fff', border: `1.5px solid ${borderColor}`, borderRadius: '8px', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
       <Typography fontWeight="600" sx={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.25, maxWidth: '65%' }}>{title}</Typography>
       <Box sx={{ width: 28, height: 28, borderRadius: '7px', bgcolor: iconBg, color: iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -103,16 +103,16 @@ const Analytics = () => {
 
   return (
     <Box mb={2}>
-      {/* ─── Finance Row (static) ─── */}
-      <Box sx={{ display: 'flex', gap: `${FINANCE_GAP}px`, mb: 1.75 }}>
+      {/* ─── Finance Row (responsive flex-wrap) ─── */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: `${FINANCE_GAP}px`, mb: 1.75 }}>
         {financeCards.map((fc) => <FinanceCard key={fc.title} {...fc} />)}
       </Box>
 
-      {/* ─── Analytics 3-column Row ─── */}
-      <Stack direction="row" spacing={1.5} alignItems="stretch">
+      {/* ─── Analytics 3-column Row (responsive stack on mobile) ─── */}
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
 
         {/* ── Academic Overview ── */}
-        <Card elevation={0} sx={{ ...cardSx, flex: '1 1 0', p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: '1 1 0' }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box>
             <Typography fontWeight="700" sx={{ fontSize: '0.82rem', color: '#111827', mb: 0.5 }}>
               Academic Overview{' '}
@@ -129,7 +129,7 @@ const Analytics = () => {
         </Card>
 
         {/* ── Attendance Overview ── */}
-        <Card elevation={0} sx={{ ...cardSx, flex: '1 1 0', p: '12px 14px', display: 'flex', flexDirection: 'column' }}>
+        <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: '1 1 0' }, p: '12px 14px', display: 'flex', flexDirection: 'column' }}>
           <Typography fontWeight="700" sx={{ fontSize: '0.82rem', color: '#111827', mb: 0.5 }}>
             Attendance Overview
           </Typography>
@@ -187,7 +187,7 @@ const Analytics = () => {
         </Card>
 
         {/* ── Performance Snapshot + Engagement Analytics stacked ── */}
-        <Box sx={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 0' }, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 
           {/* Performance Snapshot */}
           <Card elevation={0} sx={{ ...cardSx, p: '12px 14px' }}>

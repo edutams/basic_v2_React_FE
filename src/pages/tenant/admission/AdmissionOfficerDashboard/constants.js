@@ -18,13 +18,6 @@ export const formatCompact = (amount) => {
 
 export const num = (v) => Number(v || 0);
 
-// Deterministic rising sparkline series (10 weekly periods; max = 84, used to scale to the card total)
-export const SPARK_MAX = 84;
-export const sparkSeries = Array.from({ length: 10 }, (_, i) => ({
-  label: `Wk ${i + 1}`,
-  v: 18 + i * 7 + (i % 3) * 5,
-}));
-
 // Shorten "2023/2024" → "2023/24"
 export const shortSession = (s) =>
   String(s || '').replace(/\/(\d{4})$/, (m, y) => `/${String(Number(y) % 100).padStart(2, '0')}`);

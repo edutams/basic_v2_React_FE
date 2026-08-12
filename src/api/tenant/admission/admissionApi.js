@@ -110,6 +110,27 @@ export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
   return response.data;
 };
 
+// Parent Dashboard (consolidated guardian payload: open batches, wards, finance)
+export const getParentInsights = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent-insights', {
+    params: sessionTermId ? { session_term_id: sessionTermId } : {},
+  });
+  return response.data;
+};
+
+export const getParentInsightsDetail = async (type, sessionTermId = null) => {
+  const params = { type };
+  if (sessionTermId) params.session_term_id = sessionTermId;
+  const response = await api.get('/admission/parent-insights/detail', { params });
+  return response.data;
+};
+
+export const getParentDashboard = async (sessionTermId = null) => {
+  const params = sessionTermId ? { session_term_id: sessionTermId } : {};
+  const response = await api.get('/admission/parent-dashboard', { params });
+  return response.data;
+};
+
 // Admission Payment
 export const checkAdmissionPaymentStatus = async (admissionId) => {
   const response = await api.get(`/admission/payments/status/${admissionId}`);

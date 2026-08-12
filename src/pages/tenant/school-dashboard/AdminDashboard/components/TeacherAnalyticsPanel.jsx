@@ -10,7 +10,7 @@ import {
 } from '@mui/icons-material';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
 import { Panel, SectionHeader } from '../common';
-import { BLUE, GREEN, ORANGE, PURPLE, RESOURCE_SPARK_DATA, num } from '../constants';
+import { BLUE, GREEN, ORANGE, PURPLE, num } from '../constants';
 import MetricTile from './MetricTile';
 import HBarChart from './HBarChart';
 
@@ -19,6 +19,13 @@ import HBarChart from './HBarChart';
  */
 const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
   const theme = useTheme();
+
+  // Real monthly resource-creation series from the backend; falls back to an
+  // empty array so the sparkline renders flat when there is no history.
+  const usageSeries = (ta?.resource_usage_series || []).map((p) => ({
+    label: p.label,
+    v: num(p.v),
+  }));
 
   return (
     <Panel>
@@ -71,7 +78,7 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
             right={
               <Box sx={{ width: 76, height: 30 }}>
                 <ReusableSparkline
-                  data={RESOURCE_SPARK_DATA}
+                  data={usageSeries}
                   dataKey="v"
                   color={GREEN}
                   height={30}

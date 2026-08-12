@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Typography, FormControl, Select, MenuItem, Button, Menu, useTheme } from '@mui/material';
-import { Event, Download, FilterAlt } from '@mui/icons-material';
+import React from 'react';
+import { Box, Typography, FormControl, Select, MenuItem, Button, useTheme } from '@mui/material';
+import { Event, Download } from '@mui/icons-material';
 
 /**
- * Header — title + data-as-of line, session/term selectors, export button and
- * class-status filter menu.
+ * Header — title + data-as-of line, session/term selectors and export button.
  */
 const DashboardHeader = ({
   dataAsOf,
@@ -15,11 +14,8 @@ const DashboardHeader = ({
   selectedTerm,
   onTermChange,
   onExport,
-  statusFilter,
-  onStatusFilterChange,
 }) => {
   const theme = useTheme();
-  const [filterAnchor, setFilterAnchor] = useState(null);
 
   return (
     <Box
@@ -39,12 +35,14 @@ const DashboardHeader = ({
         <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
           Overview of revenue performance and collections
         </Typography>
+        {/* Data as of — commented out per request
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1 }}>
           <Event sx={{ fontSize: 14, color: 'text.secondary' }} />
           <Typography variant="body2" color="text.secondary">
             Data as of {dataAsOf}
           </Typography>
         </Box>
+        */}
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
@@ -115,38 +113,6 @@ const DashboardHeader = ({
         >
           Export Report
         </Button>
-
-        <Button
-          variant="contained"
-          startIcon={<FilterAlt />}
-          onClick={(e) => setFilterAnchor(e.currentTarget)}
-          sx={{ borderRadius: 2, fontWeight: 700 }}
-        >
-          Filter
-        </Button>
-        <Menu
-          anchorEl={filterAnchor}
-          open={Boolean(filterAnchor)}
-          onClose={() => setFilterAnchor(null)}
-        >
-          {[
-            { value: 'all', label: 'All Classes' },
-            { value: 'excellent', label: 'Excellent' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'poor', label: 'Poor' },
-          ].map((opt) => (
-            <MenuItem
-              key={opt.value}
-              selected={statusFilter === opt.value}
-              onClick={() => {
-                onStatusFilterChange(opt.value);
-                setFilterAnchor(null);
-              }}
-            >
-              {opt.label}
-            </MenuItem>
-          ))}
-        </Menu>
       </Box>
     </Box>
   );

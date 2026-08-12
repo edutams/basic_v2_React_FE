@@ -21,5 +21,3 @@ export const makeSparkData = (down = false) =>
     v: down ? 90 - i * 8 : 16 + i * 8,
   }));
 
-// Stable upward series for the Resource Usage tile (rebuilt only at module load)
-export const RESOURCE_SPARK_DATA = makeSparkData(false);

@@ -16,6 +16,13 @@ const cardSx = {
 };
 
 /* Each notification row gets its own tinted background row */
+const TYPE_STYLES = {
+  fee:     { icon: WarningAmberOutlined,       iconBg: '#FEE2E2', iconColor: '#DC2626', rowBg: '#FFF5F5', rowBorder: '#FECACA' },
+  payment: { icon: CheckCircleOutlineOutlined, iconBg: '#DCFCE7', iconColor: '#16A34A', rowBg: '#F0FDF4', rowBorder: '#A7F3D0' },
+  event:   { icon: CampaignOutlined,           iconBg: '#DBEAFE', iconColor: '#2563EB', rowBg: '#EFF6FF', rowBorder: '#BFDBFE' },
+  message: { icon: MenuBookOutlined,           iconBg: '#FEF3C7', iconColor: '#D97706', rowBg: '#FFFBEB', rowBorder: '#FDE68A' },
+};
+
 const NotifItem = ({ icon: Icon, iconBg, iconColor, rowBg, rowBorder, text, time }) => (
   <Box
     sx={{
@@ -87,55 +94,54 @@ const EventItem = ({ month, day, title, timeStr }) => (
   </ListItem>
 );
 
-const Notifications = () => (
-  <Stack spacing={2}>
+const Notifications = ({ notifications = [], events = [] }) => (
+  <Stack spacing={2} sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
     {/* Notifications */}
-    <Card elevation={0} sx={{ ...cardSx, p: '12px 14px' }}>
+    <Card elevation={0} sx={{ ...cardSx, p: '12px 14px', flex: 1 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.9}>
         <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827' }}>Notifications</Typography>
         <Typography sx={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>View All</Typography>
       </Stack>
 
-      <NotifItem
-        icon={WarningAmberOutlined}
-        iconBg="#FEE2E2"   iconColor="#DC2626"
-        rowBg="#FFF5F5"    rowBorder="#FECACA"
-        text="Outstanding fees for Chinedu Adenubi"
-        time="2h ago"
-      />
-      <NotifItem
-        icon={MenuBookOutlined}
-        iconBg="#FEF3C7"   iconColor="#D97706"
-        rowBg="#FFFBEB"    rowBorder="#FDE68A"
-        text="Maths Assignment due tomorrow for Amaka"
-        time="4h ago"
-      />
-      <NotifItem
-        icon={CampaignOutlined}
-        iconBg="#DBEAFE"   iconColor="#2563EB"
-        rowBg="#EFF6FF"    rowBorder="#BFDBFE"
-        text="Mid-term exams begin June 10, 2025"
-        time="6h ago"
-      />
-      <NotifItem
-        icon={CheckCircleOutlineOutlined}
-        iconBg="#DCFCE7"   iconColor="#16A34A"
-        rowBg="#F0FDF4"    rowBorder="#A7F3D0"
-        text="Payment of ₦50,000 was successful"
-        time="1d ago"
-      />
+      {notifications.length > 0 ? (
+        notifications.slice(0, 4).map((n, i) => {
+          const style = TYPE_STYLES[n.type] || TYPE_STYLES.message;
+          return (
+            <NotifItem
+              key={i}
+              icon={style.icon}
+              iconBg={style.iconBg}
+              iconColor={style.iconColor}
+              rowBg={style.rowBg}
+              rowBorder={style.rowBorder}
+              text={n.text}
+              time={n.time}
+            />
+          );
+        })
+      ) : (
+        <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 1 }}>
+          You're all caught up.
+        </Typography>
+      )}
     </Card>
 
     {/* Upcoming Events */}
-    <Card elevation={0} sx={{ ...cardSx, p: '12px 14px' }}>
+    <Card elevation={0} sx={{ ...cardSx, p: '12px 14px', flex: 1 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.75}>
         <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827' }}>Upcoming Events</Typography>
         <Typography sx={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>View Calendar</Typography>
       </Stack>
       <List disablePadding>
-        <EventItem month="JUN" day="08" title="PTA Meeting"        timeStr="10:00 AM - 12:00 PM" />
-        <EventItem month="JUN" day="10" title="Mid-term Exams Begin" timeStr="All Day"            />
-        <EventItem month="JUN" day="15" title="Sports Day"         timeStr="9:00 AM - 2:00 PM"  />
+        {events.length > 0 ? (
+          events.map((e, i) => (
+            <EventItem key={i} month={e.month} day={e.day} title={e.title} timeStr={e.time} />
+          ))
+        ) : (
+          <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 1 }}>
+            No upcoming events.
+          </Typography>
+        )}
       </List>
     </Card>
   </Stack>

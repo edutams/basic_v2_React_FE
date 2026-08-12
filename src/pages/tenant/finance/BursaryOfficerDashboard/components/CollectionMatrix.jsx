@@ -20,9 +20,9 @@ import { STATUS_META, formatCurrency } from '../constants';
 
 /**
  * Class-Level Collection Matrix — table of per-class expected/collected/outstanding
- * fees with efficiency progress bars, a filtered chip, and a totals row.
+ * fees with efficiency progress bars and a totals row.
  */
-const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, statusFilter, onRowClick }) => {
+const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) => {
   const theme = useTheme();
 
   return (
@@ -54,18 +54,6 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, statusFilter, 
         <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 12.5, letterSpacing: 0.4 }}>
           Class-Level Collection Matrix
         </Typography>
-        {statusFilter !== 'all' && (
-          <Chip
-            size="small"
-            label={`Filtered: ${STATUS_META[statusFilter]?.label || statusFilter}`}
-            sx={{
-              ml: 'auto',
-              bgcolor: 'rgba(255,255,255,0.18)',
-              color: '#fff',
-              fontWeight: 700,
-            }}
-          />
-        )}
       </Box>
 
       <TableContainer sx={{ flexGrow: 1 }}>

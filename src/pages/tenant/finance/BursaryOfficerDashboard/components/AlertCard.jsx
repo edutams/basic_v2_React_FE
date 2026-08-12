@@ -11,51 +11,65 @@ import {
 } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
 
+const ICON_SIZE = 38;
+const ICON_GAP = 12; // px, matches gap: 1.5
+
 /**
- * Operational alert card — matches the reference layout: a tinted severity box with a
- * solid circular icon + bold colored title, a bold dark value with muted sublabel, a
- * secondary count stat line, and a chevron on the right. The efficiency-target alert
- * shows a progress bar with a target marker and red variance line instead.
+ * Operational alert card — icon + title + chevron on the top row, with the
+ * value/sublabel content indented underneath the title. Each alert type has
+ * a "primary" stat (large, bold) and a "secondary" stat (smaller, bold),
+ * both stacked as value → label. Late payment inverts the usual
+ * amount/count order: count is primary, amount is secondary.
  */
 const AlertCard = ({ alert }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isTarget = alert.type === 'efficiency_target';
 
-  const colorMap = {
-    outstanding_fees: '#DC2626',
-    settlements_pending: '#F97316',
-    late_payment: '#D97706',
-    efficiency_target: '#059669',
+  const config = {
+    outstanding_fees: {
+      color: '#DC2626',
+      Icon: ErrorOutline,
+      primaryValue: formatCurrency(alert.amount),
+      primaryLabel: 'Total Unpaid Balance',
+      secondaryValue: `${alert.count} Students`,
+      secondaryLabel: 'Have outstanding fees',
+    },
+    settlements_pending: {
+      color: '#F97316',
+      Icon: HourglassEmpty,
+      primaryValue: formatCurrency(alert.amount),
+      primaryLabel: 'Unsettled Transactions',
+      secondaryValue: `${alert.count} Transactions`,
+      secondaryLabel: 'Awaiting settlement',
+    },
+    late_payment: {
+      color: '#D97706',
+      Icon: Schedule,
+      primaryValue: `${alert.count} Students`,
+      primaryLabel: 'Payments overdue',
+      secondaryValue: formatCurrency(alert.amount),
+      secondaryLabel: 'Overdue Amount',
+    },
+    efficiency_target: {
+      color: '#059669',
+      Icon: TrackChanges,
+      primaryValue: `${alert.percentage}%`,
+      primaryLabel: 'Current Efficiency',
+    },
   };
-  const iconMap = {
-    outstanding_fees: ErrorOutline,
-    settlements_pending: HourglassEmpty,
-    late_payment: Schedule,
-    efficiency_target: TrackChanges,
-  };
-  // Subtitle line (value label) per alert type — avoids repeating the footer text
-  const subtitleMap = {
-    outstanding_fees: 'Total Unpaid Balance',
-    settlements_pending: 'Unsettled Transactions',
-    late_payment: 'Overdue Amount',
-    efficiency_target: 'Current Efficiency',
-  };
-  // Footer line: bold count + unit, then the trailing label
-  const footerMap = {
-    outstanding_fees: { unit: 'Students', label: 'Have outstanding fees' },
-    settlements_pending: { unit: 'Transactions', label: 'Awaiting settlement' },
-    late_payment: { unit: 'Students', label: 'Payments overdue' },
-  };
-  const color = colorMap[alert.type] || theme.palette.info.main;
-  const Icon = iconMap[alert.type] || InfoOutlined;
+
+  const { color, Icon, primaryValue, primaryLabel, secondaryValue, secondaryLabel } =
+    config[alert.type] || {
+      color: theme.palette.info.main,
+      Icon: InfoOutlined,
+      primaryValue: alert.amount ? formatCurrency(alert.amount) : '',
+      primaryLabel: alert.description,
+    };
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
         p: 1.75,
         borderRadius: '14px',
         bgcolor: isDark ? alpha(color, 0.14) : alpha(color, 0.07),
@@ -69,44 +83,48 @@ const AlertCard = ({ alert }) => {
         },
       }}
     >
-      {/* Solid circular severity icon */}
-      <Box
-        sx={{
-          width: 38,
-          height: 38,
-          borderRadius: '50%',
-          bgcolor: color,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          boxShadow: `0 4px 10px ${alpha(color, 0.35)}`,
-        }}
-      >
-        <Icon sx={{ fontSize: 16 }} />
-      </Box>
+      {/* Top row: icon, title, chevron */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            borderRadius: '50%',
+            bgcolor: color,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 4px 10px ${alpha(color, 0.35)}`,
+          }}
+        >
+          <Icon sx={{ fontSize: 16 }} />
+        </Box>
 
-      {/* Content: title / value / sublabel / secondary stat */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant="subtitle2"
           fontWeight={800}
-          sx={{ color, fontSize: 11.5, lineHeight: 1.3 }}
+          sx={{ color, fontSize: 11.5, lineHeight: 1.3, flex: 1 }}
         >
           {alert.title}
         </Typography>
 
+        <ChevronRight sx={{ color: alpha(color, 0.55), flexShrink: 0 }} />
+      </Box>
+
+      {/* Content, indented to align under the title */}
+      <Box sx={{ pl: `${ICON_SIZE + ICON_GAP}px`, mt: 0.5 }}>
         <Typography
           variant="h5"
           fontWeight={800}
-          sx={{ mt: 0.5, color: 'text.primary', fontSize: 18, lineHeight: 1.15 }}
+          sx={{ color: 'text.primary', fontSize: 18, lineHeight: 1.15 }}
         >
-          {isTarget ? `${alert.percentage}%` : formatCurrency(alert.amount)}
+          {primaryValue}
         </Typography>
 
-        <Typography variant="caption" color="text.secondary">
-          {subtitleMap[alert.type] || alert.description}
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          {primaryLabel}
         </Typography>
 
         {isTarget ? (
@@ -128,7 +146,6 @@ const AlertCard = ({ alert }) => {
                   },
                 }}
               />
-              {/* Dark target marker */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -150,21 +167,23 @@ const AlertCard = ({ alert }) => {
             </Typography>
           </Box>
         ) : (
-          footerMap[alert.type] && (
-            <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-              <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ fontSize: 11.5 }}>
-                {alert.count} {footerMap[alert.type].unit}
+          secondaryValue && (
+            <Box sx={{ mt: 1 }}>
+              <Typography
+                variant="body2"
+                fontWeight={800}
+                color="text.primary"
+                sx={{ fontSize: 13, lineHeight: 1.2 }}
+              >
+                {secondaryValue}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                / {footerMap[alert.type].label}
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                {secondaryLabel}
               </Typography>
             </Box>
           )
         )}
       </Box>
-
-      {/* Chevron */}
-      <ChevronRight sx={{ color: alpha(color, 0.55), flexShrink: 0 }} />
     </Box>
   );
 };

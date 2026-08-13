@@ -171,7 +171,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PermissionIcon fontSize="small" color="primary" />
           <Typography variant="h6" component="span">
-            Users with this Permission
+            {permission?.id === 'all'
+              ? 'Users Impacted by Permissions'
+              : 'Users with this Permission'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
@@ -216,15 +218,17 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                 <TableCell sx={{ width: '40%' }}>User Details</TableCell>
                 <TableCell sx={{ width: '20%' }}>Source</TableCell>
                 <TableCell sx={{ width: '18%' }}>Status</TableCell>
-                <TableCell sx={{ width: '12%' }} align="center">
-                  Action
-                </TableCell>
+                {permission?.id !== 'all' && (
+                  <TableCell sx={{ width: '12%' }} align="center">
+                    Action
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -238,35 +242,33 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                     u.avatar ||
                     u.image ||
                     item.image ||
-                    item.profile_picture ||
-                    item.profile_photo_url ||
-                    item.photo ||
                     '';
                   const avatarSrc = rawAvatar ? getFullImageUrl(rawAvatar) : '';
-                  const fname = u.fname || u.first_name || u.name || item.fname || item.name || '';
-                  const lname = u.lname || u.last_name || item.lname || '';
-                  const displayName = u.full_name || (fname ? `${fname} ${lname}`.trim() : item.full_name || '—');
-                  const email = u.email || item.email || '—';
 
                   return (
-                    <TableRow key={item.id || index} hover>
+                    <TableRow key={item.id || u.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar
                             src={avatarSrc}
-                            alt={fname || displayName}
-                            sx={{ width: 36, height: 36 }}
+                            alt={u.full_name || u.fname || ''}
+                            sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700 }}
                           >
-                            {fname?.[0]?.toUpperCase() ?? displayName?.[0]?.toUpperCase() ?? '?'}
+                            {getInitials(
+                              u.full_name ||
+                                `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                                'User'
+                            )}
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" fontWeight={600} noWrap>
-                              {displayName}
+                            <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+                              {u.full_name ||
+                                `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                                'N/A'}
                             </Typography>
-
                             <Typography variant="caption" color="text.secondary">
-                              {email}
+                              {u.email || 'N/A'}
                             </Typography>
                           </Box>
                         </Box>
@@ -289,17 +291,19 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                         />
                       </TableCell>
 
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
+                      {permission?.id !== 'all' && (
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <Alert
                       severity="info"
                       sx={{
@@ -310,6 +314,8 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                     >
                       {search
                         ? 'No users match your search.'
+                        : permission?.id === 'all'
+                        ? 'No users are impacted by permissions yet.'
                         : 'No users have this permission yet.'}
                     </Alert>
                   </TableCell>

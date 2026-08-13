@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import { Search as SearchIcon } from '@mui/icons-material';
@@ -185,7 +186,6 @@ const SchoolPermissionBased = () => {
     setActiveMenuPerm(null);
   };
 
-  // Extract module name from permission object
   const getModuleName = (permission) => {
     if (!permission) return 'General';
     if (permission.module_name) return permission.module_name;
@@ -201,7 +201,6 @@ const SchoolPermissionBased = () => {
     return 'General';
   };
 
-  // Filtered display permissions
   const displayPermissions = useMemo(() => {
     if (!permissions || permissions.length === 0) return [];
     return permissions.filter((p) => {
@@ -231,7 +230,6 @@ const SchoolPermissionBased = () => {
     });
   }, [permissions, nameFilter, moduleFilter, statusFilter]);
 
-  // Stat calculations
   const stats = useMemo(() => {
     const rawTotalP = summaryStats?.total_permissions ?? summaryStats?.totalPermissions;
     const rawAssignedP = summaryStats?.assigned_permissions ?? summaryStats?.assignedPermissions;
@@ -510,9 +508,7 @@ const SchoolPermissionBased = () => {
 
   return (
     <Box>
-      {/* ── 1. Top Summary Stat Cards (4 Cards Row) ─────────────────────────── */}
       <Grid container spacing={2} mb={3}>
-        {/* Card 1: Total Permissions */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.totalP.toLocaleString()}
@@ -524,7 +520,6 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 2: Permissions Assigned */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.assignedP.toLocaleString()}
@@ -536,7 +531,6 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 3: Unused Permissions */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.unusedP}
@@ -548,22 +542,40 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 4: Affected Users */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.affectedU.toLocaleString()}
-            label="Affected Users"
-            subtitle="Users impacted by permissions"
-            icon={IconUsers}
-            colorIndex={2}
-            loading={statsLoading}
-          />
+          <Tooltip title="Click to view full user breakdown" placement="top">
+            <Box
+              onClick={() => {
+                setSelectedPermission({
+                  id: 'all',
+                  name: 'All Impacted Users',
+                  title: 'All Impacted Users',
+                });
+                setUsersModalOpen(true);
+              }}
+              sx={{
+                width: '100%',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              <StatCard
+                count={stats.affectedU.toLocaleString()}
+                label="Affected Users"
+                subtitle="Users impacted by permissions"
+                icon={IconUsers}
+                colorIndex={2}
+                loading={statsLoading}
+              />
+            </Box>
+          </Tooltip>
         </Grid>
       </Grid>
 
-      {/* ── 2. Main 2-Column Section (Left Chart + Right Table) ───────────── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Left Column: Donut Chart Breakdown */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Permissions by Module" sx={{ width: '100%', height: '100%' }}>
             <Box
@@ -600,10 +612,9 @@ const SchoolPermissionBased = () => {
                   )}
                 </Box>
 
-                {/* Custom Legend List (Show Top 4 items on card) */}
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.slice(0, 4).map((item, idx) => {
-                    const isLast = idx === Math.min(chartLegendData.length, 4) - 1;
+                  {chartLegendData.slice(0, 8).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 8) - 1;
                     return (
                       <Box
                         key={idx}
@@ -658,7 +669,6 @@ const SchoolPermissionBased = () => {
           </ParentCard>
         </Grid>
 
-        {/* Right Column: Permissions Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
           <Paper
             elevation={0}
@@ -676,7 +686,6 @@ const SchoolPermissionBased = () => {
             }}
           >
             <Box>
-              {/* Table Top Controls Bar */}
               <Box
                 component="form"
                 onSubmit={handleSearchSubmit}
@@ -716,7 +725,6 @@ const SchoolPermissionBased = () => {
                     }}
                   />
 
-                  {/* Module Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 150 }}>
                     <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
                       <MenuItem value="all">All Modules</MenuItem>
@@ -728,7 +736,6 @@ const SchoolPermissionBased = () => {
                     </Select>
                   </FormControl>
 
-                  {/* Status Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 120 }}>
                     <Select value={statusInput} onChange={(e) => setStatusInput(e.target.value)}>
                       <MenuItem value="all">All Status</MenuItem>
@@ -737,7 +744,6 @@ const SchoolPermissionBased = () => {
                     </Select>
                   </FormControl>
 
-                  {/* Roles Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 140 }}>
                     <Select value={roleInput} onChange={(e) => setRoleInput(e.target.value)}>
                       <MenuItem value="all">All Roles</MenuItem>
@@ -792,7 +798,6 @@ const SchoolPermissionBased = () => {
                 </Button>
               </Box>
 
-              {/* Permissions Table */}
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
                 <Table sx={{ minWidth: 960 }} stickyHeader>
                   <TableHead>
@@ -845,16 +850,16 @@ const SchoolPermissionBased = () => {
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
                           : 'May 6, 2025';
                         const formattedTime = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                           : '10:30 AM';
 
                         return (
@@ -875,14 +880,12 @@ const SchoolPermissionBased = () => {
                               </Box>
                             </TableCell>
 
-                            {/* Module Name */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Typography variant="body2" fontWeight={600} color="text.primary">
                                 {moduleTitle}
                               </Typography>
                             </TableCell>
 
-                            {/* Description Snippet (Multiline wrapping) */}
                             <TableCell sx={{ py: 1.5, minWidth: 220, maxWidth: 300 }}>
                               <Typography
                                 variant="body2"
@@ -897,7 +900,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Roles Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -914,7 +916,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Users Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -931,7 +932,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Status Chip */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Chip
                                 label={isAssigned ? 'Assigned' : 'Unused'}
@@ -946,7 +946,6 @@ const SchoolPermissionBased = () => {
                               />
                             </TableCell>
 
-                            {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Typography
                                 variant="caption"
@@ -961,7 +960,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Action Menu */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
@@ -984,7 +982,6 @@ const SchoolPermissionBased = () => {
               </TableContainer>
             </Box>
 
-            {/* Standard TablePagination Footer */}
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, 50, 100]}
               component="div"
@@ -1001,7 +998,6 @@ const SchoolPermissionBased = () => {
         </Grid>
       </Grid>
 
-      {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem
           onClick={() => {

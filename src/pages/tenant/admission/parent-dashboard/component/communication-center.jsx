@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, Avatar, List, ListItem, ListItemAvatar, ListItemText, Button } from '@mui/material';
+import { Box, Card, Typography, Stack, Avatar, List, ListItem, ListItemAvatar, ListItemText, Button, Skeleton } from '@mui/material';
 
 const cardSx = {
   borderRadius: '8px',
@@ -64,7 +64,18 @@ const MessageItem = ({ name, text, time }) => (
   </ListItem>
 );
 
-const CommunicationCenter = ({ contacts = [], messages = [] }) => (
+const CommunicationCenter = ({ contacts = [], messages = [], loading = false }) => {
+  if (loading) {
+    return (
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} mb={2} alignItems="stretch">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} variant="rounded" height={160} sx={{ flex: 1, borderRadius: '8px' }} />
+        ))}
+      </Stack>
+    );
+  }
+
+  return (
   <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} mb={2} alignItems="stretch">
 
     {/* Communication Center */}
@@ -159,6 +170,7 @@ const CommunicationCenter = ({ contacts = [], messages = [] }) => (
     </Card>
 
   </Stack>
-);
+  );
+};
 
 export default CommunicationCenter;

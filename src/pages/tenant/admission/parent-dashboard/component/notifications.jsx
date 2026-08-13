@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
+import { Box, Card, Typography, Stack, List, ListItem, ListItemText, ListItemIcon, Skeleton } from '@mui/material';
 import {
   WarningAmberOutlined,
   MenuBookOutlined,
@@ -94,7 +94,18 @@ const EventItem = ({ month, day, title, timeStr }) => (
   </ListItem>
 );
 
-const Notifications = ({ notifications = [], events = [] }) => (
+const Notifications = ({ notifications = [], events = [], loading = false }) => {
+  if (loading) {
+    return (
+      <Stack spacing={2} sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {[0, 1].map((i) => (
+          <Skeleton key={i} variant="rounded" height={220} sx={{ borderRadius: '8px' }} />
+        ))}
+      </Stack>
+    );
+  }
+
+  return (
   <Stack spacing={2} sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
     {/* Notifications */}
     <Card elevation={0} sx={{ ...cardSx, p: '12px 14px', flex: 1 }}>
@@ -145,6 +156,7 @@ const Notifications = ({ notifications = [], events = [] }) => (
       </List>
     </Card>
   </Stack>
-);
+  );
+};
 
 export default Notifications;

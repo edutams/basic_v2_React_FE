@@ -148,6 +148,16 @@ const ActivityLog = () => {
   const [openModal, setOpenModal] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuLog, setMenuLog] = useState(null);
+  const [activeUser, setActiveUser] = useState(null);
+
+  const handleCauserClick = (causer) => {
+    if (!causer) return;
+    setActiveUser(causer);
+  };
+
+  const handleCloseProfileDrawer = () => {
+    setActiveUser(null);
+  };
 
   const [stats, setStats] = useState({
     total_activities: 0,
@@ -158,10 +168,14 @@ const ActivityLog = () => {
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const fetchStats = async () => {
+  const fetchStats = async (from = appliedDateFrom, to = appliedDateTo) => {
     try {
       setStatsLoading(true);
-      const res = await tenantApi.get('/activity-logs/statistics');
+      const params = new URLSearchParams();
+      if (from) params.append('date_from', from);
+      if (to) params.append('date_to', to);
+
+      const res = await tenantApi.get(`/activity-logs/statistics?${params.toString()}`);
       const data = res.data?.data || res.data || {};
       setStats({
         total_activities: data.total_activities ?? 0,
@@ -177,55 +191,28 @@ const ActivityLog = () => {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
-
-  const activeUser = useMemo(() => {
-    if (!activeUserId) return null;
-    const logWithUser = logs.find(
-      (l) => l.causer && String(l.causer.id) === String(activeUserId)
-    );
-    return logWithUser ? { ...logWithUser.causer, properties: logWithUser.properties } : null;
-  }, [activeUserId, logs]);
-
-  const handleCauserClick = (causer) => {
-    if (!causer || !causer.id) return;
-    setSearchParams((prev) => {
-      const p = new URLSearchParams(prev);
-      p.set('user_id', causer.id);
-      return p;
-    });
-  };
-
-  const handleCloseProfileDrawer = () => {
-    setSearchParams((prev) => {
-      const p = new URLSearchParams(prev);
-      p.delete('user_id');
-      p.delete('causer_id');
-      p.delete('profile_id');
-      return p;
-    });
-  };
-
   const fetchLogs = async (
-    currentPage,
-    limit,
+    currentPage = page,
+    limit = rowsPerPage,
     sQuery = searchQuery,
     from = appliedDateFrom,
     to = appliedDateTo,
+    mod = moduleFilter,
+    act = actionFilter,
+    usr = userFilter,
   ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: currentPage + 1,
         limit,
-        search: sQuery,
       });
+      if (sQuery) params.append('search', sQuery);
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
+      if (mod && mod !== 'all') params.append('log_name', mod);
+      if (act && act !== 'all') params.append('action', act);
+      if (usr && usr !== 'all') params.append('user_id', usr);
 
       const response = await tenantApi.get(`/activity-logs?${params.toString()}`);
       setLogs(response.data.data || []);
@@ -241,8 +228,9 @@ const ActivityLog = () => {
   };
 
   useEffect(() => {
-    fetchLogs(page, rowsPerPage);
-  }, [page, rowsPerPage, searchQuery, appliedDateFrom, appliedDateTo]);
+    fetchLogs(page, rowsPerPage, searchQuery, appliedDateFrom, appliedDateTo, moduleFilter, actionFilter, userFilter);
+    fetchStats(appliedDateFrom, appliedDateTo);
+  }, [page, rowsPerPage, searchQuery, appliedDateFrom, appliedDateTo, moduleFilter, actionFilter, userFilter]);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -330,17 +318,36 @@ const ActivityLog = () => {
     }
   };
 
-  // Helper getters for log items
-  const getLogModule = (log) => {
-    if (log.log_name) {
-      return log.log_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const [modulesList, setModulesList] = useState([]);
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const res = await tenantApi.get('/activity-logs/log-names');
+        const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        setModulesList(list);
+      } catch (err) {
+        console.error('Failed to fetch activity log modules:', err);
+      }
+    };
+    fetchModules();
+  }, []);
+
+  const getModuleName = (log) => {
+    if (!log) return 'General';
+    if (log.module_name) return log.module_name;
+    const name =
+      typeof log === 'string'
+        ? log
+        : (log.log_name && log.log_name !== 'default' ? log.log_name : log.description || log.subject_type || '');
+    const parts = name.split(/[\._\-:]/);
+    if (parts.length > 1 && parts[0].trim()) {
+      return parts[0]
+        .trim()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
     }
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('role')) return 'Role Management';
-    if (desc.includes('user') || desc.includes('profile')) return 'User Management';
-    if (desc.includes('login') || desc.includes('logged')) return 'Authentication';
-    if (desc.includes('holiday') || desc.includes('acad')) return 'Academic Calendar';
-    return 'User Management';
+    return 'General';
   };
 
   const getLogAction = (log) => {
@@ -416,20 +423,7 @@ const ActivityLog = () => {
     return descriptionStr;
   };
 
-  // Filtered log display
-  const displayLogs = useMemo(() => {
-    if (!logs || logs.length === 0) return [];
-    return logs.filter((log) => {
-      const moduleName = getLogModule(log).toLowerCase();
-      const actionName = getLogAction(log).toLowerCase();
-      const severityName = getLogSeverity(log).toLowerCase();
-
-      if (moduleFilter !== 'all' && moduleName !== moduleFilter.toLowerCase()) return false;
-      if (actionFilter !== 'all' && actionName !== actionFilter.toLowerCase()) return false;
-      if (severityFilter !== 'all' && severityName !== severityFilter.toLowerCase()) return false;
-      return true;
-    });
-  }, [logs, moduleFilter, actionFilter, severityFilter]);
+  const displayLogs = logs || [];
 
   const hasActiveFilters = Boolean(
     searchQuery || userFilter !== 'all' || moduleFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
@@ -480,7 +474,7 @@ const ActivityLog = () => {
             <StatCard
               count={stats.critical_actions.toLocaleString()}
               label="Critical Actions"
-              subtitle="Deletions & security events"
+              subtitle="Deletions & security"
               icon={IconShield}
               colorIndex={2}
               loading={statsLoading}
@@ -575,13 +569,14 @@ const ActivityLog = () => {
                 </Select>
               </FormControl>
 
-              <FormControl size="small" sx={{ minWidth: 130 }}>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
                   <MenuItem value="all">All Modules</MenuItem>
-                  <MenuItem value="User Management">User Management</MenuItem>
-                  <MenuItem value="Authentication">Authentication</MenuItem>
-                  <MenuItem value="Academic Calendar">Academic Calendar</MenuItem>
-                  <MenuItem value="Role Management">Role Management</MenuItem>
+                  {modulesList.map((mod) => (
+                    <MenuItem key={mod} value={mod}>
+                      {mod.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 
@@ -695,8 +690,10 @@ const ActivityLog = () => {
                             ? `${causerObj.fname} ${causerObj.lname}`
                             : causerObj.name || 'System User')
                           : 'System';
-                        const userRole = causerObj?.email ? causerObj.email.split('@')[0] : 'super.admin';
-                        const moduleName = getLogModule(log);
+                        const userRole = causerObj?.roles?.[0]?.name
+                          ? causerObj.roles[0].name.replace(/_/g, ' ').toUpperCase()
+                          : (causerObj?.email || '—');
+                        const moduleName = getModuleName(log);
                         const actionName = getLogAction(log);
                         const severityName = getLogSeverity(log);
 
@@ -816,7 +813,7 @@ const ActivityLog = () => {
                             {/* IP Address */}
                             <TableCell sx={{ py: 1.8 }}>
                               <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                {log.ip_address || log.properties?.ip || '197.210.45.12'}
+                                {log.ip_address || log.properties?.ip || log.properties?.ip_address || '—'}
                               </Typography>
                             </TableCell>
 
@@ -914,7 +911,11 @@ const ActivityLog = () => {
                     </TableRow>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
-                      <TableCell>{selectedLog.my_updated_at || selectedLog.updated_at}</TableCell>
+                      <TableCell>
+                        {selectedLog.created_at || selectedLog.updated_at
+                          ? dayjs(selectedLog.created_at || selectedLog.updated_at).format('MMM D, YYYY • h:mm:ss A')
+                          : '—'}
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -994,7 +995,7 @@ const ActivityLog = () => {
 
       {/* User Profile Side Drawer */}
       <UserProfileDrawer
-        open={Boolean(activeUserId)}
+        open={Boolean(activeUser)}
         onClose={handleCloseProfileDrawer}
         user={activeUser}
       />

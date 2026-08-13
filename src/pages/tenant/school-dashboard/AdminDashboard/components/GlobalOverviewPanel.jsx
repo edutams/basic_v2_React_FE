@@ -9,7 +9,7 @@ import StaffDistributionCard from './StaffDistributionCard';
 /**
  * Global Overview — 3 stat cards + staff distribution donut.
  */
-const GlobalOverviewPanel = ({ go, staffDonut }) => {
+const GlobalOverviewPanel = ({ go, staffDonut, onCardClick }) => {
   const theme = useTheme();
 
   return (
@@ -24,6 +24,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             value={num(go.total_students).toLocaleString()}
             trend={go.student_growth}
             sparkData={go.student_series}
+            onClick={() => onCardClick && onCardClick('students')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -34,6 +35,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             value={num(go.teaching_staff).toLocaleString()}
             trend={go.teaching_growth}
             sparkData={go.teaching_series}
+            onClick={() => onCardClick && onCardClick('teaching_staff')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -45,6 +47,7 @@ const GlobalOverviewPanel = ({ go, staffDonut }) => {
             trend={go.non_teaching_growth}
             down
             sparkData={go.non_teaching_series}
+            onClick={() => onCardClick && onCardClick('non_teaching_staff')}
           />
         </Grid>
 

@@ -1,9 +1,27 @@
-import React from 'react';
-import { Box, Typography, FormControl, Select, MenuItem, Button, useTheme } from '@mui/material';
-import { Event, Download } from '@mui/icons-material';
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  FormControl,
+  Select,
+  MenuItem,
+  Button,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  useTheme,
+} from '@mui/material';
+import {
+  Event,
+  Download,
+  ArrowDropDown,
+  TableChart,
+  PictureAsPdf,
+} from '@mui/icons-material';
 
 /**
- * Header — title + data-as-of line, session/term selectors and export button.
+ * Header — title + data-as-of line, session/term selectors and an
+ * Excel/PDF export dropdown (mirrors the export menu used across the project).
  */
 const DashboardHeader = ({
   dataAsOf,
@@ -13,9 +31,15 @@ const DashboardHeader = ({
   termsForSession,
   selectedTerm,
   onTermChange,
-  onExport,
+  onExportExcel,
+  onExportPdf,
+  exporting,
 }) => {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClose = () => setAnchorEl(null);
 
   return (
     <Box
@@ -102,7 +126,9 @@ const DashboardHeader = ({
           variant="outlined"
           color="inherit"
           startIcon={<Download />}
-          onClick={onExport}
+          endIcon={<ArrowDropDown />}
+          disabled={Boolean(exporting)}
+          onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
             borderRadius: 2,
             borderColor: theme.palette.divider,
@@ -111,8 +137,38 @@ const DashboardHeader = ({
             '&:hover': { borderColor: 'text.secondary' },
           }}
         >
-          Export Report
+          {exporting ? 'Preparing…' : 'Export Report'}
         </Button>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}
+        >
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              if (onExportExcel) onExportExcel();
+            }}
+          >
+            <ListItemIcon>
+              <TableChart fontSize="small" sx={{ color: 'success.main' }} />
+            </ListItemIcon>
+            <ListItemText>Export Excel (.xlsx)</ListItemText>
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              if (onExportPdf) onExportPdf();
+            }}
+          >
+            <ListItemIcon>
+              <PictureAsPdf fontSize="small" sx={{ color: 'error.main' }} />
+            </ListItemIcon>
+            <ListItemText>Export PDF (.pdf)</ListItemText>
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );

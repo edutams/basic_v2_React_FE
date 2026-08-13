@@ -7,8 +7,16 @@ import { GREEN, num } from '../constants';
 
 /**
  * Row 1: Top metric cards — Total Applicants / Total Batches / Total Admitted / Total Accepted.
+ * Each card opens a breakdown modal via `onCardClick(type)` (same as the AdminDashboard cards).
  */
-const MetricCards = ({ total_applicants, total_batches, total_admitted, total_accepted, prevSessionLabel }) => (
+const MetricCards = ({
+  total_applicants,
+  total_batches,
+  total_admitted,
+  total_accepted,
+  prevSessionLabel,
+  onCardClick,
+}) => (
   <Grid container spacing={2} mb={3}>
     <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
       <StatCard
@@ -24,6 +32,7 @@ const MetricCards = ({ total_applicants, total_batches, total_admitted, total_ac
             label={prevSessionLabel}
           />
         }
+        onClick={onCardClick ? () => onCardClick('applicants') : undefined}
       />
     </Grid>
 
@@ -49,6 +58,7 @@ const MetricCards = ({ total_applicants, total_batches, total_admitted, total_ac
             </Box>
           </Box>
         }
+        onClick={onCardClick ? () => onCardClick('batches') : undefined}
       />
     </Grid>
 
@@ -66,6 +76,7 @@ const MetricCards = ({ total_applicants, total_batches, total_admitted, total_ac
             label={prevSessionLabel}
           />
         }
+        onClick={onCardClick ? () => onCardClick('admitted') : undefined}
       />
     </Grid>
 
@@ -83,6 +94,7 @@ const MetricCards = ({ total_applicants, total_batches, total_admitted, total_ac
             label={prevSessionLabel}
           />
         }
+        onClick={onCardClick ? () => onCardClick('accepted') : undefined}
       />
     </Grid>
   </Grid>

@@ -9,6 +9,8 @@ import { BLUE, GREEN, PURPLE, formatCurrency, num } from '../constants';
  * Row 2: Financial Metrics — three fee cards + revenue breakdown donut card.
  * Each fee card's sparkline is fed the real weekly series from the backend's
  * fee_trend payload ({ label, pre_application, post_application, total }).
+ * Each fee card opens a breakdown modal via `onCardClick(type)` (the donut card
+ * stays static).
  */
 const FinancialMetrics = ({
   financial_metrics = {},
@@ -17,6 +19,7 @@ const FinancialMetrics = ({
   total_accepted = {},
   prevSessionLabel,
   donutData,
+  onCardClick,
 }) => {
   const trend = Array.isArray(financial_metrics.fee_trend) ? financial_metrics.fee_trend : [];
   const seriesFor = (key) => trend.map((p) => ({ label: p.label, v: Number(p[key] || 0) }));
@@ -35,6 +38,7 @@ const FinancialMetrics = ({
               from {num(total_applicants.count).toLocaleString()} forms
             </Typography>
           }
+          onClick={onCardClick ? () => onCardClick('pre_application_fees') : undefined}
         />
       </Grid>
 
@@ -50,6 +54,7 @@ const FinancialMetrics = ({
               from {num(total_accepted.count).toLocaleString()} acceptances
             </Typography>
           }
+          onClick={onCardClick ? () => onCardClick('post_application_fees') : undefined}
         />
       </Grid>
 
@@ -67,6 +72,7 @@ const FinancialMetrics = ({
               label={prevSessionLabel}
             />
           }
+          onClick={onCardClick ? () => onCardClick('total_fees') : undefined}
         />
       </Grid>
 

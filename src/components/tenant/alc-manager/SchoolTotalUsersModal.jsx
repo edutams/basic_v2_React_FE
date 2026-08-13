@@ -112,6 +112,12 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
     setPage(0);
   };
 
+  const handleClear = () => {
+    setSearch('');
+    setSearchInput('');
+    setPage(0);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -185,7 +191,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
       <DialogContent dividers sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
-            placeholder="Search by user name"
+            placeholder="Search by user name or email"
             value={searchInput}
             size="small"
             fullWidth
@@ -197,11 +203,23 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClear} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
           <Button variant="contained" size="small" onClick={handleSearch}>
             Search
           </Button>
+          {(search || searchInput) && (
+            <Button variant="outlined" color="error" size="small" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
         </Box>
 
         {error && (
@@ -257,8 +275,8 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                           >
                             {getInitials(
                               u.full_name ||
-                                `${u.fname || ''} ${u.lname || ''}`.trim() ||
-                                'User'
+                              `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                              'User'
                             )}
                           </Avatar>
                           <Box>
@@ -268,7 +286,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                                 'N/A'}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {u.email || 'N/A'}
+                              {u.email || 'No email added yet'}
                             </Typography>
                           </Box>
                         </Box>
@@ -315,8 +333,8 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                       {search
                         ? 'No users match your search.'
                         : permission?.id === 'all'
-                        ? 'No users are impacted by permissions yet.'
-                        : 'No users have this permission yet.'}
+                          ? 'No users are impacted by permissions yet.'
+                          : 'No users have this permission yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>
@@ -380,9 +398,8 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleRemovePermission}
         title="Remove permission from user?"
-        message={`Are you sure you want to remove "${
-          permission?.description ?? permission?.name ?? ''
-        }" from ${selectedUser?.full_name ?? ''}?`}
+        message={`Are you sure you want to remove "${permission?.description ?? permission?.name ?? ''
+          }" from ${selectedUser?.full_name ?? ''}?`}
         confirmText="Remove"
         cancelText="Cancel"
         severity="error"

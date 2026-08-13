@@ -543,35 +543,14 @@ const SchoolPermissionBased = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Tooltip title="Click to view full user breakdown" placement="top">
-            <Box
-              onClick={() => {
-                setSelectedPermission({
-                  id: 'all',
-                  name: 'All Impacted Users',
-                  title: 'All Impacted Users',
-                });
-                setUsersModalOpen(true);
-              }}
-              sx={{
-                width: '100%',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <StatCard
-                count={stats.affectedU.toLocaleString()}
-                label="Affected Users"
-                subtitle="Users impacted by permissions"
-                icon={IconUsers}
-                colorIndex={2}
-                loading={statsLoading}
-              />
-            </Box>
-          </Tooltip>
+          <StatCard
+            count={stats.affectedU.toLocaleString()}
+            label="Affected Users"
+            subtitle="Users impacted by permissions"
+            icon={IconUsers}
+            colorIndex={2}
+            loading={statsLoading}
+          />
         </Grid>
       </Grid>
 

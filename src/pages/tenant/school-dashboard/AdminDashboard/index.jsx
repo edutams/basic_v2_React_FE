@@ -107,28 +107,31 @@ const AdminDashboard = () => {
   const ao = useSection('/dashboard/admin/admission-overview');
   const bo = useSection('/dashboard/admin/bursary-overview');
 
-  const handleDownloadReport = () => {
-    const g = go.data || {};
-    const rp = bo.data?.revenue_performance || {};
-    const rows = [
-      ['Metric', 'Value'],
-      ['Total Students', g.total_students],
-      ['Teaching Staff', g.teaching_staff],
-      ['Non-Teaching Staff', g.non_teaching_staff],
-      ['Total Expected Income', rp.total_expected_income],
-      ['Total Collected Income', rp.total_collected_income],
-      ['Total Outstanding Balance', rp.total_outstanding_balance],
-      ['Collection Efficiency (%)', rp.collection_efficiency],
-    ];
-    const csv = rows.map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'admin-dashboard-report.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-    notify.success('Report exported successfully');
+  // Report export — Excel/PDF are generated server-side (PhpSpreadsheet/Dompdf)
+  // and streamed back as binary blobs, mirroring the other dashboard exports.
+  const [exporting, setExporting] = useState(null);
+
+  const handleExport = async (format) => {
+    setExporting(format);
+    try {
+      const res = await tenantApi.get('/dashboard/admin/export-report', {
+        params: { format },
+        responseType: 'blob',
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `admin-dashboard-report.${format === 'pdf' ? 'pdf' : 'xlsx'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      notify.success(`Report exported as ${format.toUpperCase()}`);
+    } catch {
+      notify.error(`Failed to export ${format.toUpperCase()} report`);
+    } finally {
+      setExporting(null);
+    }
   };
 
   // Derived chart data (computed from loaded sections).
@@ -182,7 +185,11 @@ const AdminDashboard = () => {
 
   return (
     <PageContainer title="Admin Dashboard" description="School-wide overview">
-      <DashboardHeader onDownload={handleDownloadReport} />
+      <DashboardHeader
+        onExportExcel={() => handleExport('excel')}
+        onExportPdf={() => handleExport('pdf')}
+        exporting={exporting}
+      />
 
       {go.loading ? (
         <GlobalOverviewSkeleton />

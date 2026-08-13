@@ -15,6 +15,7 @@ import EnrollmentAcrossClasses from './components/EnrollmentAcrossClasses';
 import RatioAndFunnel from './components/RatioAndFunnel';
 import EnrollmentAcrossSessions from './components/EnrollmentAcrossSessions';
 import AtAGlance from './components/AtAGlance';
+import AdmissionBreakdownModal from './components/AdmissionBreakdownModal';
 import DashboardFooter from './components/DashboardFooter';
 
 /**
@@ -52,6 +53,10 @@ const PanelSkeleton = ({ height = 240 }) => {
  */
 const AdmissionOfficerDashboard = () => {
   const notify = useNotification();
+
+  // Breakdown modal state — holds the stat card type clicked on the metric /
+  // fee cards (same pattern as the AdminDashboard OverviewBreakdownModal).
+  const [breakdownType, setBreakdownType] = useState(null);
 
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
@@ -222,6 +227,7 @@ const AdmissionOfficerDashboard = () => {
           total_admitted={overview.data.total_admitted || {}}
           total_accepted={overview.data.total_accepted || {}}
           prevSessionLabel={prevSessionLabel}
+          onCardClick={setBreakdownType}
         />
       )}
 
@@ -242,6 +248,7 @@ const AdmissionOfficerDashboard = () => {
           total_accepted={overview.data.total_accepted || {}}
           prevSessionLabel={prevSessionLabel}
           donutData={donutData}
+          onCardClick={setBreakdownType}
         />
       )}
 
@@ -309,6 +316,14 @@ const AdmissionOfficerDashboard = () => {
       </Grid>
 
       <DashboardFooter lastUpdated={lastUpdated} />
+
+      {/* ── Stat card breakdown modal ─────────────────────────────── */}
+      <AdmissionBreakdownModal
+        open={Boolean(breakdownType)}
+        type={breakdownType}
+        sessionTerm={sessionTerm}
+        onClose={() => setBreakdownType(null)}
+      />
     </PageContainer>
   );
 };

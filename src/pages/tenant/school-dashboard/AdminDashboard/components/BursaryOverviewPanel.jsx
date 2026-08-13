@@ -68,6 +68,11 @@ const BursaryOverviewPanel = ({
             color={GREEN}
             label="Total Collected Income"
             value={formatCompact(bo.revenue_performance?.total_collected_income)}
+            sub={
+              bo.revenue_performance?.revenue_growth
+                ? `${bo.revenue_performance.revenue_growth >= 0 ? '↑' : '↓'}${Math.abs(num(bo.revenue_performance.revenue_growth))}%`
+                : ''
+            }
             onClick={() => onTileClick && onTileClick('bursary_students')}
           />
         </Grid>
@@ -86,7 +91,6 @@ const BursaryOverviewPanel = ({
             color={PURPLE}
             label="Collection Efficiency"
             value={`${num(bo.revenue_performance?.collection_efficiency)}%`}
-            sub="↑ 8.4%"
             onClick={() => onTileClick && onTileClick('collection_matrix')}
           />
         </Grid>

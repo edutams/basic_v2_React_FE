@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import { AccountBalanceWallet } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
@@ -8,35 +8,41 @@ import { formatCurrency } from '../constants';
 /**
  * Financial fee card — stat-card treatment (gradient bg + icon tile) with a mini
  * sparkline fed by the backend's weekly fee_trend series ({ label, v } points).
+ *
+ * When `onClick` is provided the card is clickable and shows a tooltip signalling it
+ * opens a breakdown modal (same interaction as the AdminDashboard OverviewCard).
  */
-const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = [] }) => {
+const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = [], onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2.5,
-        borderRadius: '16px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-3px)',
+    <Tooltip title={onClick ? 'Click to view breakdown' : ''} placement="top" arrow>
+      <Paper
+        elevation={0}
+        onClick={onClick}
+        sx={{
+          p: 2.5,
+          borderRadius: '16px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          cursor: onClick ? 'pointer' : 'default',
+          background: isDark ? theme.palette.background.paper : colors.cardBg,
+          border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
           boxShadow: isDark
-            ? '0 8px 30px rgba(0,0,0,0.35)'
-            : '0 6px 24px rgba(0,0,0,0.12)',
-        },
-      }}
-    >
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 4px 20px rgba(0,0,0,0.07)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: onClick ? 'translateY(-3px)' : 'none',
+            boxShadow: isDark
+              ? '0 8px 30px rgba(0,0,0,0.35)'
+              : '0 6px 24px rgba(0,0,0,0.12)',
+          },
+        }}
+      >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
@@ -95,7 +101,8 @@ const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = 
           tooltipValueFormatter={(v) => formatCurrency(v)}
         />
       </Box>
-    </Paper>
+      </Paper>
+    </Tooltip>
   );
 };
 

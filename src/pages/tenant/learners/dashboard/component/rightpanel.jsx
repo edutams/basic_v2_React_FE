@@ -7,6 +7,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Skeleton,
 } from '@mui/material';
 import {
   AssignmentOutlined,
@@ -23,52 +24,68 @@ const cardSx = {
   bgcolor: '#fff',
 };
 
-const NotifItem = ({ icon: Icon, iconBg, iconColor, rowBg, rowBorder, title, desc, time }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 1,
-      bgcolor: rowBg,
-      border: `1px solid ${rowBorder}`,
-      borderRadius: '6px',
-      px: 1,
-      py: 0.75,
-      mb: 0.75,
-      '&:last-child': { mb: 0 },
-    }}
-  >
+// Visual treatment per notification type (falls back to a neutral style).
+const NOTIF_META = {
+  assignment: { icon: AssignmentOutlined, iconBg: '#DBEAFE', iconColor: '#2563EB', rowBg: '#EFF6FF', rowBorder: '#BFDBFE' },
+  quiz: { icon: QuizOutlined, iconBg: '#FEF3C7', iconColor: '#D97706', rowBg: '#FFFBEB', rowBorder: '#FDE68A' },
+  fee: { icon: PaymentOutlined, iconBg: '#FEE2E2', iconColor: '#DC2626', rowBg: '#FFF5F5', rowBorder: '#FECACA' },
+  exam: { icon: EventNoteOutlined, iconBg: '#EDE9FE', iconColor: '#7C3AED', rowBg: '#F5F3FF', rowBorder: '#DDD6FE' },
+  resource: { icon: FolderZipOutlined, iconBg: '#DCFCE7', iconColor: '#16A34A', rowBg: '#F0FDF4', rowBorder: '#A7F3D0' },
+};
+
+const defaultMeta = { icon: EventNoteOutlined, iconBg: '#E5E7EB', iconColor: '#6B7280', rowBg: '#F9FAFB', rowBorder: '#E5E7EB' };
+
+const NotifItem = ({ type = 'resource', title, desc, time }) => {
+  const meta = NOTIF_META[type] || defaultMeta;
+  const Icon = meta.icon;
+
+  return (
     <Box
       sx={{
-        width: 22,
-        height: 22,
-        borderRadius: '50%',
-        bgcolor: iconBg,
-        color: iconColor,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        mt: '1px',
+        alignItems: 'flex-start',
+        gap: 1,
+        bgcolor: meta.rowBg,
+        border: `1px solid ${meta.rowBorder}`,
+        borderRadius: '6px',
+        px: 1,
+        py: 0.75,
+        mb: 0.75,
+        '&:last-child': { mb: 0 },
       }}
     >
-      <Icon sx={{ fontSize: 12 }} />
-    </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-        <Typography fontWeight="700" sx={{ fontSize: '0.73rem', color: '#111827', lineHeight: 1.2 }}>
-          {title}
+      <Box
+        sx={{
+          width: 22,
+          height: 22,
+          borderRadius: '50%',
+          bgcolor: meta.iconBg,
+          color: meta.iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          mt: '1px',
+        }}
+      >
+        <Icon sx={{ fontSize: 12 }} />
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+          <Typography fontWeight="700" sx={{ fontSize: '0.73rem', color: '#111827', lineHeight: 1.2 }}>
+            {title}
+          </Typography>
+          <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', whiteSpace: 'nowrap', ml: 0.75, flexShrink: 0 }}>
+            {time}
+          </Typography>
+        </Stack>
+        <Typography sx={{ fontSize: '0.65rem', color: '#4B5563', mt: 0.15, lineHeight: 1.25 }}>
+          {desc}
         </Typography>
-        <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', whiteSpace: 'nowrap', ml: 0.75, flexShrink: 0 }}>
-          {time}
-        </Typography>
-      </Stack>
-      <Typography sx={{ fontSize: '0.65rem', color: '#4B5563', mt: 0.15, lineHeight: 1.25 }}>
-        {desc}
-      </Typography>
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 const EventItem = ({ month, day, title, timeStr }) => (
   <ListItem sx={{ px: 0, py: 0.75, borderBottom: '1px solid #F3F4F6', '&:last-child': { borderBottom: 0, pb: 0 } }}>
@@ -98,7 +115,24 @@ const EventItem = ({ month, day, title, timeStr }) => (
   </ListItem>
 );
 
-const RightPanel = () => {
+const ListSkeleton = ({ rows = 4 }) => (
+  <Stack spacing={0.75}>
+    {Array.from({ length: rows }).map((_, i) => (
+      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Skeleton variant="circular" width={22} height={22} />
+        <Box sx={{ flex: 1 }}>
+          <Skeleton variant="text" width="75%" height={12} />
+          <Skeleton variant="text" width="55%" height={10} />
+        </Box>
+      </Box>
+    ))}
+  </Stack>
+);
+
+const RightPanel = ({ notifications = [], events = [], loading = false }) => {
+  const notifList = Array.isArray(notifications) ? notifications : [];
+  const eventList = Array.isArray(events) ? events : [];
+
   return (
     <Stack spacing={2}>
       {/* ─── Notifications Section ─── */}
@@ -112,60 +146,23 @@ const RightPanel = () => {
           </Typography>
         </Stack>
 
-        <NotifItem
-          icon={AssignmentOutlined}
-          iconBg="#DBEAFE"
-          iconColor="#2563EB"
-          rowBg="#EFF6FF"
-          rowBorder="#BFDBFE"
-          title="New assignment posted"
-          desc="Physics: Wave Theory Assignment"
-          time="30 mins ago"
-        />
-
-        <NotifItem
-          icon={QuizOutlined}
-          iconBg="#FEF3C7"
-          iconColor="#D97706"
-          rowBg="#FFFBEB"
-          rowBorder="#FDE68A"
-          title="Upcoming Quiz"
-          desc="English Language Quiz"
-          time="Tomorrow, 9:00 AM"
-        />
-
-        <NotifItem
-          icon={PaymentOutlined}
-          iconBg="#FEE2E2"
-          iconColor="#DC2626"
-          rowBg="#FFF5F5"
-          rowBorder="#FECACA"
-          title="Fee Payment Reminder"
-          desc="You have outstanding fees"
-          time="2 hours ago"
-        />
-
-        <NotifItem
-          icon={EventNoteOutlined}
-          iconBg="#EDE9FE"
-          iconColor="#7C3AED"
-          rowBg="#F5F3FF"
-          rowBorder="#DDD6FE"
-          title="Exam Timetable Released"
-          desc="Check your exam schedule"
-          time="1 day ago"
-        />
-
-        <NotifItem
-          icon={FolderZipOutlined}
-          iconBg="#DCFCE7"
-          iconColor="#16A34A"
-          rowBg="#F0FDF4"
-          rowBorder="#A7F3D0"
-          title="New Resource Available"
-          desc="Chemistry: Organic Compounds"
-          time="2 days ago"
-        />
+        {loading ? (
+          <ListSkeleton />
+        ) : notifList.length === 0 ? (
+          <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 3, textAlign: 'center' }}>
+            You're all caught up — no new notifications.
+          </Typography>
+        ) : (
+          notifList.map((item, idx) => (
+            <NotifItem
+              key={`${item.type}-${item.title}-${idx}`}
+              type={item.type}
+              title={item.title}
+              desc={item.desc}
+              time={item.time}
+            />
+          ))
+        )}
       </Card>
 
       {/* ─── Upcoming Events Section ─── */}
@@ -179,12 +176,25 @@ const RightPanel = () => {
           </Typography>
         </Stack>
 
-        <List disablePadding>
-          <EventItem month="MAY" day="10" title="Physics Quiz" timeStr="May 10, 2025 · 9:00 AM" />
-          <EventItem month="MAY" day="12" title="Mathematics Assignment Due" timeStr="May 12, 2025 · 11:59 PM" />
-          <EventItem month="MAY" day="16" title="Inter-House Sports" timeStr="May 16, 2025 · All Day" />
-          <EventItem month="MAY" day="26" title="Term Exam Begins" timeStr="May 26, 2025 · 8:00 AM" />
-        </List>
+        {loading ? (
+          <ListSkeleton rows={4} />
+        ) : eventList.length === 0 ? (
+          <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', py: 3, textAlign: 'center' }}>
+            No upcoming events.
+          </Typography>
+        ) : (
+          <List disablePadding>
+            {eventList.map((event, idx) => (
+              <EventItem
+                key={`${event.title}-${idx}`}
+                month={event.month}
+                day={event.day}
+                title={event.title}
+                timeStr={event.timeStr}
+              />
+            ))}
+          </List>
+        )}
       </Card>
     </Stack>
   );

@@ -8,11 +8,14 @@ import tenantApi from '@/api/tenant/tenant_api';
 import { BLUE, GREEN, num, shortSession } from './constants';
 import DashboardHeader from './components/DashboardHeader';
 import MetricCards from './components/MetricCards';
+import MetricCardsSkeleton from './components/MetricCardsSkeleton';
 import FinancialMetrics from './components/FinancialMetrics';
+import FinancialMetricsSkeleton from './components/FinancialMetricsSkeleton';
 import EnrollmentAcrossClasses from './components/EnrollmentAcrossClasses';
 import RatioAndFunnel from './components/RatioAndFunnel';
 import EnrollmentAcrossSessions from './components/EnrollmentAcrossSessions';
 import AtAGlance from './components/AtAGlance';
+import AdmissionBreakdownModal from './components/AdmissionBreakdownModal';
 import DashboardFooter from './components/DashboardFooter';
 
 /**
@@ -51,28 +54,39 @@ const PanelSkeleton = ({ height = 240 }) => {
 const AdmissionOfficerDashboard = () => {
   const notify = useNotification();
 
+  // Breakdown modal state — holds the stat card type clicked on the metric /
+  // fee cards (same pattern as the AdminDashboard OverviewBreakdownModal).
+  const [breakdownType, setBreakdownType] = useState(null);
+
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+  const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedSessionsClass, setSelectedSessionsClass] = useState('all');
 
-  // Each section manages its own { data, loading } state.
-  const params = useMemo(
-    () => (sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
-    [sessionTerm],
-  );
-  const paramsKey = JSON.stringify(params);
-
+  // Each section manages its own { data, loading } state; requests wait until
+  // the session term is preselected (active term resolved, or All Sessions) so
+  // the first fetch already carries the filter.
   const useSection = (path, extra = {}) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
+    // Only fetch once a session term is preselected — the dependency array on
+    // sessionTerm fires again whenever the selector or a panel filter changes.
     useEffect(() => {
+      if (!sessionTermsLoaded) {
+        return;
+      }
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path, { params: { ...params, ...extra } })
+        .get(path, {
+          params: {
+            ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+            ...extra,
+          },
+        })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -86,7 +100,7 @@ const AdmissionOfficerDashboard = () => {
         mounted = false;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [path, paramsKey, JSON.stringify(extra)]);
+    }, [path, sessionTerm, JSON.stringify(extra), sessionTermsLoaded]);
 
     return { data, loading };
   };
@@ -135,6 +149,8 @@ const AdmissionOfficerDashboard = () => {
         }
       } catch (error) {
         console.error('Failed to fetch session terms:', error);
+      } finally {
+        setSessionTermsLoaded(true);
       }
     };
 
@@ -203,9 +219,7 @@ const AdmissionOfficerDashboard = () => {
 
       {/* ── Row 1: Overview metric cards ──────────────────────────── */}
       {overview.loading ? (
-        <Box mb={3}>
-          <PanelSkeleton height={150} />
-        </Box>
+        <MetricCardsSkeleton />
       ) : (
         <MetricCards
           total_applicants={overview.data.total_applicants || {}}
@@ -213,6 +227,7 @@ const AdmissionOfficerDashboard = () => {
           total_admitted={overview.data.total_admitted || {}}
           total_accepted={overview.data.total_accepted || {}}
           prevSessionLabel={prevSessionLabel}
+          onCardClick={setBreakdownType}
         />
       )}
 
@@ -224,9 +239,7 @@ const AdmissionOfficerDashboard = () => {
           so it waits for both sections — otherwise it can render while overview is
           still loading (or failed) and crash on a missing .count. */}
       {financialMetrics.loading || overview.loading ? (
-        <Box mb={3}>
-          <PanelSkeleton height={170} />
-        </Box>
+        <FinancialMetricsSkeleton />
       ) : (
         <FinancialMetrics
           financial_metrics={financialMetrics.data}
@@ -235,6 +248,7 @@ const AdmissionOfficerDashboard = () => {
           total_accepted={overview.data.total_accepted || {}}
           prevSessionLabel={prevSessionLabel}
           donutData={donutData}
+          onCardClick={setBreakdownType}
         />
       )}
 
@@ -302,6 +316,14 @@ const AdmissionOfficerDashboard = () => {
       </Grid>
 
       <DashboardFooter lastUpdated={lastUpdated} />
+
+      {/* ── Stat card breakdown modal ─────────────────────────────── */}
+      <AdmissionBreakdownModal
+        open={Boolean(breakdownType)}
+        type={breakdownType}
+        sessionTerm={sessionTerm}
+        onClose={() => setBreakdownType(null)}
+      />
     </PageContainer>
   );
 };

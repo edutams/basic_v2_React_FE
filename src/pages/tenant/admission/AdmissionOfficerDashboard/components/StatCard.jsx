@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { getStatCardColor } from '@/utils/statCardColors';
 
@@ -8,35 +8,41 @@ import { getStatCardColor } from '@/utils/statCardColors';
  * big value, gender split column on the right, growth / active-completed footer bottom-left.
  * Uses the project-standard getStatCardColor treatment (gradient cardBg + icon tile) like
  * the BursaryOfficerDashboard KpiCard.
+ *
+ * When `onClick` is provided the card is clickable and shows a tooltip signalling it
+ * opens a breakdown modal (same interaction as the AdminDashboard OverviewCard).
  */
-const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, footer }) => {
+const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, footer, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2.5,
-        borderRadius: '16px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-3px)',
+    <Tooltip title={onClick ? 'Click to view breakdown' : ''} placement="top" arrow>
+      <Paper
+        elevation={0}
+        onClick={onClick}
+        sx={{
+          p: 2.5,
+          borderRadius: '16px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          cursor: onClick ? 'pointer' : 'default',
+          background: isDark ? theme.palette.background.paper : colors.cardBg,
+          border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
           boxShadow: isDark
-            ? '0 8px 30px rgba(0,0,0,0.35)'
-            : '0 6px 24px rgba(0,0,0,0.12)',
-        },
-      }}
-    >
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 4px 20px rgba(0,0,0,0.07)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: onClick ? 'translateY(-3px)' : 'none',
+            boxShadow: isDark
+              ? '0 8px 30px rgba(0,0,0,0.35)'
+              : '0 6px 24px rgba(0,0,0,0.12)',
+          },
+        }}
+      >
       {/* Icon left, label immediately after it */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
         <Box
@@ -97,7 +103,8 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
           {footer}
         </Box>
       )}
-    </Paper>
+      </Paper>
+    </Tooltip>
   );
 };
 

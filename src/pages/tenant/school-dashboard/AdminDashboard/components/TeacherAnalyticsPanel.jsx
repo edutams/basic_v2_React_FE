@@ -10,14 +10,14 @@ import {
 } from '@mui/icons-material';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
 import { Panel, SectionHeader } from '../common';
-import { BLUE, GREEN, ORANGE, PURPLE, num } from '../constants';
+import { BLUE, GREEN, ORANGE, PURPLE, MOCK_TOP_RESOURCES, num } from '../constants';
 import MetricTile from './MetricTile';
 import HBarChart from './HBarChart';
 
 /**
  * Teacher Analytics — metric tiles + top resource usage bar chart.
  */
-const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
+const TeacherAnalyticsPanel = ({ ta, onViewAll, onTileClick }) => {
   const theme = useTheme();
 
   // Real monthly resource-creation series from the backend; falls back to an
@@ -36,40 +36,44 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
         action="View all"
         onAction={onViewAll}
       />
-      <Grid container columns={6} spacing={1.5}>
-        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid container columns={{ xs: 4, sm: 6, md: 6 }} spacing={1.5}>
+        <Grid size={{ xs: 4, sm: 3, md: 2 }}>
           <MetricTile
             icon={MenuBook}
             color={BLUE}
             label="Lesson Plans Created"
             value={num(ta.lesson_plans_created).toLocaleString()}
+            onClick={onTileClick ? () => onTileClick('lesson_plans') : undefined}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+        <Grid size={{ xs: 4, sm: 3, md: 2 }}>
           <MetricTile
             icon={Quiz}
             color={GREEN}
             label="Quizzes Created"
             value={num(ta.quizzes_created).toLocaleString()}
+            onClick={onTileClick ? () => onTileClick('quizzes') : undefined}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+        <Grid size={{ xs: 4, sm: 3, md: 2 }}>
           <MetricTile
             icon={Assignment}
             color={ORANGE}
             label="Assignments Given"
             value={num(ta.assignments_given).toLocaleString()}
+            onClick={onTileClick ? () => onTileClick('assignments') : undefined}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+        <Grid size={{ xs: 4, sm: 3, md: 2 }}>
           <MetricTile
             icon={VideoLibrary}
             color={PURPLE}
             label="Video Resources Generated"
             value={num(ta.video_resources_generated).toLocaleString()}
+            onClick={onTileClick ? () => onTileClick('video_resources') : undefined}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 8, md: 4 }}>
+        <Grid size={{ xs: 4, sm: 6, md: 4 }}>
           <MetricTile
             icon={Insights}
             color={BLUE}
@@ -87,6 +91,7 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
                 />
               </Box>
             }
+            onClick={onTileClick ? () => onTileClick('resources') : undefined}
           />
         </Grid>
       </Grid>
@@ -105,7 +110,7 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll }) => {
           Top Resource Usage by Teachers
         </Typography>
         <HBarChart
-          data={ta.top_resources || []}
+          data={(ta.top_resources || []).length > 0 ? ta.top_resources : MOCK_TOP_RESOURCES}
           dataKey="percentage"
           nameKey="name"
           color={BLUE}

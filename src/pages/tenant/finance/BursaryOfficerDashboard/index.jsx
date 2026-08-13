@@ -62,7 +62,6 @@ const BursaryOfficerDashboard = () => {
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
-  const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
   const [selectedSession, setSelectedSession] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [sessionTermId, setSessionTermId] = useState('');
@@ -75,8 +74,6 @@ const BursaryOfficerDashboard = () => {
         if (res?.status) setSessionTerms(res.data || []);
       } catch (error) {
         console.error('Failed to fetch session terms:', error);
-      } finally {
-        setSessionTermsLoaded(true);
       }
     };
     load();
@@ -117,25 +114,21 @@ const BursaryOfficerDashboard = () => {
 
   // Each section manages its own { data, loading } state; requests wait
   // until the term resolves so the first fetch already carries the filter.
-  const params = useMemo(
-    () => (sessionTermId ? { session_term_id: sessionTermId } : {}),
-    [sessionTermId],
-  );
-  const paramsKey = JSON.stringify(params);
-  const enabled = sessionTermsLoaded && !!sessionTermId;
-
   const useSection = (path) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
+    // Only fetch when a session term is preselected — the dependency array
+    // on sessionTermId means the endpoint fires once (and again whenever the
+    // session/term selector changes), never before a term is resolved.
     useEffect(() => {
-      if (!enabled) {
+      if (!sessionTermId) {
         return;
       }
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path, { params })
+        .get(path, { params: { session_term_id: sessionTermId } })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -148,8 +141,10 @@ const BursaryOfficerDashboard = () => {
       return () => {
         mounted = false;
       };
+      // sessionTermId is valid reactive state, but the inline custom hook
+      // confuses exhaustive-deps into flagging it as unnecessary — keep it.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [path, paramsKey, enabled]);
+    }, [path, sessionTermId]);
 
     return { data, loading };
   };
@@ -186,35 +181,34 @@ const BursaryOfficerDashboard = () => {
     0,
   );
 
-  const handleExport = () => {
-    const rows = [
-      [
-        'Class',
-        'Expected Fees (₦)',
-        'Collected Fees (₦)',
-        'Outstanding Fees (₦)',
-        'Efficiency (%)',
-        'Status',
-      ],
-      ...matrixRows.map((r) => [
-        r.class,
-        r.expected_fees,
-        r.collected_fees,
-        r.outstanding_fees,
-        r.efficiency,
-        r.status,
-      ]),
-      ['Total', totals.expected, totals.collected, totals.outstanding, totalEfficiency, ''],
-    ];
-    const csv = rows.map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `bursary-collection-matrix-${(selectedSession || 'all').replace(/[\\/]/g, '-')}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    notify.success('Report exported successfully');
+  // Report export — Excel/PDF are generated server-side (PhpSpreadsheet/Dompdf)
+  // and streamed back as binary blobs, scoped to the currently selected term.
+  const [exporting, setExporting] = useState(null);
+
+  const handleExport = async (format) => {
+    setExporting(format);
+    try {
+      const res = await tenantApi.get('/dashboard/bursary/export-report', {
+        params: { format, session_term_id: sessionTermId || undefined },
+        responseType: 'blob',
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute(
+        'download',
+        `bursary-dashboard-report.${format === 'pdf' ? 'pdf' : 'xlsx'}`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      notify.success(`Report exported as ${format.toUpperCase()}`);
+    } catch {
+      notify.error(`Failed to export ${format.toUpperCase()} report`);
+    } finally {
+      setExporting(null);
+    }
   };
 
   const handleSessionChange = (value) => {
@@ -270,7 +264,9 @@ const BursaryOfficerDashboard = () => {
         termsForSession={termsForSession}
         selectedTerm={selectedTerm}
         onTermChange={setSelectedTerm}
-        onExport={handleExport}
+        onExportExcel={() => handleExport('excel')}
+        onExportPdf={() => handleExport('pdf')}
+        exporting={exporting}
       />
 
       {/* ── KPI Cards ──────────────────────────────────────────── */}

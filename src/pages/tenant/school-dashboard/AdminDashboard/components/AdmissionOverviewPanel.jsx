@@ -17,6 +17,7 @@ const AdmissionOverviewPanel = ({
   maxEnrollment,
   onSwitchRole,
   onFooterClick,
+  onTileClick,
 }) => {
   const theme = useTheme();
 
@@ -43,6 +44,7 @@ const AdmissionOverviewPanel = ({
                 ? `${ao.applicants_growth >= 0 ? '↑' : '↓'}${Math.abs(num(ao.applicants_growth))}%`
                 : ''
             }
+            onClick={() => onTileClick && onTileClick('applicants')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -51,6 +53,7 @@ const AdmissionOverviewPanel = ({
             color={BLUE}
             label="Total Batches Created"
             value={num(ao.total_batches).toLocaleString()}
+            onClick={() => onTileClick && onTileClick('batches')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -64,6 +67,7 @@ const AdmissionOverviewPanel = ({
                 ? `${ao.admitted_growth >= 0 ? '↑' : '↓'}${Math.abs(num(ao.admitted_growth))}%`
                 : ''
             }
+            onClick={() => onTileClick && onTileClick('admitted')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -77,6 +81,7 @@ const AdmissionOverviewPanel = ({
                 ? `${ao.accepted_growth >= 0 ? '↑' : '↓'}${Math.abs(num(ao.accepted_growth))}%`
                 : ''
             }
+            onClick={() => onTileClick && onTileClick('accepted')}
           />
         </Grid>
       </Grid>

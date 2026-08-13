@@ -8,6 +8,8 @@ import BursaryOfficerDashboard from '@/pages/tenant/finance/BursaryOfficerDashbo
 import AdminDashboard from '@/pages/tenant/school-dashboard/AdminDashboard';
 import ParentDashboard2 from '../admission/parent-dashboard/ParentDashboard2';
 import LearnerDashboard from '@/pages/tenant/learners/dashboard/LearnerDashboard';
+import TeacherDashboard from '../staff-manager/teacher-dashboard/TeacherDashboard';
+import NonTeacherDashboard from '../staff-manager/non-teaching-dashboard/NonTeachDashboard';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -37,6 +39,10 @@ export default function SchoolDashboard() {
     ['super_admin', 'school_owner', 'school_head'].includes(role.name)
   );
 
+  const isClassTeacher = roles.some(role => role.name === 'class_teacher')
+
+  const isReceptionist = roles.some(role => role.name === 'receptionist')
+
 
   /**
    * Dashboard Title
@@ -49,6 +55,8 @@ export default function SchoolDashboard() {
         ? 'Admission Officer Dashboard'
         : isBursaryOfficer
           ? 'Bursary Officer Dashboard'
+          : isClassTeacher
+          ? 'Teacher Dashboard'
           : isStaff
             ? 'Staff Dashboard'
             : isLearner
@@ -66,6 +74,8 @@ export default function SchoolDashboard() {
         ? 'Admission management portal'
         : isBursaryOfficer
           ? 'Revenue and collections portal'
+          : isClassTeacher
+          ? 'Teaching Staff Portal'
           : isStaff
             ? 'Staff portal'
             : isLearner
@@ -82,7 +92,13 @@ export default function SchoolDashboard() {
         <AdmissionOfficerDashboard />
       ) : isBursaryOfficer ? (
         <BursaryOfficerDashboard />
-      ) : isStaff ? (
+      ) : isClassTeacher ? (
+        <TeacherDashboard />
+      
+      ) : isReceptionist ? (
+        <NonTeacherDashboard />
+      )
+      : isStaff ? (
         <PageUnderDevelopment
           title="Staff Dashboard Under Development"
           subtitle="We're building a comprehensive staff management portal. Check back soon!"

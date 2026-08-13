@@ -655,10 +655,10 @@ const SchoolAssignmentManagement = () => {
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');
 
-                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.updated_at || user.created_at;
+                    const lastActiveRaw = user.last_active_at || user.last_login_at;
                     const lastActiveDate = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                      : '—';
+                      : 'No activity yet';
                     const lastActiveTime = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                       : '';

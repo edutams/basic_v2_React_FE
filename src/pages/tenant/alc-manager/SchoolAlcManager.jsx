@@ -903,6 +903,7 @@ const SchoolAlcManager = () => {
                             ? 'Inactive'
                             : 'Active';
 
+                        const hasBeenUpdated = Boolean(row.updated_at && row.updated_at !== row.created_at) || Boolean(row.updated_by);
                         const date = row.updated_at || row.created_at;
 
                         const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
@@ -913,7 +914,7 @@ const SchoolAlcManager = () => {
                           ? rawUpdater.toLowerCase().startsWith('by ')
                             ? rawUpdater.slice(3)
                             : rawUpdater
-                          : 'Super Admin';
+                          : (hasBeenUpdated ? 'Super Admin' : 'System Default');
 
                         return (
                           <TableRow key={row.id || index} hover>

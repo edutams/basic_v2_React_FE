@@ -55,26 +55,33 @@ const AdmissionOfficerDashboard = () => {
 
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+  const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedSessionsClass, setSelectedSessionsClass] = useState('all');
 
-  // Each section manages its own { data, loading } state.
-  const params = useMemo(
-    () => (sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
-    [sessionTerm],
-  );
-  const paramsKey = JSON.stringify(params);
-
+  // Each section manages its own { data, loading } state; requests wait until
+  // the session term is preselected (active term resolved, or All Sessions) so
+  // the first fetch already carries the filter.
   const useSection = (path, extra = {}) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
+    // Only fetch once a session term is preselected — the dependency array on
+    // sessionTerm fires again whenever the selector or a panel filter changes.
     useEffect(() => {
+      if (!sessionTermsLoaded) {
+        return;
+      }
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path, { params: { ...params, ...extra } })
+        .get(path, {
+          params: {
+            ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+            ...extra,
+          },
+        })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -88,7 +95,7 @@ const AdmissionOfficerDashboard = () => {
         mounted = false;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [path, paramsKey, JSON.stringify(extra)]);
+    }, [path, sessionTerm, JSON.stringify(extra), sessionTermsLoaded]);
 
     return { data, loading };
   };
@@ -137,6 +144,8 @@ const AdmissionOfficerDashboard = () => {
         }
       } catch (error) {
         console.error('Failed to fetch session terms:', error);
+      } finally {
+        setSessionTermsLoaded(true);
       }
     };
 

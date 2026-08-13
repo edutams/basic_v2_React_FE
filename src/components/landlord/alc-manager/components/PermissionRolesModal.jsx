@@ -101,6 +101,12 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
     setPage(0);
   };
 
+  const handleClear = () => {
+    setSearch('');
+    setSearchInput('');
+    setPage(0);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -155,17 +161,24 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClear} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
           <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
             Search
           </Button>
-          {search && (
-            <Button variant="contained" size="small" onClick={() => {
-                setSearch('');
-                setSearchInput('');
-                setPage(0);
-              }}
+          {(search || searchInput) && (
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={handleClear}
               sx={{ minWidth: 'auto', px: 2 }}
             >
               Clear

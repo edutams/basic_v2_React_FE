@@ -492,7 +492,7 @@ const ActivityLog = () => {
               count={
                 stats.last_activity?.created_at
                   ? dayjs(stats.last_activity.created_at).fromNow()
-                  : stats.last_activity?.diff_for_humans || '—'
+                  : stats.last_activity?.time_ago || '—'
               }
               label="Last Activity"
               subtitle={

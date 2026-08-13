@@ -4,13 +4,23 @@ import { Box, Grid, Paper, Skeleton, Typography, useTheme } from '@mui/material'
 import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from 'src/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
-import { BLUE, GREEN, ORANGE, PURPLE, RED, num } from './constants';
+import {
+  BLUE,
+  GREEN,
+  ORANGE,
+  PURPLE,
+  RED,
+  MOCK_TEACHER_ANALYTICS,
+  num,
+} from './constants';
 import DashboardHeader from './components/DashboardHeader';
 import GlobalOverviewPanel from './components/GlobalOverviewPanel';
+import GlobalOverviewSkeleton from './components/GlobalOverviewSkeleton';
 import TeacherAnalyticsPanel from './components/TeacherAnalyticsPanel';
 import LearnerAnalyticsPanel from './components/LearnerAnalyticsPanel';
 import AdmissionOverviewPanel from './components/AdmissionOverviewPanel';
 import BursaryOverviewPanel from './components/BursaryOverviewPanel';
+import OverviewBreakdownModal from './components/OverviewBreakdownModal';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -49,6 +59,9 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const notify = useNotification();
 
+  // Breakdown modal state — holds the stat card type clicked on Global Overview.
+  const [breakdownType, setBreakdownType] = useState(null);
+
   // Each section manages its own { data, loading } state.
   const useSection = (path) => {
     const [data, setData] = useState({});
@@ -77,8 +90,20 @@ const AdminDashboard = () => {
   };
 
   const go = useSection('/dashboard/admin/global-overview');
-  const ta = useSection('/dashboard/admin/teacher-analytics');
-  const la = useSection('/dashboard/admin/learner-analytics');
+  // Teacher analytics is mocked for now — the endpoint is implemented, but the
+  // frontend call is commented out so the panel (including the Top Resource
+  // Usage chart with Quizzes) renders mock data until it's reconnected.
+  // const ta = useSection('/dashboard/admin/teacher-analytics');
+  const ta = { data: MOCK_TEACHER_ANALYTICS, loading: false };
+  // Learner analytics is one endpoint per card, so each card loads (and shows
+  // its own built-in skeleton) independently.
+  const laAttendance = useSection('/dashboard/admin/learner/attendance');
+  const laExam = useSection('/dashboard/admin/learner/exam-performance');
+  const laUnderperforming = useSection('/dashboard/admin/learner/underperforming');
+  const laAtRisk = useSection('/dashboard/admin/learner/at-risk');
+  const laDropOut = useSection('/dashboard/admin/learner/drop-out-risk');
+  const laAssignment = useSection('/dashboard/admin/learner/assignment-completion');
+  const laResources = useSection('/dashboard/admin/learner/resource-engagement');
   const ao = useSection('/dashboard/admin/admission-overview');
   const bo = useSection('/dashboard/admin/bursary-overview');
 
@@ -112,25 +137,6 @@ const AdminDashboard = () => {
     value: num(s.value),
     count: num(s.count),
     color: s.name === 'Teaching' ? BLUE : ORANGE,
-  }));
-
-  // Attendance donut — only Present/Absent segments (Late/Excused were removed
-  // from the backend tally, so they never appear here).
-  const attendanceColors = { Present: GREEN, Absent: RED };
-  const attendanceDonut = (la.data?.attendance_overview || []).map((a) => ({
-    ...a,
-    color: attendanceColors[a.name] || BLUE,
-  }));
-
-  // Exam performance bars — match by name prefix so "Excellent (80%+)" → Excellent etc.
-  const examColors = [
-    { match: 'Excellent', color: BLUE },
-    { match: 'Good', color: ORANGE },
-    { match: 'Average', color: RED },
-  ];
-  const examData = (la.data?.exam_performance_overview || []).map((e) => ({
-    ...e,
-    fill: examColors.find((c) => String(e.name || '').startsWith(c.match))?.color || BLUE,
   }));
 
   const revenueColors = [BLUE, GREEN, ORANGE, PURPLE, RED];
@@ -179,9 +185,13 @@ const AdminDashboard = () => {
       <DashboardHeader onDownload={handleDownloadReport} />
 
       {go.loading ? (
-        <PanelSkeleton height={170} />
+        <GlobalOverviewSkeleton />
       ) : (
-        <GlobalOverviewPanel go={go.data} staffDonut={staffDonut} />
+        <GlobalOverviewPanel
+          go={go.data}
+          staffDonut={staffDonut}
+          onCardClick={setBreakdownType}
+        />
       )}
 
       {/* ── Teacher Analytics | Learner Analytics ───────────────────── */}
@@ -193,20 +203,22 @@ const AdminDashboard = () => {
             <TeacherAnalyticsPanel
               ta={ta.data}
               onViewAll={() => notify.info('Full teacher analytics coming soon')}
+              onTileClick={setBreakdownType}
             />
           )}
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
-          {la.loading ? (
-            <PanelSkeleton height={340} />
-          ) : (
-            <LearnerAnalyticsPanel
-              la={la.data}
-              attendanceDonut={attendanceDonut}
-              examData={examData}
-              onViewAll={() => notify.info('Full learner analytics coming soon')}
-            />
-          )}
+          <LearnerAnalyticsPanel
+            attendance={laAttendance}
+            exam={laExam}
+            underperforming={laUnderperforming}
+            atRisk={laAtRisk}
+            dropOut={laDropOut}
+            assignment={laAssignment}
+            resources={laResources}
+            onViewAll={() => notify.info('Full learner analytics coming soon')}
+            onTileClick={setBreakdownType}
+          />
         </Grid>
       </Grid>
 
@@ -220,6 +232,7 @@ const AdminDashboard = () => {
           maxEnrollment={maxEnrollment}
           onSwitchRole={() => navigate('/dashboard/admission')}
           onFooterClick={() => navigate('/dashboard/admission')}
+          onTileClick={setBreakdownType}
         />
       )}
 
@@ -234,8 +247,16 @@ const AdminDashboard = () => {
           matrix={matrix}
           onSwitchRole={() => navigate('/dashboard/bursary')}
           onFooterClick={() => navigate('/dashboard/bursary')}
+          onTileClick={setBreakdownType}
         />
       )}
+
+      {/* ── Global Overview stat card breakdown modal ──────────────── */}
+      <OverviewBreakdownModal
+        open={Boolean(breakdownType)}
+        type={breakdownType}
+        onClose={() => setBreakdownType(null)}
+      />
     </PageContainer>
   );
 };

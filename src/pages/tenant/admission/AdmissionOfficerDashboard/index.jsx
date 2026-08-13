@@ -8,7 +8,9 @@ import tenantApi from '@/api/tenant/tenant_api';
 import { BLUE, GREEN, num, shortSession } from './constants';
 import DashboardHeader from './components/DashboardHeader';
 import MetricCards from './components/MetricCards';
+import MetricCardsSkeleton from './components/MetricCardsSkeleton';
 import FinancialMetrics from './components/FinancialMetrics';
+import FinancialMetricsSkeleton from './components/FinancialMetricsSkeleton';
 import EnrollmentAcrossClasses from './components/EnrollmentAcrossClasses';
 import RatioAndFunnel from './components/RatioAndFunnel';
 import EnrollmentAcrossSessions from './components/EnrollmentAcrossSessions';
@@ -203,9 +205,7 @@ const AdmissionOfficerDashboard = () => {
 
       {/* ── Row 1: Overview metric cards ──────────────────────────── */}
       {overview.loading ? (
-        <Box mb={3}>
-          <PanelSkeleton height={150} />
-        </Box>
+        <MetricCardsSkeleton />
       ) : (
         <MetricCards
           total_applicants={overview.data.total_applicants || {}}
@@ -224,9 +224,7 @@ const AdmissionOfficerDashboard = () => {
           so it waits for both sections — otherwise it can render while overview is
           still loading (or failed) and crash on a missing .count. */}
       {financialMetrics.loading || overview.loading ? (
-        <Box mb={3}>
-          <PanelSkeleton height={170} />
-        </Box>
+        <FinancialMetricsSkeleton />
       ) : (
         <FinancialMetrics
           financial_metrics={financialMetrics.data}

@@ -37,6 +37,7 @@ const BursaryOverviewPanel = ({
   matrix,
   onSwitchRole,
   onFooterClick,
+  onTileClick,
 }) => {
   const theme = useTheme();
 
@@ -58,6 +59,7 @@ const BursaryOverviewPanel = ({
             color={BLUE}
             label="Total Expected Income"
             value={formatCompact(bo.revenue_performance?.total_expected_income)}
+            onClick={() => onTileClick && onTileClick('bursary_students')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -66,6 +68,7 @@ const BursaryOverviewPanel = ({
             color={GREEN}
             label="Total Collected Income"
             value={formatCompact(bo.revenue_performance?.total_collected_income)}
+            onClick={() => onTileClick && onTileClick('bursary_students')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -74,6 +77,7 @@ const BursaryOverviewPanel = ({
             color={ORANGE}
             label="Total Outstanding Balance"
             value={formatCompact(bo.revenue_performance?.total_outstanding_balance)}
+            onClick={() => onTileClick && onTileClick('bursary_students')}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -83,6 +87,7 @@ const BursaryOverviewPanel = ({
             label="Collection Efficiency"
             value={`${num(bo.revenue_performance?.collection_efficiency)}%`}
             sub="↑ 8.4%"
+            onClick={() => onTileClick && onTileClick('collection_matrix')}
           />
         </Grid>
       </Grid>

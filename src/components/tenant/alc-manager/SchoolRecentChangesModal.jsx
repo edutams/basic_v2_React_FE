@@ -82,6 +82,12 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(0);
+  };
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchInput(val);
@@ -154,6 +160,13 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                       <IconSearch size={18} color={theme.palette.text.secondary} />
                     </InputAdornment>
                   ),
+                  endAdornment: searchInput ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch}>
+                        <IconX size={16} color={theme.palette.text.secondary} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
                 },
               }}
             />
@@ -167,6 +180,19 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             >
               Search
             </Button>
+
+            {(searchInput || searchQuery) && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                onClick={handleClearSearch}
+                startIcon={<IconX size={16} />}
+                sx={{ height: 38, px: 2, fontWeight: 600, flexShrink: 0, borderRadius: '8px', textTransform: 'none' }}
+              >
+                Clear
+              </Button>
+            )}
           </Box>
 
           {loading ? (

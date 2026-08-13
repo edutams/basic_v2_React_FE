@@ -97,6 +97,7 @@ const SchoolAssignmentManagement = () => {
         search: appliedFilters.search || undefined,
         role: appliedFilters.role !== 'all' ? appliedFilters.role : undefined,
         status: appliedFilters.status !== 'all' ? appliedFilters.status : undefined,
+        exclude_super_admin: true,
       };
 
       const res = await aclApi.getSchoolUsers(params);
@@ -138,9 +139,13 @@ const SchoolAssignmentManagement = () => {
 
   const fetchRolesList = async () => {
     try {
-      const res = await aclApi.getSchoolRolesList();
+      const res = await aclApi.getSchoolRolesList({ exclude_super_admin: true });
       if (res?.data && Array.isArray(res.data)) {
-        setAvailableRoles(res.data.map((r) => r.name));
+        setAvailableRoles(
+          res.data
+            .map((r) => r.name)
+            .filter((name) => name !== 'super_admin'),
+        );
       }
     } catch (err) {
       console.error('Failed to fetch roles list:', err);
@@ -189,9 +194,17 @@ const SchoolAssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
-      'super admin': {
+      school_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
+      },
+      school_head: {
+        backgroundColor: '#EDE9FE',
+        color: '#7C3AED',
+      },
+      school_owner: {
+        backgroundColor: '#DCFCE7',
+        color: '#15803D',
       },
       subject_teacher: {
         backgroundColor: (theme) => theme.palette.secondary.light,

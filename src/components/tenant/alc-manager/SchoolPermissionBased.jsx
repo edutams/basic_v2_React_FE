@@ -84,10 +84,10 @@ const SchoolPermissionBased = () => {
 
   const fetchRolesList = async () => {
     try {
-      const res = await aclApi.getSchoolRolesList();
+      const res = await aclApi.getSchoolRolesList({ exclude_super_admin: true });
       const fetched = res?.data?.data || res?.data || res || [];
       if (Array.isArray(fetched)) {
-        setRolesList(fetched);
+        setRolesList(fetched.filter((r) => r.name !== 'super_admin'));
       }
     } catch (err) {
       console.error('Failed to fetch roles list:', err);

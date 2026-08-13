@@ -101,6 +101,7 @@ const SchoolRoleBasedAccess = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        exclude_super_admin: true,
       };
       const res = await aclApi.getSchoolRoleAnalytics(params);
 

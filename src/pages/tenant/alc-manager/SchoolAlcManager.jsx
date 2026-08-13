@@ -250,6 +250,7 @@ const SchoolAlcManager = () => {
       const params = {
         page: page + 1,
         per_page: rowsPerPage,
+        exclude_super_admin: true,
       };
 
       if (appliedFilters.search) params.search = appliedFilters.search;

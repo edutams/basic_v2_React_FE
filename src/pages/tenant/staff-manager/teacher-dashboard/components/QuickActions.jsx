@@ -105,7 +105,7 @@ export default function QuickActions() {
                   height: "100%",
                   minHeight: 88,
                   p: 1,
-                  borderRadius: 2,
+                  borderRadius: "10px",
                   border: "1.5px solid",
                   borderColor: action.color,
                   bgcolor: `${action.color}14`,

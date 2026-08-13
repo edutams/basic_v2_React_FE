@@ -31,7 +31,7 @@ function ChartPanel({ title, right, children, accentColor }) {
         bgcolor: "#fff",
         border: "1px solid",
         borderColor: "grey.200",
-        borderRadius: 3,
+        borderRadius: "10px",
         p: 2,
         height: "100%",
         display: "flex",

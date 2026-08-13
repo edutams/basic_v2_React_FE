@@ -122,8 +122,8 @@ const ActivityLog = ({
       elevation={0}
       sx={{
         height: "100%",
-        border: "1px solid #edf0f2",
-        borderRadius: "10px",
+        border: "1.5px solid #7446c8",
+        borderRadius: "8px",
         backgroundColor: "#ffffff",
         boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
         display: "flex",

@@ -52,7 +52,7 @@ function DashboardHeader({ teacherName, classesToday = 4, assignmentsPending = 1
           bgcolor: "#f8fafc",
           border: "1px solid",
           borderColor: "grey.200",
-          borderRadius: 3,
+          borderRadius: "10px",
           px: 2,
           py: 1.5,
           display: "flex",

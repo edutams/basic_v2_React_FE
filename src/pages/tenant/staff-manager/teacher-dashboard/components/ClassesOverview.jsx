@@ -129,7 +129,7 @@ function ClassCard({ cls }) {
     <Card
       variant="outlined"
       sx={{
-        borderRadius: 3,
+        borderRadius: "10px",
         height: "100%",
         bgcolor: cls.cardBg,
         borderColor: cls.color,

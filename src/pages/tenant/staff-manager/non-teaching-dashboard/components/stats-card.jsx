@@ -23,109 +23,105 @@ const StatsCard = ({
             elevation={0}
             sx={{
                 height: "100%",
-                border: "1px solid #edf0f2",
-                borderRadius: "10px",
-                backgroundColor: "#ffffff",
-                boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
-                transition: "all 0.2s ease",
+                bgcolor: iconBackground,
+                border: `1.5px solid ${iconColor}`,
+                borderRadius: "8px",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+                transition: "box-shadow 0.25s ease, transform 0.25s ease",
                 "&:hover": {
-                    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
-                    transform: "translateY(-1px)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04)",
+                    transform: "translateY(-2px)",
                 },
             }}
         >
             <CardContent
                 sx={{
-                    p: "16px !important",
+                    p: "12px !important",
                     height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
                 }}
             >
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 1.8,
-                    }}
-                >
-                    {/* Icon */}
+                <Box>
                     <Box
                         sx={{
-                            width: 46,
-                            height: 46,
-                            minWidth: 46,
-                            borderRadius: "11px",
-                            backgroundColor: iconBackground,
                             display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: iconColor,
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                            mb: 0.3,
                         }}
                     >
-                        {icon}
-                    </Box>
-
-                    {/* Content */}
-                    <Box
-                        sx={{
-                            flex: 1,
-                            minWidth: 0,
-                        }}
-                    >
-                        {/* Value */}
                         <Typography
+                            fontWeight="600"
                             sx={{
-                                fontSize: "22px",
-                                lineHeight: 1.1,
-                                fontWeight: 700,
-                                color: "#111827",
-                                mb: 0.4,
-                            }}
-                        >
-                            {value}
-                        </Typography>
-
-                        {/* Title */}
-                        <Typography
-                            sx={{
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                color: "#27303f",
-                                lineHeight: 1.3,
-                                mb: 0.7,
+                                fontSize: "0.78rem",
+                                color: "#374151",
+                                lineHeight: 1.25,
+                                maxWidth: "75%",
                             }}
                         >
                             {title}
                         </Typography>
 
-                        {/* Subtitle */}
-                        {subtitle && (
-                            <Typography
-                                sx={{
-                                    fontSize: "10px",
-                                    color: "#6b7280",
-                                    lineHeight: 1.3,
-                                }}
-                            >
-                                {subtitle}
-                            </Typography>
-                        )}
+                        <Box
+                            sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: "7px",
+                                backgroundColor: iconBackground,
+                                color: iconColor,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                                "& svg": {
+                                    fontSize: 16,
+                                },
+                            }}
+                        >
+                            {icon}
+                        </Box>
                     </Box>
+
+                    {subtitle && (
+                        <Typography
+                            sx={{
+                                fontSize: "0.67rem",
+                                color: "#9CA3AF",
+                                lineHeight: 1.2,
+                                mb: 0.5,
+                            }}
+                        >
+                            {subtitle}
+                        </Typography>
+                    )}
+
+                    <Typography
+                        fontWeight="700"
+                        sx={{
+                            fontSize: "1.05rem",
+                            color: "#111827",
+                            lineHeight: 1.2,
+                            mt: 0.2,
+                        }}
+                    >
+                        {value}
+                    </Typography>
                 </Box>
 
-                {/* Progress */}
                 {progress !== undefined && (
-                    <Box sx={{ mt: 1.6 }}>
+                    <Box sx={{ mt: 1 }}>
                         <LinearProgress
                             variant="determinate"
                             value={progress}
                             sx={{
                                 height: 4,
-                                borderRadius: 10,
-                                backgroundColor: "#edf1f3",
-
+                                borderRadius: 4,
+                                backgroundColor: "#F3F4F6",
                                 "& .MuiLinearProgress-bar": {
                                     backgroundColor: progressColor,
-                                    borderRadius: 10,
+                                    borderRadius: 4,
                                 },
                             }}
                         />
@@ -133,9 +129,9 @@ const StatsCard = ({
                         {progressLabel && (
                             <Typography
                                 sx={{
-                                    fontSize: "9px",
-                                    color: "#4b5563",
-                                    mt: 0.7,
+                                    fontSize: "0.65rem",
+                                    color: "#6B7280",
+                                    mt: 0.5,
                                 }}
                             >
                                 {progressLabel}

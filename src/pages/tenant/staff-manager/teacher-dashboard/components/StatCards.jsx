@@ -106,7 +106,7 @@ export default function StatCards() {
               sx={{
                 bgcolor: stat.cardBg,
                 border: `1.5px solid ${stat.borderColor}`,
-                borderRadius: 3,
+                borderRadius: "10px",
                 p: 1.5,
                 height: "100%",
                 boxSizing: "border-box",

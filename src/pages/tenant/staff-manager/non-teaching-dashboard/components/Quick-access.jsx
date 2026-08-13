@@ -90,7 +90,7 @@ const QuickAccess = ({
 
                 borderBottom: "3px solid #e9eef1",
 
-                borderRadius: "10px",
+                borderRadius: "8px",
 
                 backgroundColor: "#ffffff",
 

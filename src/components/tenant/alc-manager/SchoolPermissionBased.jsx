@@ -847,6 +847,11 @@ const SchoolPermissionBased = () => {
                         const isAssigned = roleCount > 0;
                         const actionBadge = getPermissionActionChip(permName);
 
+                        const hasBeenUpdated =
+                          Boolean(row.updated_by) ||
+                          (Boolean(row.updated_at) &&
+                            Boolean(row.created_at) &&
+                            row.updated_at !== row.created_at);
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
@@ -854,13 +859,13 @@ const SchoolPermissionBased = () => {
                             day: 'numeric',
                             year: 'numeric',
                           })
-                          : 'May 6, 2025';
+                          : '—';
                         const formattedTime = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit',
                           })
-                          : '10:30 AM';
+                          : '';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -947,17 +952,25 @@ const SchoolPermissionBased = () => {
                             </TableCell>
 
                             <TableCell sx={{ py: 1.5 }}>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color="text.primary"
-                                display="block"
-                              >
-                                {formattedDate}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" fontSize="11px">
-                                {formattedTime}
-                              </Typography>
+                              {hasBeenUpdated ? (
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight={600}
+                                    color="text.primary"
+                                    display="block"
+                                  >
+                                    {formattedDate}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" fontSize="11px">
+                                    {formattedTime}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                  No updates yet
+                                </Typography>
+                              )}
                             </TableCell>
 
                             <TableCell align="center" sx={{ py: 1.5 }}>

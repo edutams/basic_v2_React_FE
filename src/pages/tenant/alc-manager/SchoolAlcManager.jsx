@@ -903,18 +903,22 @@ const SchoolAlcManager = () => {
                             ? 'Inactive'
                             : 'Active';
 
-                        const hasBeenUpdated = Boolean(row.updated_at && row.updated_at !== row.created_at) || Boolean(row.updated_by);
+                        const hasBeenUpdated =
+                          Boolean(row.updated_by) ||
+                          (Boolean(row.updated_at) &&
+                            Boolean(row.created_at) &&
+                            Math.abs(dayjs(row.updated_at).diff(dayjs(row.created_at), 'second')) > 2);
                         const date = row.updated_at || row.created_at;
 
                         const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
 
                         const rawUpdater =
-                          row.updated_by || row.created_by || row.updater?.name || row.updater_role;
+                          row.updated_by || row.updater?.name || row.updater_role;
                         const updatedByPerson = rawUpdater
                           ? rawUpdater.toLowerCase().startsWith('by ')
                             ? rawUpdater.slice(3)
                             : rawUpdater
-                          : (hasBeenUpdated ? 'Super Admin' : 'System Default');
+                          : 'School Admin';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -1035,18 +1039,24 @@ const SchoolAlcManager = () => {
                             </TableCell>
 
                             <TableCell>
-                              <Box>
-                                <Typography variant="body2" fontWeight={500}>
-                                  {dateFormatted}
+                              {hasBeenUpdated ? (
+                                <Box>
+                                  <Typography variant="body2" fontWeight={500}>
+                                    {dateFormatted}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    display="block"
+                                  >
+                                    by {updatedByPerson}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                  No updates yet
                                 </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  display="block"
-                                >
-                                  by {updatedByPerson}
-                                </Typography>
-                              </Box>
+                              )}
                             </TableCell>
 
                             <TableCell align="center">

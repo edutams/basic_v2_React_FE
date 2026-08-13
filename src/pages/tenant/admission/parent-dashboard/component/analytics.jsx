@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Card, Typography, Stack, LinearProgress, Avatar, Divider } from '@mui/material';
+import { Box, Card, Typography, Stack, LinearProgress, Avatar, Divider, Skeleton } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
   AccountBalanceWalletOutlined,
@@ -152,7 +152,13 @@ const LegendItem = ({ color, label, pct, days }) => (
 /* ────────────────────────────────────────
    MAIN ANALYTICS COMPONENT
 ──────────────────────────────────────── */
-const Analytics = ({ finance = {}, attendance, academics }) => {
+const Analytics = ({
+  finance = {},
+  attendance,
+  academics,
+  financeLoading = false,
+  loading = false,
+}) => {
   const financeCards = buildFinanceCards(finance);
   const [detailType, setDetailType] = useState(null); // 'academic' | 'attendance' | 'performance' | 'engagement'
 
@@ -195,11 +201,26 @@ const Analytics = ({ finance = {}, attendance, academics }) => {
   return (
     <Box mb={2}>
       {/* ─── Finance Row (responsive flex-wrap) ─── */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: `${FINANCE_GAP}px`, mb: 1.75 }}>
-        {financeCards.map((fc) => <FinanceCard key={fc.title} {...fc} onClick={() => setDetailType(fc.type)} />)}
-      </Box>
+      {financeLoading ? (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: `${FINANCE_GAP}px`, mb: 1.75 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rounded" height={96} sx={{ flex: '1 1 140px', minWidth: 0, borderRadius: '8px' }} />
+          ))}
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: `${FINANCE_GAP}px`, mb: 1.75 }}>
+          {financeCards.map((fc) => <FinanceCard key={fc.title} {...fc} onClick={() => setDetailType(fc.type)} />)}
+        </Box>
+      )}
 
       {/* ─── Analytics 3-column Row (responsive stack on mobile) ─── */}
+      {loading ? (
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} variant="rounded" height={330} sx={{ flex: '1 1 0', borderRadius: '8px' }} />
+          ))}
+        </Stack>
+      ) : (
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
 
         {/* ── Academic Overview ── */}
@@ -367,6 +388,7 @@ const Analytics = ({ finance = {}, attendance, academics }) => {
 
         </Box>
       </Stack>
+      )}
 
       {/* Detail modal — fetches from /admission/parent-insights/detail on open */}
       <InsightsDetailModal

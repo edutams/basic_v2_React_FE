@@ -65,7 +65,7 @@ import SchoolAssignmentManagement from '@/components/tenant/alc-manager/SchoolAs
 import SchoolAccessAnalysis from '@/components/tenant/alc-manager/SchoolAccessAnalysis';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
-
+import dayjs from 'dayjs';
 import aclApi from '@/api/tenant/acl/aclApi';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ACL Manager' }];
@@ -902,19 +902,9 @@ const SchoolAlcManager = () => {
                             ? 'Inactive'
                             : 'Active';
 
-                        const dateFormatted = row.updated_at
-                          ? new Date(row.updated_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : row.created_at
-                            ? new Date(row.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })
-                            : '—';
+                        const date = row.updated_at || row.created_at;
+
+                        const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
 
                         const rawUpdater =
                           row.updated_by || row.created_by || row.updater?.name || row.updater_role;

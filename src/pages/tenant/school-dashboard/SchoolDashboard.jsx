@@ -27,17 +27,18 @@ export default function SchoolDashboard() {
   // Check user roles
   const roles = user?.roles || [];
 
-  const isAdmissionOfficer = roles.some((role) => role.name === 'admission_officer');
-
-  const isBursaryOfficer = roles.some((role) => role.name === 'bursar');
-
-  const isAdmin = roles.some((role) =>
-    ['super_admin', 'school_owner', 'school_head'].includes(role.name),
-  );
-
   const isTeachingStaff = isStaff && user?.staff?.staff_type === 'teaching';
 
-  const isNonTeachingStaff = isStaff && user?.staff?.staff_type === 'non_teaching';
+  const isNonTeachingStaff = isStaff && user?.staff?.staff_type === 'non-teaching';
+
+  const isAdmissionOfficer =
+    isNonTeachingStaff && roles.some((role) => role.name === 'admission_officer');
+
+  const isBursaryOfficer = isNonTeachingStaff && roles.some((role) => role.name === 'bursar');
+
+  const isAdmin = roles.some((role) =>
+    ['super_admin', 'school_admin', 'school_owner', 'school_head'].includes(role.name),
+  );
 
   /**
    * Dashboard Title
@@ -52,8 +53,8 @@ export default function SchoolDashboard() {
           ? 'Bursary Officer Dashboard'
           : isTeachingStaff
             ? 'Teacher Dashboard'
-            : isStaff
-              ? 'Staff Dashboard'
+            : isNonTeachingStaff
+              ? 'Non-Teacher Dashboard'
               : isLearner
                 ? 'Student Dashboard'
                 : 'Dashboard';
@@ -71,8 +72,8 @@ export default function SchoolDashboard() {
           ? 'Revenue and collections portal'
           : isTeachingStaff
             ? 'Teaching Staff Portal'
-            : isStaff
-              ? 'Staff portal'
+            : isNonTeachingStaff
+              ? 'Non-teaching Staff Portal'
               : isLearner
                 ? 'Student portal'
                 : 'Dashboard';

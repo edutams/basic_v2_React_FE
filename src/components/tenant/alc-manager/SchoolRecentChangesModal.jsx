@@ -82,6 +82,12 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(0);
+  };
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchInput(val);
@@ -125,10 +131,10 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             </Box>
             <Box>
               <Typography variant="h6" fontWeight={700}>
-                Recent Changes Activity Log
+                User Access Audit Log
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Audit trail of system activities, role updates, and user assignments performed in the last 7 days
+                Audit trail of role assignments, direct permissions, and user status toggles performed in the last 7 days
               </Typography>
             </Box>
           </Box>
@@ -143,7 +149,7 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             <TextField
               size="small"
               fullWidth
-              placeholder="Search user activities..."
+              placeholder="Search user assignment activities..."
               value={searchInput}
               onChange={handleSearchChange}
               onKeyDown={handleSearchKeyDown}
@@ -154,6 +160,13 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                       <IconSearch size={18} color={theme.palette.text.secondary} />
                     </InputAdornment>
                   ),
+                  endAdornment: searchInput ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch}>
+                        <IconX size={16} color={theme.palette.text.secondary} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
                 },
               }}
             />
@@ -167,6 +180,18 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             >
               Search
             </Button>
+
+            {(searchInput || searchQuery) && (
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                onClick={handleClearSearch}
+                sx={{ height: 38, px: 2, fontWeight: 600, flexShrink: 0, borderRadius: '8px', textTransform: 'none' }}
+              >
+                Clear
+              </Button>
+            )}
           </Box>
 
           {loading ? (
@@ -186,12 +211,12 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             >
               <IconHistory size={40} color={theme.palette.text.disabled} />
               <Typography variant="subtitle1" fontWeight={600} mt={1} color="text.secondary">
-                {searchQuery ? `No Activity Records Found for "${searchQuery}"` : 'No Activity Records Found'}
+                {searchQuery ? `No Activity Records Found for "${searchQuery}"` : 'No Recent Changes Found'}
               </Typography>
               <Typography variant="body2" color="text.disabled">
                 {searchQuery
                   ? 'Try searching for a different keyword or user name.'
-                  : 'There are no recorded system actions for the last 7 days yet.'}
+                  : 'There are no recorded role assignments, direct permissions, or user status changes in the last 7 days.'}
               </Typography>
             </Paper>
           ) : (
@@ -224,8 +249,7 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                             <Chip
                               size="small"
-                              label={item.event ? item.event.toUpperCase() : 'SYSTEM'}
-                              color="primary"
+                              label={item.event ? item.event.toUpperCase() : 'ASSIGNMENT'}
                               sx={{
                                 height: 20,
                                 fontSize: '0.65rem',
@@ -320,7 +344,7 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                       <TableCell sx={{ fontWeight: 600 }}>Action By</TableCell>
                       <TableCell>
                         <Typography component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                          {selectedActivityDetail.performed_by || 'Super Admin'}
+                          {selectedActivityDetail.performed_by || 'School Admin'}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -350,7 +374,9 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                           <TableRow key={key}>
                             <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>{key}</TableCell>
                             <TableCell>
-                              {typeof value === 'object' ? (
+                              {value === null || value === undefined || value === '' || value === 'null' ? (
+                                'N/A'
+                              ) : typeof value === 'object' ? (
                                 <Box component="pre" sx={{ m: 0, fontSize: '0.75rem', fontFamily: 'monospace' }}>
                                   {JSON.stringify(value, null, 2)}
                                 </Box>

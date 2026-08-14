@@ -19,6 +19,7 @@ import {
   IconButton,
   Select,
   MenuItem,
+  ListItemIcon,
   FormControl,
   Menu,
   TablePagination,
@@ -26,6 +27,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import { Search as SearchIcon } from '@mui/icons-material';
@@ -37,6 +39,7 @@ import {
   IconDotsVertical,
   IconArrowRight,
   IconShieldCheck,
+  IconShield,
   IconDownload,
   IconX,
 } from '@tabler/icons-react';
@@ -83,10 +86,10 @@ const SchoolPermissionBased = () => {
 
   const fetchRolesList = async () => {
     try {
-      const res = await aclApi.getSchoolRolesList();
+      const res = await aclApi.getSchoolRolesList({ exclude_super_admin: true });
       const fetched = res?.data?.data || res?.data || res || [];
       if (Array.isArray(fetched)) {
-        setRolesList(fetched);
+        setRolesList(fetched.filter((r) => r.name !== 'super_admin'));
       }
     } catch (err) {
       console.error('Failed to fetch roles list:', err);
@@ -185,7 +188,6 @@ const SchoolPermissionBased = () => {
     setActiveMenuPerm(null);
   };
 
-  // Extract module name from permission object
   const getModuleName = (permission) => {
     if (!permission) return 'General';
     if (permission.module_name) return permission.module_name;
@@ -201,7 +203,6 @@ const SchoolPermissionBased = () => {
     return 'General';
   };
 
-  // Filtered display permissions
   const displayPermissions = useMemo(() => {
     if (!permissions || permissions.length === 0) return [];
     return permissions.filter((p) => {
@@ -231,7 +232,6 @@ const SchoolPermissionBased = () => {
     });
   }, [permissions, nameFilter, moduleFilter, statusFilter]);
 
-  // Stat calculations
   const stats = useMemo(() => {
     const rawTotalP = summaryStats?.total_permissions ?? summaryStats?.totalPermissions;
     const rawAssignedP = summaryStats?.assigned_permissions ?? summaryStats?.assignedPermissions;
@@ -510,9 +510,7 @@ const SchoolPermissionBased = () => {
 
   return (
     <Box>
-      {/* ── 1. Top Summary Stat Cards (4 Cards Row) ─────────────────────────── */}
       <Grid container spacing={2} mb={3}>
-        {/* Card 1: Total Permissions */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.totalP.toLocaleString()}
@@ -524,7 +522,6 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 2: Permissions Assigned */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.assignedP.toLocaleString()}
@@ -536,7 +533,6 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 3: Unused Permissions */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.unusedP}
@@ -548,7 +544,6 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
 
-        {/* Card 4: Affected Users */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.affectedU.toLocaleString()}
@@ -561,9 +556,7 @@ const SchoolPermissionBased = () => {
         </Grid>
       </Grid>
 
-      {/* ── 2. Main 2-Column Section (Left Chart + Right Table) ───────────── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Left Column: Donut Chart Breakdown */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Permissions by Module" sx={{ width: '100%', height: '100%' }}>
             <Box
@@ -600,10 +593,9 @@ const SchoolPermissionBased = () => {
                   )}
                 </Box>
 
-                {/* Custom Legend List (Show Top 4 items on card) */}
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.slice(0, 4).map((item, idx) => {
-                    const isLast = idx === Math.min(chartLegendData.length, 4) - 1;
+                  {chartLegendData.slice(0, 8).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 8) - 1;
                     return (
                       <Box
                         key={idx}
@@ -658,7 +650,6 @@ const SchoolPermissionBased = () => {
           </ParentCard>
         </Grid>
 
-        {/* Right Column: Permissions Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
           <Paper
             elevation={0}
@@ -676,7 +667,6 @@ const SchoolPermissionBased = () => {
             }}
           >
             <Box>
-              {/* Table Top Controls Bar */}
               <Box
                 component="form"
                 onSubmit={handleSearchSubmit}
@@ -716,7 +706,6 @@ const SchoolPermissionBased = () => {
                     }}
                   />
 
-                  {/* Module Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 150 }}>
                     <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
                       <MenuItem value="all">All Modules</MenuItem>
@@ -728,7 +717,6 @@ const SchoolPermissionBased = () => {
                     </Select>
                   </FormControl>
 
-                  {/* Status Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 120 }}>
                     <Select value={statusInput} onChange={(e) => setStatusInput(e.target.value)}>
                       <MenuItem value="all">All Status</MenuItem>
@@ -737,7 +725,6 @@ const SchoolPermissionBased = () => {
                     </Select>
                   </FormControl>
 
-                  {/* Roles Select Dropdown */}
                   <FormControl size="small" sx={{ minWidth: 140 }}>
                     <Select value={roleInput} onChange={(e) => setRoleInput(e.target.value)}>
                       <MenuItem value="all">All Roles</MenuItem>
@@ -792,13 +779,12 @@ const SchoolPermissionBased = () => {
                 </Button>
               </Box>
 
-              {/* Permissions Table */}
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
                 <Table sx={{ minWidth: 960 }} stickyHeader>
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
-                        #
+                        S/N
                       </TableCell>
                       <TableCell sx={{ minWidth: 200, fontWeight: 700, py: 1.5 }}>
                         Permission
@@ -842,20 +828,25 @@ const SchoolPermissionBased = () => {
                         const isAssigned = roleCount > 0;
                         const actionBadge = getPermissionActionChip(permName);
 
+                        const hasBeenUpdated =
+                          Boolean(row.updated_by) ||
+                          (Boolean(row.updated_at) &&
+                            Boolean(row.created_at) &&
+                            row.updated_at !== row.created_at);
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'May 6, 2025';
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                          : '—';
                         const formattedTime = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
-                          : '10:30 AM';
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                          : '';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -875,14 +866,12 @@ const SchoolPermissionBased = () => {
                               </Box>
                             </TableCell>
 
-                            {/* Module Name */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Typography variant="body2" fontWeight={600} color="text.primary">
                                 {moduleTitle}
                               </Typography>
                             </TableCell>
 
-                            {/* Description Snippet (Multiline wrapping) */}
                             <TableCell sx={{ py: 1.5, minWidth: 220, maxWidth: 300 }}>
                               <Typography
                                 variant="body2"
@@ -897,7 +886,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Roles Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -914,7 +902,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Users Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -931,7 +918,6 @@ const SchoolPermissionBased = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Status Chip */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Chip
                                 label={isAssigned ? 'Assigned' : 'Unused'}
@@ -946,22 +932,28 @@ const SchoolPermissionBased = () => {
                               />
                             </TableCell>
 
-                            {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color="text.primary"
-                                display="block"
-                              >
-                                {formattedDate}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" fontSize="11px">
-                                {formattedTime}
-                              </Typography>
+                              {hasBeenUpdated ? (
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight={600}
+                                    color="text.primary"
+                                    display="block"
+                                  >
+                                    {formattedDate}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" fontSize="11px">
+                                    {formattedTime}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                  No updates yet
+                                </Typography>
+                              )}
                             </TableCell>
 
-                            {/* Action Menu */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
@@ -984,7 +976,6 @@ const SchoolPermissionBased = () => {
               </TableContainer>
             </Box>
 
-            {/* Standard TablePagination Footer */}
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, 50, 100]}
               component="div"
@@ -1001,14 +992,27 @@ const SchoolPermissionBased = () => {
         </Grid>
       </Grid>
 
-      {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            '& .MuiMenuItem-root:hover': {
+              bgcolor: 'primary.light',
+            },
+          },
+        }}
+      >
         <MenuItem
           onClick={() => {
             handleTotalRoleClick(activeMenuPerm);
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconShield size={18} />
+          </ListItemIcon>
           View Assigned Roles
         </MenuItem>
         <MenuItem
@@ -1017,6 +1021,9 @@ const SchoolPermissionBased = () => {
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconUsers size={18} />
+          </ListItemIcon>
           View Impacted Users
         </MenuItem>
       </Menu>
@@ -1080,7 +1087,7 @@ const SchoolPermissionBased = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Module Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     Permissions

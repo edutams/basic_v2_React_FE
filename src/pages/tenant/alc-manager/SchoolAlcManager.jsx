@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useNotification } from '@/hooks/useNotification';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 import {
   Box,
@@ -18,6 +19,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Button,
   Tabs,
   Tab,
@@ -51,6 +53,7 @@ import {
   IconUserPlus,
   IconShieldLock,
   IconShield,
+  IconEye,
 } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
@@ -191,6 +194,7 @@ const analysisTourSteps = [
 
 const SchoolAlcManager = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
@@ -250,6 +254,7 @@ const SchoolAlcManager = () => {
       const params = {
         page: page + 1,
         per_page: rowsPerPage,
+        exclude_super_admin: true,
       };
 
       if (appliedFilters.search) params.search = appliedFilters.search;
@@ -863,7 +868,7 @@ const SchoolAlcManager = () => {
             {/* Table Container */}
             <Box data-tour="acl-role-table">
               <TableContainer>
-                <Table>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>
@@ -902,17 +907,22 @@ const SchoolAlcManager = () => {
                             ? 'Inactive'
                             : 'Active';
 
+                        const hasBeenUpdated =
+                          Boolean(row.updated_by) ||
+                          (Boolean(row.updated_at) &&
+                            Boolean(row.created_at) &&
+                            Math.abs(dayjs(row.updated_at).diff(dayjs(row.created_at), 'second')) > 2);
                         const date = row.updated_at || row.created_at;
 
                         const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
 
                         const rawUpdater =
-                          row.updated_by || row.created_by || row.updater?.name || row.updater_role;
+                          row.updated_by || row.updater?.name || row.updater_role;
                         const updatedByPerson = rawUpdater
                           ? rawUpdater.toLowerCase().startsWith('by ')
                             ? rawUpdater.slice(3)
                             : rawUpdater
-                          : 'Super Admin';
+                          : 'School Admin';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -1033,18 +1043,24 @@ const SchoolAlcManager = () => {
                             </TableCell>
 
                             <TableCell>
-                              <Box>
-                                <Typography variant="body2" fontWeight={500}>
-                                  {dateFormatted}
+                              {hasBeenUpdated ? (
+                                <Box>
+                                  <Typography variant="body2" fontWeight={500}>
+                                    {dateFormatted}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    display="block"
+                                  >
+                                    by {updatedByPerson}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                  No updates yet
                                 </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  display="block"
-                                >
-                                  by {updatedByPerson}
-                                </Typography>
-                              </Box>
+                              )}
                             </TableCell>
 
                             <TableCell align="center">
@@ -1056,36 +1072,65 @@ const SchoolAlcManager = () => {
                                 anchorEl={anchorEl}
                                 open={Boolean(anchorEl) && selectedRow?.id === row.id}
                                 onClose={handleMenuClose}
+                                PaperProps={{
+                                  sx: {
+                                    '& .MuiMenuItem-root:hover': {
+                                      bgcolor: 'primary.light',
+                                    },
+                                  },
+                                }}
                               >
                                 <MenuItem onClick={() => handleAttachPermission(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconShieldLock size={18} />
+                                  </ListItemIcon>
                                   Attach Permission
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewPermissions(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconEye size={18} />
+                                  </ListItemIcon>
                                   View Permission
                                 </MenuItem>
-                                <MenuItem onClick={() => handleViewUsers(row)}>View Users</MenuItem>
-                                {isCustomRole && (
+                                <MenuItem onClick={() => handleViewUsers(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUsers size={18} />
+                                  </ListItemIcon>
+                                  View Users
+                                </MenuItem>
+                                {isCustomRole && can('acl.roles.make_system') && (
                                   <MenuItem
                                     onClick={() => handleOpenConvertConfirm(row)}
                                     sx={{ color: 'error.main' }}
                                   >
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <IconShield size={18} />
+                                    </ListItemIcon>
                                     Make System Role
                                   </MenuItem>
                                 )}
-                                {row.status === 'Inactive' || row.status === 'inactive' ? (
-                                  <MenuItem
-                                    onClick={() => handleToggleRoleStatus(row)}
-                                    sx={{ color: 'success.main' }}
-                                  >
-                                    Activate Role
-                                  </MenuItem>
-                                ) : (
-                                  <MenuItem
-                                    onClick={() => handleToggleRoleStatus(row)}
-                                    sx={{ color: 'error.main' }}
-                                  >
-                                    Deactivate Role
-                                  </MenuItem>
+                                {can('acl.roles.toggle_status') && (
+                                  row.status === 'Inactive' || row.status === 'inactive' ? (
+                                    <MenuItem
+                                      onClick={() => handleToggleRoleStatus(row)}
+                                      sx={{ color: 'success.main' }}
+                                    >
+                                      <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                        <IconUserCheck size={18} />
+                                      </ListItemIcon>
+                                      Activate Role
+                                    </MenuItem>
+                                  ) : (
+                                    <MenuItem
+                                      onClick={() => handleToggleRoleStatus(row)}
+                                      sx={{ color: 'error.main' }}
+                                    >
+                                      <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                        <IconUserOff size={18} />
+                                      </ListItemIcon>
+                                      Deactivate Role
+                                    </MenuItem>
+                                  )
                                 )}
                               </Menu>
                             </TableCell>

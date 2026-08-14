@@ -37,8 +37,8 @@ const aclApi = {
         return response.data;
     },
 
-    getSchoolRolesList: async () => {
-        const response = await tenantApi.get('/censis/acl/assignments/roles/list');
+    getSchoolRolesList: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/roles/list', { params });
         return response.data;
     },
 

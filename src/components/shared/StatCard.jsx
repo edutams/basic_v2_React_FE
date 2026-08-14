@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { getStatCardColor } from 'src/utils/statCardColors';
@@ -16,6 +16,9 @@ const StatCard = ({
   colorIndex = 0,
   loading,
   subtitle,
+  onClick,
+  tooltip,
+  tooltipPlacement = 'top',
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
@@ -24,15 +27,15 @@ const StatCard = ({
   const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
     getStatCardColor(color, colorIndex, isDark, theme);
 
-  return (
+  const cardContent = (
     <Paper
       elevation={0}
       variant={!isCardShadow ? 'outlined' : undefined}
+      onClick={onClick}
       sx={{
         borderRadius: 1,
         px: 1.6,
-        py: 2.5
-        ,
+        py: 2.5,
         width: '100%',
         background: `${cardBg} !important`,
         display: 'flex',
@@ -47,7 +50,17 @@ const StatCard = ({
             ? '0 6px 24px rgba(0,0,0,0.28)'
             : '0 4px 20px rgba(0,0,0,0.07)',
 
+        cursor: onClick ? 'pointer' : 'default',
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': onClick
+          ? {
+              transform: 'translateY(-3px)',
+              boxShadow: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '0 10px 30px rgba(0,0,0,0.4)'
+                  : '0 8px 25px rgba(0,0,0,0.12)',
+            }
+          : undefined,
       }}
     >
       {/* Icon Badge */}
@@ -134,6 +147,18 @@ const StatCard = ({
       </Box>
     </Paper>
   );
+
+  if (tooltip) {
+    return (
+      <Tooltip title={tooltip} placement={tooltipPlacement} arrow>
+        <Box sx={{ width: '100%', display: 'flex' }}>
+          {cardContent}
+        </Box>
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };
 
 StatCard.propTypes = {
@@ -144,6 +169,9 @@ StatCard.propTypes = {
   color: PropTypes.string,
   colorIndex: PropTypes.number,
   loading: PropTypes.bool,
+  onClick: PropTypes.func,
+  tooltip: PropTypes.node,
+  tooltipPlacement: PropTypes.string,
 };
 
 export default StatCard;

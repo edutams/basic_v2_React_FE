@@ -23,6 +23,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,6 +31,7 @@ import {
   Group as UsersIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
+import { IconUserOff } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
@@ -337,6 +339,13 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
           onClose={handleMenuClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{
+            sx: {
+              '& .MuiMenuItem-root:hover': {
+                bgcolor: 'primary.light',
+              },
+            },
+          }}
         >
           <MenuItem
             onClick={() => {
@@ -346,6 +355,9 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
             disabled={removing}
             sx={{ color: 'error.main' }}
           >
+            <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+              <IconUserOff size={18} />
+            </ListItemIcon>
             Remove from Role
           </MenuItem>
         </Menu>

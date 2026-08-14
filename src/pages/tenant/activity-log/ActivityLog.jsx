@@ -54,6 +54,10 @@ import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 import UserProfileDrawer from '@/components/shared/UserProfileDrawer';
 import StatCard from '@/components/shared/StatCard';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 const BCrumb = [
   {
@@ -144,6 +148,38 @@ const ActivityLog = () => {
   const [openModal, setOpenModal] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuLog, setMenuLog] = useState(null);
+
+  const [stats, setStats] = useState({
+    total_activities: 0,
+    unique_users: 0,
+    today_activities: 0,
+    critical_actions: 0,
+    last_activity: null,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      const res = await tenantApi.get('/activity-logs/statistics');
+      const data = res.data?.data || res.data || {};
+      setStats({
+        total_activities: data.total_activities ?? 0,
+        unique_users: data.unique_users ?? 0,
+        today_activities: data.today_activities ?? 0,
+        critical_actions: data.critical_actions ?? 0,
+        last_activity: data.last_activity ?? null,
+      });
+    } catch (err) {
+      console.error('Failed to fetch activity log statistics:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
 
@@ -409,56 +445,64 @@ const ActivityLog = () => {
         <Grid container spacing={2} mb={3}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={(total || 1248).toLocaleString()}
+              count={(stats.total_activities || total || 0).toLocaleString()}
               label="Total Activities"
-              subtitle="↗ 12.5% vs last 7 days"
+              subtitle="System log entries"
               icon={IconListCheck}
               colorIndex={0}
-              loading={loading}
+              loading={statsLoading}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count="256"
+              count={stats.unique_users.toLocaleString()}
               label="Unique Users"
-              subtitle="↗ 8.3% vs last 7 days"
+              subtitle="Users with activity"
               icon={IconUserCheck}
               colorIndex={1}
-              loading={loading}
+              loading={statsLoading}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count="86"
+              count={stats.today_activities.toLocaleString()}
               label="Today's Activities"
-              subtitle="↗ 15.2% vs yesterday"
+              subtitle="Recorded today"
               icon={IconCalendar}
               colorIndex={3}
-              loading={loading}
+              loading={statsLoading}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count="12"
+              count={stats.critical_actions.toLocaleString()}
               label="Critical Actions"
-              subtitle="↘ 2.1% vs last 7 days"
+              subtitle="Deletions & security events"
               icon={IconShield}
               colorIndex={2}
-              loading={loading}
+              loading={statsLoading}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count="2 mins ago"
-              label="Last Updated"
-              subtitle="May 6, 2025 • 10:30 AM"
+              count={
+                stats.last_activity?.created_at
+                  ? dayjs(stats.last_activity.created_at).fromNow()
+                  : stats.last_activity?.time_ago || '—'
+              }
+              label="Last Activity"
+              subtitle={
+                stats.last_activity?.created_at
+                  ? dayjs(stats.last_activity.created_at).format('MMM D, YYYY • h:mm A')
+                  : stats.last_activity?.date_formatted || 'No activity yet'
+              }
               icon={IconClock}
               colorIndex={4}
-              loading={loading}
+              loading={statsLoading}
             />
           </Grid>
         </Grid>
@@ -656,13 +700,13 @@ const ActivityLog = () => {
                         const actionName = getLogAction(log);
                         const severityName = getLogSeverity(log);
 
-                        const updatedDateRaw = log.updated_at || log.created_at || log.my_updated_at;
+                        const updatedDateRaw = log.created_at || log.updated_at;
                         const formattedDate = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                          : 'May 6, 2025';
+                          ? dayjs(updatedDateRaw).format('MMM D, YYYY')
+                          : '—';
                         const formattedTime = updatedDateRaw
-                          ? new Date(updatedDateRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                          : '10:30:15 AM';
+                          ? dayjs(updatedDateRaw).format('h:mm:ss A')
+                          : '';
 
                         return (
                           <TableRow key={log.id || idx} hover>

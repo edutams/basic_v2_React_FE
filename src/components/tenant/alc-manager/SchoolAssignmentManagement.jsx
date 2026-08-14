@@ -18,6 +18,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Alert,
   CircularProgress,
   Avatar,
@@ -38,6 +39,9 @@ import {
   IconUserCheck,
   IconUserOff,
   IconUserPlus,
+  IconShieldLock,
+  IconShieldCheck,
+  IconEye,
 } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -97,6 +101,7 @@ const SchoolAssignmentManagement = () => {
         search: appliedFilters.search || undefined,
         role: appliedFilters.role !== 'all' ? appliedFilters.role : undefined,
         status: appliedFilters.status !== 'all' ? appliedFilters.status : undefined,
+        exclude_super_admin: true,
       };
 
       const res = await aclApi.getSchoolUsers(params);
@@ -138,9 +143,13 @@ const SchoolAssignmentManagement = () => {
 
   const fetchRolesList = async () => {
     try {
-      const res = await aclApi.getSchoolRolesList();
+      const res = await aclApi.getSchoolRolesList({ exclude_super_admin: true });
       if (res?.data && Array.isArray(res.data)) {
-        setAvailableRoles(res.data.map((r) => r.name));
+        setAvailableRoles(
+          res.data
+            .map((r) => r.name)
+            .filter((name) => name !== 'super_admin'),
+        );
       }
     } catch (err) {
       console.error('Failed to fetch roles list:', err);
@@ -189,9 +198,17 @@ const SchoolAssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
-      'super admin': {
+      school_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
+      },
+      school_head: {
+        backgroundColor: '#EDE9FE',
+        color: '#7C3AED',
+      },
+      school_owner: {
+        backgroundColor: '#DCFCE7',
+        color: '#15803D',
       },
       subject_teacher: {
         backgroundColor: (theme) => theme.palette.secondary.light,
@@ -303,7 +320,7 @@ const SchoolAssignmentManagement = () => {
 
     try {
       await aclApi.assignSchoolUserRole(currentUserForRole.id, roleIds);
-      await fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
 
       if (actionType === 'added') {
         notify.success('Role(s) attached successfully!');
@@ -343,7 +360,7 @@ const SchoolAssignmentManagement = () => {
       await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
       notify.success('Direct permissions assigned successfully!');
       setDirectPermissionModalOpen(false);
-      fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to assign direct permissions');
     }
@@ -356,7 +373,7 @@ const SchoolAssignmentManagement = () => {
       await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
       notify.success('Permissions updated successfully!');
       setViewDirectPermissionModalOpen(false);
-      fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to update permissions');
     }
@@ -617,10 +634,10 @@ const SchoolAssignmentManagement = () => {
 
           {/* Table Container */}
           <TableContainer>
-            <Table>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 60, fontWeight: 700 }}>#</TableCell>
+                  <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Assigned Roles</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
@@ -642,10 +659,10 @@ const SchoolAssignmentManagement = () => {
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');
 
-                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.updated_at || user.created_at;
+                    const lastActiveRaw = user.last_active_at || user.last_login_at;
                     const lastActiveDate = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                      : '—';
+                      : 'No activity yet';
                     const lastActiveTime = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                       : '';
@@ -737,27 +754,52 @@ const SchoolAssignmentManagement = () => {
                             anchorEl={anchorEl}
                             open={Boolean(anchorEl) && selectedRow?.id === user.id}
                             onClose={handleMenuClose}
+                            PaperProps={{
+                              sx: {
+                                '& .MuiMenuItem-root:hover': {
+                                  bgcolor: 'primary.light',
+                                },
+                              },
+                            }}
                           >
                             <MenuItem onClick={() => handleAction('edit', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconUserPlus size={18} />
+                              </ListItemIcon>
                               Attach Role
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('view', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconShieldCheck size={18} />
+                              </ListItemIcon>
                               View Role
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('directPermission', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconShieldLock size={18} />
+                              </ListItemIcon>
                               Assign Direct Permission
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconEye size={18} />
+                              </ListItemIcon>
                               View Permission
                             </MenuItem>
                             {(() => {
                               const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
                               return isCurrentActive ? (
                                 <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'error.main' }}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUserOff size={18} />
+                                  </ListItemIcon>
                                   Deactivate User
                                 </MenuItem>
                               ) : (
                                 <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'success.main' }}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUserCheck size={18} />
+                                  </ListItemIcon>
                                   Activate User
                                 </MenuItem>
                               );

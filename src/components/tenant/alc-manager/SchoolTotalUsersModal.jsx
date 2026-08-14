@@ -24,6 +24,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Tooltip,
 } from '@mui/material';
 import {
@@ -32,6 +33,7 @@ import {
   VpnKeyOutlined as PermissionIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
+import { IconUserOff } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
@@ -112,6 +114,12 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
     setPage(0);
   };
 
+  const handleClear = () => {
+    setSearch('');
+    setSearchInput('');
+    setPage(0);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -171,7 +179,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PermissionIcon fontSize="small" color="primary" />
           <Typography variant="h6" component="span">
-            Users with this Permission
+            {permission?.id === 'all'
+              ? 'Users Impacted by Permissions'
+              : 'Users with this Permission'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
@@ -183,7 +193,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
       <DialogContent dividers sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
-            placeholder="Search by user name"
+            placeholder="Search by user name or email"
             value={searchInput}
             size="small"
             fullWidth
@@ -195,11 +205,23 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClear} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
           <Button variant="contained" size="small" onClick={handleSearch}>
             Search
           </Button>
+          {(search || searchInput) && (
+            <Button variant="outlined" color="error" size="small" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
         </Box>
 
         {error && (
@@ -216,15 +238,17 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                 <TableCell sx={{ width: '40%' }}>User Details</TableCell>
                 <TableCell sx={{ width: '20%' }}>Source</TableCell>
                 <TableCell sx={{ width: '18%' }}>Status</TableCell>
-                <TableCell sx={{ width: '12%' }} align="center">
-                  Action
-                </TableCell>
+                {permission?.id !== 'all' && (
+                  <TableCell sx={{ width: '12%' }} align="center">
+                    Action
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -238,35 +262,33 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                     u.avatar ||
                     u.image ||
                     item.image ||
-                    item.profile_picture ||
-                    item.profile_photo_url ||
-                    item.photo ||
                     '';
                   const avatarSrc = rawAvatar ? getFullImageUrl(rawAvatar) : '';
-                  const fname = u.fname || u.first_name || u.name || item.fname || item.name || '';
-                  const lname = u.lname || u.last_name || item.lname || '';
-                  const displayName = u.full_name || (fname ? `${fname} ${lname}`.trim() : item.full_name || '—');
-                  const email = u.email || item.email || '—';
 
                   return (
-                    <TableRow key={item.id || index} hover>
+                    <TableRow key={item.id || u.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar
                             src={avatarSrc}
-                            alt={fname || displayName}
-                            sx={{ width: 36, height: 36 }}
+                            alt={u.full_name || u.fname || ''}
+                            sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700 }}
                           >
-                            {fname?.[0]?.toUpperCase() ?? displayName?.[0]?.toUpperCase() ?? '?'}
+                            {getInitials(
+                              u.full_name ||
+                              `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                              'User'
+                            )}
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" fontWeight={600} noWrap>
-                              {displayName}
+                            <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+                              {u.full_name ||
+                                `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                                'N/A'}
                             </Typography>
-
                             <Typography variant="caption" color="text.secondary">
-                              {email}
+                              {u.email || 'No email added yet'}
                             </Typography>
                           </Box>
                         </Box>
@@ -289,17 +311,19 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                         />
                       </TableCell>
 
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
+                      {permission?.id !== 'all' && (
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <Alert
                       severity="info"
                       sx={{
@@ -310,7 +334,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                     >
                       {search
                         ? 'No users match your search.'
-                        : 'No users have this permission yet.'}
+                        : permission?.id === 'all'
+                          ? 'No users are impacted by permissions yet.'
+                          : 'No users have this permission yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>
@@ -338,6 +364,13 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
           onClose={handleMenuClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{
+            sx: {
+              '& .MuiMenuItem-root:hover': {
+                bgcolor: 'primary.light',
+              },
+            },
+          }}
         >
           <Tooltip
             title={
@@ -356,6 +389,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                 disabled={removing || !isDirectHolder(selectedUser)}
                 sx={{ color: 'error.main' }}
               >
+                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                  <IconUserOff size={18} />
+                </ListItemIcon>
                 Remove Permission
               </MenuItem>
             </span>
@@ -374,9 +410,8 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleRemovePermission}
         title="Remove permission from user?"
-        message={`Are you sure you want to remove "${
-          permission?.description ?? permission?.name ?? ''
-        }" from ${selectedUser?.full_name ?? ''}?`}
+        message={`Are you sure you want to remove "${permission?.description ?? permission?.name ?? ''
+          }" from ${selectedUser?.full_name ?? ''}?`}
         confirmText="Remove"
         cancelText="Cancel"
         severity="error"

@@ -20,6 +20,7 @@ import {
   IconButton,
   Select,
   MenuItem,
+  ListItemIcon,
   FormControl,
   Menu,
   TablePagination,
@@ -42,6 +43,7 @@ import {
   IconArrowRight,
   IconUserCheck,
   IconX,
+  IconEye,
 } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ParentCard from '@/components/shared/ParentCard';
@@ -101,6 +103,7 @@ const SchoolRoleBasedAccess = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        exclude_super_admin: true,
       };
       const res = await aclApi.getSchoolRoleAnalytics(params);
 
@@ -196,8 +199,8 @@ const SchoolRoleBasedAccess = () => {
       rawActiveU !== undefined && rawActiveU !== null
         ? Number(rawActiveU)
         : roles
-            .filter((r) => (r.status || 'active').toLowerCase() === 'active')
-            .reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+          .filter((r) => (r.status || 'active').toLowerCase() === 'active')
+          .reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
     const orphanedR =
       rawOrphanedR !== undefined && rawOrphanedR !== null
         ? Number(rawOrphanedR)
@@ -588,13 +591,12 @@ const SchoolRoleBasedAccess = () => {
                 </Box>
               </Box>
 
-              {/* Roles Table */}
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
                 <Table sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                    <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
-                        #
+                        S/N
                       </TableCell>
                       <TableCell sx={{ minWidth: 260, fontWeight: 700, py: 1.5 }}>
                         Role Name
@@ -642,20 +644,25 @@ const SchoolRoleBasedAccess = () => {
                         const avatarStyle = getRoleAvatarStyle(index);
                         const IconComp = avatarStyle.icon;
 
+                        const hasBeenUpdated =
+                          Boolean(row.updated_by) ||
+                          (Boolean(row.updated_at) &&
+                            Boolean(row.created_at) &&
+                            row.updated_at !== row.created_at);
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'May 6, 2025';
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                          : '—';
                         const formattedTime = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
-                          : '10:30 AM';
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                          : '';
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -766,17 +773,25 @@ const SchoolRoleBasedAccess = () => {
 
                             {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
-                              <Typography
-                                variant="caption"
-                                fontWeight={600}
-                                color="text.primary"
-                                display="block"
-                              >
-                                {formattedDate}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" fontSize="11px">
-                                {formattedTime}
-                              </Typography>
+                              {hasBeenUpdated ? (
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight={600}
+                                    color="text.primary"
+                                    display="block"
+                                  >
+                                    {formattedDate}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" fontSize="11px">
+                                    {formattedTime}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                  No updates yet
+                                </Typography>
+                              )}
                             </TableCell>
 
                             {/* Action Buttons */}
@@ -820,13 +835,27 @@ const SchoolRoleBasedAccess = () => {
       </Grid>
 
       {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            '& .MuiMenuItem-root:hover': {
+              bgcolor: 'primary.light',
+            },
+          },
+        }}
+      >
         <MenuItem
           onClick={() => {
             handleTotalPermissionClick(activeMenuRole);
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconEye size={18} />
+          </ListItemIcon>
           View Permissions
         </MenuItem>
         <MenuItem
@@ -835,6 +864,9 @@ const SchoolRoleBasedAccess = () => {
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconUsers size={18} />
+          </ListItemIcon>
           View Assigned Users
         </MenuItem>
       </Menu>
@@ -898,7 +930,7 @@ const SchoolRoleBasedAccess = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     Users

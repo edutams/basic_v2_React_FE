@@ -320,7 +320,7 @@ const SchoolAssignmentManagement = () => {
 
     try {
       await aclApi.assignSchoolUserRole(currentUserForRole.id, roleIds);
-      await fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
 
       if (actionType === 'added') {
         notify.success('Role(s) attached successfully!');
@@ -360,7 +360,7 @@ const SchoolAssignmentManagement = () => {
       await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
       notify.success('Direct permissions assigned successfully!');
       setDirectPermissionModalOpen(false);
-      fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to assign direct permissions');
     }
@@ -373,7 +373,7 @@ const SchoolAssignmentManagement = () => {
       await aclApi.assignSchoolUserDirectPermissions(currentUserForRole.id, permissions);
       notify.success('Permissions updated successfully!');
       setViewDirectPermissionModalOpen(false);
-      fetchUsers();
+      await Promise.all([fetchUsers(), fetchStats()]);
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to update permissions');
     }

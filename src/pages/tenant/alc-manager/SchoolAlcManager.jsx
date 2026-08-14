@@ -914,7 +914,7 @@ const SchoolAlcManager = () => {
                         const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
 
                         const rawUpdater =
-                          row.updated_by || row.updater?.name || row.updater_role || null;
+                          row.updated_by || null;
                         const updatedByPerson = rawUpdater
                           ? rawUpdater.toLowerCase().startsWith('by ')
                             ? rawUpdater.slice(3)

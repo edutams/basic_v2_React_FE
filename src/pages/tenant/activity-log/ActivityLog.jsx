@@ -59,6 +59,22 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
+const formatTimeAgo = (activity) => {
+  const rawTimeAgo = activity?.created_at
+    ? dayjs(activity.created_at).fromNow()
+    : activity?.time_ago;
+
+  if (!rawTimeAgo) return '—';
+
+  return rawTimeAgo
+    .replace(/\bminutes\b/gi, 'mins')
+    .replace(/\bminute\b/gi, 'min')
+    .replace(/\bhours\b/gi, 'hrs')
+    .replace(/\bhour\b/gi, 'hr')
+    .replace(/\bseconds\b/gi, 'secs')
+    .replace(/\bsecond\b/gi, 'sec');
+};
+
 const BCrumb = [
   {
     to: '/school-dashboard',
@@ -441,7 +457,6 @@ const ActivityLog = () => {
       <Breadcrumb title="Activity Log" items={BCrumb} />
       <AclTourProvider steps={tourSteps} autoPlay storageKey="activity_log_tour_seen">
 
-        {/* ── 1. Top Summary Stat Cards (5 Cards Row) ───────────────────────── */}
         <Grid container spacing={2} mb={3}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
@@ -489,11 +504,7 @@ const ActivityLog = () => {
 
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={
-                stats.last_activity?.created_at
-                  ? dayjs(stats.last_activity.created_at).fromNow()
-                  : stats.last_activity?.time_ago || '—'
-              }
+              count={formatTimeAgo(stats.last_activity)}
               label="Last Activity"
               subtitle={
                 stats.last_activity?.created_at

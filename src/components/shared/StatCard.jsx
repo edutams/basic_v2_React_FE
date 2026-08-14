@@ -33,7 +33,7 @@ const StatCard = ({
       variant={!isCardShadow ? 'outlined' : undefined}
       onClick={onClick}
       sx={{
-        borderRadius: 1,
+        borderRadius: 2,
         px: 1.6,
         py: 2.5,
         width: '100%',
@@ -44,7 +44,7 @@ const StatCard = ({
         position: 'relative',
         overflow: 'hidden',
 
-        border: `1px solid ${borderColor}`,
+        // border: `1px solid ${borderColor}`,
         boxShadow: (theme) =>
           theme.palette.mode === 'dark'
             ? '0 6px 24px rgba(0,0,0,0.28)'
@@ -54,12 +54,12 @@ const StatCard = ({
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': onClick
           ? {
-              transform: 'translateY(-3px)',
-              boxShadow: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '0 10px 30px rgba(0,0,0,0.4)'
-                  : '0 8px 25px rgba(0,0,0,0.12)',
-            }
+            transform: 'translateY(-3px)',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 10px 30px rgba(0,0,0,0.4)'
+                : '0 8px 25px rgba(0,0,0,0.12)',
+          }
           : undefined,
       }}
     >

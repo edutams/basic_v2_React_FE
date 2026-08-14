@@ -634,10 +634,10 @@ const SchoolAssignmentManagement = () => {
 
           {/* Table Container */}
           <TableContainer>
-            <Table>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 60, fontWeight: 700 }}>#</TableCell>
+                  <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Assigned Roles</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>

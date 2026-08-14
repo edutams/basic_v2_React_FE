@@ -784,7 +784,7 @@ const SchoolPermissionBased = () => {
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
-                        #
+                        S/N
                       </TableCell>
                       <TableCell sx={{ minWidth: 200, fontWeight: 700, py: 1.5 }}>
                         Permission
@@ -1087,7 +1087,7 @@ const SchoolPermissionBased = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Module Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     Permissions

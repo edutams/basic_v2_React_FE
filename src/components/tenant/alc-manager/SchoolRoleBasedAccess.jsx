@@ -199,8 +199,8 @@ const SchoolRoleBasedAccess = () => {
       rawActiveU !== undefined && rawActiveU !== null
         ? Number(rawActiveU)
         : roles
-            .filter((r) => (r.status || 'active').toLowerCase() === 'active')
-            .reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
+          .filter((r) => (r.status || 'active').toLowerCase() === 'active')
+          .reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
     const orphanedR =
       rawOrphanedR !== undefined && rawOrphanedR !== null
         ? Number(rawOrphanedR)
@@ -591,13 +591,12 @@ const SchoolRoleBasedAccess = () => {
                 </Box>
               </Box>
 
-              {/* Roles Table */}
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
                 <Table sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                    <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
-                        #
+                        S/N
                       </TableCell>
                       <TableCell sx={{ minWidth: 260, fontWeight: 700, py: 1.5 }}>
                         Role Name
@@ -653,16 +652,16 @@ const SchoolRoleBasedAccess = () => {
                         const updatedDateRaw = row.updated_at || row.created_at;
                         const formattedDate = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
                           : '—';
                         const formattedTime = updatedDateRaw
                           ? new Date(updatedDateRaw).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
                           : '';
 
                         return (
@@ -931,7 +930,7 @@ const SchoolRoleBasedAccess = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-                  <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
                     Users

@@ -866,7 +866,7 @@ const SchoolAlcManager = () => {
             {/* Table Container */}
             <Box data-tour="acl-role-table">
               <TableContainer>
-                <Table>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>

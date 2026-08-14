@@ -639,7 +639,7 @@ const SchoolAlcManager = () => {
           <Tab label="Permission Assignment" value="Permission Assignment" />
           <Tab label="Access Analysis" value="Access Analysis" />
         </Tabs>
-        {activeTab === 'Role Management' && (
+        {/* {activeTab === 'Role Management' && (
           <Box display="flex" alignItems="center" gap={1.5}>
             <ShowTourGuideButton />
             {can('acl.roles.create') && (
@@ -662,7 +662,7 @@ const SchoolAlcManager = () => {
               </Button>
             )}
           </Box>
-        )}
+        )} */}
       </Box>
 
       {activeTab === 'Role Management' && (

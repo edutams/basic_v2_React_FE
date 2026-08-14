@@ -507,7 +507,6 @@ const ActivityLog = () => {
           </Grid>
         </Grid>
 
-        {/* ── 2. Main Logs Table Container ──────────────────────────────────── */}
         <Paper
           elevation={0}
           sx={{
@@ -515,11 +514,9 @@ const ActivityLog = () => {
             borderRadius: '16px',
             border: '1px solid',
             borderColor: 'divider',
-            bgcolor: '#ffffff',
           }}
           data-tour="activity-log-table"
         >
-          {/* Header Action Bar */}
           <Box
             display="flex"
             alignItems="center"
@@ -662,7 +659,7 @@ const ActivityLog = () => {
               <TableContainer sx={{ overflowX: 'auto' }}>
                 <Table sx={{ minWidth: 1250 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                    <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
                       <TableCell sx={{ minWidth: 280, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
                       <TableCell sx={{ minWidth: 240, fontWeight: 700, py: 1.5 }}>User</TableCell>

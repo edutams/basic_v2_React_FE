@@ -480,7 +480,7 @@ const ActivityLog = () => {
             <StatCard
               count={stats.critical_actions.toLocaleString()}
               label="Critical Actions"
-              subtitle="Deletions & security events"
+              subtitle="Deletions/security events"
               icon={IconShield}
               colorIndex={2}
               loading={statsLoading}

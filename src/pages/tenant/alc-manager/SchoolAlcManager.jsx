@@ -485,7 +485,6 @@ const SchoolAlcManager = () => {
     }
   };
 
-  // ── Stat calculations ──────────────────────────────────────────────────────
   const statsData = useMemo(() => {
     if (roleStats) {
       return roleStats;
@@ -519,7 +518,6 @@ const SchoolAlcManager = () => {
     };
   }, [roleStats, allSystemRoles, rows, totalRoles]);
 
-  // ── Filtered Rows ──────────────────────────────────────────────────────────
   const filteredRows = rows;
 
   const handleExportRoles = () => {
@@ -667,7 +665,6 @@ const SchoolAlcManager = () => {
 
       {activeTab === 'Role Management' && (
         <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
-          {/* Analysis / Summary Metric Cards */}
           <Box sx={{ mb: 3 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
@@ -725,7 +722,6 @@ const SchoolAlcManager = () => {
           </Box>
 
           <ParentCard>
-            {/* Table Header Filter & Action Toolbar */}
             <Box
               sx={{
                 mb: 2.5,
@@ -918,12 +914,12 @@ const SchoolAlcManager = () => {
                         const dateFormatted = date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—';
 
                         const rawUpdater =
-                          row.updated_by || row.updater?.name || row.updater_role;
+                          row.updated_by || row.updater?.name || row.updater_role || null;
                         const updatedByPerson = rawUpdater
                           ? rawUpdater.toLowerCase().startsWith('by ')
                             ? rawUpdater.slice(3)
                             : rawUpdater
-                          : 'School Admin';
+                          : null;
 
                         return (
                           <TableRow key={row.id || index} hover>
@@ -1049,13 +1045,15 @@ const SchoolAlcManager = () => {
                                   <Typography variant="body2" fontWeight={500}>
                                     {dateFormatted}
                                   </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    display="block"
-                                  >
-                                    by {updatedByPerson}
-                                  </Typography>
+                                  {updatedByPerson && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      display="block"
+                                    >
+                                      by {updatedByPerson}
+                                    </Typography>
+                                  )}
                                 </Box>
                               ) : (
                                 <Typography variant="body2" color="text.secondary" fontWeight={500}>

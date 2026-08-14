@@ -18,6 +18,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Button,
   Tabs,
   Tab,
@@ -51,6 +52,7 @@ import {
   IconUserPlus,
   IconShieldLock,
   IconShield,
+  IconEye,
 } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
@@ -1068,19 +1070,40 @@ const SchoolAlcManager = () => {
                                 anchorEl={anchorEl}
                                 open={Boolean(anchorEl) && selectedRow?.id === row.id}
                                 onClose={handleMenuClose}
+                                PaperProps={{
+                                  sx: {
+                                    '& .MuiMenuItem-root:hover': {
+                                      bgcolor: 'primary.light',
+                                    },
+                                  },
+                                }}
                               >
                                 <MenuItem onClick={() => handleAttachPermission(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconShieldLock size={18} />
+                                  </ListItemIcon>
                                   Attach Permission
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewPermissions(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconEye size={18} />
+                                  </ListItemIcon>
                                   View Permission
                                 </MenuItem>
-                                <MenuItem onClick={() => handleViewUsers(row)}>View Users</MenuItem>
+                                <MenuItem onClick={() => handleViewUsers(row)}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUsers size={18} />
+                                  </ListItemIcon>
+                                  View Users
+                                </MenuItem>
                                 {isCustomRole && (
                                   <MenuItem
                                     onClick={() => handleOpenConvertConfirm(row)}
                                     sx={{ color: 'error.main' }}
                                   >
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <IconShield size={18} />
+                                    </ListItemIcon>
                                     Make System Role
                                   </MenuItem>
                                 )}
@@ -1089,6 +1112,9 @@ const SchoolAlcManager = () => {
                                     onClick={() => handleToggleRoleStatus(row)}
                                     sx={{ color: 'success.main' }}
                                   >
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <IconUserCheck size={18} />
+                                    </ListItemIcon>
                                     Activate Role
                                   </MenuItem>
                                 ) : (
@@ -1096,6 +1122,9 @@ const SchoolAlcManager = () => {
                                     onClick={() => handleToggleRoleStatus(row)}
                                     sx={{ color: 'error.main' }}
                                   >
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <IconUserOff size={18} />
+                                    </ListItemIcon>
                                     Deactivate Role
                                   </MenuItem>
                                 )}

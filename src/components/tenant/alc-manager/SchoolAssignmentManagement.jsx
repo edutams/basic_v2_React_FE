@@ -18,6 +18,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Alert,
   CircularProgress,
   Avatar,
@@ -38,6 +39,9 @@ import {
   IconUserCheck,
   IconUserOff,
   IconUserPlus,
+  IconShieldLock,
+  IconShieldCheck,
+  IconEye,
 } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -750,27 +754,52 @@ const SchoolAssignmentManagement = () => {
                             anchorEl={anchorEl}
                             open={Boolean(anchorEl) && selectedRow?.id === user.id}
                             onClose={handleMenuClose}
+                            PaperProps={{
+                              sx: {
+                                '& .MuiMenuItem-root:hover': {
+                                  bgcolor: 'primary.light',
+                                },
+                              },
+                            }}
                           >
                             <MenuItem onClick={() => handleAction('edit', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconUserPlus size={18} />
+                              </ListItemIcon>
                               Attach Role
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('view', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconShieldCheck size={18} />
+                              </ListItemIcon>
                               View Role
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('directPermission', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconShieldLock size={18} />
+                              </ListItemIcon>
                               Assign Direct Permission
                             </MenuItem>
                             <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                <IconEye size={18} />
+                              </ListItemIcon>
                               View Permission
                             </MenuItem>
                             {(() => {
                               const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
                               return isCurrentActive ? (
                                 <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'error.main' }}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUserOff size={18} />
+                                  </ListItemIcon>
                                   Deactivate User
                                 </MenuItem>
                               ) : (
                                 <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'success.main' }}>
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <IconUserCheck size={18} />
+                                  </ListItemIcon>
                                   Activate User
                                 </MenuItem>
                               );

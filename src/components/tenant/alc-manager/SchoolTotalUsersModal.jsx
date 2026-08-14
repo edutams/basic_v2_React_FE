@@ -24,6 +24,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  ListItemIcon,
   Tooltip,
 } from '@mui/material';
 import {
@@ -32,6 +33,7 @@ import {
   VpnKeyOutlined as PermissionIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
+import { IconUserOff } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import { useNotification } from '@/hooks/useNotification';
@@ -362,6 +364,13 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
           onClose={handleMenuClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{
+            sx: {
+              '& .MuiMenuItem-root:hover': {
+                bgcolor: 'primary.light',
+              },
+            },
+          }}
         >
           <Tooltip
             title={
@@ -380,6 +389,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
                 disabled={removing || !isDirectHolder(selectedUser)}
                 sx={{ color: 'error.main' }}
               >
+                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                  <IconUserOff size={18} />
+                </ListItemIcon>
                 Remove Permission
               </MenuItem>
             </span>

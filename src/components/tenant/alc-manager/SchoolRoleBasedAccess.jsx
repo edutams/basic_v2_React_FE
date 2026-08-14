@@ -20,6 +20,7 @@ import {
   IconButton,
   Select,
   MenuItem,
+  ListItemIcon,
   FormControl,
   Menu,
   TablePagination,
@@ -42,6 +43,7 @@ import {
   IconArrowRight,
   IconUserCheck,
   IconX,
+  IconEye,
 } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ParentCard from '@/components/shared/ParentCard';
@@ -834,13 +836,27 @@ const SchoolRoleBasedAccess = () => {
       </Grid>
 
       {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            '& .MuiMenuItem-root:hover': {
+              bgcolor: 'primary.light',
+            },
+          },
+        }}
+      >
         <MenuItem
           onClick={() => {
             handleTotalPermissionClick(activeMenuRole);
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconEye size={18} />
+          </ListItemIcon>
           View Permissions
         </MenuItem>
         <MenuItem
@@ -849,6 +865,9 @@ const SchoolRoleBasedAccess = () => {
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconUsers size={18} />
+          </ListItemIcon>
           View Assigned Users
         </MenuItem>
       </Menu>

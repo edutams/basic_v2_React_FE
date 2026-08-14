@@ -19,6 +19,7 @@ import {
   IconButton,
   Select,
   MenuItem,
+  ListItemIcon,
   FormControl,
   Menu,
   TablePagination,
@@ -38,6 +39,7 @@ import {
   IconDotsVertical,
   IconArrowRight,
   IconShieldCheck,
+  IconShield,
   IconDownload,
   IconX,
 } from '@tabler/icons-react';
@@ -990,13 +992,27 @@ const SchoolPermissionBased = () => {
         </Grid>
       </Grid>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            '& .MuiMenuItem-root:hover': {
+              bgcolor: 'primary.light',
+            },
+          },
+        }}
+      >
         <MenuItem
           onClick={() => {
             handleTotalRoleClick(activeMenuPerm);
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconShield size={18} />
+          </ListItemIcon>
           View Assigned Roles
         </MenuItem>
         <MenuItem
@@ -1005,6 +1021,9 @@ const SchoolPermissionBased = () => {
             handleMenuClose();
           }}
         >
+          <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+            <IconUsers size={18} />
+          </ListItemIcon>
           View Impacted Users
         </MenuItem>
       </Menu>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Typography, Stack, Avatar, Card, Select, MenuItem, IconButton } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, Select, MenuItem, IconButton, Skeleton } from '@mui/material';
 import { ChevronRight, ChevronLeft } from '@mui/icons-material';
 
 const CARD_WIDTH = 260; // px – each ward card width
@@ -106,7 +106,7 @@ const WardCard = ({ ward }) => {
   );
 };
 
-const MyWards = ({ wards = [] }) => {
+const MyWards = ({ wards = [], loading = false }) => {
   const [filter, setFilter] = useState('all');
   const [offset, setOffset] = useState(0);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -157,6 +157,19 @@ const MyWards = ({ wards = [] }) => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <Box mb={2}>
+        <Skeleton variant="text" width={120} height={24} sx={{ mb: 1.25 }} />
+        <Box sx={{ display: 'flex', gap: `${CARD_GAP}px` }}>
+          {[0, 1].map((i) => (
+            <Skeleton key={i} variant="rounded" width={CARD_WIDTH} height={190} sx={{ borderRadius: '8px' }} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box mb={2}>

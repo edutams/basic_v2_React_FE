@@ -110,11 +110,49 @@ export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
   return response.data;
 };
 
-// Parent Dashboard (consolidated guardian payload: open batches, wards, finance)
-export const getParentInsights = async (sessionTermId = null) => {
-  const response = await api.get('/admission/parent-insights', {
-    params: sessionTermId ? { session_term_id: sessionTermId } : {},
-  });
+// ── Parent Dashboard v2 — one endpoint per card, fetched independently ──
+const parentParams = (sessionTermId = null) =>
+  sessionTermId ? { session_term_id: sessionTermId } : {};
+
+// Finance stat cards (paid / outstanding / pending)
+export const getParentFinance = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/finance', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Attendance Overview card (+ Performance Snapshot)
+export const getParentAttendance = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/attendance', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Academic Overview + Engagement cards
+export const getParentAcademics = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/academics', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Upcoming Events card
+export const getParentEvents = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/events', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Teacher Contacts card
+export const getParentContacts = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/contacts', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Recent Messages card
+export const getParentMessages = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/messages', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Notifications card
+export const getParentNotifications = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/notifications', { params: parentParams(sessionTermId) });
   return response.data;
 };
 

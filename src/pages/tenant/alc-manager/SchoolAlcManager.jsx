@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useNotification } from '@/hooks/useNotification';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 import {
   Box,
@@ -193,6 +194,7 @@ const analysisTourSteps = [
 
 const SchoolAlcManager = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
@@ -1096,7 +1098,7 @@ const SchoolAlcManager = () => {
                                   </ListItemIcon>
                                   View Users
                                 </MenuItem>
-                                {isCustomRole && (
+                                {isCustomRole && can('acl.roles.make_system') && (
                                   <MenuItem
                                     onClick={() => handleOpenConvertConfirm(row)}
                                     sx={{ color: 'error.main' }}
@@ -1107,26 +1109,28 @@ const SchoolAlcManager = () => {
                                     Make System Role
                                   </MenuItem>
                                 )}
-                                {row.status === 'Inactive' || row.status === 'inactive' ? (
-                                  <MenuItem
-                                    onClick={() => handleToggleRoleStatus(row)}
-                                    sx={{ color: 'success.main' }}
-                                  >
-                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                      <IconUserCheck size={18} />
-                                    </ListItemIcon>
-                                    Activate Role
-                                  </MenuItem>
-                                ) : (
-                                  <MenuItem
-                                    onClick={() => handleToggleRoleStatus(row)}
-                                    sx={{ color: 'error.main' }}
-                                  >
-                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                      <IconUserOff size={18} />
-                                    </ListItemIcon>
-                                    Deactivate Role
-                                  </MenuItem>
+                                {can('acl.roles.toggle_status') && (
+                                  row.status === 'Inactive' || row.status === 'inactive' ? (
+                                    <MenuItem
+                                      onClick={() => handleToggleRoleStatus(row)}
+                                      sx={{ color: 'success.main' }}
+                                    >
+                                      <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                        <IconUserCheck size={18} />
+                                      </ListItemIcon>
+                                      Activate Role
+                                    </MenuItem>
+                                  ) : (
+                                    <MenuItem
+                                      onClick={() => handleToggleRoleStatus(row)}
+                                      sx={{ color: 'error.main' }}
+                                    >
+                                      <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                        <IconUserOff size={18} />
+                                      </ListItemIcon>
+                                      Deactivate Role
+                                    </MenuItem>
+                                  )
                                 )}
                               </Menu>
                             </TableCell>

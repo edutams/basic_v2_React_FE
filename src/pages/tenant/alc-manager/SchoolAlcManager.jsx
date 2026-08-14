@@ -639,27 +639,28 @@ const SchoolAlcManager = () => {
           <Tab label="Permission Assignment" value="Permission Assignment" />
           <Tab label="Access Analysis" value="Access Analysis" />
         </Tabs>
-
         {activeTab === 'Role Management' && (
           <Box display="flex" alignItems="center" gap={1.5}>
             <ShowTourGuideButton />
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              data-tour="acl-role-new"
-              onClick={() => setNewRoleModalOpen(true)}
-              sx={{
-                borderRadius: 2,
-                px: 2.5,
-                py: 0.8,
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '13px',
-              }}
-            >
-              New Role
-            </Button>
+            {can('acl.roles.create') && (
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                data-tour="acl-role-new"
+                onClick={() => setNewRoleModalOpen(true)}
+                sx={{
+                  borderRadius: 2,
+                  px: 2.5,
+                  py: 0.8,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                New Role
+              </Button>
+            )}
           </Box>
         )}
       </Box>
@@ -1080,12 +1081,14 @@ const SchoolAlcManager = () => {
                                   },
                                 }}
                               >
-                                <MenuItem onClick={() => handleAttachPermission(row)}>
-                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                    <IconShieldLock size={18} />
-                                  </ListItemIcon>
-                                  Attach Permission
-                                </MenuItem>
+                                {can('acl.roles.attach_permissions') && (
+                                  <MenuItem onClick={() => handleAttachPermission(row)}>
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <IconShieldLock size={18} />
+                                    </ListItemIcon>
+                                    Attach Permission
+                                  </MenuItem>
+                                )}
                                 <MenuItem onClick={() => handleViewPermissions(row)}>
                                   <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
                                     <IconEye size={18} />

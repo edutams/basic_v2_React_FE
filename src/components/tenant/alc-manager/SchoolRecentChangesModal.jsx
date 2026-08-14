@@ -184,10 +184,9 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
             {(searchInput || searchQuery) && (
               <Button
                 variant="outlined"
-                color="secondary"
+                color="primary"
                 size="small"
                 onClick={handleClearSearch}
-                startIcon={<IconX size={16} />}
                 sx={{ height: 38, px: 2, fontWeight: 600, flexShrink: 0, borderRadius: '8px', textTransform: 'none' }}
               >
                 Clear
@@ -250,8 +249,7 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
                           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                             <Chip
                               size="small"
-                              label={item.event ? item.event.toUpperCase() : 'SYSTEM'}
-                              color="primary"
+                              label={item.event ? item.event.toUpperCase() : 'ASSIGNMENT'}
                               sx={{
                                 height: 20,
                                 fontSize: '0.65rem',

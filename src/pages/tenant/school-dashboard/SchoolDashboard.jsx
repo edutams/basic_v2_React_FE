@@ -32,7 +32,7 @@ export default function SchoolDashboard() {
   const isBursaryOfficer = roles.some((role) => role.name === 'bursar');
 
   const isAdmin = roles.some((role) =>
-    ['super_admin', 'school_owner', 'school_head'].includes(role.name),
+    ['super_admin', 'school_admin', 'school_owner', 'school_head'].includes(role.name),
   );
 
   const isTeachingStaff = isStaff && user?.staff?.staff_type === 'teaching';

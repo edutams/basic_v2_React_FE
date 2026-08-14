@@ -341,9 +341,7 @@ const SchoolRoleBasedAccess = () => {
 
   return (
     <Box>
-      {/* ── 1. Top Summary Stat Cards (5 Column Cards) ─────────────────────── */}
       <Grid container spacing={2} mb={3}>
-        {/* Card 1: Total Roles */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.totalR}
@@ -355,7 +353,6 @@ const SchoolRoleBasedAccess = () => {
           />
         </Grid>
 
-        {/* Card 2: Total Permissions */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.totalP}
@@ -367,7 +364,6 @@ const SchoolRoleBasedAccess = () => {
           />
         </Grid>
 
-        {/* Card 3: Total Users */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.totalU}
@@ -379,7 +375,6 @@ const SchoolRoleBasedAccess = () => {
           />
         </Grid>
 
-        {/* Card 4: Active Access */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.activeU}
@@ -391,7 +386,6 @@ const SchoolRoleBasedAccess = () => {
           />
         </Grid>
 
-        {/* Card 5: Orphaned Roles */}
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={stats.orphanedR}
@@ -404,9 +398,7 @@ const SchoolRoleBasedAccess = () => {
         </Grid>
       </Grid>
 
-      {/* ── 2. Main 2-Column Section (Left Chart + Right Table) ───────────── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Left Column: Donut Chart Breakdown */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box
@@ -501,7 +493,6 @@ const SchoolRoleBasedAccess = () => {
           </ParentCard>
         </Grid>
 
-        {/* Right Column: Roles Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
           <Paper
             elevation={0}
@@ -510,7 +501,6 @@ const SchoolRoleBasedAccess = () => {
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
-              bgcolor: '#ffffff',
               width: '100%',
               height: '100%',
               display: 'flex',
@@ -519,7 +509,6 @@ const SchoolRoleBasedAccess = () => {
             }}
           >
             <Box>
-              {/* Table Top Controls Bar */}
               <Box
                 component="form"
                 onSubmit={handleSearchSubmit}
@@ -707,7 +696,6 @@ const SchoolRoleBasedAccess = () => {
                               </Box>
                             </TableCell>
 
-                            {/* Description Snippet */}
                             <TableCell sx={{ py: 1.5, minWidth: 250, maxWidth: 320 }}>
                               <Typography
                                 variant="body2"
@@ -722,7 +710,6 @@ const SchoolRoleBasedAccess = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Permissions Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -739,7 +726,6 @@ const SchoolRoleBasedAccess = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Total Users Link */}
                             <TableCell align="center" sx={{ py: 1.5 }}>
                               <Typography
                                 variant="subtitle2"
@@ -756,7 +742,6 @@ const SchoolRoleBasedAccess = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Status Chip */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Chip
                                 label={isInactive ? 'Inactive' : 'Active'}
@@ -771,7 +756,6 @@ const SchoolRoleBasedAccess = () => {
                               />
                             </TableCell>
 
-                            {/* Last Updated */}
                             <TableCell sx={{ py: 1.5 }}>
                               {hasBeenUpdated ? (
                                 <Box>
@@ -817,7 +801,6 @@ const SchoolRoleBasedAccess = () => {
               </TableContainer>
             </Box>
 
-            {/* TablePagination Component */}
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, 50, 100]}
               component="div"
@@ -834,7 +817,6 @@ const SchoolRoleBasedAccess = () => {
         </Grid>
       </Grid>
 
-      {/* ── Modals & Action Menu ────────────────────────────────────────────── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}

@@ -322,7 +322,6 @@ const SchoolPermissionBased = () => {
     return ['#9CA3AF'];
   }, [distributionData]);
 
-  // Chart configuration for Permissions by Module
   const chartOptions = useMemo(
     () => ({
       chart: {
@@ -658,7 +657,6 @@ const SchoolPermissionBased = () => {
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
-              bgcolor: '#ffffff',
               width: '100%',
               height: '100%',
               display: 'flex',

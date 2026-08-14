@@ -54,11 +54,13 @@ import SchoolRecentChangesModal from '@/components/tenant/alc-manager/SchoolRece
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
+import { usePermissions } from '@/context/TenantContext/permissions';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
 import { formatRoleName } from '@/pages/tenant/alc-manager/SchoolAlcManager';
 
 const SchoolAssignmentManagement = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
@@ -762,31 +764,35 @@ const SchoolAssignmentManagement = () => {
                               },
                             }}
                           >
-                            <MenuItem onClick={() => handleAction('edit', user)}>
-                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                <IconUserPlus size={18} />
-                              </ListItemIcon>
-                              Attach Role
-                            </MenuItem>
+                            {can('acl.roles.assignments.assign') && (
+                              <MenuItem onClick={() => handleAction('edit', user)}>
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                  <IconUserPlus size={18} />
+                                </ListItemIcon>
+                                Attach Role
+                              </MenuItem>
+                            )}
                             <MenuItem onClick={() => handleAction('view', user)}>
                               <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
                                 <IconShieldCheck size={18} />
                               </ListItemIcon>
                               View Role
                             </MenuItem>
-                            <MenuItem onClick={() => handleAction('directPermission', user)}>
-                              <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                <IconShieldLock size={18} />
-                              </ListItemIcon>
-                              Assign Direct Permission
-                            </MenuItem>
+                            {can('acl.user.manage.permission') && (
+                              <MenuItem onClick={() => handleAction('directPermission', user)}>
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                  <IconShieldLock size={18} />
+                                </ListItemIcon>
+                                Assign Direct Permission
+                              </MenuItem>
+                            )}
                             <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
                               <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
                                 <IconEye size={18} />
                               </ListItemIcon>
                               View Permission
                             </MenuItem>
-                            {(() => {
+                            {can('acl.roles.toggle_status') && (() => {
                               const isCurrentActive = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'active';
                               return isCurrentActive ? (
                                 <MenuItem onClick={() => handleOpenStatusConfirm(user)} sx={{ color: 'error.main' }}>

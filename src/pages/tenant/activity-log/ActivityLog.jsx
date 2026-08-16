@@ -919,15 +919,16 @@ const ActivityLog = () => {
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>IP Address</TableCell>
                       <TableCell>
-                        {selectedLog.ip_address || selectedLog.properties?.ip || '197.210.45.12'}
+                        {selectedLog.ip_address || selectedLog.properties?.ip || selectedLog.properties?.ip_address || '-'}
                       </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </Box>
 
-              {selectedLog.properties && Object.keys(selectedLog.properties).length > 0 && (
-                <Box>
+              {selectedLog.properties &&
+              Object.entries(selectedLog.properties).filter(([key]) => key !== 'ip' && key !== 'ip_address').length > 0 ? (
+                <Box mt={2}>
                   <Typography variant="subtitle2" gutterBottom fontWeight={700}>
                     Additional Information
                   </Typography>
@@ -944,38 +945,38 @@ const ActivityLog = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {Object.entries(selectedLog.properties).map(([key, value]) => (
-                          <TableRow key={key}>
-                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {key}
-                            </TableCell>
-                            <TableCell>
-                              {typeof value === 'object' && value !== null ? (
-                                <pre
-                                  style={{
-                                    margin: 0,
-                                    fontFamily: 'monospace',
-                                    fontSize: '12px',
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-word',
-                                  }}
-                                >
-                                  {JSON.stringify(value, null, 2)}
-                                </pre>
-                              ) : (
-                                String(value)
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {Object.entries(selectedLog.properties)
+                          .filter(([key]) => key !== 'ip' && key !== 'ip_address')
+                          .map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {key}
+                              </TableCell>
+                              <TableCell>
+                                {typeof value === 'object' && value !== null ? (
+                                  <pre
+                                    style={{
+                                      margin: 0,
+                                      fontFamily: 'monospace',
+                                      fontSize: '12px',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                    }}
+                                  >
+                                    {JSON.stringify(value, null, 2)}
+                                  </pre>
+                                ) : (
+                                  String(value)
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Box>
-              )}
-
-              {(!selectedLog.properties || Object.keys(selectedLog.properties).length === 0) && (
-                <Typography color="text.secondary" fontStyle="italic">
+              ) : (
+                <Typography color="text.secondary" fontStyle="italic" mt={2}>
                   No additional properties available for this activity.
                 </Typography>
               )}

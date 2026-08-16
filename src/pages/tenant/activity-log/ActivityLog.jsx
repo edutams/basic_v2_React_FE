@@ -562,11 +562,14 @@ const ActivityLog = () => {
                 }}
               />
 
-              <FormControl size="small" sx={{ minWidth: 120 }}>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select value={userInput} onChange={(e) => setUserInput(e.target.value)}>
                   <MenuItem value="all">All Users</MenuItem>
                   <MenuItem value="admin">Admins</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
                   <MenuItem value="teacher">Teachers</MenuItem>
+                  <MenuItem value="student">Students</MenuItem>
+                  <MenuItem value="guardian">Parents / Guardians</MenuItem>
                 </Select>
               </FormControl>
 

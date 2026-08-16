@@ -677,7 +677,6 @@ const ActivityLog = () => {
                       <TableCell sx={{ minWidth: 180, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
-                      <TableCell sx={{ minWidth: 130, fontWeight: 700, py: 1.5 }}>IP Address</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
                       <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
                         Action
@@ -688,7 +687,7 @@ const ActivityLog = () => {
                   <TableBody>
                     {displayLogs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                           <Alert severity="info" sx={{ justifyContent: 'center' }}>
                             No activity logs found matching the current filters.
                           </Alert>
@@ -821,13 +820,6 @@ const ActivityLog = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* IP Address */}
-                            <TableCell sx={{ py: 1.8 }}>
-                              <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                {log.ip_address || log.properties?.ip || '197.210.45.12'}
-                              </Typography>
-                            </TableCell>
-
                             {/* Severity Chip */}
                             <TableCell sx={{ py: 1.8 }}>
                               {getSeverityChip(severityName)}
@@ -923,6 +915,12 @@ const ActivityLog = () => {
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
                       <TableCell>{selectedLog.my_updated_at || selectedLog.updated_at}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>IP Address</TableCell>
+                      <TableCell>
+                        {selectedLog.ip_address || selectedLog.properties?.ip || '197.210.45.12'}
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

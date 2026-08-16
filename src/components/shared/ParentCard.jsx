@@ -20,7 +20,6 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
           theme.palette.mode === 'dark'
             ? '0 6px 24px rgba(0, 0, 0, 0.28)'
             : '0 4px 20px rgba(0, 0, 0, 0.07)',
-        ...sx,
       }}
     >
       <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />

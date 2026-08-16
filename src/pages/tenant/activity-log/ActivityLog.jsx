@@ -600,6 +600,11 @@ const ActivityLog = () => {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                  },
+                }}
                 sx={{ width: 140 }}
                 data-tour="activity-log-date"
               />
@@ -611,6 +616,12 @@ const ActivityLog = () => {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                    min: dateFrom || undefined,
+                  },
+                }}
                 sx={{ width: 140 }}
               />
 

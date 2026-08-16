@@ -659,8 +659,7 @@ const ActivityLog = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 280, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
-                      <TableCell sx={{ minWidth: 240, fontWeight: 700, py: 1.5 }}>User</TableCell>
+                      <TableCell sx={{ minWidth: 320, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
                       <TableCell sx={{ minWidth: 180, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
@@ -674,7 +673,7 @@ const ActivityLog = () => {
                   <TableBody>
                     {displayLogs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                           <Alert severity="info" sx={{ justifyContent: 'center' }}>
                             No activity logs found matching the current filters.
                           </Alert>
@@ -706,79 +705,65 @@ const ActivityLog = () => {
                           <TableRow key={log.id || idx} hover>
                             <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
-                            {/* Activity Description */}
-                            <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {causerObj ? (
-                                  <Tooltip title="Click to View User Profile" arrow placement="top">
-                                    <Typography
-                                      component="span"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        handleCauserClick(causerObj);
-                                      }}
-                                      sx={{
-                                        color: 'primary.main',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        '&:hover': { textDecoration: 'underline' },
-                                      }}
-                                    >
-                                      {userName}
-                                    </Typography>
-                                  </Tooltip>
-                                ) : (
-                                  <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                                    System
-                                  </Typography>
-                                )}{' '}
-                                {log.description}
-                              </Typography>
-                            </TableCell>
-
-                            {/* User Avatar + Full Name + Username */}
-                            <TableCell sx={{ py: 1.8, minWidth: 240 }}>
+                            {/* Activity Description with User Avatar */}
+                            <TableCell sx={{ py: 1.8, minWidth: 320, maxWidth: 450 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   src={causerObj?.avatar_url}
-                                  sx={{ width: 34, height: 34, bgcolor: '#EFF6FF', color: '#3B82F6', fontWeight: 700, fontSize: '13px' }}
+                                  alt={userName}
+                                  onClick={(e) => {
+                                    if (causerObj) {
+                                      e.preventDefault();
+                                      handleCauserClick(causerObj);
+                                    }
+                                  }}
+                                  sx={{
+                                    width: 34,
+                                    height: 34,
+                                    bgcolor: '#EFF6FF',
+                                    color: '#3B82F6',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    flexShrink: 0,
+                                    cursor: causerObj ? 'pointer' : 'default',
+                                    '&:hover': causerObj ? { opacity: 0.85 } : {},
+                                  }}
                                 >
-                                  {userName.charAt(0)}
+                                  {userName?.[0]?.toUpperCase() ?? '?'}
                                 </Avatar>
 
-                                <Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
                                   {causerObj ? (
                                     <Tooltip title="Click to View User Profile" arrow placement="top">
                                       <Typography
-                                        variant="subtitle2"
-                                        fontWeight={700}
+                                        component="span"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           handleCauserClick(causerObj);
                                         }}
                                         sx={{
+                                          color: 'primary.main',
+                                          fontWeight: 600,
                                           cursor: 'pointer',
-                                          '&:hover': { color: 'primary.dark', textDecoration: 'underline' },
+                                          '&:hover': { textDecoration: 'underline' },
                                         }}
                                       >
                                         {userName}
                                       </Typography>
                                     </Tooltip>
                                   ) : (
-                                    <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                                    <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
                                       System
                                     </Typography>
-                                  )}
-                                  <Typography variant="caption" color="text.secondary" fontSize="11px" display="block">
-                                    {userRole}
-                                  </Typography>
-                                </Box>
+                                  )}{' '}
+                                  {log.description}
+                                </Typography>
                               </Box>
                             </TableCell>
 

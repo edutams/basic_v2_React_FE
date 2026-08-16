@@ -918,9 +918,7 @@ const ActivityLog = () => {
                     </TableRow>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>IP Address</TableCell>
-                      <TableCell>
-                        {selectedLog.ip_address || selectedLog.properties?.ip || selectedLog.properties?.ip_address || '-'}
-                      </TableCell>
+                      <TableCell>{selectedLog.ip_address || '-'}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

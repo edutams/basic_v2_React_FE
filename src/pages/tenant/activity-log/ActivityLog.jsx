@@ -659,12 +659,12 @@ const ActivityLog = () => {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1250 }}>
+                <Table sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 320, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
-                      <TableCell sx={{ minWidth: 180, fontWeight: 700, py: 1.5 }}>Module</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
@@ -710,7 +710,7 @@ const ActivityLog = () => {
                             <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
                             {/* Activity Description with User Avatar */}
-                            <TableCell sx={{ py: 1.8, minWidth: 320, maxWidth: 450 }}>
+                            <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   src={causerObj?.avatar_url}
@@ -901,7 +901,7 @@ const ActivityLog = () => {
               </Box>
 
               {selectedLog.properties &&
-              Object.entries(selectedLog.properties).filter(([key]) => key !== 'ip' && key !== 'ip_address').length > 0 ? (
+                Object.entries(selectedLog.properties).filter(([key]) => key !== 'ip' && key !== 'ip_address').length > 0 ? (
                 <Box mt={2}>
                   <Typography variant="subtitle2" gutterBottom fontWeight={700}>
                     Additional Information

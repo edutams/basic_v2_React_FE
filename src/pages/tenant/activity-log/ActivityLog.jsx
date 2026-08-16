@@ -144,7 +144,6 @@ const ActivityLog = () => {
   // Search & Filter Draft Inputs
   const [searchInput, setSearchInput] = useState('');
   const [userInput, setUserInput] = useState('all');
-  const [moduleInput, setModuleInput] = useState('all');
   const [actionInput, setActionInput] = useState('all');
   const [severityInput, setSeverityInput] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
@@ -153,7 +152,6 @@ const ActivityLog = () => {
   // Applied Filter Query States
   const [searchQuery, setSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState('all');
-  const [moduleFilter, setModuleFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [appliedDateFrom, setAppliedDateFrom] = useState('');
@@ -232,6 +230,9 @@ const ActivityLog = () => {
     sQuery = searchQuery,
     from = appliedDateFrom,
     to = appliedDateTo,
+    act = actionFilter,
+    sev = severityFilter,
+    usr = userFilter,
   ) => {
     setLoading(true);
     try {
@@ -242,6 +243,9 @@ const ActivityLog = () => {
       });
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
+      if (act && act !== 'all') params.append('action', act);
+      if (sev && sev !== 'all') params.append('severity', sev);
+      if (usr && usr !== 'all') params.append('user_type', usr);
 
       const response = await tenantApi.get(`/activity-logs?${params.toString()}`);
       setLogs(response.data.data || []);
@@ -257,14 +261,31 @@ const ActivityLog = () => {
   };
 
   useEffect(() => {
-    fetchLogs(page, rowsPerPage);
-  }, [page, rowsPerPage, searchQuery, appliedDateFrom, appliedDateTo]);
+    fetchLogs(
+      page,
+      rowsPerPage,
+      searchQuery,
+      appliedDateFrom,
+      appliedDateTo,
+      actionFilter,
+      severityFilter,
+      userFilter
+    );
+  }, [
+    page,
+    rowsPerPage,
+    searchQuery,
+    appliedDateFrom,
+    appliedDateTo,
+    actionFilter,
+    severityFilter,
+    userFilter,
+  ]);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     setSearchQuery(searchInput);
     setUserFilter(userInput);
-    setModuleFilter(moduleInput);
     setActionFilter(actionInput);
     setSeverityFilter(severityInput);
     setAppliedDateFrom(dateFrom);
@@ -275,7 +296,6 @@ const ActivityLog = () => {
   const handleClearFilters = () => {
     setSearchInput('');
     setUserInput('all');
-    setModuleInput('all');
     setActionInput('all');
     setSeverityInput('all');
     setDateFrom('');
@@ -283,7 +303,6 @@ const ActivityLog = () => {
 
     setSearchQuery('');
     setUserFilter('all');
-    setModuleFilter('all');
     setActionFilter('all');
     setSeverityFilter('all');
     setAppliedDateFrom('');
@@ -339,25 +358,14 @@ const ActivityLog = () => {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
+      notify.error('Failed to download PDF report');
       console.error(err);
-      setError('Failed to download the activity report');
     } finally {
       setDownloading(false);
     }
   };
 
-  // Helper getters for log items
-  const getLogModule = (log) => {
-    if (log.log_name) {
-      return log.log_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    }
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('role')) return 'Role Management';
-    if (desc.includes('user') || desc.includes('profile')) return 'User Management';
-    if (desc.includes('login') || desc.includes('logged')) return 'Authentication';
-    if (desc.includes('holiday') || desc.includes('acad')) return 'Academic Calendar';
-    return 'User Management';
-  };
+  const getLogModule = (log) => log?.module || 'User Management';
 
   const getLogAction = (log) => log?.action || 'Update';
 
@@ -394,10 +402,12 @@ const ActivityLog = () => {
 
   const getModuleIcon = (moduleName = '') => {
     const lower = moduleName.toLowerCase();
-    if (lower.includes('user')) return <IconUsers size={16} color="#6B7280" />;
-    if (lower.includes('auth')) return <IconLock size={16} color="#6B7280" />;
-    if (lower.includes('calendar') || lower.includes('acad')) return <IconCalendar size={16} color="#6B7280" />;
-    if (lower.includes('role')) return <IconShieldCheck size={16} color="#6B7280" />;
+    if (lower.includes('acl') || lower.includes('role') || lower.includes('permission')) return <IconShieldCheck size={16} color="#6B7280" />;
+    if (lower.includes('finance') || lower.includes('bursary')) return <IconListCheck size={16} color="#6B7280" />;
+    if (lower.includes('admission')) return <IconUserCheck size={16} color="#6B7280" />;
+    if (lower.includes('academic')) return <IconCalendar size={16} color="#6B7280" />;
+    if (lower.includes('profile') || lower.includes('user')) return <IconUsers size={16} color="#6B7280" />;
+    if (lower.includes('subscription')) return <IconLock size={16} color="#6B7280" />;
     return <IconListCheck size={16} color="#6B7280" />;
   };
 
@@ -419,24 +429,14 @@ const ActivityLog = () => {
     return descriptionStr;
   };
 
-  // Filtered log display
+  // Server-side paginated display logs
   const displayLogs = useMemo(() => {
-    if (!logs || logs.length === 0) return [];
-    return logs.filter((log) => {
-      const moduleName = getLogModule(log).toLowerCase();
-      const actionName = getLogAction(log).toLowerCase();
-      const severityName = getLogSeverity(log).toLowerCase();
-
-      if (moduleFilter !== 'all' && moduleName !== moduleFilter.toLowerCase()) return false;
-      if (actionFilter !== 'all' && actionName !== actionFilter.toLowerCase()) return false;
-      if (severityFilter !== 'all' && severityName !== severityFilter.toLowerCase()) return false;
-      return true;
-    });
-  }, [logs, moduleFilter, actionFilter, severityFilter]);
+    return logs || [];
+  }, [logs]);
 
   const hasActiveFilters = Boolean(
-    searchQuery || userFilter !== 'all' || moduleFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
-    searchInput || userInput !== 'all' || moduleInput !== 'all' || actionInput !== 'all' || severityInput !== 'all' || dateFrom || dateTo
+    searchQuery || userFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
+    searchInput || userInput !== 'all' || actionInput !== 'all' || severityInput !== 'all' || dateFrom || dateTo
   );
 
   return (
@@ -567,16 +567,6 @@ const ActivityLog = () => {
                   <MenuItem value="all">All Users</MenuItem>
                   <MenuItem value="admin">Admins</MenuItem>
                   <MenuItem value="teacher">Teachers</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: 130 }}>
-                <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
-                  <MenuItem value="all">All Modules</MenuItem>
-                  <MenuItem value="User Management">User Management</MenuItem>
-                  <MenuItem value="Authentication">Authentication</MenuItem>
-                  <MenuItem value="Academic Calendar">Academic Calendar</MenuItem>
-                  <MenuItem value="Role Management">Role Management</MenuItem>
                 </Select>
               </FormControl>
 

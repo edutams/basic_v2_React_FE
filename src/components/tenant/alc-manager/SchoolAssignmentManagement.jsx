@@ -446,8 +446,8 @@ const SchoolAssignmentManagement = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* ── Top Summary Stat Cards ────────────────────────────────────────── */}
-      <Grid container spacing={2.5} mb={3}>
+      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+        <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard
             count={userStats.total}
@@ -493,29 +493,30 @@ const SchoolAssignmentManagement = () => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view breakdown of recent changes" placement="top">
-            <Box
-              onClick={() => setRecentChangesModalOpen(true)}
-              sx={{
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <StatCard
-                count={userStats.recentChanges}
-                label="Recent Changes"
-                subtitle="In the last 7 days"
-                icon={IconUserPlus}
-                colorIndex={4}
-                loading={loading}
-              />
-            </Box>
-          </Tooltip>
+            <Tooltip title="Click to view breakdown of recent changes" placement="top">
+              <Box
+                onClick={() => setRecentChangesModalOpen(true)}
+                sx={{
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                <StatCard
+                  count={userStats.recentChanges}
+                  label="Recent Changes"
+                  subtitle="In the last 7 days"
+                  icon={IconUserPlus}
+                  colorIndex={4}
+                  loading={loading}
+                />
+              </Box>
+            </Tooltip>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
 
       {/* ── Main ParentCard Table Section ─────────────────────────────────── */}
       <ParentCard

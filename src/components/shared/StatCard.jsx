@@ -30,7 +30,6 @@ const StatCard = ({
   const cardContent = (
     <Paper
       elevation={0}
-      variant={!isCardShadow ? 'outlined' : undefined}
       onClick={onClick}
       sx={{
         borderRadius: 2,
@@ -44,23 +43,21 @@ const StatCard = ({
         position: 'relative',
         overflow: 'hidden',
 
-        // border: `1px solid ${borderColor}`,
-        boxShadow: (theme) =>
-          theme.palette.mode === 'dark'
-            ? '0 6px 24px rgba(0,0,0,0.28)'
-            : '0 4px 20px rgba(0,0,0,0.07)',
+        border: '1px rgba(69, 67, 67, 1) solid',
+        // boxShadow: (theme) =>
+        //   theme.palette.mode === 'dark'
+        //     ? '0 0 32px 0 rgba(0, 0, 0, 0.5), 0 8px 24px 0 rgba(0, 0, 0, 0.35)'
+        //     : '0 0 28px 0 rgba(0, 0, 0, 0.14), 0 8px 20px 0 rgba(0, 0, 0, 0.08)',
+        // boxShadow: (theme) =>
+        //   theme.palette.mode === 'dark'
+        //     ? '0 0 20px -3px rgba(0, 0, 0, 0.5), 0 8px 22px -3px rgba(0, 0, 0, 0.35)'
+        //     : '0 0 20px -3px rgba(0, 0, 0, 0.14), 0 8px 20px -3px rgba(0, 0, 0, 0.08)',
 
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': onClick
-          ? {
-            transform: 'translateY(-3px)',
-            boxShadow: (theme) =>
-              theme.palette.mode === 'dark'
-                ? '0 10px 30px rgba(0,0,0,0.4)'
-                : '0 8px 25px rgba(0,0,0,0.12)',
-          }
-          : undefined,
+        '&:hover': {
+          transform: onClick ? 'translateY(-3px)' : 'translateY(-2px)',
+        },
       }}
     >
       {/* Icon Badge */}

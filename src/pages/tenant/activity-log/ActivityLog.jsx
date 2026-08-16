@@ -359,22 +359,9 @@ const ActivityLog = () => {
     return 'User Management';
   };
 
-  const getLogAction = (log) => {
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('login') || desc.includes('logged')) return 'Login';
-    if (desc.includes('create') || desc.includes('created')) return 'Create';
-    if (desc.includes('update') || desc.includes('updated') || desc.includes('change')) return 'Update';
-    if (desc.includes('delete') || desc.includes('deleted')) return 'Delete';
-    if (desc.includes('assign') || desc.includes('assigned')) return 'Assign';
-    return 'Update';
-  };
+  const getLogAction = (log) => log?.action || 'Update';
 
-  const getLogSeverity = (log) => {
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('delete') || desc.includes('remove') || desc.includes('critical')) return 'High';
-    if (desc.includes('role') || desc.includes('edit') || desc.includes('change')) return 'Medium';
-    return 'Low';
-  };
+  const getLogSeverity = (log) => log?.severity || 'Low';
 
   const getActionChip = (actionStr) => {
     if (!actionStr) return null;

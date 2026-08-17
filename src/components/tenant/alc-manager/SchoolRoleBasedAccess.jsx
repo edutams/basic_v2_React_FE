@@ -341,62 +341,64 @@ const SchoolRoleBasedAccess = () => {
 
   return (
     <Box>
-      <Grid container spacing={2} mb={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={stats.totalR}
-            label="Total Roles"
-            subtitle="Across the system"
-            icon={IconUserCheck}
-            colorIndex={0}
-            loading={statsLoading}
-          />
-        </Grid>
+      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.totalR}
+              label="Total Roles"
+              subtitle="Across the system"
+              icon={IconUserCheck}
+              colorIndex={0}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={stats.totalP}
-            label="Total Permissions"
-            subtitle="System permissions"
-            icon={IconLock}
-            colorIndex={1}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.totalP}
+              label="Total Permissions"
+              subtitle="System permissions"
+              icon={IconLock}
+              colorIndex={1}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={stats.totalU}
-            label="Total Users"
-            subtitle="Across all roles"
-            icon={IconUsers}
-            colorIndex={2}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.totalU}
+              label="Total Users"
+              subtitle="Across all roles"
+              icon={IconUsers}
+              colorIndex={2}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={stats.activeU}
-            label="Active Access"
-            subtitle="Users with active roles"
-            icon={IconKey}
-            colorIndex={3}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.activeU}
+              label="Active Access"
+              subtitle="Users with active roles"
+              icon={IconKey}
+              colorIndex={3}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={stats.orphanedR}
-            label="Orphaned Roles"
-            subtitle="No users assigned"
-            icon={IconRefresh}
-            colorIndex={4}
-            loading={statsLoading}
-          />
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.orphanedR}
+              label="Orphaned Roles"
+              subtitle="No users assigned"
+              icon={IconRefresh}
+              colorIndex={4}
+              loading={statsLoading}
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>

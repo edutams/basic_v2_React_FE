@@ -509,7 +509,8 @@ const SchoolPermissionBased = () => {
 
   return (
     <Box>
-      <Grid container spacing={2} mb={3}>
+      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+        <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             count={stats.totalP.toLocaleString()}
@@ -554,6 +555,7 @@ const SchoolPermissionBased = () => {
           />
         </Grid>
       </Grid>
+    </Box>
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>

@@ -144,7 +144,6 @@ const ActivityLog = () => {
   // Search & Filter Draft Inputs
   const [searchInput, setSearchInput] = useState('');
   const [userInput, setUserInput] = useState('all');
-  const [moduleInput, setModuleInput] = useState('all');
   const [actionInput, setActionInput] = useState('all');
   const [severityInput, setSeverityInput] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
@@ -153,7 +152,6 @@ const ActivityLog = () => {
   // Applied Filter Query States
   const [searchQuery, setSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState('all');
-  const [moduleFilter, setModuleFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [appliedDateFrom, setAppliedDateFrom] = useState('');
@@ -232,6 +230,9 @@ const ActivityLog = () => {
     sQuery = searchQuery,
     from = appliedDateFrom,
     to = appliedDateTo,
+    act = actionFilter,
+    sev = severityFilter,
+    usr = userFilter,
   ) => {
     setLoading(true);
     try {
@@ -242,6 +243,9 @@ const ActivityLog = () => {
       });
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
+      if (act && act !== 'all') params.append('action', act);
+      if (sev && sev !== 'all') params.append('severity', sev);
+      if (usr && usr !== 'all') params.append('user_type', usr);
 
       const response = await tenantApi.get(`/activity-logs?${params.toString()}`);
       setLogs(response.data.data || []);
@@ -257,14 +261,31 @@ const ActivityLog = () => {
   };
 
   useEffect(() => {
-    fetchLogs(page, rowsPerPage);
-  }, [page, rowsPerPage, searchQuery, appliedDateFrom, appliedDateTo]);
+    fetchLogs(
+      page,
+      rowsPerPage,
+      searchQuery,
+      appliedDateFrom,
+      appliedDateTo,
+      actionFilter,
+      severityFilter,
+      userFilter
+    );
+  }, [
+    page,
+    rowsPerPage,
+    searchQuery,
+    appliedDateFrom,
+    appliedDateTo,
+    actionFilter,
+    severityFilter,
+    userFilter,
+  ]);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     setSearchQuery(searchInput);
     setUserFilter(userInput);
-    setModuleFilter(moduleInput);
     setActionFilter(actionInput);
     setSeverityFilter(severityInput);
     setAppliedDateFrom(dateFrom);
@@ -275,7 +296,6 @@ const ActivityLog = () => {
   const handleClearFilters = () => {
     setSearchInput('');
     setUserInput('all');
-    setModuleInput('all');
     setActionInput('all');
     setSeverityInput('all');
     setDateFrom('');
@@ -283,7 +303,6 @@ const ActivityLog = () => {
 
     setSearchQuery('');
     setUserFilter('all');
-    setModuleFilter('all');
     setActionFilter('all');
     setSeverityFilter('all');
     setAppliedDateFrom('');
@@ -339,42 +358,18 @@ const ActivityLog = () => {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
+      notify.error('Failed to download PDF report');
       console.error(err);
-      setError('Failed to download the activity report');
     } finally {
       setDownloading(false);
     }
   };
 
-  // Helper getters for log items
-  const getLogModule = (log) => {
-    if (log.log_name) {
-      return log.log_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    }
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('role')) return 'Role Management';
-    if (desc.includes('user') || desc.includes('profile')) return 'User Management';
-    if (desc.includes('login') || desc.includes('logged')) return 'Authentication';
-    if (desc.includes('holiday') || desc.includes('acad')) return 'Academic Calendar';
-    return 'User Management';
-  };
+  const getLogModule = (log) => log?.module || 'User Management';
 
-  const getLogAction = (log) => {
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('login') || desc.includes('logged')) return 'Login';
-    if (desc.includes('create') || desc.includes('created')) return 'Create';
-    if (desc.includes('update') || desc.includes('updated') || desc.includes('change')) return 'Update';
-    if (desc.includes('delete') || desc.includes('deleted')) return 'Delete';
-    if (desc.includes('assign') || desc.includes('assigned')) return 'Assign';
-    return 'Update';
-  };
+  const getLogAction = (log) => log?.action || 'Update';
 
-  const getLogSeverity = (log) => {
-    const desc = (log.description || '').toLowerCase();
-    if (desc.includes('delete') || desc.includes('remove') || desc.includes('critical')) return 'High';
-    if (desc.includes('role') || desc.includes('edit') || desc.includes('change')) return 'Medium';
-    return 'Low';
-  };
+  const getLogSeverity = (log) => log?.severity || 'Low';
 
   const getActionChip = (actionStr) => {
     if (!actionStr) return null;
@@ -407,10 +402,12 @@ const ActivityLog = () => {
 
   const getModuleIcon = (moduleName = '') => {
     const lower = moduleName.toLowerCase();
-    if (lower.includes('user')) return <IconUsers size={16} color="#6B7280" />;
-    if (lower.includes('auth')) return <IconLock size={16} color="#6B7280" />;
-    if (lower.includes('calendar') || lower.includes('acad')) return <IconCalendar size={16} color="#6B7280" />;
-    if (lower.includes('role')) return <IconShieldCheck size={16} color="#6B7280" />;
+    if (lower.includes('acl') || lower.includes('role') || lower.includes('permission')) return <IconShieldCheck size={16} color="#6B7280" />;
+    if (lower.includes('finance') || lower.includes('bursary')) return <IconListCheck size={16} color="#6B7280" />;
+    if (lower.includes('admission')) return <IconUserCheck size={16} color="#6B7280" />;
+    if (lower.includes('academic')) return <IconCalendar size={16} color="#6B7280" />;
+    if (lower.includes('profile') || lower.includes('user')) return <IconUsers size={16} color="#6B7280" />;
+    if (lower.includes('subscription')) return <IconLock size={16} color="#6B7280" />;
     return <IconListCheck size={16} color="#6B7280" />;
   };
 
@@ -432,24 +429,14 @@ const ActivityLog = () => {
     return descriptionStr;
   };
 
-  // Filtered log display
+  // Server-side paginated display logs
   const displayLogs = useMemo(() => {
-    if (!logs || logs.length === 0) return [];
-    return logs.filter((log) => {
-      const moduleName = getLogModule(log).toLowerCase();
-      const actionName = getLogAction(log).toLowerCase();
-      const severityName = getLogSeverity(log).toLowerCase();
-
-      if (moduleFilter !== 'all' && moduleName !== moduleFilter.toLowerCase()) return false;
-      if (actionFilter !== 'all' && actionName !== actionFilter.toLowerCase()) return false;
-      if (severityFilter !== 'all' && severityName !== severityFilter.toLowerCase()) return false;
-      return true;
-    });
-  }, [logs, moduleFilter, actionFilter, severityFilter]);
+    return logs || [];
+  }, [logs]);
 
   const hasActiveFilters = Boolean(
-    searchQuery || userFilter !== 'all' || moduleFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
-    searchInput || userInput !== 'all' || moduleInput !== 'all' || actionInput !== 'all' || severityInput !== 'all' || dateFrom || dateTo
+    searchQuery || userFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
+    searchInput || userInput !== 'all' || actionInput !== 'all' || severityInput !== 'all' || dateFrom || dateTo
   );
 
   return (
@@ -575,21 +562,14 @@ const ActivityLog = () => {
                 }}
               />
 
-              <FormControl size="small" sx={{ minWidth: 120 }}>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select value={userInput} onChange={(e) => setUserInput(e.target.value)}>
                   <MenuItem value="all">All Users</MenuItem>
                   <MenuItem value="admin">Admins</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
                   <MenuItem value="teacher">Teachers</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: 130 }}>
-                <Select value={moduleInput} onChange={(e) => setModuleInput(e.target.value)}>
-                  <MenuItem value="all">All Modules</MenuItem>
-                  <MenuItem value="User Management">User Management</MenuItem>
-                  <MenuItem value="Authentication">Authentication</MenuItem>
-                  <MenuItem value="Academic Calendar">Academic Calendar</MenuItem>
-                  <MenuItem value="Role Management">Role Management</MenuItem>
+                  <MenuItem value="student">Students</MenuItem>
+                  <MenuItem value="guardian">Parents / Guardians</MenuItem>
                 </Select>
               </FormControl>
 
@@ -620,6 +600,11 @@ const ActivityLog = () => {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                  },
+                }}
                 sx={{ width: 140 }}
                 data-tour="activity-log-date"
               />
@@ -631,6 +616,12 @@ const ActivityLog = () => {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                    min: dateFrom || undefined,
+                  },
+                }}
                 sx={{ width: 140 }}
               />
 
@@ -668,16 +659,14 @@ const ActivityLog = () => {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1250 }}>
+                <Table sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
-                      <TableCell sx={{ minWidth: 280, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
-                      <TableCell sx={{ minWidth: 240, fontWeight: 700, py: 1.5 }}>User</TableCell>
-                      <TableCell sx={{ minWidth: 180, fontWeight: 700, py: 1.5 }}>Module</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
-                      <TableCell sx={{ minWidth: 130, fontWeight: 700, py: 1.5 }}>IP Address</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
                       <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
                         Action
@@ -688,7 +677,7 @@ const ActivityLog = () => {
                   <TableBody>
                     {displayLogs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                           <Alert severity="info" sx={{ justifyContent: 'center' }}>
                             No activity logs found matching the current filters.
                           </Alert>
@@ -720,79 +709,65 @@ const ActivityLog = () => {
                           <TableRow key={log.id || idx} hover>
                             <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
-                            {/* Activity Description */}
+                            {/* Activity Description with User Avatar */}
                             <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {causerObj ? (
-                                  <Tooltip title="Click to View User Profile" arrow placement="top">
-                                    <Typography
-                                      component="span"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        handleCauserClick(causerObj);
-                                      }}
-                                      sx={{
-                                        color: 'primary.main',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        '&:hover': { textDecoration: 'underline' },
-                                      }}
-                                    >
-                                      {userName}
-                                    </Typography>
-                                  </Tooltip>
-                                ) : (
-                                  <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                                    System
-                                  </Typography>
-                                )}{' '}
-                                {log.description}
-                              </Typography>
-                            </TableCell>
-
-                            {/* User Avatar + Full Name + Username */}
-                            <TableCell sx={{ py: 1.8, minWidth: 240 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   src={causerObj?.avatar_url}
-                                  sx={{ width: 34, height: 34, bgcolor: '#EFF6FF', color: '#3B82F6', fontWeight: 700, fontSize: '13px' }}
+                                  alt={userName}
+                                  onClick={(e) => {
+                                    if (causerObj) {
+                                      e.preventDefault();
+                                      handleCauserClick(causerObj);
+                                    }
+                                  }}
+                                  sx={{
+                                    width: 34,
+                                    height: 34,
+                                    bgcolor: '#EFF6FF',
+                                    color: '#3B82F6',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    flexShrink: 0,
+                                    cursor: causerObj ? 'pointer' : 'default',
+                                    '&:hover': causerObj ? { opacity: 0.85 } : {},
+                                  }}
                                 >
-                                  {userName.charAt(0)}
+                                  {userName?.[0]?.toUpperCase() ?? '?'}
                                 </Avatar>
 
-                                <Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
                                   {causerObj ? (
                                     <Tooltip title="Click to View User Profile" arrow placement="top">
                                       <Typography
-                                        variant="subtitle2"
-                                        fontWeight={700}
+                                        component="span"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           handleCauserClick(causerObj);
                                         }}
                                         sx={{
+                                          color: 'primary.main',
+                                          fontWeight: 600,
                                           cursor: 'pointer',
-                                          '&:hover': { color: 'primary.dark', textDecoration: 'underline' },
+                                          '&:hover': { textDecoration: 'underline' },
                                         }}
                                       >
                                         {userName}
                                       </Typography>
                                     </Tooltip>
                                   ) : (
-                                    <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                                    <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
                                       System
                                     </Typography>
-                                  )}
-                                  <Typography variant="caption" color="text.secondary" fontSize="11px" display="block">
-                                    {userRole}
-                                  </Typography>
-                                </Box>
+                                  )}{' '}
+                                  {log.description}
+                                </Typography>
                               </Box>
                             </TableCell>
 
@@ -818,13 +793,6 @@ const ActivityLog = () => {
                               </Typography>
                               <Typography variant="caption" color="text.secondary" fontSize="11px">
                                 {formattedTime}
-                              </Typography>
-                            </TableCell>
-
-                            {/* IP Address */}
-                            <TableCell sx={{ py: 1.8 }}>
-                              <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                {log.ip_address || log.properties?.ip || '197.210.45.12'}
                               </Typography>
                             </TableCell>
 
@@ -924,12 +892,17 @@ const ActivityLog = () => {
                       <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
                       <TableCell>{selectedLog.my_updated_at || selectedLog.updated_at}</TableCell>
                     </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>IP Address</TableCell>
+                      <TableCell>{selectedLog.ip_address || '-'}</TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </Box>
 
-              {selectedLog.properties && Object.keys(selectedLog.properties).length > 0 && (
-                <Box>
+              {selectedLog.properties &&
+                Object.entries(selectedLog.properties).filter(([key]) => key !== 'ip' && key !== 'ip_address').length > 0 ? (
+                <Box mt={2}>
                   <Typography variant="subtitle2" gutterBottom fontWeight={700}>
                     Additional Information
                   </Typography>
@@ -946,38 +919,38 @@ const ActivityLog = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {Object.entries(selectedLog.properties).map(([key, value]) => (
-                          <TableRow key={key}>
-                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {key}
-                            </TableCell>
-                            <TableCell>
-                              {typeof value === 'object' && value !== null ? (
-                                <pre
-                                  style={{
-                                    margin: 0,
-                                    fontFamily: 'monospace',
-                                    fontSize: '12px',
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-word',
-                                  }}
-                                >
-                                  {JSON.stringify(value, null, 2)}
-                                </pre>
-                              ) : (
-                                String(value)
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {Object.entries(selectedLog.properties)
+                          .filter(([key]) => key !== 'ip' && key !== 'ip_address')
+                          .map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {key}
+                              </TableCell>
+                              <TableCell>
+                                {typeof value === 'object' && value !== null ? (
+                                  <pre
+                                    style={{
+                                      margin: 0,
+                                      fontFamily: 'monospace',
+                                      fontSize: '12px',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                    }}
+                                  >
+                                    {JSON.stringify(value, null, 2)}
+                                  </pre>
+                                ) : (
+                                  String(value)
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Box>
-              )}
-
-              {(!selectedLog.properties || Object.keys(selectedLog.properties).length === 0) && (
-                <Typography color="text.secondary" fontStyle="italic">
+              ) : (
+                <Typography color="text.secondary" fontStyle="italic" mt={2}>
                   No additional properties available for this activity.
                 </Typography>
               )}

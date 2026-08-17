@@ -10,10 +10,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  LinearProgress,
   useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import StatusChip from './StatusChip';
 import { STATUS_META, formatCurrency } from '../constants';
@@ -24,6 +22,34 @@ import { STATUS_META, formatCurrency } from '../constants';
  */
 const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) => {
   const theme = useTheme();
+
+  const efficiencyColor = (value) =>
+    value >= 75
+      ? theme.palette.success.main
+      : value >= 60
+        ? theme.palette.warning.main
+        : theme.palette.error.main;
+
+  const efficiencyBadge = (value, fontWeight = 700) => (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 52,
+        px: 1,
+        py: 0.5,
+        borderRadius: 2,
+        bgcolor: efficiencyColor(Number(value)),
+        color: '#fff',
+        fontWeight,
+        fontSize: 12,
+        lineHeight: 1,
+      }}
+    >
+      {value}%
+    </Box>
+  );
 
   return (
     <Paper
@@ -118,26 +144,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                      <Box sx={{ width: 60 }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={Math.min(row.efficiency, 100)}
-                          sx={{
-                            height: 6,
-                            borderRadius: 3,
-                            bgcolor: alpha(statusColor, 0.15),
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: statusColor,
-                              borderRadius: 3,
-                            },
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ width: 40 }}>
-                        {row.efficiency}%
-                      </Typography>
-                    </Box>
+                    {efficiencyBadge(row.efficiency)}
                   </TableCell>
                   <TableCell align="center">
                     <StatusChip status={row.status} />
@@ -174,9 +181,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <Typography variant="subtitle2" fontWeight={800}>
-                  {totalEfficiency}%
-                </Typography>
+                {efficiencyBadge(totalEfficiency, 800)}
               </TableCell>
               <TableCell align="center">
                 <StatusChip status={totalEfficiency >= 75 ? 'excellent' : totalEfficiency >= 60 ? 'pending' : 'poor'} />

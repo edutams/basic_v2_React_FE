@@ -9,6 +9,7 @@ const ReusableGaugeChart = ({
   label = '',
   subtitle = '',
   height = 320,
+  width = '100%',
   minValue = 0,
   maxValue = 100,
   colorRanges = [],
@@ -92,7 +93,7 @@ const ReusableGaugeChart = ({
 
   return (
     <Box sx={{ textAlign: 'center', py: 1, px: 0 }}>
-      <Chart options={options} series={series} type="radialBar" height={height} width="100%" />
+      <Chart options={options} series={series} type="radialBar" height={height} width={width} />
       {subtitle && (
         <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mt: -1, fontWeight: 500 }}>
           {subtitle}
@@ -107,6 +108,7 @@ ReusableGaugeChart.propTypes = {
   label: PropTypes.string,
   subtitle: PropTypes.string,
   height: PropTypes.number,
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   minValue: PropTypes.number,
   maxValue: PropTypes.number,
   colorRanges: PropTypes.arrayOf(

@@ -119,9 +119,10 @@ export default function StatCards() {
                   boxSizing: "border-box",
                   overflow: "hidden",
                   cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
                   transition: "box-shadow 120ms ease, transform 120ms ease",
                   "&:hover": {
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
                     transform: "translateY(-2px)",
                   },
                 }}

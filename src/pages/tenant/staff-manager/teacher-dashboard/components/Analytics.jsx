@@ -266,7 +266,8 @@ function DaysInTermChart() {
           <ReusableGaugeChart
             value={percentageCompleted}
             label="Completed"
-            height={220}
+            height={190}
+            width={190}
             colorRanges={[
               { from: 0, to: 100, color: "#16a34a" },
             ]}
@@ -339,10 +340,10 @@ export default function Analytics() {
     <Stack spacing={2.5}>
       {/* Teaching Engagement + Days in Term */}
       <Grid container spacing={2.5}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <TeachingEngagementChart />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <DaysInTermChart />
         </Grid>
       </Grid>

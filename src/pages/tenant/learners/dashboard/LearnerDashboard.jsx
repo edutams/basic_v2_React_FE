@@ -86,8 +86,6 @@ const LearnerDashboard = () => {
   const academics = useSection('/dashboard/learner/academic-performance', academicTermId);
   const attendance = useSection('/dashboard/learner/attendance', attendanceTermId);
   const assignments = useSection('/dashboard/learner/assignments', defaultTermId);
-  const notifications = useSection('/dashboard/learner/notifications', defaultTermId);
-  const events = useSection('/dashboard/learner/events', defaultTermId);
 
   // Stat-card breakdown modal — holds the clicked card type.
   const [breakdownType, setBreakdownType] = useState(null);
@@ -142,18 +140,14 @@ const LearnerDashboard = () => {
           />
         </Box>
 
-        {/* Right Sidebar (Notifications & Events stacked) */}
+        {/* Right Sidebar (Activity Log) */}
         <Box
           sx={{
             width: { xs: '100%', lg: 310 },
             flexShrink: 0,
           }}
         >
-          <RightPanel
-            notifications={notifications.data}
-            events={events.data}
-            loading={notifications.loading || events.loading}
-          />
+          <RightPanel />
         </Box>
       </Box>
 

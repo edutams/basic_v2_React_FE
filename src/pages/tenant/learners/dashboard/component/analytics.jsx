@@ -116,12 +116,11 @@ const Analytics = ({
   const attTotal = Number(attendance.total || 0);
   const attPresent = Number(attendance.present || 0);
   const attAbsent = Number(attendance.absent || 0);
-  const attLate = Number(attendance.late || 0);
   const attRate = Number(attendance.rate || 0);
 
   const attendancePie = {
-    series: [attPresent, attAbsent, attLate],
-    labels: ['Present', 'Absent', 'Late'],
+    series: [attPresent, attAbsent],
+    labels: ['Present', 'Absent'],
   };
 
   return (
@@ -332,7 +331,7 @@ const Analytics = ({
                       options={{
                         chart: { type: 'donut', sparkline: { enabled: true } },
                         labels: attendancePie.labels,
-                        colors: ['#10B981', '#F59E0B', '#EF4444'],
+                        colors: ['#10B981', '#EF4444'],
                         plotOptions: { pie: { donut: { size: '72%' } } },
                         dataLabels: { enabled: false },
                         legend: { show: false },
@@ -361,8 +360,7 @@ const Analytics = ({
 
                   <Stack spacing={0.6} sx={{ minWidth: 100, justifyContent: 'center' }}>
                     <LegendItem color="#10B981" label="Present" pct={`${pctOf(attPresent, attTotal)}%`} />
-                    <LegendItem color="#F59E0B" label="Absent" pct={`${pctOf(attAbsent, attTotal)}%`} />
-                    <LegendItem color="#EF4444" label="Late" pct={`${pctOf(attLate, attTotal)}%`} />
+                    <LegendItem color="#EF4444" label="Absent" pct={`${pctOf(attAbsent, attTotal)}%`} />
                   </Stack>
                 </Box>
 

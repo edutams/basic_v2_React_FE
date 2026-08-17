@@ -79,14 +79,17 @@ export default function QuickActions() {
                   minHeight: 88,
                   p: 1,
                   borderRadius: "10px",
-                  border: "1.5px solid",
-                  borderColor: action.color,
                   bgcolor: `${action.color}14`,
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.07)",
                   textAlign: "center",
                   justifyContent: "flex-start",
                   alignItems: "flex-start",
-                  transition: "background-color 120ms ease, border-color 120ms ease",
-                  "&:hover": { bgcolor: `${action.color}1a`, borderColor: action.color },
+                  transition: "background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease",
+                  "&:hover": {
+                    bgcolor: `${action.color}1a`,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
                 <Stack spacing={1} alignItems="center" sx={{ width: "100%" }}>

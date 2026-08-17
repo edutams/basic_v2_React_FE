@@ -77,10 +77,11 @@ function ClassCard({ cls }) {
         bgcolor: cls.cardBg,
         border: "1px solid",
         borderColor: "grey.200",
+        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
         transition: "transform 180ms ease, box-shadow 180ms ease",
         "&:hover": {
           transform: "translateY(-2px)",
-          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.06)",
+          boxShadow: "0 8px 22px rgba(15, 23, 42, 0.12)",
         },
       }}
     >

@@ -68,7 +68,15 @@ const TrendRow = ({ growth, label }) => {
 };
 
 const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
-  const wallet = overview.wallet || {};
+  // Dummy wallet data shown until the real wallet endpoint is wired
+  const wallet = overview.wallet?.account_no
+    ? overview.wallet
+    : {
+        account_no: '3028761540',
+        bank_name: 'SkoolPay Microfinance Bank',
+        verified: true,
+        balance: 125000,
+      };
 
   // Clickable stat cards open a breakdown modal; non-clickable ones (wallet)
   // keep the default cursor. The hover-lift styles apply only when a click
@@ -329,19 +337,26 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
           </Stack>
 
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 0.3 }}>
-            <Typography
-              fontWeight="800"
-              sx={{
-                fontSize: '1.1rem',
-                color: '#111827',
-                letterSpacing: '0.5px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {wallet.account_no || '—'}
-            </Typography>
+            <Box>
+              <Typography
+                fontWeight="800"
+                sx={{
+                  fontSize: '1.1rem',
+                  color: '#111827',
+                  letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {wallet.account_no || '—'}
+              </Typography>
+              {wallet.bank_name && (
+                <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', mt: 0.1 }}>
+                  {wallet.bank_name}
+                </Typography>
+              )}
+            </Box>
 
             <Button
               variant="contained"

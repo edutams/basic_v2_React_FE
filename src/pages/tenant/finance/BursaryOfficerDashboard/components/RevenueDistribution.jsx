@@ -8,7 +8,7 @@ import { COLORS, formatCompact, formatCurrency } from '../constants';
 /**
  * Revenue Distribution — donut chart + per-category legend with amounts.
  */
-const RevenueDistribution = ({ revenue_distribution = [], totalRevenue = 0 }) => {
+const RevenueDistribution = ({ revenue_distribution = [], totalRevenue = 0, onClick }) => {
   const theme = useTheme();
 
   return (
@@ -16,6 +16,7 @@ const RevenueDistribution = ({ revenue_distribution = [], totalRevenue = 0 }) =>
       icon={PieChartOutline}
       title="Revenue Distribution"
       color={theme.palette.primary.main}
+      onClick={onClick}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
         <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>

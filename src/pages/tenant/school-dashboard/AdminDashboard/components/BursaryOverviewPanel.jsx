@@ -52,7 +52,7 @@ const BursaryOverviewPanel = ({
       />
 
       {/* Summary cards */}
-      <Grid container spacing={2} mb={2.5}>
+      <Grid container spacing={1} mb={1.5}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <MetricTile
             icon={AccountBalanceWallet}
@@ -103,7 +103,7 @@ const BursaryOverviewPanel = ({
             sx={{
               p: 1.75,
               borderRadius: '14px',
-              border: (t) => `1px solid ${t.palette.divider}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
                 t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
@@ -140,7 +140,7 @@ const BursaryOverviewPanel = ({
             sx={{
               p: 1.75,
               borderRadius: '14px',
-              border: (t) => `1px solid ${t.palette.divider}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
                 t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
@@ -166,7 +166,7 @@ const BursaryOverviewPanel = ({
             sx={{
               p: 1.75,
               borderRadius: '14px',
-              border: (t) => `1px solid ${t.palette.divider}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
                 t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',

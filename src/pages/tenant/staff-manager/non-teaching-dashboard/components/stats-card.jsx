@@ -5,6 +5,7 @@ import {
     Box,
     Typography,
     LinearProgress,
+    Tooltip,
 } from "@mui/material";
 
 const StatsCard = ({
@@ -17,23 +18,27 @@ const StatsCard = ({
     iconColor = "#16a085",
     iconBackground = "#e8f8f5",
     progressColor = "#16a085",
+    onClick,
 }) => {
     return (
-        <Card
-            elevation={0}
-            sx={{
-                height: "100%",
-                bgcolor: iconBackground,
-                border: `1.5px solid ${iconColor}`,
-                borderRadius: "8px",
-                boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-                transition: "box-shadow 0.25s ease, transform 0.25s ease",
-                "&:hover": {
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04)",
-                    transform: "translateY(-2px)",
-                },
-            }}
-        >
+        <Tooltip title={onClick ? "Click to view breakdown" : ""} placement="top" arrow>
+            <Card
+                elevation={0}
+                onClick={onClick}
+                sx={{
+                    height: "100%",
+                    bgcolor: iconBackground,
+                    border: "1px rgba(69, 67, 67, 1) solid",
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+                    cursor: onClick ? "pointer" : "default",
+                    transition: "box-shadow 0.25s ease, transform 0.25s ease",
+                    "&:hover": {
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.04)",
+                        transform: "translateY(-2px)",
+                    },
+                }}
+            >
             <CardContent
                 sx={{
                     p: "12px !important",
@@ -84,30 +89,30 @@ const StatsCard = ({
                         </Box>
                     </Box>
 
+                    <Typography
+                        fontWeight="800"
+                        sx={{
+                            fontSize: "1.5rem",
+                            color: "#111827",
+                            lineHeight: 1.1,
+                            mt: 0.2,
+                        }}
+                    >
+                        {value}
+                    </Typography>
+
                     {subtitle && (
                         <Typography
                             sx={{
                                 fontSize: "0.67rem",
                                 color: "#9CA3AF",
                                 lineHeight: 1.2,
-                                mb: 0.5,
+                                mt: 0.3,
                             }}
                         >
                             {subtitle}
                         </Typography>
                     )}
-
-                    <Typography
-                        fontWeight="700"
-                        sx={{
-                            fontSize: "1.05rem",
-                            color: "#111827",
-                            lineHeight: 1.2,
-                            mt: 0.2,
-                        }}
-                    >
-                        {value}
-                    </Typography>
                 </Box>
 
                 {progress !== undefined && (
@@ -140,7 +145,8 @@ const StatsCard = ({
                     </Box>
                 )}
             </CardContent>
-        </Card>
+            </Card>
+        </Tooltip>
     );
 };
 

@@ -9,12 +9,12 @@ import { formatCurrency } from './constants';
 import DashboardHeader from './components/DashboardHeader';
 import KpiCard from './components/KpiCard';
 import EfficiencyRing from './components/EfficiencyRing';
-import GrowthSparkline from './components/GrowthSparkline';
 import FeeIntelligence from './components/FeeIntelligence';
 import RevenueDistribution from './components/RevenueDistribution';
 import PaymentCategories from './components/PaymentCategories';
 import CollectionMatrix from './components/CollectionMatrix';
 import OperationalAlerts from './components/OperationalAlerts';
+import BursaryBreakdownModal from './components/BursaryBreakdownModal';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -59,6 +59,10 @@ const PanelSkeleton = ({ height = 240 }) => {
  */
 const BursaryOfficerDashboard = () => {
   const notify = useNotification();
+
+  // Breakdown modal state — holds the clicked KPI/panel type so the modal
+  // knows which table to render (same pattern as the admin/admission dashboards).
+  const [breakdownType, setBreakdownType] = useState(null);
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -225,17 +229,15 @@ const BursaryOfficerDashboard = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const kpiSkeleton = (
-    <Grid container columns={10} spacing={2} mb={3}>
+    <Grid container columns={10} spacing={1.25} mb={2}>
       {[0, 1, 2, 3, 4].map((i) => (
         <Grid key={i} size={{ xs: 10, sm: 5, lg: 2 }}>
           <Paper
             elevation={0}
             sx={{
-              p: 2.5,
+              p: 2,
               borderRadius: '16px',
-              border: isDark
-                ? '1px solid rgba(255,255,255,0.12)'
-                : `1px solid ${theme.palette.grey[200]}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               background: isDark ? theme.palette.background.paper : '#fff',
             }}
           >
@@ -273,7 +275,7 @@ const BursaryOfficerDashboard = () => {
       {rp.loading ? (
         kpiSkeleton
       ) : (
-        <Grid container columns={10} spacing={2} mb={3}>
+        <Grid container columns={10} spacing={1.25} mb={2}>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
             <KpiCard
               label="Total Expected Income"
@@ -281,6 +283,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Projected for term"
               icon={ReceiptLong}
               colorName="info"
+              onClick={() => setBreakdownType('expected_income')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -290,7 +293,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Actual collected"
               icon={AccountBalanceWallet}
               colorName="success"
-              trend={rp.data.revenue_growth}
+              onClick={() => setBreakdownType('collected_income')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -300,6 +303,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Remaining unpaid"
               icon={ErrorOutline}
               colorName="warning"
+              onClick={() => setBreakdownType('outstanding_balance')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -309,6 +313,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Collected vs Expected"
               colorName="primary"
               rightElement={<EfficiencyRing value={rp.data.collection_efficiency} />}
+              onClick={() => setBreakdownType('collection_efficiency')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -317,19 +322,19 @@ const BursaryOfficerDashboard = () => {
               value={`+${rp.data.revenue_growth}%`}
               sublabel="vs 1st Term"
               colorName="success"
-              rightElement={<GrowthSparkline data={rp.data.collection_series} />}
+              onClick={() => setBreakdownType('revenue_growth')}
             />
           </Grid>
         </Grid>
       )}
 
       {/* ── Fee Intelligence, Revenue Distribution, Payment Categories ─── */}
-      <Grid container spacing={3} mb={3}>
+      <Grid container spacing={2} mb={2}>
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           {feeIntelligence.loading ? (
             <PanelSkeleton height={380} />
           ) : (
-            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} />
+            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} onClick={() => setBreakdownType('fee_intelligence')} />
           )}
         </Grid>
 
@@ -340,6 +345,7 @@ const BursaryOfficerDashboard = () => {
             <RevenueDistribution
               revenue_distribution={asArray(revenueDistribution.data)}
               totalRevenue={totalRevenue}
+              onClick={() => setBreakdownType('revenue_distribution')}
             />
           )}
         </Grid>
@@ -348,13 +354,13 @@ const BursaryOfficerDashboard = () => {
           {paymentCategories.loading ? (
             <PanelSkeleton height={380} />
           ) : (
-            <PaymentCategories payment_categories={asArray(paymentCategories.data)} />
+            <PaymentCategories payment_categories={asArray(paymentCategories.data)} onClick={() => setBreakdownType('payment_categories')} />
           )}
         </Grid>
       </Grid>
 
       {/* ── Class-Level Collection Matrix + Operational Alerts ─────── */}
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 9 }}>
           {collectionMatrix.loading ? (
             <PanelSkeleton height={420} />
@@ -378,6 +384,14 @@ const BursaryOfficerDashboard = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* ── Breakdown modal ────────────────────────────────────── */}
+      <BursaryBreakdownModal
+        open={Boolean(breakdownType)}
+        type={breakdownType}
+        sessionTermId={sessionTermId}
+        onClose={() => setBreakdownType(null)}
+      />
     </PageContainer>
   );
 };

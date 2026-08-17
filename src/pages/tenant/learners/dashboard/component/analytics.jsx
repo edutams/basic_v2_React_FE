@@ -7,7 +7,6 @@ import {
   Select,
   MenuItem,
   Divider,
-  Button,
   Skeleton,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
@@ -20,7 +19,6 @@ import {
   FunctionsOutlined,
   AccountBalanceOutlined,
   ComputerOutlined,
-  AccessTimeOutlined,
 } from '@mui/icons-material';
 
 const cardSx = {
@@ -47,14 +45,6 @@ const subjectMeta = (name, index) => {
   return { icon, color: SUBJECT_COLORS[index % SUBJECT_COLORS.length] };
 };
 
-const GRADE_STYLES = {
-  A: { bg: '#DCFCE7', color: '#15803D' },
-  B: { bg: '#DBEAFE', color: '#1E40AF' },
-  C: { bg: '#FEF3C7', color: '#B45309' },
-  D: { bg: '#FFEDD5', color: '#C2410C' },
-  F: { bg: '#FEE2E2', color: '#B91C1C' },
-};
-
 const LegendItem = ({ color, label, pct }) => (
   <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 0.1 }}>
     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
@@ -73,8 +63,7 @@ const pctOf = (count, total) => (total > 0 ? Math.round((count / total) * 100) :
 const termLabel = (t) =>
   [t?.session?.sesname, t?.display_term?.display_name].filter(Boolean).join(' · ') || 'This Term';
 
-// Controlled term dropdown shared by the chart cards. When no terms have
-// loaded yet it shows a single "This Term" placeholder so the layout holds.
+// Controlled term dropdown shared by the chart cards.
 const TermSelect = ({ value, onChange, sessionTerms, size = 'small' }) => (
   <Select
     value={String(value || '') || 'this_term'}
@@ -101,7 +90,7 @@ const TermSelect = ({ value, onChange, sessionTerms, size = 'small' }) => (
   </Select>
 );
 
-// ── Per-card skeletons (mirror the card body while a section loads) ─────
+// Per-card skeletons
 const CardSkeleton = ({ rows = 3 }) => (
   <Stack spacing={1}>
     <Skeleton variant="text" width="45%" height={16} />
@@ -115,7 +104,6 @@ const CardSkeleton = ({ rows = 3 }) => (
 const Analytics = ({
   academics = {},
   attendance = {},
-  assignments = {},
   loading = false,
   sessionTerms = [],
   academicTermId = '',
@@ -124,7 +112,6 @@ const Analytics = ({
   onAttendanceTermChange = () => {},
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];
-  const recentResults = Array.isArray(academics.recent_results) ? academics.recent_results : [];
 
   const attTotal = Number(attendance.total || 0);
   const attPresent = Number(attendance.present || 0);
@@ -132,19 +119,9 @@ const Analytics = ({
   const attLate = Number(attendance.late || 0);
   const attRate = Number(attendance.rate || 0);
 
-  const asgTotal = Number(assignments.total || 0);
-  const asgCompleted = Number(assignments.completed || 0);
-  const asgPending = Number(assignments.pending || 0);
-  const asgOverdue = Number(assignments.overdue || 0);
-
   const attendancePie = {
     series: [attPresent, attAbsent, attLate],
     labels: ['Present', 'Absent', 'Late'],
-  };
-
-  const assignmentPie = {
-    series: [asgCompleted, asgPending, asgOverdue],
-    labels: ['Completed', 'Pending', 'Overdue'],
   };
 
   return (
@@ -409,234 +386,6 @@ const Analytics = ({
                     {attRate >= 75 ? '★ Excellent!' : attRate >= 50 ? 'Good job!' : 'Keep going!'}
                   </Typography>
                 </Box>
-              </>
-            )}
-          </Box>
-        </Card>
-      </Stack>
-
-      {/* ─── ROW 2: Recent Results & Assignment Summary ─── */}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
-        {/* Recent Results */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 1, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
-              <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827' }}>
-                Recent Results
-              </Typography>
-              <Typography sx={{ fontSize: '0.68rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>
-                View all results
-              </Typography>
-            </Stack>
-
-            {loading ? (
-              <CardSkeleton rows={5} />
-            ) : recentResults.length === 0 ? (
-              <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
-                No results yet this term.
-              </Typography>
-            ) : (
-              <Stack spacing={0}>
-                {recentResults.map((item, idx) => {
-                  const gradeStyle = GRADE_STYLES[item.grade] || GRADE_STYLES.C;
-                  return (
-                    <React.Fragment key={`${item.title}-${item.date}-${idx}`}>
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        sx={{ py: 0.6 }}
-                      >
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography fontWeight="600" sx={{ fontSize: '0.76rem', color: '#111827', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.title}
-                          </Typography>
-                          <Typography sx={{ fontSize: '0.64rem', color: '#6B7280', mt: 0.1 }}>
-                            {item.type ? `${item.type} · ` : ''}{item.date}
-                          </Typography>
-                        </Box>
-
-                        <Stack direction="row" alignItems="center" spacing={1.25} flexShrink={0}>
-                          <Typography fontWeight="800" sx={{ fontSize: '0.8rem', color: '#111827' }}>
-                            {Math.round(Number(item.score || 0))}%
-                          </Typography>
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              borderRadius: '4px',
-                              bgcolor: gradeStyle.bg,
-                              color: gradeStyle.color,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: '0.68rem',
-                            }}
-                          >
-                            {item.grade}
-                          </Box>
-                        </Stack>
-                      </Stack>
-                      {idx < recentResults.length - 1 && <Divider sx={{ borderColor: '#F3F4F6' }} />}
-                    </React.Fragment>
-                  );
-                })}
-              </Stack>
-            )}
-          </Box>
-
-          <Box>
-            <Divider sx={{ mt: 0.75, mb: 0.75, borderColor: '#F3F4F6' }} />
-            <Typography
-              sx={{
-                fontSize: '0.72rem',
-                color: '#2563EB',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-block',
-                '&:hover': { textDecoration: 'underline' },
-              }}
-            >
-              Go to Exams & Results →
-            </Typography>
-          </Box>
-        </Card>
-
-        {/* Assignment Summary */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 1, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
-              <Typography fontWeight="700" sx={{ fontSize: '0.85rem', color: '#111827' }}>
-                Assignment Summary
-              </Typography>
-              <Typography sx={{ fontSize: '0.68rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>
-                View all
-              </Typography>
-            </Stack>
-
-            {loading ? (
-              <CardSkeleton rows={3} />
-            ) : asgTotal === 0 ? (
-              <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
-                No assignments posted for this term yet.
-              </Typography>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    pt: 1.5,
-                    pb: 0.5,
-                  }}
-                >
-                  <Box sx={{ position: 'relative', width: 130, height: 130, flexShrink: 0 }}>
-                    <Chart
-                      type="donut"
-                      series={assignmentPie.series}
-                      width={130}
-                      height={130}
-                      options={{
-                        chart: { type: 'donut', sparkline: { enabled: true } },
-                        labels: assignmentPie.labels,
-                        colors: ['#10B981', '#3B82F6', '#EF4444'],
-                        plotOptions: { pie: { donut: { size: '72%' } } },
-                        dataLabels: { enabled: false },
-                        legend: { show: false },
-                        stroke: { show: false },
-                        tooltip: { enabled: true },
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%,-50%)',
-                        textAlign: 'center',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <Typography fontWeight="800" sx={{ fontSize: '1.1rem', color: '#111827', lineHeight: 1 }}>
-                        {asgTotal}
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', fontWeight: 600, mt: 0.1 }}>
-                        Total
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Stack spacing={0.6} sx={{ minWidth: 110, justifyContent: 'center' }}>
-                    <LegendItem color="#10B981" label="Completed" pct={`${asgCompleted} (${pctOf(asgCompleted, asgTotal)}%)`} />
-                    <LegendItem color="#3B82F6" label="Pending" pct={`${asgPending} (${pctOf(asgPending, asgTotal)}%)`} />
-                    <LegendItem color="#EF4444" label="Overdue" pct={`${asgOverdue} (${pctOf(asgOverdue, asgTotal)}%)`} />
-                  </Stack>
-                </Box>
-
-                {asgOverdue > 0 && (
-                  <Box
-                    sx={{
-                      bgcolor: '#FFF5F5',
-                      border: '1px solid #FECACA',
-                      borderRadius: '6px',
-                      px: 1.25,
-                      py: 0.75,
-                      mt: 0.1,
-                    }}
-                  >
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-                        <Box
-                          sx={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: '50%',
-                            bgcolor: '#FEE2E2',
-                            color: '#DC2626',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <AccessTimeOutlined sx={{ fontSize: 13 }} />
-                        </Box>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography fontWeight="700" sx={{ fontSize: '0.7rem', color: '#991B1B', lineHeight: 1.2 }}>
-                            {asgOverdue} {asgOverdue === 1 ? 'assignment is' : 'assignments are'} overdue
-                          </Typography>
-                          <Typography sx={{ fontSize: '0.63rem', color: '#B91C1C', mt: 0.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {assignments.overdue_list?.[0]?.title || 'Please submit them as soon as possible.'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Button
-                        variant="contained"
-                        disableElevation
-                        size="small"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          textTransform: 'none',
-                          color: '#FFF',
-                          bgcolor: '#DC2626',
-                          px: 1.1,
-                          py: 0.3,
-                          minWidth: 0,
-                          whiteSpace: 'nowrap',
-                          borderRadius: '5px',
-                          '&:hover': { bgcolor: '#B91C1C' },
-                          ml: 1,
-                        }}
-                      >
-                        View Assignments
-                      </Button>
-                    </Stack>
-                  </Box>
-                )}
               </>
             )}
           </Box>

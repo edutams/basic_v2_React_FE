@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Typography, Stack, Avatar, Card, Select, MenuItem, IconButton, Skeleton } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, IconButton, Skeleton } from '@mui/material';
 import { ChevronRight, ChevronLeft } from '@mui/icons-material';
 
 const CARD_WIDTH = 260; // px – each ward card width
@@ -107,23 +107,15 @@ const WardCard = ({ ward }) => {
 };
 
 const MyWards = ({ wards = [], loading = false }) => {
-  const [filter, setFilter] = useState('all');
   const [offset, setOffset] = useState(0);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const trackRef = useRef(null);
 
-  const filtered =
-    filter === 'enrolled'
-      ? wards.filter((w) => w.status === 'Enrolled')
-      : filter === 'pending'
-        ? wards.filter((w) => !['Enrolled', 'Admitted', 'Accepted'].includes(w.status))
-        : wards;
-
-  // Reset the carousel whenever the filter or the ward list changes.
+  // Reset the carousel scroll whenever the ward list changes.
   useEffect(() => {
     setOffset(0);
     if (trackRef.current) trackRef.current.scrollTo({ left: 0 });
-  }, [filter, wards.length]);
+  }, [wards.length]);
 
   // Recompute whether the track overflows its container
   const checkOverflow = useCallback(() => {
@@ -143,9 +135,9 @@ const MyWards = ({ wards = [], loading = false }) => {
       ro.disconnect();
       el.removeEventListener('scroll', checkOverflow);
     };
-  }, [checkOverflow, filtered.length]);
+  }, [checkOverflow, wards.length]);
 
-  const maxOffset = Math.max(0, filtered.length - 1);
+  const maxOffset = Math.max(0, wards.length - 1);
 
   const scrollTo = (newOffset) => {
     const clamped = Math.max(0, Math.min(newOffset, maxOffset));
@@ -174,30 +166,11 @@ const MyWards = ({ wards = [], loading = false }) => {
   return (
     <Box mb={2}>
       {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.25}>
-        <Typography fontWeight="700" sx={{ fontSize: '0.95rem', color: '#111827' }}>
-          My Wards
-        </Typography>
-        <Select
-          size="small"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          sx={{
-            bgcolor: '#fff',
-            borderRadius: '8px',
-            minWidth: 130,
-            height: 30,
-            fontSize: '0.78rem',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D1D5DB' },
-          }}
-        >
-          <MenuItem value="all" sx={{ fontSize: '0.78rem' }}>All Wards ({wards.length})</MenuItem>
-          <MenuItem value="enrolled" sx={{ fontSize: '0.78rem' }}>Enrolled</MenuItem>
-          <MenuItem value="pending" sx={{ fontSize: '0.78rem' }}>Pending</MenuItem>
-        </Select>
-      </Stack>
+      <Typography fontWeight="700" sx={{ fontSize: '0.95rem', color: '#111827', mb: 1.25 }}>
+        My Wards
+      </Typography>
 
-      {filtered.length === 0 ? (
+      {wards.length === 0 ? (
         /* Empty state */
         <Box
           sx={{
@@ -259,7 +232,7 @@ const MyWards = ({ wards = [], loading = false }) => {
               pb: { xs: 0.5, lg: 0 },
             }}
           >
-            {filtered.map((ward) => (
+            {wards.map((ward) => (
               <WardCard key={`${ward.kind}-${ward.id}`} ward={ward} />
             ))}
           </Box>

@@ -1,9 +1,7 @@
-import React, { useContext } from "react";
+import React, { useState } from "react";
 import {
     Box,
-    Grid,
     Stack,
-    Typography,
 } from "@mui/material";
 
 import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
@@ -12,18 +10,17 @@ import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import PageContainer from "@/components/container/PageContainer";
-import { TenantAuthContext } from "@/context/TenantContext/auth";
 
 // Dashboard Components
 import StatsCard from "./components/stats-card";
+import StatCardBreakdownModal from "./components/StatCardBreakdownModal";
 import MyProfile from "./components/my-profile";
 import SchoolCalendar from "./components/School-calendar";
 import ActivityLog from "./components/Activity-log";
 import QuickAccess from "./components/Quick-access";
 
 const NonTeachDashboard = () => {
-    const { user } = useContext(TenantAuthContext);
-    const userName = user?.name || "Mr. Tunde";
+    const [selectedStat, setSelectedStat] = useState(null);
 
     const statistics = [
         {
@@ -86,43 +83,6 @@ const NonTeachDashboard = () => {
     return (
         <PageContainer title="Staff Dashboard" description="Non-teaching staff portal">
             <Stack spacing={3}>
-                {/* DASHBOARD HEADER */}
-                <Box>
-                    <Typography
-                        component="h1"
-                        sx={{
-                            fontSize: {
-                                xs: "20px",
-                                sm: "23px",
-                                md: "26px",
-                                lg: "28px",
-                            },
-                            fontWeight: 700,
-                            color: "text.primary",
-                            lineHeight: 1.25,
-                            letterSpacing: "-0.4px",
-                        }}
-                    >
-                        Good morning, {userName}. 👋
-                    </Typography>
-
-                    <Typography
-                        sx={{
-                            mt: 0.7,
-                            fontSize: {
-                                xs: "11px",
-                                sm: "12px",
-                                md: "13px",
-                                lg: "14px",
-                            },
-                            color: "text.secondary",
-                            lineHeight: 1.5,
-                        }}
-                    >
-                        Here's an overview of your activities and updates.
-                    </Typography>
-                </Box>
-
                 {/* STATISTICS CARDS */}
                 <Box
                     sx={{
@@ -147,6 +107,7 @@ const NonTeachDashboard = () => {
                                 iconColor={stat.iconColor}
                                 iconBackground={stat.iconBackground}
                                 progressColor={stat.progressColor}
+                                onClick={() => setSelectedStat(stat)}
                             />
                         </Box>
                     ))}
@@ -182,6 +143,12 @@ const NonTeachDashboard = () => {
                     <QuickAccess />
                 </Box>
             </Stack>
+
+            <StatCardBreakdownModal
+                open={Boolean(selectedStat)}
+                stat={selectedStat}
+                onClose={() => setSelectedStat(null)}
+            />
         </PageContainer>
     );
 };

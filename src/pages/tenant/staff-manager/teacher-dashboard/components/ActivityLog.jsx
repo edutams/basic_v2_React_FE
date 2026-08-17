@@ -54,7 +54,7 @@ const activity = [
   },
 ];
 
-export default function RecentClassActivity() {
+export default function ActivityLog() {
   return (
     <Box
       sx={{
@@ -76,7 +76,7 @@ export default function RecentClassActivity() {
     >
       <Box>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2 }}>Recent Class Activity</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2 }}>Activity Log</Typography>
           <Typography
             sx={{ fontSize: 12, fontWeight: 600, color: "primary.main", cursor: "pointer" }}
           >

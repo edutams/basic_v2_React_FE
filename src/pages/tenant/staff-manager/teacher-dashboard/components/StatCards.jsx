@@ -1,4 +1,5 @@
-import { Box, Grid, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
@@ -7,6 +8,7 @@ import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import StatCardBreakdownModal from "./StatCardBreakdownModal";
 
 // Mock data — replace with real aggregate stats once the API is wired up.
 const stats = [
@@ -82,19 +84,22 @@ const stats = [
 ];
 
 export default function StatCards() {
+  const [selectedStat, setSelectedStat] = useState(null);
+
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "repeat(2, 1fr)",
-          sm: "repeat(3, 1fr)",
-          md: "repeat(3, 1fr)",
-          lg: "repeat(6, 1fr)",
-        },
-        gap: 1.75,
-      }}
-    >
+    <>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(3, 1fr)",
+            md: "repeat(3, 1fr)",
+            lg: "repeat(6, 1fr)",
+          },
+          gap: 1.75,
+        }}
+      >
       {stats.map((stat) => {
         const Icon = stat.icon;
         const TrendIcon = stat.trend?.direction === "up" ? ArrowUpwardIcon : ArrowDownwardIcon;
@@ -102,17 +107,25 @@ export default function StatCards() {
 
         return (
           <Box key={stat.id} sx={{ minWidth: 0, height: "100%" }}>
-            <Box
-              sx={{
-                bgcolor: stat.cardBg,
-                border: `1.5px solid ${stat.borderColor}`,
-                borderRadius: "10px",
-                p: 1.5,
-                height: "100%",
-                boxSizing: "border-box",
-                overflow: "hidden",
-              }}
-            >
+            <Tooltip title="Click to view breakdown" placement="top" arrow>
+              <Box
+                onClick={() => setSelectedStat(stat)}
+                sx={{
+                  bgcolor: stat.cardBg,
+                  border: "1px rgba(69, 67, 67, 1) solid",
+                  borderRadius: "10px",
+                  p: 1.5,
+                  height: "100%",
+                  boxSizing: "border-box",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "box-shadow 120ms ease, transform 120ms ease",
+                  "&:hover": {
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                 <Box
                   sx={{
@@ -130,15 +143,11 @@ export default function StatCards() {
                   <Icon sx={{ fontSize: 20 }} />
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: 18, lineHeight: 1.1, color: "text.primary" }}>
-                    {stat.value}
-                  </Typography>
                   <Typography
                     sx={{
                       fontSize: 12,
                       fontWeight: 600,
                       color: "text.primary",
-                      mt: 0.3,
                       lineHeight: 1.25,
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -146,6 +155,17 @@ export default function StatCards() {
                     }}
                   >
                     {stat.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: 24,
+                      lineHeight: 1.1,
+                      color: "text.primary",
+                      mt: 0.5,
+                    }}
+                  >
+                    {stat.value}
                   </Typography>
                   <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25, minWidth: 0 }}>
                     <Typography
@@ -171,10 +191,18 @@ export default function StatCards() {
                   </Stack>
                 </Box>
               </Stack>
-            </Box>
+              </Box>
+            </Tooltip>
           </Box>
         );
       })}
-    </Box>
+      </Box>
+
+      <StatCardBreakdownModal
+        open={Boolean(selectedStat)}
+        stat={selectedStat}
+        onClose={() => setSelectedStat(null)}
+      />
+    </>
   );
 }

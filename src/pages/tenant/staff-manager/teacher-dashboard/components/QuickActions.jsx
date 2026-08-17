@@ -1,12 +1,9 @@
-import { Box, Grid, Stack, Typography, ButtonBase } from "@mui/material";
+import { Box, Stack, Typography, ButtonBase } from "@mui/material";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
-import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
-import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 
 // Mock data — wire each action's onClick up to real handlers/routes later.
 const actions = [
@@ -43,36 +40,12 @@ const actions = [
     bg: "#dbeafe",
   },
   {
-    id: "scores",
-    label: "Enter Scores",
-    sub: "Input test or exam scores",
-    icon: EditNoteOutlinedIcon,
-    color: "#e11d48",
-    bg: "#ffe4e6",
-  },
-  {
-    id: "reports",
-    label: "Class Reports",
-    sub: "Generate class report",
-    icon: AssessmentOutlinedIcon,
-    color: "#0f766e",
-    bg: "#e2e8f0",
-  },
-  {
     id: "timetable",
     label: "View Timetable",
     sub: "See full timetable",
     icon: CalendarMonthOutlinedIcon,
     color: "#334155",
     bg: "#e2e8f0",
-  },
-  {
-    id: "announcement",
-    label: "Send Announcement",
-    sub: "Notify students",
-    icon: CampaignOutlinedIcon,
-    color: "#7c3aed",
-    bg: "#ede9fe",
   },
 ];
 
@@ -87,7 +60,7 @@ export default function QuickActions() {
           gridTemplateColumns: {
             xs: "repeat(2, 1fr)",
             sm: "repeat(4, 1fr)",
-            md: "repeat(8, 1fr)",
+            md: "repeat(5, 1fr)",
           },
           gap: 1.25,
         }}

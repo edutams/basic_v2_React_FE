@@ -1,12 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, useTheme, LinearProgress } from '@mui/material';
-import { TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, TrendingFlat as TrendingFlatIcon } from '@mui/icons-material';
+import { Box, Typography, Paper, Tooltip, useTheme, LinearProgress } from '@mui/material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
 /**
  * KPI card — project-standard stat card (same pattern as PsychomotorAnalyticsCards /
  * DashboardStatCard): getStatCardColor gradient background, accent-colored uppercase
- * caption, big accent value, LinearProgress bar, and trend indicator.
+ * caption, big accent value, and LinearProgress bar.
  */
 const KpiCard = ({
   label,
@@ -16,29 +15,30 @@ const KpiCard = ({
   colorName = 'primary',
   colorIndex = 0,
   progress,
-  trend,
-  trendLabel,
   rightElement,
+  onClick,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
 
-  return (
+  const card = (
     <Paper
       elevation={0}
+      onClick={onClick}
       sx={{
-        p: 2.5,
+        p: 1.5,
         borderRadius: '16px',
         height: '100%',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+        border: '1px rgba(69, 67, 67, 1) solid',
         boxShadow: isDark
           ? '0 10px 30px rgba(0,0,0,0.35)'
           : '0 4px 20px rgba(0,0,0,0.07)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: onClick ? 'pointer' : 'default',
         '&:hover': {
-          transform: 'translateY(-3px)',
+          transform: onClick ? 'translateY(-3px)' : 'translateY(-1px)',
           boxShadow: isDark
             ? '0 8px 30px rgba(0,0,0,0.35)'
             : '0 6px 24px rgba(0,0,0,0.12)',
@@ -63,7 +63,7 @@ const KpiCard = ({
 
       {/* Content row - different layout for rightElement vs icon */}
       {rightElement ? (
-        // Layout for cards with charts (efficiency ring, sparkline): value left, chart right
+        // Layout for cards with charts (efficiency ring): value left, chart right
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
@@ -71,7 +71,7 @@ const KpiCard = ({
               fontWeight={800}
               sx={{
                 color: isDark ? '#fff' : colors.accentColor,
-                fontSize: { xs: 19, md: 22 },
+                fontSize: { xs: 22, md: 26 },
                 lineHeight: 1.1,
               }}
             >
@@ -93,7 +93,7 @@ const KpiCard = ({
                 flex: 1,
                 minWidth: 0,
                 color: isDark ? '#fff' : colors.accentColor,
-                fontSize: { xs: 19, md: 22 },
+                fontSize: { xs: 22, md: 26 },
                 lineHeight: 1.1,
               }}
             >
@@ -122,12 +122,20 @@ const KpiCard = ({
         </>
       )}
 
+      {/* Sublabel under count */}
+      <Box sx={{ mt: 0.75 }}>
+        <Typography variant="caption" color="text.secondary">
+          {sublabel}
+        </Typography>
+      </Box>
+
       {typeof progress === 'number' && (
         <LinearProgress
           variant="determinate"
           value={Math.min(progress, 100)}
           sx={{
-            my: 1,
+            mt: 'auto',
+            mb: 0,
             height: 5,
             borderRadius: 2,
             bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
@@ -137,32 +145,17 @@ const KpiCard = ({
           }}
         />
       )}
-
-      {/* Sublabel and trend row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 'auto' }}>
-        <Typography variant="caption" color="text.secondary">
-          {sublabel}
-        </Typography>
-        {trend !== undefined && (
-          <Stack direction="row" alignItems="center" spacing={0.4}>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{ color: trend > 0 ? theme.palette.success.main : theme.palette.error.main }}
-            >
-              {trendLabel || `${trend > 0 ? '+' : ''}${trend}%`}
-            </Typography>
-            {trend > 0 ? (
-              <TrendingUpIcon sx={{ fontSize: 12.5, color: theme.palette.success.main }} />
-            ) : trend < 0 ? (
-              <TrendingDownIcon sx={{ fontSize: 12.5, color: theme.palette.error.main }} />
-            ) : (
-              <TrendingFlatIcon sx={{ fontSize: 12.5, color: colors.accentColor }} />
-            )}
-          </Stack>
-        )}
-      </Box>
     </Paper>
+  );
+
+  if (!onClick) {
+    return card;
+  }
+
+  return (
+    <Tooltip title="Click to view breakdown" placement="top" arrow>
+      {card}
+    </Tooltip>
   );
 };
 

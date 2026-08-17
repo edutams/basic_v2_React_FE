@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Grid, Typography } from '@mui/material';
 import { Groups, Layers, HowToReg, TaskAlt } from '@mui/icons-material';
 import StatCard from './StatCard';
-import { GenderSplit, GrowthRow } from '../common';
+import { GenderSplit } from '../common';
 import { GREEN, num } from '../constants';
 
 /**
@@ -14,7 +14,6 @@ const MetricCards = ({
   total_batches,
   total_admitted,
   total_accepted,
-  prevSessionLabel,
   onCardClick,
 }) => (
   <Grid container spacing={2} mb={3}>
@@ -25,13 +24,6 @@ const MetricCards = ({
         title="Total Applicants"
         value={num(total_applicants.count).toLocaleString()}
         right={<GenderSplit male={total_applicants.male} female={total_applicants.female} />}
-        footer={
-          <GrowthRow
-            pct={total_applicants.growth_percentage}
-            type={total_applicants.growth_type}
-            label={prevSessionLabel}
-          />
-        }
         onClick={onCardClick ? () => onCardClick('applicants') : undefined}
       />
     </Grid>
@@ -69,13 +61,6 @@ const MetricCards = ({
         title="Total Admitted"
         value={num(total_admitted.count).toLocaleString()}
         right={<GenderSplit male={total_admitted.male} female={total_admitted.female} />}
-        footer={
-          <GrowthRow
-            pct={total_admitted.growth_percentage}
-            type={total_admitted.growth_type}
-            label={prevSessionLabel}
-          />
-        }
         onClick={onCardClick ? () => onCardClick('admitted') : undefined}
       />
     </Grid>
@@ -87,13 +72,6 @@ const MetricCards = ({
         title="Total Accepted"
         value={num(total_accepted.count).toLocaleString()}
         right={<GenderSplit male={total_accepted.male} female={total_accepted.female} />}
-        footer={
-          <GrowthRow
-            pct={total_accepted.growth_percentage}
-            type={total_accepted.growth_type}
-            label={prevSessionLabel}
-          />
-        }
         onClick={onCardClick ? () => onCardClick('accepted') : undefined}
       />
     </Grid>

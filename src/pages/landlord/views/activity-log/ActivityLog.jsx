@@ -32,6 +32,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import api from '@/api/landlord/landlord_api';
+import aclApi from '@/api/landlord/acl/aclApi';
 import {
   IconSearch,
   IconX,
@@ -170,6 +171,23 @@ const ActivityLog = () => {
     last_activity: null,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+
+  const [rolesList, setRolesList] = useState([]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await aclApi.getRolesList();
+        const rolesData = res?.data ?? res ?? [];
+        if (Array.isArray(rolesData)) {
+          setRolesList(rolesData);
+        }
+      } catch (err) {
+        console.error('Failed to load roles for activity log filter:', err);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -544,11 +562,20 @@ const ActivityLog = () => {
 
               <FormControl size="small" sx={{ minWidth: 140 }}>
                 <Select value={userInput} onChange={(e) => setUserInput(e.target.value)}>
-                  <MenuItem value="all">All Users</MenuItem>
-                  <MenuItem value="super_admin">Super Admins</MenuItem>
-                  <MenuItem value="system_admin">System Admins</MenuItem>
-                  <MenuItem value="support_admin">Support Admins</MenuItem>
-                  <MenuItem value="agent">Agents</MenuItem>
+                  <MenuItem value="all">All Roles</MenuItem>
+                  {rolesList.map((role) => {
+                    const rawRoleName = typeof role === 'string' ? role : (role.name || role.title || role.id);
+                    const displayLabel = rawRoleName
+                      ? String(rawRoleName)
+                          .replace(/[_-]/g, ' ')
+                          .replace(/\b\w/g, (char) => char.toUpperCase())
+                      : '';
+                    return (
+                      <MenuItem key={role.id || rawRoleName} value={rawRoleName}>
+                        {displayLabel}
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
 

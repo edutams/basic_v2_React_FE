@@ -692,6 +692,14 @@ const ActivityLog = () => {
                             ? `${causerObj.fname} ${causerObj.lname}`
                             : causerObj.name || 'System User')
                           : 'System';
+                        const causerAvatar =
+                          causerObj?.avatar ||
+                          causerObj?.avatar_url ||
+                          causerObj?.profile_picture ||
+                          causerObj?.picture ||
+                          causerObj?.image ||
+                          causerObj?.image_url ||
+                          '';
                         const userRole = causerObj?.email ? causerObj.email.split('@')[0] : 'super.admin';
                         const moduleName = getLogModule(log);
                         const actionName = getLogAction(log);
@@ -713,7 +721,7 @@ const ActivityLog = () => {
                             <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
-                                  src={causerObj?.avatar_url}
+                                  src={causerAvatar}
                                   alt={userName}
                                   onClick={(e) => {
                                     if (causerObj) {

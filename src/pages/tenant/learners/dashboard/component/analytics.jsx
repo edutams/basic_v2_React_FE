@@ -8,6 +8,7 @@ import {
   MenuItem,
   Divider,
   Skeleton,
+  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -20,6 +21,7 @@ import {
   AccountBalanceOutlined,
   ComputerOutlined,
 } from '@mui/icons-material';
+import AcademicOverview from './AcademicOverview';
 
 const cardSx = {
   borderRadius: '8px',
@@ -204,65 +206,73 @@ const Analytics = ({
                       const meta = subjectMeta(subj.subject, index);
                       const IconComponent = meta.icon;
                       return (
-                        <Box
-                          key={subj.subject}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            height: '100%',
-                            justifyContent: 'flex-end',
-                            width: { xs: 20, sm: 28, md: 32 },
-                            position: 'relative',
-                          }}
+                        <Tooltip
+                          title={`${subj.subject}: ${Math.round(Number(subj.score || 0))}%`}
+                          placement="top"
+                          arrow
+                          sx={{ cursor: 'pointer' }}
                         >
-                          <Typography
-                            fontWeight="700"
-                            sx={{
-                              fontSize: '0.62rem',
-                              color: '#374151',
-                              mb: 0.2,
-                            }}
-                          >
-                            {Math.round(Number(subj.score || 0))}%
-                          </Typography>
-
                           <Box
+                            key={subj.subject}
                             sx={{
-                              width: { xs: 12, sm: 16, md: 18 },
-                              height: `${Math.min(100, Number(subj.score || 0))}%`,
-                              bgcolor: meta.color,
-                              borderRadius: '3px 3px 0 0',
-                              transition: 'height 0.3s ease',
-                            }}
-                          />
-
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              bottom: -30,
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
-                              gap: 0.1,
-                              width: 50,
+                              height: '100%',
+                              justifyContent: 'flex-end',
+                              width: { xs: 20, sm: 28, md: 32 },
+                              position: 'relative',
                             }}
                           >
-                            <IconComponent sx={{ fontSize: 11, color: meta.color }} />
                             <Typography
-                              noWrap
+                              fontWeight="700"
                               sx={{
-                                fontSize: '0.6rem',
-                                color: '#4B5563',
-                                fontWeight: 600,
-                                textAlign: 'center',
-                                maxWidth: '100%',
+                                fontSize: '0.62rem',
+                                color: '#374151',
+                                mb: 0.2,
                               }}
                             >
-                              {subj.subject}
+                              {Math.round(Number(subj.score || 0))}%
                             </Typography>
+
+                            <Box
+                              sx={{
+                                width: { xs: 12, sm: 16, md: 18 },
+                                height: `${Math.min(100, Number(subj.score || 0))}%`,
+                                bgcolor: meta.color,
+                                borderRadius: '3px 3px 0 0',
+                                transition: 'height 0.3s ease',
+                                '&:hover': { opacity: 0.8 },
+                              }}
+                            />
+
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                bottom: -30,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 0.1,
+                                width: 50,
+                              }}
+                            >
+                              <IconComponent sx={{ fontSize: 11, color: meta.color }} />
+                              <Typography
+                                noWrap
+                                sx={{
+                                  fontSize: '0.6rem',
+                                  color: '#4B5563',
+                                  fontWeight: 600,
+                                  textAlign: 'center',
+                                  maxWidth: '100%',
+                                }}
+                              >
+                                {subj.subject}
+                              </Typography>
+                            </Box>
                           </Box>
-                        </Box>
+                        </Tooltip>
                       );
                     })}
                   </Box>
@@ -389,6 +399,9 @@ const Analytics = ({
           </Box>
         </Card>
       </Stack>
+
+      {/* ─── ROW 2: Academic Overview (spans full width) ─── */}
+      <AcademicOverview data={academics} />
     </Box>
   );
 };

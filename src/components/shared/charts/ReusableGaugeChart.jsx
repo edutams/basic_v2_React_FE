@@ -8,8 +8,8 @@ const ReusableGaugeChart = ({
   value = 0,
   label = '',
   subtitle = '',
-  height = 320,
-  width = '100%',
+  height = 130,
+  width = 130,
   minValue = 0,
   maxValue = 100,
   colorRanges = [],
@@ -24,10 +24,14 @@ const ReusableGaugeChart = ({
         }
       }
     }
+
     if (value >= 75) return theme.palette.success.main;
     if (value >= 50) return theme.palette.warning.main;
+
     return theme.palette.error.main;
   };
+
+  const gaugeColor = getColor();
 
   const options = {
     chart: {
@@ -37,49 +41,63 @@ const ReusableGaugeChart = ({
       toolbar: { show: false },
       sparkline: { enabled: true },
     },
-    colors: [getColor()],
+
+    colors: [gaugeColor],
+
     plotOptions: {
       radialBar: {
         startAngle: -130,
         endAngle: 130,
+
         track: {
-          background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e0e0',
+          background:
+            theme.palette.mode === 'dark'
+              ? 'rgba(255,255,255,0.1)'
+              : '#e0e0e0',
           strokeWidth: '97%',
           margin: 5,
         },
+
         hollow: {
           margin: 0,
           size: '35%',
           background: 'transparent',
         },
+
         dataLabels: {
           show: true,
+
           name: {
             show: true,
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: 600,
             color: theme.palette.text.secondary,
-            offsetY: -10,
+            offsetY: -8,
           },
+
           value: {
             show: true,
-            fontSize: '36px',
+            fontSize: '30px',
             fontWeight: 700,
             color: theme.palette.text.primary,
-            offsetY: 5,
+            offsetY: 4,
             formatter: (val) => `${Math.round(val)}%`,
           },
         },
       },
     },
+
     fill: {
       type: 'solid',
-      colors: [getColor()],
+      colors: [gaugeColor],
     },
+
     stroke: {
       lineCap: 'round',
     },
+
     labels: [label || ''],
+
     tooltip: {
       enabled: true,
       theme: theme.palette.mode,
@@ -92,10 +110,33 @@ const ReusableGaugeChart = ({
   const series = [Math.round(value)];
 
   return (
-    <Box sx={{ textAlign: 'center', py: 1, px: 0 }}>
-      <Chart options={options} series={series} type="radialBar" height={height} width={width} />
+    <Box
+      sx={{
+        textAlign: 'center',
+        py: 1,
+        px: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <Chart
+        options={options}
+        series={series}
+        type="radialBar"
+        height={height}
+        width={width}
+      />
+
       {subtitle && (
-        <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mt: -1, fontWeight: 500 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            mt: -1,
+            fontWeight: 500,
+          }}
+        >
           {subtitle}
         </Typography>
       )}
@@ -108,7 +149,10 @@ ReusableGaugeChart.propTypes = {
   label: PropTypes.string,
   subtitle: PropTypes.string,
   height: PropTypes.number,
-  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  width: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]),
   minValue: PropTypes.number,
   maxValue: PropTypes.number,
   colorRanges: PropTypes.arrayOf(
@@ -116,8 +160,9 @@ ReusableGaugeChart.propTypes = {
       from: PropTypes.number,
       to: PropTypes.number,
       color: PropTypes.string,
-    })
+    }),
   ),
 };
 
 export default ReusableGaugeChart;
+

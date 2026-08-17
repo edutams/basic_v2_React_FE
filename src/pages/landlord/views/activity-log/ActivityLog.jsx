@@ -124,8 +124,8 @@ const tourSteps = [
     selector: '[data-tour="activity-log-action"]',
     content: (
       <StepContent
-        title="Actions Menu"
-        body="Click the action menu to view full details or download activity reports."
+        title="View Details"
+        body="Click View Details to open the full activity record, including exactly what changed."
       />
     ),
   },

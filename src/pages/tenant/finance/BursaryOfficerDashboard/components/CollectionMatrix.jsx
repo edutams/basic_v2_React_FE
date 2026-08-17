@@ -14,42 +14,17 @@ import {
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import StatusChip from './StatusChip';
-import { STATUS_META, formatCurrency } from '../constants';
+import { formatCurrency } from '../constants';
 
 /**
  * Class-Level Collection Matrix — table of per-class expected/collected/outstanding
- * fees with efficiency progress bars and a totals row.
+ * fees with the efficiency percentage and a colored status badge per row.
  */
 const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) => {
   const theme = useTheme();
 
   const efficiencyColor = (value) =>
-    value >= 75
-      ? theme.palette.success.main
-      : value >= 60
-        ? theme.palette.warning.main
-        : theme.palette.error.main;
-
-  const efficiencyBadge = (value, fontWeight = 700) => (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: 52,
-        px: 1,
-        py: 0.5,
-        borderRadius: 2,
-        bgcolor: efficiencyColor(Number(value)),
-        color: '#fff',
-        fontWeight,
-        fontSize: 12,
-        lineHeight: 1,
-      }}
-    >
-      {value}%
-    </Box>
-  );
+    value < 80 ? theme.palette.success.main : theme.palette.mode === 'dark' ? '#fff' : '#000';
 
   return (
     <Paper
@@ -137,7 +112,9 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  {efficiencyBadge(row.efficiency)}
+                  <Typography variant="body2" fontWeight={700} color={efficiencyColor(row.efficiency)}>
+                    {row.efficiency}%
+                  </Typography>
                 </TableCell>
                 <TableCell align="center">
                   <StatusChip status={row.status} />
@@ -173,10 +150,12 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                {efficiencyBadge(totalEfficiency, 800)}
+                <Typography variant="subtitle2" fontWeight={800} color={efficiencyColor(totalEfficiency)}>
+                  {totalEfficiency}%
+                </Typography>
               </TableCell>
               <TableCell align="center">
-                <StatusChip status={totalEfficiency >= 75 ? 'excellent' : totalEfficiency >= 60 ? 'pending' : 'poor'} />
+                <StatusChip status={totalEfficiency < 70 ? 'poor' : totalEfficiency <= 80 ? 'pending' : 'excellent'} />
               </TableCell>
             </TableRow>
           </TableBody>

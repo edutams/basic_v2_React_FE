@@ -225,6 +225,7 @@ const SchoolAlcManager = () => {
   const [roleStats, setRoleStats] = useState(null);
   const [allSystemRoles, setAllSystemRoles] = useState([]);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -461,27 +462,56 @@ const SchoolAlcManager = () => {
     }
   };
 
-  const handleCreateRole = async () => {
-    try {
-      await aclApi.createSchoolRole({
-        name: newRoleForm.roleName,
-        guard_name: newRoleForm.guardName,
-        description: newRoleForm.description,
-      });
+  const handleEditRole = (row) => {
+    setSelectedRow(row);
+    setIsEditing(true);
+    setNewRoleForm({
+      roleName: row.name || '',
+      guardName: row.guard_name || 'tenant',
+      description: row.description || '',
+    });
+    setNewRoleModalOpen(true);
+    handleMenuClose();
+  };
 
-      notify.success('Role created successfully!');
+  const handleSaveRole = async () => {
+    try {
+      if (!newRoleForm.roleName?.trim()) {
+        notify.error('Role name is required');
+        return;
+      }
+
+      if (isEditing && selectedRow) {
+        await aclApi.updateSchoolRole(selectedRow.id, {
+          name: newRoleForm.roleName,
+          description: newRoleForm.description,
+        });
+        notify.success('Role updated successfully!');
+      } else {
+        await aclApi.createSchoolRole({
+          name: newRoleForm.roleName,
+          guard_name: newRoleForm.guardName,
+          description: newRoleForm.description,
+        });
+        notify.success('Role created successfully!');
+      }
 
       setNewRoleModalOpen(false);
-
       setNewRoleForm({
         roleName: '',
         guardName: 'tenant',
         description: '',
       });
-
       fetchRoles();
     } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to create role');
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        notify.error(errorMessages[0] || 'Validation failed');
+      } else {
+        notify.error(
+          err?.response?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} role`,
+        );
+      }
     }
   };
 
@@ -825,23 +855,33 @@ const SchoolAlcManager = () => {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  startIcon={<IconUserPlus size={18} />}
-                  onClick={() => setNewRoleModalOpen(true)}
-                  data-tour="acl-role-create"
-                  sx={{
-                    px: 2,
-                    py: 0.8,
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: '8px',
-                  }}
-                >
-                  New Role
-                </Button>
+                {can('acl.roles.create') && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<IconUserPlus size={18} />}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setNewRoleForm({
+                        roleName: '',
+                        guardName: 'tenant',
+                        description: '',
+                      });
+                      setNewRoleModalOpen(true);
+                    }}
+                    data-tour="acl-role-create"
+                    sx={{
+                      px: 2,
+                      py: 0.8,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    New Role
+                  </Button>
+                )}
 
                 <Button
                   variant="outlined"
@@ -1079,6 +1119,14 @@ const SchoolAlcManager = () => {
                                   },
                                 }}
                               >
+                                {isCustomRole && can('acl.roles.update') && (
+                                  <MenuItem onClick={() => handleEditRole(row)}>
+                                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                      <EditIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Edit Role
+                                  </MenuItem>
+                                )}
                                 {can('acl.roles.attach_permissions') && (
                                   <MenuItem onClick={() => handleAttachPermission(row)}>
                                     <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
@@ -1226,7 +1274,8 @@ const SchoolAlcManager = () => {
         onClose={() => setNewRoleModalOpen(false)}
         formData={newRoleForm}
         onFieldChange={handleNewRoleFieldChange}
-        onSave={handleCreateRole}
+        onSave={handleSaveRole}
+        isEditing={isEditing}
       />
 
       <FilterSideDrawer

@@ -662,7 +662,7 @@ const ActivityLog = () => {
                 <Table sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
                       <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
@@ -717,7 +717,6 @@ const ActivityLog = () => {
                           <TableRow key={log.id || idx} hover>
                             <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
-                            {/* Activity Description with User Avatar */}
                             <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
@@ -779,7 +778,6 @@ const ActivityLog = () => {
                               </Box>
                             </TableCell>
 
-                            {/* Module Name + Icon */}
                             <TableCell sx={{ py: 1.8 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {getModuleIcon(moduleName)}
@@ -789,12 +787,10 @@ const ActivityLog = () => {
                               </Box>
                             </TableCell>
 
-                            {/* Action Badge Chip */}
                             <TableCell sx={{ py: 1.8 }}>
                               {getActionChip(actionName)}
                             </TableCell>
 
-                            {/* Date & Time */}
                             <TableCell sx={{ py: 1.8 }}>
                               <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
                                 {formattedDate}
@@ -804,12 +800,10 @@ const ActivityLog = () => {
                               </Typography>
                             </TableCell>
 
-                            {/* Severity Chip */}
                             <TableCell sx={{ py: 1.8 }}>
                               {getSeverityChip(severityName)}
                             </TableCell>
 
-                            {/* 3-Dots Action Menu ONLY (NO EYE ICON) */}
                             <TableCell align="center" sx={{ py: 1.8 }} data-tour="activity-log-action">
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, log)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
@@ -823,7 +817,6 @@ const ActivityLog = () => {
                 </Table>
               </TableContainer>
 
-              {/* Standard TablePagination Component */}
               <TablePagination
                 rowsPerPageOptions={[10, 20, 50]}
                 component="div"
@@ -838,7 +831,6 @@ const ActivityLog = () => {
         </Paper>
       </AclTourProvider>
 
-      {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => { handleOpenModal(menuLog); handleMenuClose(); }}>
           View Activity Details

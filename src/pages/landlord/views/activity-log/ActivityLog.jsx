@@ -641,7 +641,7 @@ const ActivityLog = () => {
                 <Table sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>#</TableCell>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
                       <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
                       <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
                       <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>

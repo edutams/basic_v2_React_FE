@@ -105,53 +105,45 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
             </TableRow>
           </TableHead>
           <TableBody>
-            {matrix.map((row, index) => {
-              const statusColor =
-                STATUS_META[row.status]?.color === 'success'
-                  ? theme.palette.success.main
-                  : STATUS_META[row.status]?.color === 'warning'
-                    ? theme.palette.warning.main
-                    : theme.palette.error.main;
-              return (
-                <TableRow
-                  key={index}
-                  hover
-                  sx={{ cursor: 'pointer', '&:last-of-type td': { borderBottom: 'none' } }}
-                  onClick={() => onRowClick(row.class)}
-                >
-                  <TableCell>
-                    <Chip
-                      label={row.class}
-                      size="small"
-                      sx={{
-                        bgcolor:
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.grey[800]
-                            : theme.palette.grey[100],
-                        fontWeight: 700,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">{formatCurrency(row.expected_fees)}</TableCell>
-                  <TableCell align="right">
-                    <Typography color="success.main" fontWeight={700}>
-                      {formatCurrency(row.collected_fees)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography color="error.main" fontWeight={700}>
-                      {formatCurrency(row.outstanding_fees)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    {efficiencyBadge(row.efficiency)}
-                  </TableCell>
-                  <TableCell align="center">
-                    <StatusChip status={row.status} />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {matrix.map((row, index) => (
+              <TableRow
+                key={index}
+                hover
+                sx={{ cursor: 'pointer', '&:last-of-type td': { borderBottom: 'none' } }}
+                onClick={() => onRowClick(row.class)}
+              >
+                <TableCell>
+                  <Chip
+                    label={row.class}
+                    size="small"
+                    sx={{
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? theme.palette.grey[800]
+                          : theme.palette.grey[100],
+                      fontWeight: 700,
+                    }}
+                  />
+                </TableCell>
+                <TableCell align="right">{formatCurrency(row.expected_fees)}</TableCell>
+                <TableCell align="right">
+                  <Typography color="success.main" fontWeight={700}>
+                    {formatCurrency(row.collected_fees)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography color="error.main" fontWeight={700}>
+                    {formatCurrency(row.outstanding_fees)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  {efficiencyBadge(row.efficiency)}
+                </TableCell>
+                <TableCell align="center">
+                  <StatusChip status={row.status} />
+                </TableCell>
+              </TableRow>
+            ))}
 
             {/* Totals row */}
             <TableRow

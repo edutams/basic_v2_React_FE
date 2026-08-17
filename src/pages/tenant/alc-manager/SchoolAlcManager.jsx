@@ -1110,7 +1110,7 @@ const SchoolAlcManager = () => {
                                     Make System Role
                                   </MenuItem>
                                 )}
-                                {can('acl.roles.toggle_status') && (
+                                {/* {can('acl.roles.toggle_status') && (
                                   row.status === 'Inactive' || row.status === 'inactive' ? (
                                     <MenuItem
                                       onClick={() => handleToggleRoleStatus(row)}
@@ -1132,7 +1132,7 @@ const SchoolAlcManager = () => {
                                       Deactivate Role
                                     </MenuItem>
                                   )
-                                )}
+                                )} */}
                               </Menu>
                             </TableCell>
                           </TableRow>

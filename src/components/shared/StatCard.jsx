@@ -43,8 +43,8 @@ const StatCard = ({
         position: 'relative',
         overflow: 'hidden',
 
-        border: '1px rgba(69, 67, 67, 1) solid',
-        // borderLeft: accentColor ? `2px solid ${accentColor}` : 'none',
+        // border: '1px rgba(69, 67, 67, 1) solid',
+        border: accentColor ? `0.5px solid ${accentColor}` : 'none',
         boxShadow: (theme) =>
           theme.palette.mode === 'dark'
             ? '0 0 32px 0 rgba(0, 0, 0, 0.5), 0 8px 24px 0 rgba(0, 0, 0, 0.35)'

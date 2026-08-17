@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme, LinearProgress } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, useTheme, LinearProgress } from '@mui/material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
 /**
@@ -16,14 +16,16 @@ const KpiCard = ({
   colorIndex = 0,
   progress,
   rightElement,
+  onClick,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
 
-  return (
+  const card = (
     <Paper
       elevation={0}
+      onClick={onClick}
       sx={{
         p: 1.5,
         borderRadius: '16px',
@@ -34,8 +36,9 @@ const KpiCard = ({
           ? '0 10px 30px rgba(0,0,0,0.35)'
           : '0 4px 20px rgba(0,0,0,0.07)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: onClick ? 'pointer' : 'default',
         '&:hover': {
-          transform: 'translateY(-3px)',
+          transform: onClick ? 'translateY(-3px)' : 'translateY(-1px)',
           boxShadow: isDark
             ? '0 8px 30px rgba(0,0,0,0.35)'
             : '0 6px 24px rgba(0,0,0,0.12)',
@@ -143,6 +146,16 @@ const KpiCard = ({
         />
       )}
     </Paper>
+  );
+
+  if (!onClick) {
+    return card;
+  }
+
+  return (
+    <Tooltip title="Click to view breakdown" placement="top" arrow>
+      {card}
+    </Tooltip>
   );
 };
 

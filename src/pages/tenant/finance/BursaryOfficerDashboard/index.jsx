@@ -14,6 +14,7 @@ import RevenueDistribution from './components/RevenueDistribution';
 import PaymentCategories from './components/PaymentCategories';
 import CollectionMatrix from './components/CollectionMatrix';
 import OperationalAlerts from './components/OperationalAlerts';
+import BursaryBreakdownModal from './components/BursaryBreakdownModal';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -58,6 +59,10 @@ const PanelSkeleton = ({ height = 240 }) => {
  */
 const BursaryOfficerDashboard = () => {
   const notify = useNotification();
+
+  // Breakdown modal state — holds the clicked KPI/panel type so the modal
+  // knows which table to render (same pattern as the admin/admission dashboards).
+  const [breakdownType, setBreakdownType] = useState(null);
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -278,6 +283,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Projected for term"
               icon={ReceiptLong}
               colorName="info"
+              onClick={() => setBreakdownType('expected_income')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -287,6 +293,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Actual collected"
               icon={AccountBalanceWallet}
               colorName="success"
+              onClick={() => setBreakdownType('collected_income')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -296,6 +303,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Remaining unpaid"
               icon={ErrorOutline}
               colorName="warning"
+              onClick={() => setBreakdownType('outstanding_balance')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -305,6 +313,7 @@ const BursaryOfficerDashboard = () => {
               sublabel="Collected vs Expected"
               colorName="primary"
               rightElement={<EfficiencyRing value={rp.data.collection_efficiency} />}
+              onClick={() => setBreakdownType('collection_efficiency')}
             />
           </Grid>
           <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
@@ -313,6 +322,7 @@ const BursaryOfficerDashboard = () => {
               value={`+${rp.data.revenue_growth}%`}
               sublabel="vs 1st Term"
               colorName="success"
+              onClick={() => setBreakdownType('revenue_growth')}
             />
           </Grid>
         </Grid>
@@ -324,7 +334,7 @@ const BursaryOfficerDashboard = () => {
           {feeIntelligence.loading ? (
             <PanelSkeleton height={380} />
           ) : (
-            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} />
+            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} onClick={() => setBreakdownType('fee_intelligence')} />
           )}
         </Grid>
 
@@ -335,6 +345,7 @@ const BursaryOfficerDashboard = () => {
             <RevenueDistribution
               revenue_distribution={asArray(revenueDistribution.data)}
               totalRevenue={totalRevenue}
+              onClick={() => setBreakdownType('revenue_distribution')}
             />
           )}
         </Grid>
@@ -343,7 +354,7 @@ const BursaryOfficerDashboard = () => {
           {paymentCategories.loading ? (
             <PanelSkeleton height={380} />
           ) : (
-            <PaymentCategories payment_categories={asArray(paymentCategories.data)} />
+            <PaymentCategories payment_categories={asArray(paymentCategories.data)} onClick={() => setBreakdownType('payment_categories')} />
           )}
         </Grid>
       </Grid>
@@ -373,6 +384,14 @@ const BursaryOfficerDashboard = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* ── Breakdown modal ────────────────────────────────────── */}
+      <BursaryBreakdownModal
+        open={Boolean(breakdownType)}
+        type={breakdownType}
+        sessionTermId={sessionTermId}
+        onClose={() => setBreakdownType(null)}
+      />
     </PageContainer>
   );
 };

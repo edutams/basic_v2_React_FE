@@ -23,14 +23,14 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 2.5,
+          p: 2,
           borderRadius: '16px',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           cursor: onClick ? 'pointer' : 'default',
           background: isDark ? theme.palette.background.paper : colors.cardBg,
-          border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+          border: '1px rgba(69, 67, 67, 1) solid',
           boxShadow: isDark
             ? '0 10px 30px rgba(0,0,0,0.35)'
             : '0 4px 20px rgba(0,0,0,0.07)',
@@ -75,14 +75,15 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
         </Typography>
       </Box>
 
-      {/* Value + right gender split */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 1.25 }}>
+      {/* Value + right gender split — anchored to the bottom so cards without a
+          footer don't leave a dead gap */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 'auto', pt: 1.5 }}>
         <Typography
           variant="h4"
           fontWeight={800}
           sx={{
             color: isDark ? '#fff' : colors.accentColor,
-            fontSize: { xs: 19, md: 22 },
+            fontSize: { xs: 22, md: 26 },
             lineHeight: 1.1,
           }}
         >
@@ -94,7 +95,7 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
       {footer && (
         <Box
           sx={{
-            mt: 'auto',
+            mt: 1.25,
             pt: 1.25,
             borderTop: '1px dashed',
             borderColor: isDark ? 'rgba(255,255,255,0.15)' : alpha(colors.accentColor, 0.3),

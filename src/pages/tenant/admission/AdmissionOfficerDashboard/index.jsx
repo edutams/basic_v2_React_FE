@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Grid, Stack, Typography, Paper, Skeleton, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -170,15 +170,6 @@ const AdmissionOfficerDashboard = () => {
     loadClasses();
   }, []);
 
-  // Previous-session label, e.g. "2024/2025" → "2023/24"
-  const prevSessionLabel = useMemo(() => {
-    const st = sessionTerms.find((s) => s.id === sessionTerm);
-    const name = st?.label || '';
-    const m = String(name).match(/(\d{4})\/(\d{4})/);
-    if (m) return `${num(m[1]) - 1}/${String(num(m[2]) - 1).slice(2)}`;
-    return 'previous session';
-  }, [sessionTerms, sessionTerm]);
-
   const lastUpdated = new Date().toLocaleString('en-US', {
     day: '2-digit',
     month: 'short',
@@ -226,33 +217,11 @@ const AdmissionOfficerDashboard = () => {
           total_batches={overview.data.total_batches || {}}
           total_admitted={overview.data.total_admitted || {}}
           total_accepted={overview.data.total_accepted || {}}
-          prevSessionLabel={prevSessionLabel}
           onCardClick={setBreakdownType}
         />
       )}
 
-      {/* ── Row 2: Financial Metrics ───────────────────────────────── */}
-      <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 14, mb: 1.5 }}>
-        Financial Metrics
-      </Typography>
-      {/* Financial Metrics reads overview counts (total_applicants/total_accepted),
-          so it waits for both sections — otherwise it can render while overview is
-          still loading (or failed) and crash on a missing .count. */}
-      {financialMetrics.loading || overview.loading ? (
-        <FinancialMetricsSkeleton />
-      ) : (
-        <FinancialMetrics
-          financial_metrics={financialMetrics.data}
-          totalFees={totalFees}
-          total_applicants={overview.data.total_applicants || {}}
-          total_accepted={overview.data.total_accepted || {}}
-          prevSessionLabel={prevSessionLabel}
-          donutData={donutData}
-          onCardClick={setBreakdownType}
-        />
-      )}
-
-      {/* ── Row 3: Enrollment Insights ─────────────────────────────── */}
+      {/* ── Row 2: Enrollment Insights ─────────────────────────────── */}
       <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 14, mb: 1.5 }}>
         Enrollment Insights
       </Typography>
@@ -314,6 +283,26 @@ const AdmissionOfficerDashboard = () => {
         </Grid>
 
       </Grid>
+
+      {/* ── Row 3: Financial Metrics ──────────────────────────────── */}
+      <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 14, mb: 1.5 }}>
+        Financial Metrics
+      </Typography>
+      {/* Financial Metrics reads overview counts (total_applicants/total_accepted),
+          so it waits for both sections — otherwise it can render while overview is
+          still loading (or failed) and crash on a missing .count. */}
+      {financialMetrics.loading || overview.loading ? (
+        <FinancialMetricsSkeleton />
+      ) : (
+        <FinancialMetrics
+          financial_metrics={financialMetrics.data}
+          totalFees={totalFees}
+          total_applicants={overview.data.total_applicants || {}}
+          total_accepted={overview.data.total_accepted || {}}
+          donutData={donutData}
+          onCardClick={setBreakdownType}
+        />
+      )}
 
       <DashboardFooter lastUpdated={lastUpdated} />
 

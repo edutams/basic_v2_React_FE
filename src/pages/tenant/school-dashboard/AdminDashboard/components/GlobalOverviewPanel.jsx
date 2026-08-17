@@ -7,23 +7,21 @@ import OverviewCard from './OverviewCard';
 import StaffDistributionCard from './StaffDistributionCard';
 
 /**
- * Global Overview — 3 stat cards + staff distribution donut.
+ * Global Overview — compact stat tiles + compact staff distribution donut.
  */
 const GlobalOverviewPanel = ({ go, staffDonut, onCardClick }) => {
   const theme = useTheme();
 
   return (
-    <Panel sx={{ mb: 3 }}>
+    <Panel sx={{ mb: 3, p: 2 }}>
       <SectionHeader icon={Public} title="Global Overview" color={theme.palette.primary.main} />
-      <Grid container spacing={2}>
+      <Grid container spacing={1.5} alignItems="stretch">
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <OverviewCard
             icon={Groups}
             colorName="info"
             title="Total Students"
             value={num(go.total_students).toLocaleString()}
-            trend={go.student_growth}
-            sparkData={go.student_series}
             onClick={() => onCardClick && onCardClick('students')}
           />
         </Grid>
@@ -33,8 +31,6 @@ const GlobalOverviewPanel = ({ go, staffDonut, onCardClick }) => {
             colorName="success"
             title="Teaching Staff"
             value={num(go.teaching_staff).toLocaleString()}
-            trend={go.teaching_growth}
-            sparkData={go.teaching_series}
             onClick={() => onCardClick && onCardClick('teaching_staff')}
           />
         </Grid>
@@ -44,9 +40,6 @@ const GlobalOverviewPanel = ({ go, staffDonut, onCardClick }) => {
             colorName="warning"
             title="Non-Teaching Staff"
             value={num(go.non_teaching_staff).toLocaleString()}
-            trend={go.non_teaching_growth}
-            down
-            sparkData={go.non_teaching_series}
             onClick={() => onCardClick && onCardClick('non_teaching_staff')}
           />
         </Grid>

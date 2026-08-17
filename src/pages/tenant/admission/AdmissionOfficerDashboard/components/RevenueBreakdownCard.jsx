@@ -18,13 +18,13 @@ const RevenueBreakdownCard = ({ donutData, totalFees }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 2.5,
+        p: 2,
         borderRadius: '16px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+        border: '1px rgba(69, 67, 67, 1) solid',
         boxShadow: isDark
           ? '0 10px 30px rgba(0,0,0,0.35)'
           : '0 4px 20px rgba(0,0,0,0.07)',

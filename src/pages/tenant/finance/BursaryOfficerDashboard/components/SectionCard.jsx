@@ -14,14 +14,14 @@ const SectionCard = ({ icon: Icon, title, color, children, sx = {} }) => {
         border: '1px solid',
         borderColor: theme.palette.divider,
         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-        p: 2.5,
+        p: 1.75,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         ...sx,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
         <Box
           sx={{
             width: 36,

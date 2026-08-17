@@ -2,17 +2,14 @@ import React from 'react';
 import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import { AccountBalanceWallet } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
-import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
-import { formatCurrency } from '../constants';
 
 /**
- * Financial fee card — stat-card treatment (gradient bg + icon tile) with a mini
- * sparkline fed by the backend's weekly fee_trend series ({ label, v } points).
+ * Financial fee card — stat-card treatment (gradient bg + icon tile).
  *
  * When `onClick` is provided the card is clickable and shows a tooltip signalling it
  * opens a breakdown modal (same interaction as the AdminDashboard OverviewCard).
  */
-const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = [], onClick }) => {
+const FeeCard = ({ colorName = 'primary', title, value, sub, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
@@ -23,14 +20,14 @@ const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = 
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 2.5,
+          p: 2,
           borderRadius: '16px',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           cursor: onClick ? 'pointer' : 'default',
           background: isDark ? theme.palette.background.paper : colors.cardBg,
-          border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+          border: '1px rgba(69, 67, 67, 1) solid',
           boxShadow: isDark
             ? '0 10px 30px rgba(0,0,0,0.35)'
             : '0 4px 20px rgba(0,0,0,0.07)',
@@ -81,7 +78,7 @@ const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = 
         sx={{
           my: 1,
           color: isDark ? '#fff' : colors.accentColor,
-          fontSize: { xs: 17, md: 21 },
+          fontSize: { xs: 20, md: 24 },
           lineHeight: 1.1,
         }}
       >
@@ -89,18 +86,6 @@ const FeeCard = ({ color, colorName = 'primary', title, value, sub, sparkData = 
       </Typography>
 
       <Box sx={{ minHeight: 18 }}>{sub}</Box>
-
-      <Box sx={{ mt: 'auto', pt: 1, height: 48 }}>
-        <ReusableSparkline
-          data={sparkData}
-          dataKey="v"
-          color={isDark ? colors.accentColor : color}
-          height={48}
-          showTooltip
-          labelKey="label"
-          tooltipValueFormatter={(v) => formatCurrency(v)}
-        />
-      </Box>
       </Paper>
     </Tooltip>
   );

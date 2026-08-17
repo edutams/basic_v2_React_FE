@@ -8,7 +8,7 @@ import { formatCurrency } from '../constants';
 /**
  * Payment Categories — list of categories with amount and share of total.
  */
-const PaymentCategories = ({ payment_categories = [] }) => {
+const PaymentCategories = ({ payment_categories = [], onClick }) => {
   const theme = useTheme();
   const catColors = [
     theme.palette.info.main,
@@ -23,6 +23,7 @@ const PaymentCategories = ({ payment_categories = [] }) => {
       icon={Groups}
       title="Payment Categories"
       color={theme.palette.secondary.main}
+      onClick={onClick}
     >
       <Stack spacing={2} sx={{ flexGrow: 1 }}>
         {payment_categories.map((cat, i) => {

@@ -76,7 +76,7 @@ const ResourceCardSkeleton = () => (
       p: 1.25,
       borderRadius: '12px',
       height: '100%',
-      border: (t) => `1px solid ${t.palette.divider}`,
+      border: '1px rgba(69, 67, 67, 1) solid',
     }}
   >
     <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: '10px' }} />
@@ -231,7 +231,7 @@ const LearnerAnalyticsPanel = ({
             sx={{
               p: 1.75,
               borderRadius: '14px',
-              border: (t) => `1px solid ${t.palette.divider}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50'),
               height: '100%',
             }}
@@ -268,7 +268,7 @@ const LearnerAnalyticsPanel = ({
             sx={{
               p: 1.75,
               borderRadius: '14px',
-              border: (t) => `1px solid ${t.palette.divider}`,
+              border: '1px rgba(69, 67, 67, 1) solid',
               bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50'),
               height: '100%',
             }}
@@ -320,7 +320,7 @@ const LearnerAnalyticsPanel = ({
           mt: 1.5,
           p: 1.75,
           borderRadius: '14px',
-          border: (t) => `1px solid ${t.palette.divider}`,
+          border: '1px rgba(69, 67, 67, 1) solid',
           bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50'),
         }}
       >
@@ -351,7 +351,7 @@ const LearnerAnalyticsPanel = ({
                         p: 1.25,
                         borderRadius: '12px',
                         bgcolor: alpha(meta.color, 0.08),
-                        border: `1px solid ${alpha(meta.color, 0.18)}`,
+                        border: '1px rgba(69, 67, 67, 1) solid',
                         height: '100%',
                       }}
                     >

@@ -1,65 +1,50 @@
+import React from "react";
 import {
   Box,
-  Grid,
   Card,
   CardContent,
   Typography,
   IconButton,
   CircularProgress,
-  Chip,
   Stack,
+  Divider,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 
-// Mock data — replace with API data once the classes endpoint is ready.
 const classesData = [
   {
     id: "ss2a",
     code: "SS2A",
     subject: "Mathematics",
-    lessonsToday: 2,
-    score: 78,
     students: 32,
     attendance: "93%",
-    nextLessonLabel: "Next Lesson",
-    nextLesson: "Tomorrow, 8:00 AM",
     color: "#16a34a",
     cardBg: "#f0fdf4",
     trackColor: "#dcfce7",
     iconBg: "#22c55e",
-    symbol: "\u221Ax",
+    symbol: "√x",
   },
   {
     id: "ss2b",
     code: "SS2B",
     subject: "Mathematics",
-    lessonsToday: 1,
-    score: 72,
     students: 30,
     attendance: "90%",
-    nextLessonLabel: "Next Lesson",
-    nextLesson: "Today, 9:00 AM",
     color: "#2563eb",
     cardBg: "#f0f9ff",
     trackColor: "#dbeafe",
     iconBg: "#3b82f6",
-    symbol: "x\u00B2",
+    symbol: "x²",
   },
   {
     id: "ss1c",
     code: "SS1C",
     subject: "Mathematics",
-    lessonsToday: 2,
-    score: 68,
     students: 33,
     attendance: "91%",
-    nextLessonLabel: "Next Lesson",
-    nextLesson: "Tomorrow, 11:00 AM",
     color: "#7c3aed",
     cardBg: "#f5f3ff",
     trackColor: "#ede9fe",
@@ -70,12 +55,8 @@ const classesData = [
     id: "ss1a",
     code: "SS1A",
     subject: "Mathematics",
-    lessonsToday: 1,
-    score: 76,
     students: 33,
     attendance: "94%",
-    nextLessonLabel: "Next Lesson",
-    nextLesson: "Today, 1:00 PM",
     color: "#ea580c",
     cardBg: "#fff7ed",
     trackColor: "#ffedd5",
@@ -84,139 +65,115 @@ const classesData = [
   },
 ];
 
-function ScoreRing({ score, color, trackColor }) {
-  return (
-    <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-      <CircularProgress
-        variant="determinate"
-        value={100}
-        size={68}
-        thickness={4}
-        sx={{ color: trackColor }}
-      />
-      <CircularProgress
-        variant="determinate"
-        value={score}
-        size={68}
-        thickness={4}
-        sx={{
-          color,
-          position: "absolute",
-          left: 0,
-          "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: 14, fontWeight: 700, lineHeight: 1 }}>
-          {score}%
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
 function ClassCard({ cls }) {
+  const attendanceNum = parseInt(cls.attendance, 10) || cls.attendance;
+
   return (
     <Card
-      variant="outlined"
+      elevation={0}
       sx={{
-        borderRadius: "10px",
+        borderRadius: "12px",
         height: "100%",
         bgcolor: cls.cardBg,
-        borderColor: cls.color,
-        borderWidth: 1.5,
-        transition: "box-shadow 120ms ease, border-color 120ms ease",
-        "&:hover": { boxShadow: 2, borderColor: cls.color },
+        border: "1px solid",
+        borderColor: "grey.200",
+        transition: "transform 180ms ease, box-shadow 180ms ease",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.06)",
+        },
       }}
     >
-      <CardContent sx={{ p: 2.1, "&:last-child": { pb: 2.1 } }}>
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        {/* Top Header */}
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-          <Stack direction="row" spacing={1.25} alignItems="center">
+          <Stack direction="row" spacing={1.5} alignItems="center">
             <Box
               sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: cls.iconBg,
-                color: "#fff",
+                width: 44,
+                height: 44,
+                borderRadius: "10px",
+                bgcolor: cls.iconBg || cls.color,
+                color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: cls.symbol ? 15 : 0,
+                fontSize: cls.symbol ? 16 : 0,
                 fontWeight: 700,
                 flexShrink: 0,
               }}
             >
-              {cls.symbol ?? <BarChartRoundedIcon sx={{ fontSize: 20 }} />}
+              {cls.symbol ?? <BarChartRoundedIcon sx={{ fontSize: 24 }} />}
             </Box>
             <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#1e293b", lineHeight: 1.2 }}>
                 {cls.code}
               </Typography>
-              <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
+              <Typography sx={{ fontSize: 12.5, color: "#64748b", mt: 0.25, fontWeight: 500 }}>
                 {cls.subject}
               </Typography>
             </Box>
           </Stack>
-          <IconButton size="small" sx={{ mt: -0.5, mr: -0.5 }}>
+          <IconButton size="small" sx={{ mt: -0.5, mr: -0.5, color: "#64748b" }}>
             <MoreVertIcon fontSize="small" />
           </IconButton>
         </Stack>
 
-        <Chip
-          size="small"
-          label={`Today: ${cls.lessonsToday} Lesson${cls.lessonsToday > 1 ? "s" : ""}`}
-          sx={{
-            mt: 1.5,
-            bgcolor: cls.trackColor,
-            color: cls.color,
-            fontWeight: 600,
-            fontSize: 11.5,
-            height: 22,
-          }}
-        />
+        {/* Bottom Stat Row */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mt: 2.5 }}
+        >
+          {/* Students Column */}
+          <Box sx={{ flex: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <PeopleOutlineIcon sx={{ fontSize: 20, color: "#1e1b4b" }} />
+              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
+                {cls.students}
+              </Typography>
+            </Stack>
+            <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
+              Students
+            </Typography>
+          </Box>
 
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1.75 }}>
-          <ScoreRing score={cls.score} color={cls.color} trackColor={cls.trackColor} />
-          <Stack spacing={0.9}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <PeopleAltOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-              <Typography sx={{ fontSize: 12.5 }}>
-                <Box component="span" sx={{ fontWeight: 700 }}>
-                  {cls.students}
-                </Box>{" "}
-                Students
+          {/* Vertical Divider */}
+          <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#cbd5e1" }} />
+
+          {/* Attendance Column */}
+          <Box sx={{ flex: 1, pl: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                <CircularProgress
+                  variant="determinate"
+                  value={100}
+                  size={20}
+                  thickness={5}
+                  sx={{ color: cls.trackColor || "#e2e8f0" }}
+                />
+                <CircularProgress
+                  variant="determinate"
+                  value={attendanceNum}
+                  size={20}
+                  thickness={5}
+                  sx={{
+                    color: cls.color,
+                    position: "absolute",
+                    left: 0,
+                    "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
+                  }}
+                />
+              </Box>
+              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
+                {attendanceNum}%
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <FavoriteBorderIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-              <Typography sx={{ fontSize: 12.5 }}>
-                <Box component="span" sx={{ fontWeight: 700 }}>
-                  {cls.attendance}
-                </Box>{" "}
-                Attendance
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <CalendarTodayOutlinedIcon sx={{ fontSize: 15, color: "text.secondary" }} />
-              <Typography sx={{ fontSize: 12.5 }}>
-                {cls.nextLessonLabel}
-                <br />
-                <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
-                  {cls.nextLesson}
-                </Box>
-              </Typography>
-            </Stack>
-          </Stack>
+            <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
+              Attendance
+            </Typography>
+          </Box>
         </Stack>
       </CardContent>
     </Card>
@@ -227,12 +184,14 @@ export default function ClassesOverview() {
   return (
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3 }}>My Classes Overview</Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: "#1e293b" }}>
+          My Classes Overview
+        </Typography>
         <Stack
           direction="row"
           spacing={0.5}
           alignItems="center"
-          sx={{ cursor: "pointer", color: "primary.main" }}
+          sx={{ cursor: "pointer", color: "#06b6d4", "&:hover": { textDecoration: "underline" } }}
         >
           <Typography sx={{ fontSize: 13, fontWeight: 600 }}>View all classes</Typography>
           <ArrowForwardIcon sx={{ fontSize: 15 }} />

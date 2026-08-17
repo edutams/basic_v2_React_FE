@@ -10,6 +10,8 @@ import AlertCard from './AlertCard';
 const OperationalAlerts = ({ operational_alerts = [] }) => {
   const theme = useTheme();
 
+  const alerts = operational_alerts.filter((alert) => alert.type !== 'late_payment');
+
   return (
     <SectionCard
       icon={NotificationsActive}
@@ -17,8 +19,8 @@ const OperationalAlerts = ({ operational_alerts = [] }) => {
       color={theme.palette.error.main}
       sx={{ height: '100%' }}
     >
-      <Stack spacing={2} sx={{ flexGrow: 1 }}>
-        {operational_alerts.map((alert, i) => (
+      <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
+        {alerts.map((alert, i) => (
           <AlertCard key={i} alert={alert} />
         ))}
       </Stack>

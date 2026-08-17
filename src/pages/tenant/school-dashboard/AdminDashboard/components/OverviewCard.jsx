@@ -1,33 +1,16 @@
 import React from 'react';
 import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getStatCardColor } from '@/utils/statCardColors';
-import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
-import { GREEN, makeSparkData, num } from '../constants';
 
 /**
- * Global overview card — circular icon top-left, title, big value, trend, sparkline.
- * Clicking the card opens a breakdown modal, so a tooltip signals it's interactive.
- *
- * sparkData is real month-by-month history from the backend; when it is empty
- * (e.g. an older cached payload) a deterministic placeholder is used.
+ * Compact overview card — horizontal layout (Icon + Title on left, Value on right)
+ * eliminates all empty/dead space in the card.
  */
-const OverviewCard = ({
-  icon: Icon,
-  colorName,
-  title,
-  value,
-  trend,
-  down,
-  sparkData,
-  onClick,
-}) => {
+const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, 0, isDark, theme);
-  const trendUp = num(trend) >= 0;
-  const sparkDataResolved =
-    sparkData && sparkData.length > 0 ? sparkData : makeSparkData(down || !trendUp);
 
   return (
     <Tooltip
@@ -39,97 +22,85 @@ const OverviewCard = ({
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 2,
-          borderRadius: '16px',
-          height: '100%',
+          py: 1.5,
+          px: 1.75,
+          borderRadius: '12px',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           cursor: onClick ? 'pointer' : 'default',
           background: isDark ? theme.palette.background.paper : colors.cardBg,
-          border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : (colors.borderColor || 'grey.200'),
           boxShadow: isDark
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 4px 20px rgba(0,0,0,0.07)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            ? '0 4px 14px rgba(0,0,0,0.25)'
+            : '0 2px 10px rgba(15, 23, 42, 0.04)',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            transform: onClick ? 'translateY(-3px)' : 'none',
+            transform: onClick ? 'translateY(-2px)' : 'none',
             boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
+              ? '0 6px 20px rgba(0,0,0,0.35)'
+              : '0 4px 16px rgba(15, 23, 42, 0.08)',
           },
         }}
       >
-      {/* Icon + title */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-        <Box
-          sx={{
-            width: 42,
-            height: 42,
-            borderRadius: '50%',
-            background: `${colors.iconBg} !important`,
-            boxShadow: isDark
-              ? '0 4px 12px rgba(0,0,0,0.3)'
-              : `0 4px 14px ${colors.iconGlow}`,
-            color: colors.iconColor || '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon sx={{ fontSize: 18 }} />
+        {/* Left Side: Icon + Title */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
+              background: `${colors.iconBg} !important`,
+              boxShadow: isDark
+                ? '0 2px 8px rgba(0,0,0,0.3)'
+                : `0 2px 10px ${colors.iconGlow}`,
+              color: colors.iconColor || '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon sx={{ fontSize: 18 }} />
+          </Box>
+          <Typography
+            sx={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: isDark ? '#E2E8F0' : '#334155',
+              lineHeight: 1.25,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {title}
+          </Typography>
         </Box>
-        <Typography
-          variant="caption"
-          fontWeight={700}
-          sx={{ fontSize: 11, color: 'text.secondary' }}
-        >
-          {title}
-        </Typography>
-      </Box>
 
-      {/* Value */}
-      <Typography
-        sx={{
-          mt: 1.25,
-          fontSize: { xs: 19, md: 22 },
-          fontWeight: 800,
-          lineHeight: 1.1,
-          color: isDark ? '#fff' : colors.accentColor,
-        }}
-      >
-        {value}
-      </Typography>
-
-      {/* Trend */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-        {trendUp ? (
-          <TrendingUp sx={{ fontSize: 12.5, color: GREEN }} />
-        ) : (
-          <TrendingDown sx={{ fontSize: 12.5, color: 'error.main' }} />
-        )}
-        <Typography
-          variant="caption"
-          fontWeight={700}
-          sx={{ fontSize: 10, color: trendUp ? GREEN : 'error.main' }}
-        >
-          {Math.abs(num(trend))}% vs last term
-        </Typography>
-      </Box>
-
-      {/* Sparkline */}
-      <Box sx={{ mt: 'auto', pt: 1, height: 34 }}>
-        <ReusableSparkline
-          data={sparkDataResolved}
-          dataKey="v"
-          color={colors.accentColor}
-          height={34}
-          gradientOpacity={0.3}
-          showTooltip
-          labelKey="label"
-          tooltipValueFormatter={(v) => `${num(v).toLocaleString()} ${title.toLowerCase()}`}
-        />
-      </Box>
+        {/* Right Side: Big Value + Optional Arrow */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0, ml: 1 }}>
+          <Typography
+            sx={{
+              fontSize: { xs: 20, sm: 22, md: 24 },
+              fontWeight: 800,
+              lineHeight: 1,
+              color: isDark ? '#FFF' : colors.accentColor,
+            }}
+          >
+            {value}
+          </Typography>
+          {onClick && (
+            <ArrowForwardIcon
+              sx={{
+                fontSize: 14,
+                color: colors.accentColor,
+                opacity: 0.5,
+              }}
+            />
+          )}
+        </Box>
       </Paper>
     </Tooltip>
   );

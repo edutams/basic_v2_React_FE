@@ -3,7 +3,7 @@ import { Box, Grid, Paper, Skeleton, Stack, useTheme } from '@mui/material';
 
 /**
  * Financial Metrics loading skeleton — mirrors the FinancialMetrics layout with
- * an individual skeleton card per stat (icon tile + title, value, sub, sparkline)
+ * an individual skeleton card per stat (icon tile + title, value, sub)
  * plus the revenue breakdown donut card.
  */
 const FinancialMetricsSkeleton = () => {
@@ -11,15 +11,13 @@ const FinancialMetricsSkeleton = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const cardSx = {
-    p: 2.5,
+    p: 2,
     borderRadius: '16px',
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
     background: isDark ? theme.palette.background.paper : '#fff',
-    border: isDark
-      ? '1px solid rgba(255,255,255,0.12)'
-      : `1px solid ${theme.palette.grey[200]}`,
+    border: '1px rgba(69, 67, 67, 1) solid',
     boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
   };
 
@@ -37,8 +35,6 @@ const FinancialMetricsSkeleton = () => {
             <Skeleton variant="text" width="60%" height={24} sx={{ my: 1 }} />
             {/* Sub */}
             <Skeleton variant="text" width="40%" height={10} />
-            {/* Sparkline */}
-            <Skeleton variant="rounded" height={48} sx={{ mt: 1, width: '100%' }} />
           </Paper>
         </Grid>
       ))}

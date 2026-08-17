@@ -28,8 +28,7 @@ const MetricTile = ({ icon: Icon, color, label, value, sub, right, onClick, load
           display: 'flex',
           flexDirection: 'column',
           cursor: !loading && onClick ? 'pointer' : 'default',
-          border: '2px solid',
-          borderColor: (t) => (t.palette.mode === 'dark' ? alpha(color, 0.5) : color),
+          border: '1px rgba(69, 67, 67, 1) solid',
           bgcolor: (t) => (t.palette.mode === 'dark' ? alpha(color, 0.12) : alpha(color, 0.05)),
           boxShadow: isDark
             ? '0 10px 30px rgba(0,0,0,0.35)'

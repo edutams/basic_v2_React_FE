@@ -5,17 +5,15 @@ import { ArrowForward } from '@mui/icons-material';
 import { CardShell } from '../common';
 import { BLUE, GREEN, ORANGE, PURPLE, num } from '../constants';
 
-// Funnel step card — tinted rounded box with bold value on top,
-// colored label below and optional colored percentage. The label is allowed to
-// wrap (centered) and font sizes scale down on narrow containers so the text
-// always fits inside its card without overflowing.
+// Funnel step card — compact rounded box with bold value on top,
+// colored label below and optional percentage.
 const FunnelCard = ({ color, label, value, pct }) => (
   <Box
     sx={{
       flex: '1 1 0',
       minWidth: 0,
-      p: { xs: 1.25, sm: 1.5, lg: 1.25 },
-      borderRadius: '12px',
+      p: { xs: 0.75, sm: 1 },
+      borderRadius: '8px',
       bgcolor: (t) => (t.palette.mode === 'dark' ? alpha(color, 0.12) : alpha(color, 0.08)),
       border: '1px solid',
       borderColor: (t) => (t.palette.mode === 'dark' ? alpha(color, 0.32) : alpha(color, 0.2)),
@@ -27,22 +25,21 @@ const FunnelCard = ({ color, label, value, pct }) => (
       transition: 'all 0.2s ease',
       '&:hover': {
         transform: 'translateY(-2px)',
-        boxShadow: `0 4px 12px ${alpha(color, 0.2)}`,
+        boxShadow: `0 3px 10px ${alpha(color, 0.2)}`,
       },
     }}
   >
     <Typography
       sx={{
-        fontSize: { xs: 8, sm: 9, lg: 8.5 },
+        fontSize: { xs: 8, sm: 8.5 },
         fontWeight: 700,
         color,
         letterSpacing: 0.3,
-        mb: 0.5,
+        mb: 0.25,
         textTransform: 'uppercase',
-        lineHeight: 1.35,
+        lineHeight: 1.2,
         whiteSpace: 'normal',
         overflowWrap: 'break-word',
-        minHeight: { xs: 22, sm: 26 },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -52,10 +49,10 @@ const FunnelCard = ({ color, label, value, pct }) => (
     </Typography>
     <Typography
       sx={{
-        fontSize: { xs: 12, sm: 13, lg: 12 },
+        fontSize: { xs: 12, sm: 13 },
         fontWeight: 800,
         color: 'text.primary',
-        lineHeight: 1.15,
+        lineHeight: 1.1,
         whiteSpace: 'nowrap',
       }}
     >
@@ -64,10 +61,10 @@ const FunnelCard = ({ color, label, value, pct }) => (
     {pct !== undefined && (
       <Typography
         sx={{
-          fontSize: { xs: 8, sm: 9, lg: 8.5 },
+          fontSize: { xs: 8, sm: 8.5 },
           fontWeight: 700,
           color,
-          mt: 0.4,
+          mt: 0.25,
           lineHeight: 1,
           whiteSpace: 'nowrap',
         }}
@@ -79,10 +76,8 @@ const FunnelCard = ({ color, label, value, pct }) => (
 );
 
 /**
- * Overall Enrollment Ratio + Conversion Funnel — a full-width pair:
- * left shows the blue ratio percentage on a soft blue background,
- * right shows the Applicants → Admitted → Accepted funnel on a soft
- * violet background, wide enough that every step is fully visible.
+ * Overall Enrollment Ratio + Conversion Funnel — compact pair:
+ * Reduced inner/outer padding to eliminate excess whitespace.
  */
 const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, enrollmentRate }) => {
   const theme = useTheme();
@@ -91,23 +86,22 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
   return (
     <CardShell
       sx={{
-        p: 1,
+        p: 0.75,
         height: 'auto',
         bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
       }}
     >
-      <Grid container spacing={1}>
-        {/* Overall Enrollment Ratio — soft blue background, always beside the
-            funnel on sm+ (they only stack on the narrowest xs screens). */}
+      <Grid container spacing={1} alignItems="stretch">
+        {/* Overall Enrollment Ratio */}
         <Grid size={{ xs: 12, sm: 4 }}>
           <Box
             sx={{
-              p: { xs: 2, lg: 1.5 },
+              p: { xs: 1.25, sm: 1.25, lg: 1.25 },
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              borderRadius: '10px',
+              borderRadius: '8px',
               border: '1px solid',
               borderColor: (t) => (t.palette.mode === 'dark' ? alpha(BLUE, 0.32) : alpha(BLUE, 0.18)),
               bgcolor: (t) => (t.palette.mode === 'dark' ? alpha(BLUE, 0.14) : alpha(BLUE, 0.07)),
@@ -115,27 +109,27 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
           >
             <Typography
               sx={{
-                fontSize: { xs: 10, lg: 9 },
+                fontSize: { xs: 9.5, lg: 9 },
                 fontWeight: 700,
                 color: 'text.secondary',
-                mb: 1,
+                mb: 0.75,
                 letterSpacing: 0.2,
-                lineHeight: 1.35,
+                lineHeight: 1.2,
               }}
             >
               Overall Enrollment Ratio
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: { xs: 1.5, lg: 1 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
               {/* Left: percentage and fraction */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   sx={{
-                    fontSize: { xs: 16, sm: 18, lg: 17 },
+                    fontSize: { xs: 16, sm: 17 },
                     fontWeight: 800,
                     color: BLUE,
                     lineHeight: 1,
-                    mb: 0.5,
+                    mb: 0.35,
                     whiteSpace: 'nowrap',
                   }}
                 >
@@ -143,7 +137,7 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: { xs: 9, sm: 10, lg: 9 },
+                    fontSize: { xs: 8.5, sm: 9 },
                     color: 'text.secondary',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
@@ -155,23 +149,21 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
 
               {/* Right: circular progress ring */}
               <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                {/* Background ring */}
                 <CircularProgress
                   variant="determinate"
                   value={100}
-                  size={{ xs: 52, lg: 44 }}
-                  thickness={5}
+                  size={{ xs: 44, lg: 40 }}
+                  thickness={4.5}
                   sx={{
                     color: isDark ? 'rgba(255,255,255,0.1)' : alpha(BLUE, 0.15),
                     position: 'absolute',
                   }}
                 />
-                {/* Foreground progress ring */}
                 <CircularProgress
                   variant="determinate"
                   value={Math.min(overallRatio, 100)}
-                  size={{ xs: 52, lg: 44 }}
-                  thickness={5}
+                  size={{ xs: 44, lg: 40 }}
+                  thickness={4.5}
                   sx={{
                     color: BLUE,
                     '& .MuiCircularProgress-circle': {
@@ -184,16 +176,16 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
           </Box>
         </Grid>
 
-        {/* Conversion Funnel — very wide, soft violet background */}
+        {/* Conversion Funnel */}
         <Grid size={{ xs: 12, sm: 8 }}>
           <Box
             sx={{
-              p: { xs: 2, sm: 1.5 },
+              p: { xs: 1.25, sm: 1.25 },
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              borderRadius: '10px',
+              borderRadius: '8px',
               border: '1px solid',
               borderColor: (t) => (t.palette.mode === 'dark' ? alpha(PURPLE, 0.32) : alpha(PURPLE, 0.18)),
               bgcolor: (t) => (t.palette.mode === 'dark' ? alpha(PURPLE, 0.14) : alpha(PURPLE, 0.06)),
@@ -201,11 +193,12 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
           >
             <Typography
               sx={{
-                fontSize: 10,
+                fontSize: { xs: 9.5, lg: 9 },
                 fontWeight: 700,
                 color: 'text.secondary',
-                mb: 1,
+                mb: 0.75,
                 letterSpacing: 0.2,
+                lineHeight: 1.2,
               }}
             >
               Conversion Funnel
@@ -216,7 +209,7 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: { xs: 1, lg: 0.5 },
+                gap: { xs: 0.5, sm: 0.75 },
               }}
             >
               {/* Applicants */}
@@ -228,10 +221,10 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
 
               <ArrowForward
                 sx={{
-                  fontSize: { xs: 16, lg: 14 },
+                  fontSize: { xs: 14, lg: 13 },
                   color: 'text.disabled',
                   flexShrink: 0,
-                  mx: { xs: -0.5, lg: -1 },
+                  mx: { xs: -0.25, sm: 0 },
                 }}
               />
 
@@ -245,10 +238,10 @@ const RatioAndFunnel = ({ overallRatio, conversionFunnel, funnelAdmittedRate, en
 
               <ArrowForward
                 sx={{
-                  fontSize: { xs: 16, lg: 14 },
+                  fontSize: { xs: 14, lg: 13 },
                   color: 'text.disabled',
                   flexShrink: 0,
-                  mx: { xs: -0.5, lg: -1 },
+                  mx: { xs: -0.25, sm: 0 },
                 }}
               />
 

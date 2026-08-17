@@ -8,7 +8,7 @@ import { formatCurrency } from '../constants';
 /**
  * Fee Intelligence — list of fee types with collected amount and label.
  */
-const FeeIntelligence = ({ fee_intelligence = [] }) => {
+const FeeIntelligence = ({ fee_intelligence = [], onClick }) => {
   const theme = useTheme();
   const feeIcons = [Description, TaskAlt, Grade];
   const feeColors = [
@@ -18,7 +18,7 @@ const FeeIntelligence = ({ fee_intelligence = [] }) => {
   ];
 
   return (
-    <SectionCard icon={Insights} title="Fee Intelligence" color={theme.palette.info.main}>
+    <SectionCard icon={Insights} title="Fee Intelligence" color={theme.palette.info.main} onClick={onClick}>
       <Stack spacing={2}>
         {fee_intelligence.map((fee, i) => {
           const Icon = feeIcons[i % feeIcons.length];

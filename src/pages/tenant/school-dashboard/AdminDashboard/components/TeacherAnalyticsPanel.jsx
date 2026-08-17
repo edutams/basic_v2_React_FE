@@ -8,7 +8,6 @@ import {
   VideoLibrary,
   Insights,
 } from '@mui/icons-material';
-import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
 import { Panel, SectionHeader } from '../common';
 import { BLUE, GREEN, ORANGE, PURPLE, MOCK_TOP_RESOURCES, num } from '../constants';
 import MetricTile from './MetricTile';
@@ -19,13 +18,6 @@ import HBarChart from './HBarChart';
  */
 const TeacherAnalyticsPanel = ({ ta, onViewAll, onTileClick }) => {
   const theme = useTheme();
-
-  // Real monthly resource-creation series from the backend; falls back to an
-  // empty array so the sparkline renders flat when there is no history.
-  const usageSeries = (ta?.resource_usage_series || []).map((p) => ({
-    label: p.label,
-    v: num(p.v),
-  }));
 
   return (
     <Panel>
@@ -79,18 +71,6 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll, onTileClick }) => {
             color={BLUE}
             label="Resource Usage (Access by Teachers)"
             value={ta.resource_usage?.level || 'High'}
-            right={
-              <Box sx={{ width: 76, height: 30 }}>
-                <ReusableSparkline
-                  data={usageSeries}
-                  dataKey="v"
-                  color={GREEN}
-                  height={30}
-                  gradientOpacity={0.3}
-                  activeDot={false}
-                />
-              </Box>
-            }
             onClick={onTileClick ? () => onTileClick('resources') : undefined}
           />
         </Grid>
@@ -103,7 +83,7 @@ const TeacherAnalyticsPanel = ({ ta, onViewAll, onTileClick }) => {
           p: 1.75,
           borderRadius: '14px',
           bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50'),
-          border: (t) => `1px solid ${t.palette.divider}`,
+          border: '1px rgba(69, 67, 67, 1) solid',
         }}
       >
         <Typography sx={{ fontSize: 11.5, fontWeight: 700, mb: 1 }}>

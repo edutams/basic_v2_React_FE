@@ -1,19 +1,23 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ChevronRight, ArrowForward } from '@mui/icons-material';
 
 // Panel — rounded section container with subtle border & shadow
 export const Panel = ({ children, sx = {} }) => {
-  const theme = useTheme();
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: 3,
-        border: '1px solid',
-        borderColor: theme.palette.divider,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        border: (t) =>
+          t.palette.mode === 'dark'
+            ? '1px solid rgba(255,255,255,0.12)'
+            : `1px solid ${t.palette.grey[200]}`,
+        boxShadow: (t) =>
+          t.palette.mode === 'dark'
+            ? '0 10px 30px rgba(0,0,0,0.35)'
+            : '0 2px 12px rgba(15,23,42,0.04)',
         p: 2.5,
         height: '100%',
         display: 'flex',

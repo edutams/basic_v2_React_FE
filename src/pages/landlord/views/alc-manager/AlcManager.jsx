@@ -40,6 +40,7 @@ import {
   IconShieldLock,
   IconUsers,
   IconX,
+  IconDownload,
 } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
@@ -101,7 +102,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Filters"
-        body="Use the search bar and role type filter to quickly narrow down roles."
+        body="Use the search bar, status & type filters, or More Filters to narrow down roles."
       />
     ),
   },
@@ -110,7 +111,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Roles Table"
-        body="Each row shows a role, description, assigned members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned members."
+        body="Each row shows a role, description, assigned organizations/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned organizations."
       />
     ),
   },
@@ -413,6 +414,48 @@ const AlcManager = () => {
     handleMenuClose();
   };
 
+  const handleExportRoles = () => {
+    if (!rows || rows.length === 0) {
+      notify.error('No roles available to export');
+      return;
+    }
+
+    const dataToExport = rows.map((row, index) => {
+      const isCustom = row.is_sys !== 'yes' && !row.is_system;
+      const uCount = row.users_count ?? row.totalUsers ?? 0;
+      const uDate = row.updated_at
+        ? new Date(row.updated_at).toLocaleDateString()
+        : row.created_at
+          ? new Date(row.created_at).toLocaleDateString()
+          : '—';
+
+      return {
+        'S/N': index + 1,
+        'Role Name': formatRoleName(row.name),
+        Description: row.description || '—',
+        Type: isCustom ? 'Custom Role' : 'System Role',
+        'Assigned Members': uCount,
+        'Last Updated': uDate,
+      };
+    });
+
+    const headers = Object.keys(dataToExport[0]).join(',');
+    const csvRows = dataToExport.map((r) =>
+      Object.values(r)
+        .map((val) => `"${val}"`)
+        .join(','),
+    );
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...csvRows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `landlord_roles_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify.success('Roles exported successfully!');
+  };
+
   const hasFilters = appliedFilters.search || appliedFilters.type !== 'all';
 
   return (
@@ -503,9 +546,79 @@ const AlcManager = () => {
             title={
               <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
                 <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
+                <ShowTourGuideButton />
+              </Box>
+            }
+          >
+            <Box
+              sx={{ mb: 3 }}
+              data-tour="acl-role-filter"
+            >
+              <Stack
+                direction={{ xs: 'column', md: 'row' }}
+                spacing={2}
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems="center"
+                  sx={{ width: { xs: '100%', md: 'auto' } }}
+                >
+                  <TextField
+                    placeholder="Search role by name or description…"
+                    size="small"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
+                    sx={{ width: { xs: '100%', sm: 300, md: 340 } }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                <Box display="flex" alignItems="center" gap={1}>
-                  <ShowTourGuideButton />
+                  <FormControl size="small" sx={{ minWidth: 130 }}>
+                    <Select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="all">All Types</MenuItem>
+                      <MenuItem value="system">System Roles</MenuItem>
+                      <MenuItem value="custom">Custom Roles</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    onClick={handleApplySearch}
+                    sx={{ px: 2.5, height: 40 }}
+                  >
+                    Search
+                  </Button>
+
+                  {hasFilters && (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      startIcon={<IconX size={16} />}
+                      onClick={handleClearFilters}
+                      sx={{ height: 40, px: 2, textTransform: 'none' }}
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </Stack>
+
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
                   <Button
                     variant="contained"
                     size="small"
@@ -516,76 +629,22 @@ const AlcManager = () => {
                       setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
                       setNewRoleModalOpen(true);
                     }}
+                    sx={{ height: 40, px: 2.5, textTransform: 'none' }}
                   >
                     New Role
                   </Button>
-                </Box>
-              </Box>
-            }
-          >
-            {/* ── Filter Controls Bar ── */}
-            <Box
-              sx={{
-                p: 2,
-                mb: 3,
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-              data-tour="acl-role-filter"
-            >
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-                <TextField
-                  placeholder="Search role by name or description…"
-                  size="small"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
-                  sx={{ flexGrow: 1, minWidth: { sm: 240 } }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
 
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <Select
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value)}
-                    displayEmpty
-                  >
-                    <MenuItem value="all">All Types</MenuItem>
-                    <MenuItem value="system">System Roles</MenuItem>
-                    <MenuItem value="custom">Custom Roles</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="primary"
-                  onClick={handleApplySearch}
-                  sx={{ px: 3, height: 40 }}
-                >
-                  Search
-                </Button>
-
-                {hasFilters && (
                   <Button
-                    variant="text"
-                    color="error"
+                    variant="outlined"
                     size="small"
-                    startIcon={<IconX size={16} />}
-                    onClick={handleClearFilters}
-                    sx={{ height: 40 }}
+                    color="primary"
+                    startIcon={<IconDownload size={18} />}
+                    onClick={handleExportRoles}
+                    sx={{ height: 40, px: 2, textTransform: 'none' }}
                   >
-                    Clear
+                    Export
                   </Button>
-                )}
+                </Stack>
               </Stack>
             </Box>
 

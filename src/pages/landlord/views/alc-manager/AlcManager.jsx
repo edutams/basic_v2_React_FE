@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useNotification } from '@/hooks/useNotification';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 import {
   Box,
@@ -179,6 +180,7 @@ const analysisTourSteps = [
 
 const AlcManager = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
@@ -619,20 +621,22 @@ const AlcManager = () => {
                 </Stack>
 
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="primary"
-                    data-tour="acl-role-new"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
-                      setNewRoleModalOpen(true);
-                    }}
-                    sx={{ height: 40, px: 2.5, textTransform: 'none' }}
-                  >
-                    New Role
-                  </Button>
+                  {can('landlord.acl.roles.create') && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="primary"
+                      data-tour="acl-role-new"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
+                        setNewRoleModalOpen(true);
+                      }}
+                      sx={{ height: 40, px: 2.5, textTransform: 'none' }}
+                    >
+                      New Role
+                    </Button>
+                  )}
 
                   <Button
                     variant="outlined"
@@ -706,8 +710,8 @@ const AlcManager = () => {
                                 label={isSysRole ? 'System Role' : 'Custom Role'}
                                 size="small"
                                 sx={{
-                                  bgcolor: isSysRole ? '#E6F7F0' : '#EFF6FF',
-                                  color: isSysRole ? '#059669' : '#2563EB',
+                                  bgcolor: isSysRole ? 'primary.light' : 'secondary.light',
+                                  color: isSysRole ? 'primary.main' : 'secondary.main',
                                   fontWeight: 600,
                                   fontSize: '0.75rem',
                                   borderRadius: '12px',
@@ -752,10 +756,12 @@ const AlcManager = () => {
                                 <MenuItem onClick={() => handleViewPermission(row)}>
                                   View Permissions
                                 </MenuItem>
-                                <MenuItem onClick={() => handleAttachPermission(row)}>
-                                  Attach Permissions
-                                </MenuItem>
-                                {!isSysRole && (
+                                {can('landlord.acl.roles.attach_permissions') && (
+                                  <MenuItem onClick={() => handleAttachPermission(row)}>
+                                    Attach Permissions
+                                  </MenuItem>
+                                )}
+                                {!isSysRole && can('landlord.acl.roles.update') && (
                                   <MenuItem onClick={() => handleEditRole(row)}>
                                     Edit Role
                                   </MenuItem>

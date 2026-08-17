@@ -32,6 +32,13 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
+import {
+  IconUsers,
+  IconUserCheck,
+  IconUserOff,
+  IconShieldCheck,
+} from '@tabler/icons-react';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import DirectPermissionModal from './DirectPermissionModal';
@@ -40,9 +47,11 @@ import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import aclApi from '@/api/landlord/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 const AssignmentManagement = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
   const { user: currentUser } = useAuth();
   const currentUserLevel = currentUser?.access_level;
   const [users, setUsers] = useState([]);
@@ -88,6 +97,7 @@ const AssignmentManagement = () => {
         parent_id: u.parent_id || null,
         status: u.status || 'active',
         assignedRoles: u.roles || [],
+        last_active: u.last_active || u.last_login_at || u.updated_at || u.created_at || null,
       }));
 
       setUsers(normalized);
@@ -102,6 +112,20 @@ const AssignmentManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const userStats = useMemo(() => {
+    const total = users.length;
+    const assigned = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 0).length;
+    const unassigned = total - assigned;
+    const multiRole = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 1).length;
+
+    return {
+      total,
+      assigned,
+      unassigned,
+      multiRole,
+    };
+  }, [users]);
   const getInitials = (name = '') =>
     name
       .split(' ')
@@ -376,16 +400,58 @@ const AssignmentManagement = () => {
   const hasFilters = nameFilter !== '' || userTypeFilter !== '' || levelFilter !== '';
 
   return (
-    <ParentCard
-      title={
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-          <Typography variant="h5" data-tour="acl-assign-heading">
-            Assign Roles/Permission to Organizations
-          </Typography>
-          <ShowTourGuideButton />
-        </Box>
-      }
-    >
+    <Box>
+      {/* ── Summary Stat Cards ── */}
+      <Grid container spacing={2} mb={3} data-tour="acl-assign-stats">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label="Total Members"
+            count={userStats.total}
+            icon={IconUsers}
+            color="primary"
+            subtitle="All registered accounts"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label="Assigned Members"
+            count={userStats.assigned}
+            icon={IconUserCheck}
+            color="success"
+            subtitle="Accounts with roles"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label="Unassigned Members"
+            count={userStats.unassigned}
+            icon={IconUserOff}
+            color="warning"
+            subtitle="Accounts without roles"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            label="Multi-Role Members"
+            count={userStats.multiRole}
+            icon={IconShieldCheck}
+            color="info"
+            subtitle="Accounts with multiple roles"
+          />
+        </Grid>
+      </Grid>
+
+      <ParentCard
+        title={
+          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+            <Typography variant="h5" data-tour="acl-assign-heading">
+              Assign Roles/Permission to Organizations
+            </Typography>
+            <ShowTourGuideButton />
+          </Box>
+        }
+      >
+
       <Grid container spacing={1} mb={3} alignItems="center">
         <Grid size={{ xs: 12, md: 4 }}>
           <TextField
@@ -444,9 +510,10 @@ const AssignmentManagement = () => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: { xs: '30%', md: '22%' } }}>User Details</TableCell>
-                <TableCell sx={{ width: { xs: '25%', md: '18%' } }}>Organization</TableCell>
-                <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>Assigned Role</TableCell>
+                <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>User Details</TableCell>
+                <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Organization</TableCell>
+                <TableCell sx={{ width: { xs: '25%', md: '22%' } }}>Assigned Role</TableCell>
+                <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
                 <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
                   Action
                 </TableCell>
@@ -455,7 +522,7 @@ const AssignmentManagement = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
@@ -528,6 +595,17 @@ const AssignmentManagement = () => {
                         ))}
                       </Box>
                     </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {user.last_active
+                          ? new Date(user.last_active).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                          : 'Recently'}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="center" data-tour="acl-assign-view">
                       <IconButton onClick={(e) => handleMenuOpen(e, user)}>
                         <MoreVertIcon />
@@ -537,15 +615,19 @@ const AssignmentManagement = () => {
                         open={Boolean(anchorEl) && selectedRow?.id === user.id}
                         onClose={handleMenuClose}
                       >
-                        <MenuItem onClick={() => handleAction('edit', user)}>
-                          Assign Role
-                        </MenuItem>
+                        {can('landlord.acl.user.assign_role') && (
+                          <MenuItem onClick={() => handleAction('edit', user)}>
+                            Assign Role
+                          </MenuItem>
+                        )}
                         <MenuItem onClick={() => handleAction('view', user)}>
                           View Assigned Roles
                         </MenuItem>
-                        <MenuItem onClick={() => handleAction('directPermission', user)}>
-                          Assign Direct Permission
-                        </MenuItem>
+                        {can('landlord.acl.user.assign_permission') && (
+                          <MenuItem onClick={() => handleAction('directPermission', user)}>
+                            Assign Direct Permission
+                          </MenuItem>
+                        )}
                         <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
                           View Permission
                         </MenuItem>
@@ -555,7 +637,7 @@ const AssignmentManagement = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     <Alert
                       severity="info"
                       sx={{
@@ -587,7 +669,7 @@ const AssignmentManagement = () => {
                     setRowsPerPage(parseInt(e.target.value, 10));
                     setPage(0);
                   }}
-                  colSpan={5}
+                  colSpan={6}
                 />
               </TableRow>
             </TableFooter>
@@ -620,6 +702,7 @@ const AssignmentManagement = () => {
         onPermissionSave={handleViewDirectPermissionSave}
       />
     </ParentCard>
+  </Box>
   );
 };
 

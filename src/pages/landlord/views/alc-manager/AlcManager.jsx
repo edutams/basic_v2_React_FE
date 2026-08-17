@@ -464,50 +464,6 @@ const AlcManager = () => {
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
       <Breadcrumb title="ACL Manager" items={BCrumb} />
 
-      {/* ── Summary Stat Cards ── */}
-      <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Total Roles"
-            title="Total Roles"
-            count={stats.totalRoles}
-            icon={IconShield}
-            color="primary"
-            subtitle="All defined roles"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="System Roles"
-            title="System Roles"
-            count={stats.systemRoles}
-            icon={IconShieldLock}
-            color="success"
-            subtitle="Platform default roles"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Custom Roles"
-            title="Custom Roles"
-            count={stats.customRoles}
-            icon={IconShield}
-            color="warning"
-            subtitle="Custom created roles"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Assigned Members"
-            title="Assigned Members"
-            count={stats.totalUsersAssigned}
-            icon={IconUsers}
-            color="info"
-            subtitle="Members with roles"
-          />
-        </Grid>
-      </Grid>
-
       {/* ── Navigation Tabs ── */}
       <Box
         sx={{
@@ -544,14 +500,59 @@ const AlcManager = () => {
 
       {activeTab === 'Role Management' && (
         <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
-          <ParentCard
-            title={
-              <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-                <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
-                <ShowTourGuideButton />
-              </Box>
-            }
-          >
+          <Box>
+            {/* ── Summary Stat Cards ── */}
+            <Grid container spacing={3} mb={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Total Roles"
+                  title="Total Roles"
+                  count={stats.totalRoles}
+                  icon={IconShield}
+                  color="primary"
+                  subtitle="All defined roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="System Roles"
+                  title="System Roles"
+                  count={stats.systemRoles}
+                  icon={IconShieldLock}
+                  color="success"
+                  subtitle="Platform default roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Custom Roles"
+                  title="Custom Roles"
+                  count={stats.customRoles}
+                  icon={IconShield}
+                  color="warning"
+                  subtitle="Custom created roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Assigned Members"
+                  title="Assigned Members"
+                  count={stats.totalUsersAssigned}
+                  icon={IconUsers}
+                  color="info"
+                  subtitle="Members with roles"
+                />
+              </Grid>
+            </Grid>
+
+            <ParentCard
+              title={
+                <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+                  <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
+                  <ShowTourGuideButton />
+                </Box>
+              }
+            >
             <Box
               sx={{ mb: 3 }}
               data-tour="acl-role-filter"
@@ -806,6 +807,7 @@ const AlcManager = () => {
               </TableContainer>
             </Box>
           </ParentCard>
+        </Box>
         </AclTourProvider>
       )}
 

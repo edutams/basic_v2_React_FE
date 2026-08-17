@@ -143,45 +143,45 @@ const AssignmentManagement = () => {
   };
 
   const getRoleSx = (role) => {
-    const normalizedRole = role?.toString().toLowerCase();
+    const rawRole = role?.toString() || '';
+    const normalizedRole = rawRole.toLowerCase().trim().replace(/[\s_]+/g, '_');
 
+    // Specific system role assignments
     const roleStyles = {
-      user: {
-        backgroundColor: (theme) => theme.palette.success.light,
-        color: (theme) => theme.palette.success.main,
-      },
-      admin: {
-        backgroundColor: (theme) => theme.palette.error.light,
-        color: (theme) => theme.palette.error.main,
-      },
-      customer: {
-        backgroundColor: (theme) => theme.palette.info.light,
-        color: (theme) => theme.palette.info.main,
-      },
-      manager: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
-      },
-      organization: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
-      },
       super_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
-      superadmin: {
-        backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
+      agent: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      team_member: {
+        backgroundColor: (theme) => theme.palette.warning.light,
+        color: (theme) => theme.palette.warning.main,
       },
     };
 
-    return (
-      roleStyles[normalizedRole] || {
-        backgroundColor: (theme) => theme.palette.grey[200],
-        color: (theme) => theme.palette.grey[700],
-      }
-    );
+    if (roleStyles[normalizedRole]) {
+      return roleStyles[normalizedRole];
+    }
+
+    // 100% Dynamic theme palette generator for ANY newly created role
+    const themePalettes = [
+      { backgroundColor: (theme) => theme.palette.primary.light, color: (theme) => theme.palette.primary.main },
+      { backgroundColor: (theme) => theme.palette.secondary.light, color: (theme) => theme.palette.secondary.main },
+      { backgroundColor: (theme) => theme.palette.success.light, color: (theme) => theme.palette.success.main },
+      { backgroundColor: (theme) => theme.palette.info.light, color: (theme) => theme.palette.info.main },
+      { backgroundColor: (theme) => theme.palette.warning.light, color: (theme) => theme.palette.warning.main },
+      { backgroundColor: (theme) => theme.palette.error.light, color: (theme) => theme.palette.error.main },
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < rawRole.length; i++) {
+      hash = rawRole.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % themePalettes.length;
+    return themePalettes[index];
   };
 
   const getLevelChipSx = (level) => {
@@ -452,257 +452,266 @@ const AssignmentManagement = () => {
         }
       >
 
-      <Grid container spacing={1} mb={3} alignItems="center">
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Search by Name"
-            value={nameFilterInput}
-            onChange={(e) => setNameFilterInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            data-tour="acl-assign-search"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-
-        {currentUserLevel === 1 && (
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="level-filter-label">Organization Level</InputLabel>
-              <Select
-                labelId="level-filter-label"
-                value={levelFilter}
-                label="Organization Level"
-                onChange={(e) => {
-                  setLevelFilter(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <SelectMenuItem value="">All Levels</SelectMenuItem>
-                <SelectMenuItem value="1">Level 1</SelectMenuItem>
-                <SelectMenuItem value="2">Level 2</SelectMenuItem>
-                <SelectMenuItem value="3">Level 3</SelectMenuItem>
-                <SelectMenuItem value="4">Level 4</SelectMenuItem>
-                <SelectMenuItem value="5">Level 5</SelectMenuItem>
-              </Select>
-            </FormControl>
+        <Grid container spacing={1} mb={3} alignItems="center">
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Search by Name"
+              value={nameFilterInput}
+              onChange={(e) => setNameFilterInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              data-tour="acl-assign-search"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
           </Grid>
-        )}
 
-        {/* 👇 key change */}
-        <Grid size="auto">
-          <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
-            Search
-          </Button>
-        </Grid>
-      </Grid>
-      <Box sx={{ p: 0 }}>
-        {/* <Paper> */}
-        <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 600 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>User Details</TableCell>
-                <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Organization</TableCell>
-                <TableCell sx={{ width: { xs: '25%', md: '22%' } }}>Assigned Role</TableCell>
-                <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
-                <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
-                  Action
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
-              ) : paginatedFilteredUsers.length > 0 ? (
-                paginatedFilteredUsers.map((user, index) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user.image}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        >
-                          {!user.image && getInitials(user.name)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {user.name}
-                          </Typography>
-                          <Typography variant="small" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user?.organization_logo}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        >
-                          {!user?.organization_logo && getInitials(user?.organization_name)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {user?.organization_name}
-                          </Typography>
-                          <Typography variant="body2">{user.organization_email}</Typography>
-
-                          <Typography variant="body2" color="text.secondary">
-                            {user?.organization_code}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {user.assignedRoles?.map((role, i) => (
-                          <Chip
-                            key={i}
-                            label={typeof role === 'object' ? role.name : role}
-                            size="small"
-                            sx={{
-                              borderRadius: '8px',
-                              ...getRoleSx(typeof role === 'object' ? role.name : role),
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {user.last_active
-                          ? new Date(user.last_active).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'Recently'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center" data-tour="acl-assign-view">
-                      <IconButton onClick={(e) => handleMenuOpen(e, user)}>
-                        <MoreVertIcon />
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl) && selectedRow?.id === user.id}
-                        onClose={handleMenuClose}
-                      >
-                        {can('landlord.acl.user.assign_role') && (
-                          <MenuItem onClick={() => handleAction('edit', user)}>
-                            Assign Role
-                          </MenuItem>
-                        )}
-                        <MenuItem onClick={() => handleAction('view', user)}>
-                          View Assigned Roles
-                        </MenuItem>
-                        {can('landlord.acl.user.assign_permission') && (
-                          <MenuItem onClick={() => handleAction('directPermission', user)}>
-                            Assign Direct Permission
-                          </MenuItem>
-                        )}
-                        <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
-                          View Permission
-                        </MenuItem>
-                      </Menu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <Alert
-                      severity="info"
-                      sx={{
-                        mb: 3,
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        '& .MuiAlert-icon': {
-                          mr: 1.5,
-                        },
-                      }}
-                    >
-                      {hasFilters
-                        ? 'No users match the current filters.'
-                        : 'No users available. Add new users or adjust filters.'}
-                    </Alert>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25]}
-                  count={filteredUsers.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={(_, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
+          {currentUserLevel === 1 && (
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="level-filter-label">Organization Level</InputLabel>
+                <Select
+                  labelId="level-filter-label"
+                  value={levelFilter}
+                  label="Organization Level"
+                  onChange={(e) => {
+                    setLevelFilter(e.target.value);
                     setPage(0);
                   }}
-                  colSpan={6}
-                />
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
-        {/* </Paper> */}
-      </Box>
+                >
+                  <SelectMenuItem value="">All Levels</SelectMenuItem>
+                  <SelectMenuItem value="1">Level 1</SelectMenuItem>
+                  <SelectMenuItem value="2">Level 2</SelectMenuItem>
+                  <SelectMenuItem value="3">Level 3</SelectMenuItem>
+                  <SelectMenuItem value="4">Level 4</SelectMenuItem>
+                  <SelectMenuItem value="5">Level 5</SelectMenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
 
-      <RoleAttachmentModal
-        open={roleAttachmentModalOpen}
-        onClose={() => setRoleAttachmentModalOpen(false)}
-        currentAgent={currentOrganizationForRole}
-        onRoleSelection={handleRoleSelection}
-      />
-      <ViewRoleModal
-        open={viewRoleModalOpen}
-        onClose={() => setViewRoleModalOpen(false)}
-        currentUser={currentOrganizationForRole}
-      />
-      <DirectPermissionModal
-        open={directPermissionModalOpen}
-        onClose={() => setDirectPermissionModalOpen(false)}
-        currentAgent={currentOrganizationForRole}
-        onPermissionSave={handleDirectPermissionSave}
-      />
-      <ViewDirectPermissionModal
-        open={viewDirectPermissionModalOpen}
-        onClose={() => setViewDirectPermissionModalOpen(false)}
-        currentUser={currentOrganizationForRole}
-        onPermissionSave={handleViewDirectPermissionSave}
-      />
-    </ParentCard>
-  </Box>
+          {/* 👇 key change */}
+          <Grid size="auto">
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
+              Search
+            </Button>
+          </Grid>
+        </Grid>
+        <Box sx={{ p: 0 }}>
+          {/* <Paper> */}
+          <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 600 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: '5%' }}>#</TableCell>
+                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>User Details</TableCell>
+                  <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Organization</TableCell>
+                  <TableCell sx={{ width: { xs: '25%', md: '22%' } }}>Assigned Role</TableCell>
+                  <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
+                  <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
+                    Action
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedFilteredUsers.length > 0 ? (
+                  paginatedFilteredUsers.map((user, index) => {
+                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.last_active || user.updated_at || user.created_at;
+                    const lastActiveDate = lastActiveRaw
+                      ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : 'No activity yet';
+                    const lastActiveTime = lastActiveRaw
+                      ? new Date(lastActiveRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                      : '';
+
+                    return (
+                      <TableRow key={user.id || index} hover>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                              src={user.image}
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                fontSize: 11,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                              }}
+                            >
+                              {!user.image && getInitials(user.name)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={500} noWrap>
+                                {user.name}
+                              </Typography>
+                              <Typography variant="small" color="text.secondary">
+                                {user.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                              src={user?.organization_logo}
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                fontSize: 11,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                              }}
+                            >
+                              {!user?.organization_logo && getInitials(user?.organization_name)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={500} noWrap>
+                                {user?.organization_name}
+                              </Typography>
+                              <Typography variant="body2">{user.organization_email}</Typography>
+
+                              <Typography variant="body2" color="text.secondary">
+                                {user?.organization_code}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                            {user.assignedRoles?.map((role, i) => (
+                              <Chip
+                                key={i}
+                                label={typeof role === 'object' ? role.name : role}
+                                size="small"
+                                sx={{
+                                  borderRadius: '8px',
+                                  ...getRoleSx(typeof role === 'object' ? role.name : role),
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={500}>
+                            {lastActiveDate}
+                          </Typography>
+                          {lastActiveTime && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {lastActiveTime}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="center" data-tour="acl-assign-view">
+                          <IconButton onClick={(e) => handleMenuOpen(e, user)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === user.id}
+                            onClose={handleMenuClose}
+                          >
+                            {can('landlord.acl.user.assign_role') && (
+                              <MenuItem onClick={() => handleAction('edit', user)}>
+                                Assign Role
+                              </MenuItem>
+                            )}
+                            <MenuItem onClick={() => handleAction('view', user)}>
+                              View Assigned Roles
+                            </MenuItem>
+                            {can('landlord.acl.user.assign_permission') && (
+                              <MenuItem onClick={() => handleAction('directPermission', user)}>
+                                Assign Direct Permission
+                              </MenuItem>
+                            )}
+                            <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              View Permission
+                            </MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 3,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        {hasFilters
+                          ? 'No users match the current filters.'
+                          : 'No users available. Add new users or adjust filters.'}
+                      </Alert>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    count={filteredUsers.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                    colSpan={6}
+                  />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </TableContainer>
+          {/* </Paper> */}
+        </Box>
+
+        <RoleAttachmentModal
+          open={roleAttachmentModalOpen}
+          onClose={() => setRoleAttachmentModalOpen(false)}
+          currentAgent={currentOrganizationForRole}
+          onRoleSelection={handleRoleSelection}
+        />
+        <ViewRoleModal
+          open={viewRoleModalOpen}
+          onClose={() => setViewRoleModalOpen(false)}
+          currentUser={currentOrganizationForRole}
+        />
+        <DirectPermissionModal
+          open={directPermissionModalOpen}
+          onClose={() => setDirectPermissionModalOpen(false)}
+          currentAgent={currentOrganizationForRole}
+          onPermissionSave={handleDirectPermissionSave}
+        />
+        <ViewDirectPermissionModal
+          open={viewDirectPermissionModalOpen}
+          onClose={() => setViewDirectPermissionModalOpen(false)}
+          currentUser={currentOrganizationForRole}
+          onPermissionSave={handleViewDirectPermissionSave}
+        />
+      </ParentCard>
+    </Box>
   );
 };
 

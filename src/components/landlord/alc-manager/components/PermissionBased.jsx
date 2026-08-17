@@ -85,33 +85,47 @@ const PermissionBased = () => {
   };
 
   const getRoleSx = (role) => {
+    const rawRole = role?.toString() || '';
+    const normalizedRole = rawRole.toLowerCase().trim().replace(/[\s_]+/g, '_');
+
     const roleStyles = {
-      User: {
-        backgroundColor: (theme) => theme.palette.success.light,
-        color: (theme) => theme.palette.success.main,
-      },
-      Admin: {
-        backgroundColor: (theme) => theme.palette.error.light,
-        color: (theme) => theme.palette.error.main,
-      },
-      Customer: {
-        backgroundColor: (theme) => theme.palette.info.light,
-        color: (theme) => theme.palette.info.main,
-      },
-      Manager: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
-      },
-      Agent: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
-      },
-      Super_Admin: {
+      super_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
+      system_admin: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      support_admin: {
+        backgroundColor: (theme) => theme.palette.info.light,
+        color: (theme) => theme.palette.info.main,
+      },
+      agent: {
+        backgroundColor: (theme) => theme.palette.warning.light,
+        color: (theme) => theme.palette.warning.main,
+      },
     };
-    return roleStyles[role] || {};
+
+    if (roleStyles[normalizedRole]) {
+      return roleStyles[normalizedRole];
+    }
+
+    const themePalettes = [
+      { backgroundColor: (theme) => theme.palette.primary.light, color: (theme) => theme.palette.primary.main },
+      { backgroundColor: (theme) => theme.palette.secondary.light, color: (theme) => theme.palette.secondary.main },
+      { backgroundColor: (theme) => theme.palette.success.light, color: (theme) => theme.palette.success.main },
+      { backgroundColor: (theme) => theme.palette.info.light, color: (theme) => theme.palette.info.main },
+      { backgroundColor: (theme) => theme.palette.warning.light, color: (theme) => theme.palette.warning.main },
+      { backgroundColor: (theme) => theme.palette.error.light, color: (theme) => theme.palette.error.main },
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < rawRole.length; i++) {
+      hash = rawRole.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % themePalettes.length;
+    return themePalettes[index];
   };
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);

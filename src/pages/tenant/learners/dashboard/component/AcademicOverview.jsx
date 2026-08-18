@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, LinearProgress } from '@mui/material';
+import { Box, Card, Typography, Stack, LinearProgress, Avatar } from '@mui/material';
 import {
   AssignmentTurnedInOutlined,
   QuizOutlined,
@@ -7,12 +7,13 @@ import {
   ImageOutlined,
   EmojiEventsOutlined,
   EmojiEvents,
+  PersonOutlined,
 } from '@mui/icons-material';
 
 const cardSx = {
-  borderRadius: '8px',
+  borderRadius: '14px',
   border: '1px solid #E5E7EB',
-  boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
   bgcolor: '#fff',
 };
 
@@ -36,7 +37,7 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
       sx={{
         width: 34,
         height: 34,
-        borderRadius: '50%',
+        borderRadius: '8px',
         bgcolor: iconBg,
         color: iconColor,
         display: 'flex',
@@ -48,10 +49,10 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
       <Icon sx={{ fontSize: 17 }} />
     </Box>
     <Box>
-      <Typography sx={{ fontSize: '0.66rem', color: '#6B7280', fontWeight: 500, lineHeight: 1.2 }}>
+      <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: 0.4 }}>
         {label}
       </Typography>
-      <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1.1 }}>
+      <Typography fontWeight="800" sx={{ fontSize: '1.1rem', color: '#111827', lineHeight: 1.1 }}>
         {value}
       </Typography>
     </Box>
@@ -250,49 +251,43 @@ const AcademicOverview = ({ data = {} }) => {
 
         {/* Class Standing */}
         <Card elevation={0} sx={{ ...cardSx, flex: 0.8, p: '12px 14px' }}>
-          <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
-            Class Standing
-          </Typography>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '50%',
-                bgcolor: '#f3e8ff',
-                color: '#9333ea',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <EmojiEvents sx={{ fontSize: 22 }} />
-            </Box>
-            <Box>
-              <Typography fontWeight="800" sx={{ fontSize: '1.25rem', color: '#111827', lineHeight: 1 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+            <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827' }}>
+              Class Standing
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <EmojiEvents sx={{ fontSize: 14, color: '#9333ea' }} />
+              <Typography fontWeight="800" sx={{ fontSize: '0.82rem', color: '#9333ea' }}>
                 Top {d.classStanding.rank}%
-              </Typography>
-              <Typography sx={{ fontSize: '0.65rem', color: '#9CA3AF', mt: 0.2 }}>
-                Out of {d.classStanding.total} students
               </Typography>
             </Box>
           </Stack>
 
-          {/* Student figures visualization */}
-          <Stack direction="row" spacing={0.5} mt={1.5} justifyContent="center">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Box
-                key={i}
-                sx={{
-                  width: 16,
-                  height: 20,
-                  borderRadius: '3px 3px 0 0',
-                  bgcolor: i < Math.ceil(d.classStanding.rank / 10) ? '#9333ea' : '#E5E7EB',
-                  transition: 'background-color 0.3s',
-                }}
-              />
-            ))}
+          <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', mb: 1 }}>
+            Out of {d.classStanding.total} students
+          </Typography>
+
+          {/* Human avatars row — show rank position with colored avatars */}
+          <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
+            {Array.from({ length: 10 }).map((_, i) => {
+              const isTop = i < Math.ceil(d.classStanding.rank / 10);
+              const isMe = i === Math.floor(d.classStanding.rank / 10) - 1;
+              return (
+                <Avatar
+                  key={i}
+                  sx={{
+                    width: isMe ? 26 : 22,
+                    height: isMe ? 26 : 22,
+                    bgcolor: isMe ? '#9333ea' : isTop ? '#C4B5FD' : '#E5E7EB',
+                    color: isMe ? '#fff' : isTop ? '#7C3AED' : '#9CA3AF',
+                    border: isMe ? '2px solid #9333ea' : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <PersonOutlined sx={{ fontSize: isMe ? 15 : 12 }} />
+                </Avatar>
+              );
+            })}
           </Stack>
         </Card>
       </Stack>

@@ -325,79 +325,72 @@ const BursaryOfficerDashboard = () => {
         </Grid>
       )}
 
-      {/* ── Revenue Trend + Revenue Distribution + Quick Actions ─── */}
+      {/* ── Main content: left column (charts) | right column (actions + categories) ─── */}
       <Grid container spacing={2} mb={2}>
-        {/* Revenue Trend Chart */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          {revenueTrend.loading ? (
-            <PanelSkeleton height={480} />
-          ) : (
-            <RevenueTrend 
-              revenue_trend={asArray(revenueTrend.data)} 
-              onClick={() => setBreakdownType('revenue_trend')}
-            />
-          )}
-        </Grid>
-
-        {/* Revenue Distribution + Quick Actions Column */}
+        {/* Left column — Revenue Trend & Revenue Distribution stacked */}
         <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2}>
-            {/* Revenue Distribution with Session dropdown */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              {revenueDistribution.loading ? (
-                <PanelSkeleton height={300} />
-              ) : (
-                <RevenueDistribution
-                  revenue_distribution={asArray(revenueDistribution.data)}
-                  totalRevenue={totalRevenue}
-                  onClick={() => setBreakdownType('revenue_distribution')}
-                  session={selectedSession || 'This Session'}
-                  sessions={sessions}
-                  onSessionChange={handleSessionChange}
-                />
-              )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                {revenueTrend.loading ? (
+                  <PanelSkeleton height={480} />
+                ) : (
+                  <RevenueTrend 
+                    revenue_trend={asArray(revenueTrend.data)} 
+                    onClick={() => setBreakdownType('revenue_trend')}
+                  />
+                )}
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                {revenueDistribution.loading ? (
+                  <PanelSkeleton height={300} />
+                ) : (
+                  <RevenueDistribution
+                    revenue_distribution={asArray(revenueDistribution.data)}
+                    totalRevenue={totalRevenue}
+                    onClick={() => setBreakdownType('revenue_distribution')}
+                    session={selectedSession || 'This Session'}
+                    sessions={sessions}
+                    onSessionChange={handleSessionChange}
+                  />
+                )}
+              </Grid>
             </Grid>
-
-            {/* Quick Actions */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <QuickActions onAction={handleQuickAction} />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      {/* ── Outstanding Balance by Class + Payment Categories ─── */}
-      <Grid container spacing={2} mb={2}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          {collectionMatrix.loading ? (
-            <PanelSkeleton height={420} />
-          ) : (
-            <CollectionMatrix
-              matrix={matrixRows}
-              totals={totals}
-              totalEfficiency={totalEfficiency}
-              session={selectedSession || 'This Session'}
-              sessions={sessions}
-              onSessionChange={handleSessionChange}
-              onRowClick={(className) =>
-                notify.info(`Detailed breakdown for ${className} is coming soon`)
-              }
-            />
-          )}
+            {/* Outstanding Balance by Class — below the charts, full left-column width */}
+            {collectionMatrix.loading ? (
+              <PanelSkeleton height={420} />
+            ) : (
+              <CollectionMatrix
+                matrix={matrixRows}
+                totals={totals}
+                totalEfficiency={totalEfficiency}
+                session={selectedSession || 'This Session'}
+                sessions={sessions}
+                onSessionChange={handleSessionChange}
+                onRowClick={(className) =>
+                  notify.info(`Detailed breakdown for ${className} is coming soon`)
+                }
+              />
+            )}
+          </Box>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          {paymentCategories.loading ? (
-            <PanelSkeleton height={420} />
-          ) : (
-            <PaymentCategories 
-              payment_categories={asArray(paymentCategories.data)} 
-              session={selectedSession || 'This Session'}
-              sessions={sessions}
-              onSessionChange={handleSessionChange}
-              onClick={() => setBreakdownType('payment_categories')} 
-            />
-          )}
+        {/* Right column — Quick Actions + Payment Categories spanning full height */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <QuickActions onAction={handleQuickAction} />
+            {paymentCategories.loading ? (
+              <PanelSkeleton height={420} />
+            ) : (
+              <PaymentCategories 
+                payment_categories={asArray(paymentCategories.data)} 
+                session={selectedSession || 'This Session'}
+                sessions={sessions}
+                onSessionChange={handleSessionChange}
+                onClick={() => setBreakdownType('payment_categories')} 
+              />
+            )}
+          </Box>
         </Grid>
       </Grid>
 

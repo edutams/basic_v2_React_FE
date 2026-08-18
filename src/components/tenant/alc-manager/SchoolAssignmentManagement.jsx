@@ -662,7 +662,7 @@ const SchoolAssignmentManagement = () => {
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');
 
-                    const lastActiveRaw = user.last_active_at || user.last_login_at;
+                    const lastActiveRaw = user.last_active_at;
                     const lastActiveDate = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                       : 'No activity yet';

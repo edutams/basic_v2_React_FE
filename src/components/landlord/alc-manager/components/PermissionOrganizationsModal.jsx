@@ -216,10 +216,10 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
           </Button>
           {search && (
             <Button variant="contained" size="small" onClick={() => {
-                setSearch('');
-                setSearchInput('');
-                setPage(0);
-              }}
+              setSearch('');
+              setSearchInput('');
+              setPage(0);
+            }}
               sx={{ minWidth: 'auto', px: 2 }}
             >
               Clear
@@ -331,8 +331,8 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
                       }}
                     >
                       {search
-                        ? 'No agents match your search.'
-                        : 'No agents have this permission yet.'}
+                        ? 'No Users match your search.'
+                        : 'No Users have this permission yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>
@@ -385,9 +385,8 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleRemovePermission}
         title="Remove permission from user?"
-        message={`Are you sure you want to remove this permission from ${
-          selectedUser?.full_name ?? ''
-        }?`}
+        message={`Are you sure you want to remove this permission from ${selectedUser?.full_name ?? ''
+          }?`}
         confirmText="Remove"
         cancelText="Cancel"
         severity="error"

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import aclApi from '@/api/landlord/acl/aclApi';
+import { formatRoleName } from './PermissionBased';
 
 const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) => {
   const [selectedRoleIds, setSelectedRoleIds] = useState([]);
@@ -137,7 +138,7 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
                       sx={{ marginRight: 1 }}
                     />
                     <ListItemText
-                      primary={role.name}
+                      primary={formatRoleName(role.name)}
                       primaryTypographyProps={{ variant: 'body2' }}
                     />
                   </ListItemButton>

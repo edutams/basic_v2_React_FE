@@ -29,6 +29,16 @@ import {
 } from '@mui/icons-material';
 import aclApi from '@/api/landlord/acl/aclApi';
 
+export const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 /**
  * PermissionRolesModal
  *
@@ -216,13 +226,13 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
 
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {role.description || role.name}
+                        {role.description || formatRoleName(role.name)}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
                       <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
-                        {role.name}
+                        {formatRoleName(role.name)}
                       </Typography>
                     </TableCell>
 

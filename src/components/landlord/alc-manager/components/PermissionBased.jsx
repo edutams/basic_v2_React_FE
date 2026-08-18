@@ -193,6 +193,24 @@ const PermissionBased = () => {
     setActiveMenuPerm(null);
   };
 
+  const getModuleName = (permission) => {
+    if (!permission) return 'General';
+    if (permission.module_name) return permission.module_name;
+    const name =
+      typeof permission === 'string' ? permission : permission.name || permission.permission || '';
+    const parts = name.split(/[\._\-:]/);
+    if (parts.length > 1) {
+      const rawMod = parts[0].toLowerCase() === 'landlord' ? parts[1] : parts[0];
+      if (rawMod) {
+        return rawMod
+          .trim()
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    }
+    return 'General';
+  };
+
   const displayPermissions = useMemo(() => {
     if (!permissions || permissions.length === 0) return [];
     return permissions.filter((p) => {
@@ -208,19 +226,17 @@ const PermissionBased = () => {
         totalP: summaryData.total_permissions ?? (totalRows || permissions.length || 0),
         totalR: summaryData.total_roles ?? 0,
         totalU: summaryData.total_users ?? 0,
-        directP: summaryData.direct_grants ?? 0,
         orphanedP: summaryData.orphaned_permissions ?? 0,
       };
     }
     const totalP = totalRows || permissions.length || 0;
     const totalR = permissions.reduce((acc, p) => acc + (p.totalRoles ?? p.roles_count ?? 0), 0);
     const totalU = permissions.reduce((acc, p) => acc + (p.totalUsers ?? p.users_count ?? 0), 0);
-    const directP = permissions.filter((p) => (p.is_direct || p.type === 'direct')).length;
     const orphanedP = permissions.filter(
       (p) => (p.totalRoles ?? p.roles_count ?? 0) === 0 && (p.totalUsers ?? p.users_count ?? 0) === 0,
     ).length;
 
-    return { totalP, totalR, totalU, directP, orphanedP };
+    return { totalP, totalR, totalU, orphanedP };
   }, [permissions, totalRows, summaryData]);
 
   const COLOR_PALETTE = [
@@ -235,23 +251,38 @@ const PermissionBased = () => {
   ];
 
   const distributionData = useMemo(() => {
-    if (permissions && permissions.length > 0) {
-      return permissions.slice(0, 8).map((p, idx) => ({
-        label: formatPermissionName(p.name || p.permission || 'Permission'),
-        count: Number(p.totalUsers ?? p.users_count ?? p.totalRoles ?? 0),
+    const dist = summaryData?.distribution;
+    if (Array.isArray(dist) && dist.length > 0) {
+      return dist.map((item, idx) => ({
+        label: item.name || item.label || 'Module',
+        count: Number(item.count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
     }
+    if (permissions && permissions.length > 0) {
+      const countsMap = {};
+      permissions.forEach((p) => {
+        const m = getModuleName(p);
+        countsMap[m] = (countsMap[m] || 0) + 1;
+      });
+      return Object.entries(countsMap)
+        .map(([label, count], idx) => ({
+          label,
+          count,
+          color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+        }))
+        .sort((a, b) => b.count - a.count);
+    }
     return [];
-  }, [permissions]);
+  }, [summaryData, permissions]);
 
   const chartLabels = useMemo(() => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
-      if (total === 0) return ['No Assignments'];
+      if (total === 0) return ['No Permissions'];
       return distributionData.map((d) => d.label);
     }
-    return ['No Assignments'];
+    return ['No Permissions'];
   }, [distributionData]);
 
   const chartSeries = useMemo(() => {
@@ -311,15 +342,15 @@ const PermissionBased = () => {
                 fontWeight: 800,
                 color: '#1E293B',
                 offsetY: -14,
-                formatter: () => `${stats.totalP.toLocaleString()}`,
+                formatter: () => `${distributionData.length}`,
               },
               total: {
                 show: true,
-                label: 'Total Permissions',
+                label: 'Total Modules',
                 fontSize: '12px',
                 fontWeight: 500,
                 color: '#64748B',
-                formatter: () => `${stats.totalP.toLocaleString()}`,
+                formatter: () => `${distributionData.length}`,
               },
             },
           },
@@ -346,7 +377,7 @@ const PermissionBased = () => {
       {/* ── Metric Stat Cards ── */}
       <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
         <Grid container spacing={2.5}>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               count={stats.totalP}
               label="Total Permissions"
@@ -357,7 +388,7 @@ const PermissionBased = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               count={stats.totalR}
               label="Assigned Roles"
@@ -368,7 +399,7 @@ const PermissionBased = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               count={stats.totalU}
               label="Total Users"
@@ -379,18 +410,7 @@ const PermissionBased = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <StatCard
-              count={stats.directP}
-              label="Direct Grants"
-              subtitle="Directly assigned"
-              icon={IconLock}
-              colorIndex={3}
-              loading={loading}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               count={stats.orphanedP}
               label="Unassigned"
@@ -407,7 +427,7 @@ const PermissionBased = () => {
       <Grid container spacing={3} alignItems="stretch">
         {/* Donut Chart Card */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
-          <ParentCard title="Permission Usage Distribution" sx={{ width: '100%', height: '100%' }}>
+          <ParentCard title="Module Permission Distribution" sx={{ width: '100%', height: '100%' }}>
             <Box
               sx={{
                 py: 1,
@@ -848,7 +868,7 @@ const PermissionBased = () => {
             sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}
           >
             <Typography variant="subtitle2" fontWeight={700}>
-              Total Permissions Analyzed
+              Total Permissions
             </Typography>
             <Chip
               label={`${stats.totalP.toLocaleString()} Permissions`}
@@ -863,9 +883,9 @@ const PermissionBased = () => {
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Permission Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Module Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    Assigned
+                    Permissions
                   </TableCell>
                 </TableRow>
               </TableHead>

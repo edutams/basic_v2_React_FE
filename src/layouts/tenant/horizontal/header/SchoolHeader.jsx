@@ -184,12 +184,14 @@ const SchoolHeader = () => {
               Logged in as
             </Typography>
 
-            <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(true)}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setConfirmOpen(true)}
               sx={{
-                whiteSpace: 'nowrap',
-                fontSize: { xs: '10px', sm: '13px' },
+                whiteSpace: 'wrap',
+                fontSize: { xs: '13px', sm: '10px' },
                 px: { xs: 0.75, sm: 1.5 },
-                minWidth: 'unset',
               }}
             >
               {lgUp ? 'Return to my account' : 'Exit'}
@@ -207,13 +209,20 @@ const SchoolHeader = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(false)}>
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={() => setConfirmOpen(false)}
+            >
               Cancel
             </Button>
-            <Button size="small" onClick={() => {
-              setConfirmOpen(false);
-              stopImpersonation();
-            }}
+            <Button
+              size="small"
+              onClick={() => {
+                setConfirmOpen(false);
+                stopImpersonation();
+              }}
               sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}
             >
               Yes, return to my account

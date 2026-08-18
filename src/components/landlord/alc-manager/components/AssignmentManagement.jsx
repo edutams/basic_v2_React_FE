@@ -25,7 +25,8 @@ import {
   Select,
   Avatar,
   MenuItem as SelectMenuItem,
-  Grid,
+  ListItemIcon,
+  Grid
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -38,6 +39,9 @@ import {
   IconUserCheck,
   IconUserOff,
   IconShieldCheck,
+  IconEye,
+  IconKey,
+  IconLock,
 } from '@tabler/icons-react';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
@@ -48,6 +52,7 @@ import aclApi from '@/api/landlord/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import { usePermissions } from '@/context/AgentContext/permissions';
+import { formatRoleName } from './PermissionBased';
 
 const AssignmentManagement = () => {
   const notify = useNotification();
@@ -60,21 +65,36 @@ const AssignmentManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [nameFilter, setNameFilter] = useState('');
-  const [nameFilterInput, setNameFilterInput] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState('');
-  const [levelFilter, setLevelFilter] = useState('');
-
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentOrganizationForRole, setCurrentOrganizationForRole] = useState(null);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
   const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
 
-  const fetchUsers = async () => {
+  const [nameFilterInput, setNameFilterInput] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: '',
+    role: 'all',
+    status: 'all',
+    level: '',
+  });
+
+  const [summaryData, setSummaryData] = useState(null);
+
+  const fetchUsers = async (customFilters = appliedFilters) => {
     try {
       setLoading(true);
-      const res = await aclApi.getAgents();
+      const params = {};
+      if (customFilters.name) params.search = customFilters.name;
+      if (customFilters.role && customFilters.role !== 'all') params.role = customFilters.role;
+      if (customFilters.status && customFilters.status !== 'all') params.status = customFilters.status;
+      if (customFilters.level) params.level = customFilters.level;
+
+      const res = await aclApi.getAgents(params);
 
       let usersData = [];
       if (Array.isArray(res.data)) {
@@ -83,7 +103,10 @@ const AssignmentManagement = () => {
         usersData = res.data.data;
       }
 
-      // Map organization data to user format for the UI
+      if (res.data?.summary) {
+        setSummaryData(res.data.summary);
+      }
+
       const normalized = (usersData || []).map((u) => ({
         id: u.id,
         name: u.name,
@@ -97,7 +120,7 @@ const AssignmentManagement = () => {
         parent_id: u.parent_id || null,
         status: u.status || 'active',
         assignedRoles: u.roles || [],
-        last_active: u.last_active || u.last_login_at || u.updated_at || u.created_at || null,
+        last_active_at: u.last_active_at || null,
       }));
 
       setUsers(normalized);
@@ -109,11 +132,32 @@ const AssignmentManagement = () => {
     }
   };
 
+  const fetchRolesList = async () => {
+    try {
+      const res = await aclApi.getRolesList();
+      const fetched = res?.data?.data || res?.data || res || [];
+      if (Array.isArray(fetched)) {
+        setAvailableRoles(fetched);
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles list:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchUsers();
+    fetchUsers({ name: '', role: 'all', status: 'all', level: '' });
+    fetchRolesList();
   }, []);
 
   const userStats = useMemo(() => {
+    if (summaryData) {
+      return {
+        total: summaryData.total ?? users.length,
+        assigned: summaryData.assigned ?? 0,
+        unassigned: summaryData.unassigned ?? 0,
+        multiRole: summaryData.multiRole ?? 0,
+      };
+    }
     const total = users.length;
     const assigned = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 0).length;
     const unassigned = total - assigned;
@@ -125,7 +169,7 @@ const AssignmentManagement = () => {
       unassigned,
       multiRole,
     };
-  }, [users]);
+  }, [users, summaryData]);
   const getInitials = (name = '') =>
     name
       .split(' ')
@@ -146,19 +190,18 @@ const AssignmentManagement = () => {
     const rawRole = role?.toString() || '';
     const normalizedRole = rawRole.toLowerCase().trim().replace(/[\s_]+/g, '_');
 
-    // Specific system role assignments
     const roleStyles = {
       super_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
+        color: (theme) => theme.palette.primary.dark,
       },
       agent: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
+        backgroundColor: (theme) => theme.palette.success.light,
+        color: (theme) => theme.palette.success.dark,
       },
       team_member: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
+        backgroundColor: (theme) => theme.palette.error.light,
+        color: (theme) => theme.palette.error.dark,
       },
     };
 
@@ -166,14 +209,14 @@ const AssignmentManagement = () => {
       return roleStyles[normalizedRole];
     }
 
-    // 100% Dynamic theme palette generator for ANY newly created role
+    // Theme palette generator for ANY newly created role
     const themePalettes = [
-      { backgroundColor: (theme) => theme.palette.primary.light, color: (theme) => theme.palette.primary.main },
-      { backgroundColor: (theme) => theme.palette.secondary.light, color: (theme) => theme.palette.secondary.main },
-      { backgroundColor: (theme) => theme.palette.success.light, color: (theme) => theme.palette.success.main },
-      { backgroundColor: (theme) => theme.palette.info.light, color: (theme) => theme.palette.info.main },
-      { backgroundColor: (theme) => theme.palette.warning.light, color: (theme) => theme.palette.warning.main },
-      { backgroundColor: (theme) => theme.palette.error.light, color: (theme) => theme.palette.error.main },
+      { backgroundColor: (theme) => theme.palette.primary.light, color: (theme) => theme.palette.primary.dark },
+      { backgroundColor: (theme) => theme.palette.secondary.light, color: (theme) => theme.palette.secondary.dark },
+      { backgroundColor: (theme) => theme.palette.success.light, color: (theme) => theme.palette.success.dark },
+      { backgroundColor: (theme) => theme.palette.info.light, color: (theme) => theme.palette.info.dark },
+      { backgroundColor: (theme) => theme.palette.warning.light, color: (theme) => theme.palette.warning.dark },
+      { backgroundColor: (theme) => theme.palette.error.light, color: (theme) => theme.palette.error.dark },
     ];
 
     let hash = 0;
@@ -269,6 +312,7 @@ const AssignmentManagement = () => {
         parent_id: u.parent_id || null,
         status: u.status || 'active',
         assignedRoles: u.roles || [],
+        last_active_at: u.last_active_at || null,
       }));
 
       setUsers(normalized);
@@ -326,6 +370,18 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
+  const handleToggleStatus = async (user) => {
+    try {
+      handleMenuClose();
+      await aclApi.toggleAgentStatus(user.id);
+      const actionText = user.status?.toLowerCase() === 'active' ? 'deactivated' : 'activated';
+      notify.success(`User successfully ${actionText}!`);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update user status');
+    }
+  };
+
   const handleViewDirectPermissionSave = async (permissions) => {
     if (!currentOrganizationForRole) return;
 
@@ -341,37 +397,54 @@ const AssignmentManagement = () => {
 
   const filteredUsers = useMemo(() => {
     let filtered = users.filter((user) => {
-      const term = nameFilter.toLowerCase();
-      return (
+      const term = appliedFilters.name.toLowerCase();
+      const matchesName =
+        !appliedFilters.name ||
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term) ||
-        user.userType?.toLowerCase().includes(term)
-      );
+        user.organization_name?.toLowerCase().includes(term) ||
+        user.organization_code?.toLowerCase().includes(term);
+
+      let matchesRole = true;
+      if (appliedFilters.role && appliedFilters.role !== 'all') {
+        matchesRole = user.assignedRoles?.some((r) => {
+          const rName = typeof r === 'object' ? r.name : r;
+          const rId = typeof r === 'object' ? r.id : r;
+          return (
+            String(rId).toLowerCase() === String(appliedFilters.role).toLowerCase() ||
+            String(rName).toLowerCase() === String(appliedFilters.role).toLowerCase()
+          );
+        });
+      }
+
+      let matchesStatus = true;
+      if (appliedFilters.status && appliedFilters.status !== 'all') {
+        const uStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase();
+        matchesStatus = uStatus === appliedFilters.status.toLowerCase();
+      }
+
+      return matchesName && matchesRole && matchesStatus;
     });
 
-    // Any organization can see organizations they created (their children)
-    // Level 1 organizations can see ALL organizations
     const currentUserId = currentUser?.id;
     if (currentUserLevel && currentUserLevel > 1) {
       filtered = filtered.filter((user) => {
         if (user.id === currentUserId) {
           return false;
         }
-        // Only include organizations created by current user (their children)
         return user.parent_id === currentUserId;
       });
     }
 
-    //level filter - only for Level 1 users
-    if (levelFilter !== '') {
+    if (appliedFilters.level !== '') {
       filtered = filtered.filter((user) => {
         const userLevel = parseInt(user.level, 10);
-        return userLevel === parseInt(levelFilter, 10);
+        return userLevel === parseInt(appliedFilters.level, 10);
       });
     }
 
     return filtered;
-  }, [users, nameFilter, userTypeFilter, levelFilter, currentUserLevel, currentUser]);
+  }, [users, appliedFilters, currentUserLevel, currentUser]);
 
   const paginatedFilteredUsers = useMemo(() => {
     const start = page * rowsPerPage;
@@ -379,16 +452,26 @@ const AssignmentManagement = () => {
   }, [filteredUsers, page, rowsPerPage]);
 
   const resetFilters = () => {
-    setNameFilter('');
     setNameFilterInput('');
-    setUserTypeFilter('');
+    setRoleFilter('all');
+    setStatusFilter('all');
     setLevelFilter('');
+    const emptyFilters = { name: '', role: 'all', status: 'all', level: '' };
+    setAppliedFilters(emptyFilters);
     setPage(0);
+    fetchUsers(emptyFilters);
   };
 
   const handleSearch = () => {
-    setNameFilter(nameFilterInput);
+    const newFilters = {
+      name: nameFilterInput,
+      role: roleFilter,
+      status: statusFilter,
+      level: levelFilter,
+    };
+    setAppliedFilters(newFilters);
     setPage(0);
+    fetchUsers(newFilters);
   };
 
   const handleKeyPress = (e) => {
@@ -397,7 +480,15 @@ const AssignmentManagement = () => {
     }
   };
 
-  const hasFilters = nameFilter !== '' || userTypeFilter !== '' || levelFilter !== '';
+  const hasFilters =
+    nameFilterInput !== '' ||
+    roleFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    levelFilter !== '' ||
+    appliedFilters.name !== '' ||
+    appliedFilters.role !== 'all' ||
+    appliedFilters.status !== 'all' ||
+    appliedFilters.level !== '';
 
   return (
     <Box>
@@ -405,7 +496,7 @@ const AssignmentManagement = () => {
       <Grid container spacing={2} mb={3} data-tour="acl-assign-stats">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Total Members"
+            label="Total Users"
             count={userStats.total}
             icon={IconUsers}
             color="primary"
@@ -414,7 +505,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Assigned Members"
+            label="Assigned Users"
             count={userStats.assigned}
             icon={IconUserCheck}
             color="success"
@@ -423,7 +514,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Unassigned Members"
+            label="Unassigned Users"
             count={userStats.unassigned}
             icon={IconUserOff}
             color="warning"
@@ -432,7 +523,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Multi-Role Members"
+            label="Multi-Role Users"
             count={userStats.multiRole}
             icon={IconShieldCheck}
             color="info"
@@ -452,8 +543,8 @@ const AssignmentManagement = () => {
         }
       >
 
-        <Grid container spacing={1} mb={3} alignItems="center">
-          <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={1.5} mb={3} alignItems="center">
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               size="small"
@@ -462,28 +553,53 @@ const AssignmentManagement = () => {
               onChange={(e) => setNameFilterInput(e.target.value)}
               onKeyPress={handleKeyPress}
               data-tour="acl-assign-search"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
             />
           </Grid>
 
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="role-filter-label">Role</InputLabel>
+              <Select
+                labelId="role-filter-label"
+                value={roleFilter}
+                label="Role"
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <SelectMenuItem value="all">All Roles</SelectMenuItem>
+                {availableRoles.map((r) => (
+                  <SelectMenuItem key={typeof r === 'object' ? (r.id || r.name) : r} value={typeof r === 'object' ? (r.name || r.id) : r}>
+                    {formatRoleName(typeof r === 'object' ? (r.name || r.role || r) : r)}
+                  </SelectMenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="status-filter-label">Status</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <SelectMenuItem value="all">All Status</SelectMenuItem>
+                <SelectMenuItem value="active">Active</SelectMenuItem>
+                <SelectMenuItem value="inactive">Inactive</SelectMenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
           {currentUserLevel === 1 && (
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <FormControl fullWidth size="small">
                 <InputLabel id="level-filter-label">Organization Level</InputLabel>
                 <Select
                   labelId="level-filter-label"
                   value={levelFilter}
                   label="Organization Level"
-                  onChange={(e) => {
-                    setLevelFilter(e.target.value);
-                    setPage(0);
-                  }}
+                  onChange={(e) => setLevelFilter(e.target.value)}
                 >
                   <SelectMenuItem value="">All Levels</SelectMenuItem>
                   <SelectMenuItem value="1">Level 1</SelectMenuItem>
@@ -496,23 +612,31 @@ const AssignmentManagement = () => {
             </Grid>
           )}
 
-          {/* 👇 key change */}
           <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40, px: 2 }}>
               Search
             </Button>
           </Grid>
+
+          {hasFilters && (
+            <Grid size="auto">
+              <Button variant="outlined" color="error" size="small" onClick={resetFilters} sx={{ height: 40, px: 2 }}>
+                Clear Filters
+              </Button>
+            </Grid>
+          )}
         </Grid>
         <Box sx={{ p: 0 }}>
           {/* <Paper> */}
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 600 }}>
+            <Table sx={{ minWidth: 750 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>
-                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>User Details</TableCell>
-                  <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Organization</TableCell>
-                  <TableCell sx={{ width: { xs: '25%', md: '22%' } }}>Assigned Role</TableCell>
+                  <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>User Details</TableCell>
+                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Organization</TableCell>
+                  <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Assigned Role</TableCell>
+                  <TableCell sx={{ width: '10%' }}>Status</TableCell>
                   <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
                   <TableCell sx={{ width: '10%' }} align="center" data-tour="acl-assign-direct">
                     Action
@@ -522,13 +646,14 @@ const AssignmentManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
-                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.last_active || user.updated_at || user.created_at;
+                    const userStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'inactive' ? 'Inactive' : 'Active';
+                    const lastActiveRaw = user.last_active_at;
                     const lastActiveDate = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                       : 'No activity yet';
@@ -594,7 +719,7 @@ const AssignmentManagement = () => {
                             {user.assignedRoles?.map((role, i) => (
                               <Chip
                                 key={i}
-                                label={typeof role === 'object' ? role.name : role}
+                                label={formatRoleName(typeof role === 'object' ? role.name : role)}
                                 size="small"
                                 sx={{
                                   borderRadius: '8px',
@@ -605,14 +730,29 @@ const AssignmentManagement = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={500}>
-                            {lastActiveDate}
-                          </Typography>
-                          {lastActiveTime && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              {lastActiveTime}
+                          <Chip
+                            label={userStatus}
+                            size="small"
+                            sx={{
+                              bgcolor: userStatus === 'Inactive' ? '#FEF2F2' : '#E6F4EA',
+                              color: userStatus === 'Inactive' ? '#DC2626' : '#10B981',
+                              fontWeight: 700,
+                              borderRadius: '12px',
+                              px: 1,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {lastActiveDate}
                             </Typography>
-                          )}
+                            {lastActiveTime && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {lastActiveTime}
+                              </Typography>
+                            )}
+                          </Box>
                         </TableCell>
                         <TableCell align="center" data-tour="acl-assign-view">
                           <IconButton onClick={(e) => handleMenuOpen(e, user)}>
@@ -625,20 +765,43 @@ const AssignmentManagement = () => {
                           >
                             {can('landlord.acl.user.assign_role') && (
                               <MenuItem onClick={() => handleAction('edit', user)}>
+                                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                  <IconShieldCheck size={18} />
+                                </ListItemIcon>
                                 Assign Role
                               </MenuItem>
                             )}
                             <MenuItem onClick={() => handleAction('view', user)}>
+                              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                <IconEye size={18} />
+                              </ListItemIcon>
                               View Assigned Roles
                             </MenuItem>
                             {can('landlord.acl.user.assign_permission') && (
                               <MenuItem onClick={() => handleAction('directPermission', user)}>
+                                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                  <IconKey size={18} />
+                                </ListItemIcon>
                                 Assign Direct Permission
                               </MenuItem>
                             )}
                             <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                <IconLock size={18} />
+                              </ListItemIcon>
                               View Permission
                             </MenuItem>
+                            {can('landlord.acl.user.toggle_status') && (
+                              <MenuItem
+                                onClick={() => handleToggleStatus(user)}
+                                sx={{ color: user.status?.toLowerCase() === 'active' ? 'error.main' : 'success.main' }}
+                              >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                  {user.status?.toLowerCase() === 'active' ? <IconUserOff size={18} /> : <IconUserCheck size={18} />}
+                                </ListItemIcon>
+                                {user.status?.toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -646,7 +809,7 @@ const AssignmentManagement = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Alert
                         severity="info"
                         sx={{

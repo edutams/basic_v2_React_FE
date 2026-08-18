@@ -50,6 +50,15 @@ import { formatRoleName } from '@/pages/tenant/alc-manager/SchoolAlcManager';
 import SchoolTotalPermissionModal from './SchoolTotalPermissionModal';
 import SchoolTotalUsersModal from './SchoolTotalUsersModal';
 
+const formatPermissionName = (str = '') => {
+  if (!str) return '';
+  return str
+    .replace(/^(landlord\.|tenant\.|school\.)/, '')
+    .replace(/_/g, ' ')
+    .replace(/\./g, ' › ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 const SchoolPermissionBased = () => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -852,17 +861,26 @@ const SchoolPermissionBased = () => {
                           <TableRow key={row.id || index} hover>
                             <TableCell sx={{ py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
 
-                            {/* Permission Code + Action Badge */}
+                             {/* Permission Code + Action Badge */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography
-                                  variant="subtitle2"
-                                  fontWeight={700}
-                                  color="text.primary"
-                                >
-                                  {permName}
-                                </Typography>
-                                {actionBadge}
+                                <Box>
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight={700}
+                                    color="text.primary"
+                                  >
+                                    {formatPermissionName(permName)}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', fontSize: '11px' }}
+                                  >
+                                    {permName}
+                                  </Typography>
+                                </Box>
+                                {/* {actionBadge} */}
                               </Box>
                             </TableCell>
 

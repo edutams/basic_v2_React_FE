@@ -76,7 +76,9 @@ const RoleBasedAcess = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [page, rowsPerPage, nameFilter]);
+  }, [page, rowsPerPage, nameFilter, statusFilter]);
+
+  const [summaryData, setSummaryData] = useState(null);
 
   const fetchRoles = async () => {
     setLoading(true);
@@ -85,6 +87,7 @@ const RoleBasedAcess = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       };
       const res = await aclApi.getRoleAnalytics(params);
 
@@ -92,6 +95,7 @@ const RoleBasedAcess = () => {
         const fetchedData = res.data.data || res.data || [];
         setRoles(Array.isArray(fetchedData) ? fetchedData : []);
         setTotalRows(res.data.total || (Array.isArray(fetchedData) ? fetchedData.length : 0));
+        if (res.data.summary) setSummaryData(res.data.summary);
         if (res.data.per_page) setRowsPerPage(res.data.per_page);
       }
     } catch (error) {
@@ -148,15 +152,19 @@ const RoleBasedAcess = () => {
   };
 
   const displayRoles = useMemo(() => {
-    if (!roles || roles.length === 0) return [];
-    return roles.filter((r) => {
-      if (statusFilter === 'all') return true;
-      const rStatus = (r.status || (r.is_active === false ? 'inactive' : 'active')).toLowerCase();
-      return rStatus === statusFilter.toLowerCase();
-    });
-  }, [roles, statusFilter]);
+    return roles || [];
+  }, [roles]);
 
   const stats = useMemo(() => {
+    if (summaryData) {
+      return {
+        totalR: summaryData.total_roles ?? (totalRows || roles.length || 0),
+        totalP: summaryData.total_permissions ?? 0,
+        totalU: summaryData.total_users ?? 0,
+        activeU: summaryData.active_users ?? 0,
+        orphanedR: summaryData.orphaned_roles ?? 0,
+      };
+    }
     const totalR = totalRows || roles.length || 0;
     const totalP = roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0);
     const totalU = roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
@@ -166,7 +174,7 @@ const RoleBasedAcess = () => {
     const orphanedR = roles.filter((r) => (r.totalUsers ?? r.users_count ?? 0) === 0).length;
 
     return { totalR, totalP, totalU, activeU, orphanedR };
-  }, [roles, totalRows]);
+  }, [roles, totalRows, summaryData]);
 
   const COLOR_PALETTE = [
     '#10B981',
@@ -180,23 +188,31 @@ const RoleBasedAcess = () => {
   ];
 
   const distributionData = useMemo(() => {
+    const dist = summaryData?.distribution;
+    if (Array.isArray(dist) && dist.length > 0) {
+      return dist.map((item, idx) => ({
+        label: formatRoleName(item.name || item.label || 'Role'),
+        count: Number(item.count ?? 0),
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+    }
     if (roles && roles.length > 0) {
-      return roles.slice(0, 8).map((r, idx) => ({
+      return roles.map((r, idx) => ({
         label: formatRoleName(r.role || r.name || 'Role'),
         count: Number(r.totalUsers ?? r.users_count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
     }
     return [];
-  }, [roles]);
+  }, [summaryData, roles]);
 
   const chartLabels = useMemo(() => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
-      if (total === 0) return ['No Members Assigned'];
+      if (total === 0) return ['No Users Assigned'];
       return distributionData.map((d) => d.label);
     }
-    return ['No Members Assigned'];
+    return ['No Users Assigned'];
   }, [distributionData]);
 
   const chartSeries = useMemo(() => {
@@ -260,7 +276,7 @@ const RoleBasedAcess = () => {
               },
               total: {
                 show: true,
-                label: 'Total Members',
+                label: 'Total Users',
                 fontSize: '12px',
                 fontWeight: 500,
                 color: '#64748B',
@@ -316,7 +332,7 @@ const RoleBasedAcess = () => {
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
               count={stats.totalU}
-              label="Total Members"
+              label="Total Users"
               subtitle="Across all roles"
               icon={IconUsers}
               colorIndex={2}
@@ -348,9 +364,7 @@ const RoleBasedAcess = () => {
         </Grid>
       </Box>
 
-      {/* ── Donut Chart & Analytics Table ── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Donut Chart Card */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box
@@ -444,22 +458,8 @@ const RoleBasedAcess = () => {
           </ParentCard>
         </Grid>
 
-        {/* Access Analytics Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.5,
-              borderRadius: '16px',
-              border: '1px solid',
-              borderColor: 'divider',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
+          <ParentCard>
             <Box>
               <Box
                 component="form"
@@ -549,7 +549,7 @@ const RoleBasedAcess = () => {
                         Total Permissions
                       </TableCell>
                       <TableCell align="center" sx={{ minWidth: 130, fontWeight: 700, py: 1.5 }}>
-                        Assigned Members
+                        Assigned Users
                       </TableCell>
                       <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 1.5 }}>Status</TableCell>
                       <TableCell
@@ -718,11 +718,10 @@ const RoleBasedAcess = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 
-      {/* Row Context Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -755,7 +754,7 @@ const RoleBasedAcess = () => {
           <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
             <IconUsers size={18} />
           </ListItemIcon>
-          View Assigned Members
+          View Assigned Users
         </MenuItem>
       </Menu>
 
@@ -807,10 +806,10 @@ const RoleBasedAcess = () => {
             sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}
           >
             <Typography variant="subtitle2" fontWeight={700}>
-              Total Assigned Members
+              Total Assigned Users
             </Typography>
             <Chip
-              label={`${stats.totalU.toLocaleString()} Members`}
+              label={`${stats.totalU.toLocaleString()} Users`}
               color="primary"
               size="small"
               sx={{ fontWeight: 700 }}
@@ -824,7 +823,7 @@ const RoleBasedAcess = () => {
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    Members
+                    Users
                   </TableCell>
                 </TableRow>
               </TableHead>

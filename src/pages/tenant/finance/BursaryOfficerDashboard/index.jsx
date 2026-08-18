@@ -325,7 +325,7 @@ const BursaryOfficerDashboard = () => {
         </Grid>
       )}
 
-      {/* ── Revenue Trend + Revenue Distribution + Quick Actions ─── */}
+      {/* ── Row 1: Revenue Trend | Revenue Distribution | Quick Actions ─── */}
       <Grid container spacing={2} mb={2}>
         {/* Revenue Trend Chart */}
         <Grid size={{ xs: 12, md: 4 }}>
@@ -339,35 +339,30 @@ const BursaryOfficerDashboard = () => {
           )}
         </Grid>
 
-        {/* Revenue Distribution + Quick Actions Column */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2}>
-            {/* Revenue Distribution with Session dropdown */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              {revenueDistribution.loading ? (
-                <PanelSkeleton height={300} />
-              ) : (
-                <RevenueDistribution
-                  revenue_distribution={asArray(revenueDistribution.data)}
-                  totalRevenue={totalRevenue}
-                  onClick={() => setBreakdownType('revenue_distribution')}
-                  session={selectedSession || 'This Session'}
-                  sessions={sessions}
-                  onSessionChange={handleSessionChange}
-                />
-              )}
-            </Grid>
+        {/* Revenue Distribution */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          {revenueDistribution.loading ? (
+            <PanelSkeleton height={300} />
+          ) : (
+            <RevenueDistribution
+              revenue_distribution={asArray(revenueDistribution.data)}
+              totalRevenue={totalRevenue}
+              onClick={() => setBreakdownType('revenue_distribution')}
+              session={selectedSession || 'This Session'}
+              sessions={sessions}
+              onSessionChange={handleSessionChange}
+            />
+          )}
+        </Grid>
 
-            {/* Quick Actions */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <QuickActions onAction={handleQuickAction} />
-            </Grid>
-          </Grid>
+        {/* Quick Actions */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <QuickActions onAction={handleQuickAction} />
         </Grid>
       </Grid>
 
-      {/* ── Outstanding Balance by Class + Payment Categories ─── */}
-      <Grid container spacing={2} mb={2} alignItems="stretch">
+      {/* ── Row 2: Outstanding Balance by Class | Payment Categories ─── */}
+      <Grid container spacing={2} mb={2} alignItems="flex-start">
         <Grid size={{ xs: 12, lg: 8 }}>
           {collectionMatrix.loading ? (
             <PanelSkeleton height={420} />

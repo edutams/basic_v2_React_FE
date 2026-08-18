@@ -24,19 +24,45 @@ const formatNaira = (amount) =>
   `₦${Number(amount || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
 
 const cardBase = {
-  borderRadius: '8px',
-  boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+  borderRadius: '12px',
+  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
   p: '12px 14px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
 };
 
+// Shared interactive styles matching the teacher dashboard classes cards:
+// white background, grey hairline border, deep resting shadow that deepens
+// + lifts on hover.
+const cardHover = () => ({
+  cursor: 'pointer',
+  transition:
+    'box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease',
+  '&:hover': {
+    borderColor: '#94a3b8',
+    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
+    transform: 'translateY(-3px)',
+  },
+});
+
+const iconTile = (bg, color) => ({
+  width: 38,
+  height: 38,
+  borderRadius: '10px',
+  bgcolor: bg,
+  color,
+  border: '1px solid',
+  borderColor: `${color}26`,
+  boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+});
+
 const StatCardSkeleton = () => (
-  <Card
-    elevation={0}
-    sx={{ ...cardBase, bgcolor: '#fff', border: '1.5px solid #E5E7EB' }}
-  >
+  <Card elevation={0} sx={{ ...cardBase, bgcolor: '#fff', border: '1px solid #E5E7EB' }}>
     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
       <Skeleton variant="text" width={90} height={14} />
       <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '7px' }} />
@@ -81,18 +107,9 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
   // Clickable stat cards open a breakdown modal; non-clickable ones (wallet)
   // keep the default cursor. The hover-lift styles apply only when a click
   // handler is wired.
-  const cardProps = (type) => ({
+  const cardProps = (type, color) => ({
     onClick: type ? () => onCardClick && onCardClick(type) : undefined,
-    sx: type
-      ? {
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-          },
-        }
-      : {},
+    sx: type ? cardHover(color) : {},
   });
 
   if (loading) {
@@ -129,32 +146,21 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
       <Tooltip title="Click to view breakdown" placement="top" arrow>
         <Card
           elevation={0}
-          {...cardProps('subjects')}
+          {...cardProps('subjects', '#2563EB')}
           sx={{
             ...cardBase,
-            bgcolor: '#F0F4FF',
-            border: '1.5px solid #2563EB',
-            ...(cardProps('subjects').sx || {}),
+            bgcolor: '#ffffff',
+            border: '1px solid',
+            borderColor: '#cbd5e1',
+            ...(cardProps('subjects', '#2563EB').sx || {}),
           }}
         >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography fontWeight="600" sx={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.25 }}>
             Average Score
           </Typography>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '7px',
-              bgcolor: '#DBEAFE',
-              color: '#2563EB',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <SchoolOutlined sx={{ fontSize: 15 }} />
+          <Box sx={iconTile('#DBEAFE', '#2563EB')}>
+            <SchoolOutlined sx={{ fontSize: 17 }} />
           </Box>
         </Stack>
 
@@ -177,32 +183,21 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
       <Tooltip title="Click to view breakdown" placement="top" arrow>
       <Card
         elevation={0}
-        {...cardProps('attendance')}
+        {...cardProps('attendance', '#16A34A')}
         sx={{
           ...cardBase,
-          bgcolor: '#F0FDF4',
-          border: '1.5px solid #16A34A',
-          ...(cardProps('attendance').sx || {}),
+          bgcolor: '#ffffff',
+          border: '1px solid',
+          borderColor: '#cbd5e1',
+          ...(cardProps('attendance', '#16A34A').sx || {}),
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography fontWeight="600" sx={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.25 }}>
             Attendance
           </Typography>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '7px',
-              bgcolor: '#DCFCE7',
-              color: '#16A34A',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <CalendarTodayOutlined sx={{ fontSize: 15 }} />
+          <Box sx={iconTile('#DCFCE7', '#16A34A')}>
+            <CalendarTodayOutlined sx={{ fontSize: 17 }} />
           </Box>
         </Stack>
 
@@ -225,32 +220,21 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
       <Tooltip title="Click to view breakdown" placement="top" arrow>
       <Card
         elevation={0}
-        {...cardProps('fees')}
+        {...cardProps('fees', '#DC2626')}
         sx={{
           ...cardBase,
-          bgcolor: '#FFF5F5',
-          border: '1.5px solid #DC2626',
-          ...(cardProps('fees').sx || {}),
+          bgcolor: '#ffffff',
+          border: '1px solid',
+          borderColor: '#cbd5e1',
+          ...(cardProps('fees', '#DC2626').sx || {}),
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography fontWeight="600" sx={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.25 }}>
             Outstanding Fees
           </Typography>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '7px',
-              bgcolor: '#FEE2E2',
-              color: '#DC2626',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <AccountBalanceWalletOutlined sx={{ fontSize: 15 }} />
+          <Box sx={iconTile('#FEE2E2', '#DC2626')}>
+            <AccountBalanceWalletOutlined sx={{ fontSize: 17 }} />
           </Box>
         </Stack>
 
@@ -271,8 +255,8 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
         elevation={0}
         sx={{
           ...cardBase,
-          bgcolor: '#FFF',
-          border: '1.5px solid #E5E7EB',
+          bgcolor: '#ffffff',
+          border: '1px solid #cbd5e1',
         }}
       >
         <Stack direction="row" justifyContent="space-between" alignItems="center">

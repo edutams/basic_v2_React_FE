@@ -76,43 +76,50 @@ export default function QuickActions() {
                 sx={{
                   width: "100%",
                   height: "100%",
-                  minHeight: 88,
-                  p: 1,
-                  borderRadius: "10px",
-                  bgcolor: `${action.color}14`,
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.07)",
+                  minHeight: 92,
+                  p: 1.25,
+                  borderRadius: "12px",
+                  bgcolor: `${action.color}0f`,
+                  border: "1px solid",
+                  borderColor: `${action.color}26`,
+                  boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
                   textAlign: "center",
-                  justifyContent: "flex-start",
-                  alignItems: "flex-start",
-                  transition: "background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexDirection: "column",
+                  transition: "background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease",
                   "&:hover": {
                     bgcolor: `${action.color}1a`,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                    transform: "translateY(-2px)",
+                    borderColor: `${action.color}40`,
+                    boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)",
+                    transform: "translateY(-3px)",
                   },
                 }}
               >
                 <Stack spacing={1} alignItems="center" sx={{ width: "100%" }}>
                   <Box
                     sx={{
-                      width: 35,
-                      height: 35,
-                      borderRadius: 1.75,
+                      width: 38,
+                      height: 38,
+                      borderRadius: "10px",
                       bgcolor: action.bg,
                       color: action.color,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      border: "1px solid",
+                      borderColor: `${action.color}26`,
+                      boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
                     }}
                   >
                     <Icon sx={{ fontSize: 20 }} />
                   </Box>
                   <Box sx={{ width: "100%" }}>
-                    <Typography sx={{ fontSize: 11, fontWeight: 700, lineHeight: 1.25 }}>
+                    <Typography sx={{ fontSize: 11.5, fontWeight: 800, lineHeight: 1.25, color: "#1e293b" }}>
                       {action.label}
                     </Typography>
-                    <Typography sx={{ fontSize: 10, color: "text.secondary", lineHeight: 1.25, mt: 0.2 }}>
+                    <Typography sx={{ fontSize: 10, color: "#64748b", lineHeight: 1.25, mt: 0.25 }}>
                       {action.sub}
                     </Typography>
                   </Box>

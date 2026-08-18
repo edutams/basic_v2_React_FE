@@ -72,16 +72,17 @@ function ClassCard({ cls }) {
     <Card
       elevation={0}
       sx={{
-        borderRadius: "12px",
+        borderRadius: "14px",
         height: "100%",
-        bgcolor: cls.cardBg,
+        bgcolor: "#ffffff",
         border: "1px solid",
-        borderColor: "grey.200",
-        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
-        transition: "transform 180ms ease, box-shadow 180ms ease",
+        borderColor: "#cbd5e1",
+        boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
+        transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
         "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 8px 22px rgba(15, 23, 42, 0.12)",
+          transform: "translateY(-3px)",
+          borderColor: "#94a3b8",
+          boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)",
         },
       }}
     >
@@ -125,7 +126,7 @@ function ClassCard({ cls }) {
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ mt: 2.5 }}
+          sx={{ mt: 2.5, pt: 1.75, borderTop: "1px solid", borderTopColor: "#f1f5f9" }}
         >
           {/* Students Column */}
           <Box sx={{ flex: 1 }}>
@@ -141,7 +142,7 @@ function ClassCard({ cls }) {
           </Box>
 
           {/* Vertical Divider */}
-          <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#cbd5e1" }} />
+          <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#e2e8f0" }} />
 
           {/* Attendance Column */}
           <Box sx={{ flex: 1, pl: 1 }}>

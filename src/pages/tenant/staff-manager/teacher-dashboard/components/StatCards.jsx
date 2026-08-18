@@ -111,34 +111,40 @@ export default function StatCards() {
               <Box
                 onClick={() => setSelectedStat(stat)}
                 sx={{
-                  bgcolor: stat.cardBg,
-                  border: "1px rgba(69, 67, 67, 1) solid",
-                  borderRadius: "10px",
+                  bgcolor: `${stat.color}0f`,
+                  border: "1px solid",
+                  borderColor: `${stat.color}26`,
+                  borderRadius: "12px",
                   p: 1.5,
                   height: "100%",
                   boxSizing: "border-box",
                   overflow: "hidden",
                   cursor: "pointer",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                  transition: "box-shadow 120ms ease, transform 120ms ease",
+                  boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
+                  transition: "background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease",
                   "&:hover": {
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
-                    transform: "translateY(-2px)",
+                    bgcolor: `${stat.color}1a`,
+                    borderColor: `${stat.color}40`,
+                    boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)",
+                    transform: "translateY(-3px)",
                   },
                 }}
               >
               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
+                    width: 38,
+                    height: 38,
+                    borderRadius: "10px",
                     bgcolor: stat.iconBg,
                     color: stat.color,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
+                    border: "1px solid",
+                    borderColor: `${stat.color}26`,
+                    boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
                   }}
                 >
                   <Icon sx={{ fontSize: 20 }} />

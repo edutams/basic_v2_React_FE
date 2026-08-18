@@ -16,17 +16,28 @@ const ReusableGaugeChart = ({
 }) => {
   const theme = useTheme();
 
+  // Clamp the raw value into [minValue, maxValue]
+  const clampedValue = Math.min(maxValue, Math.max(minValue, value));
+
+  // radialBar always wants a 0-100 percentage for its series data,
+  // so we normalize the actual value against min/max before passing it in.
+  const range = maxValue - minValue;
+  const percentage =
+    range > 0 ? ((clampedValue - minValue) / range) * 100 : 0;
+
   const getColor = () => {
     if (colorRanges.length > 0) {
-      for (const range of colorRanges) {
-        if (value >= range.from && value <= range.to) {
-          return range.color;
+      for (const r of colorRanges) {
+        if (clampedValue >= r.from && clampedValue <= r.to) {
+          return r.color;
         }
       }
     }
 
-    if (value >= 75) return theme.palette.success.main;
-    if (value >= 50) return theme.palette.warning.main;
+    // Fall back thresholds are expressed against the real value range,
+    // not a hardcoded 0-100 assumption.
+    if (percentage >= 75) return theme.palette.success.main;
+    if (percentage >= 50) return theme.palette.warning.main;
 
     return theme.palette.error.main;
   };
@@ -54,13 +65,18 @@ const ReusableGaugeChart = ({
             theme.palette.mode === 'dark'
               ? 'rgba(255,255,255,0.1)'
               : '#e0e0e0',
-          strokeWidth: '97%',
+          // Smaller strokeWidth = thinner ring. Since this is a percentage
+          // of the chart's diameter (not a fixed px value), the ring stays
+          // proportionally thin no matter what height/width you pass in.
+          strokeWidth: '12%',
           margin: 5,
         },
 
         hollow: {
           margin: 0,
-          size: '35%',
+          // hollow.size + track.strokeWidth should add up to roughly 100%
+          // (diameter). Growing this is what makes the ring thin.
+          size: '80%',
           background: 'transparent',
         },
 
@@ -81,7 +97,9 @@ const ReusableGaugeChart = ({
             fontWeight: 700,
             color: theme.palette.text.primary,
             offsetY: 4,
-            formatter: (val) => `${Math.round(val)}%`,
+            // val here is the normalized 0-100 series value, not the real
+            // value, so we ignore it and format the actual clampedValue.
+            formatter: () => `${Math.round(clampedValue)}`,
           },
         },
       },
@@ -102,12 +120,13 @@ const ReusableGaugeChart = ({
       enabled: true,
       theme: theme.palette.mode,
       y: {
-        formatter: (val) => `${Math.round(val)}%`,
+        // Same deal for the tooltip: show the real value, not the percentage.
+        formatter: () => `${Math.round(clampedValue)}`,
       },
     },
   };
 
-  const series = [Math.round(value)];
+  const series = [Math.round(percentage)];
 
   return (
     <Box
@@ -149,10 +168,7 @@ ReusableGaugeChart.propTypes = {
   label: PropTypes.string,
   subtitle: PropTypes.string,
   height: PropTypes.number,
-  width: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]),
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   minValue: PropTypes.number,
   maxValue: PropTypes.number,
   colorRanges: PropTypes.arrayOf(
@@ -165,4 +181,3 @@ ReusableGaugeChart.propTypes = {
 };
 
 export default ReusableGaugeChart;
-

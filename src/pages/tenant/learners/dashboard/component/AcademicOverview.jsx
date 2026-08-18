@@ -31,11 +31,11 @@ const MOCK_DATA = {
 };
 
 const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
-  <Card elevation={0} sx={{ ...cardSx, p: '12px 14px', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+  <Card elevation={0} sx={{ ...cardSx, p: '10px 12px', display: 'flex', alignItems: 'center', gap: 1.25 }}>
     <Box
       sx={{
-        width: 40,
-        height: 40,
+        width: 34,
+        height: 34,
         borderRadius: '50%',
         bgcolor: iconBg,
         color: iconColor,
@@ -45,13 +45,13 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
         flexShrink: 0,
       }}
     >
-      <Icon sx={{ fontSize: 20 }} />
+      <Icon sx={{ fontSize: 17 }} />
     </Box>
     <Box>
-      <Typography sx={{ fontSize: '0.7rem', color: '#6B7280', fontWeight: 500, lineHeight: 1.2 }}>
+      <Typography sx={{ fontSize: '0.66rem', color: '#6B7280', fontWeight: 500, lineHeight: 1.2 }}>
         {label}
       </Typography>
-      <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1.1 }}>
+      <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1.1 }}>
         {value}
       </Typography>
     </Box>
@@ -59,24 +59,24 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
 );
 
 const MetricCard = ({ label, value, subtext, color }) => (
-  <Card elevation={0} sx={{ ...cardSx, p: '12px 14px' }}>
-    <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 0.5 }}>
+  <Card elevation={0} sx={{ ...cardSx, p: '10px 12px' }}>
+    <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', mb: 0.35 }}>
       {label}
     </Typography>
     <Stack direction="row" alignItems="baseline" spacing={1}>
-      <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1 }}>
+      <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
         {value}%
       </Typography>
-      <Typography sx={{ fontSize: '0.65rem', color: '#9CA3AF', fontWeight: 500 }}>
+      <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 500 }}>
         {subtext}
       </Typography>
     </Stack>
-    <Box sx={{ mt: 1 }}>
+    <Box sx={{ mt: 0.75 }}>
       <LinearProgress
         variant="determinate"
         value={value}
         sx={{
-          height: 6,
+          height: 5,
           borderRadius: 3,
           bgcolor: '#F3F4F6',
           '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
@@ -106,21 +106,21 @@ const AcademicOverview = ({ data = {} }) => {
       elevation={0}
       sx={{
         ...cardSx,
-        p: '16px 18px',
+        p: '14px 16px',
       }}
     >
       {/* Header */}
-      <Box mb={2}>
-        <Typography fontWeight="800" sx={{ fontSize: '1rem', color: '#111827' }}>
+      <Box mb={1.5}>
+        <Typography fontWeight="800" sx={{ fontSize: '0.95rem', color: '#111827' }}>
           Academic Overview
         </Typography>
-        <Typography sx={{ fontSize: '0.72rem', color: '#6B7280', mt: 0.2 }}>
+        <Typography sx={{ fontSize: '0.68rem', color: '#6B7280', mt: 0.15 }}>
           Overview of your academic activities this term
         </Typography>
       </Box>
 
       {/* Row 1: 4 Stat Cards */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} mb={1.5}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} mb={1.25}>
         <Box sx={{ flex: 1 }}>
           <MiniStatCard
             icon={AssignmentTurnedInOutlined}
@@ -160,7 +160,7 @@ const AcademicOverview = ({ data = {} }) => {
       </Stack>
 
       {/* Row 2: 3 Metric Cards */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} mb={1.5}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} mb={1.25}>
         <Box sx={{ flex: 1 }}>
           <MetricCard
             label="Submission Rate"
@@ -188,10 +188,10 @@ const AcademicOverview = ({ data = {} }) => {
       </Stack>
 
       {/* Row 3: 2 Detail Cards */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
         {/* Subject Strength */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 1.2, p: '14px 16px' }}>
-          <Typography fontWeight="700" sx={{ fontSize: '0.82rem', color: '#111827', mb: 1.25 }}>
+        <Card elevation={0} sx={{ ...cardSx, flex: 1.2, p: '12px 14px' }}>
+          <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
             Subject Strength
           </Typography>
           <Stack direction="row" spacing={2}>
@@ -249,8 +249,8 @@ const AcademicOverview = ({ data = {} }) => {
         </Card>
 
         {/* Class Standing */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 0.8, p: '14px 16px' }}>
-          <Typography fontWeight="700" sx={{ fontSize: '0.82rem', color: '#111827', mb: 1.25 }}>
+        <Card elevation={0} sx={{ ...cardSx, flex: 0.8, p: '12px 14px' }}>
+          <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
             Class Standing
           </Typography>
           <Stack direction="row" alignItems="center" spacing={1.5}>

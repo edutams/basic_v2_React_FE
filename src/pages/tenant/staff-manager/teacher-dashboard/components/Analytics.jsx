@@ -266,8 +266,8 @@ function DaysInTermChart() {
           <ReusableGaugeChart
             value={percentageCompleted}
             label="Completed"
-            height={190}
-            width={190}
+            height={250}
+            width={300}
             colorRanges={[
               { from: 0, to: 100, color: "#16a34a" },
             ]}

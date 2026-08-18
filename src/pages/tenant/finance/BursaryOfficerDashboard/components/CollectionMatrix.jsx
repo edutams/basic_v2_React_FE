@@ -11,20 +11,17 @@ import {
   TableHead,
   TableRow,
   useTheme,
+  LinearProgress,
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
-import StatusChip from './StatusChip';
 import { formatCurrency } from '../constants';
 
 /**
- * Class-Level Collection Matrix — table of per-class expected/collected/outstanding
- * fees with the efficiency percentage and a colored status badge per row.
+ * Outstanding Balance by Class — table of per-class expected/collected/outstanding
+ * fees with the efficiency percentage and a visual progress bar per row.
  */
 const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) => {
   const theme = useTheme();
-
-  const efficiencyColor = (value) =>
-    value < 80 ? theme.palette.success.main : theme.palette.mode === 'dark' ? '#fff' : '#000';
 
   return (
     <Paper
@@ -53,7 +50,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
       >
         <TableChart sx={{ fontSize: 19 }} />
         <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 12.5, letterSpacing: 0.4 }}>
-          Class-Level Collection Matrix
+          Outstanding Balance by Class
         </Typography>
       </Box>
 
@@ -63,19 +60,19 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
             <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
               <TableCell sx={{ fontWeight: 800, fontSize: 11 }}>Class</TableCell>
               <TableCell align="right" sx={{ fontWeight: 800, fontSize: 11 }}>
-                Expected Fees (₦)
+                Total Payable (₦)
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 800, fontSize: 11 }}>
-                Collected Fees (₦)
+                Collected (₦)
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 800, fontSize: 11 }}>
-                Outstanding Fees (₦)
+                Outstanding (₦)
               </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 800, fontSize: 11, minWidth: 140 }}>
-                Efficiency (%)
+              <TableCell align="right" sx={{ fontWeight: 800, fontSize: 11 }}>
+                Outstanding (%)
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 800, fontSize: 11 }}>
-                Status
+              <TableCell align="center" sx={{ fontWeight: 800, fontSize: 11, minWidth: 140 }}>
+                Visual Progress
               </TableCell>
             </TableRow>
           </TableHead>
@@ -112,12 +109,31 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Typography variant="body2" fontWeight={700} color={efficiencyColor(row.efficiency)}>
+                  <Typography variant="body2" fontWeight={700}>
                     {row.efficiency}%
                   </Typography>
                 </TableCell>
                 <TableCell align="center">
-                  <StatusChip status={row.status} />
+                  <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min(row.efficiency, 100)}
+                      sx={{
+                        flex: 1,
+                        height: 8,
+                        borderRadius: 4,
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: row.efficiency >= 80 
+                            ? theme.palette.success.main
+                            : row.efficiency >= 50
+                            ? theme.palette.warning.main
+                            : theme.palette.error.main,
+                          borderRadius: 4,
+                        },
+                      }}
+                    />
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -131,7 +147,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
             >
               <TableCell>
                 <Typography variant="subtitle2" fontWeight={800}>
-                  Total
+                  TOTAL
                 </Typography>
               </TableCell>
               <TableCell align="right">
@@ -150,12 +166,28 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <Typography variant="subtitle2" fontWeight={800} color={efficiencyColor(totalEfficiency)}>
+                <Typography variant="subtitle2" fontWeight={800}>
                   {totalEfficiency}%
                 </Typography>
               </TableCell>
               <TableCell align="center">
-                <StatusChip status={totalEfficiency < 70 ? 'poor' : totalEfficiency <= 80 ? 'pending' : 'excellent'} />
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(parseFloat(totalEfficiency), 100)}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: parseFloat(totalEfficiency) >= 80
+                        ? theme.palette.success.main
+                        : parseFloat(totalEfficiency) >= 50
+                        ? theme.palette.warning.main
+                        : theme.palette.error.main,
+                      borderRadius: 4,
+                    },
+                  }}
+                />
               </TableCell>
             </TableRow>
           </TableBody>

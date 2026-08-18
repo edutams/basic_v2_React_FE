@@ -10,7 +10,6 @@ import {
   Skeleton,
   Tooltip,
 } from '@mui/material';
-import Chart from 'react-apexcharts';
 import {
   CalculateOutlined,
   MenuBookOutlined,
@@ -20,7 +19,9 @@ import {
   FunctionsOutlined,
   AccountBalanceOutlined,
   ComputerOutlined,
+  CalendarTodayOutlined,
 } from '@mui/icons-material';
+import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import AcademicOverview from './AcademicOverview';
 
 const cardSx = {
@@ -46,20 +47,6 @@ const subjectMeta = (name, index) => {
   else if (n.includes('ict') || n.includes('comput')) icon = ComputerOutlined;
   return { icon, color: SUBJECT_COLORS[index % SUBJECT_COLORS.length] };
 };
-
-const LegendItem = ({ color, label, pct }) => (
-  <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 0.1 }}>
-    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
-    <Typography sx={{ fontSize: '0.72rem', color: '#374151', fontWeight: 500 }}>
-      {label}
-    </Typography>
-    <Typography fontWeight="700" sx={{ fontSize: '0.73rem', color: '#111827', ml: 'auto' }}>
-      {pct}
-    </Typography>
-  </Stack>
-);
-
-const pctOf = (count, total) => (total > 0 ? Math.round((count / total) * 100) : 0);
 
 // Label for a session term, e.g. "2025/2026 · 1st Term".
 const termLabel = (t) =>
@@ -103,6 +90,116 @@ const CardSkeleton = ({ rows = 3 }) => (
   </Stack>
 );
 
+// Days in the Term — mirrors the teacher dashboard card, driven by the
+// learner's attendance stats for the selected term.
+const daysData = {
+  totalDays: 89,
+  termEndDate: 'July 30, 2026',
+};
+
+const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => {} }) => {
+  const total = Number(attendance.total || 0);
+  const present = Number(attendance.present || 0);
+  const absent = Number(attendance.absent || 0);
+  const late = Number(attendance.late || 0);
+
+  const daysPassed = total;
+  const schoolDays = total;
+  const daysRemaining = Math.max(0, daysData.totalDays - total);
+  const percentageCompleted = daysData.totalDays > 0 ? Math.round((total / daysData.totalDays) * 100) : 0;
+
+  return (
+    <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <Box>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.75}>
+          <Typography fontWeight="700" sx={{ fontSize: '0.85rem', color: '#111827' }}>
+            Days in the Term
+          </Typography>
+          <TermSelect
+            value={termId}
+            onChange={onTermChange}
+            sessionTerms={sessionTerms}
+            size="xs"
+          />
+        </Stack>
+
+        {loading ? (
+          <CardSkeleton rows={3} />
+        ) : total === 0 ? (
+          <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
+            No school days recorded for this term yet.
+          </Typography>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: -0.5 }}>
+              <ReusableGaugeChart
+                value={percentageCompleted}
+                label="Completed"
+                height={300}
+                width={250}
+                colorRanges={[{ from: 0, to: 100, color: '#16a34a' }]}
+              />
+            </Box>
+
+            <Stack direction="row" alignItems="center" justifyContent="space-around" sx={{ mt: 1.25, py: 0.5 }}>
+              <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
+                <Typography fontWeight="800" sx={{ fontSize: 18, color: '#16a34a', lineHeight: 1 }}>
+                  {schoolDays}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                  School Days
+                </Typography>
+              </Stack>
+
+              <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', my: 0.5 }} />
+
+              <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
+                <Typography fontWeight="800" sx={{ fontSize: 18, color: '#2563EB', lineHeight: 1 }}>
+                  {daysRemaining}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                  Days Remaining
+                </Typography>
+              </Stack>
+
+              <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', my: 0.5 }} />
+
+              <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
+                <Typography fontWeight="800" sx={{ fontSize: 18, color: '#e11d48', lineHeight: 1 }}>
+                  {absent + late}
+                </Typography>
+                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                  Absent Days
+                </Typography>
+              </Stack>
+            </Stack>
+
+            <Box
+              sx={{
+                mt: 1.25,
+                bgcolor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '6px',
+                px: 1.25,
+                py: 0.75,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.75,
+              }}
+            >
+              <CalendarTodayOutlined sx={{ fontSize: 14, color: '#16a34a' }} />
+              <Typography sx={{ fontSize: '0.7rem', color: '#1e1b4b', fontWeight: 600 }}>
+                Term Ends: {daysData.termEndDate}
+              </Typography>
+            </Box>
+          </>
+        )}
+      </Box>
+    </Card>
+  );
+};
+
 const Analytics = ({
   academics = {},
   attendance = {},
@@ -115,19 +212,9 @@ const Analytics = ({
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];
 
-  const attTotal = Number(attendance.total || 0);
-  const attPresent = Number(attendance.present || 0);
-  const attAbsent = Number(attendance.absent || 0);
-  const attRate = Number(attendance.rate || 0);
-
-  const attendancePie = {
-    series: [attPresent, attAbsent],
-    labels: ['Present', 'Absent'],
-  };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* ─── ROW 1: Academic Performance & Attendance Overview ─── */}
+      {/* ─── ROW 1: Academic Performance & Days in the Term ─── */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
         {/* Academic Performance */}
         <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1.45 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -298,106 +385,14 @@ const Analytics = ({
           </Box>
         </Card>
 
-        {/* Attendance Overview */}
-        <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.75}>
-              <Typography fontWeight="700" sx={{ fontSize: '0.85rem', color: '#111827' }}>
-                Attendance Overview
-              </Typography>
-              <TermSelect
-                value={attendanceTermId}
-                onChange={onAttendanceTermChange}
-                sessionTerms={sessionTerms}
-                size="xs"
-              />
-            </Stack>
-
-            {loading ? (
-              <CardSkeleton rows={3} />
-            ) : attTotal === 0 ? (
-              <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
-                No attendance recorded for this term yet.
-              </Typography>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    mt: 1.25,
-                    mb: 1,
-                    py: 0.5,
-                  }}
-                >
-                  <Box sx={{ position: 'relative', width: 130, height: 130, flexShrink: 0 }}>
-                    <Chart
-                      type="donut"
-                      series={attendancePie.series}
-                      width={130}
-                      height={130}
-                      options={{
-                        chart: { type: 'donut', sparkline: { enabled: true } },
-                        labels: attendancePie.labels,
-                        colors: ['#10B981', '#EF4444'],
-                        plotOptions: { pie: { donut: { size: '72%' } } },
-                        dataLabels: { enabled: false },
-                        legend: { show: false },
-                        stroke: { show: false },
-                        tooltip: { enabled: true },
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%,-50%)',
-                        textAlign: 'center',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <Typography fontWeight="800" sx={{ fontSize: '1.1rem', color: '#111827', lineHeight: 1 }}>
-                        {attRate}%
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', fontWeight: 600, mt: 0.1 }}>
-                        Present
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Stack spacing={0.6} sx={{ minWidth: 100, justifyContent: 'center' }}>
-                    <LegendItem color="#10B981" label="Present" pct={`${pctOf(attPresent, attTotal)}%`} />
-                    <LegendItem color="#EF4444" label="Absent" pct={`${pctOf(attAbsent, attTotal)}%`} />
-                  </Stack>
-                </Box>
-
-                <Box
-                  sx={{
-                    bgcolor: '#F0FDF4',
-                    border: '1px solid #A7F3D0',
-                    borderRadius: '6px',
-                    px: 1.25,
-                    py: 0.75,
-                    mt: 0.1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Typography sx={{ fontSize: '0.7rem', color: '#166534', fontWeight: 500 }}>
-                    You've been present for <b>{attRate}%</b> of school days.
-                  </Typography>
-                  <Typography fontWeight="700" sx={{ fontSize: '0.7rem', color: '#15803D', whiteSpace: 'nowrap', ml: 1 }}>
-                    {attRate >= 75 ? '★ Excellent!' : attRate >= 50 ? 'Good job!' : 'Keep going!'}
-                  </Typography>
-                </Box>
-              </>
-            )}
-          </Box>
-        </Card>
+        {/* Days in the Term */}
+        <DaysInTermCard
+          attendance={attendance}
+          loading={loading}
+          sessionTerms={sessionTerms}
+          termId={attendanceTermId}
+          onTermChange={onAttendanceTermChange}
+        />
       </Stack>
 
       {/* ─── ROW 2: Academic Overview (spans full width) ─── */}

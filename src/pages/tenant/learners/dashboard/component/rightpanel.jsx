@@ -1,17 +1,10 @@
 import React from 'react';
-import { Box, Card, Typography, Stack } from '@mui/material';
+import { Box, Card, Typography, Stack, Divider } from '@mui/material';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-
-const cardSx = {
-  borderRadius: '8px',
-  border: '1px solid #E5E7EB',
-  boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
-  bgcolor: '#fff',
-};
 
 // Mocked activity log entries — will be replaced with real data later.
 const MOCK_ACTIVITIES = [
@@ -64,62 +57,81 @@ const MOCK_ACTIVITIES = [
 
 const RightPanel = () => {
   return (
-    <Card elevation={0} sx={{ ...cardSx, p: '14px 14px' }}>
-      {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
-        <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827' }}>
-          Activity Log
-        </Typography>
-        <Typography sx={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
-          View All
-        </Typography>
-      </Stack>
+    <Card
+      elevation={0}
+      sx={{
+        bgcolor: '#fff',
+        border: '1px solid',
+        borderColor: 'grey.200',
+        borderRadius: '10px',
+        p: 2,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 18px rgba(15, 23, 42, 0.05)',
+        },
+      }}
+    >
+      <Box>
+        {/* Header */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2, color: '#111827' }}>
+            Activity Log
+          </Typography>
+          <Typography
+            sx={{ fontSize: 12, fontWeight: 600, color: 'primary.main', cursor: 'pointer' }}
+          >
+            View all
+          </Typography>
+        </Stack>
 
-      {/* Activity Items */}
-      <Stack spacing={1.5}>
-        {MOCK_ACTIVITIES.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Stack
-              key={item.id}
-              direction="row"
-              spacing={1.25}
-              alignItems="flex-start"
-              justifyContent="space-between"
-            >
-              <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0, flex: 1 }}>
+        {/* Activity Items */}
+        <Stack divider={<Divider flexItem />} spacing={1}>
+          {MOCK_ACTIVITIES.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Stack
+                key={item.id}
+                direction="row"
+                spacing={1.25}
+                alignItems="flex-start"
+                sx={{ pt: 0.2, transition: 'transform 150ms ease', '&:hover': { transform: 'translateX(2px)' } }}
+              >
                 <Box
                   sx={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1.5,
                     bgcolor: item.iconBg,
                     color: item.iconColor,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    mt: '2px',
                   }}
                 >
-                  <Icon sx={{ fontSize: 14 }} />
+                  <Icon sx={{ fontSize: 17 }} />
                 </Box>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', lineHeight: 1.25 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3, color: '#111827' }}>
                     {item.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.63rem', color: '#6B7280', mt: 0.15, lineHeight: 1.3 }}>
+                  <Typography sx={{ fontSize: 11.5, color: '#6B7280', lineHeight: 1.3 }}>
                     {item.subtitle}
                   </Typography>
                 </Box>
+                <Typography sx={{ fontSize: 10.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>
+                  {item.time}
+                </Typography>
               </Stack>
-              <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', fontWeight: 500, flexShrink: 0, mt: '2px' }}>
-                {item.time}
-              </Typography>
-            </Stack>
-          );
-        })}
-      </Stack>
+            );
+          })}
+        </Stack>
+      </Box>
     </Card>
   );
 };

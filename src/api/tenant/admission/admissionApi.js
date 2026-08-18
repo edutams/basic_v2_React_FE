@@ -169,6 +169,13 @@ export const getParentDashboard = async (sessionTermId = null) => {
   return response.data;
 };
 
+// Weeks for a session term (used by the parent Term Calendar card for real
+// start/end dates). Public read — no calendar permission required.
+export const getSessionTermWeeks = async (sessionTermId) => {
+  const response = await api.get(`/session-mappings/${sessionTermId}/weeks`);
+  return response.data;
+};
+
 // Admission Payment
 export const checkAdmissionPaymentStatus = async (admissionId) => {
   const response = await api.get(`/admission/payments/status/${admissionId}`);

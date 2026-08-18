@@ -1,7 +1,6 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import { TenantAuthContext } from '@/context/TenantContext/auth';
 import tenantApi from '@/api/tenant/tenant_api';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
@@ -48,9 +47,6 @@ const useSection = (path, sessionTermId) => {
 };
 
 const LearnerDashboard = () => {
-  const { user } = useContext(TenantAuthContext);
-  const userName = user?.name || 'there';
-
   // Session terms the learner is registered in, newest first. The first term
   // becomes the default for every section; the two chart cards each keep their
   // own term so a dropdown only ever refetches its own card.
@@ -86,31 +82,12 @@ const LearnerDashboard = () => {
   const academics = useSection('/dashboard/learner/academic-performance', academicTermId);
   const attendance = useSection('/dashboard/learner/attendance', attendanceTermId);
   const assignments = useSection('/dashboard/learner/assignments', defaultTermId);
-  const notifications = useSection('/dashboard/learner/notifications', defaultTermId);
-  const events = useSection('/dashboard/learner/events', defaultTermId);
 
   // Stat-card breakdown modal — holds the clicked card type.
   const [breakdownType, setBreakdownType] = useState(null);
 
   return (
     <PageContainer title="Student Dashboard" description="Student portal">
-      {/* Greeting Header */}
-      <Box mb={2}>
-        <Typography
-          fontWeight="800"
-          sx={{
-            fontSize: { xs: '1.15rem', md: '1.4rem' },
-            color: '#111827',
-            lineHeight: 1.2,
-          }}
-        >
-          Welcome back, {userName} 👋
-        </Typography>
-        <Typography sx={{ fontSize: '0.82rem', color: '#6B7280', mt: 0.3 }}>
-          Here is your academic overview and upcoming activities.
-        </Typography>
-      </Box>
-
       {/* Top Stat Cards Section (Wallet card wider) */}
       <StatCards
         overview={overview.data}
@@ -123,11 +100,11 @@ const LearnerDashboard = () => {
         sx={{
           display: 'flex',
           gap: 2,
-          alignItems: 'flex-start',
+          alignItems: 'stretch',
           flexDirection: { xs: 'column', lg: 'row' },
         }}
       >
-        {/* Main Content Area (Analytics 2x2 grid: Academic & Attendance side-by-side; Results & Assignment side-by-side) */}
+        {/* Main Content Area (Analytics 2x2 grid: Academic & Days-in-Term side-by-side; Academic Overview full width) */}
         <Box sx={{ flex: '1 1 0', minWidth: 0, width: { xs: '100%', lg: 'auto' } }}>
           <Analytics
             academics={academics.data}
@@ -142,18 +119,15 @@ const LearnerDashboard = () => {
           />
         </Box>
 
-        {/* Right Sidebar (Notifications & Events stacked) */}
+        {/* Right Sidebar (Activity Log) — stretches to match left column height */}
         <Box
           sx={{
             width: { xs: '100%', lg: 310 },
             flexShrink: 0,
+            display: 'flex',
           }}
         >
-          <RightPanel
-            notifications={notifications.data}
-            events={events.data}
-            loading={notifications.loading || events.loading}
-          />
+          <RightPanel />
         </Box>
       </Box>
 

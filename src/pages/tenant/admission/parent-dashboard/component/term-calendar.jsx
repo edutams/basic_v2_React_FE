@@ -12,12 +12,15 @@ const TermCalendar = ({
     <Card
       elevation={0}
       sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',
         p: 2,
         boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
-        mb: 2,
         transition: 'all 0.2s ease',
         '&:hover': {
           boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',

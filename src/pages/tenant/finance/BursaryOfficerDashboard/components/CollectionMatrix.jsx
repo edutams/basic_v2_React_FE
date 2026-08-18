@@ -15,44 +15,81 @@ import {
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
+import SessionSelect from './SessionSelect';
+
+// Mocked data shown when the API returns empty.
+const MOCK_MATRIX = [
+  { class: 'SSS 3', expected_fees: 38450000, collected_fees: 24680000, outstanding_fees: 13770000, efficiency: 35.8 },
+  { class: 'SSS 2', expected_fees: 35250000, collected_fees: 22410000, outstanding_fees: 12840000, efficiency: 36.5 },
+  { class: 'SSS 1', expected_fees: 30800000, collected_fees: 20150000, outstanding_fees: 10650000, efficiency: 34.6 },
+  { class: 'JSS 3', expected_fees: 28900000, collected_fees: 18760000, outstanding_fees: 10140000, efficiency: 35.1 },
+  { class: 'JSS 2', expected_fees: 27400000, collected_fees: 17930000, outstanding_fees: 9470000, efficiency: 34.6 },
+  { class: 'JSS 1', expected_fees: 26300000, collected_fees: 16630000, outstanding_fees: 9670000, efficiency: 36.8 },
+];
 
 /**
  * Outstanding Balance by Class — table of per-class expected/collected/outstanding
  * fees with the efficiency percentage and a visual progress bar per row.
  */
-const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) => {
+const CollectionMatrix = ({
+  matrix = [],
+  totals,
+  totalEfficiency,
+  onRowClick,
+  session = 'This Session',
+  sessions = [],
+  onSessionChange,
+}) => {
   const theme = useTheme();
+  const displayMatrix = matrix.length > 0 ? matrix : MOCK_MATRIX;
+
+  // Compute totals from display data when not provided
+  const computedTotals = totals || displayMatrix.reduce(
+    (acc, row) => ({
+      expected: acc.expected + (row.expected_fees || 0),
+      collected: acc.collected + (row.collected_fees || 0),
+      outstanding: acc.outstanding + (row.outstanding_fees || 0),
+    }),
+    { expected: 0, collected: 0, outstanding: 0 },
+  );
+  const computedEfficiency = totalEfficiency || (computedTotals.expected
+    ? ((computedTotals.collected / computedTotals.expected) * 100).toFixed(1)
+    : '0.0');
 
   return (
     <Paper
+      elevation={0}
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 3,
+        borderRadius: '14px',
         border: '1px solid',
-        borderColor: theme.palette.divider,
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
       }}
     >
-      {/* Banner */}
+      {/* Header */}
       <Box
         sx={{
-          px: 3,
-          py: 2.5,
+          px: 2.5,
+          py: 2,
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-          color: '#fff',
+          justifyContent: 'space-between',
         }}
       >
-        <TableChart sx={{ fontSize: 19 }} />
-        <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: 12.5, letterSpacing: 0.4 }}>
-          Outstanding Balance by Class
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChart sx={{ fontSize: 18, color: theme.palette.primary.main }} />
+          <Typography fontWeight={800} sx={{ fontSize: '0.82rem', color: '#111827', letterSpacing: 0.3 }}>
+            Outstanding Balance by Class
+          </Typography>
+          <InfoOutlined sx={{ fontSize: 14, color: '#9CA3AF', ml: 0.5 }} />
+        </Box>
+        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
       </Box>
+      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
 
       <TableContainer sx={{ flexGrow: 1 }}>
         <Table sx={{ minWidth: 700 }}>
@@ -77,7 +114,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
             </TableRow>
           </TableHead>
           <TableBody>
-            {matrix.map((row, index) => (
+            {displayMatrix.map((row, index) => (
               <TableRow
                 key={index}
                 hover
@@ -152,28 +189,28 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
               </TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle2" fontWeight={800}>
-                  {formatCurrency(totals.expected)}
+                  {formatCurrency(computedTotals.expected)}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle2" fontWeight={800} color="success.main">
-                  {formatCurrency(totals.collected)}
+                  {formatCurrency(computedTotals.collected)}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle2" fontWeight={800} color="error.main">
-                  {formatCurrency(totals.outstanding)}
+                  {formatCurrency(computedTotals.outstanding)}
                 </Typography>
               </TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle2" fontWeight={800}>
-                  {totalEfficiency}%
+                  {computedEfficiency}%
                 </Typography>
               </TableCell>
               <TableCell align="center">
                 <LinearProgress
                   variant="determinate"
-                  value={Math.min(parseFloat(totalEfficiency), 100)}
+                  value={Math.min(parseFloat(computedEfficiency), 100)}
                   sx={{
                     height: 8,
                     borderRadius: 4,
@@ -194,21 +231,7 @@ const CollectionMatrix = ({ matrix = [], totals, totalEfficiency, onRowClick }) 
         </Table>
       </TableContainer>
 
-      <Box
-        sx={{
-          px: 3,
-          py: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-        }}
-      >
-        <InfoOutlined sx={{ fontSize: 14, color: 'text.secondary' }} />
-        <Typography variant="body2" color="text.secondary">
-          Click on any class row to view a detailed breakdown of students and transactions.
-        </Typography>
-      </Box>
+
     </Paper>
   );
 };

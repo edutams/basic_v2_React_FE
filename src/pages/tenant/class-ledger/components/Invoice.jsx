@@ -577,12 +577,22 @@ const Invoice = () => {
 
   const breadcrumbTitle = `Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
 
-  const BCrumbLive = [
-    { to: '/', title: 'Home' },
-    { title: 'Bursary' },
-    { to: '/class-ledger', title: 'Class Ledger' },
-    { title: breadcrumbTitle },
-  ];
+  // Parents reach this page via /parent-invoice/... and don't have access to
+  // /class-ledger — point their breadcrumb/back links at the dashboard instead.
+  const isParentView = window.location.pathname.startsWith('/parent-invoice');
+
+  const BCrumbLive = isParentView
+    ? [
+        { to: '/', title: 'Home' },
+        { to: '/dashboard', title: 'Dashboard' },
+        { title: breadcrumbTitle },
+      ]
+    : [
+        { to: '/', title: 'Home' },
+        { title: 'Bursary' },
+        { to: '/class-ledger', title: 'Class Ledger' },
+        { title: breadcrumbTitle },
+      ];
 
   return (
     <PageContainer title={breadcrumbTitle}>
@@ -647,7 +657,10 @@ const Invoice = () => {
           </Box>
 
           {/* BACK BUTTON */}
-          <Button variant="contained" size="small" onClick={() => navigate('/class-ledger')}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate(isParentView ? '/dashboard' : '/class-ledger')}
             sx={{
               position: 'absolute',
               top: 12,

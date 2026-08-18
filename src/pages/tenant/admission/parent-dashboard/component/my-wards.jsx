@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -61,6 +62,14 @@ const initialsOf = (name = '') =>
     .toUpperCase() || 'W';
 
 const WardCard = ({ ward, onSelect, isSelected }) => {
+  const navigate = useNavigate();
+
+  const handleViewInvoice = (e) => {
+    e.stopPropagation();
+    const invoiceNumber = ward.invoice_number || ward.invoiceNo || ward.invoiceNumber || '';
+    navigate(`/parent-invoice/${invoiceNumber}/${ward.id}`);
+  };
+
   return (
     <Card
       elevation={0}
@@ -85,56 +94,52 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
       }}
     >
       <Box>
-        {/* Header: Avatar, Name, Class/Age, Status */}
-        <Stack direction="row" spacing={1.25} alignItems="flex-start" justifyContent="space-between">
-          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
-            <Avatar
-              src={ward.avatar}
-              alt={ward.name}
+        {/* Header: Avatar + Name/Class (status sits below, aligned right) */}
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Avatar
+            src={ward.avatar}
+            alt={ward.name}
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: '50%',
+              flexShrink: 0,
+              border: isSelected ? '2px solid #dc2626' : '2px solid transparent',
+              bgcolor: ward.statusBg || '#dbeafe',
+              color: ward.statusColor || '#2563eb',
+              fontSize: 15,
+              fontWeight: 700,
+            }}
+          >
+            {!ward.avatar && initialsOf(ward.name)}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
               sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '50%',
-                flexShrink: 0,
-                border: isSelected ? '2px solid #dc2626' : '2px solid transparent',
-                bgcolor: ward.statusBg || '#dbeafe',
-                color: ward.statusColor || '#2563eb',
-                fontSize: 15,
-                fontWeight: 700,
+                fontWeight: 800,
+                fontSize: 13.5,
+                color: '#1e293b',
+                lineHeight: 1.25,
               }}
             >
-              {!ward.avatar && initialsOf(ward.name)}
-            </Avatar>
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: 13.5,
-                  color: '#1e293b',
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {ward.name}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 11,
-                  color: '#64748b',
-                  fontWeight: 500,
-                  mt: 0.2,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {ward.class}
-                {ward.age != null ? ` &nbsp;•&nbsp; Age: ${ward.age} years` : ''}
-              </Typography>
-            </Box>
-          </Stack>
+              {ward.name}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 11,
+                color: '#64748b',
+                fontWeight: 500,
+                mt: 0.2,
+              }}
+            >
+              {ward.class}
+              {ward.age != null ? ` • Age: ${ward.age} years` : ''}
+            </Typography>
+          </Box>
+        </Stack>
+
+        {/* Status — below the class section, aligned right */}
+        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
           <Box
             sx={{
               bgcolor: ward.statusBg,
@@ -152,14 +157,17 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           </Box>
         </Stack>
 
-        {/* Gauges Row */}
-        <Stack direction="row" spacing={1} sx={{ mt: 1.75, mb: 1.5 }}>
-          <GaugeRing value={ward.attendance ?? 0} label="Attendance" color={ward.attendanceColor} />
-          <GaugeRing value={ward.averageScore ?? 0} label="Average Score" color={ward.scoreColor} />
-        </Stack>
+        {/* Gauges Row — solid border separator above */}
+        <Box sx={{ borderTop: '1px solid #e2e8f0', mt: 1.5, pt: 1.5, mb: 1.5 }}>
+          <Stack direction="row" spacing={1}>
+            <GaugeRing value={ward.attendance ?? 0} label="Attendance" color={ward.attendanceColor} />
+            <Box sx={{ borderLeft: '1px solid #e2e8f0', pl: 1, mx: 0.5 }} />
+            <GaugeRing value={ward.averageScore ?? 0} label="Avg Score" color={ward.scoreColor} />
+          </Stack>
+        </Box>
 
         {/* Financial Info */}
-        <Box sx={{ borderTop: '1px dashed #e2e8f0', pt: 1.25, mb: 1.5 }}>
+        <Box sx={{ borderTop: '1px solid #e2e8f0', pt: 1.25, mb: 1.5 }}>
           <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
             TOTAL PAYABLE
           </Typography>
@@ -188,7 +196,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               }}
             >
               Wallet Account: <Box component="span" sx={{ color: '#1e293b', fontWeight: 600 }}>{ward.walletAccount}</Box>
-              {ward.bank ? ` &nbsp;|&nbsp; ${ward.bank}` : ''}
+              {ward.bank ? ` • ${ward.bank}` : ''}
             </Typography>
           ) : null}
         </Box>
@@ -200,18 +208,24 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           variant="outlined"
           size="small"
           startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
+          onClick={handleViewInvoice}
           sx={{
             flex: 1,
             borderRadius: '7px',
             textTransform: 'none',
             fontSize: 10.5,
             fontWeight: 700,
-            color: '#334155',
-            borderColor: '#cbd5e1',
+            color: '#1d4ed8',
+            borderColor: '#bfdbfe',
             px: 0.75,
             py: 0.4,
             whiteSpace: 'nowrap',
-            '&:hover': { borderColor: '#94a3b8', bgcolor: '#f8fafc' },
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: '#2563eb',
+              bgcolor: '#eff6ff',
+              color: '#1d4ed8',
+            },
           }}
         >
           View Invoice
@@ -273,53 +287,7 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
   }
 
   return (
-    <Box mb={2.5}>
-      {/* Header with Title and Prev/Next Navigation Controls */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.25}>
-        <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
-          My Wards
-        </Typography>
-
-        <Stack direction="row" spacing={0.75} alignItems="center">
-          <IconButton
-            size="small"
-            onClick={handlePrev}
-            disabled={!canPrev}
-            sx={{
-              width: 30,
-              height: 30,
-              borderRadius: '7px',
-              bgcolor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              color: canPrev ? '#1e293b' : '#94a3b8',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              '&:hover': { bgcolor: '#f8fafc' },
-              '&.Mui-disabled': { opacity: 0.4 },
-            }}
-          >
-            <ChevronLeftIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={handleNext}
-            disabled={!canNext}
-            sx={{
-              width: 30,
-              height: 30,
-              borderRadius: '7px',
-              bgcolor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              color: canNext ? '#1e293b' : '#94a3b8',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              '&:hover': { bgcolor: '#f8fafc' },
-              '&.Mui-disabled': { opacity: 0.4 },
-            }}
-          >
-            <ChevronRightIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Stack>
-      </Stack>
-
+    <Box mb={2.5} height="100%">
       {wards.length === 0 ? (
         /* Empty state — never show mock data */
         <Box
@@ -339,26 +307,86 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
           </Typography>
         </Box>
       ) : (
-        /* Grid displaying exactly 3 ward cards per view */
+        /* Wrapper panel wrapping the title, prev/next controls and the ward cards */
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-            },
-            gap: 1.5,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '14px',
+            p: 1.5,
+            boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
           }}
         >
-          {visibleWards.map((ward) => (
-            <WardCard
-              key={ward.id}
-              ward={ward}
-              isSelected={selectedWard?.id === ward.id}
-              onSelect={onSelectWard}
-            />
-          ))}
+          {/* Header with Title and Prev/Next Navigation Controls */}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.25}>
+            <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
+              My Wards
+            </Typography>
+
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <IconButton
+                size="small"
+                onClick={handlePrev}
+                disabled={!canPrev}
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '7px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: canPrev ? '#1e293b' : '#94a3b8',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  '&:hover': { bgcolor: '#f8fafc' },
+                  '&.Mui-disabled': { opacity: 0.4 },
+                }}
+              >
+                <ChevronLeftIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={handleNext}
+                disabled={!canNext}
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '7px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: canNext ? '#1e293b' : '#94a3b8',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  '&:hover': { bgcolor: '#f8fafc' },
+                  '&.Mui-disabled': { opacity: 0.4 },
+                }}
+              >
+                <ChevronRightIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Stack>
+          </Stack>
+
+          {/* Grid displaying exactly 3 ward cards per view */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 1.5,
+            }}
+          >
+            {visibleWards.map((ward) => (
+              <WardCard
+                key={ward.id}
+                ward={ward}
+                isSelected={selectedWard?.id === ward.id}
+                onSelect={onSelectWard}
+              />
+            ))}
+          </Box>
         </Box>
       )}
     </Box>

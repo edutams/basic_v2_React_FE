@@ -1,60 +1,108 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, InputAdornment, useTheme } from '@mui/material';
+import { Box, Typography, TextField, InputAdornment, Button, useTheme } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import SectionCard from './SectionCard';
 
 /**
- * Search Student — Quick search box for finding students by name, admission number, or student ID.
+ * Search Student — clean search box matching the design image.
  */
 const SearchStudent = ({ onSearch }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    if (onSearch) {
-      onSearch(value);
+  const handleSearch = () => {
+    if (onSearch && searchQuery.length >= 2) {
+      onSearch(searchQuery);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
   return (
-    <SectionCard
-      icon={Search}
-      title="Search Student"
-      color={theme.palette.info.main}
+    <Box
+      sx={{
+        borderRadius: '14px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
+        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
+        p: '16px 18px',
+      }}
     >
-      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: '10px',
+            bgcolor: '#EBF5FF',
+            color: '#3B82F6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Search sx={{ fontSize: 18 }} />
+        </Box>
+        <Typography fontWeight={800} sx={{ fontSize: '0.82rem', color: '#111827', letterSpacing: 0.3 }}>
+          Search Student
+        </Typography>
+      </Box>
+
+      {/* Search input + button */}
+      <Box sx={{ display: 'flex', gap: 1 }}>
         <TextField
           fullWidth
           placeholder="Search by name, admission number, student ID..."
           value={searchQuery}
-          onChange={handleSearch}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           variant="outlined"
-          size="medium"
+          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search sx={{ color: 'text.secondary', fontSize: 20 }} />
+                <Search sx={{ color: '#9CA3AF', fontSize: 18 }} />
               </InputAdornment>
             ),
             sx: {
-              borderRadius: 2,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#F9FAFB',
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.divider,
+                borderColor: '#E5E7EB',
               },
               '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
+                borderColor: '#3B82F6',
               },
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
+                borderColor: '#3B82F6',
               },
             },
           }}
         />
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          sx={{
+            minWidth: 80,
+            borderRadius: '8px',
+            bgcolor: '#3B82F6',
+            textTransform: 'none',
+            fontWeight: 700,
+            fontSize: '0.78rem',
+            '&:hover': { bgcolor: '#2563EB' },
+          }}
+        >
+          Search
+        </Button>
       </Box>
-    </SectionCard>
+    </Box>
   );
 };
 

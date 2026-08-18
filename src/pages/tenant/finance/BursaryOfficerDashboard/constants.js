@@ -9,7 +9,7 @@ export const STATUS_META = {
 };
 
 export const formatCurrency = (amount) =>
-  `₦${Number(amount || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
+  `₦${Number(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export const formatCompact = (amount) => {
   const n = Number(amount || 0);

@@ -193,10 +193,10 @@ const RoleBasedAcess = () => {
   const chartLabels = useMemo(() => {
     if (distributionData && distributionData.length > 0) {
       const total = distributionData.reduce((acc, d) => acc + d.count, 0);
-      if (total === 0) return ['No Members Assigned'];
+      if (total === 0) return ['No Users Assigned'];
       return distributionData.map((d) => d.label);
     }
-    return ['No Members Assigned'];
+    return ['No Users Assigned'];
   }, [distributionData]);
 
   const chartSeries = useMemo(() => {
@@ -260,7 +260,7 @@ const RoleBasedAcess = () => {
               },
               total: {
                 show: true,
-                label: 'Total Members',
+                label: 'Total Users',
                 fontSize: '12px',
                 fontWeight: 500,
                 color: '#64748B',
@@ -316,7 +316,7 @@ const RoleBasedAcess = () => {
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
               count={stats.totalU}
-              label="Total Members"
+              label="Total Users"
               subtitle="Across all roles"
               icon={IconUsers}
               colorIndex={2}
@@ -549,7 +549,7 @@ const RoleBasedAcess = () => {
                         Total Permissions
                       </TableCell>
                       <TableCell align="center" sx={{ minWidth: 130, fontWeight: 700, py: 1.5 }}>
-                        Assigned Members
+                        Assigned Users
                       </TableCell>
                       <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 1.5 }}>Status</TableCell>
                       <TableCell
@@ -755,7 +755,7 @@ const RoleBasedAcess = () => {
           <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
             <IconUsers size={18} />
           </ListItemIcon>
-          View Assigned Members
+          View Assigned Users
         </MenuItem>
       </Menu>
 
@@ -807,10 +807,10 @@ const RoleBasedAcess = () => {
             sx={{ bgcolor: '#F8FAFC', borderRadius: '10px' }}
           >
             <Typography variant="subtitle2" fontWeight={700}>
-              Total Assigned Members
+              Total Assigned Users
             </Typography>
             <Chip
-              label={`${stats.totalU.toLocaleString()} Members`}
+              label={`${stats.totalU.toLocaleString()} Users`}
               color="primary"
               size="small"
               sx={{ fontWeight: 700 }}
@@ -824,7 +824,7 @@ const RoleBasedAcess = () => {
                   <TableCell sx={{ fontWeight: 700, width: 40 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Role Name</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    Members
+                    Users
                   </TableCell>
                 </TableRow>
               </TableHead>

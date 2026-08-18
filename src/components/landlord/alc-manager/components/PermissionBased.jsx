@@ -157,11 +157,11 @@ const PermissionBased = () => {
 
   const hasActiveFilters = Boolean(
     nameFilter ||
-      statusFilter !== 'all' ||
-      roleFilter !== 'all' ||
-      searchInput ||
-      statusInput !== 'all' ||
-      roleInput !== 'all',
+    statusFilter !== 'all' ||
+    roleFilter !== 'all' ||
+    searchInput ||
+    statusInput !== 'all' ||
+    roleInput !== 'all',
   );
 
   const handleKeyPress = (e) => {
@@ -359,8 +359,8 @@ const PermissionBased = () => {
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
               count={stats.totalU}
-              label="Total Members"
-              subtitle="Members with access"
+              label="Total Users"
+              subtitle="Users with access"
               icon={IconUsers}
               colorIndex={2}
               loading={loading}
@@ -600,7 +600,7 @@ const PermissionBased = () => {
                         Assigned Roles
                       </TableCell>
                       <TableCell align="center" sx={{ minWidth: 140, fontWeight: 700, py: 1.5 }}>
-                        Assigned Members
+                        Assigned Users
                       </TableCell>
                       <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 1.5 }}>Status</TableCell>
                       <TableCell
@@ -785,7 +785,7 @@ const PermissionBased = () => {
           <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
             <IconUsers size={18} />
           </ListItemIcon>
-          View Assigned Members
+          View Assigned Users
         </MenuItem>
       </Menu>
 

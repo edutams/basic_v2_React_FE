@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatRoleName } from './PermissionBased';
 import {
   Dialog,
   DialogTitle,
@@ -46,7 +47,7 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
               return (
                 <Chip
                   key={index}
-                  label={roleName}
+                  label={formatRoleName(roleName)}
                   size="small"
                   sx={{
                     borderRadius: '8px',

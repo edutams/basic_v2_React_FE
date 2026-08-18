@@ -48,6 +48,7 @@ import aclApi from '@/api/landlord/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import { usePermissions } from '@/context/AgentContext/permissions';
+import { formatRoleName } from './PermissionBased';
 
 const AssignmentManagement = () => {
   const notify = useNotification();
@@ -594,7 +595,7 @@ const AssignmentManagement = () => {
                             {user.assignedRoles?.map((role, i) => (
                               <Chip
                                 key={i}
-                                label={typeof role === 'object' ? role.name : role}
+                                label={formatRoleName(typeof role === 'object' ? role.name : role)}
                                 size="small"
                                 sx={{
                                   borderRadius: '8px',

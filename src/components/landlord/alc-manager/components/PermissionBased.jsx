@@ -48,6 +48,16 @@ import StatCard from '@/components/shared/StatCard';
 import PermissionRolesModal from './PermissionRolesModal';
 import PermissionOrganizationsModal from './PermissionOrganizationsModal';
 
+export const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const formatPermissionName = (str = '') => {
   if (!str) return '';
   return str
@@ -67,9 +77,11 @@ const PermissionBased = () => {
   // Filter States
   const [searchInput, setSearchInput] = useState('');
   const [statusInput, setStatusInput] = useState('all');
+  const [roleInput, setRoleInput] = useState('all');
 
   const [nameFilter, setNameFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
   const [orgsModalOpen, setOrgsModalOpen] = useState(false);
@@ -78,9 +90,27 @@ const PermissionBased = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
+  const [rolesList, setRolesList] = useState([]);
+
+  useEffect(() => {
+    fetchRolesList();
+  }, []);
+
+  const fetchRolesList = async () => {
+    try {
+      const res = await aclApi.getRolesList();
+      const fetched = res?.data?.data || res?.data || res || [];
+      if (Array.isArray(fetched)) {
+        setRolesList(fetched);
+      }
+    } catch (err) {
+      console.error('Failed to fetch roles list:', err);
+    }
+  };
+
   useEffect(() => {
     fetchPermissions();
-  }, [page, rowsPerPage, nameFilter]);
+  }, [page, rowsPerPage, nameFilter, roleFilter]);
 
   const fetchPermissions = async () => {
     setLoading(true);
@@ -89,6 +119,7 @@ const PermissionBased = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        role_id: roleFilter !== 'all' ? roleFilter : undefined,
       };
       const res = await aclApi.getPermissionAnalytics(params);
 
@@ -110,19 +141,27 @@ const PermissionBased = () => {
     if (e) e.preventDefault();
     setNameFilter(searchInput);
     setStatusFilter(statusInput);
+    setRoleFilter(roleInput);
     setPage(0);
   };
 
   const handleClearFilters = () => {
     setSearchInput('');
     setStatusInput('all');
+    setRoleInput('all');
     setNameFilter('');
     setStatusFilter('all');
+    setRoleFilter('all');
     setPage(0);
   };
 
   const hasActiveFilters = Boolean(
-    nameFilter || statusFilter !== 'all' || searchInput || statusInput !== 'all',
+    nameFilter ||
+      statusFilter !== 'all' ||
+      roleFilter !== 'all' ||
+      searchInput ||
+      statusInput !== 'all' ||
+      roleInput !== 'all',
   );
 
   const handleKeyPress = (e) => {
@@ -509,6 +548,17 @@ const PermissionBased = () => {
                       <MenuItem value="all">All Status</MenuItem>
                       <MenuItem value="active">Active</MenuItem>
                       <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: 140 }}>
+                    <Select value={roleInput} onChange={(e) => setRoleInput(e.target.value)}>
+                      <MenuItem value="all">All Roles</MenuItem>
+                      {rolesList.map((r) => (
+                        <MenuItem key={r.id} value={r.id}>
+                          {formatRoleName(r.name || r.role)}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
 

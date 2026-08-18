@@ -27,56 +27,56 @@ const NonTeachDashboard = () => {
             value: "12",
             title: "Tasks Completed",
             subtitle: "This Week",
-            progress: 85,
-            progressLabel: "85% of assigned tasks",
+            trend: 12.5,
+            extraLabel: "vs last week",
             icon: <TaskAltOutlinedIcon />,
-            iconColor: "#159a72",
-            iconBackground: "#e8f8f3",
-            progressColor: "#159a72",
+            iconColor: "#059669",
+            iconBackground: "#ECFDF5",
+            progressColor: "#059669",
         },
         {
             value: "8",
             title: "Requests Resolved",
             subtitle: "This Week",
-            progress: 80,
-            progressLabel: "80% resolution rate",
+            trend: 8.3,
+            extraLabel: "vs last week",
             icon: <AssignmentOutlinedIcon />,
-            iconColor: "#7446c8",
-            iconBackground: "#f2ebff",
-            progressColor: "#8b5cf6",
+            iconColor: "#7C3AED",
+            iconBackground: "#F5F3FF",
+            progressColor: "#7C3AED",
         },
         {
             value: "15",
             title: "Documents Uploaded",
             subtitle: "This Week",
-            progress: 60,
-            progressLabel: "3 new uploads",
+            trend: -3.2,
+            extraLabel: "vs last week",
             icon: <FolderOutlinedIcon />,
-            iconColor: "#2563eb",
-            iconBackground: "#eaf2ff",
-            progressColor: "#5797e6",
+            iconColor: "#2563EB",
+            iconBackground: "#EEF2FF",
+            progressColor: "#2563EB",
         },
         {
             value: "68",
             title: "Days in School",
             subtitle: "This Term",
-            progress: 68,
-            progressLabel: "68% of school days",
+            trend: 5.0,
+            extraLabel: "vs last term",
             icon: <CalendarMonthOutlinedIcon />,
-            iconColor: "#e58b16",
-            iconBackground: "#fff5e7",
-            progressColor: "#e9a33b",
+            iconColor: "#EA580C",
+            iconBackground: "#FFF7ED",
+            progressColor: "#EA580C",
         },
         {
             value: "6",
             title: "Departments",
             subtitle: "In the school",
-            progress: 100,
-            progressLabel: "Across all levels",
+            trend: null,
+            extraLabel: "Across all levels",
             icon: <BusinessOutlinedIcon />,
-            iconColor: "#159a9a",
-            iconBackground: "#e7f8f8",
-            progressColor: "#52b6b2",
+            iconColor: "#0891B2",
+            iconBackground: "#ECFEFF",
+            progressColor: "#0891B2",
         },
     ];
 
@@ -101,8 +101,8 @@ const NonTeachDashboard = () => {
                                 value={stat.value}
                                 title={stat.title}
                                 subtitle={stat.subtitle}
-                                progress={stat.progress}
-                                progressLabel={stat.progressLabel}
+                                trend={stat.trend}
+                                extraLabel={stat.extraLabel}
                                 icon={stat.icon}
                                 iconColor={stat.iconColor}
                                 iconBackground={stat.iconBackground}

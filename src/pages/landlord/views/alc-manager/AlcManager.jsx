@@ -33,7 +33,7 @@ import {
   FormControl,
   Select,
   InputAdornment,
-  Alert
+  Alert,
 } from '@mui/material';
 
 import { MoreVert as MoreVertIcon, Search as SearchIcon } from '@mui/icons-material';
@@ -478,7 +478,10 @@ const AlcManager = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `landlord_roles_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `landlord_roles_export_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -567,23 +570,28 @@ const AlcManager = () => {
                   count={stats.totalUsersAssigned}
                   icon={IconUsers}
                   color="info"
-                  subtitle="Members with roles"
+                  subtitle="Users with roles"
                 />
               </Grid>
             </Grid>
 
             <ParentCard
               title={
-                <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-                  <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  flexWrap="wrap"
+                  gap={1}
+                >
+                  <Typography variant="h5" data-tour="acl-role-heading">
+                    Manage Roles
+                  </Typography>
                   <ShowTourGuideButton />
                 </Box>
               }
             >
-              <Box
-                sx={{ mb: 3 }}
-                data-tour="acl-role-filter"
-              >
+              <Box sx={{ mb: 3 }} data-tour="acl-role-filter">
                 <Stack
                   direction={{ xs: 'column', md: 'row' }}
                   spacing={2}
@@ -648,7 +656,12 @@ const AlcManager = () => {
                     )}
                   </Stack>
 
-                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}
+                  >
                     {can('landlord.acl.roles.create') && (
                       <Button
                         variant="contained"
@@ -690,7 +703,9 @@ const AlcManager = () => {
                         <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Role Type</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Assigned Users</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600 }}>Action</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600 }}>
+                          Action
+                        </TableCell>
                       </TableRow>
                     </TableHead>
 
@@ -719,7 +734,11 @@ const AlcManager = () => {
                                       height: 34,
                                     }}
                                   >
-                                    {isSysRole ? <IconShieldLock size={18} /> : <IconShield size={18} />}
+                                    {isSysRole ? (
+                                      <IconShieldLock size={18} />
+                                    ) : (
+                                      <IconShield size={18} />
+                                    )}
                                   </Avatar>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Typography variant="subtitle2" fontWeight={600}>
@@ -742,7 +761,11 @@ const AlcManager = () => {
                                 </Stack>
                               </TableCell>
                               <TableCell>
-                                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }}>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ maxWidth: 280 }}
+                                >
                                   {row.description || 'No description provided'}
                                 </Typography>
                               </TableCell>
@@ -831,7 +854,10 @@ const AlcManager = () => {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                            <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
+                            <Alert
+                              severity="info"
+                              sx={{ justifyContent: 'center', textAlign: 'center' }}
+                            >
                               {hasFilters
                                 ? 'No roles match the current filters.'
                                 : 'No roles available. Create a new role to get started.'}

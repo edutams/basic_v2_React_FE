@@ -10,20 +10,21 @@ const SectionCard = ({ icon: Icon, title, color, children, sx = {}, onClick }) =
 
   const card = (
     <Paper
+      elevation={0}
       sx={{
-        borderRadius: 3,
+        borderRadius: '10px',
         border: '1px solid',
-        borderColor: theme.palette.divider,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-        p: 1.75,
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'grey.200',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
+        p: 2.5,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+        transition: 'box-shadow 150ms ease, transform 150ms ease',
         '&:hover': onClick
           ? {
-              boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
               transform: 'translateY(-2px)',
             }
           : {},
@@ -34,14 +35,17 @@ const SectionCard = ({ icon: Icon, title, color, children, sx = {}, onClick }) =
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
         <Box
           sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 2,
+            width: 38,
+            height: 38,
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             bgcolor: alpha(color || 'primary.main', 0.12),
             color: color || 'primary.main',
+            border: '1px solid',
+            borderColor: alpha(color || 'primary.main', 0.26),
+            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)',
           }}
         >
           <Icon sx={{ fontSize: 17 }} />

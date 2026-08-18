@@ -81,11 +81,27 @@ const DashboardHeader = ({
               borderRadius: 2,
               fontWeight: 600,
               '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.divider },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
+                  mt: 0.5,
+                },
+              },
             }}
           >
-            {sessions.length === 0 && <MenuItem value="">All Sessions</MenuItem>}
+            {sessions.length === 0 && (
+              <MenuItem value="" sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
+                All Sessions
+              </MenuItem>
+            )}
             {sessions.map((s) => (
-              <MenuItem key={s} value={s}>
+              <MenuItem key={s} value={s} sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
                 {s}
               </MenuItem>
             ))}
@@ -112,10 +128,22 @@ const DashboardHeader = ({
               bgcolor: 'background.paper',
               borderRadius: 2,
               '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.divider },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
+                  mt: 0.5,
+                },
+              },
             }}
           >
             {termsForSession.map((t) => (
-              <MenuItem key={t} value={t}>
+              <MenuItem key={t} value={t} sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
                 {t}
               </MenuItem>
             ))}

@@ -64,22 +64,33 @@ const QuickActions = ({ onApplyAdmission }) => {
   ];
 
   return (
-    <Box mb={2.5}>
-      <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', mb: 1.25, letterSpacing: -0.3 }}>
-        Quick Actions
-      </Typography>
-
+    <Box mb={2.5} height="100%">
+      {/* White wrapper card around title + action grid */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            sm: 'repeat(3, 1fr)',
-            md: 'repeat(6, 1fr)',
-          },
-          gap: 1.25,
+          height: '100%',
+          bgcolor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '14px',
+          p: 1.5,
+          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
         }}
       >
+        <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', mb: 1.25, letterSpacing: -0.3 }}>
+          Quick Actions
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(3, 1fr)',
+              md: 'repeat(6, 1fr)',
+            },
+            gap: 1.25,
+          }}
+        >
         {actions.map((item) => {
           const Icon = item.icon;
           return (
@@ -167,6 +178,7 @@ const QuickActions = ({ onApplyAdmission }) => {
             </Card>
           );
         })}
+        </Box>
       </Box>
     </Box>
   );

@@ -59,6 +59,9 @@ const ActivityLogs = ({ logs = DEFAULT_LOGS, onViewAll }) => {
     <Card
       elevation={0}
       sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',

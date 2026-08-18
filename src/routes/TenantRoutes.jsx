@@ -189,6 +189,17 @@ const TenantRoutes = [
     children: [{ index: true, element: <PayInvoice /> }],
   },
   {
+    // Parent/student invoice view — auth-only (the class-ledger invoice route
+    // requires bursary_manager.ledger.index, which parents don't have).
+    path: '/parent-invoice/:invoiceId/:user_id',
+    element: (
+      <TenantProtectedRoute>
+        <SchoolLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <Invoice /> }],
+  },
+  {
     path: '/complete-setup',
     element: (
       <TenantProtectedRoute permission="setup.school.complete">

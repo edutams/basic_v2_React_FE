@@ -1,27 +1,96 @@
 import React from 'react';
 import { Box, Typography, Stack, useTheme } from '@mui/material';
 import { PieChartOutline } from '@mui/icons-material';
-import SectionCard from './SectionCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import { COLORS, formatCompact, formatCurrency } from '../constants';
+import SessionSelect from './SessionSelect';
+
+// Mocked data shown when the API returns empty.
+const MOCK_DISTRIBUTION = [
+  { category: 'Tuition Fees', amount: 89450000, percentage: 71.8 },
+  { category: 'Transport Fees', amount: 15620000, percentage: 12.5 },
+  { category: 'Uniform Fees', amount: 9870000, percentage: 7.9 },
+  { category: 'Books & Others', amount: 5860000, percentage: 4.7 },
+  { category: 'Examination Fees', amount: 3760000, percentage: 3.1 },
+];
 
 /**
  * Revenue Distribution — donut chart + per-category legend with amounts.
+ * Includes a session dropdown in the header.
  */
-const RevenueDistribution = ({ revenue_distribution = [], totalRevenue = 0, onClick }) => {
+const RevenueDistribution = ({
+  revenue_distribution = [],
+  totalRevenue = 0,
+  onClick,
+  session = 'This Session',
+  sessions = [],
+  onSessionChange,
+}) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const distData = revenue_distribution.length > 0 ? revenue_distribution : MOCK_DISTRIBUTION;
+  const distTotal = distData.reduce((sum, item) => sum + (item.amount || 0), 0);
 
   return (
-    <SectionCard
-      icon={PieChartOutline}
-      title="Revenue Distribution"
-      color={theme.palette.primary.main}
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '14px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
+        bgcolor: isDark ? theme.palette.background.paper : '#fff',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
+        overflow: 'hidden',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'box-shadow 150ms ease, transform 150ms ease',
+        '&:hover': onClick
+          ? { boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)', transform: 'translateY(-2px)' }
+          : {},
+      }}
       onClick={onClick}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+      {/* Header */}
+      <Box
+        sx={{
+          px: 2.5,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              bgcolor: '#EBF5FF',
+              color: '#3B82F6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <PieChartOutline sx={{ fontSize: 17 }} />
+          </Box>
+          <Typography fontWeight={800} sx={{ fontSize: '0.75rem', color: '#111827', letterSpacing: 0.3 }}>
+            REVENUE DISTRIBUTION
+          </Typography>
+        </Box>
+
+        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
+      </Box>
+      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+
+      {/* Content */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 2.5, flexGrow: 1 }}>
         <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
           <ReusableDonutChart
-            data={revenue_distribution.map((entry, i) => ({
+            data={distData.map((entry, i) => ({
               name: entry.category,
               value: entry.amount,
               color: COLORS[i % COLORS.length],
@@ -31,41 +100,60 @@ const RevenueDistribution = ({ revenue_distribution = [], totalRevenue = 0, onCl
             innerRadius={52}
             outerRadius={70}
             paddingAngle={2}
-            centerValue={formatCompact(totalRevenue)}
-            centerTitle="Total Collected"
+            centerValue={formatCompact(totalRevenue || distTotal)}
+            centerTitle="Total Revenue"
             valueFontSize={12.5}
             tooltipFormatter={(value) => formatCurrency(value)}
           />
         </Box>
 
-        <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
-          {revenue_distribution.map((item, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Stack spacing={1} sx={{ width: '100%', minWidth: 0 }}>
+          {distData.map((item, i) => (
+            <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
               <Box
                 sx={{
-                  width: 10,
-                  height: 10,
+                  width: 8,
+                  height: 8,
                   borderRadius: '50%',
                   bgcolor: COLORS[i % COLORS.length],
                   flexShrink: 0,
+                  mt: 0.45,
                 }}
               />
-              <Typography variant="body2" noWrap sx={{ flex: 1, minWidth: 0, fontWeight: 600 }}>
-                {item.category}
-              </Typography>
-              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                <Typography variant="subtitle2" fontWeight={800} whiteSpace="nowrap">
-                  {item.percentage}%
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3 }}>
+                  {item.category}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  {formatCurrency(item.amount)}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
+                  <Typography fontWeight={800} whiteSpace="nowrap" sx={{ flex: '1 1 0%', fontSize: '0.7rem', lineHeight: 1.4 }}>
+                    {formatCurrency(item.amount)}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ flex: '1 1 0%', fontSize: '0.58rem' }}>
+                    ({item.percentage}%)
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           ))}
         </Stack>
       </Box>
-    </SectionCard>
+
+      {/* Footer link */}
+      <Box sx={{ px: 2.5, pb: 2 }}>
+        <Typography
+          sx={{
+            fontSize: '0.66rem',
+            color: '#2563EB',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'inline-block',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
+          View Detailed Revenue Analysis →
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 

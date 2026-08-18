@@ -156,6 +156,18 @@ export const getParentNotifications = async (sessionTermId = null) => {
   return response.data;
 };
 
+// Ward listing (enrolled + prospective) with DOB
+export const getParentWards = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/wards', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Open admission batches for the parent dashboard
+export const getParentBatches = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/batches', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
 export const getParentInsightsDetail = async (type, sessionTermId = null) => {
   const params = { type };
   if (sessionTermId) params.session_term_id = sessionTermId;

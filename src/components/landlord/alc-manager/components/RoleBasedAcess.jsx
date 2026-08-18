@@ -364,9 +364,7 @@ const RoleBasedAcess = () => {
         </Grid>
       </Box>
 
-      {/* ── Donut Chart & Analytics Table ── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Donut Chart Card */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box
@@ -460,22 +458,8 @@ const RoleBasedAcess = () => {
           </ParentCard>
         </Grid>
 
-        {/* Access Analytics Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.5,
-              borderRadius: '16px',
-              border: '1px solid',
-              borderColor: 'divider',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
+          <ParentCard>
             <Box>
               <Box
                 component="form"
@@ -734,11 +718,10 @@ const RoleBasedAcess = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 
-      {/* Row Context Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}

@@ -676,11 +676,10 @@ const AlcManager = () => {
                 </Stack>
               </Box>
 
-              {/* ── Roles Table ── */}
               <Box data-tour="acl-role-table">
                 <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                   <Table>
-                    <TableHead sx={{ bgcolor: 'grey.50' }}>
+                    <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>

@@ -28,6 +28,7 @@ import {
   Grid,
   Stack,
   Avatar,
+  ListItemIcon,
   Tooltip,
   FormControl,
   Select,
@@ -36,7 +37,16 @@ import {
 } from '@mui/material';
 
 import { MoreVert as MoreVertIcon, Search as SearchIcon } from '@mui/icons-material';
-import { IconShield, IconShieldLock, IconUsers, IconX, IconDownload } from '@tabler/icons-react';
+import {
+  IconShield,
+  IconShieldLock,
+  IconUsers,
+  IconX,
+  IconDownload,
+  IconEye,
+  IconKey,
+  IconEdit,
+} from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -683,11 +693,10 @@ const AlcManager = () => {
                 </Stack>
               </Box>
 
-              {/* ── Roles Table ── */}
               <Box data-tour="acl-role-table">
                 <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                   <Table>
-                    <TableHead sx={{ bgcolor: 'grey.50' }}>
+                    <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
@@ -810,19 +819,31 @@ const AlcManager = () => {
                                   onClose={handleMenuClose}
                                 >
                                   <MenuItem onClick={() => handleViewPermission(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconEye size={18} />
+                                    </ListItemIcon>
                                     View Permissions
                                   </MenuItem>
                                   {can('landlord.acl.roles.attach_permissions') && (
                                     <MenuItem onClick={() => handleAttachPermission(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconKey size={18} />
+                                      </ListItemIcon>
                                       Attach Permissions
                                     </MenuItem>
                                   )}
                                   {!isSysRole && can('landlord.acl.roles.update') && (
                                     <MenuItem onClick={() => handleEditRole(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconEdit size={18} />
+                                      </ListItemIcon>
                                       Edit Role
                                     </MenuItem>
                                   )}
                                   <MenuItem onClick={() => handleOpenOrgsModal(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconUsers size={18} />
+                                    </ListItemIcon>
                                     View Assigned Users
                                   </MenuItem>
                                 </Menu>

@@ -25,7 +25,8 @@ import {
   Select,
   Avatar,
   MenuItem as SelectMenuItem,
-  Grid,
+  ListItemIcon,
+  Grid
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -38,6 +39,9 @@ import {
   IconUserCheck,
   IconUserOff,
   IconShieldCheck,
+  IconEye,
+  IconKey,
+  IconLock,
 } from '@tabler/icons-react';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
@@ -761,22 +765,40 @@ const AssignmentManagement = () => {
                           >
                             {can('landlord.acl.user.assign_role') && (
                               <MenuItem onClick={() => handleAction('edit', user)}>
+                                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                  <IconShieldCheck size={18} />
+                                </ListItemIcon>
                                 Assign Role
                               </MenuItem>
                             )}
                             <MenuItem onClick={() => handleAction('view', user)}>
+                              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                <IconEye size={18} />
+                              </ListItemIcon>
                               View Assigned Roles
                             </MenuItem>
                             {can('landlord.acl.user.assign_permission') && (
                               <MenuItem onClick={() => handleAction('directPermission', user)}>
+                                <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                  <IconKey size={18} />
+                                </ListItemIcon>
                                 Assign Direct Permission
                               </MenuItem>
                             )}
                             <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                <IconLock size={18} />
+                              </ListItemIcon>
                               View Permission
                             </MenuItem>
                             {can('landlord.acl.user.toggle_status') && (
-                              <MenuItem onClick={() => handleToggleStatus(user)}>
+                              <MenuItem
+                                onClick={() => handleToggleStatus(user)}
+                                sx={{ color: user.status?.toLowerCase() === 'active' ? 'error.main' : 'success.main' }}
+                              >
+                                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                  {user.status?.toLowerCase() === 'active' ? <IconUserOff size={18} /> : <IconUserCheck size={18} />}
+                                </ListItemIcon>
                                 {user.status?.toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}
                               </MenuItem>
                             )}

@@ -419,11 +419,9 @@ const PermissionBased = () => {
         </Grid>
       </Box>
 
-      {/* ── Donut Chart & Analytics Table ── */}
       <Grid container spacing={3} alignItems="stretch">
-        {/* Donut Chart Card */}
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
-          <ParentCard title="Module Permission Distribution" sx={{ width: '100%', height: '100%' }}>
+          <ParentCard title="Permission by Module" sx={{ width: '100%', height: '100%' }}>
             <Box
               sx={{
                 py: 1,
@@ -517,20 +515,7 @@ const PermissionBased = () => {
 
         {/* Permission Analytics Table */}
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.5,
-              borderRadius: '16px',
-              border: '1px solid',
-              borderColor: 'divider',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
+          <ParentCard>
             <Box>
               <Box
                 component="form"
@@ -776,7 +761,7 @@ const PermissionBased = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

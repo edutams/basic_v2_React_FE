@@ -98,7 +98,7 @@ const AssignmentManagement = () => {
         parent_id: u.parent_id || null,
         status: u.status || 'active',
         assignedRoles: u.roles || [],
-        last_active: u.last_active || u.last_login_at || u.updated_at || u.created_at || null,
+        last_active_at: u.last_active_at || null,
       }));
 
       setUsers(normalized);
@@ -147,19 +147,18 @@ const AssignmentManagement = () => {
     const rawRole = role?.toString() || '';
     const normalizedRole = rawRole.toLowerCase().trim().replace(/[\s_]+/g, '_');
 
-    // Specific system role assignments
     const roleStyles = {
       super_admin: {
         backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
+        color: (theme) => theme.palette.primary.dark,
       },
       agent: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
+        backgroundColor: (theme) => theme.palette.success.light,
+        color: (theme) => theme.palette.success.dark,
       },
       team_member: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
+        backgroundColor: (theme) => theme.palette.error.light,
+        color: (theme) => theme.palette.error.dark,
       },
     };
 
@@ -270,6 +269,7 @@ const AssignmentManagement = () => {
         parent_id: u.parent_id || null,
         status: u.status || 'active',
         assignedRoles: u.roles || [],
+        last_active_at: u.last_active_at || null,
       }));
 
       setUsers(normalized);
@@ -406,7 +406,7 @@ const AssignmentManagement = () => {
       <Grid container spacing={2} mb={3} data-tour="acl-assign-stats">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Total Members"
+            label="Total Users"
             count={userStats.total}
             icon={IconUsers}
             color="primary"
@@ -415,7 +415,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Assigned Members"
+            label="Assigned Users"
             count={userStats.assigned}
             icon={IconUserCheck}
             color="success"
@@ -424,7 +424,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Unassigned Members"
+            label="Unassigned Users"
             count={userStats.unassigned}
             icon={IconUserOff}
             color="warning"
@@ -433,7 +433,7 @@ const AssignmentManagement = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Multi-Role Members"
+            label="Multi-Role Users"
             count={userStats.multiRole}
             icon={IconShieldCheck}
             color="info"
@@ -529,7 +529,7 @@ const AssignmentManagement = () => {
                   </TableRow>
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
-                    const lastActiveRaw = user.last_active_at || user.last_login_at || user.last_active || user.updated_at || user.created_at;
+                    const lastActiveRaw = user.last_active_at;
                     const lastActiveDate = lastActiveRaw
                       ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                       : 'No activity yet';
@@ -606,14 +606,16 @@ const AssignmentManagement = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={500}>
-                            {lastActiveDate}
-                          </Typography>
-                          {lastActiveTime && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              {lastActiveTime}
+                          <Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {lastActiveDate}
                             </Typography>
-                          )}
+                            {lastActiveTime && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {lastActiveTime}
+                              </Typography>
+                            )}
+                          </Box>
                         </TableCell>
                         <TableCell align="center" data-tour="acl-assign-view">
                           <IconButton onClick={(e) => handleMenuOpen(e, user)}>

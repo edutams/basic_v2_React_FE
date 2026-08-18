@@ -436,7 +436,7 @@ const AlcManager = () => {
         'Role Name': formatRoleName(row.name),
         Description: row.description || '—',
         Type: isCustom ? 'Custom Role' : 'System Role',
-        'Assigned Members': uCount,
+        'Assigned Users': uCount,
         'Last Updated': uDate,
       };
     });
@@ -535,8 +535,8 @@ const AlcManager = () => {
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
-                  label="Assigned Members"
-                  title="Assigned Members"
+                  label="Assigned Users"
+                  title="Assigned Users"
                   count={stats.totalUsersAssigned}
                   icon={IconUsers}
                   color="info"
@@ -553,261 +553,261 @@ const AlcManager = () => {
                 </Box>
               }
             >
-            <Box
-              sx={{ mb: 3 }}
-              data-tour="acl-role-filter"
-            >
-              <Stack
-                direction={{ xs: 'column', md: 'row' }}
-                spacing={2}
-                alignItems="center"
-                justifyContent="space-between"
+              <Box
+                sx={{ mb: 3 }}
+                data-tour="acl-role-filter"
               >
                 <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={1.5}
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={2}
                   alignItems="center"
-                  sx={{ width: { xs: '100%', md: 'auto' } }}
+                  justifyContent="space-between"
                 >
-                  <TextField
-                    placeholder="Search role by name or description…"
-                    size="small"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
-                    sx={{ width: { xs: '100%', sm: 300, md: 340 } }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon fontSize="small" color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-
-                  <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <Select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      displayEmpty
-                    >
-                      <MenuItem value="all">All Types</MenuItem>
-                      <MenuItem value="system">System Roles</MenuItem>
-                      <MenuItem value="custom">Custom Roles</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="primary"
-                    onClick={handleApplySearch}
-                    sx={{ px: 2.5, height: 40 }}
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ width: { xs: '100%', md: 'auto' } }}
                   >
-                    Search
-                  </Button>
-
-                  {hasFilters && (
-                    <Button
-                      variant="outlined"
-                      color="primary"
+                    <TextField
+                      placeholder="Search role by name or description…"
                       size="small"
-                      startIcon={<IconX size={16} />}
-                      onClick={handleClearFilters}
-                      sx={{ height: 40, px: 2, textTransform: 'none' }}
-                    >
-                      Clear Filter
-                    </Button>
-                  )}
-                </Stack>
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
+                      sx={{ width: { xs: '100%', sm: 300, md: 340 } }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
 
-                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
-                  {can('landlord.acl.roles.create') && (
+                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                      <Select
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        displayEmpty
+                      >
+                        <MenuItem value="all">All Types</MenuItem>
+                        <MenuItem value="system">System Roles</MenuItem>
+                        <MenuItem value="custom">Custom Roles</MenuItem>
+                      </Select>
+                    </FormControl>
+
                     <Button
                       variant="contained"
                       size="small"
                       color="primary"
-                      data-tour="acl-role-new"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
-                        setNewRoleModalOpen(true);
-                      }}
-                      sx={{ height: 40, px: 2.5, textTransform: 'none' }}
+                      onClick={handleApplySearch}
+                      sx={{ px: 2.5, height: 40 }}
                     >
-                      New Role
+                      Search
                     </Button>
-                  )}
 
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="primary"
-                    startIcon={<IconDownload size={18} />}
-                    onClick={handleExportRoles}
-                    sx={{ height: 40, px: 2, textTransform: 'none' }}
-                  >
-                    Export
-                  </Button>
-                </Stack>
-              </Stack>
-            </Box>
-
-            {/* ── Roles Table ── */}
-            <Box data-tour="acl-role-table">
-              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                <Table>
-                  <TableHead sx={{ bgcolor: 'grey.50' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Role Type</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Assigned Members</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 600 }}>Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
-                    ) : rows.length > 0 ? (
-                      rows.map((row, index) => {
-                        const isSysRole = row.is_sys === 'yes' || row.is_system;
-                        const colorScheme = avatarColors[index % avatarColors.length];
-
-                        return (
-                          <TableRow key={row.id} hover>
-                            <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                            <TableCell>
-                              <Stack direction="row" spacing={1.5} alignItems="center">
-                                <Avatar
-                                  sx={{
-                                    bgcolor: colorScheme.bg,
-                                    color: colorScheme.color,
-                                    width: 34,
-                                    height: 34,
-                                  }}
-                                >
-                                  {isSysRole ? <IconShieldLock size={18} /> : <IconShield size={18} />}
-                                </Avatar>
-                                <Typography variant="subtitle2" fontWeight={600}>
-                                  {formatRoleName(row.name)}
-                                </Typography>
-                              </Stack>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }}>
-                                {row.description || 'No description provided'}
-                              </Typography>
-                            </TableCell>
-
-                            <TableCell>
-                              <Chip
-                                label={isSysRole ? 'System Role' : 'Custom Role'}
-                                size="small"
-                                sx={{
-                                  bgcolor: isSysRole ? 'primary.light' : 'secondary.light',
-                                  color: isSysRole ? 'primary.main' : 'secondary.main',
-                                  fontWeight: 600,
-                                  fontSize: '0.75rem',
-                                  borderRadius: '12px',
-                                  px: 0.5,
-                                }}
-                              />
-                            </TableCell>
-
-                            <TableCell>
-                              <Tooltip title="Click to view assigned organizations & users">
-                                <Typography
-                                  variant="body2"
-                                  onClick={() => handleOpenOrgsModal(row)}
-                                  sx={{
-                                    cursor: 'pointer',
-                                    fontWeight: 600,
-                                    color: 'primary.main',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 0.75,
-                                    '&:hover': {
-                                      textDecoration: 'underline',
-                                    },
-                                  }}
-                                >
-                                  <IconUsers size={16} />
-                                  {row.users_count ?? row.totalUsers ?? 0} Members
-                                </Typography>
-                              </Tooltip>
-                            </TableCell>
-
-                            <TableCell align="center">
-                              <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                                <MoreVertIcon />
-                              </IconButton>
-
-                              <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                                onClose={handleMenuClose}
-                              >
-                                <MenuItem onClick={() => handleViewPermission(row)}>
-                                  View Permissions
-                                </MenuItem>
-                                {can('landlord.acl.roles.attach_permissions') && (
-                                  <MenuItem onClick={() => handleAttachPermission(row)}>
-                                    Attach Permissions
-                                  </MenuItem>
-                                )}
-                                {!isSysRole && can('landlord.acl.roles.update') && (
-                                  <MenuItem onClick={() => handleEditRole(row)}>
-                                    Edit Role
-                                  </MenuItem>
-                                )}
-                                <MenuItem onClick={() => handleOpenOrgsModal(row)}>
-                                  View Assigned Members
-                                </MenuItem>
-                              </Menu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                          <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
-                            {hasFilters
-                              ? 'No roles match the current filters.'
-                              : 'No roles available. Create a new role to get started.'}
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
+                    {hasFilters && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        startIcon={<IconX size={16} />}
+                        onClick={handleClearFilters}
+                        sx={{ height: 40, px: 2, textTransform: 'none' }}
+                      >
+                        Clear Filter
+                      </Button>
                     )}
-                  </TableBody>
+                  </Stack>
 
-                  <TableFooter>
-                    <TableRow>
-                      <TablePagination
-                        rowsPerPageOptions={[10, 20, 50]}
-                        count={totalRoles}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={(_, newPage) => setPage(newPage)}
-                        onRowsPerPageChange={(e) => {
-                          setRowsPerPage(parseInt(e.target.value, 10));
-                          setPage(0);
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
+                    {can('landlord.acl.roles.create') && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        data-tour="acl-role-new"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
+                          setNewRoleModalOpen(true);
                         }}
-                      />
-                    </TableRow>
-                  </TableFooter>
-                </Table>
-              </TableContainer>
-            </Box>
-          </ParentCard>
-        </Box>
+                        sx={{ height: 40, px: 2.5, textTransform: 'none' }}
+                      >
+                        New Role
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      startIcon={<IconDownload size={18} />}
+                      onClick={handleExportRoles}
+                      sx={{ height: 40, px: 2, textTransform: 'none' }}
+                    >
+                      Export
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
+
+              {/* ── Roles Table ── */}
+              <Box data-tour="acl-role-table">
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                  <Table>
+                    <TableHead sx={{ bgcolor: 'grey.50' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Role Type</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Assigned Users</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600 }}>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                            <CircularProgress size={28} />
+                          </TableCell>
+                        </TableRow>
+                      ) : rows.length > 0 ? (
+                        rows.map((row, index) => {
+                          const isSysRole = row.is_sys === 'yes' || row.is_system;
+                          const colorScheme = avatarColors[index % avatarColors.length];
+
+                          return (
+                            <TableRow key={row.id} hover>
+                              <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                              <TableCell>
+                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: colorScheme.bg,
+                                      color: colorScheme.color,
+                                      width: 34,
+                                      height: 34,
+                                    }}
+                                  >
+                                    {isSysRole ? <IconShieldLock size={18} /> : <IconShield size={18} />}
+                                  </Avatar>
+                                  <Typography variant="subtitle2" fontWeight={600}>
+                                    {formatRoleName(row.name)}
+                                  </Typography>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }}>
+                                  {row.description || 'No description provided'}
+                                </Typography>
+                              </TableCell>
+
+                              <TableCell>
+                                <Chip
+                                  label={isSysRole ? 'System Role' : 'Custom Role'}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: isSysRole ? 'success.light' : 'secondary.light',
+                                    color: isSysRole ? 'success.dark' : 'secondary.dark',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    borderRadius: '12px',
+                                    px: 0.5,
+                                  }}
+                                />
+                              </TableCell>
+
+                              <TableCell>
+                                <Tooltip title="Click to view assigned organizations & users">
+                                  <Typography
+                                    variant="body2"
+                                    onClick={() => handleOpenOrgsModal(row)}
+                                    sx={{
+                                      cursor: 'pointer',
+                                      fontWeight: 600,
+                                      color: 'primary.main',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 0.75,
+                                      '&:hover': {
+                                        textDecoration: 'underline',
+                                      },
+                                    }}
+                                  >
+                                    <IconUsers size={16} />
+                                    {row.users_count ?? row.totalUsers ?? 0} Users
+                                  </Typography>
+                                </Tooltip>
+                              </TableCell>
+
+                              <TableCell align="center">
+                                <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                                  <MoreVertIcon />
+                                </IconButton>
+
+                                <Menu
+                                  anchorEl={anchorEl}
+                                  open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                                  onClose={handleMenuClose}
+                                >
+                                  <MenuItem onClick={() => handleViewPermission(row)}>
+                                    View Permissions
+                                  </MenuItem>
+                                  {can('landlord.acl.roles.attach_permissions') && (
+                                    <MenuItem onClick={() => handleAttachPermission(row)}>
+                                      Attach Permissions
+                                    </MenuItem>
+                                  )}
+                                  {!isSysRole && can('landlord.acl.roles.update') && (
+                                    <MenuItem onClick={() => handleEditRole(row)}>
+                                      Edit Role
+                                    </MenuItem>
+                                  )}
+                                  <MenuItem onClick={() => handleOpenOrgsModal(row)}>
+                                    View Assigned Users
+                                  </MenuItem>
+                                </Menu>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                            <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
+                              {hasFilters
+                                ? 'No roles match the current filters.'
+                                : 'No roles available. Create a new role to get started.'}
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+
+                    <TableFooter>
+                      <TableRow>
+                        <TablePagination
+                          rowsPerPageOptions={[10, 20, 50]}
+                          count={totalRoles}
+                          rowsPerPage={rowsPerPage}
+                          page={page}
+                          onPageChange={(_, newPage) => setPage(newPage)}
+                          onRowsPerPageChange={(e) => {
+                            setRowsPerPage(parseInt(e.target.value, 10));
+                            setPage(0);
+                          }}
+                        />
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </ParentCard>
+          </Box>
         </AclTourProvider>
       )}
 

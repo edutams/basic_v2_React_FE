@@ -127,6 +127,22 @@ const aclApi = {
         return response.data;
     },
 
+    exportSchoolPermissionsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolPermissionsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
     getSchoolPermissionAnalysisStats: async () => {
         const response = await tenantApi.get('/censis/acl/permissions/analysis_stats');
         return response.data;

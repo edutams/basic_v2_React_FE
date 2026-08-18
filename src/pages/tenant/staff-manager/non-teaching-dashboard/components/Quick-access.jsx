@@ -86,15 +86,13 @@ const QuickAccess = ({
                 |--------------------------------------------------------------------------
                 */
 
-                border: "1px solid #edf0f2",
+                border: "1px solid #E5E7EB",
 
-                borderBottom: "3px solid #e9eef1",
-
-                borderRadius: "8px",
+                borderRadius: "14px",
 
                 backgroundColor: "#ffffff",
 
-                boxShadow: "0 1px 3px rgba(15, 23, 42, 0.025)",
+                boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
 
                 overflow: "hidden",
             }}

@@ -134,11 +134,23 @@ const RevenueTrend = ({ revenue_trend = [], onClick }) => {
               bgcolor: '#F9FAFB',
               borderRadius: '6px',
               '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E5E7EB' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
+                  mt: 0.5,
+                },
+              },
             }}
           >
-            <MenuItem value="Monthly" sx={{ fontSize: '0.7rem' }}>Monthly</MenuItem>
-            <MenuItem value="Weekly" sx={{ fontSize: '0.7rem' }}>Weekly</MenuItem>
-            <MenuItem value="Daily" sx={{ fontSize: '0.7rem' }}>Daily</MenuItem>
+            <MenuItem value="Monthly" sx={{ fontSize: '0.75rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>Monthly</MenuItem>
+            <MenuItem value="Weekly" sx={{ fontSize: '0.75rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>Weekly</MenuItem>
+            <MenuItem value="Daily" sx={{ fontSize: '0.75rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>Daily</MenuItem>
           </Select>
         </FormControl>
       </Box>

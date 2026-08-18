@@ -87,12 +87,12 @@ const KpiCard = ({
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
               sx={{
-                fontSize: '0.68rem',
+                fontSize: '0.62rem',
                 fontWeight: 700,
                 color: isDark ? 'rgba(255,255,255,0.55)' : '#6B7280',
                 textTransform: 'uppercase',
-                letterSpacing: 0.6,
-                lineHeight: 1.2,
+                letterSpacing: 0.4,
+                lineHeight: 1.25,
                 mb: 0.5,
               }}
             >
@@ -100,13 +100,10 @@ const KpiCard = ({
             </Typography>
             <Typography
               sx={{
-                fontSize: { xs: '1.35rem', md: '1.55rem' },
+                fontSize: { xs: '1.1rem', md: '1.25rem' },
                 fontWeight: 800,
                 color: isDark ? '#fff' : '#111827',
-                lineHeight: 1.15,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                lineHeight: 1.2,
               }}
             >
               {value}
@@ -130,7 +127,7 @@ const KpiCard = ({
       >
         <Typography
           sx={{
-            fontSize: '0.7rem',
+            fontSize: '0.68rem',
             color: isDark ? 'rgba(255,255,255,0.45)' : '#9CA3AF',
             fontWeight: 500,
           }}
@@ -142,14 +139,14 @@ const KpiCard = ({
           {typeof progress === 'number' && (
             <>
               {isPositive ? (
-                <ArrowUpward sx={{ fontSize: 14, color: '#16A34A' }} />
+                <ArrowUpward sx={{ fontSize: 13, color: '#16A34A' }} />
               ) : (
-                <ArrowDownward sx={{ fontSize: 14, color: '#EF4444' }} />
+                <ArrowDownward sx={{ fontSize: 13, color: '#EF4444' }} />
               )}
               <Typography
                 fontWeight={700}
                 sx={{
-                  fontSize: '0.72rem',
+                  fontSize: '0.68rem',
                   color: isPositive ? '#16A34A' : '#EF4444',
                 }}
               >
@@ -159,7 +156,7 @@ const KpiCard = ({
           )}
           <Typography
             sx={{
-              fontSize: '0.68rem',
+              fontSize: '0.65rem',
               color: isDark ? 'rgba(255,255,255,0.45)' : '#9CA3AF',
               ml: 0.25,
             }}

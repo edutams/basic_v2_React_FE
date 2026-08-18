@@ -1,11 +1,12 @@
 import React from 'react';
-import { Box, Typography, Paper, Tooltip, useTheme, LinearProgress } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, useTheme, LinearProgress, Chip } from '@mui/material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { getStatCardColor } from '@/utils/statCardColors';
 
 /**
  * KPI card — project-standard stat card (same pattern as PsychomotorAnalyticsCards /
  * DashboardStatCard): getStatCardColor gradient background, accent-colored uppercase
- * caption, big accent value, and LinearProgress bar.
+ * caption, big accent value, and LinearProgress bar with comparison to last session.
  */
 const KpiCard = ({
   label,
@@ -21,6 +22,9 @@ const KpiCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
+
+  const isPositive = progress >= 0;
+  const progressAbs = Math.abs(progress || 0);
 
   const card = (
     <Paper
@@ -122,29 +126,36 @@ const KpiCard = ({
         </>
       )}
 
-      {/* Sublabel under count */}
-      <Box sx={{ mt: 0.75 }}>
-        <Typography variant="caption" color="text.secondary">
+      {/* Sublabel and comparison row */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
           {sublabel}
         </Typography>
+        {typeof progress === 'number' && (
+          <Chip
+            icon={isPositive ? <ArrowUpward sx={{ fontSize: 12 }} /> : <ArrowDownward sx={{ fontSize: 12 }} />}
+            label={`${progressAbs.toFixed(1)}%`}
+            size="small"
+            sx={{
+              height: 20,
+              fontSize: 10,
+              fontWeight: 700,
+              bgcolor: isPositive 
+                ? isDark ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.1)'
+                : isDark ? 'rgba(211, 47, 47, 0.2)' : 'rgba(211, 47, 47, 0.1)',
+              color: isPositive ? 'success.main' : 'error.main',
+              '& .MuiChip-icon': {
+                color: isPositive ? 'success.main' : 'error.main',
+                ml: 0.5,
+              },
+            }}
+          />
+        )}
       </Box>
 
-      {typeof progress === 'number' && (
-        <LinearProgress
-          variant="determinate"
-          value={Math.min(progress, 100)}
-          sx={{
-            mt: 'auto',
-            mb: 0,
-            height: 5,
-            borderRadius: 2,
-            bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-            '& .MuiLinearProgress-bar': {
-              bgcolor: colors.accentColor,
-            },
-          }}
-        />
-      )}
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, display: 'block' }}>
+        vs last session
+      </Typography>
     </Paper>
   );
 

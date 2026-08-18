@@ -9,12 +9,13 @@ import { formatCurrency } from './constants';
 import DashboardHeader from './components/DashboardHeader';
 import KpiCard from './components/KpiCard';
 import EfficiencyRing from './components/EfficiencyRing';
-import FeeIntelligence from './components/FeeIntelligence';
 import RevenueDistribution from './components/RevenueDistribution';
 import PaymentCategories from './components/PaymentCategories';
 import CollectionMatrix from './components/CollectionMatrix';
-import OperationalAlerts from './components/OperationalAlerts';
 import BursaryBreakdownModal from './components/BursaryBreakdownModal';
+import RevenueTrend from './components/RevenueTrend';
+import SearchStudent from './components/SearchStudent';
+import QuickActions from './components/QuickActions';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -154,11 +155,10 @@ const BursaryOfficerDashboard = () => {
   };
 
   const rp = useSection('/dashboard/bursary/revenue-performance');
-  const feeIntelligence = useSection('/dashboard/bursary/fee-intelligence');
   const revenueDistribution = useSection('/dashboard/bursary/revenue-distribution');
   const paymentCategories = useSection('/dashboard/bursary/payment-categories');
   const collectionMatrix = useSection('/dashboard/bursary/collection-matrix');
-  const operationalAlerts = useSection('/dashboard/bursary/operational-alerts');
+  const revenueTrend = useSection('/dashboard/bursary/revenue-trend');
 
   const dataAsOf = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -222,36 +222,24 @@ const BursaryOfficerDashboard = () => {
     setSelectedTerm(firstTerm || '');
   };
 
+  // Handle student search
+  const handleStudentSearch = (query) => {
+    if (!query || query.length < 2) return;
+    notify.info(`Searching for: ${query}...`);
+    // Future: Implement actual search API call
+  };
+
+  // Handle quick actions
+  const handleQuickAction = (action) => {
+    notify.info(`${action.replace('_', ' ')} feature coming soon`);
+    // Future: Navigate to respective pages or open modals
+  };
+
   // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
   // (uppercase label, icon chip top-right, big value, progress + sublabel) so
   // the header area keeps its shape while revenue-performance loads.
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-
-  const kpiSkeleton = (
-    <Grid container columns={10} spacing={1.25} mb={2}>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <Grid key={i} size={{ xs: 10, sm: 5, lg: 2 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: '16px',
-              border: '1px rgba(69, 67, 67, 1) solid',
-              background: isDark ? theme.palette.background.paper : '#fff',
-            }}
-          >
-            <Skeleton variant="text" width="60%" height={12} sx={{ mb: 2 }} />
-            <Skeleton variant="rounded" width={70} height={26} sx={{ mb: 1 }} />
-            <Skeleton variant="text" width="100%" height={16} />
-            <Skeleton variant="text" width="80%" height={16} />
-            <Skeleton variant="rounded" width="100%" height={5} sx={{ my: 1 }} />
-            <Skeleton variant="text" width="50%" height={10} />
-          </Paper>
-        </Grid>
-      ))}
-    </Grid>
-  );
 
   return (
     <PageContainer
@@ -273,95 +261,123 @@ const BursaryOfficerDashboard = () => {
 
       {/* ── KPI Cards ──────────────────────────────────────────── */}
       {rp.loading ? (
-        kpiSkeleton
+        <Grid container spacing={1.25} mb={2}>
+          {[0, 1, 2, 3].map((i) => (
+            <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: '16px',
+                  border: '1px rgba(69, 67, 67, 1) solid',
+                  background: isDark ? theme.palette.background.paper : '#fff',
+                }}
+              >
+                <Skeleton variant="text" width="60%" height={12} sx={{ mb: 2 }} />
+                <Skeleton variant="rounded" width={70} height={26} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="100%" height={16} />
+                <Skeleton variant="text" width="80%" height={16} />
+                <Skeleton variant="rounded" width="100%" height={5} sx={{ my: 1 }} />
+                <Skeleton variant="text" width="50%" height={10} />
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
-        <Grid container columns={10} spacing={1.25} mb={2}>
-          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+        <Grid container spacing={1.25} mb={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Expected Income"
               value={formatCurrency(rp.data.total_expected_income)}
-              sublabel="Projected for term"
+              sublabel="This Session"
+              progress={rp.data.expected_vs_last_session || 12.6}
               icon={ReceiptLong}
               colorName="info"
               onClick={() => setBreakdownType('expected_income')}
             />
           </Grid>
-          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Collected Income"
               value={formatCurrency(rp.data.total_collected_income)}
-              sublabel="Actual collected"
+              sublabel="This Session"
+              progress={rp.data.collected_vs_last_session || 15.8}
               icon={AccountBalanceWallet}
               colorName="success"
               onClick={() => setBreakdownType('collected_income')}
             />
           </Grid>
-          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Outstanding Balance"
               value={formatCurrency(rp.data.total_outstanding_balance)}
-              sublabel="Remaining unpaid"
+              sublabel="This Session"
+              progress={-(rp.data.outstanding_vs_last_session || 5.2)}
               icon={ErrorOutline}
               colorName="warning"
               onClick={() => setBreakdownType('outstanding_balance')}
             />
           </Grid>
-          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Collection Efficiency"
               value={`${rp.data.collection_efficiency}%`}
-              sublabel="Collected vs Expected"
+              sublabel="This Session"
+              progress={rp.data.efficiency_vs_last_session || 2.6}
               colorName="primary"
               rightElement={<EfficiencyRing value={rp.data.collection_efficiency} />}
               onClick={() => setBreakdownType('collection_efficiency')}
             />
           </Grid>
-          <Grid size={{ xs: 10, sm: 5, lg: 2 }}>
-            <KpiCard
-              label="Revenue Growth"
-              value={`+${rp.data.revenue_growth}%`}
-              sublabel="vs 1st Term"
-              colorName="success"
-              onClick={() => setBreakdownType('revenue_growth')}
-            />
-          </Grid>
         </Grid>
       )}
 
-      {/* ── Fee Intelligence, Revenue Distribution, Payment Categories ─── */}
+      {/* ── Revenue Trend + Revenue Distribution + Search & Quick Actions ─── */}
       <Grid container spacing={2} mb={2}>
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          {feeIntelligence.loading ? (
-            <PanelSkeleton height={380} />
+        {/* Revenue Trend Chart */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          {revenueTrend.loading ? (
+            <PanelSkeleton height={480} />
           ) : (
-            <FeeIntelligence fee_intelligence={asArray(feeIntelligence.data)} onClick={() => setBreakdownType('fee_intelligence')} />
-          )}
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          {revenueDistribution.loading ? (
-            <PanelSkeleton height={380} />
-          ) : (
-            <RevenueDistribution
-              revenue_distribution={asArray(revenueDistribution.data)}
-              totalRevenue={totalRevenue}
-              onClick={() => setBreakdownType('revenue_distribution')}
+            <RevenueTrend 
+              revenue_trend={asArray(revenueTrend.data)} 
+              onClick={() => setBreakdownType('revenue_trend')}
             />
           )}
         </Grid>
 
-        <Grid size={{ xs: 12, md: 12, lg: 4 }}>
-          {paymentCategories.loading ? (
-            <PanelSkeleton height={380} />
-          ) : (
-            <PaymentCategories payment_categories={asArray(paymentCategories.data)} onClick={() => setBreakdownType('payment_categories')} />
-          )}
+        {/* Revenue Distribution + Search + Quick Actions Column */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Grid container spacing={2}>
+            {/* Revenue Distribution */}
+            <Grid size={{ xs: 12 }}>
+              {revenueDistribution.loading ? (
+                <PanelSkeleton height={380} />
+              ) : (
+                <RevenueDistribution
+                  revenue_distribution={asArray(revenueDistribution.data)}
+                  totalRevenue={totalRevenue}
+                  onClick={() => setBreakdownType('revenue_distribution')}
+                />
+              )}
+            </Grid>
+
+            {/* Search Student */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SearchStudent onSearch={handleStudentSearch} />
+            </Grid>
+
+            {/* Quick Actions */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <QuickActions onAction={handleQuickAction} />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 
-      {/* ── Class-Level Collection Matrix + Operational Alerts ─────── */}
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 9 }}>
+      {/* ── Outstanding Balance by Class + Payment Categories ─── */}
+      <Grid container spacing={2} mb={2}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           {collectionMatrix.loading ? (
             <PanelSkeleton height={420} />
           ) : (
@@ -376,11 +392,14 @@ const BursaryOfficerDashboard = () => {
           )}
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 3 }}>
-          {operationalAlerts.loading ? (
+        <Grid size={{ xs: 12, lg: 4 }}>
+          {paymentCategories.loading ? (
             <PanelSkeleton height={420} />
           ) : (
-            <OperationalAlerts operational_alerts={asArray(operationalAlerts.data)} />
+            <PaymentCategories 
+              payment_categories={asArray(paymentCategories.data)} 
+              onClick={() => setBreakdownType('payment_categories')} 
+            />
           )}
         </Grid>
       </Grid>

@@ -33,6 +33,9 @@ import {
   Visibility as EyeIcon,
   Edit as EditIcon,
   FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
 } from '@mui/icons-material';
 import {
   IconUsers,
@@ -80,6 +83,7 @@ const SchoolAssignmentManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [anchorEl, setAnchorEl] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
@@ -406,42 +410,52 @@ const SchoolAssignmentManagement = () => {
   const filteredUsers = users;
   const paginatedFilteredUsers = users;
 
-  const handleExportUsers = () => {
-    if (!filteredUsers || filteredUsers.length === 0) {
-      notify.error('No users available to export');
-      return;
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.role !== 'all') params.role = appliedFilters.role;
+      if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
+
+      const res = await aclApi.exportSchoolAssignmentsExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user_role_assignments_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('User assignments exported to Excel successfully!');
+    } catch (err) {
+      console.error('Failed to export assignments excel:', err);
+      notify.error('Failed to export Excel');
     }
+  };
 
-    const dataToExport = filteredUsers.map((u, index) => {
-      const rolesString = u.assignedRoles
-        ? u.assignedRoles.map((r) => (typeof r === 'object' ? r.name : r)).join(', ')
-        : 'None';
-      const statusLabel = u.status || (u.is_active === false ? 'Inactive' : 'Active');
-      return {
-        'S/N': index + 1,
-        Name: u.name,
-        Email: u.email,
-        'Assigned Roles': rolesString,
-        Status: statusLabel,
-      };
-    });
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.role !== 'all') params.role = appliedFilters.role;
+      if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
 
-    const headers = Object.keys(dataToExport[0]).join(',');
-    const rows = dataToExport.map((row) =>
-      Object.values(row)
-        .map((val) => `"${String(val).replace(/"/g, '""')}"`)
-        .join(','),
-    );
-    const csvContent = [headers, ...rows].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `users_roles_assignment_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const res = await aclApi.exportSchoolAssignmentsPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `user_role_assignments_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('User assignments exported as PDF successfully!');
+    } catch (err) {
+      console.error('Failed to export assignments pdf:', err);
+      notify.error('Failed to export PDF');
+    }
   };
 
   return (
@@ -621,7 +635,8 @@ const SchoolAssignmentManagement = () => {
               variant="outlined"
               size="small"
               startIcon={<ExportIcon fontSize="small" />}
-              onClick={handleExportUsers}
+              endIcon={<ArrowDropDownIcon />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
               sx={{
                 px: 2,
                 py: 0.8,
@@ -633,6 +648,22 @@ const SchoolAssignmentManagement = () => {
             >
               Export
             </Button>
+
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={Boolean(exportAnchorEl)}
+              onClose={() => setExportAnchorEl(null)}
+              PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+            >
+              <MenuItem onClick={handleExportExcel}>
+                <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                Export Excel
+              </MenuItem>
+              <MenuItem onClick={handleExportPdf}>
+                <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                Export PDF
+              </MenuItem>
+            </Menu>
           </Box>
 
           {/* Table Container */}

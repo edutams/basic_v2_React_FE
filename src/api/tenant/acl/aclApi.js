@@ -53,6 +53,22 @@ const aclApi = {
         return response.data;
     },
 
+    exportSchoolAssignmentsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolAssignmentsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
     getSchoolRolesList: async (params) => {
         const response = await tenantApi.get('/censis/acl/assignments/roles/list', { params });
         return response.data;

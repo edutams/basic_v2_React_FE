@@ -715,9 +715,24 @@ const AlcManager = () => {
                                   >
                                     {isSysRole ? <IconShieldLock size={18} /> : <IconShield size={18} />}
                                   </Avatar>
-                                  <Typography variant="subtitle2" fontWeight={600}>
-                                    {formatRoleName(row.name)}
-                                  </Typography>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="subtitle2" fontWeight={600}>
+                                      {formatRoleName(row.name)}
+                                    </Typography>
+                                    {isSysRole && (
+                                      <Chip
+                                        label="Protected"
+                                        size="small"
+                                        sx={{
+                                          bgcolor: '#E6F4EA',
+                                          color: '#10B981',
+                                          fontSize: '10px',
+                                          height: '18px',
+                                          fontWeight: 700,
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
                                 </Stack>
                               </TableCell>
                               <TableCell>

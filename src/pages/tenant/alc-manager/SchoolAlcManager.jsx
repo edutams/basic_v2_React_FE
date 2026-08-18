@@ -43,6 +43,9 @@ import {
   Visibility as EyeIcon,
   Edit as EditIcon,
   FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
 } from '@mui/icons-material';
 
 import {
@@ -202,6 +205,7 @@ const SchoolAlcManager = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [activeTab, setActiveTab] = useState('Role Management');
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearch, setPermissionSearch] = useState('');
@@ -550,49 +554,54 @@ const SchoolAlcManager = () => {
 
   const filteredRows = rows;
 
-  const handleExportRoles = () => {
-    if (!filteredRows || filteredRows.length === 0) {
-      notify.error('No roles available to export');
-      return;
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
+      if (appliedFilters.type !== 'all')
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
+
+      const res = await aclApi.exportSchoolRolesExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `school_roles_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Roles exported to Excel successfully!');
+    } catch (err) {
+      console.error('Failed to export roles excel:', err);
+      notify.error('Failed to export Excel');
     }
+  };
 
-    const dataToExport = filteredRows.map((row, index) => {
-      const isCustom = row.is_sys === 'no';
-      const uCount =
-        row.users_count ?? (Array.isArray(row.users) ? row.users.length : (row.total_users ?? 0));
-      const rStatus = row.status || (row.is_active === false ? 'Inactive' : 'Active');
-      const uDate = row.updated_at
-        ? new Date(row.updated_at).toLocaleDateString()
-        : row.created_at
-          ? new Date(row.created_at).toLocaleDateString()
-          : '—';
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.status !== 'all') params.status = appliedFilters.status;
+      if (appliedFilters.type !== 'all')
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
 
-      return {
-        'S/N': index + 1,
-        'Role Name': formatRoleName(row.name),
-        Description: row.description || '—',
-        Type: isCustom ? 'Custom' : 'System',
-        Users: uCount,
-        Status: rStatus,
-        'Last Updated': uDate,
-      };
-    });
-
-    const headers = Object.keys(dataToExport[0]).join(',');
-    const csvRows = dataToExport.map((r) =>
-      Object.values(r)
-        .map((val) => `"${val}"`)
-        .join(','),
-    );
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...csvRows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `roles_export_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    notify.success('Roles exported successfully!');
+      const res = await aclApi.exportSchoolRolesPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `school_roles_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Roles exported as PDF successfully!');
+    } catch (err) {
+      console.error('Failed to export roles pdf:', err);
+      notify.error('Failed to export PDF');
+    }
   };
 
   const handleSearchSubmit = (e) => {
@@ -887,7 +896,8 @@ const SchoolAlcManager = () => {
                   variant="outlined"
                   size="small"
                   startIcon={<ExportIcon fontSize="small" />}
-                  onClick={handleExportRoles}
+                  endIcon={<ArrowDropDownIcon />}
+                  onClick={(e) => setExportAnchorEl(e.currentTarget)}
                   sx={{
                     px: 2,
                     py: 0.8,
@@ -899,6 +909,22 @@ const SchoolAlcManager = () => {
                 >
                   Export
                 </Button>
+
+                <Menu
+                  anchorEl={exportAnchorEl}
+                  open={Boolean(exportAnchorEl)}
+                  onClose={() => setExportAnchorEl(null)}
+                  PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+                >
+                  <MenuItem onClick={handleExportExcel}>
+                    <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                    Export Excel
+                  </MenuItem>
+                  <MenuItem onClick={handleExportPdf}>
+                    <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                    Export PDF
+                  </MenuItem>
+                </Menu>
               </Box>
             </Box>
 

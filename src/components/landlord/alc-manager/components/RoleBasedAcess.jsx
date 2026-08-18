@@ -152,13 +152,8 @@ const RoleBasedAcess = () => {
   };
 
   const displayRoles = useMemo(() => {
-    if (!roles || roles.length === 0) return [];
-    return roles.filter((r) => {
-      if (statusFilter === 'all') return true;
-      const rStatus = (r.status || (r.is_active === false ? 'inactive' : 'active')).toLowerCase();
-      return rStatus === statusFilter.toLowerCase();
-    });
-  }, [roles, statusFilter]);
+    return roles || [];
+  }, [roles]);
 
   const stats = useMemo(() => {
     if (summaryData) {
@@ -193,15 +188,23 @@ const RoleBasedAcess = () => {
   ];
 
   const distributionData = useMemo(() => {
+    const dist = summaryData?.distribution;
+    if (Array.isArray(dist) && dist.length > 0) {
+      return dist.map((item, idx) => ({
+        label: formatRoleName(item.name || item.label || 'Role'),
+        count: Number(item.count ?? 0),
+        color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+    }
     if (roles && roles.length > 0) {
-      return roles.slice(0, 8).map((r, idx) => ({
+      return roles.map((r, idx) => ({
         label: formatRoleName(r.role || r.name || 'Role'),
         count: Number(r.totalUsers ?? r.users_count ?? 0),
         color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
       }));
     }
     return [];
-  }, [roles]);
+  }, [summaryData, roles]);
 
   const chartLabels = useMemo(() => {
     if (distributionData && distributionData.length > 0) {

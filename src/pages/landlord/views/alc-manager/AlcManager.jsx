@@ -23,9 +23,7 @@ import {
   Chip,
   Tabs,
   Tab,
-  Alert,
   TextField,
-  InputAdornment,
   CircularProgress,
   Grid,
   Stack,
@@ -33,9 +31,11 @@ import {
   Tooltip,
   FormControl,
   Select,
+  InputAdornment,
+  Alert
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
   IconShield,
   IconShieldLock,
@@ -275,8 +275,11 @@ const AlcManager = () => {
 
   useEffect(() => {
     fetchRoles();
-    fetchAllPermissions();
   }, [page, rowsPerPage, appliedFilters]);
+
+  useEffect(() => {
+    fetchAllPermissions();
+  }, []);
 
   // Stat summary calculations
   const stats = useMemo(() => {

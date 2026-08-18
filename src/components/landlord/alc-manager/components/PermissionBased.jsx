@@ -213,13 +213,8 @@ const PermissionBased = () => {
   };
 
   const displayPermissions = useMemo(() => {
-    if (!permissions || permissions.length === 0) return [];
-    return permissions.filter((p) => {
-      if (statusFilter === 'all') return true;
-      const pStatus = (p.status || (p.is_active === false ? 'inactive' : 'active')).toLowerCase();
-      return pStatus === statusFilter.toLowerCase();
-    });
-  }, [permissions, statusFilter]);
+    return permissions || [];
+  }, [permissions]);
 
   const stats = useMemo(() => {
     if (summaryData) {

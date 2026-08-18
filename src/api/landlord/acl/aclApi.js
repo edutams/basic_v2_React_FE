@@ -38,8 +38,13 @@ const aclApi = {
     return response.data;
   },
 
-  getAgents: async () => {
-    const response = await api.get('/v1/landlord/acl/assignments/agents/list');
+  getAgents: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/agents/list', { params });
+    return response.data;
+  },
+
+  toggleAgentStatus: async (agentId) => {
+    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/toggle_status`);
     return response.data;
   },
 

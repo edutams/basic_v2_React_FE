@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: userData };
     } catch (err) {
-      const msg = err.response?.data?.error || 'Login failed';
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {

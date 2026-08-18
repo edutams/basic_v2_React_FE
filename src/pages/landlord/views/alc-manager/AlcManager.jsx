@@ -28,6 +28,7 @@ import {
   Grid,
   Stack,
   Avatar,
+  ListItemIcon,
   Tooltip,
   FormControl,
   Select,
@@ -42,6 +43,9 @@ import {
   IconUsers,
   IconX,
   IconDownload,
+  IconEye,
+  IconKey,
+  IconEdit,
 } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
@@ -792,19 +796,31 @@ const AlcManager = () => {
                                   onClose={handleMenuClose}
                                 >
                                   <MenuItem onClick={() => handleViewPermission(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconEye size={18} />
+                                    </ListItemIcon>
                                     View Permissions
                                   </MenuItem>
                                   {can('landlord.acl.roles.attach_permissions') && (
                                     <MenuItem onClick={() => handleAttachPermission(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconKey size={18} />
+                                      </ListItemIcon>
                                       Attach Permissions
                                     </MenuItem>
                                   )}
                                   {!isSysRole && can('landlord.acl.roles.update') && (
                                     <MenuItem onClick={() => handleEditRole(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconEdit size={18} />
+                                      </ListItemIcon>
                                       Edit Role
                                     </MenuItem>
                                   )}
                                   <MenuItem onClick={() => handleOpenOrgsModal(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconUsers size={18} />
+                                    </ListItemIcon>
                                     View Assigned Users
                                   </MenuItem>
                                 </Menu>

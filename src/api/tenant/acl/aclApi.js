@@ -10,6 +10,22 @@ const aclApi = {
         return response.data;
     },
 
+    exportSchoolRolesExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/roles/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolRolesPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/roles/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
     createSchoolRole: async (data) => {
         const response = await tenantApi.post('/censis/acl/roles', data);
         return response.data;
@@ -35,6 +51,22 @@ const aclApi = {
     getSchoolUsers: async (params) => {
         const response = await tenantApi.get('/censis/acl/assignments/users/list', { params });
         return response.data;
+    },
+
+    exportSchoolAssignmentsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolAssignmentsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
     },
 
     getSchoolRolesList: async (params) => {
@@ -93,6 +125,22 @@ const aclApi = {
             params,
         });
         return response.data;
+    },
+
+    exportSchoolPermissionsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolPermissionsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
     },
 
     getSchoolPermissionAnalysisStats: async () => {

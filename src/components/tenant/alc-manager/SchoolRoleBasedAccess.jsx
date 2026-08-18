@@ -31,7 +31,14 @@ import {
   LinearProgress,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import { Search as SearchIcon, Visibility as EyeIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  Visibility as EyeIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+} from '@mui/icons-material';
 import {
   IconUsers,
   IconShieldCheck,
@@ -68,6 +75,7 @@ const SchoolRoleBasedAccess = () => {
   const [breakdownModalOpen, setBreakdownModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [activeMenuRole, setActiveMenuRole] = useState(null);
 
   const [summaryStats, setSummaryStats] = useState(null);
@@ -138,6 +146,48 @@ const SchoolRoleBasedAccess = () => {
   const hasActiveFilters = Boolean(
     nameFilter || statusFilter !== 'all' || searchInput || statusInput !== 'all',
   );
+
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (nameFilter) params.search = nameFilter;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const res = await aclApi.exportSchoolRolesExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `role_based_access_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export roles excel:', err);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (nameFilter) params.search = nameFilter;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const res = await aclApi.exportSchoolRolesPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `role_based_access_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export roles pdf:', err);
+    }
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -580,6 +630,41 @@ const SchoolRoleBasedAccess = () => {
                     </Button>
                   )}
                 </Box>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ExportIcon fontSize="small" />}
+                  endIcon={<ArrowDropDownIcon />}
+                  onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                  sx={{
+                    px: 2,
+                    py: 0.8,
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    height: 38,
+                  }}
+                >
+                  Export
+                </Button>
+
+                <Menu
+                  anchorEl={exportAnchorEl}
+                  open={Boolean(exportAnchorEl)}
+                  onClose={() => setExportAnchorEl(null)}
+                  PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+                >
+                  <MenuItem onClick={handleExportExcel}>
+                    <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                    Export Excel
+                  </MenuItem>
+                  <MenuItem onClick={handleExportPdf}>
+                    <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                    Export PDF
+                  </MenuItem>
+                </Menu>
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>

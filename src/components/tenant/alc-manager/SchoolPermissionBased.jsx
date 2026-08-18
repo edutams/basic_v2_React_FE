@@ -30,7 +30,13 @@ import {
   Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import { Search as SearchIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+} from '@mui/icons-material';
 import {
   IconLock,
   IconKey,
@@ -65,6 +71,7 @@ const SchoolPermissionBased = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
   // Filter States
   const [searchInput, setSearchInput] = useState('');
@@ -481,39 +488,46 @@ const SchoolPermissionBased = () => {
     roleInput !== 'all',
   );
 
-  // CSV Export handler
-  const handleExportCSV = () => {
-    if (!displayPermissions || displayPermissions.length === 0) return;
-    const headers = [
-      'S/N',
-      'Permission',
-      'Module',
-      'Description',
-      'Total Roles',
-      'Total Users',
-      'Status',
-    ];
-    const csvRows = displayPermissions.map((row, index) => [
-      index + 1,
-      `"${row.name || row.permission || ''}"`,
-      `"${getModuleName(row)}"`,
-      `"${(row.description || '').replace(/"/g, '""')}"`,
-      row.roles_count ?? row.totalRoles ?? 0,
-      row.users_count ?? row.totalUsers ?? 0,
-      (row.roles_count ?? row.totalRoles ?? 1) > 0 ? 'Assigned' : 'Unused',
-    ]);
-    const csvContent = [headers.join(','), ...csvRows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `permissions_export_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = {};
+      if (nameFilter) params.search = nameFilter;
+      if (roleFilter !== 'all') params.role_id = roleFilter;
+
+      const res = await aclApi.exportSchoolPermissionsExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `permission_analysis_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export permissions excel:', err);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = {};
+      if (nameFilter) params.search = nameFilter;
+      if (roleFilter !== 'all') params.role_id = roleFilter;
+
+      const res = await aclApi.exportSchoolPermissionsPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `permission_analysis_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export permissions pdf:', err);
+    }
   };
 
   return (
@@ -771,8 +785,9 @@ const SchoolPermissionBased = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  startIcon={<IconDownload size={18} />}
-                  onClick={handleExportCSV}
+                  startIcon={<ExportIcon fontSize="small" />}
+                  endIcon={<ArrowDropDownIcon />}
+                  onClick={(e) => setExportAnchorEl(e.currentTarget)}
                   sx={{
                     px: 2,
                     py: 0.8,
@@ -786,6 +801,22 @@ const SchoolPermissionBased = () => {
                 >
                   Export
                 </Button>
+
+                <Menu
+                  anchorEl={exportAnchorEl}
+                  open={Boolean(exportAnchorEl)}
+                  onClose={() => setExportAnchorEl(null)}
+                  PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+                >
+                  <MenuItem onClick={handleExportExcel}>
+                    <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                    Export Excel
+                  </MenuItem>
+                  <MenuItem onClick={handleExportPdf}>
+                    <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                    Export PDF
+                  </MenuItem>
+                </Menu>
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>

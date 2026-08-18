@@ -367,7 +367,7 @@ const BursaryOfficerDashboard = () => {
       </Grid>
 
       {/* ── Outstanding Balance by Class + Payment Categories ─── */}
-      <Grid container spacing={2} mb={2}>
+      <Grid container spacing={2} mb={2} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 8 }}>
           {collectionMatrix.loading ? (
             <PanelSkeleton height={420} />

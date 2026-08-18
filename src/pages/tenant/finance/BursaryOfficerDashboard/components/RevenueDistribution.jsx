@@ -36,6 +36,7 @@ const RevenueDistribution = ({
     <Box
       sx={{
         height: '100%',
+        minHeight: 480,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: '14px',
@@ -87,7 +88,7 @@ const RevenueDistribution = ({
       <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
 
       {/* Content */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 2.5, flexGrow: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 2.5, flexGrow: 1, minHeight: 0 }}>
         <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
           <ReusableDonutChart
             data={distData.map((entry, i) => ({
@@ -107,50 +108,80 @@ const RevenueDistribution = ({
           />
         </Box>
 
-        <Stack spacing={1} sx={{ width: '100%', minWidth: 0 }}>
-          {distData.map((item, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: COLORS[i % COLORS.length],
-                  flexShrink: 0,
-                  mt: 0.45,
-                }}
-              />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3 }}>
-                  {item.category}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
-                  <Typography fontWeight={800} whiteSpace="nowrap" sx={{ flex: '1 1 0%', fontSize: '0.7rem', lineHeight: 1.4 }}>
-                    {formatCurrency(item.amount)}
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ flex: '1 1 0%', fontSize: '0.58rem' }}>
-                    ({item.percentage}%)
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          ))}
-        </Stack>
-      </Box>
-
-      {/* Footer link */}
-      <Box sx={{ px: 2.5, pb: 2 }}>
-        <Typography
+        <Box
           sx={{
-            fontSize: '0.66rem',
-            color: '#2563EB',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-block',
-            '&:hover': { textDecoration: 'underline' },
+            width: '100%',
+            minWidth: 0,
+            maxHeight: 140,
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': { width: 4 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 },
+            '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
           }}
         >
-          View Detailed Revenue Analysis →
+          <Stack spacing={1}>
+            {distData.map((item, i) => (
+              <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: COLORS[i % COLORS.length],
+                    flexShrink: 0,
+                    mt: 0.45,
+                  }}
+                />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3 }}>
+                    {item.category}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
+                    <Typography fontWeight={800} whiteSpace="nowrap" sx={{ flex: '1 1 0%', fontSize: '0.7rem', lineHeight: 1.4 }}>
+                      {formatCurrency(item.amount)}
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ flex: '1 1 0%', fontSize: '0.58rem' }}>
+                      ({item.percentage}%)
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Footer link — centered in a box */}
+      <Box
+        sx={{
+          mx: 2.5,
+          mb: 2,
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          py: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0.75,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            bgcolor: '#F9FAFB',
+            borderColor: '#2563EB',
+          },
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: '0.7rem',
+            color: '#2563EB',
+            fontWeight: 700,
+          }}
+        >
+          View Detailed Revenue Analysis
+        </Typography>
+        <Typography sx={{ fontSize: '0.8rem', color: '#2563EB', fontWeight: 700 }}>
+          →
         </Typography>
       </Box>
     </Box>

@@ -238,12 +238,22 @@ const ParentDashboard2 = () => {
       averageScore: wardStats.acadById?.[String(w.id)] ?? wardStats.acadByName?.[keyOf(w.name)] ?? null,
     };
     const statusStyle = STATUS_STYLES[w.status] || {};
+    // Mock learner wallet account details per ward.
+    const mockAccounts = [
+      { walletAccount: '3021587491', bank: 'Zenith Bank' },
+      { walletAccount: '5012348762', bank: 'GTBank' },
+      { walletAccount: '2098765431', bank: 'Access Bank' },
+    ];
+    const mockIdx = Number(String(w.id || '').replace(/\D/g, '').slice(-1)) % mockAccounts.length;
+
     return {
       ...w,
       class: w.className || w.class,
       age: w.age ?? ageFromDob(w.dob),
       totalPayable: w.balance ?? w.totalPayable,
       invoice_number: w.invoice_number || w.invoiceNumber || invoiceById[String(w.id)] || '',
+      walletAccount: w.walletAccount || mockAccounts[mockIdx].walletAccount,
+      bank: w.bank || mockAccounts[mockIdx].bank,
       statusColor: statusStyle.color || '#64748b',
       statusBg: statusStyle.bg || '#f1f5f9',
       attendanceColor: '#16a34a',

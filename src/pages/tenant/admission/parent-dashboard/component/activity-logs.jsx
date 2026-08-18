@@ -65,7 +65,7 @@ const ActivityLogs = ({ logs = DEFAULT_LOGS, onViewAll }) => {
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',
-        p: 2.25,
+        overflow: 'hidden',
         boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
         transition: 'all 0.2s ease',
         '&:hover': {
@@ -74,7 +74,7 @@ const ActivityLogs = ({ logs = DEFAULT_LOGS, onViewAll }) => {
       }}
     >
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.25, pt: 2.25, pb: 1.5 }}>
         <Typography sx={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>
           Activity Logs
         </Typography>
@@ -92,7 +92,19 @@ const ActivityLogs = ({ logs = DEFAULT_LOGS, onViewAll }) => {
         </Typography>
       </Stack>
 
-      {/* Log Items */}
+      {/* Log Items — scrollable */}
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          px: 2.25,
+          pb: 2,
+          '&::-webkit-scrollbar': { width: 4 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 },
+          '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+        }}
+      >
       {logs.length === 0 && (
         <Typography sx={{ fontSize: 12, color: '#94a3b8', py: 2, textAlign: 'center' }}>
           No recent activity yet.
@@ -142,6 +154,7 @@ const ActivityLogs = ({ logs = DEFAULT_LOGS, onViewAll }) => {
           );
         })}
       </Stack>
+      </Box>
     </Card>
   );
 };

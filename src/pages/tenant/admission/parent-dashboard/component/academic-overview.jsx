@@ -100,10 +100,10 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
       <Box
         sx={{
           bgcolor: '#ffffff',
-          border: '1px solid #e2e8f0',
+          border: '1px solid #E5E7EB',
           borderRadius: '14px',
           p: 1.5,
-          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           mb: 2,
         }}
       >
@@ -195,7 +195,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
         }}
       >
         {/* Sub-panel 1: Subject Performance Table */}
-        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', p: 1.75, boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 1.75, boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box>
             <Typography sx={{ fontWeight: 800, fontSize: 13, color: '#0f172a', mb: 1 }}>
               Subject Performance
@@ -234,7 +234,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
         </Box>
 
         {/* Sub-panel 2: Assessment Summary Donut */}
-        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', p: 1.75, boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 1.75, boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box>
             <Typography sx={{ fontWeight: 800, fontSize: 13, color: '#0f172a', mb: 0.75 }}>
               Assessment Summary
@@ -282,7 +282,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
         </Box>
 
         {/* Sub-panel 3: Learning Activities List */}
-        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', p: 1.75, boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Box sx={{ bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', p: 1.75, boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box>
             <Typography sx={{ fontWeight: 800, fontSize: 13, color: '#0f172a', mb: 1 }}>
               Learning Activities

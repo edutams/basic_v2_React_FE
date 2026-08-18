@@ -54,6 +54,7 @@ const PaymentCategories = ({
     <Box
       sx={{
         height: '100%',
+        minHeight: 420,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: '14px',

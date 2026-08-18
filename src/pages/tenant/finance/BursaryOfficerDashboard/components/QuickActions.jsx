@@ -52,13 +52,13 @@ const QuickActions = ({ onAction, onSearch }) => {
         borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
         bgcolor: isDark ? theme.palette.background.paper : '#fff',
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-        p: '16px 18px',
+        p: '10px 12px',
       }}
     >
       {/* Search Student label */}
       <Typography
         fontWeight={800}
-        sx={{ fontSize: '0.82rem', color: '#111827', letterSpacing: 0.3, mb: 1 }}
+        sx={{ fontSize: '0.78rem', color: '#111827', letterSpacing: 0.3, mb: 0.75 }}
       >
         Search Student
       </Typography>
@@ -112,8 +112,8 @@ const QuickActions = ({ onAction, onSearch }) => {
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          mt: 2,
-          mb: 1.5,
+          mt: 1.5,
+          mb: 1,
         }}
       >
         <Typography
@@ -134,7 +134,7 @@ const QuickActions = ({ onAction, onSearch }) => {
             md: 'repeat(2, 1fr)',
             lg: 'repeat(4, 1fr)',
           },
-          gap: 1.25,
+          gap: 1,
           flexGrow: 1,
           alignContent: 'center',
         }}

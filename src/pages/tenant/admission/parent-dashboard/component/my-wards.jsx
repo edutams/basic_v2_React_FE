@@ -64,11 +64,7 @@ const initialsOf = (name = '') =>
 const WardCard = ({ ward, onSelect, isSelected }) => {
   const navigate = useNavigate();
 
-  const handleViewInvoice = (e) => {
-    e.stopPropagation();
-    const invoiceNumber = ward.invoice_number || ward.invoiceNo || ward.invoiceNumber || '';
-    navigate(`/parent-invoice/${invoiceNumber}/${ward.id}`);
-  };
+ 
 
   return (
     <Card
@@ -208,7 +204,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           variant="outlined"
           size="small"
           startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
-          onClick={handleViewInvoice}
+          // onClick={handleViewInvoice}
           sx={{
             flex: 1,
             borderRadius: '7px',

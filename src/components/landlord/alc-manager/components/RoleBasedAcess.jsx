@@ -76,7 +76,7 @@ const RoleBasedAcess = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [page, rowsPerPage, nameFilter]);
+  }, [page, rowsPerPage, nameFilter, statusFilter]);
 
   const [summaryData, setSummaryData] = useState(null);
 
@@ -87,6 +87,7 @@ const RoleBasedAcess = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: nameFilter,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       };
       const res = await aclApi.getRoleAnalytics(params);
 

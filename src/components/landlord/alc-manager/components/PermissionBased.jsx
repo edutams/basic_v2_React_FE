@@ -110,7 +110,7 @@ const PermissionBased = () => {
 
   useEffect(() => {
     fetchPermissions();
-  }, [page, rowsPerPage, nameFilter, roleFilter]);
+  }, [page, rowsPerPage, nameFilter, roleFilter, statusFilter]);
 
   const [summaryData, setSummaryData] = useState(null);
 
@@ -122,6 +122,7 @@ const PermissionBased = () => {
         per_page: rowsPerPage,
         search: nameFilter,
         role_id: roleFilter !== 'all' ? roleFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       };
       const res = await aclApi.getPermissionAnalytics(params);
 

@@ -79,6 +79,8 @@ const AssignmentManagement = () => {
     level: '',
   });
 
+  const [summaryData, setSummaryData] = useState(null);
+
   const fetchUsers = async (customFilters = appliedFilters) => {
     try {
       setLoading(true);
@@ -95,6 +97,10 @@ const AssignmentManagement = () => {
         usersData = res.data;
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
+      }
+
+      if (res.data?.summary) {
+        setSummaryData(res.data.summary);
       }
 
       const normalized = (usersData || []).map((u) => ({
@@ -140,6 +146,14 @@ const AssignmentManagement = () => {
   }, []);
 
   const userStats = useMemo(() => {
+    if (summaryData) {
+      return {
+        total: summaryData.total ?? users.length,
+        assigned: summaryData.assigned ?? 0,
+        unassigned: summaryData.unassigned ?? 0,
+        multiRole: summaryData.multiRole ?? 0,
+      };
+    }
     const total = users.length;
     const assigned = users.filter((u) => u.assignedRoles && u.assignedRoles.length > 0).length;
     const unassigned = total - assigned;
@@ -151,7 +165,7 @@ const AssignmentManagement = () => {
       unassigned,
       multiRole,
     };
-  }, [users]);
+  }, [users, summaryData]);
   const getInitials = (name = '') =>
     name
       .split(' ')

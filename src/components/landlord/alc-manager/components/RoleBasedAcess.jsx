@@ -78,6 +78,8 @@ const RoleBasedAcess = () => {
     fetchRoles();
   }, [page, rowsPerPage, nameFilter]);
 
+  const [summaryData, setSummaryData] = useState(null);
+
   const fetchRoles = async () => {
     setLoading(true);
     try {
@@ -92,6 +94,7 @@ const RoleBasedAcess = () => {
         const fetchedData = res.data.data || res.data || [];
         setRoles(Array.isArray(fetchedData) ? fetchedData : []);
         setTotalRows(res.data.total || (Array.isArray(fetchedData) ? fetchedData.length : 0));
+        if (res.data.summary) setSummaryData(res.data.summary);
         if (res.data.per_page) setRowsPerPage(res.data.per_page);
       }
     } catch (error) {
@@ -157,6 +160,15 @@ const RoleBasedAcess = () => {
   }, [roles, statusFilter]);
 
   const stats = useMemo(() => {
+    if (summaryData) {
+      return {
+        totalR: summaryData.total_roles ?? (totalRows || roles.length || 0),
+        totalP: summaryData.total_permissions ?? 0,
+        totalU: summaryData.total_users ?? 0,
+        activeU: summaryData.active_users ?? 0,
+        orphanedR: summaryData.orphaned_roles ?? 0,
+      };
+    }
     const totalR = totalRows || roles.length || 0;
     const totalP = roles.reduce((acc, r) => acc + (r.totalPermissions ?? r.permissions_count ?? 0), 0);
     const totalU = roles.reduce((acc, r) => acc + (r.totalUsers ?? r.users_count ?? 0), 0);
@@ -166,7 +178,7 @@ const RoleBasedAcess = () => {
     const orphanedR = roles.filter((r) => (r.totalUsers ?? r.users_count ?? 0) === 0).length;
 
     return { totalR, totalP, totalU, activeU, orphanedR };
-  }, [roles, totalRows]);
+  }, [roles, totalRows, summaryData]);
 
   const COLOR_PALETTE = [
     '#10B981',

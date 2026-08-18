@@ -227,6 +227,8 @@ const AlcManager = () => {
     }));
   };
 
+  const [summaryData, setSummaryData] = useState(null);
+
   const fetchRoles = async () => {
     try {
       setLoading(true);
@@ -242,7 +244,17 @@ const AlcManager = () => {
 
       const res = await aclApi.getRoles(params);
 
-      const rolesArray = res?.data?.data ?? res?.data ?? [];
+      let rolesArray = [];
+      if (Array.isArray(res?.data)) {
+        rolesArray = res.data;
+      } else if (res?.data?.data && Array.isArray(res.data.data)) {
+        rolesArray = res.data.data;
+      }
+
+      if (res?.data?.summary) {
+        setSummaryData(res.data.summary);
+      }
+
       const total = res?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
 
       const enrichedRoles = (Array.isArray(rolesArray) ? rolesArray : []).map((role) => ({
@@ -268,6 +280,14 @@ const AlcManager = () => {
 
   // Stat summary calculations
   const stats = useMemo(() => {
+    if (summaryData) {
+      return {
+        totalRoles: summaryData.total_roles ?? totalRoles,
+        systemRoles: summaryData.system_roles ?? 0,
+        customRoles: summaryData.custom_roles ?? 0,
+        totalUsersAssigned: summaryData.total_users_assigned ?? 0,
+      };
+    }
     const totalCount = totalRoles || rows.length;
     const systemCount = rows.filter((r) => r.is_sys === 'yes' || r.is_system).length;
     const customCount = rows.filter((r) => r.is_sys !== 'yes' && !r.is_system).length;
@@ -279,7 +299,7 @@ const AlcManager = () => {
       customRoles: customCount,
       totalUsersAssigned,
     };
-  }, [rows, totalRoles]);
+  }, [rows, totalRoles, summaryData]);
 
   const handleApplySearch = () => {
     setAppliedFilters({

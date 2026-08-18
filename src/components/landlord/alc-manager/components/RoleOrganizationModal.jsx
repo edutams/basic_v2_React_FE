@@ -218,10 +218,10 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
           </Button>
           {search && (
             <Button variant="contained" size="small" onClick={() => {
-                setSearch('');
-                setSearchInput('');
-                setPage(0);
-              }}
+              setSearch('');
+              setSearchInput('');
+              setPage(0);
+            }}
               sx={{ minWidth: 'auto', px: 2 }}
             >
               Clear
@@ -290,7 +290,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
                             <Chip
                               label="Lead"
                               size="small"
-                              color="success"
+                              color="primary"
                               sx={{ height: 18, fontSize: 10 }}
                             />
                           )}
@@ -332,7 +332,14 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
                       <Chip
                         label={user.status === 'active' ? 'Active' : 'Inactive'}
                         size="small"
-                        color={user.status === 'active' ? 'success' : 'default'}
+                        sx={{
+                          bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
+                          color: user.status === 'active' ? 'success.main' : 'error.main',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          borderRadius: '12px',
+                          px: 0.5,
+                        }}
                       />
                     </TableCell>
 

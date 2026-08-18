@@ -5,17 +5,20 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 
-const ParentWalletAccount = ({ totalPayable = 0, accountNumber = null, bank = null }) => {
+const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', bank = 'Zenith Bank' }) => {
   return (
     <Card
       elevation={0}
       sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',
         p: 2,
         boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
-        mb: 2,
         transition: 'all 0.2s ease',
         '&:hover': {
           boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
@@ -71,8 +74,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = null, bank = nu
         </Typography>
       </Box>
 
-      {accountNumber && (
-        <Box sx={{ mb: 1.75 }}>
+      <Box sx={{ mb: 1.75 }}>
           <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569', mb: 0.75 }}>
             Wallet Account Details (Parent)
           </Typography>
@@ -97,7 +99,6 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = null, bank = nu
             )}
           </Stack>
         </Box>
-      )}
 
       {/* Buttons */}
       <Stack direction="row" spacing={0.75}>

@@ -51,6 +51,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
     <Card
       elevation={0}
       sx={{
+        height: '100%',
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -95,19 +96,28 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
         )}
       </Stack>
 
-      {/* Top 5 Stat Cards Row */}
+      {/* Top 5 Stat Cards Row — on a white background wrapper */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            sm: 'repeat(3, 1fr)',
-            md: 'repeat(5, 1fr)',
-          },
-          gap: 1.25,
+          bgcolor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '14px',
+          p: 1.5,
+          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
           mb: 2,
         }}
       >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(3, 1fr)',
+              md: 'repeat(5, 1fr)',
+            },
+            gap: 1.25,
+          }}
+        >
         {/* Stat 1: Overall Average */}
         <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
@@ -170,6 +180,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
             <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Submitted</Typography>
           </Box>
         </Box>
+        </Box>
       </Box>
 
       {/* Bottom 3 Sub-Panels */}
@@ -229,7 +240,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
               Assessment Summary
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, my: 0.75 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.25, my: 0.75 }}>
               <Box sx={{ width: 90, height: 90, flexShrink: 0 }}>
                 <Chart
                   type="donut"
@@ -248,15 +259,13 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
                 />
               </Box>
 
-              <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0 }}>
+              <Stack spacing={0.5} alignItems="center">
                 {ASSESSMENT_DONUT.labels.map((lbl, idx) => (
-                  <Stack key={lbl} direction="row" alignItems="center" spacing={0.5} justifyContent="space-between">
-                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
-                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: ASSESSMENT_DONUT.colors[idx], flexShrink: 0 }} />
-                      <Typography sx={{ fontSize: 9.5, fontWeight: 600, color: '#334155', whiteSpace: 'nowrap' }}>
-                        {lbl.split(' ')[0]}
-                      </Typography>
-                    </Stack>
+                  <Stack key={lbl} direction="row" alignItems="center" spacing={0.5}>
+                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: ASSESSMENT_DONUT.colors[idx], flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: 9.5, fontWeight: 600, color: '#334155', whiteSpace: 'nowrap' }}>
+                      {lbl.split(' ')[0]}
+                    </Typography>
                     <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>
                       {ASSESSMENT_DONUT.counts[idx]}
                     </Typography>

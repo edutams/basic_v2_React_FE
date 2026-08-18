@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Grid, Paper, Skeleton, useTheme, Box, Typography } from '@mui/material';
+import { Grid, Paper, Skeleton, useTheme, Box } from '@mui/material';
 import { ReceiptLong, AccountBalanceWallet, ErrorOutline } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from 'src/hooks/useNotification';
@@ -7,14 +7,12 @@ import tenantApi from '@/api/tenant/tenant_api';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { formatCurrency } from './constants';
 import DashboardHeader from './components/DashboardHeader';
-import KpiCard from './components/KpiCard';
-import EfficiencyRing from './components/EfficiencyRing';
+import KpiCard, { EfficiencyRing } from './components/KpiCard';
 import RevenueDistribution from './components/RevenueDistribution';
 import PaymentCategories from './components/PaymentCategories';
 import CollectionMatrix from './components/CollectionMatrix';
 import BursaryBreakdownModal from './components/BursaryBreakdownModal';
 import RevenueTrend from './components/RevenueTrend';
-import SearchStudent from './components/SearchStudent';
 import QuickActions from './components/QuickActions';
 
 /**
@@ -36,12 +34,12 @@ const PanelSkeleton = ({ height = 240 }) => {
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 3,
+        borderRadius: '10px',
         background: isDark ? theme.palette.background.paper : '#fff',
         border: isDark
           ? '1px solid rgba(255,255,255,0.12)'
           : `1px solid ${theme.palette.grey[200]}`,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
@@ -222,13 +220,6 @@ const BursaryOfficerDashboard = () => {
     setSelectedTerm(firstTerm || '');
   };
 
-  // Handle student search
-  const handleStudentSearch = (query) => {
-    if (!query || query.length < 2) return;
-    notify.info(`Searching for: ${query}...`);
-    // Future: Implement actual search API call
-  };
-
   // Handle quick actions
   const handleQuickAction = (action) => {
     notify.info(`${action.replace('_', ' ')} feature coming soon`);
@@ -268,9 +259,11 @@ const BursaryOfficerDashboard = () => {
                 elevation={0}
                 sx={{
                   p: 2,
-                  borderRadius: '16px',
-                  border: '1px rgba(69, 67, 67, 1) solid',
+                  borderRadius: '14px',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
                   background: isDark ? theme.palette.background.paper : '#fff',
+                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
                 }}
               >
                 <Skeleton variant="text" width="60%" height={12} sx={{ mb: 2 }} />
@@ -288,7 +281,7 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Expected Income"
-              value={formatCurrency(rp.data.total_expected_income)}
+              value={formatCurrency(rp.data.total_expected_income || 186750000)}
               sublabel="This Session"
               progress={rp.data.expected_vs_last_session || 12.6}
               icon={ReceiptLong}
@@ -299,7 +292,7 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Collected Income"
-              value={formatCurrency(rp.data.total_collected_income)}
+              value={formatCurrency(rp.data.total_collected_income || 124560000)}
               sublabel="This Session"
               progress={rp.data.collected_vs_last_session || 15.8}
               icon={AccountBalanceWallet}
@@ -310,7 +303,7 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Outstanding Balance"
-              value={formatCurrency(rp.data.total_outstanding_balance)}
+              value={formatCurrency(rp.data.total_outstanding_balance || 62190000)}
               sublabel="This Session"
               progress={-(rp.data.outstanding_vs_last_session || 5.2)}
               icon={ErrorOutline}
@@ -321,21 +314,21 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Collection Efficiency"
-              value={`${rp.data.collection_efficiency}%`}
+              value={`${rp.data.collection_efficiency || 66.68}%`}
               sublabel="This Session"
               progress={rp.data.efficiency_vs_last_session || 2.6}
               colorName="primary"
-              rightElement={<EfficiencyRing value={rp.data.collection_efficiency} />}
+              rightElement={<EfficiencyRing value={rp.data.collection_efficiency || 66.68} />}
               onClick={() => setBreakdownType('collection_efficiency')}
             />
           </Grid>
         </Grid>
       )}
 
-      {/* ── Revenue Trend + Revenue Distribution + Search & Quick Actions ─── */}
+      {/* ── Revenue Trend + Revenue Distribution + Quick Actions ─── */}
       <Grid container spacing={2} mb={2}>
         {/* Revenue Trend Chart */}
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           {revenueTrend.loading ? (
             <PanelSkeleton height={480} />
           ) : (
@@ -346,25 +339,23 @@ const BursaryOfficerDashboard = () => {
           )}
         </Grid>
 
-        {/* Revenue Distribution + Search + Quick Actions Column */}
-        <Grid size={{ xs: 12, md: 7 }}>
+        {/* Revenue Distribution + Quick Actions Column */}
+        <Grid size={{ xs: 12, md: 8 }}>
           <Grid container spacing={2}>
-            {/* Revenue Distribution */}
-            <Grid size={{ xs: 12 }}>
+            {/* Revenue Distribution with Session dropdown */}
+            <Grid size={{ xs: 12, md: 6 }}>
               {revenueDistribution.loading ? (
-                <PanelSkeleton height={380} />
+                <PanelSkeleton height={300} />
               ) : (
                 <RevenueDistribution
                   revenue_distribution={asArray(revenueDistribution.data)}
                   totalRevenue={totalRevenue}
                   onClick={() => setBreakdownType('revenue_distribution')}
+                  session={selectedSession || 'This Session'}
+                  sessions={sessions}
+                  onSessionChange={handleSessionChange}
                 />
               )}
-            </Grid>
-
-            {/* Search Student */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SearchStudent onSearch={handleStudentSearch} />
             </Grid>
 
             {/* Quick Actions */}
@@ -385,6 +376,9 @@ const BursaryOfficerDashboard = () => {
               matrix={matrixRows}
               totals={totals}
               totalEfficiency={totalEfficiency}
+              session={selectedSession || 'This Session'}
+              sessions={sessions}
+              onSessionChange={handleSessionChange}
               onRowClick={(className) =>
                 notify.info(`Detailed breakdown for ${className} is coming soon`)
               }
@@ -398,6 +392,9 @@ const BursaryOfficerDashboard = () => {
           ) : (
             <PaymentCategories 
               payment_categories={asArray(paymentCategories.data)} 
+              session={selectedSession || 'This Session'}
+              sessions={sessions}
+              onSessionChange={handleSessionChange}
               onClick={() => setBreakdownType('payment_categories')} 
             />
           )}

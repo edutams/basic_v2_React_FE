@@ -6,6 +6,22 @@ const aclApi = {
     return response.data;
   },
 
+  exportRolesExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportRolesPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
   updateRole: async (id, data) => {
     const response = await api.put(`/v1/landlord/acl/roles/${id}`, data);
     return response.data;
@@ -36,6 +52,22 @@ const aclApi = {
   getAssignments: async () => {
     const response = await api.get('/v1/landlord/acl/assignments');
     return response.data;
+  },
+
+  exportAssignmentsExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportAssignmentsPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
   },
 
   getAgents: async (params) => {
@@ -96,6 +128,22 @@ const aclApi = {
   getPermissionAnalytics: async (params) => {
     const response = await api.get('/v1/landlord/acl/permissions/analytics', { params });
     return response.data;
+  },
+
+  exportPermissionAnalyticsExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/permissions/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportPermissionAnalyticsPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/permissions/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
   },
 
   getRoleOrganizations: async (roleId, params) => {

@@ -31,6 +31,10 @@ import {
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -64,6 +68,7 @@ const AssignmentManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
@@ -184,6 +189,54 @@ const AssignmentManagement = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = {};
+      if (appliedFilters.name) params.search = appliedFilters.name;
+      if (appliedFilters.role && appliedFilters.role !== 'all') params.role = appliedFilters.role;
+      if (appliedFilters.status && appliedFilters.status !== 'all') params.status = appliedFilters.status;
+
+      const res = await aclApi.exportAssignmentsExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Assignments exported to Excel successfully!');
+    } catch (err) {
+      console.error('Failed to export assignments excel:', err);
+      notify.error('Failed to export Excel');
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = {};
+      if (appliedFilters.name) params.search = appliedFilters.name;
+      if (appliedFilters.role && appliedFilters.role !== 'all') params.role = appliedFilters.role;
+      if (appliedFilters.status && appliedFilters.status !== 'all') params.status = appliedFilters.status;
+
+      const res = await aclApi.exportAssignmentsPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Assignments exported as PDF successfully!');
+    } catch (err) {
+      console.error('Failed to export assignments pdf:', err);
+      notify.error('Failed to export PDF');
+    }
   };
 
   const getRoleSx = (role) => {
@@ -625,6 +678,35 @@ const AssignmentManagement = () => {
               </Button>
             </Grid>
           )}
+
+          <Grid size="auto" sx={{ ml: 'auto' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              color="primary"
+              startIcon={<ExportIcon fontSize="small" />}
+              endIcon={<ArrowDropDownIcon />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
+              sx={{ height: 40, px: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Export
+            </Button>
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={Boolean(exportAnchorEl)}
+              onClose={() => setExportAnchorEl(null)}
+              PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+            >
+              <MenuItem onClick={handleExportExcel}>
+                <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                Export Excel
+              </MenuItem>
+              <MenuItem onClick={handleExportPdf}>
+                <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                Export PDF
+              </MenuItem>
+            </Menu>
+          </Grid>
         </Grid>
         <Box sx={{ p: 0 }}>
           {/* <Paper> */}

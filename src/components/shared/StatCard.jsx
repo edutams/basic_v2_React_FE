@@ -49,11 +49,6 @@ const StatCard = ({
           theme.palette.mode === 'dark'
             ? '0 0 32px 0 rgba(0, 0, 0, 0.5), 0 8px 24px 0 rgba(0, 0, 0, 0.35)'
             : '0 0 28px 0 rgba(0, 0, 0, 0.14), 0 8px 20px 0 rgba(0, 0, 0, 0.08)',
-        boxShadow: (theme) =>
-          theme.palette.mode === 'dark'
-            ? '0 0 20px -3px rgba(0, 0, 0, 0.5), 0 8px 22px -3px rgba(0, 0, 0, 0.35)'
-            : '0 0 20px -3px rgba(0, 0, 0, 0.14), 0 8px 20px -3px rgba(0, 0, 0, 0.08)',
-
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
         // '&:hover': {

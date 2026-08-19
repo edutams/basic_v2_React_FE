@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Box,
     Stack,
@@ -20,6 +21,7 @@ import ActivityLog from "./components/Activity-log";
 import QuickAccess from "./components/Quick-access";
 
 const NonTeachDashboard = () => {
+    const navigate = useNavigate();
     const [selectedStat, setSelectedStat] = useState(null);
 
     const statistics = [
@@ -79,6 +81,22 @@ const NonTeachDashboard = () => {
             progressColor: "#0891B2",
         },
     ];
+
+    const handleQuickAccessClick = (item) => {
+        setSelectedStat({
+            title: item.title,
+            subtitle: item.description,
+            icon: item.icon,
+            iconColor: item.iconColor,
+            iconBackground: item.iconBackground,
+            overview: [
+                { label: "Total entries", value: "—" },
+                { label: "Awaiting action", value: "—" },
+                { label: "Recent activity", value: "No records yet" },
+            ],
+            onOpen: item.path ? () => navigate(item.path) : undefined,
+        });
+    };
 
     return (
         <PageContainer title="Staff Dashboard" description="Non-teaching staff portal">
@@ -140,7 +158,7 @@ const NonTeachDashboard = () => {
 
                 {/* QUICK ACCESS */}
                 <Box>
-                    <QuickAccess />
+                    <QuickAccess onCardClick={handleQuickAccessClick} />
                 </Box>
             </Stack>
 

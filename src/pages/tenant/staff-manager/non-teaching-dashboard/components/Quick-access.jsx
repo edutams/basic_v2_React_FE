@@ -5,6 +5,7 @@ import {
     CardContent,
     Typography,
     ButtonBase,
+    Tooltip,
 } from "@mui/material";
 
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -16,6 +17,7 @@ import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 
 const QuickAccess = ({
     onNavigate,
+    onCardClick,
     items = [
         {
             title: "Submit Work Report",
@@ -74,6 +76,14 @@ const QuickAccess = ({
         }
     };
 
+    const handleCardClick = (item) => {
+        if (onCardClick) {
+            onCardClick(item);
+        } else if (onNavigate) {
+            onNavigate(item);
+        }
+    };
+
     return (
         <Card
             elevation={0}
@@ -100,16 +110,16 @@ const QuickAccess = ({
             <CardContent
                 sx={{
                     p: {
-                        xs: 1.5,
-                        sm: 2,
-                        md: 2.25,
+                        xs: 1,
+                        sm: 1.25,
+                        md: 1.5,
                     },
 
                     "&:last-child": {
                         pb: {
-                            xs: 1.5,
-                            sm: 2,
-                            md: 2.25,
+                            xs: 1,
+                            sm: 1.25,
+                            md: 1.5,
                         },
                     },
                 }}
@@ -170,9 +180,14 @@ const QuickAccess = ({
 
                     {items.map((item, index) => (
 
-                        <ButtonBase
+                        <Tooltip
                             key={`${item.title}-${index}`}
-                            onClick={() => handleNavigate(item)}
+                            title={`View ${item.title} overview`}
+                            placement="top"
+                            arrow
+                        >
+                        <ButtonBase
+                            onClick={() => handleCardClick(item)}
                             sx={{
                                 display: "block",
 
@@ -375,6 +390,8 @@ const QuickAccess = ({
                             </Box>
 
                         </ButtonBase>
+
+                        </Tooltip>
 
                     ))}
 

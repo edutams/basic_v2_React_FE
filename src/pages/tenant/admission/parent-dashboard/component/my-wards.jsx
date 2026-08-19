@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -180,52 +180,91 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             ₦{Number(ward.totalPayable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Typography>
           {ward.walletAccount || ward.bank ? (
-            <Typography
-              sx={{
-                fontSize: 10,
-                color: '#64748b',
-                fontWeight: 500,
-                mt: 0.4,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              Wallet Account: <Box component="span" sx={{ color: '#1e293b', fontWeight: 600 }}>{ward.walletAccount}</Box>
-              {ward.bank ? ` • ${ward.bank}` : ''}
-            </Typography>
+            <Stack direction="row" alignItems="stretch" spacing={1.25} sx={{ mt: 0.4 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
+                  WALLET ACCOUNT
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: '#1e293b',
+                    lineHeight: 1.2,
+                    mt: 0.15,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {ward.walletAccount || '—'}
+                </Typography>
+              </Box>
+              {ward.bank ? (
+                <>
+                  <Box sx={{ alignSelf: 'stretch', borderRight: '1px solid #e2e8f0', my: 0.2, flexShrink: 0 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
+                      {ward.bank}
+                    </Typography>
+                  </Box>
+                </>
+              ) : null}
+            </Stack>
           ) : null}
         </Box>
       </Box>
 
       {/* Action Buttons */}
       <Stack direction="row" spacing={0.75}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
-          // onClick={handleViewInvoice}
-          sx={{
-            flex: 1,
-            borderRadius: '7px',
-            textTransform: 'none',
-            fontSize: 10.5,
-            fontWeight: 700,
-            color: '#1d4ed8',
-            borderColor: '#bfdbfe',
-            px: 0.75,
-            py: 0.4,
-            whiteSpace: 'nowrap',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              borderColor: '#2563eb',
-              bgcolor: '#eff6ff',
-              color: '#1d4ed8',
-            },
-          }}
+        <Tooltip
+          title={
+            ward.invoice_number
+              ? `View invoice for ${ward.name}`
+              : 'No invoice generated yet. Go to Class Ledger to generate one.'
+          }
+          placement="top"
+          arrow
         >
-          View Invoice
-        </Button>
+          <Box sx={{ flex: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={!ward.invoice_number}
+              startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
+              onClick={() =>
+                ward.invoice_number
+                  ? navigate(`/class-ledger/${ward.invoice_number}/${ward.id}/pay-invoice`)
+                  : undefined
+              }
+              sx={{
+                width: '100%',
+                borderRadius: '7px',
+                textTransform: 'none',
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: '#1d4ed8',
+                borderColor: '#bfdbfe',
+                px: 0.75,
+                py: 0.4,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: '#2563eb',
+                  bgcolor: '#eff6ff',
+                  color: '#1d4ed8',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: '#f1f5f9',
+                  color: '#94a3b8',
+                  borderColor: '#e2e8f0',
+                },
+              }}
+            >
+              View Invoice
+            </Button>
+          </Box>
+        </Tooltip>
         <Button
           variant="contained"
           size="small"

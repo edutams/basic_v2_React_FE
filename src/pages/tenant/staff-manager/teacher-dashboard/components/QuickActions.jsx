@@ -51,7 +51,20 @@ const actions = [
 
 export default function QuickActions() {
   return (
-    <Box>
+    <Box
+      sx={{
+        bgcolor: "#fff",
+        border: "1px solid",
+        borderColor: "grey.200",
+        borderRadius: "10px",
+        p: 1,
+        transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          boxShadow: "0 8px 18px rgba(15, 23, 42, 0.05)",
+        },
+      }}
+    >
       <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1.5, letterSpacing: -0.2 }}>Quick Actions</Typography>
 
       <Box

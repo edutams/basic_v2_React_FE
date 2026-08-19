@@ -83,12 +83,23 @@ const ReusableDonutChart = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 2,
+            px: 2,
             pointerEvents: 'none',
           }}
         >
           {centerValue && (
-            <Typography sx={{ fontSize: valueFontSize, fontWeight: 800, lineHeight: 1.1, color: 'text.primary' }}>
-              {centerValue}
+            <Typography
+              sx={{
+                fontSize: valueFontSize,
+                fontWeight: 800,
+                lineHeight: 1.1,
+                color: 'text.primary',
+                textAlign: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {typeof centerValue === 'number' ? valueFormatter(centerValue) : centerValue}
             </Typography>
           )}
           {centerTitle && (
@@ -99,6 +110,7 @@ const ReusableDonutChart = ({
                 color: 'text.secondary',
                 textAlign: 'center',
                 lineHeight: 1.2,
+                flexShrink: 0,
               }}
             >
               {centerTitle}

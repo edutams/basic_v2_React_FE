@@ -95,7 +95,7 @@ const LearnerDashboard = () => {
         onCardClick={setBreakdownType}
       />
 
-      {/* Main Grid: Left 2x2 Analytics vs Right Side Sidebar Panel */}
+      {/* Main Grid: Left Analytics vs Right Side Sidebar Panel */}
       <Box
         sx={{
           display: 'flex',
@@ -104,7 +104,7 @@ const LearnerDashboard = () => {
           flexDirection: { xs: 'column', lg: 'row' },
         }}
       >
-        {/* Main Content Area (Analytics 2x2 grid: Academic & Days-in-Term side-by-side; Academic Overview full width) */}
+        {/* Main Content Area (Analytics: Academic & Days-in-Term side-by-side; Academic Overview full width) */}
         <Box sx={{ flex: '1 1 0', minWidth: 0, width: { xs: '100%', lg: 'auto' } }}>
           <Analytics
             academics={academics.data}
@@ -116,6 +116,7 @@ const LearnerDashboard = () => {
             attendanceTermId={attendanceTermId}
             onAcademicTermChange={setAcademicTermId}
             onAttendanceTermChange={setAttendanceTermId}
+            onCardClick={setBreakdownType}
           />
         </Box>
 
@@ -140,6 +141,8 @@ const LearnerDashboard = () => {
       <LearnerBreakdownModal
         open={Boolean(breakdownType)}
         type={breakdownType}
+        overview={overview.data}
+        academicOverview={academics.data}
         onClose={() => setBreakdownType(null)}
       />
     </PageContainer>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -12,6 +12,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
@@ -23,6 +24,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
+import InsightsDetailModal from './insights-detail-modal';
 
 const SUBJECT_PERFORMANCE = [
   { subject: 'Mathematics', score: 88, grade: 'A', trend: 'up', trendColor: '#16a34a' },
@@ -46,7 +48,34 @@ const LEARNING_ACTIVITIES = [
   { icon: VideoLibraryOutlinedIcon, iconBg: '#f3e8ff', iconColor: '#9333ea', title: 'Reading Materials Accessed', count: 12, period: 'This Term' },
 ];
 
+const statBoxSx = {
+  p: 1.25,
+  borderRadius: '9px',
+  bgcolor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1,
+  cursor: 'pointer',
+  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+  '&:hover': {
+    borderColor: '#94a3b8',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+  },
+};
+
+const StatBox = ({ label, onClick, children }) => (
+  <Tooltip title={`Click to view ${label} breakdown`} placement="top" arrow>
+    <Box onClick={onClick} sx={statBoxSx}>
+      {children}
+    </Box>
+  </Tooltip>
+);
+
 const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
+  const [detailType, setDetailType] = useState(null);
+
   return (
     <Card
       elevation={0}
@@ -119,7 +148,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
           }}
         >
         {/* Stat 1: Overall Average */}
-        <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StatBox label="Overall Average" onClick={() => setDetailType('academic')}>
           <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
             <CircularProgress variant="determinate" value={100} size={34} thickness={4.5} sx={{ color: '#e2e8f0' }} />
             <CircularProgress variant="determinate" value={78} size={34} thickness={4.5} sx={{ color: '#16a34a', position: 'absolute', left: 0 }} />
@@ -131,10 +160,10 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
               <Box sx={{ bgcolor: '#dcfce7', color: '#16a34a', px: 0.6, py: 0.1, borderRadius: '5px', fontSize: 9.5, fontWeight: 700 }}>Good</Box>
             </Stack>
           </Box>
-        </Box>
+        </StatBox>
 
         {/* Stat 2: Class Rank */}
-        <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StatBox label="Class Rank" onClick={() => setDetailType('performance')}>
           <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <EmojiEventsOutlinedIcon sx={{ fontSize: 17 }} />
           </Box>
@@ -143,10 +172,10 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
             <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>5/35</Typography>
             <Typography sx={{ fontSize: 9.5, color: '#16a34a', fontWeight: 700, whiteSpace: 'nowrap' }}>Top 14%</Typography>
           </Box>
-        </Box>
+        </StatBox>
 
         {/* Stat 3: Total Subjects */}
-        <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StatBox label="Total Subjects" onClick={() => setDetailType('academic')}>
           <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <MenuBookOutlinedIcon sx={{ fontSize: 17 }} />
           </Box>
@@ -155,10 +184,10 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
             <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>9</Typography>
             <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>This Term</Typography>
           </Box>
-        </Box>
+        </StatBox>
 
         {/* Stat 4: Pass Rate */}
-        <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StatBox label="Pass Rate" onClick={() => setDetailType('academic')}>
           <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 17 }} />
           </Box>
@@ -167,10 +196,10 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
             <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>100%</Typography>
             <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>All Subjects</Typography>
           </Box>
-        </Box>
+        </StatBox>
 
         {/* Stat 5: Assignments */}
-        <Box sx={{ p: 1.25, borderRadius: '9px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StatBox label="Assignments" onClick={() => setDetailType('engagement')}>
           <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <AssignmentOutlinedIcon sx={{ fontSize: 17 }} />
           </Box>
@@ -179,7 +208,7 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
             <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>16 / 20</Typography>
             <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Submitted</Typography>
           </Box>
-        </Box>
+        </StatBox>
         </Box>
       </Box>
 
@@ -321,6 +350,13 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
           </Stack>
         </Box>
       </Box>
+
+      {/* Detail modal — fetches from /admission/parent-insights/detail on open */}
+      <InsightsDetailModal
+        open={!!detailType}
+        type={detailType || 'academic'}
+        onClose={() => setDetailType(null)}
+      />
     </Card>
   );
 };

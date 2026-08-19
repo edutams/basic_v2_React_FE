@@ -26,7 +26,7 @@ const formatNaira = (amount) =>
 const cardBase = {
   borderRadius: '12px',
   boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-  p: '12px 14px',
+  p: '6px 6px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
@@ -47,9 +47,9 @@ const cardHover = () => ({
 });
 
 const iconTile = (bg, color) => ({
-  width: 38,
-  height: 38,
-  borderRadius: '10px',
+  width: 34,
+  height: 34,
+  borderRadius: '9px',
   bgcolor: bg,
   color,
   border: '1px solid',
@@ -166,7 +166,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
 
         <Box sx={{ mt: 0.5 }}>
           <Stack direction="row" alignItems="baseline" spacing={0.75}>
-            <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1 }}>
+            <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
               {Number(overview.average_score || 0)}%
             </Typography>
             <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF' }}>
@@ -203,7 +203,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
 
         <Box sx={{ mt: 0.5 }}>
           <Stack direction="row" alignItems="baseline" spacing={0.75}>
-            <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1 }}>
+            <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
               {Number(overview.attendance_rate || 0)}%
             </Typography>
             <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF' }}>
@@ -239,7 +239,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
         </Stack>
 
         <Box sx={{ mt: 0.5 }}>
-          <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#DC2626', lineHeight: 1 }}>
+          <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#DC2626', lineHeight: 1 }}>
             {formatNaira(overview.outstanding_fees)}
           </Typography>
           <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF', mt: 0.4 }}>
@@ -271,11 +271,11 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
                 color: wallet.verified ? '#166534' : '#6B7280',
                 border: wallet.verified ? '1px solid #86EFAC' : '1px solid #E5E7EB',
                 borderRadius: '20px',
-                px: 0.9,
-                py: 0.15,
+                // px: 0.1,
+                // py: 0.12,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0.3,
+                gap: 0.1,
               }}
             >
               <CheckCircle sx={{ fontSize: 10 }} />

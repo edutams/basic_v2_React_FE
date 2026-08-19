@@ -72,7 +72,8 @@ const QuickActions = ({ onApplyAdmission }) => {
           bgcolor: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '14px',
-          p: 1.5,
+          px: 1.2,
+          py: 0.2,
           boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
         }}
       >

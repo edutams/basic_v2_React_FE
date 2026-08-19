@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -217,36 +217,54 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
 
       {/* Action Buttons */}
       <Stack direction="row" spacing={0.75}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
-          onClick={() =>
+        <Tooltip
+          title={
             ward.invoice_number
-              ? navigate(`/class-ledger/${ward.invoice_number}/${ward.id}/pay-invoice`)
-              : undefined
+              ? `View invoice for ${ward.name}`
+              : 'No invoice generated yet. Go to Class Ledger to generate one.'
           }
-          sx={{
-            flex: 1,
-            borderRadius: '7px',
-            textTransform: 'none',
-            fontSize: 10.5,
-            fontWeight: 700,
-            color: '#1d4ed8',
-            borderColor: '#bfdbfe',
-            px: 0.75,
-            py: 0.4,
-            whiteSpace: 'nowrap',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              borderColor: '#2563eb',
-              bgcolor: '#eff6ff',
-              color: '#1d4ed8',
-            },
-          }}
+          placement="top"
+          arrow
         >
-          View Invoice
-        </Button>
+          <Box sx={{ flex: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={!ward.invoice_number}
+              startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
+              onClick={() =>
+                ward.invoice_number
+                  ? navigate(`/class-ledger/${ward.invoice_number}/${ward.id}/pay-invoice`)
+                  : undefined
+              }
+              sx={{
+                width: '100%',
+                borderRadius: '7px',
+                textTransform: 'none',
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: '#1d4ed8',
+                borderColor: '#bfdbfe',
+                px: 0.75,
+                py: 0.4,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: '#2563eb',
+                  bgcolor: '#eff6ff',
+                  color: '#1d4ed8',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: '#f1f5f9',
+                  color: '#94a3b8',
+                  borderColor: '#e2e8f0',
+                },
+              }}
+            >
+              View Invoice
+            </Button>
+          </Box>
+        </Tooltip>
         <Button
           variant="contained"
           size="small"

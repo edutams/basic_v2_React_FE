@@ -64,49 +64,88 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                 >
                     Breakdown
                 </Typography>
-                <Box
-                    sx={{
-                        p: 3,
-                        borderRadius: 2,
-                        border: "1px dashed rgba(69, 67, 67, 0.45)",
-                        textAlign: "center",
-                        bgcolor: (t) =>
-                            t.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "#fafafa",
-                    }}
-                >
-                    <Typography
-                        sx={{ fontSize: 34, fontWeight: 800, lineHeight: 1.1, color: stat.iconColor }}
-                    >
-                        {stat.value}
-                    </Typography>
-                    <Typography sx={{ fontSize: 12.5, color: "text.secondary", mt: 0.75 }}>
-                        Detailed breakdown coming soon
-                    </Typography>
-                    {typeof stat.progress === "number" && (
-                        <Box sx={{ mt: 2, maxWidth: 280, mx: "auto", textAlign: "left" }}>
-                            <LinearProgress
-                                variant="determinate"
-                                value={stat.progress}
+                {Array.isArray(stat.overview) && stat.overview.length > 0 ? (
+                    <Stack spacing={1}>
+                        {stat.overview.map((row, index) => (
+                            <Box
+                                key={index}
                                 sx={{
-                                    height: 6,
-                                    borderRadius: 6,
-                                    backgroundColor: "#F3F4F6",
-                                    "& .MuiLinearProgress-bar": {
-                                        backgroundColor: stat.progressColor,
-                                        borderRadius: 6,
-                                    },
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 2,
+                                    px: 2,
+                                    py: 1.5,
+                                    borderRadius: 2,
+                                    border: "1px solid #E5E7EB",
+                                    backgroundColor: "#ffffff",
                                 }}
-                            />
-                            {stat.progressLabel && (
-                                <Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.75 }}>
-                                    {stat.progressLabel}
+                            >
+                                <Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
+                                    {row.label}
                                 </Typography>
-                            )}
-                        </Box>
-                    )}
-                </Box>
+                                <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#182230" }}>
+                                    {row.value}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Stack>
+                ) : (
+                    <Box
+                        sx={{
+                            p: 3,
+                            borderRadius: 2,
+                            border: "1px dashed rgba(69, 67, 67, 0.45)",
+                            textAlign: "center",
+                            bgcolor: (t) =>
+                                t.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "#fafafa",
+                        }}
+                    >
+                        <Typography
+                            sx={{ fontSize: 34, fontWeight: 800, lineHeight: 1.1, color: stat.iconColor }}
+                        >
+                            {stat.value}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12.5, color: "text.secondary", mt: 0.75 }}>
+                            Detailed breakdown coming soon
+                        </Typography>
+                        {typeof stat.progress === "number" && (
+                            <Box sx={{ mt: 2, maxWidth: 280, mx: "auto", textAlign: "left" }}>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={stat.progress}
+                                    sx={{
+                                        height: 6,
+                                        borderRadius: 6,
+                                        backgroundColor: "#F3F4F6",
+                                        "& .MuiLinearProgress-bar": {
+                                            backgroundColor: stat.progressColor,
+                                            borderRadius: 6,
+                                        },
+                                    }}
+                                />
+                                {stat.progressLabel && (
+                                    <Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.75 }}>
+                                        {stat.progressLabel}
+                                    </Typography>
+                                )}
+                            </Box>
+                        )}
+                    </Box>
+                )}
             </DialogContent>
             <DialogActions>
+                {typeof stat.onOpen === "function" && (
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            stat.onOpen();
+                            onClose();
+                        }}
+                    >
+                        Open {stat.title}
+                    </Button>
+                )}
                 <Button onClick={onClose}>Close</Button>
             </DialogActions>
         </Dialog>

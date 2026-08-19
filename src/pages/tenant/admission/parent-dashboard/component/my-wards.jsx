@@ -180,20 +180,37 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             ₦{Number(ward.totalPayable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Typography>
           {ward.walletAccount || ward.bank ? (
-            <Typography
-              sx={{
-                fontSize: 10,
-                color: '#64748b',
-                fontWeight: 500,
-                mt: 0.4,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              Wallet Account: <Box component="span" sx={{ color: '#1e293b', fontWeight: 600 }}>{ward.walletAccount}</Box>
-              {ward.bank ? ` • ${ward.bank}` : ''}
-            </Typography>
+            <Stack direction="row" alignItems="stretch" spacing={1.25} sx={{ mt: 0.4 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
+                  WALLET ACCOUNT
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: '#1e293b',
+                    lineHeight: 1.2,
+                    mt: 0.15,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {ward.walletAccount || '—'}
+                </Typography>
+              </Box>
+              {ward.bank ? (
+                <>
+                  <Box sx={{ alignSelf: 'stretch', borderRight: '1px solid #e2e8f0', my: 0.2, flexShrink: 0 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
+                      {ward.bank}
+                    </Typography>
+                  </Box>
+                </>
+              ) : null}
+            </Stack>
           ) : null}
         </Box>
       </Box>

@@ -47,9 +47,9 @@ const cardHover = () => ({
 });
 
 const iconTile = (bg, color) => ({
-  width: 38,
-  height: 38,
-  borderRadius: '10px',
+  width: 34,
+  height: 34,
+  borderRadius: '9px',
   bgcolor: bg,
   color,
   border: '1px solid',
@@ -166,7 +166,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
 
         <Box sx={{ mt: 0.5 }}>
           <Stack direction="row" alignItems="baseline" spacing={0.75}>
-            <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1 }}>
+            <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
               {Number(overview.average_score || 0)}%
             </Typography>
             <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF' }}>
@@ -203,7 +203,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
 
         <Box sx={{ mt: 0.5 }}>
           <Stack direction="row" alignItems="baseline" spacing={0.75}>
-            <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#111827', lineHeight: 1 }}>
+            <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
               {Number(overview.attendance_rate || 0)}%
             </Typography>
             <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF' }}>
@@ -239,7 +239,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
         </Stack>
 
         <Box sx={{ mt: 0.5 }}>
-          <Typography fontWeight="800" sx={{ fontSize: '1.35rem', color: '#DC2626', lineHeight: 1 }}>
+          <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#DC2626', lineHeight: 1 }}>
             {formatNaira(overview.outstanding_fees)}
           </Typography>
           <Typography sx={{ fontSize: '0.67rem', color: '#9CA3AF', mt: 0.4 }}>

@@ -64,15 +64,16 @@ const QuickActions = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                border: '1px solid #F3F4F6',
-                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 bgcolor: '#fff',
-                transition: 'all 0.15s ease-in-out',
+                boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                 '&:hover': {
-                  bgcolor: '#F9FAFB',
-                  borderColor: '#E5E7EB',
-                  transform: 'translateY(-1px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
+                  transform: 'translateY(-3px)',
                 },
               }}
             >

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, Typography, Stack, LinearProgress, Avatar } from '@mui/material';
+import { Box, Card, Typography, Stack, LinearProgress, Avatar, Tooltip } from '@mui/material';
 import {
   AssignmentTurnedInOutlined,
   QuizOutlined,
@@ -12,9 +12,19 @@ import {
 
 const cardSx = {
   borderRadius: '14px',
-  border: '1px solid #E5E7EB',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+  border: '1px solid #cbd5e1',
+  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
   bgcolor: '#fff',
+};
+
+const clickableSx = {
+  cursor: 'pointer',
+  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+  '&:hover': {
+    borderColor: '#94a3b8',
+    transform: 'translateY(-3px)',
+    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
+  },
 };
 
 // Mocked data — will be replaced with real endpoint data later.
@@ -31,63 +41,87 @@ const MOCK_DATA = {
   classStanding: { rank: 15, total: 120 },
 };
 
-const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value }) => (
-  <Card elevation={0} sx={{ ...cardSx, p: '10px 12px', display: 'flex', alignItems: 'center', gap: 1.25 }}>
-    <Box
+const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value, onClick, sub }) => (
+  <Tooltip title={`Click to view ${label} breakdown`} placement="top" arrow>
+    <Card
+      elevation={0}
+      onClick={onClick}
       sx={{
-        width: 34,
-        height: 34,
-        borderRadius: '8px',
-        bgcolor: iconBg,
-        color: iconColor,
+        ...cardSx,
+        ...clickableSx,
+        p: '10px 12px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
+        gap: 1.25,
       }}
     >
-      <Icon sx={{ fontSize: 17 }} />
-    </Box>
-    <Box>
-      <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+      <Box
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: '8px',
+          bgcolor: iconBg,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 17 }} />
+      </Box>
+      <Box>
+        <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          {label}
+        </Typography>
+        <Typography fontWeight="800" sx={{ fontSize: '1.1rem', color: '#111827', lineHeight: 1.1 }}>
+          {value}
+        </Typography>
+        {sub && (
+          <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', fontWeight: 500, lineHeight: 1.1 }}>
+            {sub}
+          </Typography>
+        )}
+      </Box>
+    </Card>
+  </Tooltip>
+);
+
+const MetricCard = ({ label, value, subtext, color, onClick }) => (
+  <Tooltip title={`Click to view ${label} breakdown`} placement="top" arrow>
+    <Card
+      elevation={0}
+      onClick={onClick}
+      sx={{ ...cardSx, ...clickableSx, p: '10px 12px' }}
+    >
+      <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', mb: 0.35 }}>
         {label}
       </Typography>
-      <Typography fontWeight="800" sx={{ fontSize: '1.1rem', color: '#111827', lineHeight: 1.1 }}>
-        {value}
-      </Typography>
-    </Box>
-  </Card>
+      <Stack direction="row" alignItems="baseline" spacing={1}>
+        <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
+          {value}%
+        </Typography>
+        <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 500 }}>
+          {subtext}
+        </Typography>
+      </Stack>
+      <Box sx={{ mt: 0.75 }}>
+        <LinearProgress
+          variant="determinate"
+          value={value}
+          sx={{
+            height: 5,
+            borderRadius: 3,
+            bgcolor: '#F3F4F6',
+            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
+          }}
+        />
+      </Box>
+    </Card>
+  </Tooltip>
 );
 
-const MetricCard = ({ label, value, subtext, color }) => (
-  <Card elevation={0} sx={{ ...cardSx, p: '10px 12px' }}>
-    <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', mb: 0.35 }}>
-      {label}
-    </Typography>
-    <Stack direction="row" alignItems="baseline" spacing={1}>
-      <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
-        {value}%
-      </Typography>
-      <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 500 }}>
-        {subtext}
-      </Typography>
-    </Stack>
-    <Box sx={{ mt: 0.75 }}>
-      <LinearProgress
-        variant="determinate"
-        value={value}
-        sx={{
-          height: 5,
-          borderRadius: 3,
-          bgcolor: '#F3F4F6',
-          '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 },
-        }}
-      />
-    </Box>
-  </Card>
-);
-
-const AcademicOverview = ({ data = {} }) => {
+const AcademicOverview = ({ data = {}, onCardClick }) => {
   // Merge any real data with mocked defaults
   const d = {
     assignmentsSubmitted: data.assignments_submitted ?? MOCK_DATA.assignmentsSubmitted,
@@ -129,6 +163,8 @@ const AcademicOverview = ({ data = {} }) => {
             iconColor="#16a34a"
             label="Assignments Submitted"
             value={d.assignmentsSubmitted}
+            sub={`${d.submissionRate}% on-time`}
+            onClick={() => onCardClick('assignments_submitted')}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -138,6 +174,7 @@ const AcademicOverview = ({ data = {} }) => {
             iconColor="#ea580c"
             label="Quizzes Taken"
             value={d.quizzesTaken}
+            onClick={() => onCardClick('quizzes_taken')}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -147,6 +184,7 @@ const AcademicOverview = ({ data = {} }) => {
             iconColor="#2563eb"
             label="Tests / Exams Taken"
             value={d.testsExamsTaken}
+            onClick={() => onCardClick('tests_exams_taken')}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -156,6 +194,7 @@ const AcademicOverview = ({ data = {} }) => {
             iconColor="#9333ea"
             label="Resources Accessed"
             value={d.resourcesAccessed}
+            onClick={() => onCardClick('resources_accessed')}
           />
         </Box>
       </Stack>
@@ -168,6 +207,7 @@ const AcademicOverview = ({ data = {} }) => {
             value={d.submissionRate}
             subtext="On-time submissions"
             color="#16a34a"
+            onClick={() => onCardClick('submission_rate')}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -176,6 +216,7 @@ const AcademicOverview = ({ data = {} }) => {
             value={d.quizAverageScore}
             subtext="Across all quizzes"
             color="#3B82F6"
+            onClick={() => onCardClick('quiz_average_score')}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -184,14 +225,18 @@ const AcademicOverview = ({ data = {} }) => {
             value={d.overallAverageScore}
             subtext="Across all subjects"
             color="#9333ea"
+            onClick={() => onCardClick('overall_average_score')}
           />
         </Box>
-      </Stack>
-
-      {/* Row 3: 2 Detail Cards */}
+      </Stack>{/* Row 3: 2 Detail Cards */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
         {/* Subject Strength */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 1.2, p: '12px 14px' }}>
+        <Tooltip title="Click to view subject strength breakdown" placement="top" arrow>
+          <Card
+            elevation={0}
+            onClick={() => onCardClick('subject_strength')}
+            sx={{ ...cardSx, ...clickableSx, flex: 1.2, p: '12px 14px' }}
+          >
           <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
             Subject Strength
           </Typography>
@@ -248,9 +293,15 @@ const AcademicOverview = ({ data = {} }) => {
             </Box>
           </Stack>
         </Card>
+        </Tooltip>
 
         {/* Class Standing */}
-        <Card elevation={0} sx={{ ...cardSx, flex: 0.8, p: '12px 14px' }}>
+        <Tooltip title="Click to view class standing breakdown" placement="top" arrow>
+          <Card
+            elevation={0}
+            onClick={() => onCardClick('class_standing')}
+            sx={{ ...cardSx, ...clickableSx, flex: 0.8, p: '12px 14px' }}
+          >
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827' }}>
               Class Standing
@@ -290,6 +341,7 @@ const AcademicOverview = ({ data = {} }) => {
             })}
           </Stack>
         </Card>
+        </Tooltip>
       </Stack>
     </Card>
   );

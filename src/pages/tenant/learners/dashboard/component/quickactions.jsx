@@ -14,10 +14,16 @@ import {
 } from '@mui/icons-material';
 
 const cardSx = {
-  borderRadius: '8px',
-  border: '1px solid #E5E7EB',
-  boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+  borderRadius: '12px',
+  border: '1px solid #cbd5e1',
+  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
   bgcolor: '#fff',
+  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+  '&:hover': {
+    borderColor: '#94a3b8',
+    transform: 'translateY(-3px)',
+    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
+  },
 };
 
 const actions = [
@@ -31,7 +37,7 @@ const actions = [
 
 const QuickActions = () => {
   return (
-    <Card elevation={0} sx={{ ...cardSx, p: '12px 14px', mt: 2 }}>
+    <Card elevation={0} sx={{ ...cardSx, p: '6px 10px', mt: 2 }}>
       <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827', mb: 1 }}>
         Quick Actions
       </Typography>

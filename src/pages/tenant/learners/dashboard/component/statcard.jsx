@@ -26,7 +26,7 @@ const formatNaira = (amount) =>
 const cardBase = {
   borderRadius: '12px',
   boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-  p: '12px 14px',
+  p: '6px 6px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
@@ -271,11 +271,11 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
                 color: wallet.verified ? '#166534' : '#6B7280',
                 border: wallet.verified ? '1px solid #86EFAC' : '1px solid #E5E7EB',
                 borderRadius: '20px',
-                px: 0.9,
-                py: 0.15,
+                // px: 0.1,
+                // py: 0.12,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0.3,
+                gap: 0.1,
               }}
             >
               <CheckCircle sx={{ fontSize: 10 }} />

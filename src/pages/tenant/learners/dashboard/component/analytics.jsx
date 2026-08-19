@@ -209,6 +209,7 @@ const Analytics = ({
   attendanceTermId = '',
   onAcademicTermChange = () => {},
   onAttendanceTermChange = () => {},
+  onCardClick,
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];
 
@@ -396,7 +397,7 @@ const Analytics = ({
       </Stack>
 
       {/* ─── ROW 2: Academic Overview (spans full width) ─── */}
-      <AcademicOverview data={academics} />
+      <AcademicOverview data={academics} onCardClick={onCardClick} />
     </Box>
   );
 };

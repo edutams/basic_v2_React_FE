@@ -88,18 +88,18 @@ const ReusableGaugeChart = ({
             fontSize: '14px',
             fontWeight: 600,
             color: theme.palette.text.secondary,
-            offsetY: -8,
+            offsetY: 14,
           },
 
           value: {
             show: true,
-            fontSize: '30px',
+            fontSize: '26px',
             fontWeight: 700,
             color: theme.palette.text.primary,
-            offsetY: 4,
+            offsetY: -16,
             // val here is the normalized 0-100 series value, not the real
             // value, so we ignore it and format the actual clampedValue.
-            formatter: () => `${Math.round(clampedValue)}`,
+            formatter: () => `${Math.round(clampedValue)}%`,
           },
         },
       },

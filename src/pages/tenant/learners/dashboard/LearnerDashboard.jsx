@@ -116,6 +116,7 @@ const LearnerDashboard = () => {
             attendanceTermId={attendanceTermId}
             onAcademicTermChange={setAcademicTermId}
             onAttendanceTermChange={setAttendanceTermId}
+            onCardClick={setBreakdownType}
           />
         </Box>
 
@@ -140,6 +141,8 @@ const LearnerDashboard = () => {
       <LearnerBreakdownModal
         open={Boolean(breakdownType)}
         type={breakdownType}
+        overview={overview.data}
+        academicOverview={academics.data}
         onClose={() => setBreakdownType(null)}
       />
     </PageContainer>

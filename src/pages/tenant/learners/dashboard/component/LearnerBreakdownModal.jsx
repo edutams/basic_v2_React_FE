@@ -33,6 +33,15 @@ const TITLES = {
   attendance: 'Attendance Records',
   fees: 'My Fees',
   wallet: 'Wallet Transactions',
+  assignments_submitted: 'Assignments Submitted',
+  quizzes_taken: 'Quizzes Taken',
+  tests_exams_taken: 'Tests / Exams Taken',
+  resources_accessed: 'Resources Accessed',
+  submission_rate: 'Submission Rate',
+  quiz_average_score: 'Quiz Average Score',
+  overall_average_score: 'Overall Average Score',
+  subject_strength: 'Subject Strength',
+  class_standing: 'Class Standing',
 };
 
 /**
@@ -46,7 +55,7 @@ const TITLES = {
  *                     learner picks a term inside the modal)
  *   - `type`        → drives the column layout (see columnsFor)
  */
-const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
+const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverview = {} }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -70,8 +79,21 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
     };
   }, []);
 
+  const LOCAL_TYPES = [
+    'assignments_submitted',
+    'quizzes_taken',
+    'tests_exams_taken',
+    'resources_accessed',
+    'submission_rate',
+    'quiz_average_score',
+    'overall_average_score',
+    'subject_strength',
+    'class_standing',
+  ];
+  const isLocal = LOCAL_TYPES.includes(type);
+
   const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
-    if (!open || !type) return;
+    if (!open || !type || isLocal) return false;
 
     let cancelled = false;
     setLoading(true);
@@ -148,6 +170,55 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const title = data?.title || TITLES[type] || 'Breakdown';
   const total = data?.total || 0;
 
+  // ── Local breakdown rows for the Academic Overview cards (mocked data) ──
+  const overviewRows = (() => {
+    if (type !== 'assignments_submitted' && type !== 'quizzes_taken' && type !== 'tests_exams_taken' && type !== 'resources_accessed' && type !== 'submission_rate' && type !== 'quiz_average_score' && type !== 'overall_average_score' && type !== 'subject_strength' && type !== 'class_standing') {
+      return [];
+    }
+    const subjects = Array.isArray(academicOverview.subjects) ? academicOverview.subjects : [];
+    switch (type) {
+      case 'assignments_submitted':
+      case 'quizzes_taken':
+      case 'tests_exams_taken':
+      case 'resources_accessed':
+        return subjects.length
+          ? subjects.map((s, i) => ({
+              id: `${type}_${i}`,
+              subject: s.subject || `Subject ${i + 1}`,
+              count: Math.max(1, Math.round((Number(s.score || 0) / 100) * 6)),
+            }))
+          : [1, 2, 3, 4].map((n) => ({
+              id: `${type}_${n}`,
+              subject: `Subject ${String.fromCharCode(64 + n)}`,
+              count: n,
+            }));
+      case 'submission_rate':
+      case 'quiz_average_score':
+      case 'overall_average_score':
+      case 'subject_strength':
+        return subjects.length
+          ? subjects.map((s, i) => ({
+              id: `${type}_${i}`,
+              subject: s.subject || `Subject ${i + 1}`,
+              score: Number(s.score || 0),
+            }))
+          : [
+              { id: `${type}_1`, subject: 'Civic Education', score: 90 },
+              { id: `${type}_2`, subject: 'Mathematics', score: 84 },
+              { id: `${type}_3`, subject: 'English Language', score: 76 },
+            ];
+      case 'class_standing':
+        return [
+          { id: 'cs_1', subject: 'Your Rank', score: 'Top 15%' },
+          { id: 'cs_2', subject: 'Class Size', score: '120 students' },
+        ];
+      default:
+        return [];
+    }
+  })();
+  const displayRows = overviewRows.length ? overviewRows : rows;
+  const displayTotal = overviewRows.length ? overviewRows.length : total;
+
   // ── Per-type column definition ────────────────────────────────────
   const columnsFor = () => {
     switch (type) {
@@ -181,6 +252,27 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
           { key: 'status', label: 'Status', chip: true },
           { key: 'date', label: 'Date' },
         ];
+      case 'assignments_submitted':
+      case 'quizzes_taken':
+      case 'tests_exams_taken':
+      case 'resources_accessed':
+        return [
+          { key: 'subject', label: 'Subject' },
+          { key: 'count', label: 'Count', numeric: true },
+        ];
+      case 'submission_rate':
+      case 'quiz_average_score':
+      case 'overall_average_score':
+      case 'subject_strength':
+        return [
+          { key: 'subject', label: 'Subject' },
+          { key: 'score', label: 'Score', numeric: true, percent: true },
+        ];
+      case 'class_standing':
+        return [
+          { key: 'subject', label: 'Subject' },
+          { key: 'score', label: 'Value' },
+        ];
       default:
         return [];
     }
@@ -212,7 +304,17 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
             ? 'Subject'
             : type === 'results'
               ? 'Result'
-              : 'Name';
+              : type === 'assignments_submitted' ||
+                  type === 'quizzes_taken' ||
+                  type === 'tests_exams_taken' ||
+                  type === 'resources_accessed' ||
+                  type === 'submission_rate' ||
+                  type === 'quiz_average_score' ||
+                  type === 'overall_average_score' ||
+                  type === 'subject_strength' ||
+                  type === 'class_standing'
+                ? 'Subject'
+                : 'Name';
 
   const chipColor = (value) => {
     const v = String(value || '').toLowerCase();
@@ -227,7 +329,7 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         {title}
         <Chip
-          label={`${total.toLocaleString()} records`}
+          label={`${displayTotal.toLocaleString()} records`}
           color="primary"
           size="small"
           sx={{ ml: 'auto', fontWeight: 700 }}
@@ -274,9 +376,9 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
             <CircularProgress size={28} />
           </Box>
-        ) : !data ? (
+        ) : !data && !isLocal ? (
           <Alert severity="info">No breakdown data available yet.</Alert>
-        ) : rows.length === 0 ? (
+        ) : displayRows.length === 0 ? (
           <Alert severity="info">No records match your search.</Alert>
         ) : (
           <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
@@ -293,7 +395,7 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row, i) => (
+                {displayRows.map((row, i) => (
                   <TableRow key={row.id || i}>
                     <TableCell sx={{ color: 'text.secondary' }}>{page * rowsPerPage + i + 1}</TableCell>
                     <TableCell>
@@ -322,7 +424,7 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25, 50]}
-                    count={total}
+                    count={displayTotal}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}

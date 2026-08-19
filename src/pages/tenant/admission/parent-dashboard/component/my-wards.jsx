@@ -221,7 +221,11 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           variant="outlined"
           size="small"
           startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
-          // onClick={handleViewInvoice}
+          onClick={() =>
+            ward.invoice_number
+              ? navigate(`/class-ledger/${ward.invoice_number}/${ward.id}/pay-invoice`)
+              : undefined
+          }
           sx={{
             flex: 1,
             borderRadius: '7px',

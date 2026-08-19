@@ -93,7 +93,7 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
   const isLocal = LOCAL_TYPES.includes(type);
 
   const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
-    if (!open || !type || isLocal) return false;
+    if (!open || !type || isLocal) return () => {};
 
     let cancelled = false;
     setLoading(true);

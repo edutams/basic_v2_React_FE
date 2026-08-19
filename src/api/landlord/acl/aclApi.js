@@ -6,6 +6,22 @@ const aclApi = {
     return response.data;
   },
 
+  exportRolesExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportRolesPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
   updateRole: async (id, data) => {
     const response = await api.put(`/v1/landlord/acl/roles/${id}`, data);
     return response.data;

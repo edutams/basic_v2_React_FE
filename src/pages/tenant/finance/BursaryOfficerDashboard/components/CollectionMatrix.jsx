@@ -136,7 +136,7 @@ const CollectionMatrix = ({
                 </TableCell>
                 <TableCell align="right">{formatCurrency(row.expected_fees)}</TableCell>
                 <TableCell align="right">
-                  <Typography color="success.main" fontWeight={700}>
+                  <Typography fontWeight={700}>
                     {formatCurrency(row.collected_fees)}
                   </Typography>
                 </TableCell>
@@ -193,7 +193,7 @@ const CollectionMatrix = ({
                 </Typography>
               </TableCell>
               <TableCell align="right">
-                <Typography variant="subtitle2" fontWeight={800} color="success.main">
+                <Typography variant="subtitle2" fontWeight={800}>
                   {formatCurrency(computedTotals.collected)}
                 </Typography>
               </TableCell>

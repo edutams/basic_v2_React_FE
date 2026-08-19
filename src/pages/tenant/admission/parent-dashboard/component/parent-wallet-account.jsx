@@ -58,7 +58,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
         </Typography>
         <Typography
           sx={{
-            fontSize: 22,
+            fontSize: 35,
             fontWeight: 800,
             color: '#e11d48',
             lineHeight: 1.1,

@@ -153,8 +153,8 @@ const NonTeachingStaffForm = ({
               onBlur={formik.handleBlur}
               label="Gender"
             >
-              <MenuItem value="Male">Male</MenuItem>
-              <MenuItem value="Female">Female</MenuItem>
+              <MenuItem value="male">Male</MenuItem>
+              <MenuItem value="female">Female</MenuItem>
             </Select>
             {formik.touched.gender && formik.errors.gender && (
               <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5, ml: 1.75 }}>
@@ -240,7 +240,9 @@ const NonTeachingStaffForm = ({
         <Button variant="contained" size="small" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+        <Button size="small" type="submit">
+          {isLoading ? 'Saving...' : submitText}
+        </Button>
       </Box>
     </Box>
   );

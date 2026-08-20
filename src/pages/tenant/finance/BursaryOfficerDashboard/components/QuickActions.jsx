@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, InputAdornment, Button, useTheme } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import React from 'react';
+import { Box, Typography, useTheme } from '@mui/material';
 import {
   Receipt,
   Payment,
@@ -24,22 +23,12 @@ const ACTIONS = [
 ];
 
 /**
- * Quick Actions — search bar + 4x2 grid of action cards matching the design image.
+ * Quick Actions — 4x2 grid of action cards matching the design image.
+ * Each card navigates to the relevant bursary page.
  */
-const QuickActions = ({ onAction, onSearch }) => {
+const QuickActions = ({ onAction }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = () => {
-    if (onSearch && searchQuery.length >= 2) {
-      onSearch(searchQuery);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSearch();
-  };
 
   return (
     <Box
@@ -55,64 +44,12 @@ const QuickActions = ({ onAction, onSearch }) => {
         p: '8px 10px',
       }}
     >
-      {/* Search Student label */}
-      <Typography
-        fontWeight={800}
-        sx={{ fontSize: '0.78rem', color: '#111827', letterSpacing: 0.3, mb: 0.75 }}
-      >
-        Search Student
-      </Typography>
-
-      {/* Search field */}
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <TextField
-          fullWidth
-          placeholder="Search by name, admission number, student ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          variant="outlined"
-          size="small"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ color: '#9CA3AF', fontSize: 18 }} />
-              </InputAdornment>
-            ),
-            sx: {
-              borderRadius: '8px',
-              fontSize: '0.75rem',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#F9FAFB',
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E5E7EB' },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#3B82F6' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3B82F6' },
-            },
-          }}
-        />
-        <Button
-          variant="contained"
-          onClick={handleSearch}
-          sx={{
-            minWidth: 72,
-            borderRadius: '8px',
-            bgcolor: '#3B82F6',
-            textTransform: 'none',
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            '&:hover': { bgcolor: '#2563EB' },
-          }}
-        >
-          Search
-        </Button>
-      </Box>
-
       {/* Quick Actions section */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          mt: 1.5,
           mb: 1,
         }}
       >

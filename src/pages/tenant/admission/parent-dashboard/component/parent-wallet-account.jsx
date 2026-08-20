@@ -75,30 +75,30 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
       </Box>
 
       <Box sx={{ mb: 1.75 }}>
-          <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569', mb: 0.75 }}>
-            Wallet Account Details (Parent)
-          </Typography>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Box>
+        <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569', mb: 0.75 }}>
+          Wallet Account Details (Parent)
+        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Box>
+            <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
+              Account Number
+            </Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+              {accountNumber}
+            </Typography>
+          </Box>
+          {bank && (
+            <Box textAlign="right">
               <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-                Account Number
+                Bank
               </Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                {accountNumber}
+                {bank}
               </Typography>
             </Box>
-            {bank && (
-              <Box textAlign="right">
-                <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-                  Bank
-                </Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                  {bank}
-                </Typography>
-              </Box>
-            )}
-          </Stack>
-        </Box>
+          )}
+        </Stack>
+      </Box>
 
       {/* Buttons */}
       <Stack direction="row" spacing={0.75}>

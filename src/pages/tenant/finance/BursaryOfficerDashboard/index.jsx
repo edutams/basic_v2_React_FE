@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Grid, Paper, Skeleton, useTheme, Box } from '@mui/material';
 import { ReceiptLong, AccountBalanceWallet, ErrorOutline } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from 'src/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
@@ -14,6 +15,7 @@ import CollectionMatrix from './components/CollectionMatrix';
 import BursaryBreakdownModal from './components/BursaryBreakdownModal';
 import RevenueTrend from './components/RevenueTrend';
 import QuickActions from './components/QuickActions';
+import SearchStudent from './components/SearchStudent';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -59,9 +61,24 @@ const PanelSkeleton = ({ height = 240 }) => {
 const BursaryOfficerDashboard = () => {
   const notify = useNotification();
 
+  const navigate = useNavigate();
+
   // Breakdown modal state — holds the clicked KPI/panel type so the modal
   // knows which table to render (same pattern as the admin/admission dashboards).
   const [breakdownType, setBreakdownType] = useState(null);
+
+  // Revenue trend period (today / this_week / this_month / this_year)
+  const [trendPeriod, setTrendPeriod] = useState('this_month');
+  const [periodValue, setPeriodValue] = useState(null);
+
+  const handleTrendPeriodChange = (newPeriod) => {
+    setTrendPeriod(newPeriod);
+    setPeriodValue(null);
+  };
+
+  // Search student state
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -156,7 +173,48 @@ const BursaryOfficerDashboard = () => {
   const revenueDistribution = useSection('/dashboard/bursary/revenue-distribution');
   const paymentCategories = useSection('/dashboard/bursary/payment-categories');
   const collectionMatrix = useSection('/dashboard/bursary/collection-matrix');
-  const revenueTrend = useSection('/dashboard/bursary/revenue-trend');
+
+  // Revenue trend: re-fetch whenever sessionTermId, period, or sub-period changes.
+  const [revenueTrendData, setRevenueTrendData] = useState({});
+  const [revenueTrendLoading, setRevenueTrendLoading] = useState(true);
+
+  useEffect(() => {
+    if (!sessionTermId) return;
+    let mounted = true;
+    setRevenueTrendLoading(true);
+
+    const params = {
+      session_term_id: sessionTermId,
+      period: trendPeriod,
+    };
+
+    if (trendPeriod === 'today' && periodValue) {
+      params.selected_date = periodValue;
+    } else if (trendPeriod === 'this_week' && periodValue?.week) {
+      params.selected_week = periodValue.week;
+      params.selected_year = periodValue.year;
+    } else if (trendPeriod === 'this_month' && periodValue?.month) {
+      params.selected_month = periodValue.month;
+      params.selected_year = periodValue.year;
+    } else if (trendPeriod === 'this_year' && periodValue) {
+      params.selected_year = periodValue;
+    }
+
+    tenantApi
+      .get('/dashboard/bursary/revenue-trend', { params })
+      .then((res) => {
+        if (mounted) setRevenueTrendData(res.data?.status ? res.data.data : {});
+      })
+      .catch(() => {
+        if (mounted) setRevenueTrendData({});
+      })
+      .finally(() => {
+        if (mounted) setRevenueTrendLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [sessionTermId, trendPeriod, periodValue]);
 
   const dataAsOf = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -220,11 +278,57 @@ const BursaryOfficerDashboard = () => {
     setSelectedTerm(firstTerm || '');
   };
 
-  // Handle quick actions
-  const handleQuickAction = (action) => {
-    notify.info(`${action.replace('_', ' ')} feature coming soon`);
-    // Future: Navigate to respective pages or open modals
-  };
+  // Handle quick actions — navigate to the relevant bursary page.
+  const handleQuickAction = useCallback((action) => {
+    const routes = {
+      create_invoice: '/payment-schedule',
+      bulk_invoice: '/payment-schedule',
+      record_payment: '/class-ledger',
+      manage_fees: '/class-ledger',
+      generate_report: null, // triggers export
+      send_reminder: '/bursary-setup',
+      fee_structure: '/bursary-setup',
+      export_data: null, // triggers export
+    };
+    if (action === 'generate_report') {
+      handleExport('excel');
+      return;
+    }
+    if (action === 'export_data') {
+      handleExport('excel');
+      return;
+    }
+    const route = routes[action];
+    if (route) {
+      navigate(route);
+    } else {
+      notify.info(`${action.replace(/_/g, ' ')} feature coming soon`);
+    }
+  }, [navigate, notify]);
+
+  // Search student — calls the dashboard search endpoint.
+  const handleSearchStudent = useCallback(async (query) => {
+    setSearchLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/bursary/search-student', {
+        params: { q: query, session_term_id: sessionTermId || undefined },
+      });
+      if (res.data?.status) {
+        setSearchResults(res.data.data || []);
+        if (res.data.data?.length === 0) {
+          notify.info('No students found matching your search');
+        }
+      } else {
+        setSearchResults([]);
+        notify.info('No students found matching your search');
+      }
+    } catch {
+      setSearchResults([]);
+      notify.error('Failed to search students');
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [sessionTermId, notify]);
 
   // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
   // (uppercase label, icon chip top-right, big value, progress + sublabel) so
@@ -281,9 +385,9 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Expected Income"
-              value={formatCurrency(rp.data.total_expected_income || 186750000)}
+              value={formatCurrency(rp.data.total_expected_income)}
               sublabel="This Session"
-              progress={rp.data.expected_vs_last_session || 12.6}
+              progress={rp.data.expected_vs_last_session}
               icon={ReceiptLong}
               colorName="info"
               onClick={() => setBreakdownType('expected_income')}
@@ -292,9 +396,9 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Collected Income"
-              value={formatCurrency(rp.data.total_collected_income || 124560000)}
+              value={formatCurrency(rp.data.total_collected_income)}
               sublabel="This Session"
-              progress={rp.data.collected_vs_last_session || 15.8}
+              progress={rp.data.collected_vs_last_session}
               icon={AccountBalanceWallet}
               colorName="success"
               onClick={() => setBreakdownType('collected_income')}
@@ -303,9 +407,9 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Outstanding Balance"
-              value={formatCurrency(rp.data.total_outstanding_balance || 62190000)}
+              value={formatCurrency(rp.data.total_outstanding_balance)}
               sublabel="This Session"
-              progress={-(rp.data.outstanding_vs_last_session || 5.2)}
+              progress={rp.data.outstanding_vs_last_session ? -rp.data.outstanding_vs_last_session : undefined}
               icon={ErrorOutline}
               colorName="warning"
               onClick={() => setBreakdownType('outstanding_balance')}
@@ -314,11 +418,11 @@ const BursaryOfficerDashboard = () => {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Collection Efficiency"
-              value={`${rp.data.collection_efficiency || 66.68}%`}
+              value={`${rp.data.collection_efficiency ?? 0}%`}
               sublabel="This Session"
-              progress={rp.data.efficiency_vs_last_session || 2.6}
+              progress={rp.data.efficiency_vs_last_session}
               colorName="primary"
-              rightElement={<EfficiencyRing value={rp.data.collection_efficiency || 66.68} />}
+              rightElement={<EfficiencyRing value={rp.data.collection_efficiency ?? 0} />}
               onClick={() => setBreakdownType('collection_efficiency')}
             />
           </Grid>
@@ -332,12 +436,16 @@ const BursaryOfficerDashboard = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
-                {revenueTrend.loading ? (
+                {revenueTrendLoading ? (
                   <PanelSkeleton height={480} />
                 ) : (
                   <RevenueTrend 
-                    revenue_trend={asArray(revenueTrend.data)} 
+                    revenue_trend={asArray(revenueTrendData)} 
                     onClick={() => setBreakdownType('revenue_trend')}
+                    period={trendPeriod}
+                    periodValue={periodValue}
+                    onPeriodChange={handleTrendPeriodChange}
+                    onPeriodValueChange={setPeriodValue}
                   />
                 )}
               </Grid>
@@ -375,9 +483,10 @@ const BursaryOfficerDashboard = () => {
           </Box>
         </Grid>
 
-        {/* Right column — Quick Actions + Payment Categories spanning full height */}
+        {/* Right column — Search Student + Quick Actions + Payment Categories */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <SearchStudent onSearch={handleSearchStudent} loading={searchLoading} results={searchResults} />
             <QuickActions onAction={handleQuickAction} />
             {paymentCategories.loading ? (
               <PanelSkeleton height={420} />

@@ -5,15 +5,6 @@ import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import { COLORS, formatCompact, formatCurrency } from '../constants';
 import SessionSelect from './SessionSelect';
 
-// Mocked data shown when the API returns empty.
-const MOCK_DISTRIBUTION = [
-  { category: 'Tuition Fees', amount: 89450000, percentage: 71.8 },
-  { category: 'Transport Fees', amount: 15620000, percentage: 12.5 },
-  { category: 'Uniform Fees', amount: 9870000, percentage: 7.9 },
-  { category: 'Books & Others', amount: 5860000, percentage: 4.7 },
-  { category: 'Examination Fees', amount: 3760000, percentage: 3.1 },
-];
-
 /**
  * Revenue Distribution — donut chart + per-category legend with amounts.
  * Includes a session dropdown in the header.
@@ -29,7 +20,7 @@ const RevenueDistribution = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const distData = revenue_distribution.length > 0 ? revenue_distribution : MOCK_DISTRIBUTION;
+  const distData = revenue_distribution;
   const distTotal = distData.reduce((sum, item) => sum + (item.amount || 0), 0);
 
   return (
@@ -89,66 +80,76 @@ const RevenueDistribution = ({
 
       {/* Content */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 2.5, flexGrow: 1, minHeight: 0 }}>
-        <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
-          <ReusableDonutChart
-            data={distData.map((entry, i) => ({
-              name: entry.category,
-              value: entry.amount,
-              color: COLORS[i % COLORS.length],
-            }))}
-            dataKey="value"
-            height={150}
-            innerRadius={52}
-            outerRadius={70}
-            paddingAngle={2}
-            centerValue={formatCompact(totalRevenue || distTotal)}
-            centerTitle="Total Revenue"
-            valueFontSize={12.5}
-            tooltipFormatter={(value) => formatCurrency(value)}
-          />
-        </Box>
+        {distData.length > 0 ? (
+          <>
+            <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
+              <ReusableDonutChart
+                data={distData.map((entry, i) => ({
+                  name: entry.category,
+                  value: entry.amount,
+                  color: COLORS[i % COLORS.length],
+                }))}
+                dataKey="value"
+                height={150}
+                innerRadius={52}
+                outerRadius={70}
+                paddingAngle={2}
+                centerValue={formatCompact(totalRevenue || distTotal)}
+                centerTitle="Total Revenue"
+                valueFontSize={12.5}
+                tooltipFormatter={(value) => formatCurrency(value)}
+              />
+            </Box>
 
-        <Box
-          sx={{
-            width: '100%',
-            minWidth: 0,
-            maxHeight: 140,
-            overflowY: 'auto',
-            '&::-webkit-scrollbar': { width: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 },
-            '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-          }}
-        >
-          <Stack spacing={1}>
-            {distData.map((item, i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: COLORS[i % COLORS.length],
-                    flexShrink: 0,
-                    mt: 0.45,
-                  }}
-                />
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3 }}>
-                    {item.category}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
-                    <Typography fontWeight={800} whiteSpace="nowrap" sx={{ flex: '1 1 0%', fontSize: '0.7rem', lineHeight: 1.4 }}>
-                      {formatCurrency(item.amount)}
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ flex: '1 1 0%', fontSize: '0.58rem' }}>
-                      ({item.percentage}%)
-                    </Typography>
+            <Box
+              sx={{
+                width: '100%',
+                minWidth: 0,
+                maxHeight: 140,
+                overflowY: 'auto',
+                '&::-webkit-scrollbar': { width: 4 },
+                '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 },
+                '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+              }}
+            >
+              <Stack spacing={1}>
+                {distData.map((item, i) => (
+                  <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: COLORS[i % COLORS.length],
+                        flexShrink: 0,
+                        mt: 0.45,
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.7rem', lineHeight: 1.3 }}>
+                        {item.category}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
+                        <Typography fontWeight={800} whiteSpace="nowrap" sx={{ flex: '1 1 0%', fontSize: '0.7rem', lineHeight: 1.4 }}>
+                          {formatCurrency(item.amount)}
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ flex: '1 1 0%', fontSize: '0.58rem' }}>
+                          ({item.percentage}%)
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
-                </Box>
-              </Box>
-            ))}
-          </Stack>
-        </Box>
+                ))}
+              </Stack>
+            </Box>
+          </>
+        ) : (
+          <Box sx={{ py: 6, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              No revenue distribution data available
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Footer link — centered in a box */}

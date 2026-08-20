@@ -129,10 +129,10 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               }}
             >
               {ward.class}
-              {ward.admissionNo && ` • ${ward.admissionNo}`}
-          {ward.age != null && ` • Age: ${ward.age} years`}
+              {/* {ward.admissionNo && ` • ${ward.admissionNo}`} */}
+          {ward.age != null && ` • Age: ${ward.age} yrs`}
             </Typography>
-            {ward.session && (
+            {/* {ward.session && (
                 <Typography
                   sx={{
                     fontSize: 9.5,
@@ -146,7 +146,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
                 >
                   {ward.session}
                 </Typography>
-              )}
+              )} */}
           </Box>
         </Stack>
 

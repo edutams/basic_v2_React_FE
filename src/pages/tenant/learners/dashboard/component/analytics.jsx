@@ -96,14 +96,14 @@ const CardSkeleton = ({ rows = 3 }) => (
 //   term_end_date      – formatted end date of the last configured week
 //   present / absent / late – learner's personal attendance counts
 const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => {} }) => {
-  const total = Number(attendance.total || 0);
   const absent = Number(attendance.absent || 0);
   const late = Number(attendance.late || 0);
 
+  // All derived from the reusable getTermDayStats() backend helper.
   const schoolDays = Number(attendance.total_school_days || 0);
   const daysPassed = Number(attendance.days_passed || 0);
+  const daysRemaining = Number(attendance.days_remaining || Math.max(0, schoolDays - daysPassed));
   const termEndDate = attendance.term_end_date || '';
-  const daysRemaining = Math.max(0, schoolDays - daysPassed);
   const percentageCompleted = schoolDays > 0 ? Math.round((daysPassed / schoolDays) * 100) : 0;
 
   return (

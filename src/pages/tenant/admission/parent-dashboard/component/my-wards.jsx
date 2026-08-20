@@ -45,7 +45,7 @@ function GaugeRing({ value, label, color }) {
           {label}
         </Typography>
         <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.1, mt: 0.1 }}>
-          {value}%
+          {value != null ? value : 0}%
         </Typography>
       </Box>
     </Stack>

@@ -32,6 +32,8 @@ const fmtDate = (d) => {
 };
 
 
+
+
 const ParentDashboard2 = () => {
   const navigate = useNavigate();
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
@@ -107,11 +109,11 @@ const ParentDashboard2 = () => {
         const ends = weeks.map((w) => new Date(w.end_date).getTime());
         const first = Math.min(...starts);
         const last = Math.max(...ends);
-        const daysCount = Math.round((last - first) / 86400000) + 1;
+        const schoolDays = weeksRes?.school_days_count ?? 0;
 
         setTermInfo({
           termName: `${session_name || ''} ${term_name || ''}`.trim(),
-          daysCount: `${daysCount} Days`,
+          daysCount: `${schoolDays} School Days`,
           startDate: fmtDate(weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date),
           endDate: fmtDate(weeks.find((w) => new Date(w.end_date).getTime() === last)?.end_date),
         });

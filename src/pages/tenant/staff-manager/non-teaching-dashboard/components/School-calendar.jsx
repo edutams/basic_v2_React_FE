@@ -1,19 +1,37 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Card,
-  CardContent,
   IconButton,
   Typography,
   Button,
   CircularProgress,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Chip,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
+  Paper,
+  LinearProgress,
+  Tabs,
+  Tab,
 } from "@mui/material";
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
+import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import BeachAccessOutlinedIcon from "@mui/icons-material/BeachAccessOutlined";
 
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -23,22 +41,22 @@ import { fetchSessionTerms } from "@/api/tenant/session-term/sessionTermApi";
 import { fetchWeeks } from "@/api/tenant/term-weeks/weekApi";
 import { fetchHolidays } from "@/api/tenant/holidays/holidayApi";
 import ParentCard from "@/components/shared/ParentCard";
+import StatCard from "@/components/shared/StatCard";
 
 dayjs.extend(isBetween);
 
 const SchoolCalendar = ({ onViewFullCalendar }) => {
-  const navigate = useNavigate();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const [loading, setLoading] = useState(true);
   const [academicInfo, setAcademicInfo] = useState(null);
   const [currentMonthDate, setCurrentMonthDate] = useState(dayjs());
   const [termStats, setTermStats] = useState({
-    totalSchoolDays: 68,
-    daysSpent: 47,
-    daysRemaining: 21,
-    totalHolidays: 5,
-    pctCompleted: 69,
+    totalSchoolDays: 0,
+    daysSpent: 0,
+    daysRemaining: 0,
+    totalHolidays: 0,
+    pctCompleted: 0,
   });
   const [holidaysList, setHolidaysList] = useState([]);
   const [weeksList, setWeeksList] = useState([]);
@@ -47,13 +65,54 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
     loadCalendarData();
   }, []);
 
+  const termBounds = useMemo(() => {
+    if (!weeksList || weeksList.length === 0) return { startDate: null, endDate: null };
+    const startDates = weeksList.map((w) => w.start_date).filter(Boolean).sort();
+    const endDates = weeksList.map((w) => w.end_date).filter(Boolean).sort();
+    if (startDates.length === 0 || endDates.length === 0) {
+      return { startDate: null, endDate: null };
+    }
+    return {
+      startDate: dayjs(startDates[0]),
+      endDate: dayjs(endDates[endDates.length - 1]),
+    };
+  }, [weeksList]);
+
+  const canPrevMonth = useMemo(() => {
+    if (!termBounds.startDate) return true;
+    return currentMonthDate.startOf("month").isAfter(termBounds.startDate.startOf("month"));
+  }, [currentMonthDate, termBounds]);
+
+  const canNextMonth = useMemo(() => {
+    if (!termBounds.endDate) return true;
+    return currentMonthDate.startOf("month").isBefore(termBounds.endDate.startOf("month"));
+  }, [currentMonthDate, termBounds]);
+
   const calculateStats = (weeks, holidays = []) => {
-    if (!weeks || weeks.length === 0) return;
+    if (!weeks || weeks.length === 0) {
+      setTermStats({
+        totalSchoolDays: 0,
+        daysSpent: 0,
+        daysRemaining: 0,
+        totalHolidays: 0,
+        pctCompleted: 0,
+      });
+      return;
+    }
 
     const startDates = weeks.map((w) => w.start_date).filter(Boolean).sort();
     const endDates = weeks.map((w) => w.end_date).filter(Boolean).sort();
 
-    if (startDates.length === 0 || endDates.length === 0) return;
+    if (startDates.length === 0 || endDates.length === 0) {
+      setTermStats({
+        totalSchoolDays: 0,
+        daysSpent: 0,
+        daysRemaining: 0,
+        totalHolidays: 0,
+        pctCompleted: 0,
+      });
+      return;
+    }
 
     const startDate = dayjs(startDates[0]);
     const endDate = dayjs(endDates[endDates.length - 1]);
@@ -118,27 +177,38 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
     try {
       setLoading(true);
       // 1. Fetch academic info
-      let acadData = null;
       try {
         const acadRes = await tenantApi.get("/school_setup/get_academic_info");
-        acadData = acadRes?.data || {};
-        setAcademicInfo(acadData);
+        setAcademicInfo(acadRes?.data || {});
       } catch (e) {
         console.warn("Could not fetch academic info:", e);
       }
 
-      // 2. Fetch session terms to find active term ID
-      const sessionTermsRes = await fetchSessionTerms();
-      const termsList = Array.isArray(sessionTermsRes)
-        ? sessionTermsRes
-        : sessionTermsRes?.data || [];
-      const activeTerm =
-        termsList.find((t) => t.status === "active" || t.is_active || t.active) ||
-        termsList[0];
+      // 2. Determine active session term ID
+      let activeTermId = null;
+      try {
+        const activeRes = await tenantApi.get("/curriculum/active-session-term");
+        if (activeRes?.data?.data?.session_term_id) {
+          activeTermId = activeRes.data.data.session_term_id;
+        }
+      } catch (e) {
+        console.warn("Active session term endpoint fallback:", e);
+      }
 
-      if (activeTerm?.id) {
+      if (!activeTermId) {
+        const sessionTermsRes = await fetchSessionTerms();
+        const termsList = Array.isArray(sessionTermsRes)
+          ? sessionTermsRes
+          : sessionTermsRes?.data || [];
+        const activeTerm =
+          termsList.find((t) => t.status === "active" || t.is_active || t.active) ||
+          termsList[0];
+        activeTermId = activeTerm?.session_term_id || activeTerm?.id;
+      }
+
+      if (activeTermId) {
         // 3. Fetch weeks for active term
-        const weeksData = await fetchWeeks(activeTerm.id);
+        const weeksData = await fetchWeeks(activeTermId);
         const fetchedWeeks = Array.isArray(weeksData)
           ? weeksData
           : weeksData?.data || [];
@@ -147,7 +217,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
         // 4. Fetch holidays for active term
         let fetchedHolidays = [];
         try {
-          const holidaysData = await fetchHolidays(activeTerm.id);
+          const holidaysData = await fetchHolidays(activeTermId);
           fetchedHolidays = Array.isArray(holidaysData)
             ? holidaysData
             : holidaysData?.data || [];
@@ -156,8 +226,42 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
           console.warn("Holidays not loaded:", e);
         }
 
-        // Calculate term days stats dynamically
-        calculateStats(fetchedWeeks, fetchedHolidays);
+        // 5. Set current month to active term range (or today if within term)
+        const startDates = fetchedWeeks.map((w) => w.start_date).filter(Boolean).sort();
+        const endDates = fetchedWeeks.map((w) => w.end_date).filter(Boolean).sort();
+        if (startDates.length > 0 && endDates.length > 0) {
+          const termStart = dayjs(startDates[0]);
+          const termEnd = dayjs(endDates[endDates.length - 1]);
+          const today = dayjs();
+          if (today.isBetween(termStart.startOf("month"), termEnd.endOf("month"), "day", "[]")) {
+            setCurrentMonthDate(today);
+          } else {
+            setCurrentMonthDate(termStart);
+          }
+        }
+
+        // 6. Prefer backend calculated statistics when provided
+        if (weeksData?.stats) {
+          const s = weeksData.stats;
+          const totalSchoolDays = s.total_school_days || 0;
+          const totalHolidays = s.holiday_days_allocated ?? (fetchedHolidays?.length || 0);
+          const daysSpent = s.days_spent ?? Math.max(0, totalSchoolDays - (s.remaining_school_days || 0));
+          const daysRemaining = s.remaining_school_days ?? Math.max(0, totalSchoolDays - daysSpent);
+          const pctCompleted =
+            totalSchoolDays > 0
+              ? Math.min(100, Math.round((daysSpent / totalSchoolDays) * 100))
+              : 0;
+
+          setTermStats({
+            totalSchoolDays,
+            daysSpent,
+            daysRemaining,
+            totalHolidays,
+            pctCompleted,
+          });
+        } else {
+          calculateStats(fetchedWeeks, fetchedHolidays);
+        }
       }
     } catch (err) {
       console.error("Failed to load school calendar data:", err);
@@ -166,12 +270,18 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
     }
   };
 
+  const [openModal, setOpenModal] = useState(false);
+
   const handlePrevMonth = () => {
-    setCurrentMonthDate((prev) => prev.subtract(1, "month"));
+    if (canPrevMonth) {
+      setCurrentMonthDate((prev) => prev.subtract(1, "month"));
+    }
   };
 
   const handleNextMonth = () => {
-    setCurrentMonthDate((prev) => prev.add(1, "month"));
+    if (canNextMonth) {
+      setCurrentMonthDate((prev) => prev.add(1, "month"));
+    }
   };
 
   const handleThisTerm = () => {
@@ -179,11 +289,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
   };
 
   const handleViewFull = () => {
-    if (onViewFullCalendar) {
-      onViewFullCalendar();
-    } else {
-      navigate("/school-setup");
-    }
+    setOpenModal(true);
   };
 
   const monthName = currentMonthDate.format("MMMM");
@@ -216,7 +322,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
       const dayOfWeek = curDate.day();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      const isHoliday = holidaysList.some((h) => {
+      const holidayObj = holidaysList.find((h) => {
         if (h.start_date && h.end_date) {
           return curDate.isBetween(
             dayjs(h.start_date),
@@ -225,8 +331,11 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
             "[]"
           );
         }
-        return h.date === dateStr;
+        return h.date === dateStr || h.start_date === dateStr;
       });
+
+      const isHoliday = !!holidayObj;
+      const holidayName = holidayObj?.name || holidayObj?.holiday_name || "";
 
       const hasEvent =
         isHoliday ||
@@ -240,6 +349,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
         selected: isToday,
         isWeekend,
         isHoliday,
+        holidayName,
         event: hasEvent,
         dateStr,
       });
@@ -263,7 +373,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
   const renderCalendarDay = (date, index) => {
     const isToday = date.selected;
 
-    return (
+    const dayCell = (
       <Box
         key={`${date.dateStr}-${index}`}
         sx={{
@@ -296,7 +406,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
             position: "relative",
 
             backgroundColor: isToday
-              ? "#19a77a"
+              ? "primary.main"
               : date.isHoliday
                 ? "#fef3c7"
                 : "transparent",
@@ -320,33 +430,33 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
 
             transition: "all 0.2s ease",
 
+            cursor: date.isHoliday ? "pointer" : "default",
+
             "&:hover": {
               backgroundColor: date.muted
                 ? "transparent"
                 : isToday
-                  ? "#168e68"
-                  : "#eef8f5",
+                  ? "primary.dark"
+                  : date.isHoliday
+                    ? "#fde68a"
+                    : "#eef8f5",
             },
           }}
         >
           {date.day}
-
-          {/* Small event indicator */}
-          {date.event && !isToday && (
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 2,
-                width: 3,
-                height: 3,
-                borderRadius: "50%",
-                backgroundColor: date.isHoliday ? "#e99a22" : "#26709d",
-              }}
-            />
-          )}
         </Box>
       </Box>
     );
+
+    if (date.isHoliday && date.holidayName) {
+      return (
+        <Tooltip key={`${date.dateStr}-${index}`} title={date.holidayName} arrow placement="top">
+          {dayCell}
+        </Tooltip>
+      );
+    }
+
+    return dayCell;
   };
 
   return (
@@ -409,6 +519,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
       >
         <IconButton
           size="small"
+          disabled={!canPrevMonth}
           onClick={handlePrevMonth}
           sx={{
             width: 28,
@@ -444,6 +555,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
         >
           <IconButton
             size="small"
+            disabled={!canNextMonth}
             onClick={handleNextMonth}
             sx={{
               width: 28,
@@ -761,7 +873,239 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
           </Box> */}
         </Box>
       </Box>
-    </ParentCard >
+
+      <SchoolCalendarModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        weeks={weeksList}
+        holidays={holidaysList}
+        termStats={termStats}
+      />
+    </ParentCard>
+  );
+};
+
+const SchoolCalendarModal = ({ open, onClose, weeks, holidays, termStats }) => {
+  const [tab, setTab] = useState(0);
+
+  const renderStatusChip = (status, isCurrent) => {
+    const labelText = isCurrent ? "Current Week" : (status || "Active");
+    const st = isCurrent ? "primary" : (status || "active").toLowerCase();
+
+    let paletteKey = "success";
+    if (st === "primary" || isCurrent) paletteKey = "primary";
+    else if (st === "upcoming" || st === "pending") paletteKey = "warning";
+    else if (st === "completed" || st === "ended") paletteKey = "info";
+    else if (st === "inactive" || st === "deactivated" || st === "error") paletteKey = "error";
+
+    return (
+      <Chip
+        label={labelText}
+        size="small"
+        sx={{
+          bgcolor: (theme) => theme.palette[paletteKey]?.light,
+          color: (theme) => theme.palette[paletteKey]?.main,
+          borderRadius: "8px",
+          fontWeight: 600,
+          fontSize: "11px",
+          textTransform: "capitalize",
+        }}
+      />
+    );
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ m: 0, p: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: "10px",
+              backgroundColor: "#f0fdf4",
+              color: "#059669",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CalendarTodayOutlinedIcon fontSize="small" />
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "16px", lineHeight: 1.2 }}>
+              School Calendar Breakdown
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Active Term Schedule & Academic Weeks
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ p: 2.5 }}>
+        {/* STATS OVERVIEW CARDS */}
+        <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <StatCard
+              count={termStats.totalSchoolDays}
+              label="Total Days"
+              icon={CalendarTodayOutlinedIcon}
+              colorIndex={0}
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <StatCard
+              count={termStats.daysSpent}
+              label="Days Spent"
+              icon={CheckCircleOutlineOutlinedIcon}
+              colorIndex={1}
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <StatCard
+              count={termStats.daysRemaining}
+              label="Days Left"
+              icon={AccessTimeOutlinedIcon}
+              colorIndex={2}
+            />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <StatCard
+              count={termStats.totalHolidays}
+              label="Holidays"
+              icon={BeachAccessOutlinedIcon}
+              colorIndex={3}
+            />
+          </Grid>
+        </Grid>
+
+        {/* TERM PROGRESS BAR */}
+        <Box sx={{ mb: 3, p: 2, borderRadius: "10px", bgcolor: "#fafbfc", border: "1px solid #f0f2f4" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#344054" }}>
+              Term Completion
+            </Typography>
+            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "primary.main" }}>
+              {termStats.pctCompleted}% Completed
+            </Typography>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={termStats.pctCompleted}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              bgcolor: "#eaecf0",
+              "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: "primary.main" },
+            }}
+          />
+        </Box>
+
+        {/* TABS HEADER */}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2.5 }}>
+          <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+            <Tab label={`Academic Weeks (${weeks.length})`} />
+            <Tab label={`Holidays (${holidays.length})`} />
+          </Tabs>
+        </Box>
+
+        {/* TAB 0: WEEKS TABLE */}
+        {tab === 0 && (
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #eaecf0", borderRadius: "8px" }}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>S/N</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>Week Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>Start Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>End Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }} align="center">Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {weeks.length > 0 ? (
+                  weeks.map((w, idx) => {
+                    const sDate = w.start_date ? dayjs(w.start_date).format("MMM D, YYYY") : "—";
+                    const eDate = w.end_date ? dayjs(w.end_date).format("MMM D, YYYY") : "—";
+                    const isCurrent = dayjs().isBetween(dayjs(w.start_date), dayjs(w.end_date), "day", "[]");
+
+                    return (
+                      <TableRow key={w.id || idx} hover>
+                        <TableCell sx={{ fontSize: "12.5px" }}>{idx + 1}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: "12.5px" }}>
+                          {w.week_name || `Week ${idx + 1}`}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: "12.5px", color: "#475569" }}>{sDate}</TableCell>
+                        <TableCell sx={{ fontSize: "12.5px", color: "#475569" }}>{eDate}</TableCell>
+                        <TableCell align="center">
+                          {renderStatusChip(w.status, isCurrent)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 3, color: "text.secondary", fontSize: "13px" }}>
+                      No weeks generated for this term yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {/* TAB 1: HOLIDAYS TABLE */}
+        {tab === 1 && (
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #eaecf0", borderRadius: "8px" }}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>S/N</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>Holiday Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>Start Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "12px", color: "#475569" }}>End Date</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {holidays.length > 0 ? (
+                  holidays.map((h, idx) => (
+                    <TableRow key={h.id || idx} hover>
+                      <TableCell sx={{ fontSize: "12.5px" }}>{idx + 1}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: "12.5px" }}>
+                        {h.name || h.holiday_name || "Holiday"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "12.5px", color: "#475569" }}>
+                        {h.start_date ? dayjs(h.start_date).format("MMM D, YYYY") : "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "12.5px", color: "#475569" }}>
+                        {h.end_date ? dayjs(h.end_date).format("MMM D, YYYY") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 3, color: "text.secondary", fontSize: "13px" }}>
+                      No holidays registered for this term.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 2.5, py: 1.5 }}>
+        <Button onClick={onClose} variant="contained" color="primary">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

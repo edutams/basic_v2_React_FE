@@ -1,5 +1,4 @@
-import React from "react";
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -7,6 +6,8 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+
+import ParentCard from "@/components/shared/ParentCard";
 
 const ActivityLog = ({
   activities = [
@@ -118,41 +119,10 @@ const ActivityLog = ({
   };
 
   return (
-    <Card
-      elevation={0}
-      sx={{
-        height: "100%",
-        border: "1px solid #E5E7EB",
-        borderRadius: "14px",
-        backgroundColor: "#ffffff",
-        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <CardContent
-        sx={{
-          p: {
-            xs: 2,
-            sm: 2.5,
-            md: 2.75,
-          },
-          "&:last-child": {
-            pb: {
-              xs: 2,
-              sm: 2.5,
-              md: 2.75,
-            },
-          },
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* =====================================================
-                    HEADER
-                ===================================================== */}
+    <ParentCard>
+      {/* =====================================================
+                  HEADER
+              ===================================================== */}
 
         <Box
           sx={{
@@ -395,8 +365,7 @@ const ActivityLog = ({
             View full activity log
           </Button>
         </Box>
-      </CardContent>
-    </Card>
+      </ParentCard>
   );
 };
 

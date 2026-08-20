@@ -4,8 +4,6 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Divider,
   Typography,
@@ -22,6 +20,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useTenantAuth } from "@/hooks/useTenantAuth";
 import UserProfileDrawer from "@/components/shared/UserProfileDrawer";
+import ParentCard from "@/components/shared/ParentCard";
 
 const getInitials = (nameStr) => {
   if (!nameStr) return "ST";
@@ -265,7 +264,7 @@ const MyProfile = ({
   const profileDetails = [
     {
       icon: <BadgeOutlinedIcon />,
-      label: "Employee ID",
+      label: "Staff ID",
       value: displayEmployeeId,
       bg: "#ECFDF5",
       color: "#059669",
@@ -293,7 +292,7 @@ const MyProfile = ({
     },
     {
       icon: <LocationOnOutlinedIcon />,
-      label: "Office / Address",
+      label: "School Address",
       value: displayOffice,
       bg: "#FFF7ED",
       color: "#EA580C",
@@ -312,304 +311,42 @@ const MyProfile = ({
 
   return (
     <>
-      <Card
-        elevation={0}
-        sx={{
-          height: "100%",
-          border: "1px solid #E5E7EB",
-          borderRadius: "14px",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
-          display: "flex",
-          flexDirection: "column",
-        }}
+      <ParentCard
       >
-        <CardContent
+        {/* HEADER */}
+        <Box
           sx={{
-            p: {
-              xs: 2,
-              sm: 2.5,
-              md: 2.75,
-            },
-            "&:last-child": {
-              pb: {
-                xs: 2,
-                sm: 2.5,
-                md: 2.75,
-              },
-            },
-            height: "100%",
             display: "flex",
-            flexDirection: "column",
+            alignItems: "center",
             justifyContent: "space-between",
+            gap: 2,
+            mb: {
+              xs: 2.5,
+              md: 3,
+            },
           }}
         >
-          {/* HEADER */}
-          <Box
+          <Typography
+            component="h2"
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              mb: {
-                xs: 2.5,
-                md: 3,
+              fontSize: {
+                xs: "15px",
+                sm: "16px",
               },
+              fontWeight: 700,
+              color: "#0F172A",
             }}
           >
-            <Typography
-              component="h2"
-              sx={{
-                fontSize: {
-                  xs: "15px",
-                  sm: "16px",
-                },
-                fontWeight: 700,
-                color: "#0F172A",
-              }}
-            >
-              My Profile
-            </Typography>
+            My Profile
+          </Typography>
 
-            <Button
-              onClick={handleView}
-              size="small"
-              endIcon={
-                <ArrowForwardIcon
-                  sx={{
-                    fontSize: "14px !important",
-                  }}
-                />
-              }
-              sx={{
-                fontSize: {
-                  xs: "11px",
-                  sm: "12px",
-                },
-
-              }}
-            >
-              View full profile
-            </Button>
-          </Box>
-
-          {/* PROFILE INFORMATION HEADER (Unboxed) */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: {
-                xs: 1.5,
-                sm: 2,
-              },
-              mb: {
-                xs: 2.5,
-                md: 3,
-              },
-            }}
-          >
-            {/* Avatar */}
-            <Avatar
-              src={displayAvatar || undefined}
-              alt={displayName}
-              sx={{
-                width: {
-                  xs: 56,
-                  sm: 62,
-                },
-                height: {
-                  xs: 56,
-                  sm: 62,
-                },
-                backgroundColor: primaryLightBg,
-                color: primaryColor,
-                fontSize: {
-                  xs: "18px",
-                  sm: "20px",
-                },
-                fontWeight: 700,
-                border: "2px solid #ffffff",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              }}
-            >
-              {!displayAvatar && initials}
-            </Avatar>
-
-            {/* Name and Role Chips */}
-            <Box
-              sx={{
-                minWidth: 0,
-                flex: 1,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: {
-                    xs: "14px",
-                    sm: "15px",
-                  },
-                  fontWeight: 700,
-                  color: "#0F172A",
-                  lineHeight: 1.3,
-                  mb: 0.5,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {displayName}
-              </Typography>
-
-              {/* Roles rendered as Chips with dynamic colors */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 0.6,
-                }}
-              >
-                {roleChips.map((rName, idx) => {
-                  const roleSx = getRoleSx(rName);
-                  return (
-                    <Chip
-                      key={idx}
-                      label={rName}
-                      size="small"
-                      sx={{
-                        height: 22,
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        borderRadius: "6px",
-                        ...roleSx,
-                        "& .MuiChip-label": {
-                          px: 1,
-                        },
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-          </Box>
-
-          {/* PROFILE DETAILS (Unboxed vertical list with distinct icon colors and high-contrast text) */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: {
-                xs: 1.5,
-                sm: 1.7,
-              },
-            }}
-          >
-            {profileDetails.map((detail, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: {
-                    xs: 1.2,
-                    sm: 1.5,
-                  },
-                }}
-              >
-                {/* Distinctly colored Icon Box */}
-                <Box
-                  sx={{
-                    width: 28,
-                    minWidth: 28,
-                    height: 28,
-                    borderRadius: "7px",
-                    backgroundColor: detail.bg,
-                    color: detail.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    "& svg": {
-                      fontSize: {
-                        xs: 15,
-                        sm: 16,
-                      },
-                    },
-                  }}
-                >
-                  {detail.icon}
-                </Box>
-
-                {/* High Contrast Label */}
-                <Typography
-                  sx={{
-                    width: {
-                      xs: 90,
-                      sm: 105,
-                    },
-                    minWidth: {
-                      xs: 90,
-                      sm: 105,
-                    },
-                    fontSize: {
-                      xs: "11px",
-                      sm: "12px",
-                    },
-                    fontWeight: 600,
-                    color: "#475569",
-                  }}
-                >
-                  {detail.label}
-                </Typography>
-
-                {/* High Contrast Value */}
-                <Typography
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: {
-                      xs: "11px",
-                      sm: "12px",
-                    },
-                    fontWeight: 600,
-                    color: "#0F172A",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: {
-                      xs: "normal",
-                      sm: "nowrap",
-                    },
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {detail.value}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-
-          {/* DIVIDER */}
-          <Divider
-            sx={{
-              mt: {
-                xs: 2.5,
-                md: 3,
-              },
-              mb: {
-                xs: 2,
-                md: 2.5,
-              },
-              borderColor: "#edf0f2",
-            }}
-          />
-
-          {/* EDIT PROFILE BUTTON */}
           <Button
-            fullWidth
-            variant="outlined"
-            onClick={handleEdit}
-            startIcon={
-              <EditOutlinedIcon
+            onClick={handleView}
+            size="small"
+            endIcon={
+              <ArrowForwardIcon
                 sx={{
-                  fontSize: "15px !important",
+                  fontSize: "14px !important",
                 }}
               />
             }
@@ -621,10 +358,241 @@ const MyProfile = ({
 
             }}
           >
-            Edit Profile
+            View full profile
           </Button>
-        </CardContent>
-      </Card>
+        </Box>
+
+        {/* PROFILE INFORMATION HEADER (Unboxed) */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: {
+              xs: 1.5,
+              sm: 2,
+            },
+            mb: {
+              xs: 2.5,
+              md: 3,
+            },
+          }}
+        >
+          {/* Avatar */}
+          <Avatar
+            src={displayAvatar || undefined}
+            alt={displayName}
+            sx={{
+              width: {
+                xs: 56,
+                sm: 62,
+              },
+              height: {
+                xs: 56,
+                sm: 62,
+              },
+              backgroundColor: primaryLightBg,
+              color: primaryColor,
+              fontSize: {
+                xs: "18px",
+                sm: "20px",
+              },
+              fontWeight: 700,
+              border: "2px solid #ffffff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+            }}
+          >
+            {!displayAvatar && initials}
+          </Avatar>
+
+          {/* Name and Role Chips */}
+          <Box
+            sx={{
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: {
+                  xs: "14px",
+                  sm: "15px",
+                },
+                fontWeight: 700,
+                color: "#0F172A",
+                lineHeight: 1.3,
+                mb: 0.5,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {displayName}
+            </Typography>
+
+            {/* Roles rendered as Chips with dynamic colors */}
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 0.6,
+              }}
+            >
+              {roleChips.map((rName, idx) => {
+                const roleSx = getRoleSx(rName);
+                return (
+                  <Chip
+                    key={idx}
+                    label={rName}
+                    size="small"
+                    sx={{
+                      height: 22,
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      borderRadius: "6px",
+                      ...roleSx,
+                      "& .MuiChip-label": {
+                        px: 1,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* PROFILE DETAILS (Unboxed vertical list with distinct icon colors and high-contrast text) */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: {
+              xs: 1.5,
+              sm: 1.7,
+            },
+          }}
+        >
+          {profileDetails.map((detail, index) => (
+            <Box
+              key={index}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: {
+                  xs: 1.2,
+                  sm: 1.5,
+                },
+              }}
+            >
+              {/* Distinctly colored Icon Box */}
+              <Box
+                sx={{
+                  width: 28,
+                  minWidth: 28,
+                  height: 28,
+                  borderRadius: "7px",
+                  backgroundColor: detail.bg,
+                  color: detail.color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  "& svg": {
+                    fontSize: {
+                      xs: 15,
+                      sm: 16,
+                    },
+                  },
+                }}
+              >
+                {detail.icon}
+              </Box>
+
+              {/* High Contrast Label */}
+              <Typography
+                sx={{
+                  width: {
+                    xs: 90,
+                    sm: 105,
+                  },
+                  minWidth: {
+                    xs: 90,
+                    sm: 105,
+                  },
+                  fontSize: {
+                    xs: "11px",
+                    sm: "12px",
+                  },
+                  fontWeight: 600,
+                  color: "#475569",
+                }}
+              >
+                {detail.label}
+              </Typography>
+
+              {/* High Contrast Value */}
+              <Typography
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: {
+                    xs: "11px",
+                    sm: "12px",
+                  },
+                  fontWeight: 600,
+                  color: "#0F172A",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: {
+                    xs: "normal",
+                    sm: "nowrap",
+                  },
+                  wordBreak: "break-word",
+                }}
+              >
+                {detail.value}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {/* DIVIDER */}
+        {/* <Divider
+          sx={{
+            mt: {
+              xs: 1,
+              md: 2,
+            },
+            mb: {
+              xs: 2,
+              md: 2.5,
+            },
+            borderColor: "#edf0f2",
+          }}
+        /> */}
+
+        {/* EDIT PROFILE BUTTON */}
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleEdit}
+          startIcon={
+            <EditOutlinedIcon
+              sx={{
+                fontSize: "15px !important",
+              }}
+            />
+          }
+          sx={{
+            mt: 3,
+            fontSize: {
+              xs: "11px",
+              sm: "12px",
+            },
+          }}
+        >
+          Edit Profile
+        </Button>
+      </ParentCard>
 
       <UserProfileDrawer
         open={drawerOpen}

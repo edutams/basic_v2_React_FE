@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import StatCards from './component/statcard';
 import Analytics from './component/analytics';
@@ -57,15 +57,31 @@ const LearnerDashboard = () => {
 
   useEffect(() => {
     let mounted = true;
-    fetchSessionTerms()
-      .then((res) => {
+    Promise.all([fetchSessionTerms(), fetchActiveSessionTerm()])
+      .then(([termsRes, activeRes]) => {
         if (!mounted) return;
-        const terms = res?.status ? res.data || [] : [];
+        const terms = termsRes?.status ? termsRes.data || [] : [];
         setSessionTerms(terms);
-        const first = terms.length > 0 ? String(terms[0].id) : '';
-        setDefaultTermId(first);
-        setAcademicTermId(first);
-        setAttendanceTermId(first);
+
+        // Determine the default term: prefer the active session term,
+        // fall back to the first entry (same logic as MarkAttendance).
+        const activeData = activeRes?.data?.data || activeRes?.data || activeRes;
+        let defaultId = '';
+        if (terms.length > 0) {
+          if (activeData?.session_id && activeData?.term_id) {
+            const match = terms.find(
+              (st) =>
+                String(st.session?.id || st.session_id) === String(activeData.session_id) &&
+                String(st.display_term?.id || st.term_id) === String(activeData.term_id),
+            );
+            defaultId = match ? String(match.id) : String(terms[0].id);
+          } else {
+            defaultId = String(terms[0].id);
+          }
+        }
+        setDefaultTermId(defaultId);
+        setAcademicTermId(defaultId);
+        setAttendanceTermId(defaultId);
       })
       .catch((err) => console.error('Failed to fetch session terms:', err));
     return () => {

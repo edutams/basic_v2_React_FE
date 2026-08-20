@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, InputAdornment, Button, useTheme } from '@mui/material';
+import { Box, Typography, TextField, InputAdornment, Button, useTheme, CircularProgress, Stack, Avatar, Chip } from '@mui/material';
 import { Search } from '@mui/icons-material';
 
 /**
- * Search Student — clean search box matching the design image.
+ * Search Student — search box with results dropdown matching the design image.
+ * Props:
+ *   onSearch  – callback(query) when the user submits a search
+ *   loading   – boolean, shows a spinner while the API call is in flight
+ *   results   – array of student objects returned by the backend, or null
  */
-const SearchStudent = ({ onSearch }) => {
+const SearchStudent = ({ onSearch, loading, results }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,6 +25,8 @@ const SearchStudent = ({ onSearch }) => {
       handleSearch();
     }
   };
+
+  const showResults = results && results.length > 0;
 
   return (
     <Box
@@ -89,6 +95,7 @@ const SearchStudent = ({ onSearch }) => {
         <Button
           variant="contained"
           onClick={handleSearch}
+          disabled={loading || searchQuery.length < 2}
           sx={{
             minWidth: 80,
             borderRadius: '8px',
@@ -99,9 +106,98 @@ const SearchStudent = ({ onSearch }) => {
             '&:hover': { bgcolor: '#2563EB' },
           }}
         >
-          Search
+          {loading ? <CircularProgress size={18} color="inherit" /> : 'Search'}
         </Button>
       </Box>
+
+      {/* Loading indicator */}
+      {loading && !showResults && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          <CircularProgress size={22} />
+        </Box>
+      )}
+
+      {/* Search results */}
+      {showResults && (
+        <Box
+          sx={{
+            mt: 1.5,
+            maxHeight: 260,
+            overflowY: 'auto',
+            borderRadius: '8px',
+            border: '1px solid #E5E7EB',
+            '&::-webkit-scrollbar': { width: 4 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 },
+          }}
+        >
+          <Stack spacing={0}>
+            {results.map((student, i) => (
+              <Box
+                key={student.id || student.user_id || i}
+                sx={{
+                  px: 1.5,
+                  py: 1,
+                  borderBottom: i < results.length - 1 ? '1px solid #F3F4F6' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.25,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                  '&:hover': { bgcolor: '#F9FAFB' },
+                }}
+              >
+                <Avatar
+                  src={student.avatar || ''}
+                  alt={student.name}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    fontSize: 13,
+                    bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300],
+                  }}
+                >
+                  {student.name?.charAt(0)?.toUpperCase() || '?'}
+                </Avatar>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
+                    {student.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.75, mt: 0.2, flexWrap: 'wrap' }}>
+                    {student.admission_no && (
+                      <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 500 }}>
+                        {student.admission_no}
+                      </Typography>
+                    )}
+                    {student.class_name && (
+                      <Chip
+                        label={student.class_name}
+                        size="small"
+                        sx={{
+                          height: 16,
+                          fontSize: '0.55rem',
+                          fontWeight: 600,
+                          bgcolor: '#EEF2FF',
+                          color: '#4338CA',
+                          '& .MuiChip-label': { px: 0.75 },
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* No results message */}
+      {results && results.length === 0 && !loading && (
+        <Box sx={{ py: 2, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+            No students found matching your search
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

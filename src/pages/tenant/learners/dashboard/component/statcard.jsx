@@ -231,7 +231,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
       >
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography fontWeight="600" sx={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.25 }}>
-            Outstanding Fees
+            Pending Fees
           </Typography>
           <Box sx={iconTile('#FEE2E2', '#DC2626')}>
             <AccountBalanceWalletOutlined sx={{ fontSize: 17 }} />

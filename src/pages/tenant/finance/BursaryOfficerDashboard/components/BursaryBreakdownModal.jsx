@@ -149,14 +149,26 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
   const columnsFor = () => {
     switch (type) {
       case 'expected_income':
+        return [
+          { key: 'class', label: 'Class' },
+          { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
+          { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
+          { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
+        ];
       case 'collected_income':
-      case 'outstanding_balance':
         return [
           { key: 'class', label: 'Class' },
           { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
           { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
           { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
           { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
+        ];
+      case 'outstanding_balance':
+        return [
+          { key: 'class', label: 'Class' },
+          { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
+          { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
+          { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
         ];
       case 'collection_efficiency':
         return [

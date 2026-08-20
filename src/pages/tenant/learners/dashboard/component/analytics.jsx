@@ -90,23 +90,21 @@ const CardSkeleton = ({ rows = 3 }) => (
   </Stack>
 );
 
-// Days in the Term — mirrors the teacher dashboard card, driven by the
-// learner's attendance stats for the selected term.
-const daysData = {
-  totalDays: 89,
-  termEndDate: 'July 30, 2026',
-};
-
+// Days in the Term — driven by real backend data:
+//   total_school_days  – total weekdays in the term (from week_terms config)
+//   days_passed        – school days elapsed so far (excl. weekends & past holidays)
+//   term_end_date      – formatted end date of the last configured week
+//   present / absent / late – learner's personal attendance counts
 const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => {} }) => {
-  const total = Number(attendance.total || 0);
-  const present = Number(attendance.present || 0);
   const absent = Number(attendance.absent || 0);
   const late = Number(attendance.late || 0);
 
-  const daysPassed = total;
-  const schoolDays = total;
-  const daysRemaining = Math.max(0, daysData.totalDays - total);
-  const percentageCompleted = daysData.totalDays > 0 ? Math.round((total / daysData.totalDays) * 100) : 0;
+  // All derived from the reusable getTermDayStats() backend helper.
+  const schoolDays = Number(attendance.total_school_days || 0);
+  const daysPassed = Number(attendance.days_passed || 0);
+  const daysRemaining = Number(attendance.days_remaining || Math.max(0, schoolDays - daysPassed));
+  const termEndDate = attendance.term_end_date || '';
+  const percentageCompleted = schoolDays > 0 ? Math.round((daysPassed / schoolDays) * 100) : 0;
 
   return (
     <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -125,9 +123,9 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
 
         {loading ? (
           <CardSkeleton rows={3} />
-        ) : total === 0 ? (
+        ) : schoolDays === 0 ? (
           <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
-            No school days recorded for this term yet.
+            No school days configured for this term yet.
           </Typography>
         ) : (
           <>
@@ -190,7 +188,7 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
             >
               <CalendarTodayOutlined sx={{ fontSize: 14, color: '#16a34a' }} />
               <Typography sx={{ fontSize: '0.7rem', color: '#1e1b4b', fontWeight: 600 }}>
-                Term Ends: {daysData.termEndDate}
+                Term Ends: {termEndDate || 'N/A'}
               </Typography>
             </Box>
           </>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Box,
@@ -12,6 +12,10 @@ import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import PageContainer from "@/components/container/PageContainer";
 
+// API Helpers
+import tenantApi from "@/api/tenant/tenant_api";
+import { fetchWeeks } from "@/api/tenant/term-weeks/weekApi";
+
 // Dashboard Components
 import StatsCard from "./components/stats-card";
 import StatCardBreakdownModal from "./components/StatCardBreakdownModal";
@@ -23,6 +27,38 @@ import QuickAccess from "./components/Quick-access";
 const NonTeachDashboard = () => {
     const navigate = useNavigate();
     const [selectedStat, setSelectedStat] = useState(null);
+    const [daysInSchoolState, setDaysInSchoolState] = useState({
+        daysSpent: "...",
+        overview: null,
+    });
+
+    useEffect(() => {
+        const loadDaysInSchool = async () => {
+            try {
+                const activeRes = await tenantApi.get("/curriculum/active-session-term");
+                const activeTermId = activeRes?.data?.data?.session_term_id;
+                if (!activeTermId) return;
+
+                const weeksData = await fetchWeeks(activeTermId);
+                const s = weeksData?.stats;
+                if (s) {
+                    setDaysInSchoolState({
+                        daysSpent: String(s.days_spent ?? 0),
+                        overview: [
+                            { label: "Total Term Days", value: s.total_school_days || 0 },
+                            { label: "Days Spent", value: s.days_spent || 0 },
+                            { label: "Holiday Days", value: s.holiday_days_allocated ?? s.holiday_days ?? 0 },
+                            { label: "Days Remaining", value: s.remaining_school_days || 0 },
+                        ],
+                    });
+                }
+            } catch (err) {
+                console.warn("Could not load days in school stat:", err);
+            }
+        };
+
+        loadDaysInSchool();
+    }, []);
 
     const statistics = [
         {
@@ -59,15 +95,16 @@ const NonTeachDashboard = () => {
             progressColor: "#2563EB",
         },
         {
-            value: "68",
+            value: daysInSchoolState.daysSpent,
             title: "Days in School",
             subtitle: "This Term",
-            trend: 5.0,
-            extraLabel: "vs last term",
+            trend: null,
+            extraLabel: "Active Term",
             icon: <CalendarMonthOutlinedIcon />,
             iconColor: "#EA580C",
             iconBackground: "#FFF7ED",
             progressColor: "#EA580C",
+            overview: daysInSchoolState.overview,
         },
         {
             value: "6",

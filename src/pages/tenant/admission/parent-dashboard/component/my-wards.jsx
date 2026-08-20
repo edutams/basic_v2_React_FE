@@ -231,7 +231,22 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               )}
             </Stack>
           </Box>
-        ) : null}
+        ) : (
+          <Box
+            sx={{
+              mb: 1.5,
+              bgcolor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '9px',
+              px: 1.25,
+              py: 0.75,
+            }}
+          >
+            <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
+              ℹ️ A wallet account has not been generated for {ward.name.split(' ')[0]} make payment to generate.
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Action Buttons */}

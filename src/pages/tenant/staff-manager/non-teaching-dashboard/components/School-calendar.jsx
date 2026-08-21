@@ -148,9 +148,9 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
         totalHolidays++;
       }
 
-      if (isWeekday && !isHoliday) {
+      if (isWeekday) {
         totalSchoolDays++;
-        if (cursor.isBefore(today, "day") || cursor.isSame(today, "day")) {
+        if (!isHoliday && (cursor.isBefore(today, "day") || cursor.isSame(today, "day"))) {
           daysSpent++;
         }
       }

@@ -66,6 +66,7 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconFilter,
+  IconSettings,
 } from '@tabler/icons-react';
 import {
   groupPermissionsByModule,
@@ -1141,16 +1142,22 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                         onClick={() => handleMenuItemClick('change_picture')}
                         sx={{
                           position: 'absolute',
-                          bottom: 0,
+                          bottom: -2,
                           right: -2,
+                          width: 28,
+                          height: 28,
+                          minWidth: 28,
+                          minHeight: 28,
+                          borderRadius: '50%',
+                          p: 0,
                           bgcolor: 'primary.main',
                           color: '#fff',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                          p: '4px',
-                          '&:hover': { bgcolor: 'primary.dark' },
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          border: `2px solid ${theme.palette.background.paper}`,
+                          '&:hover': { bgcolor: 'primary.main' },
                         }}
                       >
-                        <IconCamera size={13} />
+                        <IconCamera size={14} />
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -1222,7 +1229,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                     size="small"
                     variant="outlined"
                     color="primary"
-                    startIcon={<IconEdit size={16} />}
+                    startIcon={<IconSettings size={16} />}
                     endIcon={<IconChevronDown size={14} />}
                     onClick={handleOpenMenu}
                     sx={{
@@ -1234,7 +1241,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                       py: 0.4,
                     }}
                   >
-                    Edit
+                    Manage Account
                   </Button>
                 </Box>
 

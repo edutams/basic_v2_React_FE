@@ -16,6 +16,7 @@ import BursaryBreakdownModal from './components/BursaryBreakdownModal';
 import RevenueTrend from './components/RevenueTrend';
 import QuickActions from './components/QuickActions';
 import SearchStudent from './components/SearchStudent';
+import StudentDetailModal from './components/StudentDetailModal';
 
 /**
  * Skeleton placeholder that mirrors the dashboard panel layout
@@ -79,6 +80,9 @@ const BursaryOfficerDashboard = () => {
   // Search student state
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Student detail modal state
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   // Session / term filtering
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -486,7 +490,13 @@ const BursaryOfficerDashboard = () => {
         {/* Right column — Search Student + Quick Actions + Payment Categories */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <SearchStudent onSearch={handleSearchStudent} loading={searchLoading} results={searchResults} />
+            <SearchStudent
+              onSearch={handleSearchStudent}
+              loading={searchLoading}
+              results={searchResults}
+              onStudentClick={(student) => setSelectedStudent(student)}
+              onClear={() => setSearchResults(null)}
+            />
             <QuickActions onAction={handleQuickAction} />
             {paymentCategories.loading ? (
               <PanelSkeleton height={420} />
@@ -509,6 +519,14 @@ const BursaryOfficerDashboard = () => {
         type={breakdownType}
         sessionTermId={sessionTermId}
         onClose={() => setBreakdownType(null)}
+      />
+
+      {/* ── Student detail modal ────────────────────────────────── */}
+      <StudentDetailModal
+        open={Boolean(selectedStudent)}
+        student={selectedStudent}
+        sessionTermId={sessionTermId}
+        onClose={() => setSelectedStudent(null)}
       />
     </PageContainer>
   );

@@ -102,6 +102,7 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
   // All derived from the reusable getTermDayStats() backend helper.
   const schoolDays = Number(attendance.total_school_days || 0);
   const daysPassed = Number(attendance.days_passed || 0);
+  const daysSpent = Number(attendance.days_spent || daysPassed);
   const daysRemaining = Number(attendance.days_remaining || Math.max(0, schoolDays - daysPassed));
   const termEndDate = attendance.term_end_date || '';
   const percentageCompleted = schoolDays > 0 ? Math.round((daysPassed / schoolDays) * 100) : 0;
@@ -144,8 +145,8 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#16a34a', lineHeight: 1 }}>
                   {schoolDays}
                 </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
-                  School Days
+                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                  Total School Days
                 </Typography>
               </Stack>
 
@@ -153,9 +154,20 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
 
               <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#2563EB', lineHeight: 1 }}>
+                  {daysSpent}
+                </Typography>
+                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                  Days Spent
+                </Typography>
+              </Stack>
+
+              <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', my: 0.5 }} />
+
+              <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
+                <Typography fontWeight="800" sx={{ fontSize: 18, color: '#8B5CF6', lineHeight: 1 }}>
                   {daysRemaining}
                 </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
                   Days Remaining
                 </Typography>
               </Stack>
@@ -166,7 +178,7 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#e11d48', lineHeight: 1 }}>
                   {absent + late}
                 </Typography>
-                <Typography sx={{ fontSize: '0.6rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
                   Absent Days
                 </Typography>
               </Stack>

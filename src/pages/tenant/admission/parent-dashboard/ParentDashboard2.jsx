@@ -7,7 +7,7 @@ import {
   getParentWards,
   getParentBatches,
   getParentFinance,
-  getParentNotifications,
+
   getSessionTermWeeks,
 } from '@/api/tenant/admission/admissionApi';
 import { fetchActiveSessionTerm, fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -32,6 +32,8 @@ const fmtDate = (d) => {
 };
 
 
+
+
 const ParentDashboard2 = () => {
   const navigate = useNavigate();
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
@@ -43,7 +45,7 @@ const ParentDashboard2 = () => {
 
   const [wards, setWards] = useState([]);
   const [selectedWard, setSelectedWard] = useState(null);
-  const [logs, setLogs] = useState([]);
+
   const [batches, setBatches] = useState(null);
   const [finance, setFinance] = useState(null);
   const [loadingWards, setLoadingWards] = useState(true);
@@ -107,11 +109,11 @@ const ParentDashboard2 = () => {
         const ends = weeks.map((w) => new Date(w.end_date).getTime());
         const first = Math.min(...starts);
         const last = Math.max(...ends);
-        const daysCount = Math.round((last - first) / 86400000) + 1;
+        const schoolDays = weeksRes?.school_days_count ?? 0;
 
         setTermInfo({
           termName: `${session_name || ''} ${term_name || ''}`.trim(),
-          daysCount: `${daysCount} Days`,
+          daysCount: `${schoolDays} School Days`,
           startDate: fmtDate(weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date),
           endDate: fmtDate(weeks.find((w) => new Date(w.end_date).getTime() === last)?.end_date),
         });
@@ -143,18 +145,7 @@ const ParentDashboard2 = () => {
     };
   }, [sessionTermId, termsReady]);
 
-  useEffect(() => {
-    if (!termsReady) return;
-    let mounted = true;
-    getParentNotifications(sessionTermId)
-      .then((res) => {
-        if (mounted && res?.status) setLogs(res.data);
-      })
-      .catch((err) => console.error('Failed to load parent notifications:', err));
-    return () => {
-      mounted = false;
-    };
-  }, [sessionTermId, termsReady]);
+
 
   useEffect(() => {
     if (!termsReady) return;
@@ -238,7 +229,7 @@ const ParentDashboard2 = () => {
           onSelectWard={setSelectedWard}
         />
 
-        <ActivityLogs logs={logs} />
+        <ActivityLogs />
       </Box>
 
       {/* Admission Application Modal */}

@@ -9,7 +9,7 @@ import { Search } from '@mui/icons-material';
  *   loading   – boolean, shows a spinner while the API call is in flight
  *   results   – array of student objects returned by the backend, or null
  */
-const SearchStudent = ({ onSearch, loading, results }) => {
+const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,7 +66,13 @@ const SearchStudent = ({ onSearch, loading, results }) => {
           fullWidth
           placeholder="Search by name, admission number, student ID..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchQuery(value);
+            if (value.length === 0 && onClear) {
+              onClear();
+            }
+          }}
           onKeyDown={handleKeyDown}
           variant="outlined"
           size="small"
@@ -134,6 +140,7 @@ const SearchStudent = ({ onSearch, loading, results }) => {
             {results.map((student, i) => (
               <Box
                 key={student.id || student.user_id || i}
+                onClick={() => onStudentClick && onStudentClick(student)}
                 sx={{
                   px: 1.5,
                   py: 1,
@@ -143,7 +150,7 @@ const SearchStudent = ({ onSearch, loading, results }) => {
                   gap: 1.25,
                   cursor: 'pointer',
                   transition: 'background-color 0.15s ease',
-                  '&:hover': { bgcolor: '#F9FAFB' },
+                  '&:hover': { bgcolor: '#EFF6FF' },
                 }}
               >
                 <Avatar

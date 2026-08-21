@@ -294,7 +294,6 @@ export default function ClassesOverview() {
           direction="row"
           spacing={0.5}
           alignItems="center"
-          onClick={() => navigate("/class-register")}
           sx={{ cursor: "pointer", color: "#06b6d4", "&:hover": { textDecoration: "underline" } }}
         >
           <Typography sx={{ fontSize: 13, fontWeight: 600 }}>View all classes</Typography>

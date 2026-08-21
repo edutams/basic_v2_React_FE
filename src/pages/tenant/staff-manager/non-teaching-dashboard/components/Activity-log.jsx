@@ -166,6 +166,7 @@ const ActivityLog = ({ onViewAll }) => {
 
           <Button
             onClick={handleViewAllClick}
+            variant="contained"
             endIcon={<ArrowForwardIcon sx={{ fontSize: "14px !important" }} />}
             sx={{
               fontSize: { xs: "10px", sm: "11px" },

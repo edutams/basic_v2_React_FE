@@ -490,6 +490,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
 
         <Button
           onClick={handleViewFull}
+          variant="contained"
           endIcon={
             <ArrowForwardIcon
               sx={{

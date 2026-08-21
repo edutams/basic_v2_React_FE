@@ -343,6 +343,7 @@ const MyProfile = ({
           <Button
             onClick={handleView}
             size="small"
+            variant="contained"
             endIcon={
               <ArrowForwardIcon
                 sx={{
@@ -554,25 +555,10 @@ const MyProfile = ({
           ))}
         </Box>
 
-        {/* DIVIDER */}
-        {/* <Divider
-          sx={{
-            mt: {
-              xs: 1,
-              md: 2,
-            },
-            mb: {
-              xs: 2,
-              md: 2.5,
-            },
-            borderColor: "#edf0f2",
-          }}
-        /> */}
-
         {/* EDIT PROFILE BUTTON */}
         <Button
           fullWidth
-          variant="outlined"
+          variant="contained"
           onClick={handleEdit}
           startIcon={
             <EditOutlinedIcon

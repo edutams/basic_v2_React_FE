@@ -25,6 +25,9 @@ import {
   useTheme,
   Grid,
   Paper,
+  IconButton,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -33,6 +36,10 @@ import {
   TrendingUp as TrendingUpIcon,
   ErrorOutline as ErrorIcon,
   Payments as PaymentsIcon,
+  MoreVert as MoreVertIcon,
+  Visibility as ViewIcon,
+  Refresh as RequeryIcon,
+  ReceiptLong as ReceiptLongIcon,
 } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
 
@@ -132,6 +139,11 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
   const [transactionPage, setTransactionPage] = useState(0);
   const [transactionRowsPerPage, setTransactionRowsPerPage] = useState(10);
 
+  // Action menu state for payment history rows
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [activeTx, setActiveTx] = useState(null);
+  const [checkingStatusId, setCheckingStatusId] = useState(null);
+
   // Fetch student detail when modal opens
   useEffect(() => {
     if (!open || !student?.user_id) return;
@@ -143,6 +155,8 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
     setActiveTab(0);
     setInvoicePage(0);
     setTransactionPage(0);
+    setMenuAnchorEl(null);
+    setActiveTx(null);
 
     tenantApi
       .get('/dashboard/bursary/student-detail', {
@@ -171,6 +185,50 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
 
     return () => { cancelled = true; };
   }, [open, student?.user_id, sessionTermId]);
+
+  // ── Transaction action handlers ──────────────────────────
+  const handleRequery = async (tx) => {
+    setCheckingStatusId(tx.transaction_id);
+    try {
+      const res = await tenantApi.get('/bursary/transactions/update_status', {
+        params: { id: tx.transaction_id },
+      });
+      if (res.data?.status) {
+        const newStatus = res.data.transaction_status;
+        // Update the transaction status in the detail data
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            transactions: prev.transactions.map((t) =>
+              t.transaction_id === tx.transaction_id
+                ? { ...t, status: newStatus }
+                : t
+            ),
+          };
+        });
+      }
+    } catch {
+      // silently fail — status unchanged
+    } finally {
+      setCheckingStatusId(null);
+      setMenuAnchorEl(null);
+    }
+  };
+
+  const handlePrintReceipt = (tx) => {
+    const params = new URLSearchParams({
+      order_id: tx.order_id || '',
+      user_id: String(info?.user_id || ''),
+      session_term_id: sessionTermId || '',
+    });
+    window.open(
+      `/bursary/transactions/print_receipt?${params.toString()}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+    setMenuAnchorEl(null);
+  };
 
   const info = detailData?.student;
   const summary = detailData?.summary;
@@ -464,6 +522,7 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
                         <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem' }} align="right">Amount</TableCell>
                         <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem' }} align="center">Status</TableCell>
                         <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem' }} align="center">Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -489,8 +548,24 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
                           <TableCell align="center">
                             <StatusBadge status={tx.status} />
                           </TableCell>
-                          <TableCell sx={{ fontSize: '0.72rem', color: '#6B7280', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <TableCell sx={{ fontSize: '0.72rem', color: '#6B7280' }}>
                             {tx.description || '—'}
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              disabled={checkingStatusId === tx.transaction_id}
+                              onClick={(e) => {
+                                setMenuAnchorEl(e.currentTarget);
+                                setActiveTx(tx);
+                              }}
+                            >
+                              {checkingStatusId === tx.transaction_id ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <MoreVertIcon fontSize="small" />
+                              )}
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -518,6 +593,44 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
           </>
         )}
       </DialogContent>
+
+      {/* ── Transaction Action Menu ──────────────────────────── */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={() => { setMenuAnchorEl(null); setActiveTx(null); }}
+        PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
+      >
+        {activeTx?.order_id && (
+          <MenuItem
+            onClick={() => {
+              handlePrintReceipt(activeTx);
+            }}
+          >
+            <ReceiptLongIcon sx={{ mr: 1.5, color: '#2e7d32' }} />
+            View / Print Receipt
+          </MenuItem>
+        )}
+        <MenuItem
+          disabled={checkingStatusId === activeTx?.transaction_id}
+          onClick={async () => {
+            await handleRequery(activeTx);
+          }}
+        >
+          <RequeryIcon sx={{ mr: 1.5, color: '#ed6c02' }} />
+          {checkingStatusId === activeTx?.transaction_id ? 'Checking...' : 'Requery Status'}
+        </MenuItem>
+        {activeTx?.description && (
+          <MenuItem
+            onClick={() => {
+              setMenuAnchorEl(null);
+            }}
+          >
+            <ViewIcon sx={{ mr: 1.5, color: '#1976d2' }} />
+            View Detail
+          </MenuItem>
+        )}
+      </Menu>
 
       <DialogActions sx={{ px: 2.5, py: 1.5 }}>
         <Button onClick={onClose} sx={{ fontWeight: 700, textTransform: 'none' }}>

@@ -310,12 +310,12 @@ const BursaryOfficerDashboard = () => {
     }
   }, [navigate, notify]);
 
-  // Search student — calls the dashboard search endpoint.
+  // Search student — fetches learners regardless of session term.
   const handleSearchStudent = useCallback(async (query) => {
     setSearchLoading(true);
     try {
       const res = await tenantApi.get('/dashboard/bursary/search-student', {
-        params: { q: query, session_term_id: sessionTermId || undefined },
+        params: { q: query },
       });
       if (res.data?.status) {
         setSearchResults(res.data.data || []);
@@ -332,7 +332,7 @@ const BursaryOfficerDashboard = () => {
     } finally {
       setSearchLoading(false);
     }
-  }, [sessionTermId, notify]);
+  }, [notify]);
 
   // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
   // (uppercase label, icon chip top-right, big value, progress + sublabel) so
@@ -525,7 +525,6 @@ const BursaryOfficerDashboard = () => {
       <StudentDetailModal
         open={Boolean(selectedStudent)}
         student={selectedStudent}
-        sessionTermId={sessionTermId}
         onClose={() => setSelectedStudent(null)}
       />
     </PageContainer>

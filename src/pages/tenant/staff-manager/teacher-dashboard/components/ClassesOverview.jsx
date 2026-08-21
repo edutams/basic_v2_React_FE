@@ -44,7 +44,8 @@ function ClassCard({ cls, idx }) {
 
   const isSubject = cls.isSubject;
   const statVal = isSubject ? cls.performance : cls.attendance;
-  const statNum = parseInt(statVal, 10) || (isSubject ? 88 : 92);
+  const statNum = parseInt(statVal, 10) || 0;
+  const displayText = `${statNum}%`;
   const statLabel = isSubject ? "Class Avg" : "Attendance";
 
   const handleMenuOpen = (e) => {
@@ -167,7 +168,7 @@ function ClassCard({ cls, idx }) {
                   />
                 </Box>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
-                  {statNum}%
+                  {displayText}
                 </Typography>
               </Stack>
               <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>

@@ -48,7 +48,7 @@ const initialStats = [
   },
   {
     id: "attendance",
-    value: "92%",
+    value: "0%",
     label: "Overall Attendance",
     sub: "This Term",
     icon: CheckCircleOutlinedIcon,
@@ -56,7 +56,6 @@ const initialStats = [
     iconBg: "#dcfce7",
     cardBg: "#f0fdf4",
     borderColor: "#16a34a",
-    trend: { direction: "up", value: "5.2%" },
   },
   {
     id: "score",
@@ -87,41 +86,49 @@ const initialStats = [
 export default function StatCards() {
   const [selectedStat, setSelectedStat] = useState(null);
   const [totalStudents, setTotalStudents] = useState("0");
-  const [loadingStudents, setLoadingStudents] = useState(true);
+  const [overallAttendance, setOverallAttendance] = useState("0%");
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchTotalStudents = async () => {
+    const fetchTeacherStats = async () => {
       try {
-        setLoadingStudents(true);
+        setLoadingStats(true);
         const res = await tenantApi.get("/allocations/my-allocations");
         const payload = res?.data?.data || res?.data || {};
 
         const count = payload.total_students !== undefined ? Number(payload.total_students) : 0;
+        const attendanceVal = payload.overall_attendance || "0%";
 
         if (isMounted) {
           setTotalStudents(String(count));
+          setOverallAttendance(String(attendanceVal));
         }
       } catch (err) {
-        console.warn("Failed to fetch teacher total student count:", err);
-        if (isMounted) setTotalStudents("0");
+        console.warn("Failed to fetch teacher stats:", err);
+        if (isMounted) {
+          setTotalStudents("0");
+          setOverallAttendance("0%");
+        }
       } finally {
-        if (isMounted) setLoadingStudents(false);
+        if (isMounted) setLoadingStats(false);
       }
     };
 
-    fetchTotalStudents();
+    fetchTeacherStats();
     return () => {
       isMounted = false;
     };
   }, []);
 
   const statsList = useMemo(() => {
-    return initialStats.map((item) =>
-      item.id === "students" ? { ...item, value: totalStudents } : item
-    );
-  }, [totalStudents]);
+    return initialStats.map((item) => {
+      if (item.id === "students") return { ...item, value: totalStudents };
+      if (item.id === "attendance") return { ...item, value: overallAttendance };
+      return item;
+    });
+  }, [totalStudents, overallAttendance]);
 
   return (
     <>
@@ -155,7 +162,7 @@ export default function StatCards() {
             const Icon = stat.icon;
             const TrendIcon = stat.trend?.direction === "up" ? ArrowUpwardIcon : ArrowDownwardIcon;
             const trendColor = stat.trend?.direction === "up" ? "success.main" : "error.main";
-            const isLoadingVal = stat.id === "students" && loadingStudents;
+            const isLoadingVal = (stat.id === "students" || stat.id === "attendance") && loadingStats;
 
             return (
               <Box key={stat.id} sx={{ minWidth: 0, height: "100%" }}>

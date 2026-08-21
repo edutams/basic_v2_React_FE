@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -28,6 +28,9 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -40,8 +43,10 @@ import {
   Visibility as ViewIcon,
   Refresh as RequeryIcon,
   ReceiptLong as ReceiptLongIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
+import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 /**
  * Summary stat card used inside the student detail modal.
@@ -118,14 +123,14 @@ const StatusBadge = ({ status }) => {
 /**
  * StudentDetailModal — a large dialog that fetches and displays all payment
  * details for a specific learner: invoices, payment history, and summary stats.
+ * Includes its own session term dropdown for filtering.
  *
  * Props:
  *   open            – boolean
  *   student         – { user_id, name, admission_no, class_name, avatar } from search results
- *   sessionTermId   – currently selected session_term_id from the dashboard
  *   onClose         – close handler
  */
-const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
+const StudentDetailModal = ({ open, student, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -144,7 +149,61 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
   const [activeTx, setActiveTx] = useState(null);
   const [checkingStatusId, setCheckingStatusId] = useState(null);
 
-  // Fetch student detail when modal opens
+  // ── Session term dropdown (self-contained) ─────────────────
+  const [sessionTerms, setSessionTerms] = useState([]);
+  const [selectedSession, setSelectedSession] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [termsLoading, setTermsLoading] = useState(false);
+
+  // Resolve the numeric session_term_id from the two dropdown values
+  const sessionTermId = useMemo(() => {
+    if (!sessionTerms.length || !selectedSession || !selectedTerm) return '';
+    const match = sessionTerms.find(
+      (s) =>
+        s.session?.sesname === selectedSession &&
+        s.display_term?.display_name === selectedTerm,
+    );
+    return match ? String(match.id) : '';
+  }, [sessionTerms, selectedSession, selectedTerm]);
+
+  const sessions = useMemo(
+    () => [...new Set(sessionTerms.map((s) => s.session?.sesname).filter(Boolean))],
+    [sessionTerms],
+  );
+
+  const termsForSession = useMemo(
+    () =>
+      sessionTerms
+        .filter((s) => s.session?.sesname === selectedSession)
+        .map((s) => s.display_term?.display_name)
+        .filter(Boolean),
+    [sessionTerms, selectedSession],
+  );
+
+  // Fetch session terms when modal opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setTermsLoading(true);
+    fetchSessionTerms()
+      .then((res) => {
+        if (!cancelled && res?.status) {
+          const terms = res.data || [];
+          setSessionTerms(terms);
+          // Default to first session/term
+          if (terms.length > 0 && !selectedSession) {
+            const first = terms[0];
+            setSelectedSession(first.session?.sesname || '');
+            setSelectedTerm(first.display_term?.display_name || '');
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setTermsLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  // Fetch student detail when modal opens or session term changes
   useEffect(() => {
     if (!open || !student?.user_id) return;
 
@@ -185,6 +244,14 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
 
     return () => { cancelled = true; };
   }, [open, student?.user_id, sessionTermId]);
+
+  const handleSessionChange = (newSession) => {
+    setSelectedSession(newSession);
+    const firstTerm = sessionTerms.find(
+      (s) => s.session?.sesname === newSession,
+    )?.display_term?.display_name;
+    setSelectedTerm(firstTerm || '');
+  };
 
   // ── Transaction action handlers ──────────────────────────
   const handleRequery = async (tx) => {
@@ -277,9 +344,41 @@ const StudentDetailModal = ({ open, student, sessionTermId, onClose }) => {
           <Chip
             label={info.full_class || '—'}
             size="small"
-            sx={{ ml: 'auto', fontWeight: 700, bgcolor: '#EEF2FF', color: '#4338CA' }}
+            sx={{ fontWeight: 700, bgcolor: '#EEF2FF', color: '#4338CA' }}
           />
         )}
+        {/* ── Session / Term Filter Dropdown ─────────────────── */}
+        <Box sx={{ display: 'flex', gap: 1, ml: 'auto', alignItems: 'center' }}>
+          <FilterIcon sx={{ fontSize: 18, color: '#6B7280' }} />
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel sx={{ fontSize: '0.75rem' }}>Session</InputLabel>
+            <Select
+              value={selectedSession}
+              label="Session"
+              onChange={(e) => handleSessionChange(e.target.value)}
+              disabled={termsLoading}
+              sx={{ fontSize: '0.78rem' }}
+            >
+              {sessions.map((s) => (
+                <MenuItem key={s} value={s} sx={{ fontSize: '0.78rem' }}>{s}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel sx={{ fontSize: '0.75rem' }}>Term</InputLabel>
+            <Select
+              value={selectedTerm}
+              label="Term"
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              disabled={termsLoading || !selectedSession}
+              sx={{ fontSize: '0.78rem' }}
+            >
+              {termsForSession.map((t) => (
+                <MenuItem key={t} value={t} sx={{ fontSize: '0.78rem' }}>{t}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
       </DialogTitle>
 
       <DialogContent dividers sx={{ pt: 2 }}>

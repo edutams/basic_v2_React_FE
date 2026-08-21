@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip, FormControl, MenuItem, Select } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -119,8 +119,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               }}
             >
               {ward.name}
-            </Typography>
-<Typography
+            </Typography>            <Typography
               sx={{
                 fontSize: 11,
                 color: '#64748b',
@@ -128,9 +127,16 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
                 mt: 0.2,
               }}
             >
-              {ward.class}
-              {/* {ward.admissionNo && ` • ${ward.admissionNo}`} */}
-          {ward.age != null && ` • Age: ${ward.age} yrs`}
+              {ward.class && ward.class !== '—' ? (
+                <>
+                  {ward.class}
+                  {ward.age != null && ` • Age: ${ward.age} yrs`}
+                </>
+              ) : (
+                <Typography component="span" sx={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>
+                  Not yet added to class
+                </Typography>
+              )}
             </Typography>
             {/* {ward.session && (
                 <Typography
@@ -330,9 +336,6 @@ const MyWards = ({
   loading = false,
   selectedWard,
   onSelectWard,
-  sessionTerms = [],
-  selectedSessionTerm = '',
-  onSessionTermChange,
 }) => {
   const [startIndex, setStartIndex] = useState(0);
 
@@ -390,30 +393,6 @@ const MyWards = ({
               alignItems="center"
               sx={{ flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: 0.75 }}
             >
-              <FormControl size="small" sx={{ minWidth: { xs: 130, sm: 170 }, maxWidth: 230 }}>
-                <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => onSessionTermChange && onSessionTermChange(e.target.value)}
-                  sx={{
-                    borderRadius: '7px',
-                    fontSize: 11.5,
-                    fontWeight: 700,
-                    color: '#1e293b',
-                    bgcolor: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
-                  }}
-                  MenuProps={{ PaperProps: { sx: { maxHeight: 260 } } }}
-                >
-                  {sessionTerms.map((t) => (
-                    <MenuItem key={t.id} value={t.id} sx={{ fontSize: 12.5 }}>
-                      {t.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
               <IconButton
                 size="small"
                 onClick={handlePrev}

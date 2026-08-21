@@ -177,7 +177,7 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
                     )}
                     {student.class_name && (
                       <Chip
-                        label={student.class_name}
+                        label={ student.class_name}
                         size="small"
                         sx={{
                           height: 16,

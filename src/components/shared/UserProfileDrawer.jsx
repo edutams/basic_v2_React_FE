@@ -73,6 +73,7 @@ import {
 } from '@/utils/permissionGrouping';
 import aclApi from '@/api/tenant/acl/aclApi';
 import api from '@/api/landlord/landlord_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isLandlord = false }) => {
   const theme = useTheme();
@@ -723,12 +724,16 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
   const handleSavePassword = () => {
     setPasswordError('');
+    if (!passwordForm.current_password) {
+      setPasswordError('Please enter your current password.');
+      return;
+    }
     if (!passwordForm.new_password) {
       setPasswordError('Please enter a new password.');
       return;
     }
-    if (passwordForm.new_password.length < 6) {
-      setPasswordError('New password must be at least 6 characters long.');
+    if (passwordForm.new_password.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
       return;
     }
     if (passwordForm.new_password !== passwordForm.confirm_password) {
@@ -737,37 +742,36 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
 
     const targetId = targetUser?.id || targetUser?.user_id;
-    if (targetId) {
-      setSubmittingPassword(true);
-      const updatePromise = isLandlordView
-        ? api.post(`/v1/landlord/users/${targetId}/password`, {
+    setSubmittingPassword(true);
+
+    const updatePromise = isLandlordView
+      ? api.post(`/v1/landlord/users/${targetId}/password`, {
+          current_password: passwordForm.current_password,
           new_password: passwordForm.new_password,
+          confirm_password: passwordForm.confirm_password,
         })
-        : aclApi.changeSchoolUserPassword(targetId, {
-          new_password: passwordForm.new_password,
+      : tenantApi.put('/change_password', {
+          current_password: passwordForm.current_password,
+          password: passwordForm.new_password,
+          password_confirmation: passwordForm.confirm_password,
         });
 
-      updatePromise
-        .then(() => {
-          setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-          setPasswordError('');
-          setActiveModal(null);
-          showToast('Password changed successfully!');
-        })
-        .catch((err) => {
-          console.error('Failed to change password:', err);
-          const msg = err.response?.data?.message || 'Failed to update password. Please try again.';
-          setPasswordError(msg);
-          showToast(msg, 'error');
-        })
-        .finally(() => {
-          setSubmittingPassword(false);
-        });
-    } else {
-      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-      setActiveModal(null);
-      showToast('Password changed successfully!');
-    }
+    updatePromise
+      .then((res) => {
+        setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+        setPasswordError('');
+        setActiveModal(null);
+        showToast(res?.data?.message || 'Password changed successfully!');
+      })
+      .catch((err) => {
+        console.error('Failed to change password:', err);
+        const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to update password. Please try again.';
+        setPasswordError(msg);
+        showToast(msg, 'error');
+      })
+      .finally(() => {
+        setSubmittingPassword(false);
+      });
   };
 
   const renderBasicRow = (icon, label, value, copyableKey = null) => (
@@ -1414,6 +1418,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             </Alert>
           )}
           <Stack spacing={2}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Current Password"
+              type={showPasswords.current ? 'text' : 'password'}
+              value={passwordForm.current_password}
+              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              inputProps={{ autoComplete: 'current-password' }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}>
+                      {showPasswords.current ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
             <TextField
               fullWidth
               size="small"

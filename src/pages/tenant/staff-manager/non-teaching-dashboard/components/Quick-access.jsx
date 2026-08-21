@@ -14,6 +14,7 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+import ParentCard from "@/components/shared/ParentCard";
 
 const QuickAccess = ({
     onNavigate,
@@ -85,7 +86,7 @@ const QuickAccess = ({
     };
 
     return (
-        <Card
+        <ParentCard
             elevation={0}
             sx={{
                 width: "100%",
@@ -186,210 +187,204 @@ const QuickAccess = ({
                             placement="top"
                             arrow
                         >
-                        <ButtonBase
-                            onClick={() => handleCardClick(item)}
-                            sx={{
-                                display: "block",
-
-                                width: "100%",
-
-                                textAlign: "left",
-
-                                borderRadius: "7px",
-
-                                overflow: "hidden",
-                            }}
-                        >
-
-                            {/* =================================================
-                                INDIVIDUAL QUICK ACCESS CARD
-                            ================================================= */}
-
-                            <Box
+                            <ButtonBase
+                                onClick={() => handleCardClick(item)}
                                 sx={{
+                                    display: "block",
+
                                     width: "100%",
 
-                                    minHeight: {
-                                        xs: 64,
-                                        sm: 68,
-                                        md: 70,
-                                    },
-
-                                    display: "flex",
-
-                                    alignItems: "center",
-
-                                    gap: {
-                                        xs: 0.9,
-                                        sm: 1,
-                                    },
-
-                                    px: {
-                                        xs: 1,
-                                        sm: 1.15,
-                                        md: 1.2,
-                                    },
-
-                                    py: {
-                                        xs: 0.8,
-                                        sm: 0.85,
-                                        md: 0.9,
-                                    },
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | KEEP THE COLORED BORDER
-                                    |--------------------------------------------------------------------------
-                                    */
-
-                                    border: `1px solid ${item.iconColor}`,
+                                    textAlign: "left",
 
                                     borderRadius: "7px",
 
-                                    backgroundColor: "#ffffff",
-
-                                    boxSizing: "border-box",
-
-                                    transition: "all 0.18s ease",
-
-                                    "&:hover": {
-                                        backgroundColor:
-                                            item.iconBackground,
-
-                                        transform: "translateY(-1px)",
-
-                                        boxShadow:
-                                            "0 3px 8px rgba(15, 23, 42, 0.05)",
-                                    },
+                                    overflow: "hidden",
                                 }}
                             >
 
                                 {/* =================================================
-                                    ICON
-                                ================================================= */}
+                                INDIVIDUAL QUICK ACCESS CARD
+                            ================================================= */}
 
                                 <Box
                                     sx={{
-                                        width: {
-                                            xs: 34,
-                                            sm: 36,
-                                            md: 38,
+                                        width: "100%",
+
+                                        minHeight: {
+                                            xs: 64,
+                                            sm: 68,
+                                            md: 70,
                                         },
-
-                                        height: {
-                                            xs: 34,
-                                            sm: 36,
-                                            md: 38,
-                                        },
-
-                                        minWidth: {
-                                            xs: 34,
-                                            sm: 36,
-                                            md: 38,
-                                        },
-
-                                        borderRadius: "8px",
-
-                                        backgroundColor:
-                                            item.iconBackground,
-
-                                        color: item.iconColor,
 
                                         display: "flex",
 
                                         alignItems: "center",
 
-                                        justifyContent: "center",
+                                        gap: {
+                                            xs: 0.9,
+                                            sm: 1,
+                                        },
 
-                                        "& svg": {
-                                            fontSize: {
-                                                xs: 19,
-                                                sm: 20,
-                                                md: 21,
-                                            },
+                                        px: {
+                                            xs: 1,
+                                            sm: 1.15,
+                                            md: 1.2,
+                                        },
+
+                                        py: {
+                                            xs: 0.8,
+                                            sm: 0.85,
+                                            md: 0.9,
+                                        },
+
+                                        border: "none",
+
+                                        borderRadius: "8px",
+
+                                        backgroundColor: item.iconBackground,
+
+                                        boxSizing: "border-box",
+
+                                        transition: "all 0.18s ease",
+
+                                        "&:hover": {
+                                            backgroundColor: item.iconBackground,
+
+                                            transform: "translateY(-2px)",
+
+                                            boxShadow:
+                                                "0 4px 12px rgba(15, 23, 42, 0.08)",
                                         },
                                     }}
                                 >
-                                    {item.icon}
-                                </Box>
+
+                                    {/* =================================================
+                                    ICON
+                                ================================================= */}
+
+                                    <Box
+                                        sx={{
+                                            width: {
+                                                xs: 34,
+                                                sm: 36,
+                                                md: 38,
+                                            },
+
+                                            height: {
+                                                xs: 34,
+                                                sm: 36,
+                                                md: 38,
+                                            },
+
+                                            minWidth: {
+                                                xs: 34,
+                                                sm: 36,
+                                                md: 38,
+                                            },
+
+                                            borderRadius: "8px",
+
+                                            backgroundColor: "#ffffff",
+
+                                            color: item.iconColor,
+
+                                            display: "flex",
+
+                                            alignItems: "center",
+
+                                            justifyContent: "center",
+
+                                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+
+                                            "& svg": {
+                                                fontSize: {
+                                                    xs: 19,
+                                                    sm: 20,
+                                                    md: 21,
+                                                },
+                                            },
+                                        }}
+                                    >
+                                        {item.icon}
+                                    </Box>
 
 
-                                {/* =================================================
+                                    {/* =================================================
                                     TEXT CONTENT
                                 ================================================= */}
 
-                                <Box
-                                    sx={{
-                                        flex: 1,
-
-                                        minWidth: 0,
-
-                                        overflow: "hidden",
-                                    }}
-                                >
-
-                                    {/* Title */}
-
-                                    <Typography
-                                        component="div"
+                                    <Box
                                         sx={{
-                                            fontSize: {
-                                                xs: "11px",
-                                                sm: "11.5px",
-                                                md: "12px",
-                                            },
+                                            flex: 1,
 
-                                            fontWeight: 600,
-
-                                            color: "#182230",
-
-                                            lineHeight: 1.25,
-
-                                            mb: 0.3,
-
-                                            whiteSpace: "nowrap",
+                                            minWidth: 0,
 
                                             overflow: "hidden",
-
-                                            textOverflow: "ellipsis",
                                         }}
                                     >
-                                        {item.title}
-                                    </Typography>
+
+                                        {/* Title */}
+
+                                        <Typography
+                                            component="div"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "11px",
+                                                    sm: "11.5px",
+                                                    md: "12px",
+                                                },
+
+                                                fontWeight: 600,
+
+                                                color: "#182230",
+
+                                                lineHeight: 1.25,
+
+                                                mb: 0.3,
+
+                                                whiteSpace: "nowrap",
+
+                                                overflow: "hidden",
+
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {item.title}
+                                        </Typography>
 
 
-                                    {/* Description */}
+                                        {/* Description */}
 
-                                    <Typography
-                                        component="div"
-                                        sx={{
-                                            fontSize: {
-                                                xs: "9.5px",
-                                                sm: "10px",
-                                                md: "10.5px",
-                                            },
+                                        <Typography
+                                            component="div"
+                                            sx={{
+                                                fontSize: {
+                                                    xs: "9.5px",
+                                                    sm: "10px",
+                                                    md: "10.5px",
+                                                },
 
-                                            fontWeight: 400,
+                                                fontWeight: 400,
 
-                                            color: "#667085",
+                                                color: "#667085",
 
-                                            lineHeight: 1.25,
+                                                lineHeight: 1.25,
 
-                                            whiteSpace: "nowrap",
+                                                whiteSpace: "nowrap",
 
-                                            overflow: "hidden",
+                                                overflow: "hidden",
 
-                                            textOverflow: "ellipsis",
-                                        }}
-                                    >
-                                        {item.description}
-                                    </Typography>
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {item.description}
+                                        </Typography>
+
+                                    </Box>
 
                                 </Box>
 
-                            </Box>
-
-                        </ButtonBase>
+                            </ButtonBase>
 
                         </Tooltip>
 
@@ -398,7 +393,7 @@ const QuickAccess = ({
                 </Box>
 
             </CardContent>
-        </Card>
+        </ParentCard>
     );
 };
 

@@ -40,6 +40,7 @@ const iconMapper = {
   CreditCard: IconCreditCard,
   ReportAnalytics: IconChartPie,
   ChartBar: IconChartPie,
+  ChartPie: IconTimeline,
   FileInvoice: IconClipboardList,
   UsersPay: IconUsers,
   Package: IconBox,
@@ -87,7 +88,7 @@ const SchoolSidebarItems = () => {
         const formattedMenu = allModules.map((mod) => ({
           id: mod.title,
           title: mod.title,
-          icon: iconMapper[mod.icon] || IconCircle,
+          icon: iconMapper[mod.icon] || IconBox,
           href: mod.href || '#',
           children: processNestedModules(mod.subModules),
         }));

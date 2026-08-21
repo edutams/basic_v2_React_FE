@@ -200,8 +200,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       const weeksRes = await fetchWeeks(stId);
       if (weeksRes.status) {
         setWeeks(weeksRes.data);
-        if (weeksRes.stats && weeksRes.stats.remaining_school_days !== undefined) {
-          setSchoolDays(weeksRes.stats.remaining_school_days);
+        if (weeksRes.stats) {
+          setSchoolDays(weeksRes.stats.total_school_days);
         }
       }
     } catch (error) {
@@ -346,8 +346,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       });
       if (response.status) {
         setWeeks(response.data);
-        if (response.stats && response.stats.remaining_school_days !== undefined) {
-          setSchoolDays(response.stats.remaining_school_days);
+        if (response.stats) {
+          setSchoolDays(response.stats.total_school_days);
         }
 
         setAutoGenerateConfig((prev) => ({
@@ -388,8 +388,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       const response = await deleteWeek(activeSessionTermId, lastWeek.week_id);
       if (response.status) {
         setWeeks(response.data);
-        if (response.stats && response.stats.remaining_school_days !== undefined) {
-          setSchoolDays(response.stats.remaining_school_days);
+        if (response.stats) {
+          setSchoolDays(response.stats.total_school_days);
         }
         showSnackbar('Last week removed successfully', 'success');
       } else {

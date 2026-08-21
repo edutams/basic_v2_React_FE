@@ -14,11 +14,10 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Button
+  Button,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
 import ClassOutlinedIcon from "@mui/icons-material/ClassOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
@@ -42,7 +41,11 @@ function ClassCard({ cls, idx }) {
   const color = cls.color || preset.color;
   const trackColor = cls.trackColor || preset.trackColor;
   const iconBg = cls.iconBg || preset.iconBg;
-  const attendanceNum = parseInt(cls.attendance, 10) || 90;
+
+  const isSubject = cls.isSubject;
+  const statVal = isSubject ? cls.performance : cls.attendance;
+  const statNum = parseInt(statVal, 10) || (isSubject ? 88 : 92);
+  const statLabel = isSubject ? "Class Avg" : "Attendance";
 
   const handleMenuOpen = (e) => {
     e.stopPropagation();
@@ -139,7 +142,7 @@ function ClassCard({ cls, idx }) {
             {/* Vertical Divider */}
             <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#e2e8f0" }} />
 
-            {/* Attendance Column */}
+            {/* 2nd Stat Column: Performance for Subject Teacher vs Attendance for Class Teacher */}
             <Box sx={{ flex: 1, pl: 1 }}>
               <Stack direction="row" alignItems="center" spacing={0.75}>
                 <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
@@ -152,7 +155,7 @@ function ClassCard({ cls, idx }) {
                   />
                   <CircularProgress
                     variant="determinate"
-                    value={attendanceNum}
+                    value={statNum}
                     size={20}
                     thickness={5}
                     sx={{
@@ -164,11 +167,11 @@ function ClassCard({ cls, idx }) {
                   />
                 </Box>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
-                  {attendanceNum}%
+                  {statNum}%
                 </Typography>
               </Stack>
               <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
-                Attendance
+                {statLabel}
               </Typography>
             </Box>
           </Stack>
@@ -187,12 +190,14 @@ function ClassCard({ cls, idx }) {
           sx: { borderRadius: 2, minWidth: 160, mt: 0.5 },
         }}
       >
-        <MenuItem onClick={() => handleNavigate("/attendance-psychomotor")}>
-          <ListItemIcon>
-            <HowToRegOutlinedIcon fontSize="small" sx={{ color: "#0d9488" }} />
-          </ListItemIcon>
-          <ListItemText primary="Take Attendance" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
-        </MenuItem>
+        {!isSubject && (
+          <MenuItem onClick={() => handleNavigate("/attendance-psychomotor")}>
+            <ListItemIcon>
+              <HowToRegOutlinedIcon fontSize="small" sx={{ color: "#0d9488" }} />
+            </ListItemIcon>
+            <ListItemText primary="Take Attendance" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+          </MenuItem>
+        )}
         <MenuItem onClick={() => handleNavigate("/class-register")}>
           <ListItemIcon>
             <ClassOutlinedIcon fontSize="small" sx={{ color: "#2563eb" }} />
@@ -225,8 +230,12 @@ export default function ClassesOverview() {
         const res = await tenantApi.get("/allocations/my-allocations");
         const payload = res?.data?.data || res?.data || {};
 
-        const subjects = Array.isArray(payload.subject_allocations) ? payload.subject_allocations : [];
-        const classes = Array.isArray(payload.class_allocations) ? payload.class_allocations : [];
+        const rawSubjects = Array.isArray(payload.subject_allocations) ? payload.subject_allocations : [];
+        const rawClasses = Array.isArray(payload.class_allocations) ? payload.class_allocations : [];
+
+        // Mark subjects as subject allocations, and classes as class allocations
+        const subjects = rawSubjects.map((item) => ({ ...item, is_subject: true }));
+        const classes = rawClasses.map((item) => ({ ...item, is_subject: false }));
 
         const combined = [...subjects, ...classes];
 
@@ -244,10 +253,12 @@ export default function ClassesOverview() {
                   ? `${className} - ${armName}`
                   : className || armName || item.code || `Class ${index + 1}`;
 
+              const isSubject = Boolean(item.is_subject || item.subject_id || item.subject?.id);
+
               const subjectTitle =
                 item.subject?.subject_name ||
                 item.subject_name ||
-                (item.subject_id ? "Subject" : "Class Teacher");
+                (isSubject ? "Subject" : "Class Teacher");
 
               const studentCount =
                 item.student_count !== undefined && item.student_count !== null
@@ -262,8 +273,10 @@ export default function ClassesOverview() {
                 id: item.id || index,
                 code: fullClassName,
                 subject: subjectTitle,
+                isSubject: isSubject,
                 students: studentCount,
                 attendance: item.attendance || "92%",
+                performance: item.performance || "88%",
               };
             });
             setClassesList(mapped);
@@ -293,6 +306,7 @@ export default function ClassesOverview() {
         </Typography>
         <Button
           variant="contained"
+          onClick={() => navigate("/class-register")}
           sx={{
             fontSize: 12,
             fontWeight: 600,

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 import {
   Drawer,
   Box,
@@ -77,6 +78,9 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isLandlord = false }) => {
   const theme = useTheme();
+  const tenantAuth = useContext(TenantAuthContext);
+  const updateUser = tenantAuth?.updateUser;
+  const changePassword = tenantAuth?.changePassword;
 
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -169,6 +173,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
   });
 
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     setCurrentUser(user);
@@ -639,50 +644,81 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const newFullName = `${editForm.fname} ${editForm.mname ? editForm.mname + ' ' : ''}${editForm.lname}`.trim();
-
-    const updatedObj = {
-      fname: editForm.fname,
-      mname: editForm.mname,
-      lname: editForm.lname,
-      email: editForm.email,
-      phone: editForm.phone,
-      dob: editForm.dob,
-      sex: editForm.sex,
-      address: editForm.address,
-      full_name: newFullName,
-    };
-
-    setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
-    setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
-    setActiveModal(null);
-
     const targetId = targetUser?.id || targetUser?.user_id;
-    if (targetId) {
-      const updatePromise = isLandlordView
-        ? api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
-        : aclApi.updateSchoolUserProfile(targetId, editForm);
 
-      updatePromise
+    if (isLandlordView) {
+      api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
         .then((res) => {
-          if (res?.data) {
-            setProfileData(res.data?.data || res.data);
-          }
+          if (res?.data) setProfileData(res.data?.data || res.data);
           showToast('Profile details updated successfully!');
+          setActiveModal(null);
         })
         .catch((err) => {
           console.error('Failed to save profile changes to database:', err);
           showToast('Failed to save profile changes on server', 'error');
         });
-    } else {
-      showToast('Profile details updated successfully!');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('fname', editForm.fname || '');
+    if (editForm.mname) payload.append('mname', editForm.mname);
+    payload.append('lname', editForm.lname || '');
+    payload.append('email', editForm.email || '');
+    payload.append('phone', editForm.phone || '');
+    payload.append('address', editForm.address || '');
+    if (editForm.dob) payload.append('dob', editForm.dob);
+    if (editForm.sex) payload.append('sex', editForm.sex);
+
+    try {
+      let updatedUser = null;
+      let msg = 'Profile details updated successfully!';
+
+      if (updateUser) {
+        const result = await updateUser(payload, true);
+        if (result?.success) {
+          updatedUser = result.user;
+        } else {
+          showToast(result?.error || 'Update failed', 'error');
+          return;
+        }
+      } else {
+        const res = await tenantApi.post('/update_user', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        updatedUser = res.data?.data || res.data?.user;
+        msg = res.data?.message || msg;
+      }
+
+      const updatedObj = {
+        fname: editForm.fname,
+        mname: editForm.mname,
+        lname: editForm.lname,
+        email: editForm.email,
+        phone: editForm.phone,
+        dob: editForm.dob,
+        sex: editForm.sex,
+        address: editForm.address,
+        full_name: newFullName,
+        ...(updatedUser || {}),
+      };
+
+      setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
+      setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
+      setActiveModal(null);
+      showToast(msg);
+    } catch (err) {
+      console.error('Failed to save profile changes:', err);
+      showToast(err.response?.data?.error || err.response?.data?.message || 'Failed to save profile changes', 'error');
     }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -691,31 +727,63 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
   };
 
-  const handleSavePicture = () => {
-    if (imagePreview) {
-      setProfileData((prev) => ({ ...(prev || {}), avatar: imagePreview }));
-      setCurrentUser((prev) => ({ ...(prev || {}), avatar: imagePreview }));
-      setActiveModal(null);
+  const handleSavePicture = async () => {
+    if (!imageFile && !imagePreview) return;
 
-      const targetId = targetUser?.id || targetUser?.user_id;
-      if (targetId) {
-        const updatePromise = isLandlordView
-          ? api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
-          : aclApi.updateSchoolUserProfile(targetId, { avatar: imagePreview });
+    const targetId = targetUser?.id || targetUser?.user_id;
 
-        updatePromise
-          .then((res) => {
-            if (res?.data) setProfileData(res.data?.data || res.data);
-            showToast('Profile picture updated successfully!');
-          })
-          .catch((err) => {
-            console.error('Failed to update picture on server:', err);
-            showToast('Failed to update picture on server', 'error');
-          });
+    if (isLandlordView) {
+      api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
+        .then((res) => {
+          if (res?.data) setProfileData(res.data?.data || res.data);
+          showToast('Profile picture updated successfully!');
+          setActiveModal(null);
+          setImageFile(null);
+          setImagePreview(null);
+        })
+        .catch((err) => {
+          console.error('Failed to update picture on server:', err);
+          showToast('Failed to update picture on server', 'error');
+        });
+      return;
+    }
+
+    const payload = new FormData();
+    if (imageFile) {
+      payload.append('avatar', imageFile);
+    }
+
+    try {
+      let updatedUser = null;
+      let msg = 'Profile picture updated successfully!';
+
+      if (updateUser) {
+        const result = await updateUser(payload, true);
+        if (result?.success) {
+          updatedUser = result.user;
+        } else {
+          showToast(result?.error || 'Failed to update profile picture', 'error');
+          return;
+        }
       } else {
-        showToast('Profile picture updated successfully!');
+        const res = await tenantApi.post('/update_user', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        updatedUser = res.data?.data || res.data?.user;
+        msg = res.data?.message || msg;
       }
+
+      if (updatedUser) {
+        setProfileData((prev) => ({ ...(prev || {}), ...updatedUser }));
+        setCurrentUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+      }
+      showToast(msg);
+      setActiveModal(null);
+      setImageFile(null);
       setImagePreview(null);
+    } catch (err) {
+      console.error('Failed to update profile picture:', err);
+      showToast(err.response?.data?.error || 'Failed to update profile picture', 'error');
     }
   };
 

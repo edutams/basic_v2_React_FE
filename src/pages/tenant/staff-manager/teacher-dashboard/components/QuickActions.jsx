@@ -1,3 +1,5 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Stack, Typography, ButtonBase } from "@mui/material";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
@@ -5,7 +7,6 @@ import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 
-// Mock data — wire each action's onClick up to real handlers/routes later.
 const actions = [
   {
     id: "attendance",
@@ -14,6 +15,7 @@ const actions = [
     icon: GroupAddOutlinedIcon,
     color: "#0d9488",
     bg: "#ccfbf1",
+    path: "/attendance-psychomotor",
   },
   {
     id: "assignment",
@@ -22,6 +24,7 @@ const actions = [
     icon: AssignmentOutlinedIcon,
     color: "#7c3aed",
     bg: "#ede9fe",
+    path: "/",
   },
   {
     id: "quiz",
@@ -30,6 +33,7 @@ const actions = [
     icon: HelpOutlineOutlinedIcon,
     color: "#ea580c",
     bg: "#ffedd5",
+    path: "/",
   },
   {
     id: "upload",
@@ -38,6 +42,7 @@ const actions = [
     icon: CloudUploadOutlinedIcon,
     color: "#2563eb",
     bg: "#dbeafe",
+    path: "/",
   },
   {
     id: "timetable",
@@ -46,10 +51,19 @@ const actions = [
     icon: CalendarMonthOutlinedIcon,
     color: "#334155",
     bg: "#e2e8f0",
+    path: "/",
   },
 ];
 
 export default function QuickActions() {
+  const navigate = useNavigate();
+
+  const handleActionClick = (path) => {
+    if (path) {
+      navigate(path);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -65,7 +79,9 @@ export default function QuickActions() {
         },
       }}
     >
-      <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1.5, letterSpacing: -0.2 }}>Quick Actions</Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1.5, letterSpacing: -0.2 }}>
+        Quick Actions
+      </Typography>
 
       <Box
         sx={{
@@ -83,9 +99,7 @@ export default function QuickActions() {
           return (
             <Box key={action.id} sx={{ minWidth: 0, height: "100%" }}>
               <ButtonBase
-                onClick={() => {
-                  // TODO: hook up navigation / handler for `${action.id}`
-                }}
+                onClick={() => handleActionClick(action.path)}
                 sx={{
                   width: "100%",
                   height: "100%",

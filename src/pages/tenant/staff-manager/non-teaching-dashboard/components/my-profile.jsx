@@ -343,6 +343,7 @@ const MyProfile = ({
           <Button
             onClick={handleView}
             size="small"
+            variant="contained"
             endIcon={
               <ArrowForwardIcon
                 sx={{
@@ -477,7 +478,7 @@ const MyProfile = ({
               key={index}
               sx={{
                 display: "flex",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: {
                   xs: 1.2,
                   sm: 1.5,
@@ -496,6 +497,7 @@ const MyProfile = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  mt: 0.2,
                   "& svg": {
                     fontSize: {
                       xs: 15,
@@ -524,6 +526,7 @@ const MyProfile = ({
                   },
                   fontWeight: 600,
                   color: "#475569",
+                  pt: 0.3,
                 }}
               >
                 {detail.label}
@@ -540,13 +543,10 @@ const MyProfile = ({
                   },
                   fontWeight: 600,
                   color: "#0F172A",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: {
-                    xs: "normal",
-                    sm: "nowrap",
-                  },
+                  whiteSpace: "normal",
                   wordBreak: "break-word",
+                  lineHeight: 1.4,
+                  pt: 0.3,
                 }}
               >
                 {detail.value}
@@ -555,25 +555,10 @@ const MyProfile = ({
           ))}
         </Box>
 
-        {/* DIVIDER */}
-        {/* <Divider
-          sx={{
-            mt: {
-              xs: 1,
-              md: 2,
-            },
-            mb: {
-              xs: 2,
-              md: 2.5,
-            },
-            borderColor: "#edf0f2",
-          }}
-        /> */}
-
         {/* EDIT PROFILE BUTTON */}
         <Button
           fullWidth
-          variant="outlined"
+          variant="contained"
           onClick={handleEdit}
           startIcon={
             <EditOutlinedIcon

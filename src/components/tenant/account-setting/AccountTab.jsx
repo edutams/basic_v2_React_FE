@@ -113,7 +113,7 @@ const AccountTab = () => {
     try {
       const result = await updateUser(payload, true);
       notify.success(result.message || 'Profile photo updated successfully!', 'Success');
-      
+
       const newAvatar = result.user?.avatar || result.data?.avatar || user?.avatar;
       if (newAvatar) {
         setSavedAvatarUrl(newAvatar);
@@ -246,8 +246,8 @@ const AccountTab = () => {
                       imageFile
                         ? URL.createObjectURL(imageFile)
                         : (savedAvatarUrl || formData.avatar || user?.avatar)
-                        ? `${savedAvatarUrl || formData.avatar || user?.avatar}?t=${Date.now()}`
-                        : ''
+                          ? `${savedAvatarUrl || formData.avatar || user?.avatar}?t=${Date.now()}`
+                          : ''
                     }
                     alt={user?.name}
                     sx={{
@@ -375,7 +375,8 @@ const AccountTab = () => {
                   onChange={handleProfileChange}
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={1}
+                  maxRows={2}
                   disabled={!isTenantSubdomain}
                   placeholder="Enter your street address"
                 />

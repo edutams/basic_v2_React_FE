@@ -18,7 +18,6 @@ import {
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
 import ClassOutlinedIcon from "@mui/icons-material/ClassOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
@@ -26,11 +25,11 @@ import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import tenantApi from "@/api/tenant/tenant_api";
 
 const colorPresets = [
-  { color: "#16a34a", cardBg: "#f0fdf4", trackColor: "#dcfce7", iconBg: "#22c55e", symbol: "√x" },
-  { color: "#2563eb", cardBg: "#f0f9ff", trackColor: "#dbeafe", iconBg: "#3b82f6", symbol: "x²" },
-  { color: "#7c3aed", cardBg: "#f5f3ff", trackColor: "#ede9fe", iconBg: "#8b5cf6", symbol: "f(x)" },
-  { color: "#ea580c", cardBg: "#fff7ed", trackColor: "#ffedd5", iconBg: "#f97316", symbol: "π" },
-  { color: "#0d9488", cardBg: "#ccfbf1", trackColor: "#99f6e4", iconBg: "#14b8a6", symbol: "∑" },
+  { color: "#16a34a", bg: "#f0fdf4", trackColor: "#dcfce7", iconBg: "#22c55e" },
+  { color: "#2563eb", bg: "#f0f9ff", trackColor: "#dbeafe", iconBg: "#3b82f6" },
+  { color: "#7c3aed", bg: "#f5f3ff", trackColor: "#ede9fe", iconBg: "#8b5cf6" },
+  { color: "#ea580c", bg: "#fff7ed", trackColor: "#ffedd5", iconBg: "#f97316" },
+  { color: "#0d9488", bg: "#ccfbf1", trackColor: "#99f6e4", iconBg: "#14b8a6" },
 ];
 
 function ClassCard({ cls, idx }) {
@@ -42,7 +41,6 @@ function ClassCard({ cls, idx }) {
   const color = cls.color || preset.color;
   const trackColor = cls.trackColor || preset.trackColor;
   const iconBg = cls.iconBg || preset.iconBg;
-  const symbol = cls.symbol !== undefined ? cls.symbol : preset.symbol;
   const attendanceNum = parseInt(cls.attendance, 10) || 90;
 
   const handleMenuOpen = (e) => {
@@ -64,7 +62,6 @@ function ClassCard({ cls, idx }) {
     <>
       <Card
         elevation={0}
-        onClick={() => handleNavigate("/class-register")}
         sx={{
           borderRadius: "14px",
           height: "100%",
@@ -73,7 +70,6 @@ function ClassCard({ cls, idx }) {
           borderColor: "#cbd5e1",
           boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
           transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
-          cursor: "pointer",
           "&:hover": {
             transform: "translateY(-3px)",
             borderColor: "#94a3b8",
@@ -95,12 +91,10 @@ function ClassCard({ cls, idx }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: symbol ? 16 : 0,
-                  fontWeight: 700,
                   flexShrink: 0,
                 }}
               >
-                {symbol ?? <BarChartRoundedIcon sx={{ fontSize: 24 }} />}
+                <MenuBookOutlinedIcon sx={{ fontSize: 22 }} />
               </Box>
               <Box>
                 <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#1e293b", lineHeight: 1.2 }}>
@@ -252,13 +246,22 @@ export default function ClassesOverview() {
               const subjectTitle =
                 item.subject?.subject_name ||
                 item.subject_name ||
-                (item.subject_id ? "Subject" : "Form Teacher");
+                (item.subject_id ? "Subject" : "Class Teacher");
+
+              const studentCount =
+                item.student_count !== undefined && item.student_count !== null
+                  ? Number(item.student_count)
+                  : item.students_count !== undefined
+                    ? Number(item.students_count)
+                    : item.students !== undefined
+                      ? Number(item.students)
+                      : 0;
 
               return {
                 id: item.id || index,
                 code: fullClassName,
                 subject: subjectTitle,
-                students: item.student_count || item.students_count || item.students || 30,
+                students: studentCount,
                 attendance: item.attendance || "92%",
               };
             });

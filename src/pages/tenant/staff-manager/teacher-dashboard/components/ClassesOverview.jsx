@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -8,181 +9,278 @@ import {
   CircularProgress,
   Stack,
   Divider,
+  Paper,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
+import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
+import ClassOutlinedIcon from "@mui/icons-material/ClassOutlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 
-const classesData = [
-  {
-    id: "ss2a",
-    code: "SS2A",
-    subject: "Mathematics",
-    students: 32,
-    attendance: "93%",
-    color: "#16a34a",
-    cardBg: "#f0fdf4",
-    trackColor: "#dcfce7",
-    iconBg: "#22c55e",
-    symbol: "√x",
-  },
-  {
-    id: "ss2b",
-    code: "SS2B",
-    subject: "Mathematics",
-    students: 30,
-    attendance: "90%",
-    color: "#2563eb",
-    cardBg: "#f0f9ff",
-    trackColor: "#dbeafe",
-    iconBg: "#3b82f6",
-    symbol: "x²",
-  },
-  {
-    id: "ss1c",
-    code: "SS1C",
-    subject: "Mathematics",
-    students: 33,
-    attendance: "91%",
-    color: "#7c3aed",
-    cardBg: "#f5f3ff",
-    trackColor: "#ede9fe",
-    iconBg: "#8b5cf6",
-    symbol: "f(x)",
-  },
-  {
-    id: "ss1a",
-    code: "SS1A",
-    subject: "Mathematics",
-    students: 33,
-    attendance: "94%",
-    color: "#ea580c",
-    cardBg: "#fff7ed",
-    trackColor: "#ffedd5",
-    iconBg: "#f97316",
-    symbol: null,
-  },
+import tenantApi from "@/api/tenant/tenant_api";
+
+const colorPresets = [
+  { color: "#16a34a", cardBg: "#f0fdf4", trackColor: "#dcfce7", iconBg: "#22c55e", symbol: "√x" },
+  { color: "#2563eb", cardBg: "#f0f9ff", trackColor: "#dbeafe", iconBg: "#3b82f6", symbol: "x²" },
+  { color: "#7c3aed", cardBg: "#f5f3ff", trackColor: "#ede9fe", iconBg: "#8b5cf6", symbol: "f(x)" },
+  { color: "#ea580c", cardBg: "#fff7ed", trackColor: "#ffedd5", iconBg: "#f97316", symbol: "π" },
+  { color: "#0d9488", cardBg: "#ccfbf1", trackColor: "#99f6e4", iconBg: "#14b8a6", symbol: "∑" },
 ];
 
-function ClassCard({ cls }) {
-  const attendanceNum = parseInt(cls.attendance, 10) || cls.attendance;
+function ClassCard({ cls, idx }) {
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const preset = colorPresets[idx % colorPresets.length];
+  const color = cls.color || preset.color;
+  const trackColor = cls.trackColor || preset.trackColor;
+  const iconBg = cls.iconBg || preset.iconBg;
+  const symbol = cls.symbol !== undefined ? cls.symbol : preset.symbol;
+  const attendanceNum = parseInt(cls.attendance, 10) || 90;
+
+  const handleMenuOpen = (e) => {
+    e.stopPropagation();
+    setAnchorEl(e.currentTarget);
+  };
+
+  const handleMenuClose = (e) => {
+    if (e) e.stopPropagation();
+    setAnchorEl(null);
+  };
+
+  const handleNavigate = (path) => {
+    handleMenuClose();
+    if (path) navigate(path);
+  };
 
   return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: "14px",
-        height: "100%",
-        bgcolor: "#ffffff",
-        border: "1px solid",
-        borderColor: "#cbd5e1",
-        boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
-        transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
-        "&:hover": {
-          transform: "translateY(-3px)",
-          borderColor: "#94a3b8",
-          boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)",
-        },
-      }}
-    >
-      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-        {/* Top Header */}
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: "10px",
-                bgcolor: cls.iconBg || cls.color,
-                color: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: cls.symbol ? 16 : 0,
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
+    <>
+      <Card
+        elevation={0}
+        onClick={() => handleNavigate("/class-register")}
+        sx={{
+          borderRadius: "14px",
+          height: "100%",
+          bgcolor: "#ffffff",
+          border: "1px solid",
+          borderColor: "#cbd5e1",
+          boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)",
+          transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
+          cursor: "pointer",
+          "&:hover": {
+            transform: "translateY(-3px)",
+            borderColor: "#94a3b8",
+            boxShadow: "0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)",
+          },
+        }}
+      >
+        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+          {/* Top Header */}
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "10px",
+                  bgcolor: iconBg,
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: symbol ? 16 : 0,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                {symbol ?? <BarChartRoundedIcon sx={{ fontSize: 24 }} />}
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#1e293b", lineHeight: 1.2 }}>
+                  {cls.code || cls.class_name || "Class"}
+                </Typography>
+                <Typography sx={{ fontSize: 12.5, color: "#64748b", mt: 0.25, fontWeight: 500 }}>
+                  {cls.subject || cls.subject_name || "Subject"}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <IconButton
+              size="small"
+              onClick={handleMenuOpen}
+              sx={{ mt: -0.5, mr: -0.5, color: "#64748b", "&:hover": { bgcolor: "#f1f5f9" } }}
             >
-              {cls.symbol ?? <BarChartRoundedIcon sx={{ fontSize: 24 }} />}
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#1e293b", lineHeight: 1.2 }}>
-                {cls.code}
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+
+          {/* Bottom Stat Row */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mt: 2.5, pt: 1.75, borderTop: "1px solid", borderTopColor: "#f1f5f9" }}
+          >
+            {/* Students Column */}
+            <Box sx={{ flex: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <PeopleOutlineIcon sx={{ fontSize: 20, color: "#1e1b4b" }} />
+                <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
+                  {cls.students ?? cls.student_count ?? 0}
+                </Typography>
+              </Stack>
+              <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
+                Students
               </Typography>
-              <Typography sx={{ fontSize: 12.5, color: "#64748b", mt: 0.25, fontWeight: 500 }}>
-                {cls.subject}
+            </Box>
+
+            {/* Vertical Divider */}
+            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#e2e8f0" }} />
+
+            {/* Attendance Column */}
+            <Box sx={{ flex: 1, pl: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+                  <CircularProgress
+                    variant="determinate"
+                    value={100}
+                    size={20}
+                    thickness={5}
+                    sx={{ color: trackColor }}
+                  />
+                  <CircularProgress
+                    variant="determinate"
+                    value={attendanceNum}
+                    size={20}
+                    thickness={5}
+                    sx={{
+                      color: color,
+                      position: "absolute",
+                      left: 0,
+                      "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
+                    }}
+                  />
+                </Box>
+                <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
+                  {attendanceNum}%
+                </Typography>
+              </Stack>
+              <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
+                Attendance
               </Typography>
             </Box>
           </Stack>
-          <IconButton size="small" sx={{ mt: -0.5, mr: -0.5, color: "#64748b" }}>
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-        </Stack>
+        </CardContent>
+      </Card>
 
-        {/* Bottom Stat Row */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ mt: 2.5, pt: 1.75, borderTop: "1px solid", borderTopColor: "#f1f5f9" }}
-        >
-          {/* Students Column */}
-          <Box sx={{ flex: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <PeopleOutlineIcon sx={{ fontSize: 20, color: "#1e1b4b" }} />
-              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
-                {cls.students}
-              </Typography>
-            </Stack>
-            <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
-              Students
-            </Typography>
-          </Box>
-
-          {/* Vertical Divider */}
-          <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: "#e2e8f0" }} />
-
-          {/* Attendance Column */}
-          <Box sx={{ flex: 1, pl: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <Box sx={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-                <CircularProgress
-                  variant="determinate"
-                  value={100}
-                  size={20}
-                  thickness={5}
-                  sx={{ color: cls.trackColor || "#e2e8f0" }}
-                />
-                <CircularProgress
-                  variant="determinate"
-                  value={attendanceNum}
-                  size={20}
-                  thickness={5}
-                  sx={{
-                    color: cls.color,
-                    position: "absolute",
-                    left: 0,
-                    "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
-                  }}
-                />
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: 17, color: "#0f172a", lineHeight: 1 }}>
-                {attendanceNum}%
-              </Typography>
-            </Stack>
-            <Typography sx={{ fontSize: 11, color: "#64748b", fontWeight: 500, mt: 0.5, pl: 3.5 }}>
-              Attendance
-            </Typography>
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+      {/* Class Action Options Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={menuOpen}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        PaperProps={{
+          elevation: 3,
+          sx: { borderRadius: 2, minWidth: 160, mt: 0.5 },
+        }}
+      >
+        <MenuItem onClick={() => handleNavigate("/attendance-psychomotor")}>
+          <ListItemIcon>
+            <HowToRegOutlinedIcon fontSize="small" sx={{ color: "#0d9488" }} />
+          </ListItemIcon>
+          <ListItemText primary="Take Attendance" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+        </MenuItem>
+        <MenuItem onClick={() => handleNavigate("/class-register")}>
+          <ListItemIcon>
+            <ClassOutlinedIcon fontSize="small" sx={{ color: "#2563eb" }} />
+          </ListItemIcon>
+          <ListItemText primary="Class Register" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+        </MenuItem>
+        <MenuItem onClick={() => handleNavigate("/subject-registration")}>
+          <ListItemIcon>
+            <MenuBookOutlinedIcon fontSize="small" sx={{ color: "#7c3aed" }} />
+          </ListItemIcon>
+          <ListItemText primary="Subject Setup" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+        </MenuItem>
+      </Menu>
+    </>
   );
 }
 
 export default function ClassesOverview() {
+  const navigate = useNavigate();
+  const [classesList, setClassesList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchMyAllocations = async () => {
+      try {
+        setLoading(true);
+
+        const res = await tenantApi.get("/allocations/my-allocations");
+        const payload = res?.data?.data || res?.data || {};
+
+        const subjects = Array.isArray(payload.subject_allocations) ? payload.subject_allocations : [];
+        const classes = Array.isArray(payload.class_allocations) ? payload.class_allocations : [];
+
+        const combined = [...subjects, ...classes];
+
+        if (isMounted) {
+          if (combined.length > 0) {
+            const mapped = combined.map((item, index) => {
+              const classArm = item.class_arm || item.classArm;
+              const className =
+                classArm?.programme_class?.class?.class_name ||
+                classArm?.programmeClass?.class?.class_name;
+              const armName = classArm?.arm_names || classArm?.arm_name;
+
+              const fullClassName =
+                className && armName
+                  ? `${className} - ${armName}`
+                  : className || armName || item.code || `Class ${index + 1}`;
+
+              const subjectTitle =
+                item.subject?.subject_name ||
+                item.subject_name ||
+                (item.subject_id ? "Subject" : "Form Teacher");
+
+              return {
+                id: item.id || index,
+                code: fullClassName,
+                subject: subjectTitle,
+                students: item.student_count || item.students_count || item.students || 30,
+                attendance: item.attendance || "92%",
+              };
+            });
+            setClassesList(mapped);
+          } else {
+            setClassesList([]);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch logged-in teacher allocations:", err);
+        if (isMounted) setClassesList([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchMyAllocations();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
@@ -193,6 +291,7 @@ export default function ClassesOverview() {
           direction="row"
           spacing={0.5}
           alignItems="center"
+          onClick={() => navigate("/class-register")}
           sx={{ cursor: "pointer", color: "#06b6d4", "&:hover": { textDecoration: "underline" } }}
         >
           <Typography sx={{ fontSize: 13, fontWeight: 600 }}>View all classes</Typography>
@@ -200,23 +299,48 @@ export default function ClassesOverview() {
         </Stack>
       </Stack>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(4, 1fr)",
-          },
-          gap: 2,
-        }}
-      >
-        {classesData.map((cls) => (
-          <Box key={cls.id} sx={{ minWidth: 0, height: "100%" }}>
-            <ClassCard cls={cls} />
-          </Box>
-        ))}
-      </Box>
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" py={5}>
+          <CircularProgress size={32} />
+        </Box>
+      ) : classesList.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: "center",
+            border: "1px dashed #cbd5e1",
+            borderRadius: 2,
+            bgcolor: "#f8fafc",
+          }}
+        >
+          <ClassOutlinedIcon sx={{ fontSize: 36, color: "text.disabled", mb: 1 }} />
+          <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
+            No Classes Allocated Yet
+          </Typography>
+          <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
+            You do not have any active subject or class allocations assigned for this session term.
+          </Typography>
+        </Paper>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(4, 1fr)",
+            },
+            gap: 2,
+          }}
+        >
+          {classesList.map((cls, idx) => (
+            <Box key={cls.id || idx} sx={{ minWidth: 0, height: "100%" }}>
+              <ClassCard cls={cls} idx={idx} />
+            </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

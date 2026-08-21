@@ -5,6 +5,7 @@ import {
   Typography,
   Divider,
   CircularProgress,
+  Button
 } from "@mui/material";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
@@ -118,18 +119,17 @@ export default function ActivityLog() {
             <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2 }}>
               Activity Log
             </Typography>
-            <Typography
-              onClick={() => setModalOpen(true)}
+            <Button
+              variant="contained"
               sx={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: "primary.main",
                 cursor: "pointer",
-                "&:hover": { textDecoration: "underline" },
               }}
+              onClick={() => setModalOpen(true)}
             >
               View all
-            </Typography>
+            </Button>
           </Stack>
 
           {loading ? (

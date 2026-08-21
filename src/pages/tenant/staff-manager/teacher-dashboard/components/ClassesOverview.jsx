@@ -14,6 +14,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Button
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
@@ -290,15 +291,16 @@ export default function ClassesOverview() {
         <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: "#1e293b" }}>
           My Classes Overview
         </Typography>
-        <Stack
-          direction="row"
-          spacing={0.5}
-          alignItems="center"
-          sx={{ cursor: "pointer", color: "#06b6d4", "&:hover": { textDecoration: "underline" } }}
+        <Button
+          variant="contained"
+          sx={{
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
         >
-          <Typography sx={{ fontSize: 13, fontWeight: 600 }}>View all classes</Typography>
-          <ArrowForwardIcon sx={{ fontSize: 15 }} />
-        </Stack>
+          View all classes
+        </Button>
       </Stack>
 
       {loading ? (

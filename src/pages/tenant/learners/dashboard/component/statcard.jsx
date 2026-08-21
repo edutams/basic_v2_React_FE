@@ -27,7 +27,7 @@ const leanCardBase = {
   borderRadius: '14px',
   boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
   border: '1px solid #E8ECF0',
-  p: '14px 18px',
+  p: '10px 14px',
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',

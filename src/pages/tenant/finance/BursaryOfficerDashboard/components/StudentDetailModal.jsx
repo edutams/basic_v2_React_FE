@@ -47,6 +47,7 @@ import {
 } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import TransactionDetailModal from './TransactionDetailModal';
 
 /**
  * Summary stat card used inside the student detail modal.
@@ -148,6 +149,9 @@ const StudentDetailModal = ({ open, student, onClose }) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [activeTx, setActiveTx] = useState(null);
   const [checkingStatusId, setCheckingStatusId] = useState(null);
+
+  // Transaction detail modal state
+  const [viewTxId, setViewTxId] = useState(null);
 
   // ── Session term dropdown (self-contained) ─────────────────
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -313,6 +317,7 @@ const StudentDetailModal = ({ open, student, onClose }) => {
   );
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={onClose}
@@ -719,9 +724,10 @@ const StudentDetailModal = ({ open, student, onClose }) => {
           <RequeryIcon sx={{ mr: 1.5, color: '#ed6c02' }} />
           {checkingStatusId === activeTx?.transaction_id ? 'Checking...' : 'Requery Status'}
         </MenuItem>
-        {activeTx?.description && (
+        {activeTx?.transaction_id && (
           <MenuItem
             onClick={() => {
+              setViewTxId(activeTx.transaction_id);
               setMenuAnchorEl(null);
             }}
           >
@@ -737,6 +743,14 @@ const StudentDetailModal = ({ open, student, onClose }) => {
         </Button>
       </DialogActions>
     </Dialog>
+
+    {/* ── Transaction Detail Sub-Modal ─────────────────────── */}
+    <TransactionDetailModal
+      open={Boolean(viewTxId)}
+      transactionId={viewTxId}
+      onClose={() => setViewTxId(null)}
+    />
+    </>
   );
 };
 

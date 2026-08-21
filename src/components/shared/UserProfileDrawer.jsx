@@ -814,15 +814,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
     const updatePromise = isLandlordView
       ? api.post(`/v1/landlord/users/${targetId}/password`, {
-          current_password: passwordForm.current_password,
-          new_password: passwordForm.new_password,
-          confirm_password: passwordForm.confirm_password,
-        })
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password,
+        confirm_password: passwordForm.confirm_password,
+      })
       : tenantApi.put('/change_password', {
-          current_password: passwordForm.current_password,
-          password: passwordForm.new_password,
-          password_confirmation: passwordForm.confirm_password,
-        });
+        current_password: passwordForm.current_password,
+        password: passwordForm.new_password,
+        password_confirmation: passwordForm.confirm_password,
+      });
 
     updatePromise
       .then((res) => {
@@ -1579,7 +1579,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       </Dialog>
 
       {/* View Activity Log Modal */}
-      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="lg" fullWidth>
+      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1.5}>
             <Box
@@ -1671,7 +1671,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 140, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Date Performed</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Action</TableCell>
                     </TableRow>
@@ -1683,29 +1684,31 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                           {activityPage * activityRowsPerPage + idx + 1}
                         </TableCell>
                         <TableCell>
-                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <Chip
-                              size="small"
-                              label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
-                              color="primary"
-                              sx={{
-                                height: 20,
-                                fontSize: '0.65rem',
-                                fontWeight: 700,
-                                borderRadius: '6px',
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: 'primary.main',
-                              }}
-                            />
-                            <Typography variant="body2" fontWeight={600} color="text.primary">
-                              {item.description || 'System Activity Executed'}
-                            </Typography>
-                          </Box>
+                          <Chip
+                            size="small"
+                            label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
+                            color="primary"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: 'primary.main',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.description?.startsWith(' performed action as')
+                              ? `${fullName}${item.description}`
+                              : item.description || 'System Activity Executed'}
+                          </Typography>
                         </TableCell>
                         <TableCell sx={{ color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', fontWeight: 500 }}>
                           {formatActivityDate(item.created_at, item.my_updated_at)}
                         </TableCell>
-                        <TableCell align="center">
+                        <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                           <Button
                             size="small"
                             variant="outlined"
@@ -1713,12 +1716,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                             startIcon={<IconEye size={15} />}
                             onClick={() => setSelectedActivityDetail(item)}
                             sx={{
-                              borderRadius: '8px',
-                              fontSize: '0.725rem',
-                              textTransform: 'none',
-                              py: 0.25,
-                              px: 1.25,
+                              borderRadius: "8px",
+                              fontSize: "0.725rem",
                               fontWeight: 600,
+                              textTransform: "none",
+                              px: 1.25,
+                              py: 0.25,
+                              whiteSpace: "nowrap",
                             }}
                           >
                             View Details
@@ -1828,7 +1832,11 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                               {key}
                             </TableCell>
                             <TableCell>
-                              {typeof value === 'object' && value !== null ? (
+                              {Array.isArray(value) ? (
+                                value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
+                              ) : typeof value === 'boolean' ? (
+                                value ? 'True' : 'False'
+                              ) : typeof value === 'object' && value !== null ? (
                                 <pre
                                   style={{
                                     margin: 0,

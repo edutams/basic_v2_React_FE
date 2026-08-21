@@ -463,6 +463,7 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                       <TableCell sx={{ fontWeight: 700, width: 140, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Activity</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Date Performed</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -495,6 +496,26 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                         </TableCell>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.775rem", whiteSpace: "nowrap", fontWeight: 500 }}>
                           {formatActivityDate(item.created_at, item.my_updated_at)}
+                        </TableCell>
+                        <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<IconEye size={15} />}
+                            onClick={() => setSelectedDetail(item)}
+                            sx={{
+                              borderRadius: "8px",
+                              fontSize: "0.725rem",
+                              fontWeight: 600,
+                              textTransform: "none",
+                              px: 1.25,
+                              py: 0.25,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            View Details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -576,17 +597,60 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                   </TableBody>
                 </Table>
               </Box>
-              {selectedDetail.properties && Object.keys(selectedDetail.properties).length > 0 && (
+              {selectedDetail.properties && Object.keys(selectedDetail.properties).length > 0 ? (
                 <Box mt={2}>
                   <Typography variant="subtitle2" gutterBottom fontWeight={700}>
-                    Properties / Changes
+                    Additional Information
                   </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
-                    <pre style={{ margin: 0, fontSize: "0.75rem", fontFamily: "monospace", overflowX: "auto" }}>
-                      {JSON.stringify(selectedDetail.properties, null, 2)}
-                    </pre>
-                  </Paper>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>What changed</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>Value Changed</Typography>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(selectedDetail.properties).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+                              {key}
+                            </TableCell>
+                            <TableCell>
+                              {Array.isArray(value) ? (
+                                value.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(", ")
+                              ) : typeof value === "boolean" ? (
+                                value ? "True" : "False"
+                              ) : typeof value === "object" && value !== null ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    fontFamily: "monospace",
+                                    fontSize: "12px",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {JSON.stringify(value, null, 2)}
+                                </pre>
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Box>
+              ) : (
+                <Typography color="text.secondary" fontStyle="italic" mt={2}>
+                  No additional properties available for this activity.
+                </Typography>
               )}
             </Box>
           )}

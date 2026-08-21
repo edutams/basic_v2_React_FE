@@ -9,7 +9,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
-const QuickActions = ({ onApplyAdmission }) => {
+const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
   const navigate = useNavigate();
 
   const actions = [
@@ -63,6 +63,11 @@ const QuickActions = ({ onApplyAdmission }) => {
     },
   ];
 
+  // The admission action only shows when the batches endpoint reports an open batch.
+  const visibleActions = hasOpenBatches
+    ? actions
+    : actions.filter((a) => a.title !== 'Apply for Admission');
+
   return (
     <Box mb={2.5} height="100%">
       {/* White wrapper card around title + action grid */}
@@ -85,14 +90,14 @@ const QuickActions = ({ onApplyAdmission }) => {
           sx={{
             display: 'grid',
             gridTemplateColumns: {
-              xs: 'repeat(2, 1fr)',
+              xs: 'repeat(1, 1fr)',
               sm: 'repeat(3, 1fr)',
-              md: 'repeat(6, 1fr)',
+              md: 'repeat(3, 1fr)',
             },
             gap: 1.25,
           }}
         >
-        {actions.map((item) => {
+        {visibleActions.map((item) => {
           const Icon = item.icon;
           return (
             <Card
@@ -106,8 +111,8 @@ const QuickActions = ({ onApplyAdmission }) => {
                 border: '1px solid #e2e8f0',
                 boxShadow: '0 4px 16px rgba(15, 23, 42, 0.08)',
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 1.25,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {
@@ -121,22 +126,24 @@ const QuickActions = ({ onApplyAdmission }) => {
                 },
               }}
             >
-              <Box>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: item.iconBg,
-                    color: item.iconColor,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 1,
-                  }}
-                >
-                  <Icon sx={{ fontSize: 17 }} />
-                </Box>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  minWidth: 34,
+                  borderRadius: '8px',
+                  bgcolor: item.iconBg,
+                  color: item.iconColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon sx={{ fontSize: 17 }} />
+              </Box>
+
+              <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography
                   sx={{
                     fontWeight: 700,
@@ -166,16 +173,15 @@ const QuickActions = ({ onApplyAdmission }) => {
                 </Typography>
               </Box>
 
-              <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                <ArrowForwardIcon
-                  className="action-arrow"
-                  sx={{
-                    fontSize: 13,
-                    color: '#94a3b8',
-                    transition: 'all 0.2s ease',
-                  }}
-                />
-              </Box>
+              <ArrowForwardIcon
+                className="action-arrow"
+                sx={{
+                  fontSize: 14,
+                  color: '#94a3b8',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease',
+                }}
+              />
             </Card>
           );
         })}

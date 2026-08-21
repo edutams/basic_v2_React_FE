@@ -7,13 +7,10 @@ import {
   getParentWards,
   getParentBatches,
   getParentFinance,
-  getParentAttendance,
-  getParentAcademics,
   getParentNotifications,
   getSessionTermWeeks,
 } from '@/api/tenant/admission/admissionApi';
-import { fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchParentPayments } from '@/api/tenant/bursary/classLedger';
+import { fetchActiveSessionTerm, fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import MyWards from './component/my-wards';
 import QuickActions from './component/quick-actions';
@@ -21,36 +18,6 @@ import AcademicOverview from './component/academic-overview';
 import ParentWalletAccount from './component/parent-wallet-account';
 import TermCalendar from './component/term-calendar';
 import ActivityLogs from './component/activity-logs';
-
-// Activity-log icon mapping — mirrors the notifications payload types so the
-// Activity Logs card shows real data (fee reminders, payments, events, messages).
-import {
-  WarningAmberOutlined,
-  CheckCircleOutlineOutlined,
-  EventAvailableOutlined,
-  AssignmentOutlined,
-} from '@mui/icons-material';
-
-const LOG_META = {
-  fee:     { icon: WarningAmberOutlined,       iconBg: '#fee2e2', iconColor: '#dc2626' },
-  payment: { icon: CheckCircleOutlineOutlined, iconBg: '#dcfce7', iconColor: '#16a34a' },
-  event:   { icon: EventAvailableOutlined,     iconBg: '#dbeafe', iconColor: '#2563eb' },
-  message: { icon: AssignmentOutlined,         iconBg: '#ffedd5', iconColor: '#ea580c' },
-};
-
-// Status chip colors for real backend ward statuses.
-const STATUS_STYLES = {
-  Enrolled:           { color: '#16a34a', bg: '#dcfce7' },
-  Admitted:           { color: '#059669', bg: '#d1fae5' },
-  'Under Review':     { color: '#d97706', bg: '#fef3c7' },
-  Pending:            { color: '#d97706', bg: '#fef3c7' },
-  'Pending Submission': { color: '#d97706', bg: '#fef3c7' },
-  'In Progress':      { color: '#2563eb', bg: '#dbeafe' },
-  Draft:              { color: '#64748b', bg: '#f1f5f9' },
-  Rejected:           { color: '#dc2626', bg: '#fee2e2' },
-};
-
-const keyOf = (name) => String(name || '').trim().toLowerCase();
 
 const fmtDate = (d) => {
   if (!d) return '';
@@ -64,120 +31,69 @@ const fmtDate = (d) => {
   });
 };
 
-/**
- * Parent Dashboard — Modern high-fidelity layout matching design mockup:
- * Left side (~70%): My Wards (3 cards max with prev/next navigation), Quick Actions, Academic Overview.
- * Right side (~30%): Parent Wallet Account, Term Calendar, Activity Logs.
- *
- * Data wiring (real endpoints):
- *  - My Wards          ← /admission/parent/wards (enrolled + prospective), enriched with
- *                        attendance % (parent/attendance) and average score
- *                        (parent/academics) per ward.
- *  - Batches           ← /admission/parent/batches (open admission batches).
- *  - Parent Wallet     ← /admission/parent/finance (outstanding balance).
- *  - Term Calendar     ← active session term + its weeks (real start/end dates).
- *  - Activity Logs     ← /admission/parent/notifications (real derived items).
- */
+
 const ParentDashboard2 = () => {
   const navigate = useNavigate();
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const [sessionTerms, setSessionTerms] = useState([]);
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [termsReady, setTermsReady] = useState(false);
+  const [termInfo, setTermInfo] = useState(null);
+
+  const [wards, setWards] = useState([]);
   const [selectedWard, setSelectedWard] = useState(null);
-  const [wardStats, setWardStats] = useState({}); // name -> { attendance, averageScore }
-  const [invoiceById, setInvoiceById] = useState({}); // ward id -> invoice number
-  const [logs, setLogs] = useState([]); // activity-log items from notifications
-  const [termInfo, setTermInfo] = useState(null); // { termName, daysCount, startDate, endDate }
+  const [logs, setLogs] = useState([]);
+  const [batches, setBatches] = useState(null);
+  const [finance, setFinance] = useState(null);
+  const [loadingWards, setLoadingWards] = useState(true);
+
+  const sessionTermId = selectedSessionTerm || null;
 
   useEffect(() => {
     let mounted = true;
 
-    // allSettled: one failing card endpoint must never block the rest of the
-    // dashboard (e.g. attendance/academics 500s when there are no registrations).
-    Promise.allSettled([
-      getParentWards(),
-      getParentBatches(),
-      getParentFinance(),
-      getParentAttendance(),
-      getParentAcademics(),
-      getParentNotifications(),
-      fetchParentPayments(),
-    ]).then((results) => {
-        if (!mounted) return;
+    const load = async () => {
+      try {
+        const res = await fetchSessionTerms();
+        if (!mounted || !res?.status) return;
 
-        const wardsRes  = results[0]?.status === 'fulfilled' ? results[0].value : null;
-        const batchesRes = results[1]?.status === 'fulfilled' ? results[1].value : null;
-        const finance   = results[2]?.status === 'fulfilled' ? results[2].value : null;
-        const attendance = results[3]?.status === 'fulfilled' ? results[3].value : null;
-        const academics = results[4]?.status === 'fulfilled' ? results[4].value : null;
-        const notifications = results[5]?.status === 'fulfilled' ? results[5].value : null;
-        const payments = results[6]?.status === 'fulfilled' ? results[6].value : null;
+        const options = [
+          { id: '', label: 'All Sessions' },
+          ...(res.data || []).map((st) => ({
+            id: st.id,
+            label: `${st.session?.sesname || ''} ${st.display_term?.display_name || ''}`.trim(),
+          })),
+        ];
+        setSessionTerms(options);
 
-        if (wardsRes?.status) {
-          setDashboardData((prev) => ({
-            ...prev,
-            wards: wardsRes.data || [],
-          }));
-          if (wardsRes.data?.length > 0) {
-            setSelectedWard(wardsRes.data[0]);
-          }
+        const active = await fetchActiveSessionTerm();
+        const activeId = active?.data?.session_term_id;
+        let defaultId = options.length > 1 ? options[1].id : '';
+        if (active?.status && activeId != null) {
+          const match = options.find((o) => String(o.id) === String(activeId));
+          if (match) defaultId = match.id;
         }
 
-        if (batchesRes?.status) {
-          setDashboardData((prev) => ({
-            ...prev,
-            has_open_batches: batchesRes.data?.has_open_batches ?? false,
-            open_batches: batchesRes.data?.open_batches || [],
-          }));
+        if (mounted) {
+          setSelectedSessionTerm(defaultId);
+          setTermsReady(true);
         }
+      } catch (err) {
+        console.error('Failed to load session terms:', err);
+      }
+    };
+    load();
 
-        if (finance?.status) {
-          setDashboardData((prev) => ({
-            ...prev,
-            finance: finance.data,
-          }));
-        }
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-        // Per-ward attendance % (attendance endpoint) keyed by ward name.
-        const attByName = {};
-        (attendance?.data?.wards || []).forEach((w) => {
-          const p = Number(w.present || 0);
-          const a = Number(w.absent || 0);
-          attByName[keyOf(w.name)] = p + a > 0 ? Math.round((p / (p + a)) * 100) : null;
-        });
+  useEffect(() => {
+    let mounted = true;
 
-        // Per-ward average score (academics endpoint) keyed by user id + name.
-        const acadById = {};
-        const acadByName = {};
-        (academics?.data?.wards || []).forEach((w) => {
-          const quiz = Number(w.quizzes?.avg || 0);
-          const exam = Number(w.exams?.avg || 0);
-          const avg = quiz || exam ? Math.round((quiz + exam) / 2) : (w.assignments?.pct ?? null);
-          acadById[String(w.id)] = avg;
-          acadByName[keyOf(w.name)] = avg;
-        });
-
-        setWardStats({ attByName, acadById, acadByName });
-
-        // Per-ward invoice number (for the "View Invoice" ledger link),
-        // from the parent-payments payload: first invoice id per ward.
-        const invoiceById = {};
-        (payments?.data || []).forEach((w) => {
-          const first = (w.payments || []).find((p) => p.invoice_id);
-          if (first) invoiceById[String(w.id)] = first.invoice_id;
-        });
-        setInvoiceById(invoiceById);
-
-        // Activity logs — real notifications (fee / payment / event / message).
-        if (notifications?.status) setLogs(notifications.data || []);
-      })
-      .catch((err) => console.error('Failed to load parent dashboard:', err))
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    // Term calendar — active session term + its weeks for real dates.
-    const loadTerm = async () => {
+    const load = async () => {
       try {
         const active = await fetchActiveSessionTerm();
         if (!mounted || !active?.status || !active?.data?.session_term_id) return;
@@ -185,106 +101,106 @@ const ParentDashboard2 = () => {
 
         const weeksRes = await getSessionTermWeeks(session_term_id);
         const weeks = (weeksRes?.data || []).filter((w) => w.start_date && w.end_date);
-        if (!mounted) return;
+        if (!mounted || weeks.length === 0) return;
 
-        let daysCount = 0;
-        if (weeks.length > 0) {
-          const starts = weeks.map((w) => new Date(w.start_date).getTime());
-          const ends = weeks.map((w) => new Date(w.end_date).getTime());
-          const first = Math.min(...starts);
-          const last = Math.max(...ends);
-          daysCount = Math.round((last - first) / 86400000) + 1;
-          setTermInfo({
-            termName: `${session_name || ''} ${term_name || ''} Term`.trim(),
-            daysCount: `${daysCount} Days`,
-            startDate: fmtDate(weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date),
-            endDate: fmtDate(weeks.find((w) => new Date(w.end_date).getTime() === last)?.end_date),
-          });
-        }
+        const starts = weeks.map((w) => new Date(w.start_date).getTime());
+        const ends = weeks.map((w) => new Date(w.end_date).getTime());
+        const first = Math.min(...starts);
+        const last = Math.max(...ends);
+        const daysCount = Math.round((last - first) / 86400000) + 1;
+
+        setTermInfo({
+          termName: `${session_name || ''} ${term_name || ''}`.trim(),
+          daysCount: `${daysCount} Days`,
+          startDate: fmtDate(weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date),
+          endDate: fmtDate(weeks.find((w) => new Date(w.end_date).getTime() === last)?.end_date),
+        });
       } catch (err) {
         console.error('Failed to load term calendar:', err);
       }
     };
-    loadTerm();
+    load();
 
     return () => {
       mounted = false;
     };
   }, []);
 
+  useEffect(() => {
+    if (!termsReady) return;
+    let mounted = true;
+    setLoadingWards(true);
+    getParentWards(sessionTermId)
+      .then((res) => {
+        if (mounted) setWards(res.data);
+      })
+      .catch((err) => console.error('Failed to load parent wards:', err))
+      .finally(() => {
+        if (mounted) setLoadingWards(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [sessionTermId, termsReady]);
+
+  useEffect(() => {
+    if (!termsReady) return;
+    let mounted = true;
+    getParentNotifications(sessionTermId)
+      .then((res) => {
+        if (mounted && res?.status) setLogs(res.data);
+      })
+      .catch((err) => console.error('Failed to load parent notifications:', err));
+    return () => {
+      mounted = false;
+    };
+  }, [sessionTermId, termsReady]);
+
+  useEffect(() => {
+    if (!termsReady) return;
+    let mounted = true;
+    getParentBatches(sessionTermId)
+      .then((res) => {
+        if (mounted && res?.status) setBatches(res.data);
+      })
+      .catch((err) => console.error('Failed to load open batches:', err));
+    return () => {
+      mounted = false;
+    };
+  }, [sessionTermId, termsReady]);
+
+  useEffect(() => {
+    if (!termsReady) return;
+    let mounted = true;
+    getParentFinance(sessionTermId)
+      .then((res) => {
+        if (mounted && res?.status) setFinance(res.data);
+      })
+      .catch((err) => console.error('Failed to load parent finance:', err));
+    return () => {
+      mounted = false;
+    };
+  }, [sessionTermId, termsReady]);
+
+  useEffect(() => {
+    if (!wards.length) {
+      setSelectedWard(null);
+      return;
+    }
+    const stillThere = wards.some(
+      (w) => w.id === selectedWard?.id && w.class === selectedWard?.class
+    );
+    if (!stillThere) setSelectedWard(wards[0]);
+  }, [wards]);
+
   const handleApply = (batch) => {
     setAdmissionModalOpen(false);
     navigate('/admission/new-application', { state: { batch } });
   };
 
-  // Compute age in years from a YYYY-MM-DD date string.
-  const ageFromDob = (dob) => {
-    if (!dob) return null;
-    const birth = new Date(dob);
-    if (Number.isNaN(birth.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age >= 0 ? age : null;
-  };
-
-  // Enrich backend ward cards with display fields + per-ward stats.
-  const wards = (dashboardData?.wards || []).map((w) => {
-    const stat = {
-      attendance: wardStats.attByName?.[keyOf(w.name)] ?? null,
-      averageScore: wardStats.acadById?.[String(w.id)] ?? wardStats.acadByName?.[keyOf(w.name)] ?? null,
-    };
-    const statusStyle = STATUS_STYLES[w.status] || {};
-    // Mock learner wallet account details per ward.
-    const mockAccounts = [
-      { walletAccount: '3021587491', bank: 'Zenith Bank' },
-      { walletAccount: '5012348762', bank: 'GTBank' },
-      { walletAccount: '2098765431', bank: 'Access Bank' },
-    ];
-    const mockIdx = Number(String(w.id || '').replace(/\D/g, '').slice(-1)) % mockAccounts.length;
-
-    return {
-      ...w,
-      class: w.className || w.class,
-      age: w.age ?? ageFromDob(w.dob),
-      totalPayable: w.balance ?? w.totalPayable,
-      invoice_number: w.invoice_number || w.invoiceNumber || invoiceById[String(w.id)] || '',
-      walletAccount: w.walletAccount || mockAccounts[mockIdx].walletAccount,
-      bank: w.bank || mockAccounts[mockIdx].bank,
-      statusColor: statusStyle.color || '#64748b',
-      statusBg: statusStyle.bg || '#f1f5f9',
-      attendanceColor: '#16a34a',
-      scoreColor: '#2563eb',
-      buttonColor: '#2563eb',
-      ...stat,
-    };
-  });
-
-  const activityLogs = logs.length > 0
-    ? logs.map((n, i) => {
-        const meta = LOG_META[n.type] || LOG_META.message;
-        return {
-          id: i + 1,
-          icon: meta.icon,
-          iconBg: meta.iconBg,
-          iconColor: meta.iconColor,
-          title: n.text,
-          subtitle: '',
-          time: n.time || '',
-        };
-      })
-    : [];
-
   return (
     <PageContainer title="Parent Dashboard" description="Parent Portal Overview">
-      {/* ── Row-aligned two-column grid ──
-           Row 1: My Wards | Wallet Account
-           Row 2: Quick Actions | Term Calendar
-           Row 3: Academic Overview | Activity Logs
-       */}
+      
       <Box
         sx={{
           display: 'grid',
@@ -295,36 +211,34 @@ const ParentDashboard2 = () => {
         }}
       >
         {/* ─── Row 1 ─── */}
-        {/* 1. My Wards Section */}
         <MyWards
           wards={wards}
-          loading={loading}
+          loading={loadingWards}
           selectedWard={selectedWard}
           onSelectWard={setSelectedWard}
+          sessionTerms={sessionTerms}
+          selectedSessionTerm={selectedSessionTerm}
+          onSessionTermChange={setSelectedSessionTerm}
         />
 
-        {/* 1. Parent Wallet Account Card — same row as My Wards */}
-        <ParentWalletAccount
-          totalPayable={dashboardData?.finance?.outstanding ?? 0}
-        />
+        <ParentWalletAccount totalPayable={finance?.outstanding} />
 
         {/* ─── Row 2 ─── */}
-        {/* 2. Quick Actions Section */}
-        <QuickActions onApplyAdmission={() => setAdmissionModalOpen(true)} />
+        <QuickActions
+          onApplyAdmission={() => setAdmissionModalOpen(true)}
+          hasOpenBatches={batches?.has_open_batches}
+        />
 
-        {/* 2. Term Calendar Card — same row as Quick Actions */}
         <TermCalendar {...termInfo} />
 
         {/* ─── Row 3 ─── */}
-        {/* 3. Academic Overview Section */}
         <AcademicOverview
           wards={wards}
           selectedWard={selectedWard}
           onSelectWard={setSelectedWard}
         />
 
-        {/* 3. Activity Logs Card — same row as Academic Overview */}
-        <ActivityLogs logs={activityLogs} />
+        <ActivityLogs logs={logs} />
       </Box>
 
       {/* Admission Application Modal */}

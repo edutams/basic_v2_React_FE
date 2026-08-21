@@ -13,18 +13,6 @@ import {
 import { formatCurrency } from '../constants';
 import SessionSelect from './SessionSelect';
 
-// Mocked data shown when the API returns empty.
-const MOCK_CATEGORIES = [
-  { category: 'Returning Students', amount: 78450000, percentage: 62.9 },
-  { category: 'New Students', amount: 28760000, percentage: 23.1 },
-  { category: 'Scholarship', amount: 9850000, percentage: 7.9 },
-  { category: 'Bursary Grants', amount: 7500000, percentage: 6.1 },
-  { category: 'Staff Children', amount: 3250000, percentage: 2.6 },
-  { category: 'Alumni Children', amount: 1950000, percentage: 1.6 },
-  { category: 'Sibling Discount', amount: 1480000, percentage: 1.2 },
-  { category: 'Other Concessions', amount: 1310000, percentage: 1.0 },
-];
-
 const CATEGORY_META = [
   { icon: School, color: '#3B82F6', bg: '#EBF5FF' },
   { icon: PersonAdd, color: '#10B981', bg: '#ECFDF5' },
@@ -46,7 +34,7 @@ const PaymentCategories = ({
   sessions = [],
   onSessionChange,
 }) => {
-  const catData = payment_categories.length > 0 ? payment_categories : MOCK_CATEGORIES;
+  const catData = payment_categories;
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -87,67 +75,75 @@ const PaymentCategories = ({
 
       {/* List */}
       <Stack spacing={0} sx={{ flexGrow: 1, px: 2.5, py: 1 }}>
-        {catData.map((cat, i) => {
-          const meta = CATEGORY_META[i % CATEGORY_META.length];
-          const CatIcon = meta.icon;
-          return (
-            <Box
-              key={i}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                py: 1.25,
-                borderBottom: i < catData.length - 1 ? '1px solid #F3F4F6' : 'none',
-              }}
-            >
+        {catData.length > 0 ? (
+          catData.map((cat, i) => {
+            const meta = CATEGORY_META[i % CATEGORY_META.length];
+            const CatIcon = meta.icon;
+            return (
               <Box
+                key={i}
                 sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '10px',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : meta.bg,
-                  color: isDark ? '#fff' : meta.color,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  gap: 1.5,
+                  py: 1.25,
+                  borderBottom: i < catData.length - 1 ? '1px solid #F3F4F6' : 'none',
                 }}
               >
-                <CatIcon sx={{ fontSize: 18 }} />
-              </Box>
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                noWrap
-                sx={{ flex: 1, minWidth: 0, fontSize: '0.78rem', color: '#374151' }}
-              >
-                {cat.category}
-              </Typography>
-              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={800}
-                  whiteSpace="nowrap"
-                  sx={{ fontSize: '0.82rem', color: '#111827' }}
-                >
-                  {formatCurrency(cat.amount)}
-                </Typography>
-                <Typography
-                  variant="caption"
+                <Box
                   sx={{
-                    display: 'block',
-                    fontSize: '0.65rem',
-                    color: cat.percentage >= 10 ? '#3B82F6' : '#9CA3AF',
-                    fontWeight: cat.percentage >= 10 ? 700 : 500,
+                    width: 36,
+                    height: 36,
+                    borderRadius: '10px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : meta.bg,
+                    color: isDark ? '#fff' : meta.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  {cat.percentage}%
+                  <CatIcon sx={{ fontSize: 18 }} />
+                </Box>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  noWrap
+                  sx={{ flex: 1, minWidth: 0, fontSize: '0.78rem', color: '#374151' }}
+                >
+                  {cat.category}
                 </Typography>
+                <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={800}
+                    whiteSpace="nowrap"
+                    sx={{ fontSize: '0.82rem', color: '#111827' }}
+                  >
+                    {formatCurrency(cat.amount)}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      fontSize: '0.65rem',
+                      color: cat.percentage >= 10 ? '#3B82F6' : '#9CA3AF',
+                      fontWeight: cat.percentage >= 10 ? 700 : 500,
+                    }}
+                  >
+                    {cat.percentage}%
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          );
-        })}
+            );
+          })
+        ) : (
+          <Box sx={{ py: 6, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              No payment category data available
+            </Typography>
+          </Box>
+        )}
       </Stack>
     </Box>
   );

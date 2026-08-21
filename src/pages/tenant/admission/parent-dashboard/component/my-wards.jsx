@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip } from '@mui/material';
+import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip, FormControl, MenuItem, Select } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -120,7 +120,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             >
               {ward.name}
             </Typography>
-            <Typography
+<Typography
               sx={{
                 fontSize: 11,
                 color: '#64748b',
@@ -129,8 +129,24 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               }}
             >
               {ward.class}
-              {ward.age != null ? ` • Age: ${ward.age} years` : ''}
+              {/* {ward.admissionNo && ` • ${ward.admissionNo}`} */}
+          {ward.age != null && ` • Age: ${ward.age} yrs`}
             </Typography>
+            {/* {ward.session && (
+                <Typography
+                  sx={{
+                    fontSize: 9.5,
+                    color: '#64748b',
+                    fontWeight: 600,
+                    mt: 0.25,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {ward.session}
+                </Typography>
+              )} */}
           </Box>
         </Stack>
 
@@ -156,13 +172,13 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         {/* Gauges Row — solid border separator above */}
         <Box sx={{ borderTop: '1px solid #e2e8f0', mt: 1.5, pt: 1.5, mb: 1.5 }}>
           <Stack direction="row" spacing={1}>
-            <GaugeRing value={ward.attendance ?? 0} label="Attendance" color={ward.attendanceColor} />
+            <GaugeRing value={ward.attendance} label="Attendance" color="#16a34a" />
             <Box sx={{ borderLeft: '1px solid #e2e8f0', pl: 1, mx: 0.5 }} />
-            <GaugeRing value={ward.averageScore ?? 0} label="Avg Score" color={ward.scoreColor} />
+            <GaugeRing value={ward.averageScore} label="Avg Score" color="#2563eb" />
           </Stack>
         </Box>
 
-        {/* Financial Info */}
+        {/* Financial Info — single total payable figure from the wards payload */}
         <Box sx={{ borderTop: '1px solid #e2e8f0', pt: 1.25, mb: 1.5 }}>
           <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
             TOTAL PAYABLE
@@ -171,16 +187,19 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             sx={{
               fontSize: 16,
               fontWeight: 800,
-              color: Number(ward.totalPayable || 0) > 0 ? '#ea580c' : '#16a34a',
+              color: '#16a34a',
               lineHeight: 1.2,
               mt: 0.2,
               whiteSpace: 'nowrap',
             }}
           >
-            ₦{Number(ward.totalPayable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ₦{Number(ward.paid).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Typography>
-          {ward.walletAccount || ward.bank ? (
-            <Stack direction="row" alignItems="stretch" spacing={1.25} sx={{ mt: 0.4 }}>
+        </Box>
+
+        {ward.walletAccount ? (
+          <Box sx={{ mb: 1.5 }}>
+            <Stack direction="row" alignItems="stretch" spacing={1.25}>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
                   WALLET ACCOUNT
@@ -197,22 +216,37 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {ward.walletAccount || '—'}
+                  {ward.walletAccount}
                 </Typography>
               </Box>
-              {ward.bank ? (
+              {ward.walletBalance != null && (
                 <>
                   <Box sx={{ alignSelf: 'stretch', borderRight: '1px solid #e2e8f0', my: 0.2, flexShrink: 0 }} />
                   <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                     <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
-                      {ward.bank}
+                      ₦{Number(ward.walletBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </Typography>
                   </Box>
                 </>
-              ) : null}
+              )}
             </Stack>
-          ) : null}
-        </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              mb: 1.5,
+              bgcolor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '9px',
+              px: 1.25,
+              py: 0.75,
+            }}
+          >
+            <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
+              ℹ️ A wallet account has not been generated for {ward.name.split(' ')[0]} make payment to generate.
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Action Buttons */}
@@ -276,7 +310,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             textTransform: 'none',
             fontSize: 10.5,
             fontWeight: 700,
-            bgcolor: ward.buttonColor,
+            bgcolor: '#2563eb',
             color: '#ffffff',
             px: 0.75,
             py: 0.4,
@@ -291,7 +325,15 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
   );
 };
 
-const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) => {
+const MyWards = ({
+  wards = [],
+  loading = false,
+  selectedWard,
+  onSelectWard,
+  sessionTerms = [],
+  selectedSessionTerm = '',
+  onSessionTermChange,
+}) => {
   const [startIndex, setStartIndex] = useState(0);
 
   const VISIBLE_COUNT = 3;
@@ -323,45 +365,55 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
 
   return (
     <Box mb={2.5} height="100%">
-      {wards.length === 0 ? (
-        /* Empty state — never show mock data */
-        <Box
-          sx={{
-            border: '1.5px dashed #D1D5DB',
-            borderRadius: '10px',
-            py: 5,
-            textAlign: 'center',
-            bgcolor: '#F9FAFB',
-          }}
-        >
-          <Typography sx={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 600 }}>
-            No wards here yet
-          </Typography>
-          <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', mt: 0.25 }}>
-            Wards linked to your account will appear here.
-          </Typography>
-        </Box>
-      ) : (
-        /* Wrapper panel wrapping the title, prev/next controls and the ward cards */
-        <Box
-          sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            bgcolor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '14px',
-            p: 1.5,
-            boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
-          }}
-        >
-          {/* Header with Title and Prev/Next Navigation Controls */}
+      {/* Wrapper panel wrapping the title, session-term filter, prev/next controls and the ward cards */}
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '14px',
+          p: 1.5,
+          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
+        }}
+      >
+        {/* Header with Title, Session-Term Filter, and Prev/Next Navigation Controls */}
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.25}>
             <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
               My Wards
             </Typography>
 
-            <Stack direction="row" spacing={0.75} alignItems="center">
+            <Stack
+              direction="row"
+              spacing={0.75}
+              alignItems="center"
+              sx={{ flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: 0.75 }}
+            >
+              <FormControl size="small" sx={{ minWidth: { xs: 130, sm: 170 }, maxWidth: 230 }}>
+                <Select
+                  value={selectedSessionTerm}
+                  onChange={(e) => onSessionTermChange && onSessionTermChange(e.target.value)}
+                  sx={{
+                    borderRadius: '7px',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    color: '#1e293b',
+                    bgcolor: '#ffffff',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
+                  }}
+                  MenuProps={{ PaperProps: { sx: { maxHeight: 260 } } }}
+                >
+                  {sessionTerms.map((t) => (
+                    <MenuItem key={t.id} value={t.id} sx={{ fontSize: 12.5 }}>
+                      {t.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <IconButton
                 size="small"
                 onClick={handlePrev}
@@ -401,7 +453,8 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
             </Stack>
           </Stack>
 
-          {/* Grid displaying exactly 3 ward cards per view */}
+          {wards.length > 0 ? (
+          /* Grid displaying exactly 3 ward cards per view */
           <Box
             sx={{
               display: 'grid',
@@ -413,17 +466,35 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
               gap: 1.5,
             }}
           >
-            {visibleWards.map((ward) => (
+            {visibleWards.map((ward, index) => (
               <WardCard
-                key={ward.id}
+                key={`${ward.id}-${ward.className || ward.class || ward.session_term_id || index}`}
                 ward={ward}
-                isSelected={selectedWard?.id === ward.id}
+                isSelected={selectedWard?.id === ward.id && selectedWard?.class === ward.class}
                 onSelect={onSelectWard}
               />
             ))}
           </Box>
-        </Box>
-      )}
+        ) : (
+          /* Empty state — never show mock data */
+          <Box
+            sx={{
+              border: '1.5px dashed #D1D5DB',
+              borderRadius: '10px',
+              py: 5,
+              textAlign: 'center',
+              bgcolor: '#F9FAFB',
+            }}
+          >
+            <Typography sx={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 600 }}>
+              No wards here yet
+            </Typography>
+            <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', mt: 0.25 }}>
+              Wards linked to your account will appear here.
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

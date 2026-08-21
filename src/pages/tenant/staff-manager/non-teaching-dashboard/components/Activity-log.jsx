@@ -61,13 +61,19 @@ const ActivityLog = ({ onViewAll }) => {
       const rawList = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
 
       if (isMounted) {
+        const causerName = user?.full_name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "User");
+
         const formatted = rawList.map((item) => {
-          const description = item.description || "Activity logged";
+          let description = item.description || "Activity logged";
+          if (description.startsWith(" performed action as")) {
+            description = `${causerName}${description}`;
+          }
+
           const logName = (item.log_name || item.event || "system").toLowerCase();
 
           let type = "document";
           if (logName.includes("task") || logName.includes("assignment")) type = "task";
-          else if (logName.includes("staff") || logName.includes("user") || logName.includes("group")) type = "staff";
+          else if (logName.includes("staff") || logName.includes("user") || logName.includes("group") || logName.includes("tenant")) type = "staff";
           else if (logName.includes("folder") || logName.includes("inventory")) type = "folder";
           else if (logName.includes("resolve") || logName.includes("complete") || logName.includes("check")) type = "resolved";
           else if (logName.includes("doc") || logName.includes("file")) type = "document";
@@ -166,6 +172,7 @@ const ActivityLog = ({ onViewAll }) => {
 
           <Button
             onClick={handleViewAllClick}
+            variant="contained"
             endIcon={<ArrowForwardIcon sx={{ fontSize: "14px !important" }} />}
             sx={{
               fontSize: { xs: "10px", sm: "11px" },
@@ -288,6 +295,8 @@ const ActivityLog = ({ onViewAll }) => {
 
 const ActivityLogModal = ({ open, onClose, user }) => {
   const theme = useTheme();
+  const { user: authUser } = useTenantAuth();
+
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [searchInput, setSearchInput] = useState("");
@@ -297,23 +306,45 @@ const ActivityLogModal = ({ open, onClose, user }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedDetail, setSelectedDetail] = useState(null);
 
-  const causerId = user?.id || user?.user_id;
-  const fullName = user?.full_name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : user?.name || "User");
+  const currentUser = user || authUser;
+  const causerId = currentUser?.id || currentUser?.user_id;
+  const fullName = currentUser?.full_name || (currentUser?.fname && currentUser?.lname ? `${currentUser.fname} ${currentUser.lname}` : currentUser?.name || "User");
 
   useEffect(() => {
-    if (!open || !causerId) return;
+    if (!open) return;
 
     let isMounted = true;
     const fetchLogs = async () => {
       try {
         setLoading(true);
-        const res = await tenantApi.get(`/activity-logs/causer/${causerId}`, {
-          params: {
-            page: page + 1,
-            limit: rowsPerPage,
-            search: searchQuery.trim() || undefined,
-          },
-        });
+        let res;
+        if (causerId) {
+          try {
+            res = await tenantApi.get(`/activity-logs/causer/${causerId}`, {
+              params: {
+                page: page + 1,
+                limit: rowsPerPage,
+                search: searchQuery.trim() || undefined,
+              },
+            });
+          } catch (e) {
+            res = await tenantApi.get(`/activity-logs`, {
+              params: {
+                page: page + 1,
+                limit: rowsPerPage,
+                search: searchQuery.trim() || undefined,
+              },
+            });
+          }
+        } else {
+          res = await tenantApi.get(`/activity-logs`, {
+            params: {
+              page: page + 1,
+              limit: rowsPerPage,
+              search: searchQuery.trim() || undefined,
+            },
+          });
+        }
 
         if (isMounted) {
           const list = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
@@ -362,7 +393,7 @@ const ActivityLogModal = ({ open, onClose, user }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1.5}>
             <Box
@@ -453,8 +484,10 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 140, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Date Performed</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -464,29 +497,50 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                           {page * rowsPerPage + idx + 1}
                         </TableCell>
                         <TableCell>
-                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <Chip
-                              size="small"
-                              label={item.log_name ? item.log_name.toUpperCase() : "SYSTEM"}
-                              color="primary"
-                              sx={{
-                                height: 20,
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                borderRadius: "6px",
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: "primary.main",
-                              }}
-                            />
-                            <Typography variant="body2" fontWeight={600} color="text.primary">
-                              {item.description || "System Activity Executed"}
-                            </Typography>
-                          </Box>
+                          <Chip
+                            size="small"
+                            label={item.log_name ? item.log_name.toUpperCase() : "SYSTEM"}
+                            color="primary"
+                            sx={{
+                              height: 22,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              borderRadius: "6px",
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: "primary.main",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.description?.startsWith(" performed action as")
+                              ? `${fullName}${item.description}`
+                              : item.description || "System Activity Executed"}
+                          </Typography>
                         </TableCell>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.775rem", whiteSpace: "nowrap", fontWeight: 500 }}>
                           {formatActivityDate(item.created_at, item.my_updated_at)}
                         </TableCell>
-
+                        <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<IconEye size={15} />}
+                            onClick={() => setSelectedDetail(item)}
+                            sx={{
+                              borderRadius: "8px",
+                              fontSize: "0.725rem",
+                              fontWeight: 600,
+                              textTransform: "none",
+                              px: 1.25,
+                              py: 0.25,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -567,17 +621,60 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                   </TableBody>
                 </Table>
               </Box>
-              {selectedDetail.properties && Object.keys(selectedDetail.properties).length > 0 && (
+              {selectedDetail.properties && Object.keys(selectedDetail.properties).length > 0 ? (
                 <Box mt={2}>
                   <Typography variant="subtitle2" gutterBottom fontWeight={700}>
-                    Properties / Changes
+                    Additional Information
                   </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
-                    <pre style={{ margin: 0, fontSize: "0.75rem", fontFamily: "monospace", overflowX: "auto" }}>
-                      {JSON.stringify(selectedDetail.properties, null, 2)}
-                    </pre>
-                  </Paper>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>What changed</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2" fontWeight={700}>Value Changed</Typography>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(selectedDetail.properties).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+                              {key}
+                            </TableCell>
+                            <TableCell>
+                              {Array.isArray(value) ? (
+                                value.map((v) => (typeof v === "object" ? JSON.stringify(v) : String(v))).join(", ")
+                              ) : typeof value === "boolean" ? (
+                                value ? "True" : "False"
+                              ) : typeof value === "object" && value !== null ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    fontFamily: "monospace",
+                                    fontSize: "12px",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {JSON.stringify(value, null, 2)}
+                                </pre>
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Box>
+              ) : (
+                <Typography color="text.secondary" fontStyle="italic" mt={2}>
+                  No additional properties available for this activity.
+                </Typography>
               )}
             </Box>
           )}
@@ -592,4 +689,5 @@ const ActivityLogModal = ({ open, onClose, user }) => {
   );
 };
 
+export { ActivityLogModal };
 export default ActivityLog;

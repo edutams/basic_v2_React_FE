@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 import {
   Drawer,
   Box,
@@ -65,6 +66,7 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconFilter,
+  IconSettings,
 } from '@tabler/icons-react';
 import {
   groupPermissionsByModule,
@@ -73,9 +75,13 @@ import {
 } from '@/utils/permissionGrouping';
 import aclApi from '@/api/tenant/acl/aclApi';
 import api from '@/api/landlord/landlord_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isLandlord = false }) => {
   const theme = useTheme();
+  const tenantAuth = useContext(TenantAuthContext);
+  const updateUser = tenantAuth?.updateUser;
+  const changePassword = tenantAuth?.changePassword;
 
   const [copiedField, setCopiedField] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -168,6 +174,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
   });
 
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     setCurrentUser(user);
@@ -638,50 +645,81 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const newFullName = `${editForm.fname} ${editForm.mname ? editForm.mname + ' ' : ''}${editForm.lname}`.trim();
-
-    const updatedObj = {
-      fname: editForm.fname,
-      mname: editForm.mname,
-      lname: editForm.lname,
-      email: editForm.email,
-      phone: editForm.phone,
-      dob: editForm.dob,
-      sex: editForm.sex,
-      address: editForm.address,
-      full_name: newFullName,
-    };
-
-    setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
-    setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
-    setActiveModal(null);
-
     const targetId = targetUser?.id || targetUser?.user_id;
-    if (targetId) {
-      const updatePromise = isLandlordView
-        ? api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
-        : aclApi.updateSchoolUserProfile(targetId, editForm);
 
-      updatePromise
+    if (isLandlordView) {
+      api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
         .then((res) => {
-          if (res?.data) {
-            setProfileData(res.data?.data || res.data);
-          }
+          if (res?.data) setProfileData(res.data?.data || res.data);
           showToast('Profile details updated successfully!');
+          setActiveModal(null);
         })
         .catch((err) => {
           console.error('Failed to save profile changes to database:', err);
           showToast('Failed to save profile changes on server', 'error');
         });
-    } else {
-      showToast('Profile details updated successfully!');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('fname', editForm.fname || '');
+    if (editForm.mname) payload.append('mname', editForm.mname);
+    payload.append('lname', editForm.lname || '');
+    payload.append('email', editForm.email || '');
+    payload.append('phone', editForm.phone || '');
+    payload.append('address', editForm.address || '');
+    if (editForm.dob) payload.append('dob', editForm.dob);
+    if (editForm.sex) payload.append('sex', editForm.sex);
+
+    try {
+      let updatedUser = null;
+      let msg = 'Profile details updated successfully!';
+
+      if (updateUser) {
+        const result = await updateUser(payload, true);
+        if (result?.success) {
+          updatedUser = result.user;
+        } else {
+          showToast(result?.error || 'Update failed', 'error');
+          return;
+        }
+      } else {
+        const res = await tenantApi.post('/update_user', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        updatedUser = res.data?.data || res.data?.user;
+        msg = res.data?.message || msg;
+      }
+
+      const updatedObj = {
+        fname: editForm.fname,
+        mname: editForm.mname,
+        lname: editForm.lname,
+        email: editForm.email,
+        phone: editForm.phone,
+        dob: editForm.dob,
+        sex: editForm.sex,
+        address: editForm.address,
+        full_name: newFullName,
+        ...(updatedUser || {}),
+      };
+
+      setProfileData((prev) => ({ ...(prev || {}), ...updatedObj }));
+      setCurrentUser((prev) => ({ ...(prev || {}), ...updatedObj }));
+      setActiveModal(null);
+      showToast(msg);
+    } catch (err) {
+      console.error('Failed to save profile changes:', err);
+      showToast(err.response?.data?.error || err.response?.data?.message || 'Failed to save profile changes', 'error');
     }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -690,31 +728,63 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
   };
 
-  const handleSavePicture = () => {
-    if (imagePreview) {
-      setProfileData((prev) => ({ ...(prev || {}), avatar: imagePreview }));
-      setCurrentUser((prev) => ({ ...(prev || {}), avatar: imagePreview }));
-      setActiveModal(null);
+  const handleSavePicture = async () => {
+    if (!imageFile && !imagePreview) return;
 
-      const targetId = targetUser?.id || targetUser?.user_id;
-      if (targetId) {
-        const updatePromise = isLandlordView
-          ? api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
-          : aclApi.updateSchoolUserProfile(targetId, { avatar: imagePreview });
+    const targetId = targetUser?.id || targetUser?.user_id;
 
-        updatePromise
-          .then((res) => {
-            if (res?.data) setProfileData(res.data?.data || res.data);
-            showToast('Profile picture updated successfully!');
-          })
-          .catch((err) => {
-            console.error('Failed to update picture on server:', err);
-            showToast('Failed to update picture on server', 'error');
-          });
+    if (isLandlordView) {
+      api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
+        .then((res) => {
+          if (res?.data) setProfileData(res.data?.data || res.data);
+          showToast('Profile picture updated successfully!');
+          setActiveModal(null);
+          setImageFile(null);
+          setImagePreview(null);
+        })
+        .catch((err) => {
+          console.error('Failed to update picture on server:', err);
+          showToast('Failed to update picture on server', 'error');
+        });
+      return;
+    }
+
+    const payload = new FormData();
+    if (imageFile) {
+      payload.append('avatar', imageFile);
+    }
+
+    try {
+      let updatedUser = null;
+      let msg = 'Profile picture updated successfully!';
+
+      if (updateUser) {
+        const result = await updateUser(payload, true);
+        if (result?.success) {
+          updatedUser = result.user;
+        } else {
+          showToast(result?.error || 'Failed to update profile picture', 'error');
+          return;
+        }
       } else {
-        showToast('Profile picture updated successfully!');
+        const res = await tenantApi.post('/update_user', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        updatedUser = res.data?.data || res.data?.user;
+        msg = res.data?.message || msg;
       }
+
+      if (updatedUser) {
+        setProfileData((prev) => ({ ...(prev || {}), ...updatedUser }));
+        setCurrentUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+      }
+      showToast(msg);
+      setActiveModal(null);
+      setImageFile(null);
       setImagePreview(null);
+    } catch (err) {
+      console.error('Failed to update profile picture:', err);
+      showToast(err.response?.data?.error || 'Failed to update profile picture', 'error');
     }
   };
 
@@ -723,12 +793,16 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
   const handleSavePassword = () => {
     setPasswordError('');
+    if (!passwordForm.current_password) {
+      setPasswordError('Please enter your current password.');
+      return;
+    }
     if (!passwordForm.new_password) {
       setPasswordError('Please enter a new password.');
       return;
     }
-    if (passwordForm.new_password.length < 6) {
-      setPasswordError('New password must be at least 6 characters long.');
+    if (passwordForm.new_password.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
       return;
     }
     if (passwordForm.new_password !== passwordForm.confirm_password) {
@@ -737,37 +811,36 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
 
     const targetId = targetUser?.id || targetUser?.user_id;
-    if (targetId) {
-      setSubmittingPassword(true);
-      const updatePromise = isLandlordView
-        ? api.post(`/v1/landlord/users/${targetId}/password`, {
-          new_password: passwordForm.new_password,
-        })
-        : aclApi.changeSchoolUserPassword(targetId, {
-          new_password: passwordForm.new_password,
-        });
+    setSubmittingPassword(true);
 
-      updatePromise
-        .then(() => {
-          setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-          setPasswordError('');
-          setActiveModal(null);
-          showToast('Password changed successfully!');
-        })
-        .catch((err) => {
-          console.error('Failed to change password:', err);
-          const msg = err.response?.data?.message || 'Failed to update password. Please try again.';
-          setPasswordError(msg);
-          showToast(msg, 'error');
-        })
-        .finally(() => {
-          setSubmittingPassword(false);
-        });
-    } else {
-      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-      setActiveModal(null);
-      showToast('Password changed successfully!');
-    }
+    const updatePromise = isLandlordView
+      ? api.post(`/v1/landlord/users/${targetId}/password`, {
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password,
+        confirm_password: passwordForm.confirm_password,
+      })
+      : tenantApi.put('/change_password', {
+        current_password: passwordForm.current_password,
+        password: passwordForm.new_password,
+        password_confirmation: passwordForm.confirm_password,
+      });
+
+    updatePromise
+      .then((res) => {
+        setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+        setPasswordError('');
+        setActiveModal(null);
+        showToast(res?.data?.message || 'Password changed successfully!');
+      })
+      .catch((err) => {
+        console.error('Failed to change password:', err);
+        const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to update password. Please try again.';
+        setPasswordError(msg);
+        showToast(msg, 'error');
+      })
+      .finally(() => {
+        setSubmittingPassword(false);
+      });
   };
 
   const renderBasicRow = (icon, label, value, copyableKey = null) => (
@@ -1048,20 +1121,46 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                 }}
               >
                 <Box display="flex" alignItems="center" gap={2.5}>
-                  <Avatar
-                    src={targetUser?.avatar || targetUser?.profile_picture || targetUser?.picture || ''}
-                    sx={{
-                      width: 72,
-                      height: 72,
-                      bgcolor: 'primary.main',
-                      fontSize: 26,
-                      fontWeight: 700,
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-                      border: `3px solid ${theme.palette.background.paper}`,
-                    }}
-                  >
-                    {getInitials()}
-                  </Avatar>
+                  <Box position="relative">
+                    <Avatar
+                      src={targetUser?.avatar || targetUser?.profile_picture || targetUser?.picture || ''}
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        bgcolor: 'primary.main',
+                        fontSize: 26,
+                        fontWeight: 700,
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                        border: `3px solid ${theme.palette.background.paper}`,
+                      }}
+                    >
+                      {getInitials()}
+                    </Avatar>
+                    <Tooltip title="Change Profile Picture">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleMenuItemClick('change_picture')}
+                        sx={{
+                          position: 'absolute',
+                          bottom: -2,
+                          right: -2,
+                          width: 28,
+                          height: 28,
+                          minWidth: 28,
+                          minHeight: 28,
+                          borderRadius: '50%',
+                          p: 0,
+                          bgcolor: 'primary.main',
+                          color: '#fff',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          border: `2px solid ${theme.palette.background.paper}`,
+                          '&:hover': { bgcolor: 'primary.main' },
+                        }}
+                      >
+                        <IconCamera size={14} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                   <Box flex={1} minWidth={0}>
                     <Typography variant="h6" fontWeight={700} noWrap sx={{ fontSize: '1.15rem', color: 'text.primary' }}>
                       {fullName}
@@ -1126,16 +1225,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                   <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.75rem' }}>
                     Basic Information
                   </Typography>
-                  <IconButton
+                  <Button
                     size="small"
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<IconSettings size={16} />}
+                    endIcon={<IconChevronDown size={14} />}
                     onClick={handleOpenMenu}
                     sx={{
-                      color: 'text.secondary',
-                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' },
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      px: 1.5,
+                      py: 0.4,
                     }}
                   >
-                    <IconDotsVertical size={18} />
-                  </IconButton>
+                    Manage Account
+                  </Button>
                 </Box>
 
                 <Box p={2}>
@@ -1417,6 +1524,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             <TextField
               fullWidth
               size="small"
+              label="Current Password"
+              type={showPasswords.current ? 'text' : 'password'}
+              value={passwordForm.current_password}
+              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              inputProps={{ autoComplete: 'current-password' }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}>
+                      {showPasswords.current ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              size="small"
               label="New Password"
               type={showPasswords.new ? 'text' : 'password'}
               value={passwordForm.new_password}
@@ -1461,7 +1586,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       </Dialog>
 
       {/* View Activity Log Modal */}
-      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="lg" fullWidth>
+      <Dialog open={activeModal === 'view_activity'} onClose={() => setActiveModal(null)} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1.5}>
             <Box
@@ -1553,7 +1678,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 140, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Date Performed</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700, bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>Action</TableCell>
                     </TableRow>
@@ -1565,29 +1691,31 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                           {activityPage * activityRowsPerPage + idx + 1}
                         </TableCell>
                         <TableCell>
-                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <Chip
-                              size="small"
-                              label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
-                              color="primary"
-                              sx={{
-                                height: 20,
-                                fontSize: '0.65rem',
-                                fontWeight: 700,
-                                borderRadius: '6px',
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: 'primary.main',
-                              }}
-                            />
-                            <Typography variant="body2" fontWeight={600} color="text.primary">
-                              {item.description || 'System Activity Executed'}
-                            </Typography>
-                          </Box>
+                          <Chip
+                            size="small"
+                            label={item.log_name ? item.log_name.toUpperCase() : 'SYSTEM'}
+                            color="primary"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: 'primary.main',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.description?.startsWith(' performed action as')
+                              ? `${fullName}${item.description}`
+                              : item.description || 'System Activity Executed'}
+                          </Typography>
                         </TableCell>
                         <TableCell sx={{ color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', fontWeight: 500 }}>
                           {formatActivityDate(item.created_at, item.my_updated_at)}
                         </TableCell>
-                        <TableCell align="center">
+                        <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                           <Button
                             size="small"
                             variant="outlined"
@@ -1595,12 +1723,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                             startIcon={<IconEye size={15} />}
                             onClick={() => setSelectedActivityDetail(item)}
                             sx={{
-                              borderRadius: '8px',
-                              fontSize: '0.725rem',
-                              textTransform: 'none',
-                              py: 0.25,
-                              px: 1.25,
+                              borderRadius: "8px",
+                              fontSize: "0.725rem",
                               fontWeight: 600,
+                              textTransform: "none",
+                              px: 1.25,
+                              py: 0.25,
+                              whiteSpace: "nowrap",
                             }}
                           >
                             View Details
@@ -1710,7 +1839,11 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                               {key}
                             </TableCell>
                             <TableCell>
-                              {typeof value === 'object' && value !== null ? (
+                              {Array.isArray(value) ? (
+                                value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ')
+                              ) : typeof value === 'boolean' ? (
+                                value ? 'True' : 'False'
+                              ) : typeof value === 'object' && value !== null ? (
                                 <pre
                                   style={{
                                     margin: 0,

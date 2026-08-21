@@ -713,7 +713,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
                 lineHeight: 1.25,
               }}
             >
-              Total Days
+              Total SchoolDays
             </Typography>
           </Box>
 
@@ -798,16 +798,16 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
             </Typography>
           </Box>
 
-          {/* <Box
+          <Box
             sx={{
               position: "relative",
               width: {
-                xs: 46,
-                sm: 52,
+                xs: 52,
+                sm: 58,
               },
               height: {
-                xs: 46,
-                sm: 52,
+                xs: 52,
+                sm: 58,
               },
               display: "flex",
               alignItems: "center",
@@ -818,8 +818,8 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
             <CircularProgress
               variant="determinate"
               value={100}
-              size={48}
-              thickness={3.5}
+              size={54}
+              thickness={4}
               sx={{
                 position: "absolute",
                 color: "#edf1f3",
@@ -829,11 +829,12 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
             <CircularProgress
               variant="determinate"
               value={loading ? 0 : termStats.pctCompleted}
-              size={48}
-              thickness={3.5}
+              size={54}
+              thickness={4}
               sx={{
                 color: "#159a72",
                 transform: "rotate(-90deg)",
+                strokeLinecap: "round",
               }}
             />
 
@@ -849,10 +850,10 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
               <Typography
                 sx={{
                   fontSize: {
-                    xs: "10px",
-                    sm: "11px",
+                    xs: "11px",
+                    sm: "12px",
                   },
-                  fontWeight: 700,
+                  fontWeight: 800,
                   lineHeight: 1,
                   color: "#182230",
                 }}
@@ -862,7 +863,8 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
 
               <Typography
                 sx={{
-                  fontSize: "7px",
+                  fontSize: "8px",
+                  fontWeight: 600,
                   color: "#667085",
                   mt: 0.2,
                 }}
@@ -870,7 +872,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
                 Completed
               </Typography>
             </Box>
-          </Box> */}
+          </Box>
         </Box>
       </Box>
 
@@ -947,12 +949,59 @@ const SchoolCalendarModal = ({ open, onClose, weeks, holidays, termStats }) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2.5 }}>
+        {/* TERM PROGRESS BAR */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            mb: 2.5,
+            borderRadius: "12px",
+            background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+            border: "1px solid #fed7aa",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#9a3412" }}>
+              Term Completion Progress
+            </Typography>
+            <Chip
+              label={`${termStats.pctCompleted}% Complete`}
+              size="small"
+              sx={{
+                bgcolor: "#ea580c",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: 11,
+                height: 22,
+              }}
+            />
+          </Box>
+
+          <LinearProgress
+            variant="determinate"
+            value={termStats.pctCompleted}
+            sx={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: "rgba(234, 88, 12, 0.2)",
+              "& .MuiLinearProgress-bar": {
+                backgroundColor: "#ea580c",
+                borderRadius: 4,
+              },
+            }}
+          />
+
+          <Typography sx={{ fontSize: 11.5, color: "#c2410c", mt: 1, fontWeight: 500 }}>
+            {termStats.daysSpent} days spent • {termStats.totalHolidays} holiday days allocated • {termStats.daysRemaining} days remaining.
+          </Typography>
+        </Paper>
+
         {/* STATS OVERVIEW CARDS */}
         <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
           <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
               count={termStats.totalSchoolDays}
-              label="Total Days"
+              label="Total School Days"
               icon={CalendarTodayOutlinedIcon}
               colorIndex={0}
             />
@@ -982,28 +1031,6 @@ const SchoolCalendarModal = ({ open, onClose, weeks, holidays, termStats }) => {
             />
           </Grid>
         </Grid>
-
-        {/* TERM PROGRESS BAR */}
-        <Box sx={{ mb: 3, p: 2, borderRadius: "10px", bgcolor: "#fafbfc", border: "1px solid #f0f2f4" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#344054" }}>
-              Term Completion
-            </Typography>
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "primary.main" }}>
-              {termStats.pctCompleted}% Completed
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={termStats.pctCompleted}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              bgcolor: "#eaecf0",
-              "& .MuiLinearProgress-bar": { borderRadius: 4, bgcolor: "primary.main" },
-            }}
-          />
-        </Box>
 
         {/* TABS HEADER */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2.5 }}>

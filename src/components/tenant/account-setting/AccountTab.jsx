@@ -56,6 +56,7 @@ const AccountTab = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [savedAvatarUrl, setSavedAvatarUrl] = useState('');
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
@@ -79,6 +80,9 @@ const AccountTab = () => {
         address: user?.address || '',
         avatar: user?.avatar || '',
       });
+      if (user?.avatar) {
+        setSavedAvatarUrl(user.avatar);
+      }
     }
   }, [user]);
 
@@ -96,6 +100,35 @@ const AccountTab = () => {
 
   const handlePasswordChange = (e) => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handleAvatarSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!imageFile) return;
+
+    setIsProfileLoading(true);
+    const payload = new FormData();
+    payload.append('avatar', imageFile);
+
+    try {
+      const result = await updateUser(payload, true);
+      notify.success(result.message || 'Profile photo updated successfully!', 'Success');
+      
+      const newAvatar = result.user?.avatar || result.data?.avatar || user?.avatar;
+      if (newAvatar) {
+        setSavedAvatarUrl(newAvatar);
+      }
+      setImageFile(null);
+      setFormData((prev) => ({
+        ...prev,
+        avatar: newAvatar,
+        reset_image: false,
+      }));
+    } catch (err) {
+      notify.error(err.response?.data?.error || 'Failed to update profile photo', 'Error');
+    } finally {
+      setIsProfileLoading(false);
+    }
   };
 
   const handleProfileSubmit = async (e) => {
@@ -123,11 +156,14 @@ const AccountTab = () => {
 
       notify.success(result.message || 'Profile updated successfully!', 'Success');
 
+      const newAvatar = result.user?.avatar || result.data?.avatar || user?.avatar;
+      if (newAvatar) {
+        setSavedAvatarUrl(newAvatar);
+      }
       setImageFile(null);
-      const updatedAvatar = result.user?.avatar || user?.avatar;
       setFormData((prev) => ({
         ...prev,
-        avatar: updatedAvatar,
+        avatar: newAvatar,
         reset_image: false,
       }));
     } catch (err) {
@@ -205,8 +241,14 @@ const AccountTab = () => {
               >
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} alignItems="center">
                   <Avatar
-                    key={formData.avatar || user?.avatar}
-                    src={imageFile ? URL.createObjectURL(imageFile) : formData.avatar || user?.avatar}
+                    key={imageFile ? 'preview' : (savedAvatarUrl || formData.avatar || user?.avatar)}
+                    src={
+                      imageFile
+                        ? URL.createObjectURL(imageFile)
+                        : (savedAvatarUrl || formData.avatar || user?.avatar)
+                        ? `${savedAvatarUrl || formData.avatar || user?.avatar}?t=${Date.now()}`
+                        : ''
+                    }
                     alt={user?.name}
                     sx={{
                       width: 90,
@@ -250,8 +292,8 @@ const AccountTab = () => {
                           variant="contained"
                           size="small"
                           color="success"
-                          type="submit"
-                          onClick={handleProfileSubmit}
+                          type="button"
+                          onClick={handleAvatarSubmit}
                           disabled={isProfileLoading}
                           startIcon={
                             isProfileLoading ? (

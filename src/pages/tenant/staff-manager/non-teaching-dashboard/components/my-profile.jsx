@@ -477,7 +477,7 @@ const MyProfile = ({
               key={index}
               sx={{
                 display: "flex",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: {
                   xs: 1.2,
                   sm: 1.5,
@@ -496,6 +496,7 @@ const MyProfile = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  mt: 0.2,
                   "& svg": {
                     fontSize: {
                       xs: 15,
@@ -524,6 +525,7 @@ const MyProfile = ({
                   },
                   fontWeight: 600,
                   color: "#475569",
+                  pt: 0.3,
                 }}
               >
                 {detail.label}
@@ -540,13 +542,10 @@ const MyProfile = ({
                   },
                   fontWeight: 600,
                   color: "#0F172A",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: {
-                    xs: "normal",
-                    sm: "nowrap",
-                  },
+                  whiteSpace: "normal",
                   wordBreak: "break-word",
+                  lineHeight: 1.4,
+                  pt: 0.3,
                 }}
               >
                 {detail.value}

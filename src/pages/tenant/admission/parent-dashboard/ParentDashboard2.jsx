@@ -39,7 +39,6 @@ const ParentDashboard2 = () => {
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
 
   const [sessionTerms, setSessionTerms] = useState([]);
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
   const [termsReady, setTermsReady] = useState(false);
   const [termInfo, setTermInfo] = useState(null);
 
@@ -50,8 +49,6 @@ const ParentDashboard2 = () => {
   const [finance, setFinance] = useState(null);
   const [loadingWards, setLoadingWards] = useState(true);
 
-  const sessionTermId = selectedSessionTerm || null;
-
   useEffect(() => {
     let mounted = true;
 
@@ -60,25 +57,14 @@ const ParentDashboard2 = () => {
         const res = await fetchSessionTerms();
         if (!mounted || !res?.status) return;
 
-        const options = [
-          { id: '', label: 'All Sessions' },
-          ...(res.data || []).map((st) => ({
+        setSessionTerms(
+          (res.data || []).map((st) => ({
             id: st.id,
             label: `${st.session?.sesname || ''} ${st.display_term?.display_name || ''}`.trim(),
-          })),
-        ];
-        setSessionTerms(options);
-
-        const active = await fetchActiveSessionTerm();
-        const activeId = active?.data?.session_term_id;
-        let defaultId = options.length > 1 ? options[1].id : '';
-        if (active?.status && activeId != null) {
-          const match = options.find((o) => String(o.id) === String(activeId));
-          if (match) defaultId = match.id;
-        }
+          }))
+        );
 
         if (mounted) {
-          setSelectedSessionTerm(defaultId);
           setTermsReady(true);
         }
       } catch (err) {
@@ -132,7 +118,7 @@ const ParentDashboard2 = () => {
     if (!termsReady) return;
     let mounted = true;
     setLoadingWards(true);
-    getParentWards(sessionTermId)
+    getParentWards()
       .then((res) => {
         if (mounted) setWards(res.data);
       })
@@ -143,14 +129,14 @@ const ParentDashboard2 = () => {
     return () => {
       mounted = false;
     };
-  }, [sessionTermId, termsReady]);
+  }, [termsReady]);
 
 
 
   useEffect(() => {
     if (!termsReady) return;
     let mounted = true;
-    getParentBatches(sessionTermId)
+    getParentBatches()
       .then((res) => {
         if (mounted && res?.status) setBatches(res.data);
       })
@@ -158,12 +144,12 @@ const ParentDashboard2 = () => {
     return () => {
       mounted = false;
     };
-  }, [sessionTermId, termsReady]);
+  }, [termsReady]);
 
   useEffect(() => {
     if (!termsReady) return;
     let mounted = true;
-    getParentFinance(sessionTermId)
+    getParentFinance()
       .then((res) => {
         if (mounted && res?.status) setFinance(res.data);
       })
@@ -171,7 +157,7 @@ const ParentDashboard2 = () => {
     return () => {
       mounted = false;
     };
-  }, [sessionTermId, termsReady]);
+  }, [termsReady]);
 
   useEffect(() => {
     if (!wards.length) {
@@ -207,9 +193,6 @@ const ParentDashboard2 = () => {
           loading={loadingWards}
           selectedWard={selectedWard}
           onSelectWard={setSelectedWard}
-          sessionTerms={sessionTerms}
-          selectedSessionTerm={selectedSessionTerm}
-          onSessionTermChange={setSelectedSessionTerm}
         />
 
         <ParentWalletAccount totalPayable={finance?.outstanding} />
@@ -227,6 +210,7 @@ const ParentDashboard2 = () => {
           wards={wards}
           selectedWard={selectedWard}
           onSelectWard={setSelectedWard}
+          sessionTerms={sessionTerms}
         />
 
         <ActivityLogs />

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
   Typography,
   Stack,
   CircularProgress,
+  FormControl,
   MenuItem,
   Select,
   Table,
@@ -73,8 +74,18 @@ const StatBox = ({ label, onClick, children }) => (
   </Tooltip>
 );
 
-const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
+const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms = [] }) => {
   const [detailType, setDetailType] = useState(null);
+  const [academicSessionTermId, setAcademicSessionTermId] = useState('');
+
+  // Default to the first session term when it arrives
+  useEffect(() => {
+    if (!sessionTerms.length || academicSessionTermId) return;
+    const first = sessionTerms.find((t) => t.id);
+    if (first) setAcademicSessionTermId(first.id);
+  }, [sessionTerms, academicSessionTermId]);
+
+  // TODO: fetch academic data using academicSessionTermId and selectedWard.id
 
   return (
     <Card
@@ -92,37 +103,67 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard }) => {
         },
       }}
     >
-      {/* Header: Title + Ward Selector */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.75}>
+      {/* Header: Title + Session/Term + Ward Selector */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.75} flexWrap="wrap" gap={1}>
         <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
           Academic Overview
         </Typography>
 
-        {wards.length > 0 && (
-          <Select
-            value={selectedWard?.id || wards[0]?.id}
-            onChange={(e) => {
-              const w = wards.find((item) => item.id === e.target.value);
-              if (w && onSelectWard) onSelectWard(w);
-            }}
-            size="small"
-            sx={{
-              borderRadius: '7px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: '#0f172a',
-              bgcolor: '#f8fafc',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-            }}
-          >
-            {wards.map((w) => (
-              <MenuItem key={w.id} value={w.id} sx={{ fontSize: 11.5, fontWeight: 600 }}>
-                {w.name} ({w.className || w.class})
-              </MenuItem>
-            ))}
-          </Select>
-        )}
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" gap={0.75}>
+          {/* Session / Term dropdown — filters academic data */}
+          {sessionTerms.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: { xs: 130, sm: 170 }, maxWidth: 230 }}>
+              <Select
+                value={academicSessionTermId}
+                onChange={(e) => setAcademicSessionTermId(e.target.value)}
+                sx={{
+                  borderRadius: '7px',
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  bgcolor: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
+                }}
+                MenuProps={{ PaperProps: { sx: { maxHeight: 260 } } }}
+              >
+                {sessionTerms.map((t) => (
+                  <MenuItem key={t.id} value={t.id} sx={{ fontSize: 12.5 }}>
+                    {t.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Ward selector */}
+          {wards.length > 0 && (
+            <Select
+              value={selectedWard?.id || wards[0]?.id}
+              onChange={(e) => {
+                const w = wards.find((item) => item.id === e.target.value);
+                if (w && onSelectWard) onSelectWard(w);
+              }}
+              size="small"
+              sx={{
+                borderRadius: '7px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                color: '#0f172a',
+                bgcolor: '#f8fafc',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+              }}
+            >
+              {wards.map((w) => (
+                <MenuItem key={w.id} value={w.id} sx={{ fontSize: 11.5, fontWeight: 600 }}>
+                  {w.name} ({w.className || w.class})
+                </MenuItem>
+              ))}
+            </Select>
+          )}
+        </Stack>
       </Stack>
 
       {/* Top 5 Stat Cards Row — on a white background wrapper */}

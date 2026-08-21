@@ -714,7 +714,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
                 lineHeight: 1.25,
               }}
             >
-              Total SchoolDays
+              School Days
             </Typography>
           </Box>
 

@@ -61,13 +61,19 @@ const ActivityLog = ({ onViewAll }) => {
       const rawList = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
 
       if (isMounted) {
+        const causerName = user?.full_name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "User");
+
         const formatted = rawList.map((item) => {
-          const description = item.description || "Activity logged";
+          let description = item.description || "Activity logged";
+          if (description.startsWith(" performed action as")) {
+            description = `${causerName}${description}`;
+          }
+
           const logName = (item.log_name || item.event || "system").toLowerCase();
 
           let type = "document";
           if (logName.includes("task") || logName.includes("assignment")) type = "task";
-          else if (logName.includes("staff") || logName.includes("user") || logName.includes("group")) type = "staff";
+          else if (logName.includes("staff") || logName.includes("user") || logName.includes("group") || logName.includes("tenant")) type = "staff";
           else if (logName.includes("folder") || logName.includes("inventory")) type = "folder";
           else if (logName.includes("resolve") || logName.includes("complete") || logName.includes("check")) type = "resolved";
           else if (logName.includes("doc") || logName.includes("file")) type = "document";
@@ -363,7 +369,7 @@ const ActivityLogModal = ({ open, onClose, user }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gap={1.5}>
             <Box
@@ -454,7 +460,8 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: 140, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Activity</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.100" }}>Date Performed</TableCell>
                     </TableRow>
                   </TableHead>
@@ -465,29 +472,30 @@ const ActivityLogModal = ({ open, onClose, user }) => {
                           {page * rowsPerPage + idx + 1}
                         </TableCell>
                         <TableCell>
-                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                            <Chip
-                              size="small"
-                              label={item.log_name ? item.log_name.toUpperCase() : "SYSTEM"}
-                              color="primary"
-                              sx={{
-                                height: 20,
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                borderRadius: "6px",
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: "primary.main",
-                              }}
-                            />
-                            <Typography variant="body2" fontWeight={600} color="text.primary">
-                              {item.description || "System Activity Executed"}
-                            </Typography>
-                          </Box>
+                          <Chip
+                            size="small"
+                            label={item.log_name ? item.log_name.toUpperCase() : "SYSTEM"}
+                            color="primary"
+                            sx={{
+                              height: 22,
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              borderRadius: "6px",
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: "primary.main",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {item.description?.startsWith(" performed action as")
+                              ? `${fullName}${item.description}`
+                              : item.description || "System Activity Executed"}
+                          </Typography>
                         </TableCell>
                         <TableCell sx={{ color: "text.secondary", fontSize: "0.775rem", whiteSpace: "nowrap", fontWeight: 500 }}>
                           {formatActivityDate(item.created_at, item.my_updated_at)}
                         </TableCell>
-
                       </TableRow>
                     ))}
                   </TableBody>

@@ -1120,20 +1120,40 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                 }}
               >
                 <Box display="flex" alignItems="center" gap={2.5}>
-                  <Avatar
-                    src={targetUser?.avatar || targetUser?.profile_picture || targetUser?.picture || ''}
-                    sx={{
-                      width: 72,
-                      height: 72,
-                      bgcolor: 'primary.main',
-                      fontSize: 26,
-                      fontWeight: 700,
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
-                      border: `3px solid ${theme.palette.background.paper}`,
-                    }}
-                  >
-                    {getInitials()}
-                  </Avatar>
+                  <Box position="relative">
+                    <Avatar
+                      src={targetUser?.avatar || targetUser?.profile_picture || targetUser?.picture || ''}
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        bgcolor: 'primary.main',
+                        fontSize: 26,
+                        fontWeight: 700,
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                        border: `3px solid ${theme.palette.background.paper}`,
+                      }}
+                    >
+                      {getInitials()}
+                    </Avatar>
+                    <Tooltip title="Change Profile Picture">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleMenuItemClick('change_picture')}
+                        sx={{
+                          position: 'absolute',
+                          bottom: 0,
+                          right: -2,
+                          bgcolor: 'primary.main',
+                          color: '#fff',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                          p: '4px',
+                          '&:hover': { bgcolor: 'primary.dark' },
+                        }}
+                      >
+                        <IconCamera size={13} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                   <Box flex={1} minWidth={0}>
                     <Typography variant="h6" fontWeight={700} noWrap sx={{ fontSize: '1.15rem', color: 'text.primary' }}>
                       {fullName}
@@ -1198,16 +1218,24 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
                   <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontSize: '0.75rem' }}>
                     Basic Information
                   </Typography>
-                  <IconButton
+                  <Button
                     size="small"
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<IconEdit size={16} />}
+                    endIcon={<IconChevronDown size={14} />}
                     onClick={handleOpenMenu}
                     sx={{
-                      color: 'text.secondary',
-                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' },
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      px: 1.5,
+                      py: 0.4,
                     }}
                   >
-                    <IconDotsVertical size={18} />
-                  </IconButton>
+                    Edit
+                  </Button>
                 </Box>
 
                 <Box p={2}>

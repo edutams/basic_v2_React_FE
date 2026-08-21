@@ -7,7 +7,7 @@ import {
   getParentWards,
   getParentBatches,
   getParentFinance,
-  getParentNotifications,
+
   getSessionTermWeeks,
 } from '@/api/tenant/admission/admissionApi';
 import { fetchActiveSessionTerm, fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -45,7 +45,7 @@ const ParentDashboard2 = () => {
 
   const [wards, setWards] = useState([]);
   const [selectedWard, setSelectedWard] = useState(null);
-  const [logs, setLogs] = useState([]);
+
   const [batches, setBatches] = useState(null);
   const [finance, setFinance] = useState(null);
   const [loadingWards, setLoadingWards] = useState(true);
@@ -145,18 +145,7 @@ const ParentDashboard2 = () => {
     };
   }, [sessionTermId, termsReady]);
 
-  useEffect(() => {
-    if (!termsReady) return;
-    let mounted = true;
-    getParentNotifications(sessionTermId)
-      .then((res) => {
-        if (mounted && res?.status) setLogs(res.data);
-      })
-      .catch((err) => console.error('Failed to load parent notifications:', err));
-    return () => {
-      mounted = false;
-    };
-  }, [sessionTermId, termsReady]);
+
 
   useEffect(() => {
     if (!termsReady) return;
@@ -240,7 +229,7 @@ const ParentDashboard2 = () => {
           onSelectWard={setSelectedWard}
         />
 
-        <ActivityLogs logs={logs} />
+        <ActivityLogs />
       </Box>
 
       {/* Admission Application Modal */}

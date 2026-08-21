@@ -62,7 +62,7 @@ const NonTeachingStaffForm = ({
     const getRoles = async () => {
       try {
         const res = await aclApi.getSchoolRoles({
-          exclude_super_admin: true,
+          non_teaching: true,
           // without_pagination: true,
         });
 

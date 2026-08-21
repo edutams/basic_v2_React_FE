@@ -295,6 +295,8 @@ const ActivityLog = ({ onViewAll }) => {
 
 const ActivityLogModal = ({ open, onClose, user }) => {
   const theme = useTheme();
+  const { user: authUser } = useTenantAuth();
+
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [searchInput, setSearchInput] = useState("");
@@ -304,23 +306,45 @@ const ActivityLogModal = ({ open, onClose, user }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedDetail, setSelectedDetail] = useState(null);
 
-  const causerId = user?.id || user?.user_id;
-  const fullName = user?.full_name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : user?.name || "User");
+  const currentUser = user || authUser;
+  const causerId = currentUser?.id || currentUser?.user_id;
+  const fullName = currentUser?.full_name || (currentUser?.fname && currentUser?.lname ? `${currentUser.fname} ${currentUser.lname}` : currentUser?.name || "User");
 
   useEffect(() => {
-    if (!open || !causerId) return;
+    if (!open) return;
 
     let isMounted = true;
     const fetchLogs = async () => {
       try {
         setLoading(true);
-        const res = await tenantApi.get(`/activity-logs/causer/${causerId}`, {
-          params: {
-            page: page + 1,
-            limit: rowsPerPage,
-            search: searchQuery.trim() || undefined,
-          },
-        });
+        let res;
+        if (causerId) {
+          try {
+            res = await tenantApi.get(`/activity-logs/causer/${causerId}`, {
+              params: {
+                page: page + 1,
+                limit: rowsPerPage,
+                search: searchQuery.trim() || undefined,
+              },
+            });
+          } catch (e) {
+            res = await tenantApi.get(`/activity-logs`, {
+              params: {
+                page: page + 1,
+                limit: rowsPerPage,
+                search: searchQuery.trim() || undefined,
+              },
+            });
+          }
+        } else {
+          res = await tenantApi.get(`/activity-logs`, {
+            params: {
+              page: page + 1,
+              limit: rowsPerPage,
+              search: searchQuery.trim() || undefined,
+            },
+          });
+        }
 
         if (isMounted) {
           const list = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
@@ -665,4 +689,5 @@ const ActivityLogModal = ({ open, onClose, user }) => {
   );
 };
 
+export { ActivityLogModal };
 export default ActivityLog;

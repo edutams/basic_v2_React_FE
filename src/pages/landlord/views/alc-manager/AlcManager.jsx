@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import PageContainer from 'src/components/container/PageContainer';
+import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import { useNotification } from '../../../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 import {
   Box,
@@ -22,21 +23,44 @@ import {
   Chip,
   Tabs,
   Tab,
-  Alert,
   TextField,
-  InputAdornment,
   CircularProgress,
+  Grid,
+  Stack,
+  Avatar,
+  ListItemIcon,
+  Tooltip,
+  FormControl,
+  Select,
+  InputAdornment,
+  Alert,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconFilter } from '@tabler/icons-react';
+import {
+  MoreVert as MoreVertIcon,
+  Search as SearchIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  TableChart as TableChartIcon,
+  PictureAsPdf as PictureAsPdfIcon,
+} from '@mui/icons-material';
+import {
+  IconShield,
+  IconShieldLock,
+  IconUsers,
+  IconX,
+  IconDownload,
+  IconEye,
+  IconKey,
+  IconEdit,
+} from '@tabler/icons-react';
 
-import ParentCard from '../../../../components/shared/ParentCard';
-import FilterSideDrawer from '../../../../components/shared/FilterSideDrawer';
-import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
 import PermissionAttachmentModal from '@/components/landlord/alc-manager/components/PermissionAttachmentModal';
 import ViewPermissionModal from '@/components/landlord/alc-manager/components/ViewPermissionModal';
 import NewRoleModal from '@/components/landlord/alc-manager/components/NewRoleModal';
+import RoleOrganizationModal from '@/components/landlord/alc-manager/components/RoleOrganizationModal';
 import AssignmentManagement from '@/components/landlord/alc-manager/components/AssignmentManagement';
 import AccessAnalysis from '@/components/landlord/alc-manager/components/AccessAnalysis';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
@@ -46,6 +70,25 @@ import aclApi from '@/api/landlord/acl/aclApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'ACL Manager' }];
 
+// Avatar colors for role icons in table
+const avatarColors = [
+  { bg: '#E6F4EA', color: '#10B981' },
+  { bg: '#F3E8FF', color: '#8B5CF6' },
+  { bg: '#FEF3C7', color: '#F59E0B' },
+  { bg: '#EFF6FF', color: '#3B82F6' },
+  { bg: '#FCE7F3', color: '#EC4899' },
+];
+
+export const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 // ── Tour steps ────────────────────────────────────────────────────────────────
 const roleTourSteps = [
   {
@@ -53,7 +96,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Role Management"
-        body="Create and manage roles here. Use the New Role button to add a role, and the action menu on each row to edit roles or attach/view their permissions."
+        body="Create and manage landlord roles here. Use the New Role button to add a role, and the action menu on each row to edit roles or attach/view their permissions."
       />
     ),
   },
@@ -71,7 +114,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Filters"
-        body="Use the Filters button to search for roles by name and narrow down the list."
+        body="Use the search bar, status & type filters, or More Filters to narrow down roles."
       />
     ),
   },
@@ -80,7 +123,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Roles Table"
-        body="Each row shows a role and its description. Use the action menu (⋮) to Edit, Attach Permission, or View Permission."
+        body="Each row shows a role, description, assigned organizations/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned organizations."
       />
     ),
   },
@@ -148,13 +191,16 @@ const analysisTourSteps = [
 
 const AlcManager = () => {
   const notify = useNotification();
+  const { can } = usePermissions();
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [activeTab, setActiveTab] = useState('Role Management');
+
+  // Modal States
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearch, setPermissionSearch] = useState('');
@@ -162,32 +208,27 @@ const AlcManager = () => {
   const [permissionsToView, setPermissionsToView] = useState([]);
   const [allPermissions, setAllPermissions] = useState([]);
 
+  const [roleOrgsModalOpen, setRoleOrgsModalOpen] = useState(false);
+  const [selectedRoleForOrgs, setSelectedRoleForOrgs] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+
+  // Search & Filter State
+  const [searchInput, setSearchInput] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
+    type: 'all',
+  });
+
   const [totalRoles, setTotalRoles] = useState(0);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
-  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
-
-  const alcFilterDefs = [
-    { key: 'name', label: 'Role Name', type: 'text', placeholder: 'Search by role name…' },
-    // {
-    //   key: 'guard_name',
-    //   label: 'Guard',
-    //   type: 'select',
-    //   options: [
-    //     { value: 'web', label: 'Web' },
-    //     { value: 'api', label: 'API' },
-    //   ],
-    // },
-  ];
-
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
-    guardName: 'web',
+    guardName: 'landlord',
     description: '',
   });
 
@@ -198,19 +239,43 @@ const AlcManager = () => {
     }));
   };
 
+  const [summaryData, setSummaryData] = useState(null);
+
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await aclApi.getRoles({
+      const params = {
         page: page + 1,
         per_page: rowsPerPage,
-        ...activeFilters,
-      });
+      };
 
-      const rolesArray = res?.data?.data ?? [];
-      const total = res?.data?.total ?? 0;
+      if (appliedFilters.search) params.name = appliedFilters.search;
+      if (appliedFilters.type !== 'all') {
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
+      }
 
-      setRows(Array.isArray(rolesArray) ? rolesArray : []);
+      const res = await aclApi.getRoles(params);
+
+      let rolesArray = [];
+      if (Array.isArray(res?.data)) {
+        rolesArray = res.data;
+      } else if (res?.data?.data && Array.isArray(res.data.data)) {
+        rolesArray = res.data.data;
+      }
+
+      if (res?.data?.summary) {
+        setSummaryData(res.data.summary);
+      }
+
+      const total = res?.data?.total ?? (Array.isArray(rolesArray) ? rolesArray.length : 0);
+
+      const enrichedRoles = (Array.isArray(rolesArray) ? rolesArray : []).map((role) => ({
+        ...role,
+        users_count: role.users_count ?? role.users?.length ?? 0,
+        totalUsers: role.users_count ?? role.users?.length ?? 0,
+      }));
+
+      setRows(enrichedRoles);
       setTotalRoles(total);
     } catch (error) {
       setRows([]);
@@ -222,8 +287,49 @@ const AlcManager = () => {
 
   useEffect(() => {
     fetchRoles();
+  }, [page, rowsPerPage, appliedFilters]);
+
+  useEffect(() => {
     fetchAllPermissions();
-  }, [page, rowsPerPage, activeFilters]);
+  }, []);
+
+  // Stat summary calculations
+  const stats = useMemo(() => {
+    if (summaryData) {
+      return {
+        totalRoles: summaryData.total_roles ?? totalRoles,
+        systemRoles: summaryData.system_roles ?? 0,
+        customRoles: summaryData.custom_roles ?? 0,
+        totalUsersAssigned: summaryData.total_users_assigned ?? 0,
+      };
+    }
+    const totalCount = totalRoles || rows.length;
+    const systemCount = rows.filter((r) => r.is_sys === 'yes' || r.is_system).length;
+    const customCount = rows.filter((r) => r.is_sys !== 'yes' && !r.is_system).length;
+    const totalUsersAssigned = rows.reduce((acc, r) => acc + (r.users_count || 0), 0);
+
+    return {
+      totalRoles: totalCount,
+      systemRoles: systemCount,
+      customRoles: customCount,
+      totalUsersAssigned,
+    };
+  }, [rows, totalRoles, summaryData]);
+
+  const handleApplySearch = () => {
+    setAppliedFilters({
+      search: searchInput.trim(),
+      type: typeFilter,
+    });
+    setPage(0);
+  };
+
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setTypeFilter('all');
+    setAppliedFilters({ search: '', type: 'all' });
+    setPage(0);
+  };
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -233,15 +339,13 @@ const AlcManager = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
   const handleAttachPermission = async (row) => {
     try {
       setSelectedRow(row);
       const res = await aclApi.getRolePermissions(row.id);
 
-      // Extract permissions already attached to this role
       setSelectedPermissions(res?.data?.permissions ?? []);
-
-      // Store all available permissions for the modal
       setAllPermissions(res?.data?.available_permissions ?? []);
 
       setPermissionModalOpen(true);
@@ -254,7 +358,6 @@ const AlcManager = () => {
   const handlePermissionChange = (permission) => {
     setSelectedPermissions((prev) => {
       const exists = prev.some((p) => p.id === permission.id);
-
       return exists ? prev.filter((p) => p.id !== permission.id) : [...prev, permission];
     });
   };
@@ -263,7 +366,6 @@ const AlcManager = () => {
     try {
       const permissionsToSave = permissions || selectedPermissions;
 
-      // Send permission IDs to the backend (not names)
       await aclApi.attachPermissions(
         selectedRow.id,
         permissionsToSave.map((p) => p.id),
@@ -297,6 +399,12 @@ const AlcManager = () => {
     }
   };
 
+  const handleOpenOrgsModal = (row) => {
+    setSelectedRoleForOrgs(row);
+    setRoleOrgsModalOpen(true);
+    handleMenuClose();
+  };
+
   const handleCreateRole = async () => {
     try {
       setSaveLoading(true);
@@ -309,7 +417,7 @@ const AlcManager = () => {
       } else {
         await aclApi.createRole({
           name: newRoleForm.roleName,
-          guard_name: newRoleForm.guardName,
+          guard_name: 'landlord',
           description: newRoleForm.description,
         });
         notify.success('Role created successfully!');
@@ -318,6 +426,7 @@ const AlcManager = () => {
       setNewRoleModalOpen(false);
       setNewRoleForm({
         roleName: '',
+        guardName: 'landlord',
         description: '',
       });
       fetchRoles();
@@ -336,29 +445,67 @@ const AlcManager = () => {
     setNewRoleForm({
       roleName: row.name,
       description: row.description || '',
+      guardName: row.guard_name || 'landlord',
     });
     setNewRoleModalOpen(true);
     handleMenuClose();
   };
 
-  const filteredRows = rows;
+  const handleExportExcel = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.type !== 'all')
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
-    setPage(0); // Reset to first page when filters change
+      const res = await aclApi.exportRolesExcel(params);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `landlord_roles_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Roles exported to Excel successfully!');
+    } catch (err) {
+      console.error('Failed to export roles excel:', err);
+      notify.error('Failed to export Excel');
+    }
   };
 
-  const handleFilterReset = () => {
-    setActiveFilters({});
-    setPage(0);
+  const handleExportPdf = async () => {
+    setExportAnchorEl(null);
+    try {
+      const params = { exclude_super_admin: true };
+      if (appliedFilters.search) params.search = appliedFilters.search;
+      if (appliedFilters.type !== 'all')
+        params.is_sys = appliedFilters.type === 'system' ? 'yes' : 'no';
+
+      const res = await aclApi.exportRolesPdf(params);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `landlord_roles_${new Date().toISOString().slice(0, 10)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Roles exported as PDF successfully!');
+    } catch (err) {
+      console.error('Failed to export roles pdf:', err);
+      notify.error('Failed to export PDF');
+    }
   };
 
-  const hasFilters = activeFilterCount > 0;
+  const hasFilters = appliedFilters.search || appliedFilters.type !== 'all';
 
   return (
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
       <Breadcrumb title="ACL Manager" items={BCrumb} />
 
+      {/* ── Navigation Tabs ── */}
       <Box
         sx={{
           mb: 2,
@@ -374,7 +521,6 @@ const AlcManager = () => {
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
           variant="scrollable"
-        // scrollButtons="auto"
         >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />
@@ -395,172 +541,384 @@ const AlcManager = () => {
 
       {activeTab === 'Role Management' && (
         <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
-          <ParentCard
-            title={
-              <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-                <Typography variant="h5" data-tour="acl-role-heading">Manage Roles</Typography>
+          <Box>
+            {/* ── Summary Stat Cards ── */}
+            <Grid container spacing={3} mb={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Total Roles"
+                  title="Total Roles"
+                  count={stats.totalRoles}
+                  icon={IconShield}
+                  color="primary"
+                  subtitle="All defined roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="System Roles"
+                  title="System Roles"
+                  count={stats.systemRoles}
+                  icon={IconShieldLock}
+                  color="success"
+                  subtitle="Platform default roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Custom Roles"
+                  title="Custom Roles"
+                  count={stats.customRoles}
+                  icon={IconShield}
+                  color="warning"
+                  subtitle="Custom created roles"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label="Assigned Users"
+                  title="Assigned Users"
+                  count={stats.totalUsersAssigned}
+                  icon={IconUsers}
+                  color="info"
+                  subtitle="Users with roles"
+                />
+              </Grid>
+            </Grid>
 
-                <Box display="flex" alignItems="center" gap={1}>
-                  <ShowTourGuideButton />
-                  <Button variant="contained" size="small" color="primary" data-tour="acl-role-new" onClick={() => {
-                    setIsEditing(false);
-                    setNewRoleForm({ roleName: '', description: '' });
-                    setNewRoleModalOpen(true);
-                  }}
-                  >
-                    New Role
-                  </Button>
-                </Box>
-              </Box>
-            }
-          >
-          <Box
-            sx={{
-              mb: 2,
-              display: 'flex',
-              gap: 2,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
-              onClick={() => setFilterDrawerOpen(true)}
-              data-tour="acl-role-filter"
-              sx={{
-                textTransform: 'none',
-                borderRadius: 2,
-                px: 2.5,
-                // borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                // color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
-                fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: 'primary.main', color: '#fff' },
-              }}
-            >
-              Filters
-              {activeFilterCount > 0 && (
+            <ParentCard
+              title={
                 <Box
-                  component="span"
-                  sx={{
-                    ml: 1,
-                    px: 0.8,
-                    py: 0.1,
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    borderRadius: '10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    lineHeight: 1.6,
-                  }}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  flexWrap="wrap"
+                  gap={1}
                 >
-                  {activeFilterCount}
+                  <Typography variant="h5" data-tour="acl-role-heading">
+                    Manage Roles
+                  </Typography>
+                  <ShowTourGuideButton />
                 </Box>
-              )}
-            </Button>
-          </Box>
-
-          <Box data-tour="acl-role-table">
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>Role Name</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell>Is System?</TableCell>
-                    <TableCell align="center">Action</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredRows.length > 0 ? (
-                    filteredRows.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.description}</TableCell>
-
-                        <TableCell>
-                          <Chip
-                            label={row.is_sys === 'yes' ? 'Yes' : 'No'}
-                            color={row.is_sys === 'yes' ? 'success' : 'default'}
-                            size="small"
-                            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-                          />
-                        </TableCell>
-
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                            onClose={handleMenuClose}
-                          >
-                            <MenuItem onClick={() => handleEditRole(row)}>Edit Role</MenuItem>
-                            <MenuItem onClick={() => handleAttachPermission(row)}>
-                              Attach Permission
-                            </MenuItem>
-
-                            <MenuItem onClick={() => handleViewPermission(row)}>
-                              View Permission
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <Alert
-                          severity="info"
-                          sx={{
-                            mb: 3,
-                            justifyContent: 'center',
-                            textAlign: 'center',
-                            '& .MuiAlert-icon': {
-                              mr: 1.5,
-                            },
-                          }}
-                        >
-                          {hasFilters
-                            ? 'No roles match the current filters.'
-                            : 'No roles available. Create a new role to get started.'}
-                        </Alert>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-
-                <TableFooter>
-                  <TableRow>
-                    <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]}
-                      count={hasFilters ? filteredRows.length : totalRoles}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={(_, newPage) => setPage(newPage)}
-                      onRowsPerPageChange={(e) => {
-                        setRowsPerPage(parseInt(e.target.value, 10));
-                        setPage(0);
+              }
+            >
+              <Box sx={{ mb: 3 }} data-tour="acl-role-filter">
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ width: { xs: '100%', md: 'auto' } }}
+                  >
+                    <TextField
+                      placeholder="Search role by name or description…"
+                      size="small"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
+                      sx={{ width: { xs: '100%', sm: 300, md: 340 } }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
                       }}
                     />
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </TableContainer>
+
+                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                      <Select
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        displayEmpty
+                      >
+                        <MenuItem value="all">All Types</MenuItem>
+                        <MenuItem value="system">System Roles</MenuItem>
+                        <MenuItem value="custom">Custom Roles</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="primary"
+                      onClick={handleApplySearch}
+                      sx={{ px: 2.5, height: 40 }}
+                    >
+                      Search
+                    </Button>
+
+                    {hasFilters && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        startIcon={<IconX size={16} />}
+                        onClick={handleClearFilters}
+                        sx={{ height: 40, px: 2, textTransform: 'none' }}
+                      >
+                        Clear Filter
+                      </Button>
+                    )}
+                  </Stack>
+
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}
+                  >
+                    {can('landlord.acl.roles.create') && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        color="primary"
+                        data-tour="acl-role-new"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
+                          setNewRoleModalOpen(true);
+                        }}
+                        sx={{ height: 40, px: 2.5, textTransform: 'none' }}
+                      >
+                        New Role
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                      startIcon={<ExportIcon fontSize="small" />}
+                      endIcon={<ArrowDropDownIcon />}
+                      onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                      sx={{ height: 40, px: 2, textTransform: 'none' }}
+                    >
+                      Export
+                    </Button>
+
+                    <Menu
+                      anchorEl={exportAnchorEl}
+                      open={Boolean(exportAnchorEl)}
+                      onClose={() => setExportAnchorEl(null)}
+                      PaperProps={{ sx: { borderRadius: 2, minWidth: 160 } }}
+                    >
+                      <MenuItem onClick={handleExportExcel}>
+                        <TableChartIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} />
+                        Export Excel
+                      </MenuItem>
+                      <MenuItem onClick={handleExportPdf}>
+                        <PictureAsPdfIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} />
+                        Export PDF
+                      </MenuItem>
+                    </Menu>
+                  </Stack>
+                </Stack>
+              </Box>
+
+              <Box data-tour="acl-role-table">
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Role Type</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Assigned Users</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600 }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                            <CircularProgress size={28} />
+                          </TableCell>
+                        </TableRow>
+                      ) : rows.length > 0 ? (
+                        rows.map((row, index) => {
+                          const isSysRole = row.is_sys === 'yes' || row.is_system;
+                          const colorScheme = avatarColors[index % avatarColors.length];
+
+                          return (
+                            <TableRow key={row.id} hover>
+                              <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                              <TableCell>
+                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: colorScheme.bg,
+                                      color: colorScheme.color,
+                                      width: 34,
+                                      height: 34,
+                                    }}
+                                  >
+                                    {isSysRole ? (
+                                      <IconShieldLock size={18} />
+                                    ) : (
+                                      <IconShield size={18} />
+                                    )}
+                                  </Avatar>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="subtitle2" fontWeight={600}>
+                                      {formatRoleName(row.name)}
+                                    </Typography>
+                                    {isSysRole && (
+                                      <Chip
+                                        label="Protected"
+                                        size="small"
+                                        sx={{
+                                          bgcolor: '#E6F4EA',
+                                          color: '#10B981',
+                                          fontSize: '10px',
+                                          height: '18px',
+                                          fontWeight: 700,
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ maxWidth: 280 }}
+                                >
+                                  {row.description || 'No description provided'}
+                                </Typography>
+                              </TableCell>
+
+                              <TableCell>
+                                <Chip
+                                  label={isSysRole ? 'System Role' : 'Custom Role'}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: isSysRole ? 'success.light' : 'secondary.light',
+                                    color: isSysRole ? 'success.dark' : 'secondary.dark',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    borderRadius: '12px',
+                                    px: 0.5,
+                                  }}
+                                />
+                              </TableCell>
+
+                              <TableCell>
+                                <Tooltip title="Click to view assigned organizations & users">
+                                  <Typography
+                                    variant="body2"
+                                    onClick={() => handleOpenOrgsModal(row)}
+                                    sx={{
+                                      cursor: 'pointer',
+                                      fontWeight: 600,
+                                      color: 'primary.main',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 0.75,
+                                      '&:hover': {
+                                        textDecoration: 'underline',
+                                      },
+                                    }}
+                                  >
+                                    <IconUsers size={16} />
+                                    {row.users_count ?? row.totalUsers ?? 0} Users
+                                  </Typography>
+                                </Tooltip>
+                              </TableCell>
+
+                              <TableCell align="center">
+                                <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                                  <MoreVertIcon />
+                                </IconButton>
+
+                                <Menu
+                                  anchorEl={anchorEl}
+                                  open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                                  onClose={handleMenuClose}
+                                >
+                                  <MenuItem onClick={() => handleViewPermission(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconEye size={18} />
+                                    </ListItemIcon>
+                                    View Permissions
+                                  </MenuItem>
+                                  {can('landlord.acl.roles.attach_permissions') && (
+                                    <MenuItem onClick={() => handleAttachPermission(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconKey size={18} />
+                                      </ListItemIcon>
+                                      Attach Permissions
+                                    </MenuItem>
+                                  )}
+                                  {!isSysRole && can('landlord.acl.roles.update') && (
+                                    <MenuItem onClick={() => handleEditRole(row)}>
+                                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                        <IconEdit size={18} />
+                                      </ListItemIcon>
+                                      Edit Role
+                                    </MenuItem>
+                                  )}
+                                  <MenuItem onClick={() => handleOpenOrgsModal(row)}>
+                                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 32 }}>
+                                      <IconUsers size={18} />
+                                    </ListItemIcon>
+                                    View Assigned Users
+                                  </MenuItem>
+                                </Menu>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                            <Alert
+                              severity="info"
+                              sx={{ justifyContent: 'center', textAlign: 'center' }}
+                            >
+                              {hasFilters
+                                ? 'No roles match the current filters.'
+                                : 'No roles available. Create a new role to get started.'}
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+
+                    <TableFooter>
+                      <TableRow>
+                        <TablePagination
+                          rowsPerPageOptions={[10, 20, 50]}
+                          count={totalRoles}
+                          rowsPerPage={rowsPerPage}
+                          page={page}
+                          onPageChange={(_, newPage) => setPage(newPage)}
+                          onRowsPerPageChange={(e) => {
+                            setRowsPerPage(parseInt(e.target.value, 10));
+                            setPage(0);
+                          }}
+                        />
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </ParentCard>
           </Box>
-          </ParentCard>
         </AclTourProvider>
       )}
 
+      {/* ── Modals ── */}
       <PermissionAttachmentModal
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
@@ -590,13 +948,11 @@ const AlcManager = () => {
         loading={saveLoading}
       />
 
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={alcFilterDefs}
-        title="Filter Roles"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
+      <RoleOrganizationModal
+        open={roleOrgsModalOpen}
+        onClose={() => setRoleOrgsModalOpen(false)}
+        roleId={selectedRoleForOrgs?.id}
+        roleName={selectedRoleForOrgs?.name}
       />
     </PageContainer>
   );

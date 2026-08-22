@@ -6,6 +6,22 @@ const aclApi = {
     return response.data;
   },
 
+  exportRolesExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportRolesPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/roles/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
   updateRole: async (id, data) => {
     const response = await api.put(`/v1/landlord/acl/roles/${id}`, data);
     return response.data;
@@ -38,8 +54,29 @@ const aclApi = {
     return response.data;
   },
 
-  getAgents: async () => {
-    const response = await api.get('/v1/landlord/acl/assignments/agents/list');
+  exportAssignmentsExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportAssignmentsPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  getAgents: async (params) => {
+    const response = await api.get('/v1/landlord/acl/assignments/agents/list', { params });
+    return response.data;
+  },
+
+  toggleAgentStatus: async (agentId) => {
+    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/toggle_status`);
     return response.data;
   },
 
@@ -50,13 +87,6 @@ const aclApi = {
 
   assignAgentRole: async (agentId, roleIds) => {
     const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/assign`, {
-      roles: roleIds,
-    });
-    return response.data;
-  },
-
-  unassignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/unassign`, {
       roles: roleIds,
     });
     return response.data;
@@ -74,6 +104,22 @@ const aclApi = {
     return response.data;
   },
 
+  revokeAgentDirectPermissions: async (agentId, permissions, params) => {
+    const response = await api.post(
+      `/v1/landlord/acl/assignments/agents/${agentId}/permissions/revoke`,
+      { permissions, ...params },
+    );
+    return response.data;
+  },
+
+  unassignAgentRole: async (agentId, roleIds, params) => {
+    const response = await api.post(`/v1/landlord/acl/assignments/agents/${agentId}/unassign`, {
+      roles: roleIds,
+      ...params,
+    });
+    return response.data;
+  },
+
   getRoleAnalytics: async (params) => {
     const response = await api.get('/v1/landlord/acl/roles/analytics', { params });
     return response.data;
@@ -82,6 +128,22 @@ const aclApi = {
   getPermissionAnalytics: async (params) => {
     const response = await api.get('/v1/landlord/acl/permissions/analytics', { params });
     return response.data;
+  },
+
+  exportPermissionAnalyticsExcel: async (params) => {
+    const response = await api.get('/v1/landlord/acl/permissions/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  exportPermissionAnalyticsPdf: async (params) => {
+    const response = await api.get('/v1/landlord/acl/permissions/export/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
   },
 
   getRoleOrganizations: async (roleId, params) => {

@@ -12,10 +12,10 @@ import {
   MenuItem,
 } from '@mui/material';
 
-const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) => {
+const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditing = false }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Add New Role</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit Role' : 'Add New Role'}</DialogTitle>
       <DialogContent dividers>
         <TextField
           autoFocus
@@ -30,11 +30,11 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
         {/* <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Guard Name</InputLabel>
           <Select
-            value={formData.guardName || 'web'}
+            value={formData.guardName || 'tenant'}
             label="Guard Name"
             onChange={(e) => onFieldChange('guardName', e.target.value)}
           >
-            <MenuItem value="web">web</MenuItem>
+            <MenuItem value="tenant">tenant</MenuItem>
             <MenuItem value="api">api</MenuItem>
           </Select>
         </FormControl> */}
@@ -50,9 +50,11 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
         />
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button size="small" color="primary" onClick={onSave}>
-          Create Role
+        <Button variant="outlined" size="small" color="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button size="small" variant="contained" color="primary" onClick={onSave}>
+          {isEditing ? 'Update Role' : 'Create Role'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -60,3 +62,4 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
 };
 
 export default SchoolNewRoleModal;
+

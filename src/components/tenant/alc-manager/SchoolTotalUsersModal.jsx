@@ -22,15 +22,24 @@ import {
   Avatar,
   Chip,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
   VpnKeyOutlined as PermissionIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
+import { IconUserOff } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import { useNotification } from '@/hooks/useNotification';
+import { getFullImageUrl } from '@/helpers/ImageHelper';
 
-const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
+const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,6 +48,12 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const notify = useNotification();
 
   const getInitials = (name = '') =>
     name
@@ -47,6 +62,11 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
       .map((n) => n[0])
       .join('')
       .toUpperCase();
+
+  // A user may hold a permission directly OR inherit it via a role.
+  // Only explicit 0 means "inherited only" — missing flag (older API) is treated as direct.
+  const isDirectHolder = (user) =>
+    user?.direct_holder === undefined ? true : Boolean(user.direct_holder);
 
   useEffect(() => {
     if (open && permission) {
@@ -94,6 +114,12 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
     setPage(0);
   };
 
+  const handleClear = () => {
+    setSearch('');
+    setSearchInput('');
+    setPage(0);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -106,7 +132,37 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
     setSearchInput('');
     setPage(0);
     setError(null);
+    setAnchorEl(null);
+    setSelectedUser(null);
+    setConfirmOpen(false);
     onClose();
+  };
+
+  const handleMenuOpen = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleRemovePermission = async () => {
+    if (!selectedUser || !permission || removing) return;
+    setRemoving(true);
+    try {
+      await aclApi.revokeSchoolUserDirectPermissions(selectedUser.id, [permission.name]);
+      notify.success('Permission removed from user successfully!');
+      handleMenuClose();
+      setConfirmOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+      onUserRemoved?.();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to remove permission from user');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   return (
@@ -123,7 +179,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PermissionIcon fontSize="small" color="primary" />
           <Typography variant="h6" component="span">
-            Users with this Permission
+            {permission?.id === 'all'
+              ? 'Users Impacted by Permissions'
+              : 'Users with this Permission'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
@@ -135,7 +193,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
       <DialogContent dividers sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
-            placeholder="Search by user name"
+            placeholder="Search by user name or email"
             value={searchInput}
             size="small"
             fullWidth
@@ -147,11 +205,23 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClear} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
           <Button variant="contained" size="small" onClick={handleSearch}>
             Search
           </Button>
+          {(search || searchInput) && (
+            <Button variant="outlined" color="error" size="small" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
         </Box>
 
         {error && (
@@ -164,61 +234,96 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '10%' }}>#</TableCell>
+                <TableCell sx={{ width: '8%' }}>#</TableCell>
                 <TableCell sx={{ width: '40%' }}>User Details</TableCell>
-                <TableCell sx={{ width: '20%' }}>Status</TableCell>
+                <TableCell sx={{ width: '20%' }}>Source</TableCell>
+                <TableCell sx={{ width: '18%' }}>Status</TableCell>
+                {permission?.id !== 'all' && (
+                  <TableCell sx={{ width: '12%' }} align="center">
+                    Action
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
               ) : users.length > 0 ? (
-                users.map((user, index) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={user.avatar}
-                          sx={{
-                            width: 30,
-                            height: 30,
-                            fontSize: 11,
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        >
-                          {!user.avatar &&
-                            getInitials(user.full_name ?? `${user.fname} ${user.lname}`)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {user.full_name ?? `${user.fname} ${user.lname}`}
-                          </Typography>
+                users.map((item, index) => {
+                  const u = item.users || item.user || item;
+                  const rawAvatar =
+                    item.avatar ||
+                    item.users?.avatar ||
+                    item.user?.avatar ||
+                    u.avatar ||
+                    u.image ||
+                    item.image ||
+                    '';
+                  const avatarSrc = rawAvatar ? getFullImageUrl(rawAvatar) : '';
 
-                          <Typography variant="small" color="text.secondary">
-                            {user.email}
-                          </Typography>
+                  return (
+                    <TableRow key={item.id || u.id || index} hover>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={avatarSrc}
+                            alt={u.full_name || u.fname || ''}
+                            sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700 }}
+                          >
+                            {getInitials(
+                              u.full_name ||
+                              `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                              'User'
+                            )}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+                              {u.full_name ||
+                                `${u.fname || ''} ${u.lname || ''}`.trim() ||
+                                'N/A'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {u.email || 'No email added yet'}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell>
-                      <Chip
-                        label={user.status}
-                        size="small"
-                        color={user.status === 'active' ? 'success' : 'default'}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
+                      <TableCell>
+                        <Chip
+                          label={isDirectHolder(item) ? 'Direct' : 'Via Role'}
+                          size="small"
+                          color={isDirectHolder(item) ? 'primary' : 'default'}
+                          variant={isDirectHolder(item) ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          label={item.status || u.status || 'Active'}
+                          size="small"
+                          color={(item.status === 'active' || u.status === 'active') ? 'success' : 'default'}
+                        />
+                      </TableCell>
+
+                      {permission?.id !== 'all' && (
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
                     <Alert
                       severity="info"
                       sx={{
@@ -229,7 +334,9 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
                     >
                       {search
                         ? 'No users match your search.'
-                        : 'No users have this permission yet.'}
+                        : permission?.id === 'all'
+                          ? 'No users are impacted by permissions yet.'
+                          : 'No users have this permission yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>
@@ -250,6 +357,46 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           }}
           rowsPerPageOptions={[5, 10, 25]}
         />
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          PaperProps={{
+            sx: {
+              '& .MuiMenuItem-root:hover': {
+                bgcolor: 'primary.light',
+              },
+            },
+          }}
+        >
+          <Tooltip
+            title={
+              selectedUser && !isDirectHolder(selectedUser)
+                ? 'This permission is inherited via a role. Remove the user from the role instead.'
+                : ''
+            }
+            placement="left"
+          >
+            <span>
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  setConfirmOpen(true);
+                }}
+                disabled={removing || !isDirectHolder(selectedUser)}
+                sx={{ color: 'error.main' }}
+              >
+                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                  <IconUserOff size={18} />
+                </ListItemIcon>
+                Remove Permission
+              </MenuItem>
+            </span>
+          </Tooltip>
+        </Menu>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
@@ -257,6 +404,18 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           Close
         </Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleRemovePermission}
+        title="Remove permission from user?"
+        message={`Are you sure you want to remove "${permission?.description ?? permission?.name ?? ''
+          }" from ${selectedUser?.full_name ?? ''}?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        severity="error"
+      />
     </Dialog>
   );
 };

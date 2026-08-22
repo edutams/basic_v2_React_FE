@@ -110,6 +110,84 @@ export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
   return response.data;
 };
 
+// ── Parent Dashboard v2 — one endpoint per card, fetched independently ──
+const parentParams = (sessionTermId = null) =>
+  sessionTermId ? { session_term_id: sessionTermId } : {};
+
+// Finance stat cards (paid / outstanding / pending)
+export const getParentFinance = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/finance', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Attendance Overview card (+ Performance Snapshot)
+export const getParentAttendance = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/attendance', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Academic Overview + Engagement cards
+export const getParentAcademics = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/academics', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Upcoming Events card
+export const getParentEvents = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/events', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Teacher Contacts card
+export const getParentContacts = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/contacts', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Recent Messages card
+export const getParentMessages = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/messages', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Notifications card
+export const getParentNotifications = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/notifications', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Ward listing (enrolled + prospective) with DOB
+export const getParentWards = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/wards', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+// Open admission batches for the parent dashboard
+export const getParentBatches = async (sessionTermId = null) => {
+  const response = await api.get('/admission/parent/batches', { params: parentParams(sessionTermId) });
+  return response.data;
+};
+
+export const getParentInsightsDetail = async (type, sessionTermId = null) => {
+  const params = { type };
+  if (sessionTermId) params.session_term_id = sessionTermId;
+  const response = await api.get('/admission/parent-insights/detail', { params });
+  return response.data;
+};
+
+export const getParentDashboard = async (sessionTermId = null) => {
+  const params = sessionTermId ? { session_term_id: sessionTermId } : {};
+  const response = await api.get('/admission/parent-dashboard', { params });
+  return response.data;
+};
+
+// Weeks for a session term (used by the parent Term Calendar card for real
+// start/end dates). Public read — no calendar permission required.
+export const getSessionTermWeeks = async (sessionTermId) => {
+  const response = await api.get(`/session-mappings/${sessionTermId}/weeks`);
+  return response.data;
+};
+
 // Admission Payment
 export const checkAdmissionPaymentStatus = async (admissionId) => {
   const response = await api.get(`/admission/payments/status/${admissionId}`);

@@ -1,4 +1,5 @@
 import React, { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
@@ -9,6 +10,12 @@ const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 const SchoolDashboardMain = Loadable(
   lazy(() => import('@/pages/tenant/school-dashboard/SchoolDashboard')),
+);
+const AdmissionOfficerDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionOfficerDashboard')),
+);
+const BursaryOfficerDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/finance/BursaryOfficerDashboard')),
 );
 const SetupWelcome = Loadable(lazy(() => import('@/pages/tenant/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/InitialSetup')));
@@ -103,6 +110,9 @@ const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/componen
 const PayInvoice = Loadable(
   lazy(() => import('@/pages/tenant/class-ledger/components/PayInvoice')),
 );
+const PaySchoolFees = Loadable(
+  lazy(() => import('@/pages/tenant/admission/parent-dashboard/PaySchoolFees')),
+);
 
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
@@ -179,6 +189,17 @@ const TenantRoutes = [
     children: [{ index: true, element: <PayInvoice /> }],
   },
   {
+    // Parent/student invoice view — auth-only (the class-ledger invoice route
+    // requires bursary_manager.ledger.index, which parents don't have).
+    path: '/parent-invoice/:invoiceId/:user_id',
+    element: (
+      <TenantProtectedRoute>
+        <SchoolLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <Invoice /> }],
+  },
+  {
     path: '/complete-setup',
     element: (
       <TenantProtectedRoute permission="setup.school.complete">
@@ -197,7 +218,9 @@ const TenantRoutes = [
       </TenantProtectedRoute>
     ),
     children: [
-      { index: true, element: <SchoolDashboardMain /> },
+      // The bare root always bounces to /dashboard so the dashboard URL
+      // keeps its /dashboard prefix everywhere (login, sidebar, refresh).
+      { index: true, element: <Navigate to="/dashboard" replace /> },
 
       {
         path: 'acl-manager',
@@ -482,8 +505,12 @@ const TenantRoutes = [
       },
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },
+      // ── Role-specific dashboards (linked from the Admin Dashboard) ──
+      { path: 'dashboard/admission', element: <AdmissionOfficerDashboard /> },
+      { path: 'dashboard/bursary', element: <BursaryOfficerDashboard /> },
 
       // ── Parent-specific routes ──
+      { path: 'pay-school-fees', element: <PaySchoolFees /> },
       {
         path: 'admission/new-application',
         element: (

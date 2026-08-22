@@ -85,6 +85,12 @@ const SchoolTotalPermissionModal = ({ open, onClose, permission }) => {
     setPage(0);
   };
 
+  const handleClear = () => {
+    setSearch('');
+    setSearchInput('');
+    setPage(0);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -138,11 +144,23 @@ const SchoolTotalPermissionModal = ({ open, onClose, permission }) => {
                   <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleClear} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
           <Button variant="contained" size="small" onClick={handleSearch}>
             Search
           </Button>
+          {(search || searchInput) && (
+            <Button variant="outlined" color="error" size="small" onClick={handleClear}>
+              Clear
+            </Button>
+          )}
         </Box>
 
         {error && (

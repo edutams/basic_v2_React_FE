@@ -191,13 +191,9 @@ const LearnerManagement = () => {
 
   useEffect(() => {
     fetchLearners();
-  }, [fetchLearners]);
-  useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
-  useEffect(() => {
     fetchClasses();
-  }, [fetchClasses]);
+  }, [fetchLearners, fetchStats, fetchClasses]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -389,14 +385,20 @@ const LearnerManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button variant="contained" size="small" startIcon={<AddIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
                 fullWidth={false}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setAddLearnerOpen(true)}
               >
                 Add Learner
               </Button>
-              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
                   setDownloadClassId('');
@@ -406,7 +408,10 @@ const LearnerManagement = () => {
                 Download Template
               </Button>
 
-              <Button variant="contained" size="small" startIcon={<UploadIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<UploadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setUploadLearnerOpen(true)}
               >
@@ -437,7 +442,7 @@ const LearnerManagement = () => {
             }}
             sx={{
               width: {
-                xs: "100%",
+                xs: '100%',
                 sm: 300,
                 md: 350,
               },
@@ -464,7 +469,12 @@ const LearnerManagement = () => {
           </FormControl>
 
           {hasFilters && (
-            <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={resetFilters}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Clear Filters
             </Button>
           )}
@@ -665,8 +675,15 @@ const LearnerManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button variant="contained" size="small" onClick={() => setDownloadDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleDownloadTemplate}
+            disabled={!downloadClassId}
+          >
             Download
           </Button>
         </DialogActions>
@@ -692,14 +709,22 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => {
-            setImpersonateStudentConfirmOpen(false);
-            setStudentToImpersonate(null);
-          }}
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => {
+              setImpersonateStudentConfirmOpen(false);
+              setStudentToImpersonate(null);
+            }}
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>
+          <Button
+            size="small"
+            onClick={handleConfirmedImpersonateStudent}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
             Yes, Login As
           </Button>
         </DialogActions>
@@ -753,7 +778,9 @@ const LearnerManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setDeleteDialogOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>

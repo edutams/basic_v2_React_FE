@@ -10,6 +10,22 @@ const aclApi = {
         return response.data;
     },
 
+    exportSchoolRolesExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/roles/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolRolesPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/roles/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
     createSchoolRole: async (data) => {
         const response = await tenantApi.post('/censis/acl/roles', data);
         return response.data;
@@ -32,13 +48,29 @@ const aclApi = {
         return response.data;
     },
 
-    getSchoolUsers: async () => {
-        const response = await tenantApi.get('/censis/acl/assignments/users/list');
+    getSchoolUsers: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/list', { params });
         return response.data;
     },
 
-    getSchoolRolesList: async () => {
-        const response = await tenantApi.get('/censis/acl/assignments/roles/list');
+    exportSchoolAssignmentsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolAssignmentsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    getSchoolRolesList: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/roles/list', { params });
         return response.data;
     },
 
@@ -63,10 +95,56 @@ const aclApi = {
         return response.data;
     },
 
+    getSchoolRoleSummaryStats: async () => {
+        const response = await tenantApi.get('/censis/acl/roles/summary_stats');
+        return response.data;
+    },
+
+    getSchoolRoleAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/roles/analysis_stats');
+        return response.data;
+    },
+
+    getSchoolAssignmentSummaryStats: async () => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/summary_stats');
+        return response.data;
+    },
+
+    getSchoolRecentChangesLog: async (params) => {
+        const response = await tenantApi.get('/censis/acl/assignments/users/recent_changes', { params });
+        return response.data;
+    },
+
+    toggleSchoolUserStatus: async (userId) => {
+        const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/toggle_status`);
+        return response.data;
+    },
+
     getSchoolPermissionAnalytics: async (params) => {
         const response = await tenantApi.get('/censis/acl/permissions/analytics', {
             params,
         });
+        return response.data;
+    },
+
+    exportSchoolPermissionsExcel: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    exportSchoolPermissionsPdf: async (params) => {
+        const response = await tenantApi.get('/censis/acl/permissions/export/pdf', {
+            params,
+            responseType: 'blob',
+        });
+        return response;
+    },
+
+    getSchoolPermissionAnalysisStats: async () => {
+        const response = await tenantApi.get('/censis/acl/permissions/analysis_stats');
         return response.data;
     },
 
@@ -110,6 +188,16 @@ const aclApi = {
         const response = await tenantApi.post(`/censis/acl/assignments/users/${userId}/permissions`, {
             permissions,
         });
+        return response.data;
+    },
+
+    revokeSchoolUserDirectPermissions: async (userId, permissions) => {
+        const response = await tenantApi.post(
+            `/censis/acl/assignments/users/${userId}/permissions/revoke`,
+            {
+                permissions,
+            },
+        );
         return response.data;
     },
 

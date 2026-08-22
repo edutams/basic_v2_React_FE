@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -22,16 +22,58 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  Grid,
+  Chip,
+  Avatar,
+  Select,
+  MenuItem,
+  FormControl,
+  Menu,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import tenantApi from '@/api/tenant/tenant_api';
-import { IconSearch, IconEye, IconX, IconDownload } from '@tabler/icons-react';
+import {
+  IconSearch,
+  IconX,
+  IconDownload,
+  IconDotsVertical,
+  IconListCheck,
+  IconUserCheck,
+  IconCalendar,
+  IconShield,
+  IconClock,
+  IconUsers,
+  IconLock,
+  IconShieldCheck,
+  IconFilter,
+} from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 import UserProfileDrawer from '@/components/shared/UserProfileDrawer';
+import StatCard from '@/components/shared/StatCard';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
+
+const formatTimeAgo = (activity) => {
+  const rawTimeAgo = activity?.created_at
+    ? dayjs(activity.created_at).fromNow()
+    : activity?.time_ago;
+
+  if (!rawTimeAgo) return '—';
+
+  return rawTimeAgo
+    .replace(/\bminutes\b/gi, 'mins')
+    .replace(/\bminute\b/gi, 'min')
+    .replace(/\bhours\b/gi, 'hrs')
+    .replace(/\bhour\b/gi, 'hr')
+    .replace(/\bseconds\b/gi, 'secs')
+    .replace(/\bsecond\b/gi, 'sec');
+};
 
 const BCrumb = [
   {
@@ -84,8 +126,8 @@ const tourSteps = [
     selector: '[data-tour="activity-log-action"]',
     content: (
       <StepContent
-        title="View Details"
-        body="Click View Details to open the full activity record, including exactly what changed."
+        title="Actions Menu"
+        body="Click the action menu to view full details or download activity reports."
       />
     ),
   },
@@ -96,18 +138,66 @@ const ActivityLog = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
+
+  // Search & Filter Draft Inputs
+  const [searchInput, setSearchInput] = useState('');
+  const [userInput, setUserInput] = useState('all');
+  const [actionInput, setActionInput] = useState('all');
+  const [severityInput, setSeverityInput] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Applied Filter Query States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [userFilter, setUserFilter] = useState('all');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [appliedDateFrom, setAppliedDateFrom] = useState('');
+  const [appliedDateTo, setAppliedDateTo] = useState('');
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLog, setSelectedLog] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuLog, setMenuLog] = useState(null);
+
+  const [stats, setStats] = useState({
+    total_activities: 0,
+    unique_users: 0,
+    today_activities: 0,
+    critical_actions: 0,
+    last_activity: null,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      const res = await tenantApi.get('/activity-logs/statistics');
+      const data = res.data?.data || res.data || {};
+      setStats({
+        total_activities: data.total_activities ?? 0,
+        unique_users: data.unique_users ?? 0,
+        today_activities: data.today_activities ?? 0,
+        critical_actions: data.critical_actions ?? 0,
+        last_activity: data.last_activity ?? null,
+      });
+    } catch (err) {
+      console.error('Failed to fetch activity log statistics:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
 
-  const activeUser = React.useMemo(() => {
+  const activeUser = useMemo(() => {
     if (!activeUserId) return null;
     const logWithUser = logs.find(
       (l) => l.causer && String(l.causer.id) === String(activeUserId)
@@ -137,53 +227,87 @@ const ActivityLog = () => {
   const fetchLogs = async (
     currentPage,
     limit,
-    searchQuery = search,
-    from = dateFrom,
-    to = dateTo,
+    sQuery = searchQuery,
+    from = appliedDateFrom,
+    to = appliedDateTo,
+    act = actionFilter,
+    sev = severityFilter,
+    usr = userFilter,
   ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: currentPage + 1,
         limit,
-        search: searchQuery,
+        search: sQuery,
       });
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
+      if (act && act !== 'all') params.append('action', act);
+      if (sev && sev !== 'all') params.append('severity', sev);
+      if (usr && usr !== 'all') params.append('user_type', usr);
 
       const response = await tenantApi.get(`/activity-logs?${params.toString()}`);
-      setLogs(response.data.data);
-      setTotal(response.data.total);
+      setLogs(response.data.data || []);
+      setTotal(response.data.total || 0);
       setError(null);
     } catch (err) {
       setError('Failed to fetch activity logs');
       console.error(err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLogs(page, rowsPerPage);
-  }, [page, rowsPerPage]);
+    fetchLogs(
+      page,
+      rowsPerPage,
+      searchQuery,
+      appliedDateFrom,
+      appliedDateTo,
+      actionFilter,
+      severityFilter,
+      userFilter
+    );
+  }, [
+    page,
+    rowsPerPage,
+    searchQuery,
+    appliedDateFrom,
+    appliedDateTo,
+    actionFilter,
+    severityFilter,
+    userFilter,
+  ]);
 
-  const handleSearch = () => {
-    if (page === 0) {
-      fetchLogs(0, rowsPerPage, search, dateFrom, dateTo);
-    } else {
-      setPage(0);
-    }
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    setSearchQuery(searchInput);
+    setUserFilter(userInput);
+    setActionFilter(actionInput);
+    setSeverityFilter(severityInput);
+    setAppliedDateFrom(dateFrom);
+    setAppliedDateTo(dateTo);
+    setPage(0);
   };
 
   const handleClearFilters = () => {
-    setSearch('');
+    setSearchInput('');
+    setUserInput('all');
+    setActionInput('all');
+    setSeverityInput('all');
     setDateFrom('');
     setDateTo('');
-    if (page === 0) {
-      fetchLogs(0, rowsPerPage, '', '', '');
-    } else {
-      setPage(0);
-    }
+
+    setSearchQuery('');
+    setUserFilter('all');
+    setActionFilter('all');
+    setSeverityFilter('all');
+    setAppliedDateFrom('');
+    setAppliedDateTo('');
+    setPage(0);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -193,6 +317,16 @@ const ActivityLog = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleMenuOpen = (event, log) => {
+    setAnchorEl(event.currentTarget);
+    setMenuLog(log);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuLog(null);
   };
 
   const handleOpenModal = (log) => {
@@ -208,245 +342,503 @@ const ActivityLog = () => {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownloadPdf = async () => {
-    if (!selectedLog) return;
+    if (!selectedLog && !menuLog) return;
+    const targetLog = selectedLog || menuLog;
     try {
       setDownloading(true);
-      const res = await tenantApi.get(`/activity-logs/${selectedLog.id}/pdf`, {
+      const res = await tenantApi.get(`/activity-logs/${targetLog.id}/pdf`, {
         responseType: 'blob',
       });
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `activity-log-${selectedLog.id}.pdf`;
+      a.download = `activity-log-${targetLog.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
+      notify.error('Failed to download PDF report');
       console.error(err);
-      setError('Failed to download the activity report');
     } finally {
       setDownloading(false);
     }
   };
 
+  const getLogModule = (log) => log?.module || 'User Management';
+
+  const getLogAction = (log) => log?.action || 'Update';
+
+  const getLogSeverity = (log) => log?.severity || 'Low';
+
+  const getActionChip = (actionStr) => {
+    if (!actionStr) return null;
+    const lower = actionStr.toLowerCase();
+    if (lower.includes('create') || lower.includes('login')) {
+      return <Chip label={actionStr} size="small" sx={{ bgcolor: '#E6F4EA', color: '#10B981', fontSize: '11px', height: '20px', fontWeight: 700 }} />;
+    }
+    if (lower.includes('update')) {
+      return <Chip label={actionStr} size="small" sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontSize: '11px', height: '20px', fontWeight: 700 }} />;
+    }
+    if (lower.includes('delete')) {
+      return <Chip label={actionStr} size="small" sx={{ bgcolor: '#FEF2F2', color: '#DC2626', fontSize: '11px', height: '20px', fontWeight: 700 }} />;
+    }
+    if (lower.includes('assign')) {
+      return <Chip label={actionStr} size="small" sx={{ bgcolor: '#E6F4EA', color: '#0694A2', fontSize: '11px', height: '20px', fontWeight: 700 }} />;
+    }
+    return <Chip label={actionStr} size="small" sx={{ bgcolor: '#F3E8FF', color: '#7E3AF2', fontSize: '11px', height: '20px', fontWeight: 700 }} />;
+  };
+
+  const getSeverityChip = (severityStr = 'Low') => {
+    const lower = (severityStr || 'low').toLowerCase();
+    if (lower === 'high') {
+      return <Chip label="High" size="small" sx={{ bgcolor: '#FEF2F2', color: '#DC2626', fontWeight: 700, borderRadius: '12px' }} />;
+    }
+    if (lower === 'medium') {
+      return <Chip label="Medium" size="small" sx={{ bgcolor: '#FEF3C7', color: '#D97706', fontWeight: 700, borderRadius: '12px' }} />;
+    }
+    return <Chip label="Low" size="small" sx={{ bgcolor: '#E6F4EA', color: '#10B981', fontWeight: 700, borderRadius: '12px' }} />;
+  };
+
+  const getModuleIcon = (moduleName = '') => {
+    const lower = moduleName.toLowerCase();
+    if (lower.includes('acl') || lower.includes('role') || lower.includes('permission')) return <IconShieldCheck size={16} color="#6B7280" />;
+    if (lower.includes('finance') || lower.includes('bursary')) return <IconListCheck size={16} color="#6B7280" />;
+    if (lower.includes('admission')) return <IconUserCheck size={16} color="#6B7280" />;
+    if (lower.includes('academic')) return <IconCalendar size={16} color="#6B7280" />;
+    if (lower.includes('profile') || lower.includes('user')) return <IconUsers size={16} color="#6B7280" />;
+    if (lower.includes('subscription')) return <IconLock size={16} color="#6B7280" />;
+    return <IconListCheck size={16} color="#6B7280" />;
+  };
+
+  const renderActivityTitle = (descriptionStr) => {
+    if (!descriptionStr) return 'Updated user profile';
+    const colonIndex = descriptionStr.indexOf(':');
+    if (colonIndex !== -1) {
+      const prefix = descriptionStr.substring(0, colonIndex + 1);
+      const targetName = descriptionStr.substring(colonIndex + 1);
+      return (
+        <>
+          {prefix}{' '}
+          <Typography component="span" variant="inherit" sx={{ color: 'primary.main', fontWeight: 700 }}>
+            {targetName.trim()}
+          </Typography>
+        </>
+      );
+    }
+    return descriptionStr;
+  };
+
+  // Server-side paginated display logs
+  const displayLogs = useMemo(() => {
+    return logs || [];
+  }, [logs]);
+
+  const hasActiveFilters = Boolean(
+    searchQuery || userFilter !== 'all' || actionFilter !== 'all' || severityFilter !== 'all' || appliedDateFrom || appliedDateTo ||
+    searchInput || userInput !== 'all' || actionInput !== 'all' || severityInput !== 'all' || dateFrom || dateTo
+  );
+
   return (
     <PageContainer title="Activity Log" description="View system activity logs">
       <Breadcrumb title="Activity Log" items={BCrumb} />
       <AclTourProvider steps={tourSteps} autoPlay storageKey="activity_log_tour_seen">
-        <BlankCard>
-          <CardContent>
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-              flexWrap="wrap"
-              gap={1}
-              mb={3}
-              data-tour="activity-log-header"
-            >
-              <Typography variant="h5">
-                System Activity Logs
-              </Typography>
-              <ShowTourGuideButton />
-            </Box>
-            <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+
+        <Grid container spacing={2} mb={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={(stats.total_activities || total || 0).toLocaleString()}
+              label="Total Activities"
+              subtitle="System log entries"
+              icon={IconListCheck}
+              colorIndex={0}
+              loading={statsLoading}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.unique_users.toLocaleString()}
+              label="Unique Users"
+              subtitle="Users with activity"
+              icon={IconUserCheck}
+              colorIndex={1}
+              loading={statsLoading}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.today_activities.toLocaleString()}
+              label="Today's Activities"
+              subtitle="Recorded today"
+              icon={IconCalendar}
+              colorIndex={3}
+              loading={statsLoading}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={stats.critical_actions.toLocaleString()}
+              label="Critical Actions"
+              subtitle="Deletions/security events"
+              icon={IconShield}
+              colorIndex={2}
+              loading={statsLoading}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={formatTimeAgo(stats.last_activity)}
+              label="Last Activity"
+              subtitle={
+                stats.last_activity?.created_at
+                  ? dayjs(stats.last_activity.created_at).format('MMM D, YYYY • h:mm A')
+                  : stats.last_activity?.date_formatted || 'No activity yet'
+              }
+              icon={IconClock}
+              colorIndex={4}
+              loading={statsLoading}
+            />
+          </Grid>
+        </Grid>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: '16px',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+          data-tour="activity-log-table"
+        >
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            gap={1}
+            mb={2.5}
+            data-tour="activity-log-header"
+          >
+            <Typography variant="h5" fontWeight={700}>
+              System Activity Logs
+            </Typography>
+            <ShowTourGuideButton />
+          </Box>
+
+          {/* Controls & Filter Bar */}
+          <Box
+            component="form"
+            onSubmit={handleSearchSubmit}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1.5,
+              mb: 2.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', flexGrow: 1 }}>
               <TextField
                 size="small"
-                placeholder="Search logs..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSearch();
-                }}
-                sx={{ flex: 1, minWidth: { xs: '100%', sm: 200 } }}
+                placeholder="Search logs by keyword, user or action..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                sx={{ minWidth: 260, flexGrow: 1 }}
                 data-tour="activity-log-search"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconSearch size="18" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size={18} style={{ color: '#6B7280' }} />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
+
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select value={userInput} onChange={(e) => setUserInput(e.target.value)}>
+                  <MenuItem value="all">All Users</MenuItem>
+                  <MenuItem value="admin">Admins</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
+                  <MenuItem value="teacher">Teachers</MenuItem>
+                  <MenuItem value="student">Students</MenuItem>
+                  <MenuItem value="guardian">Parents / Guardians</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select value={actionInput} onChange={(e) => setActionInput(e.target.value)}>
+                  <MenuItem value="all">All Actions</MenuItem>
+                  <MenuItem value="Update">Update</MenuItem>
+                  <MenuItem value="Login">Login</MenuItem>
+                  <MenuItem value="Create">Create</MenuItem>
+                  <MenuItem value="Delete">Delete</MenuItem>
+                  <MenuItem value="Assign">Assign</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 130 }}>
+                <Select value={severityInput} onChange={(e) => setSeverityInput(e.target.value)}>
+                  <MenuItem value="all">All Severity</MenuItem>
+                  <MenuItem value="Low">Low</MenuItem>
+                  <MenuItem value="Medium">Medium</MenuItem>
+                  <MenuItem value="High">High</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
                 size="small"
-                label="Date From"
                 type="date"
+                label="Date From"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                sx={{ width: { xs: '100%', sm: '160px' } }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                  },
+                }}
+                sx={{ width: 140 }}
                 data-tour="activity-log-date"
               />
+
               <TextField
                 size="small"
-                label="Date To"
                 type="date"
+                label="Date To"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: dateFrom || undefined }}
-                sx={{ width: { xs: '100%', sm: '160px' } }}
+                slotProps={{
+                  htmlInput: {
+                    max: dayjs().format('YYYY-MM-DD'),
+                    min: dateFrom || undefined,
+                  },
+                }}
+                sx={{ width: 140 }}
               />
-              <Button variant="contained" size="small" color="primary" onClick={handleSearch} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                type="submit"
+                sx={{ px: 2.5, py: 0.8, textTransform: 'none', fontWeight: 600, height: 38 }}
+              >
                 Search
               </Button>
-              {(search || dateFrom || dateTo) && (
-                <Button variant="contained" size="small" color="secondary" onClick={handleClearFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                  Clear
+
+              {hasActiveFilters && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={handleClearFilters}
+                  sx={{ px: 2, py: 0.8, textTransform: 'none', fontWeight: 600, height: 38 }}
+                >
+                  Clear Filters
                 </Button>
               )}
             </Box>
+          </Box>
 
-            {loading ? (
-              <Box display="flex" justifyContent="center" py={5}>
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Alert severity="error">{error}</Alert>
-            ) : (
-              <>
-                <TableContainer sx={{ overflowX: "auto" }} data-tour="activity-log-table">
-                  <Table sx={{ tableLayout: "fixed", width: "100%" }}>
-                    <TableHead>
+          {/* Activity Logs Table */}
+          {loading ? (
+            <Box display="flex" justifyContent="center" py={5}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : (
+            <>
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 1000 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
+                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
+                        Action
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {displayLogs.length === 0 ? (
                       <TableRow>
-                        <TableCell sx={{ width: "5%" }}>
-                          <Typography variant="h6">S/N</Typography>
-                        </TableCell>
-
-                        <TableCell sx={{ width: "50%" }}>
-                          <Typography variant="h6">Activity</Typography>
-                        </TableCell>
-
-                        <TableCell sx={{ width: "35%" }}>
-                          <Typography variant="h6">Date Performed</Typography>
-                        </TableCell>
-
-                        <TableCell
-                          align="right"
-                          sx={{
-                            width: "25%",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <Typography variant="h6">Action</Typography>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                            No activity logs found matching the current filters.
+                          </Alert>
                         </TableCell>
                       </TableRow>
-                    </TableHead>
+                    ) : (
+                      displayLogs.map((log, idx) => {
+                        const causerObj = log.causer;
+                        const userName = causerObj
+                          ? causerObj.full_name ||
+                          (causerObj.fname && causerObj.lname
+                            ? `${causerObj.fname} ${causerObj.lname}`
+                            : causerObj.name || 'System User')
+                          : 'System';
+                        const causerAvatar =
+                          causerObj?.avatar ||
+                          causerObj?.avatar_url ||
+                          causerObj?.profile_picture ||
+                          causerObj?.picture ||
+                          causerObj?.image ||
+                          causerObj?.image_url ||
+                          '';
+                        const userRole = causerObj?.email ? causerObj.email.split('@')[0] : 'super.admin';
+                        const moduleName = getLogModule(log);
+                        const actionName = getLogAction(log);
+                        const severityName = getLogSeverity(log);
 
-                    <TableBody>
-                      {logs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                            <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                              No activity logs found
-                            </Alert>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        logs.map((log, idx) => (
-                          <TableRow key={log.id}>
-                            <TableCell>
-                              <Typography variant="body1">
-                                {idx + 1 + page * rowsPerPage}
-                              </Typography>
-                            </TableCell>
+                        const updatedDateRaw = log.created_at || log.updated_at;
+                        const formattedDate = updatedDateRaw
+                          ? dayjs(updatedDateRaw).format('MMM D, YYYY')
+                          : '—';
+                        const formattedTime = updatedDateRaw
+                          ? dayjs(updatedDateRaw).format('h:mm:ss A')
+                          : '';
 
-                            <TableCell>
-                              <Typography
-                                variant="body1"
-                                sx={{
-                                  wordBreak: 'break-word',
-                                }}
-                              >
-                                {log.causer ? (
-                                  <Tooltip title="Click to View User Profile" arrow placement="top">
-                                    <Typography
-                                      component="span"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        handleCauserClick(log.causer);
-                                      }}
-                                      sx={{
-                                        color: 'primary.main',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        '&:hover': { textDecoration: 'underline' },
-                                      }}
-                                    >
-                                      {log.causer?.full_name ||
-                                        (log.causer?.fname && log.causer?.lname
-                                          ? `${log.causer.fname} ${log.causer.lname}`
-                                          : log.causer?.name || 'System')}
+                        return (
+                          <TableRow key={log.id || idx} hover>
+                            <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
+
+                            <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Avatar
+                                  src={causerAvatar}
+                                  alt={userName}
+                                  onClick={(e) => {
+                                    if (causerObj) {
+                                      e.preventDefault();
+                                      handleCauserClick(causerObj);
+                                    }
+                                  }}
+                                  sx={{
+                                    width: 34,
+                                    height: 34,
+                                    bgcolor: '#EFF6FF',
+                                    color: '#3B82F6',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    flexShrink: 0,
+                                    cursor: causerObj ? 'pointer' : 'default',
+                                    '&:hover': causerObj ? { opacity: 0.85 } : {},
+                                  }}
+                                >
+                                  {userName?.[0]?.toUpperCase() ?? '?'}
+                                </Avatar>
+
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
+                                  {causerObj ? (
+                                    <Tooltip title="Click to View User Profile" arrow placement="top">
+                                      <Typography
+                                        component="span"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleCauserClick(causerObj);
+                                        }}
+                                        sx={{
+                                          color: 'primary.main',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                          '&:hover': { textDecoration: 'underline' },
+                                        }}
+                                      >
+                                        {userName}
+                                      </Typography>
+                                    </Tooltip>
+                                  ) : (
+                                    <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                      System
                                     </Typography>
-                                  </Tooltip>
-                                ) : (
-                                  <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                                    System
-                                  </Typography>
-                                )}{' '}
-                                {log.description}
+                                  )}{' '}
+                                  {log.description}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={{ py: 1.8 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {getModuleIcon(moduleName)}
+                                <Typography variant="body2" fontWeight={600} color="text.primary">
+                                  {moduleName}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell sx={{ py: 1.8 }}>
+                              {getActionChip(actionName)}
+                            </TableCell>
+
+                            <TableCell sx={{ py: 1.8 }}>
+                              <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
+                                {formattedDate}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" fontSize="11px">
+                                {formattedTime}
                               </Typography>
                             </TableCell>
 
-                            <TableCell>
-                              <Typography
-                                variant="body2"
-                                color="textSecondary"
-                                sx={{ whiteSpace: "nowrap" }}
-                              >
-                                {log.my_updated_at}
-                              </Typography>
+                            <TableCell sx={{ py: 1.8 }}>
+                              {getSeverityChip(severityName)}
                             </TableCell>
 
-                            <TableCell
-                              align="right"
-                              sx={{ whiteSpace: "nowrap" }}
-                            >
-                              <Button
-                                variant="contained"
-                                size="small"
-                                startIcon={<IconEye />}
-                                onClick={() => handleOpenModal(log)}
-                                data-tour="activity-log-action"
-                                sx={{
-                                  display: { xs: "none", md: "inline-flex" },
-                                }}
-                              >
-                                View Details
-                              </Button>
-
-                              <IconButton
-                                size="small"
-                                onClick={() => handleOpenModal(log)}
-                                sx={{
-                                  display: { xs: "inline-flex", md: "none" },
-                                }}
-                              >
-                                <IconEye size={18} />
+                            <TableCell align="center" sx={{ py: 1.8 }} data-tour="activity-log-action">
+                              <IconButton size="small" onClick={(e) => handleMenuOpen(e, log)}>
+                                <IconDotsVertical size={18} color="#6B7280" />
                               </IconButton>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <TablePagination
-                  rowsPerPageOptions={[10, 20, 50]}
-                  component="div"
-                  count={total}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-              </>
-            )}
-          </CardContent>
-        </BlankCard>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <TablePagination
+                rowsPerPageOptions={[10, 20, 50]}
+                component="div"
+                count={total || displayLogs.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </>
+          )}
+        </Paper>
       </AclTourProvider>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={() => { handleOpenModal(menuLog); handleMenuClose(); }}>
+          View Activity Details
+        </MenuItem>
+        <MenuItem onClick={() => { handleDownloadPdf(); handleMenuClose(); }}>
+          Download Report PDF
+        </MenuItem>
+      </Menu>
 
       {/* Details Modal */}
       <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
@@ -462,7 +854,7 @@ const ActivityLog = () => {
           {selectedLog && (
             <Box>
               <Box mb={2}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant="subtitle2" gutterBottom fontWeight={700}>
                   Basic Information
                 </Typography>
                 <Table size="small">
@@ -471,14 +863,6 @@ const ActivityLog = () => {
                       <TableCell sx={{ fontWeight: 600, width: '150px' }}>Description</TableCell>
                       <TableCell>{selectedLog.description}</TableCell>
                     </TableRow>
-                    {/* <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Log Name</TableCell>
-                      <TableCell>{selectedLog.log_name || 'default'}</TableCell>
-                    </TableRow> */}
-                    {/* <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Subject Type</TableCell>
-                      <TableCell>{selectedLog.subject_type || 'N/A'}</TableCell>
-                    </TableRow> */}
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>Action By</TableCell>
                       <TableCell>
@@ -505,63 +889,68 @@ const ActivityLog = () => {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                      <TableCell>{selectedLog.my_updated_at}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Date & Time</TableCell>
+                      <TableCell>{selectedLog.my_updated_at || selectedLog.updated_at}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>IP Address</TableCell>
+                      <TableCell>{selectedLog.ip_address || '-'}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </Box>
 
-              {selectedLog.properties && Object.keys(selectedLog.properties).length > 0 && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
+              {selectedLog.properties &&
+                Object.entries(selectedLog.properties).filter(([key]) => key !== 'ip' && key !== 'ip_address').length > 0 ? (
+                <Box mt={2}>
+                  <Typography variant="subtitle2" gutterBottom fontWeight={700}>
                     Additional Information
                   </Typography>
-                  <TableContainer >
+                  <TableContainer>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
                           <TableCell>
-                            <Typography variant="subtitle2">What changed</Typography>
+                            <Typography variant="subtitle2" fontWeight={700}>What changed</Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="subtitle2">Value Changed</Typography>
+                            <Typography variant="subtitle2" fontWeight={700}>Value Changed</Typography>
                           </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {Object.entries(selectedLog.properties).map(([key, value]) => (
-                          <TableRow key={key}>
-                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {key}
-                            </TableCell>
-                            <TableCell>
-                              {typeof value === 'object' && value !== null ? (
-                                <pre
-                                  style={{
-                                    margin: 0,
-                                    fontFamily: 'monospace',
-                                    fontSize: '12px',
-                                    whiteSpace: 'pre-wrap',
-                                    wordBreak: 'break-word',
-                                  }}
-                                >
-                                  {JSON.stringify(value, null, 2)}
-                                </pre>
-                              ) : (
-                                String(value)
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {Object.entries(selectedLog.properties)
+                          .filter(([key]) => key !== 'ip' && key !== 'ip_address')
+                          .map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {key}
+                              </TableCell>
+                              <TableCell>
+                                {typeof value === 'object' && value !== null ? (
+                                  <pre
+                                    style={{
+                                      margin: 0,
+                                      fontFamily: 'monospace',
+                                      fontSize: '12px',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                    }}
+                                  >
+                                    {JSON.stringify(value, null, 2)}
+                                  </pre>
+                                ) : (
+                                  String(value)
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Box>
-              )}
-
-              {(!selectedLog.properties || Object.keys(selectedLog.properties).length === 0) && (
-                <Typography color="text.secondary" fontStyle="italic">
+              ) : (
+                <Typography color="text.secondary" fontStyle="italic" mt={2}>
                   No additional properties available for this activity.
                 </Typography>
               )}

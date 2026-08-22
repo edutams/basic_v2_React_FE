@@ -49,3 +49,8 @@ export const fetchStudentLedgerModalData = async (userId) => {
     const res = await api.get('/bursary/class_ledger/fetch_modal_data', { params: { user_id: userId } });
     return res.data;
 };
+
+export const fetchParentPayments = async () => {
+    const res = await api.get('/bursary/payment_schedule/parent-payments');
+    return res.data;
+};

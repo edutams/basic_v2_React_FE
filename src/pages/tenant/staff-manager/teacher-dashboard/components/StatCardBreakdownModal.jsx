@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,10 +18,10 @@ import {
   TableCell,
   CircularProgress,
   Alert,
-} from "@mui/material";
-import { School as SchoolIcon } from "@mui/icons-material";
+} from '@mui/material';
+import { School as SchoolIcon } from '@mui/icons-material';
 
-import tenantApi from "@/api/tenant/tenant_api";
+import tenantApi from '@/api/tenant/tenant_api';
 
 const StatCardBreakdownModal = ({ open, stat, onClose }) => {
   const [students, setStudents] = useState([]);
@@ -30,24 +30,28 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open || !stat || stat.id !== "students") return;
+    if (!open || !stat || stat.id !== 'students') return;
 
     let isMounted = true;
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const res = await tenantApi.get("/allocations/my-allocations");
+        const res = await tenantApi.get('/allocations/my-allocations');
         const payload = res?.data?.data || res?.data || {};
 
         const list = Array.isArray(payload.students) ? payload.students : [];
-        const count = payload.total_students !== undefined ? Number(payload.total_students) : list.length;
+        const count =
+          payload.total_students !== undefined ? Number(payload.total_students) : list.length;
 
         // Group summary count by class arm
         const armSummaryMap = new Map();
         list.forEach((reg) => {
           const className = reg.class_name || reg.class_arm?.programme_class?.class?.class_name;
           const armName = reg.arm_names || reg.class_arm?.arm_names;
-          const fullArmName = className && armName ? `${className} - ${armName}` : className || armName || "Class Arm";
+          const fullArmName =
+            className && armName
+              ? `${className} - ${armName}`
+              : className || armName || 'Class Arm';
           const armId = reg.class_arm_id || fullArmName;
 
           if (!armSummaryMap.has(armId)) {
@@ -62,7 +66,7 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
           setClassArmsSummary(Array.from(armSummaryMap.values()));
         }
       } catch (err) {
-        console.error("Failed to fetch breakdown students:", err);
+        console.error('Failed to fetch breakdown students:', err);
         if (isMounted) {
           setStudents([]);
           setClassArmsSummary([]);
@@ -80,13 +84,13 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
   }, [open, stat]);
 
   if (!stat) return null;
-  const isStudentsStat = stat.id === "students";
+  const isStudentsStat = stat.id === 'students';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+      <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
         <SchoolIcon color="primary" />
-        {stat.label} Breakdown —{" "}
+        {stat.label} Breakdown —{' '}
         <Typography component="span" color="primary" fontWeight={700}>
           {totalCount} Students
         </Typography>
@@ -97,13 +101,17 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
               Student List
             </Typography>
-            <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: "auto" }}>
+            <TableContainer
+              elevation={0}
+              variant="outlined"
+              sx={{ borderRadius: 2, overflowX: 'auto' }}
+            >
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>S/N</TableCell>
-                    <TableCell>Student Name</TableCell>
                     <TableCell>Admission No</TableCell>
+                    <TableCell>Student Name</TableCell>
                     <TableCell>Arm</TableCell>
                     <TableCell>Gender</TableCell>
                   </TableRow>
@@ -121,9 +129,9 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                         <Alert
                           severity="info"
                           sx={{
-                            justifyContent: "center",
-                            textAlign: "center",
-                            "& .MuiAlert-icon": { mr: 1.5 },
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': { mr: 1.5 },
                           }}
                         >
                           No students found.
@@ -132,34 +140,23 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                     </TableRow>
                   ) : (
                     students.map((reg, i) => {
-                      const user = reg.users || reg.user || reg;
-                      const firstName = user.fname || user.first_name || user.firstName || "";
-                      const lastName = user.lname || user.last_name || user.lastName || "";
-                      const otherName = user.mname || user.other_name || user.otherName || "";
-                      const fullName =
-                        [firstName, middleNameOr(otherName), lastName].filter(Boolean).join(" ") ||
-                        user.name ||
-                        `Student #${i + 1}`;
-
-                      const regNo =
-                        user.student_id || user.user_id || user.reg_number || user.admission_no || reg.student_id || reg.user_id || "—";
-                      const gender = (user.sex || user.gender || reg.sex || "—").toUpperCase();
-
-                      const className = reg.class_name || reg.class_arm?.programme_class?.class?.class_name;
-                      const armName = reg.arm_names || reg.class_arm?.arm_names;
-                      const fullClassName = className && armName ? `${className} - ${armName}` : className || armName || "Class Arm";
+                      const gender = reg.sex.toUpperCase();
 
                       return (
                         <TableRow key={reg.id || i}>
                           <TableCell>{i + 1}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{fullName}</TableCell>
-                          <TableCell>{regNo}</TableCell>
-                          <TableCell>{fullClassName}</TableCell>
+                          <TableCell>{reg?.student_id}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {reg?.fname} {reg?.lname} {reg?.mname}
+                          </TableCell>
+                          <TableCell>
+                            {reg?.class_name} ({reg?.arm_names})
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={gender}
                               size="small"
-                              color={gender === "MALE" ? "primary" : "success"}
+                              color={gender === 'MALE' ? 'primary' : 'success'}
                               sx={{ fontSize: 10, height: 18, fontWeight: 700 }}
                             />
                           </TableCell>
@@ -176,15 +173,15 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
             sx={{
               p: 4,
               borderRadius: 2,
-              border: "1px dashed rgba(69, 67, 67, 0.3)",
-              textAlign: "center",
-              bgcolor: "#fafafa",
+              border: '1px dashed rgba(69, 67, 67, 0.3)',
+              textAlign: 'center',
+              bgcolor: '#fafafa',
             }}
           >
             <Typography sx={{ fontSize: 32, fontWeight: 800, color: stat.color }}>
               {stat.value}
             </Typography>
-            <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 1 }}>
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 1 }}>
               Detailed breakdown for {stat.label} coming soon.
             </Typography>
           </Box>
@@ -196,9 +193,5 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
     </Dialog>
   );
 };
-
-function middleNameOr(val) {
-  return val && val !== "null" && val !== "undefined" ? val : "";
-}
 
 export default StatCardBreakdownModal;

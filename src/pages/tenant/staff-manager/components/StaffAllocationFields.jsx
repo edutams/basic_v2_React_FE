@@ -447,7 +447,10 @@ const StaffAllocationFields = ({
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             1. Class Allocation
           </Typography>
-          <Button variant="contained" size="small" startIcon={<AddIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
             onClick={addClassAllocation}
             disabled={isLoading}
             sx={{ minWidth: 'auto' }}
@@ -525,7 +528,7 @@ const StaffAllocationFields = ({
                   value={allocation.class_id}
                   onChange={(e) => handleClassChange(index, e.target.value)}
                   disabled={!allocation.programme_id || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`classAllocations.${index}.class_id`))}
                   helperText={getFieldError(`classAllocations.${index}.class_id`)}
                 >
@@ -548,7 +551,7 @@ const StaffAllocationFields = ({
                     handleClassAllocationChange(index, 'class_arm_id', e.target.value)
                   }
                   disabled={!allocation.class_id || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`classAllocations.${index}.class_arm_id`))}
                   helperText={getFieldError(`classAllocations.${index}.class_arm_id`)}
                 >
@@ -576,7 +579,10 @@ const StaffAllocationFields = ({
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             2. Subject Allocation
           </Typography>
-          <Button variant="contained" size="small" startIcon={<AddIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
             onClick={addSubjectAllocation}
             disabled={isLoading}
             sx={{ minWidth: 'auto' }}
@@ -633,7 +639,7 @@ const StaffAllocationFields = ({
                   value={allocation.programme_id}
                   onChange={(e) => handleSubjectProgrammeChange(index, e.target.value)}
                   disabled={loadingOptions || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.programme_id`))}
                   helperText={getFieldError(`subjectAllocations.${index}.programme_id`)}
                 >
@@ -654,7 +660,7 @@ const StaffAllocationFields = ({
                   value={allocation.class_id}
                   onChange={(e) => handleSubjectClassChange(index, e.target.value)}
                   disabled={!allocation.programme_id || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.class_id`))}
                   helperText={getFieldError(`subjectAllocations.${index}.class_id`)}
                 >
@@ -677,7 +683,7 @@ const StaffAllocationFields = ({
                     handleSubjectAllocationChange(index, 'class_arm_id', e.target.value)
                   }
                   disabled={!allocation.class_id || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.class_arm_id`))}
                   helperText={getFieldError(`subjectAllocations.${index}.class_arm_id`)}
                 >
@@ -698,7 +704,7 @@ const StaffAllocationFields = ({
                   value={allocation.curriculum_id}
                   onChange={(e) => handleCurriculumChange(index, e.target.value)}
                   disabled={loadingOptions || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.curriculum_id`))}
                   helperText={getFieldError(`subjectAllocations.${index}.curriculum_id`)}
                 >
@@ -721,7 +727,7 @@ const StaffAllocationFields = ({
                     handleSubjectAllocationChange(index, 'subject_id', e.target.value)
                   }
                   disabled={!allocation.curriculum_id || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.subject_id`))}
                   helperText={getFieldError(`subjectAllocations.${index}.subject_id`)}
                 >

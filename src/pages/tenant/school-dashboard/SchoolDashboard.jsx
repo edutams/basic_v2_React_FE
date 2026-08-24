@@ -20,15 +20,16 @@ export default function SchoolDashboard() {
    * 2 = Learner
    * 3 = Parent
    */
+  const isStaff = user?.user_type_id === 1;
   const isLearner = user?.user_type_id === 2;
   const isParent = user?.user_type_id === 3;
 
   // Check user roles
   const roles = user?.roles || [];
 
-  const isTeachingStaff = user?.staff?.staff_type === 'teaching';
+  const isTeachingStaff = isStaff && user?.staff?.staff_type === 'teaching';
 
-  const isNonTeachingStaff = user?.staff?.staff_type === 'non-teaching';
+  const isNonTeachingStaff = isStaff && user?.staff?.staff_type === 'non-teaching';
 
   const isAdmissionOfficer =
     isNonTeachingStaff && roles.some((role) => role.name === 'admission_officer');

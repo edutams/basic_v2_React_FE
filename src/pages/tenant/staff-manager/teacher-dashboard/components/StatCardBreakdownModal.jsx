@@ -45,13 +45,10 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
         // Group summary count by class arm
         const armSummaryMap = new Map();
         list.forEach((reg) => {
-          const classArm = reg.class_arm || reg.classArm;
-          const className =
-            classArm?.programme_class?.class?.class_name ||
-            classArm?.programmeClass?.class?.class_name;
-          const armName = classArm?.arm_names || classArm?.arm_name;
+          const className = reg.class_name || reg.class_arm?.programme_class?.class?.class_name;
+          const armName = reg.arm_names || reg.class_arm?.arm_names;
           const fullArmName = className && armName ? `${className} - ${armName}` : className || armName || "Class Arm";
-          const armId = classArm?.id || fullArmName;
+          const armId = reg.class_arm_id || fullArmName;
 
           if (!armSummaryMap.has(armId)) {
             armSummaryMap.set(armId, { arm_name: fullArmName, count: 0 });
@@ -135,7 +132,7 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                     </TableRow>
                   ) : (
                     students.map((reg, i) => {
-                      const user = reg.users || reg.user || {};
+                      const user = reg.users || reg.user || reg;
                       const firstName = user.fname || user.first_name || user.firstName || "";
                       const lastName = user.lname || user.last_name || user.lastName || "";
                       const otherName = user.mname || user.other_name || user.otherName || "";
@@ -145,14 +142,11 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                         `Student #${i + 1}`;
 
                       const regNo =
-                        user.user_id || user.reg_number || user.admission_no || user.student_id || reg.user_id || "—";
-                      const gender = user.sex || user.gender || "—";
+                        user.student_id || user.user_id || user.reg_number || user.admission_no || reg.student_id || reg.user_id || "—";
+                      const gender = (user.sex || user.gender || reg.sex || "—").toUpperCase();
 
-                      const classArm = reg.class_arm || reg.classArm;
-                      const className =
-                        classArm?.programme_class?.class?.class_name ||
-                        classArm?.programmeClass?.class?.class_name;
-                      const armName = classArm?.arm_names || classArm?.arm_name;
+                      const className = reg.class_name || reg.class_arm?.programme_class?.class?.class_name;
+                      const armName = reg.arm_names || reg.class_arm?.arm_names;
                       const fullClassName = className && armName ? `${className} - ${armName}` : className || armName || "Class Arm";
 
                       return (

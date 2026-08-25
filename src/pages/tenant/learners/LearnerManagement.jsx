@@ -284,11 +284,15 @@ const LearnerManagement = () => {
   };
 
   const handleDownloadTemplate = async () => {
-    const selected = classes.find((c) => c.id === downloadClassId);
-    if (!selected?.programme_class_id) return;
+    if (!downloadClassId) return;
+
+    const selected = classes.find((c) => String(c.programme_class_id) === String(downloadClassId));
+
+    if (!selected) return;
+
     try {
       const res = await api.get('school_setup/learner_template', {
-        params: { programme_class_id: selected.programme_class_id },
+        params: { programme_class_id: downloadClassId },
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -667,7 +671,7 @@ const LearnerManagement = () => {
               {classes
                 .filter((c) => c.programme_class_id)
                 .map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
+                  <MenuItem key={cls.programme_class_id} value={cls.programme_class_id}>
                     {cls.label}
                   </MenuItem>
                 ))}

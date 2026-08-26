@@ -47,31 +47,26 @@ const TermCalendarCard = ({
           </Typography>
         </Box>
 
-        {/* Info Row: Day Badge | Term Started | Expected End */}
+        {/* Single container for Day + Dates */}
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'stretch',
-            gap: 1.5,
+            alignItems: 'center',
+            gap: 0,
+            bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+            borderRadius: '10px',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+            p: 1.5,
             mb: 2.5,
           }}
         >
           {/* Day Badge */}
           <Box
             sx={{
-              flex: '0 0 auto',
-              px: 2,
-              py: 1.5,
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-              border: '1px solid',
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
               textAlign: 'center',
-              minWidth: 72,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
+              minWidth: 64,
+              px: 1.5,
             }}
           >
             <Typography
@@ -80,7 +75,6 @@ const TermCalendarCard = ({
                 fontWeight: 600,
                 color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
                 lineHeight: 1,
-                mb: 0.35,
               }}
             >
               Day
@@ -90,7 +84,7 @@ const TermCalendarCard = ({
                 fontSize: '26px',
                 fontWeight: 800,
                 color: isDark ? '#ffffff' : '#0f172a',
-                lineHeight: 1,
+                lineHeight: 1.2,
               }}
             >
               {dayCurrent}
@@ -101,7 +95,6 @@ const TermCalendarCard = ({
                 fontWeight: 600,
                 color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
                 lineHeight: 1,
-                mt: 0.35,
               }}
             >
               of {dayTotal}
@@ -113,14 +106,8 @@ const TermCalendarCard = ({
             sx={{
               flex: 1,
               px: 2,
-              py: 1.5,
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-              border: '1px solid',
+              borderLeft: '1px solid',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
             }}
           >
             <Typography
@@ -151,14 +138,8 @@ const TermCalendarCard = ({
             sx={{
               flex: 1,
               px: 2,
-              py: 1.5,
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-              border: '1px solid',
+              borderLeft: '1px solid',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
             }}
           >
             <Typography

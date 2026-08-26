@@ -654,7 +654,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingProfile(true);
 
     if (isLandlordView) {
-      api.post('/v1/landlord/update_agent_profile', editForm)
+      api.post('/v1/landlord/update_agent_profile', {
+        ...(targetId ? { user_id: targetId } : {}),
+        ...editForm,
+      })
         .then((res) => {
           const updatedData = res.data?.data || res.data;
           if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
@@ -672,6 +675,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
 
     const payload = new FormData();
+    if (targetId) payload.append('user_id', targetId);
     payload.append('fname', editForm.fname || '');
     if (editForm.mname) payload.append('mname', editForm.mname);
     payload.append('lname', editForm.lname || '');
@@ -747,7 +751,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingPicture(true);
 
     if (isLandlordView) {
-      api.post('/v1/landlord/update_agent_profile', { avatar: imagePreview })
+      api.post('/v1/landlord/update_agent_profile', {
+        ...(targetId ? { user_id: targetId } : {}),
+        avatar: imagePreview,
+      })
         .then((res) => {
           const updatedData = res.data?.data || res.data;
           if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
@@ -767,6 +774,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
 
     const payload = new FormData();
+    if (targetId) payload.append('user_id', targetId);
     if (imageFile) {
       payload.append('avatar', imageFile);
     }
@@ -834,11 +842,13 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
 
     const updatePromise = isLandlordView
       ? api.put('/v1/landlord/change_password', {
+        ...(targetId ? { user_id: targetId } : {}),
         current_password: passwordForm.current_password,
         password: passwordForm.new_password,
         password_confirmation: passwordForm.confirm_password,
       })
       : tenantApi.put('/change_password', {
+        ...(targetId ? { user_id: targetId } : {}),
         current_password: passwordForm.current_password,
         password: passwordForm.new_password,
         password_confirmation: passwordForm.confirm_password,

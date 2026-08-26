@@ -153,7 +153,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
           { key: 'staff_id', label: 'Staff ID' },
           { key: 'staff_type', label: 'Type' },
           { key: 'staff_status', label: 'Status' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
         ];
       case 'applicants':
       case 'admitted':
@@ -161,7 +161,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         return [
           { key: 'form_number', label: 'Form No.' },
           { key: 'class', label: 'Class' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];
       case 'batches':
@@ -185,6 +185,36 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
           { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
           { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
           { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
+          { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
+        ];
+      case 'expected_income':
+        return [
+          { key: 'student_name', label: 'Student' },
+          { key: 'class_name', label: 'Class' },
+          { key: 'expected_amount', label: 'Expected', numeric: true, currency: true },
+          { key: 'term_label', label: 'Term' },
+        ];
+      case 'collected_income':
+        return [
+          { key: 'student_name', label: 'Student' },
+          { key: 'class_name', label: 'Class' },
+          { key: 'amount_paid', label: 'Amount Paid', numeric: true, currency: true },
+          { key: 'payment_date', label: 'Date' },
+        ];
+      case 'outstanding_balance':
+        return [
+          { key: 'student_name', label: 'Student' },
+          { key: 'class_name', label: 'Class' },
+          { key: 'total_expected', label: 'Expected', numeric: true, currency: true },
+          { key: 'total_paid', label: 'Paid', numeric: true, currency: true },
+          { key: 'balance', label: 'Outstanding', numeric: true, currency: true },
+        ];
+      case 'collection_efficiency':
+        return [
+          { key: 'class_name', label: 'Class' },
+          { key: 'expected', label: 'Expected', numeric: true, currency: true },
+          { key: 'collected', label: 'Collected', numeric: true, currency: true },
+          { key: 'outstanding', label: 'Outstanding', numeric: true, currency: true },
           { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
         ];
       case 'lesson_plans':
@@ -238,7 +268,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
       case 'exam_performance':
         return [
           { key: 'class', label: 'Class' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
           { key: 'exams_taken', label: 'Exams', numeric: true },
           { key: 'avg_score', label: 'Avg %', numeric: true, percent: true },
         ];
@@ -247,7 +277,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
       case 'drop_out_risk':
         return [
           { key: 'class', label: 'Class' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
           { key: 'attendance_rate', label: 'Attendance', numeric: true, percent: true },
           { key: 'avg_score', label: 'Avg Score', numeric: true, percent: true },
         ];
@@ -255,7 +285,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         return [
           { key: 'user_id', label: 'User ID' },
           { key: 'student_name', label: 'Name' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
           { key: 'class_name', label: 'Class' },
         ];
       case 'students':
@@ -263,7 +293,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         return [
           { key: 'admission_no', label: 'Admission No.' },
           { key: 'class', label: 'Class' },
-          { key: 'gender', label: 'Gender' },
+          { key: 'sex', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];
     }

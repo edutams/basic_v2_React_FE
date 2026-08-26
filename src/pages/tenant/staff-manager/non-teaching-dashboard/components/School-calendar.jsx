@@ -88,111 +88,25 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
     return currentMonthDate.startOf("month").isBefore(termBounds.endDate.startOf("month"));
   }, [currentMonthDate, termBounds]);
 
-  const calculateStats = (weeks, holidays = []) => {
-    if (!weeks || weeks.length === 0) {
-      setTermStats({
-        totalSchoolDays: 0,
-        daysSpent: 0,
-        daysRemaining: 0,
-        totalHolidays: 0,
-        pctCompleted: 0,
-      });
-      return;
-    }
-
-    const startDates = weeks.map((w) => w.start_date).filter(Boolean).sort();
-    const endDates = weeks.map((w) => w.end_date).filter(Boolean).sort();
-
-    if (startDates.length === 0 || endDates.length === 0) {
-      setTermStats({
-        totalSchoolDays: 0,
-        daysSpent: 0,
-        daysRemaining: 0,
-        totalHolidays: 0,
-        pctCompleted: 0,
-      });
-      return;
-    }
-
-    const startDate = dayjs(startDates[0]);
-    const endDate = dayjs(endDates[endDates.length - 1]);
-    const today = dayjs();
-
-    // Collect all holiday dates
-    const holidayDatesSet = new Set();
-    holidays.forEach((h) => {
-      if (h.start_date && h.end_date) {
-        let cur = dayjs(h.start_date);
-        const hEnd = dayjs(h.end_date);
-        while (cur.isBefore(hEnd) || cur.isSame(hEnd, "day")) {
-          holidayDatesSet.add(cur.format("YYYY-MM-DD"));
-          cur = cur.add(1, "day");
-        }
-      } else if (h.date) {
-        holidayDatesSet.add(dayjs(h.date).format("YYYY-MM-DD"));
-      }
-    });
-
-    let totalSchoolDays = 0;
-    let daysSpent = 0;
-    let totalHolidays = 0;
-
-    let cursor = startDate.clone();
-    while (cursor.isBefore(endDate) || cursor.isSame(endDate, "day")) {
-      const dayOfWeek = cursor.day(); // 0 = Sun, 6 = Sat
-      const isWeekday = dayOfWeek !== 0 && dayOfWeek !== 6;
-      const dateStr = cursor.format("YYYY-MM-DD");
-      const isHoliday = holidayDatesSet.has(dateStr);
-
-      if (isHoliday) {
-        totalHolidays++;
-      }
-
-      if (isWeekday) {
-        totalSchoolDays++;
-        if (!isHoliday && (cursor.isBefore(today, "day") || cursor.isSame(today, "day"))) {
-          daysSpent++;
-        }
-      }
-      cursor = cursor.add(1, "day");
-    }
-
-    daysSpent = Math.min(daysSpent, totalSchoolDays);
-    const daysRemaining = Math.max(0, totalSchoolDays - daysSpent);
-    const pctCompleted =
-      totalSchoolDays > 0
-        ? Math.min(100, Math.round((daysSpent / totalSchoolDays) * 100))
-        : 0;
-
-    setTermStats({
-      totalSchoolDays,
-      daysSpent,
-      daysRemaining,
-      totalHolidays,
-      pctCompleted,
-    });
-  };
-
   const loadCalendarData = async () => {
     try {
       setLoading(true);
-      // 1. Fetch academic info
-      try {
-        const acadRes = await tenantApi.get("/school_setup/get_academic_info");
-        setAcademicInfo(acadRes?.data || {});
-      } catch (e) {
-        console.warn("Could not fetch academic info:", e);
+
+      const [acadResult, activeTermResult] = await Promise.allSettled([
+        tenantApi.get("/school_setup/get_academic_info"),
+        tenantApi.get("/curriculum/active-session-term"),
+      ]);
+
+      if (acadResult.status === "fulfilled") {
+        setAcademicInfo(acadResult.value?.data || {});
       }
 
-      // 2. Determine active session term ID
       let activeTermId = null;
-      try {
-        const activeRes = await tenantApi.get("/curriculum/active-session-term");
-        if (activeRes?.data?.data?.session_term_id) {
-          activeTermId = activeRes.data.data.session_term_id;
-        }
-      } catch (e) {
-        console.warn("Active session term endpoint fallback:", e);
+      if (
+        activeTermResult.status === "fulfilled" &&
+        activeTermResult.value?.data?.data?.session_term_id
+      ) {
+        activeTermId = activeTermResult.value.data.data.session_term_id;
       }
 
       if (!activeTermId) {
@@ -207,26 +121,23 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
       }
 
       if (activeTermId) {
-        // 3. Fetch weeks for active term
-        const weeksData = await fetchWeeks(activeTermId);
+        const [weeksRes, holidaysRes] = await Promise.allSettled([
+          fetchWeeks(activeTermId),
+          fetchHolidays(activeTermId),
+        ]);
+
+        const weeksData = weeksRes.status === "fulfilled" ? weeksRes.value : null;
         const fetchedWeeks = Array.isArray(weeksData)
           ? weeksData
           : weeksData?.data || [];
         setWeeksList(fetchedWeeks);
 
-        // 4. Fetch holidays for active term
-        let fetchedHolidays = [];
-        try {
-          const holidaysData = await fetchHolidays(activeTermId);
-          fetchedHolidays = Array.isArray(holidaysData)
-            ? holidaysData
-            : holidaysData?.data || [];
-          setHolidaysList(fetchedHolidays);
-        } catch (e) {
-          console.warn("Holidays not loaded:", e);
-        }
+        const holidaysData = holidaysRes.status === "fulfilled" ? holidaysRes.value : null;
+        const fetchedHolidays = Array.isArray(holidaysData)
+          ? holidaysData
+          : holidaysData?.data || [];
+        setHolidaysList(fetchedHolidays);
 
-        // 5. Set current month to active term range (or today if within term)
         const startDates = fetchedWeeks.map((w) => w.start_date).filter(Boolean).sort();
         const endDates = fetchedWeeks.map((w) => w.end_date).filter(Boolean).sort();
         if (startDates.length > 0 && endDates.length > 0) {
@@ -240,27 +151,15 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
           }
         }
 
-        // 6. Prefer backend calculated statistics when provided
         if (weeksData?.stats) {
           const s = weeksData.stats;
-          const totalSchoolDays = s.total_school_days || 0;
-          const totalHolidays = s.holiday_days_allocated ?? (fetchedHolidays?.length || 0);
-          const daysSpent = s.days_spent ?? Math.max(0, totalSchoolDays - (s.remaining_school_days || 0));
-          const daysRemaining = s.remaining_school_days ?? Math.max(0, totalSchoolDays - daysSpent);
-          const pctCompleted =
-            totalSchoolDays > 0
-              ? Math.min(100, Math.round((daysSpent / totalSchoolDays) * 100))
-              : 0;
-
           setTermStats({
-            totalSchoolDays,
-            daysSpent,
-            daysRemaining,
-            totalHolidays,
-            pctCompleted,
+            totalSchoolDays: s.total_school_days ?? 0,
+            daysSpent: s.days_spent ?? 0,
+            daysRemaining: s.remaining_school_days ?? 0,
+            totalHolidays: s.holiday_days_allocated ?? 0,
+            pctCompleted: s.pct_completed ?? 0,
           });
-        } else {
-          calculateStats(fetchedWeeks, fetchedHolidays);
         }
       }
     } catch (err) {

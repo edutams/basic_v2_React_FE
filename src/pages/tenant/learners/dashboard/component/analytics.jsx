@@ -95,7 +95,7 @@ const CardSkeleton = ({ rows = 3 }) => (
 //   days_passed        – school days elapsed so far (excl. weekends & past holidays)
 //   term_end_date      – formatted end date of the last configured week
 //   present / absent / late – learner's personal attendance counts
-const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => {} }) => {
+const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => { } }) => {
   const absent = Number(attendance.absent || 0);
   const late = Number(attendance.late || 0);
 
@@ -217,8 +217,8 @@ const Analytics = ({
   sessionTerms = [],
   academicTermId = '',
   attendanceTermId = '',
-  onAcademicTermChange = () => {},
-  onAttendanceTermChange = () => {},
+  onAcademicTermChange = () => { },
+  onAttendanceTermChange = () => { },
   onCardClick,
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];

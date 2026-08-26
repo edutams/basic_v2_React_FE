@@ -308,99 +308,17 @@ function DaysInTermChart() {
     termEndDate: "—",
   });
 
-  // Calculate term days statistics from weeks and holidays (reused handler logic)
-  const calculateDaysStats = useCallback((weeks = [], holidays = []) => {
-    if (!weeks || weeks.length === 0) {
-      return {
-        totalSchoolDays: 0,
-        daysSpent: 0,
-        daysRemaining: 0,
-        schoolDays: 0,
-        pctCompleted: 0,
-        termEndDate: "—",
-      };
-    }
-
-    const startDates = weeks.map((w) => w.start_date).filter(Boolean).sort();
-    const endDates = weeks.map((w) => w.end_date).filter(Boolean).sort();
-
-    if (startDates.length === 0 || endDates.length === 0) {
-      return {
-        totalSchoolDays: 0,
-        daysSpent: 0,
-        daysRemaining: 0,
-        schoolDays: 0,
-        pctCompleted: 0,
-        termEndDate: "—",
-      };
-    }
-
-    const startDate = dayjs(startDates[0]);
-    const endDate = dayjs(endDates[endDates.length - 1]);
-    const today = dayjs();
-
-    const holidayDatesSet = new Set();
-    const holidaysList = Array.isArray(holidays) ? holidays : [];
-
-    holidaysList.forEach((h) => {
-      const sDate = h.start_date || h.start || h.holiday_date || h.date;
-      const eDate = h.end_date || h.end || sDate;
-      if (sDate) {
-        let cur = dayjs(sDate);
-        const hEnd = dayjs(eDate);
-        while (cur.isValid() && (cur.isBefore(hEnd) || cur.isSame(hEnd, "day"))) {
-          holidayDatesSet.add(cur.format("YYYY-MM-DD"));
-          cur = cur.add(1, "day");
-        }
-      }
-    });
-
-    let totalSchoolDays = 0;
-    let daysSpent = 0;
-
-    let cursor = startDate.clone();
-    while (cursor.isBefore(endDate) || cursor.isSame(endDate, "day")) {
-      const dayOfWeek = cursor.day(); // 0 = Sun, 6 = Sat
-      const isWeekday = dayOfWeek !== 0 && dayOfWeek !== 6;
-      const dateStr = cursor.format("YYYY-MM-DD");
-      const isHoliday = holidayDatesSet.has(dateStr);
-
-      if (isWeekday) {
-        totalSchoolDays++;
-        if (!isHoliday && (cursor.isBefore(today, "day") || cursor.isSame(today, "day"))) {
-          daysSpent++;
-        }
-      }
-      cursor = cursor.add(1, "day");
-    }
-
-    daysSpent = Math.min(daysSpent, totalSchoolDays);
-    const daysRemaining = Math.max(0, totalSchoolDays - daysSpent);
-    const totalHolidays = holidayDatesSet.size > 0 ? holidayDatesSet.size : holidaysList.length;
-    const pctCompleted =
-      totalSchoolDays > 0
-        ? Math.min(100, Math.round((daysSpent / totalSchoolDays) * 100))
-        : 0;
-
-    return {
-      totalSchoolDays,
-      daysSpent,
-      daysRemaining,
-      schoolDays: totalSchoolDays,
-      totalHolidays,
-      pctCompleted,
-      termEndDate: endDate.format("MMMM D, YYYY"),
-    };
-  }, []);
-
-  // Initial load: Fetch session terms & determine active term ID
   useEffect(() => {
     let isMounted = true;
     const initializeTerms = async () => {
       try {
         setLoading(true);
-        // 1. Fetch available session terms
-        const termsRes = await fetchSessionTerms();
+        const [termsResult, activeResult] = await Promise.allSettled([
+          fetchSessionTerms(),
+          tenantApi.get("/curriculum/active-session-term"),
+        ]);
+
+        const termsRes = termsResult.status === "fulfilled" ? termsResult.value : null;
         const termsList = Array.isArray(termsRes)
           ? termsRes
           : termsRes?.data || [];
@@ -409,15 +327,12 @@ function DaysInTermChart() {
           setSessionTerms(termsList);
         }
 
-        // 2. Determine active session term ID
         let activeTermId = null;
-        try {
-          const activeRes = await tenantApi.get("/curriculum/active-session-term");
-          if (activeRes?.data?.data?.session_term_id) {
-            activeTermId = String(activeRes.data.data.session_term_id);
-          }
-        } catch (e) {
-          console.warn("Active term fallback to list:", e);
+        if (
+          activeResult.status === "fulfilled" &&
+          activeResult.value?.data?.data?.session_term_id
+        ) {
+          activeTermId = String(activeResult.value.data.data.session_term_id);
         }
 
         if (!activeTermId && termsList.length > 0) {
@@ -429,10 +344,11 @@ function DaysInTermChart() {
 
         if (isMounted && activeTermId) {
           setSelectedTermId(activeTermId);
+        } else if (isMounted) {
+          setLoading(false);
         }
       } catch (err) {
         console.warn("Failed to initialize session terms:", err);
-      } finally {
         if (isMounted) setLoading(false);
       }
     };
@@ -443,7 +359,6 @@ function DaysInTermChart() {
     };
   }, []);
 
-  // Whenever selectedTermId changes, fetch weeks & holidays and compute statistics
   useEffect(() => {
     if (!selectedTermId) return;
 
@@ -478,15 +393,30 @@ function DaysInTermChart() {
         }
 
         if (isMounted) {
-          if (fetchedWeeks.length > 0) {
-            const stats = calculateDaysStats(fetchedWeeks, fetchedHolidays);
-            setTermStats(stats);
+          const s = rawWeeks?.stats;
+          const endDates = fetchedWeeks.map((w) => w.end_date).filter(Boolean).sort();
+          const termEndDate =
+            endDates.length > 0
+              ? dayjs(endDates[endDates.length - 1]).format("MMMM D, YYYY")
+              : "—";
+
+          if (s) {
+            setTermStats({
+              totalSchoolDays: s.total_school_days ?? 0,
+              daysSpent: s.days_spent ?? 0,
+              daysRemaining: s.remaining_school_days ?? 0,
+              schoolDays: s.total_school_days ?? 0,
+              totalHolidays: s.holiday_days_allocated ?? fetchedHolidays.length,
+              pctCompleted: s.pct_completed ?? 0,
+              termEndDate,
+            });
           } else {
             setTermStats({
               totalSchoolDays: 0,
               daysSpent: 0,
               daysRemaining: 0,
               schoolDays: 0,
+              totalHolidays: 0,
               pctCompleted: 0,
               termEndDate: "—",
             });
@@ -503,7 +433,7 @@ function DaysInTermChart() {
     return () => {
       isMounted = false;
     };
-  }, [selectedTermId, calculateDaysStats]);
+  }, [selectedTermId]);
 
   return (
     <Box sx={panelSx}>
@@ -536,7 +466,6 @@ function DaysInTermChart() {
               />
             </Box>
 
-            {/* 4 Stats Columns with Vertical Dividers */}
             <Stack direction="row" alignItems="center" justifyContent="space-around" sx={{ mt: 2, px: 0.5 }}>
               <Stack alignItems="center" spacing={0.5} sx={{ flex: 1 }}>
                 <Typography sx={{ fontSize: 20, fontWeight: 800, color: "#16a34a", lineHeight: 1 }}>
@@ -581,7 +510,6 @@ function DaysInTermChart() {
               </Stack>
             </Stack>
 
-            {/* Term Ends Banner */}
             <Box
               sx={{
                 mt: 2.5,

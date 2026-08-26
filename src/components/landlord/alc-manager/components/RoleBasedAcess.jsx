@@ -492,14 +492,6 @@ const RoleBasedAcess = () => {
                 fullWidth
                 endIcon={<IconArrowRight size={16} />}
                 onClick={() => setBreakdownModalOpen(true)}
-                sx={{
-                  mt: 2,
-                  py: 0.9,
-                  borderRadius: '10px',
-                  borderColor: 'divider',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                }}
               >
                 View Full Breakdown
               </Button>

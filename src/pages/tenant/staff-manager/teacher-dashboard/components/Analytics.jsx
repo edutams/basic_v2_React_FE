@@ -308,7 +308,6 @@ function DaysInTermChart() {
     termEndDate: "—",
   });
 
-  // Initial load: Fetch session terms & determine active term ID in parallel
   useEffect(() => {
     let isMounted = true;
     const initializeTerms = async () => {
@@ -360,7 +359,6 @@ function DaysInTermChart() {
     };
   }, []);
 
-  // Whenever selectedTermId changes, fetch weeks & holidays and use backend stats
   useEffect(() => {
     if (!selectedTermId) return;
 

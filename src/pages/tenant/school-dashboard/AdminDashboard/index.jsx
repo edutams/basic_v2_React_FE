@@ -17,25 +17,7 @@ import AnnouncementsCard from './components/AnnouncementsCard';
 import EnrolmentByClass from './components/EnrolmentByClass';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
 
-/**
- * ── Re-implemented Admin Officer Dashboard (School Administrator) ────────────
- *
- * Layout (matches design):
- * ┌─────────────────────────────────────────────────────────────┐
- * │  DashboardHeader (Greeting + Session Term + Bell + Profile) │
- * ├─────────────────────────────────────────────────────────────┤
- * │  TopStatCards (4 KPI cards)                                 │
- * ├─────────────────────────────────────────────────────────────┤
- * │  QuickActions (7 action buttons)                            │
- * ├───────────────────────────────┬─────────────────────────────┤
- * │  SearchAndRoleBar             │  EnrolmentByClass           │
- * │  FinancialOverviewBar         │  (spans Search + Financial  │
- * │  Academic + Attendance        │   + Academic/Attendance)    │
- * ├───────────┬───────────┬──────┴─────────────────────────────┤
- * │  Term     │  Quick    │  Announcements                     │
- * │  Calendar │  Reports  │  (full width)                      │
- * └───────────┴───────────┴────────────────────────────────────┘
- */
+
 const AdminDashboard = () => {
   const [breakdownType, setBreakdownType] = useState(null);
   const [sessionTerm, setSessionTerm] = useState('all');
@@ -137,7 +119,7 @@ const AdminDashboard = () => {
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' },
-          gap: 2.5,
+          gap: 2,
           alignItems: 'start',
         }}
       >
@@ -174,10 +156,10 @@ const AdminDashboard = () => {
 
       {/* ── Bottom Row: Term Calendar, Quick Reports, Announcements (FULL WIDTH) ── */}
       <Grid container spacing={2.5} sx={{ mt: 2.5 }}>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <TermCalendarCard />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <QuickReportsCard />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>

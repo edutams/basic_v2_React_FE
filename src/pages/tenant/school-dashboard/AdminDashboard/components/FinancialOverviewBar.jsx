@@ -101,6 +101,7 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
               fontWeight: 800,
               color: isDark ? '#ffffff' : '#0f172a',
               lineHeight: 1.15,
+              whiteSpace: 'nowrap',
             }}
           >
             {value}
@@ -165,7 +166,7 @@ const FinancialOverviewBar = ({
           fontWeight: 800,
           textTransform: 'uppercase',
           letterSpacing: 0.5,
-          mb: 1.75,
+          mb: 1,
         }}
       >
         FINANCIAL OVERVIEW

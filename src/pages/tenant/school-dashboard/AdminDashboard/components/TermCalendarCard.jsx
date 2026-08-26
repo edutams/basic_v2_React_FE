@@ -47,26 +47,31 @@ const TermCalendarCard = ({
           </Typography>
         </Box>
 
-        {/* Single container for Day + Dates */}
+        {/* Info Row: Day Badge | Dates */}
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 0,
-            bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-            borderRadius: '10px',
-            border: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-            p: 1.5,
+            alignItems: 'stretch',
+            gap: 1.5,
             mb: 2.5,
           }}
         >
-          {/* Day Badge */}
+          {/* Day Badge — standalone */}
           <Box
             sx={{
+              flex: '0 0 auto',
+              px: 2,
+              py: 1.5,
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
               textAlign: 'center',
-              minWidth: 64,
-              px: 1.5,
+              minWidth: 72,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <Typography
@@ -101,68 +106,88 @@ const TermCalendarCard = ({
             </Typography>
           </Box>
 
-          {/* Term Started */}
+          {/* Dates — together in one box */}
           <Box
             sx={{
               flex: 1,
-              px: 2,
-              borderLeft: '1px solid',
+              display: 'flex',
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+              border: '1px solid',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+              overflow: 'hidden',
             }}
           >
-            <Typography
+            {/* Term Started */}
+            <Box
               sx={{
-                fontSize: '10px',
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                lineHeight: 1.2,
-                mb: 0.5,
+                flex: 1,
+                px: 2,
+                py: 1.5,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
               }}
             >
-              Term Started
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: isDark ? '#fff' : '#0f172a',
-                lineHeight: 1.2,
-              }}
-            >
-              {termStart}
-            </Typography>
-          </Box>
+              <Typography
+                sx={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                }}
+              >
+                Term Started
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: isDark ? '#fff' : '#0f172a',
+                  lineHeight: 1.2,
+                }}
+              >
+                {termStart}
+              </Typography>
+            </Box>
 
-          {/* Expected End */}
-          <Box
-            sx={{
-              flex: 1,
-              px: 2,
-              borderLeft: '1px solid',
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-            }}
-          >
-            <Typography
+            {/* Divider */}
+            <Box sx={{ width: '1px', bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} />
+
+            {/* Expected End */}
+            <Box
               sx={{
-                fontSize: '10px',
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                lineHeight: 1.2,
-                mb: 0.5,
+                flex: 1,
+                px: 2,
+                py: 1.5,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
               }}
             >
-              Expected End
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: isDark ? '#fff' : '#0f172a',
-                lineHeight: 1.2,
-              }}
-            >
-              {expectedEnd}
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                }}
+              >
+                Expected End
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: isDark ? '#fff' : '#0f172a',
+                  lineHeight: 1.2,
+                }}
+              >
+                {expectedEnd}
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
@@ -221,6 +246,9 @@ const TermCalendarCard = ({
             '&:hover': {
               bgcolor: 'transparent',
               textDecoration: 'underline',
+            },
+            '&:hover::before': {
+              display: 'none',
             },
           }}
         >

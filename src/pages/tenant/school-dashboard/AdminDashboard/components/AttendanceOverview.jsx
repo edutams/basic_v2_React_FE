@@ -50,7 +50,7 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
             ATTENDANCE OVERVIEW
           </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
             {/* Legend: Present & Absent only */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -127,7 +127,7 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
           justifyContent: 'space-between',
         }}
       >
-        <Box>
+        <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
           <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
             Average Attendance
           </Typography>

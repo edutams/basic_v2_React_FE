@@ -120,11 +120,15 @@ const QuickActions = () => {
               justifyContent: 'flex-start',
               whiteSpace: 'nowrap',
               boxShadow: 'none',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 0.15s ease, border-color 0.15s ease',
               '&:hover': {
                 bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#eff6ff',
                 borderColor: '#2563eb',
-                transform: 'translateY(-1px)',
+                color: isDark ? '#ffffff' : '#1e293b',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.12)',
+              },
+              '&:hover::before': {
+                display: 'none',
               },
             }}
           >

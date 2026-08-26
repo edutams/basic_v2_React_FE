@@ -117,7 +117,7 @@ const AcademicPerformanceOverview = ({ data = defaultAcademicData, avgScore = '6
           justifyContent: 'space-between',
         }}
       >
-        <Box>
+        <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
           <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
             Average Score
           </Typography>

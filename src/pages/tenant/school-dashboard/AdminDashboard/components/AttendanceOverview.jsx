@@ -1,21 +1,16 @@
-import React, { useState } from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme, CircularProgress } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
-const defaultAttendanceData = [
-  { day: 'Mon', Present: 88, Absent: 35 },
-  { day: 'Tue', Present: 90, Absent: 38 },
-  { day: 'Wed', Present: 92, Absent: 36 },
-  { day: 'Thu', Present: 89, Absent: 37 },
-  { day: 'Fri', Present: 87, Absent: 39 },
-];
-
-/**
- * Attendance Overview Grouped Bar Chart Component (Present & Absent only)
- */
-const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.6%', trend = '3.7%' }) => {
-  const [filter, setFilter] = useState('this_week');
+const AttendanceOverview = ({
+  data = [],
+  avgAttendance = '—',
+  trend = '0%',
+  period = 'this_term',
+  onPeriodChange,
+  loading = false,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -51,7 +46,7 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
-            {/* Legend: Present & Absent only */}
+            {/* Legend */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#16a34a' }} />
@@ -63,10 +58,11 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
               </Box>
             </Box>
 
+            {/* Period Filter Dropdown */}
             <FormControl size="small" sx={{ minWidth: 110 }}>
               <Select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                value={period}
+                onChange={(e) => onPeriodChange?.(e.target.value)}
                 sx={{
                   fontSize: '11.5px',
                   fontWeight: 700,
@@ -76,14 +72,19 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
                 }}
               >
-                <MenuItem value="this_week" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Week</MenuItem>
-                <MenuItem value="last_week" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Week</MenuItem>
+                <MenuItem value="this_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Term</MenuItem>
+                <MenuItem value="last_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Term</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </Box>
 
         {/* Grouped Bar Chart */}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
         <Box sx={{ width: '100%', height: 180, mb: 1.5 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -111,6 +112,7 @@ const AttendanceOverview = ({ data = defaultAttendanceData, avgAttendance = '94.
             </BarChart>
           </ResponsiveContainer>
         </Box>
+        )}
       </Box>
 
       {/* Bottom Summary */}

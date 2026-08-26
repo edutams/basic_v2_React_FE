@@ -38,7 +38,7 @@ import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
  *                     session_term_id (all types honor it where applicable)
  *   - `type`        → drives the column layout (see columnsFor)
  */
-const OverviewBreakdownModal = ({ open, type, onClose }) => {
+const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -79,6 +79,7 @@ const OverviewBreakdownModal = ({ open, type, onClose }) => {
           per_page: rpp,
           search: term || undefined,
           session_term_id: termId || undefined,
+          ...extra,
         },
       })
       .then((res) => {
@@ -250,6 +251,13 @@ const OverviewBreakdownModal = ({ open, type, onClose }) => {
           { key: 'attendance_rate', label: 'Attendance', numeric: true, percent: true },
           { key: 'avg_score', label: 'Avg Score', numeric: true, percent: true },
         ];
+      case 'enrollment_by_class':
+        return [
+          { key: 'user_id', label: 'User ID' },
+          { key: 'student_name', label: 'Name' },
+          { key: 'gender', label: 'Gender' },
+          { key: 'class_name', label: 'Class' },
+        ];
       case 'students':
       default:
         return [
@@ -277,7 +285,7 @@ const OverviewBreakdownModal = ({ open, type, onClose }) => {
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         {title}
         <Chip
-          label={`${total.toLocaleString()} ${type === 'batches' ? 'batches' : type === 'collection_matrix' ? 'classes' : 'records'}`}
+          label={`${total.toLocaleString()} ${type === 'batches' ? 'batches' : type === 'collection_matrix' ? 'classes' : type === 'enrollment_by_class' ? 'students' : 'records'}`}
           color="primary"
           size="small"
           sx={{ ml: 'auto', fontWeight: 700 }}
@@ -350,14 +358,14 @@ const OverviewBreakdownModal = ({ open, type, onClose }) => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Avatar
                           src={row.avatar || ''}
-                          alt={row.name || row.class || row.batch_name}
+                          alt={row.name || row.student_name || row.class || row.batch_name}
                           sx={{ width: 34, height: 34, fontSize: 14, bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300] }}
                         >
-                          {(row.name || row.class || row.batch_name || '?').charAt(0).toUpperCase()}
+                          {(row.name || row.student_name || row.class || row.batch_name || '?').charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
                           <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
-                            {row.name || row.class || row.batch_name || '—'}
+                            {row.name || row.student_name || row.class || row.batch_name || '—'}
                           </Typography>
                           {row.email && (
                             <Typography variant="caption" color="text.secondary">

@@ -27,7 +27,7 @@ const StatCardItem = ({
 
   const colors = schemeMap[colorScheme] || schemeMap.blue;
 
-  return (
+  const card = (
     <Paper
       elevation={0}
       onClick={onClick}
@@ -37,17 +37,18 @@ const StatCardItem = ({
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04), 0 10px 20px rgba(15, 23, 42, 0.04)',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 150ms ease, box-shadow 150ms ease',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
               transform: 'translateY(-2px)',
-              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
             }
           : {},
       }}
@@ -121,6 +122,16 @@ const StatCardItem = ({
         )}
       </Box>
     </Paper>
+  );
+
+  if (!onClick) {
+    return card;
+  }
+
+  return (
+    <Tooltip title="Click to view breakdown" placement="top" arrow>
+      {card}
+    </Tooltip>
   );
 };
 

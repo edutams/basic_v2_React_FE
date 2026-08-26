@@ -60,13 +60,13 @@ const AccountTab = () => {
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
-  const hostname = window.location.hostname;
-  const centralHost = import.meta.env.VITE_API_BASE_URL
-    ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
-    : 'basic_v2_be.test';
+  // const hostname = window.location.hostname;
+  // const centralHost = import.meta.env.VITE_API_BASE_URL
+  //   ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
+  //   : 'basic_v2_be.test';
 
-  const isTenantSubdomain =
-    hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
+  // const isTenantSubdomain =
+  //   hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
 
   // Prefill fields when user data is available
   useEffect(() => {
@@ -92,7 +92,6 @@ const AccountTab = () => {
       setImageFile(file);
     }
   };
-
 
   const handleProfileChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -241,11 +240,11 @@ const AccountTab = () => {
               >
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} alignItems="center">
                   <Avatar
-                    key={imageFile ? 'preview' : (savedAvatarUrl || formData.avatar || user?.avatar)}
+                    key={imageFile ? 'preview' : savedAvatarUrl || formData.avatar || user?.avatar}
                     src={
                       imageFile
                         ? URL.createObjectURL(imageFile)
-                        : (savedAvatarUrl || formData.avatar || user?.avatar)
+                        : savedAvatarUrl || formData.avatar || user?.avatar
                           ? `${savedAvatarUrl || formData.avatar || user?.avatar}?t=${Date.now()}`
                           : ''
                     }
@@ -279,12 +278,7 @@ const AccountTab = () => {
                         sx={{ borderRadius: '8px', textTransform: 'none', px: 2 }}
                       >
                         Upload Photo
-                        <input
-                          hidden
-                          accept="image/*"
-                          type="file"
-                          onChange={handleImageChange}
-                        />
+                        <input hidden accept="image/*" type="file" onChange={handleImageChange} />
                       </Button>
 
                       {imageFile && (
@@ -321,7 +315,6 @@ const AccountTab = () => {
                     value={formData.fname}
                     onChange={handleProfileChange}
                     fullWidth
-                    disabled={!isTenantSubdomain}
                     placeholder="Enter first name"
                   />
                 </Grid>
@@ -334,7 +327,6 @@ const AccountTab = () => {
                     value={formData.lname}
                     onChange={handleProfileChange}
                     fullWidth
-                    disabled={!isTenantSubdomain}
                     placeholder="Enter last name"
                   />
                 </Grid>
@@ -377,7 +369,6 @@ const AccountTab = () => {
                   multiline
                   minRows={1}
                   maxRows={2}
-                  disabled={!isTenantSubdomain}
                   placeholder="Enter your street address"
                 />
               </Box>
@@ -464,7 +455,8 @@ const AccountTab = () => {
                 icon={<IconShieldLock size={20} />}
                 sx={{ mb: 3, borderRadius: '12px', fontSize: '13px' }}
               >
-                Ensure your new password contains at least 8 characters with a mix of letters and numbers.
+                Ensure your new password contains at least 8 characters with a mix of letters and
+                numbers.
               </Alert>
 
               <Box>
@@ -520,7 +512,9 @@ const AccountTab = () => {
               </Box>
 
               <Box mt={1}>
-                <CustomFormLabel htmlFor="password_confirmation">Confirm New Password</CustomFormLabel>
+                <CustomFormLabel htmlFor="password_confirmation">
+                  Confirm New Password
+                </CustomFormLabel>
                 <CustomTextField
                   id="password_confirmation"
                   name="password_confirmation"

@@ -536,7 +536,6 @@ function DaysInTermChart() {
               />
             </Box>
 
-            {/* 4 Stats Columns with Vertical Dividers */}
             <Stack direction="row" alignItems="center" justifyContent="space-around" sx={{ mt: 2, px: 0.5 }}>
               <Stack alignItems="center" spacing={0.5} sx={{ flex: 1 }}>
                 <Typography sx={{ fontSize: 20, fontWeight: 800, color: "#16a34a", lineHeight: 1 }}>
@@ -581,7 +580,6 @@ function DaysInTermChart() {
               </Stack>
             </Stack>
 
-            {/* Term Ends Banner */}
             <Box
               sx={{
                 mt: 2.5,

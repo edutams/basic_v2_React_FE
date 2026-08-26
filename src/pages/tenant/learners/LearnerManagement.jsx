@@ -78,7 +78,7 @@ const LearnerManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [classId, setClassId] = useState('');
+  const [programmeClassId, setProgrammeClassId] = useState('');
 
   const [classes, setClasses] = useState([]);
 
@@ -132,7 +132,7 @@ const LearnerManagement = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search,
-        ...(classId && { class_id: classId }),
+        ...(programmeClassId && { programme_class_id: programmeClassId }),
       });
       setRows(res?.data?.data ?? []);
       setTotal(res?.data?.meta?.total ?? 0);
@@ -141,7 +141,7 @@ const LearnerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search, classId]);
+  }, [page, rowsPerPage, search, programmeClassId]);
 
   const confirmImpersonateStudent = (row) => {
     setStudentToImpersonate(row);
@@ -186,9 +186,9 @@ const LearnerManagement = () => {
         (division.programmes || []).forEach((programme) => {
           (programme.classes || []).forEach((cls) => {
             flat.push({
-              id: cls.id,
-              label: `${programme.programme_code} - ${cls.class_code}`,
+              // id: cls?.id,
               programme_class_id: cls.pivot?.id,
+              label: `${programme.programme_code} - ${cls.class_code}`,
             });
           });
         });
@@ -294,11 +294,15 @@ const LearnerManagement = () => {
   };
 
   const handleDownloadTemplate = async () => {
-    const selected = classes.find((c) => c.id === downloadClassId);
-    if (!selected?.programme_class_id) return;
+    if (!downloadClassId) return;
+
+    const selected = classes.find((c) => String(c.programme_class_id) === String(downloadClassId));
+
+    if (!selected) return;
+
     try {
       const res = await api.get('school_setup/learner_template', {
-        params: { programme_class_id: selected.programme_class_id },
+        params: { programme_class_id: downloadClassId },
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -327,11 +331,11 @@ const LearnerManagement = () => {
     return res.data.message || 'Upload complete';
   };
 
-  const hasFilters = search !== '' || classId !== '';
+  const hasFilters = search !== '' || programmeClassId !== '';
 
   const resetFilters = () => {
     setSearch('');
-    setClassId('');
+    setProgrammeClassId('');
     setPage(0);
   };
 
@@ -462,16 +466,16 @@ const LearnerManagement = () => {
           <FormControl size="small" sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
             <InputLabel>Filter by Class</InputLabel>
             <Select
-              value={classId}
+              value={programmeClassId}
               label="Filter by Class"
               onChange={(e) => {
-                setClassId(e.target.value);
+                setProgrammeClassId(e.target.value);
                 setPage(0);
               }}
             >
               <MenuItem value="">All Classes</MenuItem>
               {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>
+                <MenuItem key={cls.programme_class_id} value={cls.programme_class_id}>
                   {cls.label}
                 </MenuItem>
               ))}
@@ -523,7 +527,7 @@ const LearnerManagement = () => {
                             alt={row.users?.fname}
                             sx={{ width: 36, height: 36 }}
                           >
-                            {row.users?.fname?.[0]?.toUpperCase() ?? '?'}
+                            {row?.users?.avatar}
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>
@@ -677,7 +681,7 @@ const LearnerManagement = () => {
               {classes
                 .filter((c) => c.programme_class_id)
                 .map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
+                  <MenuItem key={cls.programme_class_id} value={cls.programme_class_id}>
                     {cls.label}
                   </MenuItem>
                 ))}

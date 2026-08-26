@@ -243,11 +243,8 @@ export default function ClassesOverview() {
         if (isMounted) {
           if (combined.length > 0) {
             const mapped = combined.map((item, index) => {
-              const classArm = item.class_arm || item.classArm;
-              const className =
-                classArm?.programme_class?.class?.class_name ||
-                classArm?.programmeClass?.class?.class_name;
-              const armName = classArm?.arm_names || classArm?.arm_name;
+              const className = item.class_name || item.class_arm?.programme_class?.class?.class_name;
+              const armName = item.arm_names || item.class_arm?.arm_names;
 
               const fullClassName =
                 className && armName

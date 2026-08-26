@@ -49,12 +49,16 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
         if (armIds.length > 0) {
           const results = await Promise.allSettled(
             armIds.map((armId) =>
-              classRegisterApi.getStudentsByClassArm({ class_arm_id: armId, per_page: 100 })
-            )
+              classRegisterApi.getStudentsByClassArm({ class_arm_id: armId, per_page: 100 }),
+            ),
           );
 
           results.forEach((result) => {
-            if (result.status === 'fulfilled' && result.value.data?.status && result.value.data?.data) {
+            if (
+              result.status === 'fulfilled' &&
+              result.value.data?.status &&
+              result.value.data?.data
+            ) {
               allStudents.push(...result.value.data.data);
             }
           });
@@ -148,13 +152,17 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
         <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
           Student List
         </Typography>
-        <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
+        <TableContainer
+          elevation={0}
+          variant="outlined"
+          sx={{ borderRadius: 2, overflowX: 'auto' }}
+        >
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>
-                <TableCell>Student Name</TableCell>
                 <TableCell>Admission No</TableCell>
+                <TableCell>Student Name</TableCell>
                 <TableCell>Arm</TableCell>
                 <TableCell>Gender</TableCell>
               </TableRow>
@@ -185,8 +193,8 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
                 students.map((st, i) => (
                   <TableRow key={st.student_reg_id || i}>
                     <TableCell>{i + 1}</TableCell>
-                    <TableCell fontWeight={600}>{st.name}</TableCell>
                     <TableCell>{st.admission_no}</TableCell>
+                    <TableCell fontWeight={600}>{st.name}</TableCell>
                     <TableCell>{st.arm_name ? `Arm ${st.arm_name}` : '-'}</TableCell>
                     <TableCell>
                       <Chip

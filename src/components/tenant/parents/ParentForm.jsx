@@ -101,22 +101,22 @@ const ParentForm = ({
   const initialValues =
     isEdit && selectedParent
       ? {
-        title: selectedParent.title ?? '',
-        first_name: selectedParent.user?.fname ?? '',
-        last_name: selectedParent.user?.lname ?? '',
-        middle_name: selectedParent.user?.mname ?? '',
-        email: selectedParent.user?.email ?? '',
-        phone: selectedParent.user?.phone ?? '',
-        gender: selectedParent.user?.sex ?? '',
-        occupation: selectedParent.occupation ?? '',
-        relationship: selectedParent.relationship ?? '',
-        address: selectedParent.user?.address ?? '',
-        confirm_password: '',
-      }
+          title: selectedParent.title ?? '',
+          first_name: selectedParent.user?.fname ?? '',
+          last_name: selectedParent.user?.lname ?? '',
+          middle_name: selectedParent.user?.mname ?? '',
+          email: selectedParent.user?.email ?? '',
+          phone: selectedParent.user?.phone ?? '',
+          gender: selectedParent.user?.sex ?? '',
+          occupation: selectedParent.occupation ?? '',
+          relationship: selectedParent.relationship ?? '',
+          address: selectedParent.user?.address ?? '',
+          confirm_password: '',
+        }
       : EMPTY_FORM;
 
   const [wardSearch, setWardSearch] = useState('');
-  const [wardClassId, setWardClassId] = useState('');
+  const [wardProgrammeClassId, setWardProgrammeClassId] = useState('');
   const [classes, setClasses] = useState([]);
   const [wardResults, setWardResults] = useState([]);
   const [wardSearching, setWardSearching] = useState(false);
@@ -141,7 +141,10 @@ const ParentForm = ({
         (data || []).forEach((div) =>
           (div.programmes || []).forEach((prog) =>
             (prog.classes || []).forEach((cls) =>
-              flat.push({ id: cls.id, label: `${prog.programme_code} - ${cls.class_code}` }),
+              flat.push({
+                program_class_id: cls?.pivot?.id,
+                label: `${prog.programme_code} - ${cls.class_code}`,
+              }),
             ),
           ),
         );
@@ -151,12 +154,12 @@ const ParentForm = ({
   }, [isEdit]);
 
   const handleWardSearch = useCallback(async () => {
-    if (!wardSearch.trim() && !wardClassId) return;
+    if (!wardSearch.trim() && !wardProgrammeClassId) return;
     try {
       setWardSearching(true);
       const res = await guardianApi.searchLearners({
         search: wardSearch.trim(),
-        class_id: wardClassId || undefined,
+        programme_class_id: wardProgrammeClassId || undefined,
       });
       const data = res?.data?.data ?? [];
       if (data.length === 0) notify.info('No learners found');
@@ -167,7 +170,7 @@ const ParentForm = ({
     } finally {
       setWardSearching(false);
     }
-  }, [wardSearch, wardClassId]);
+  }, [wardSearch, wardProgrammeClassId]);
 
   const handleAddWard = (l) => {
     if (!linkedWards.some((w) => w.id === l.id)) setLinkedWards((p) => [...p, l]);
@@ -400,7 +403,7 @@ const ParentForm = ({
               }
               helperText={
                 formik.values.confirm_password &&
-                  formik.values.password !== formik.values.confirm_password
+                formik.values.password !== formik.values.confirm_password
                   ? 'Passwords do not match'
                   : ''
               }
@@ -462,13 +465,13 @@ const ParentForm = ({
               <FormControl size="small" sx={{ minWidth: 160 }}>
                 <InputLabel>Filter by Class</InputLabel>
                 <Select
-                  value={wardClassId}
+                  value={wardProgrammeClassId}
                   label="Filter by Class"
-                  onChange={(e) => setWardClassId(e.target.value)}
+                  onChange={(e) => setWardProgrammeClassId(e.target.value)}
                 >
                   <MenuItem value="">All Classes</MenuItem>
                   {classes.map((cls) => (
-                    <MenuItem key={cls.id} value={cls.id}>
+                    <MenuItem key={cls.program_class_id} value={cls.program_class_id}>
                       {cls.label}
                     </MenuItem>
                   ))}
@@ -493,7 +496,13 @@ const ParentForm = ({
                 }}
               />
 
-              <Button variant="contained" size="small" onClick={handleWardSearch} disabled={wardSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleWardSearch}
+                disabled={wardSearching}
+                sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+              >
                 {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
               </Button>
             </Box>

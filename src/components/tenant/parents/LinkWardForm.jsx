@@ -52,7 +52,8 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
   const notify = useNotification();
 
   const [search, setSearch] = useState('');
-  const [classId, setClassId] = useState('');
+  const [programmeClassId, setProgrammeClassId] = useState('');
+
   const [classes, setClasses] = useState([]);
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -66,7 +67,10 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
         (data || []).forEach((div) =>
           (div.programmes || []).forEach((prog) =>
             (prog.classes || []).forEach((cls) =>
-              flat.push({ id: cls.id, label: `${prog.programme_code} - ${cls.class_code}` }),
+              flat.push({
+                program_class_id: cls?.pivot?.id,
+                label: `${prog.programme_code} - ${cls.class_code}`,
+              }),
             ),
           ),
         );
@@ -78,7 +82,7 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
   useEffect(() => {
     if (!parent?.user_id) return;
     setSearch('');
-    setClassId('');
+    setProgrammeClassId('');
     setResults([]);
     guardianApi
       .getWards(parent.user_id)
@@ -87,12 +91,12 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
   }, [parent?.user_id]);
 
   const handleSearch = useCallback(async () => {
-    if (!search.trim() && !classId) return;
+    if (!search.trim() && !programmeClassId) return;
     try {
       setSearching(true);
       const res = await guardianApi.searchLearners({
         search: search.trim(),
-        class_id: classId || undefined,
+        programme_class_id: programmeClassId || undefined,
       });
       const data = res?.data?.data ?? [];
       if (data.length === 0) notify.info('No learners found for that search');
@@ -103,7 +107,7 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
     } finally {
       setSearching(false);
     }
-  }, [search, classId]);
+  }, [search, programmeClassId]);
 
   const handleAdd = (l) => {
     if (!linkedWards.some((w) => w.id === l.id)) setLinkedWards((p) => [...p, l]);
@@ -185,13 +189,13 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Filter by Class</InputLabel>
           <Select
-            value={classId}
+            value={programmeClassId}
             label="Filter by Class"
-            onChange={(e) => setClassId(e.target.value)}
+            onChange={(e) => setProgrammeClassId(e.target.value)}
           >
             <MenuItem value="">All Classes</MenuItem>
             {classes.map((cls) => (
-              <MenuItem key={cls.id} value={cls.id}>
+              <MenuItem key={cls.program_class_id} value={cls.program_class_id}>
                 {cls.label}
               </MenuItem>
             ))}
@@ -216,7 +220,13 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
           }}
         />
 
-        <Button variant="contained" size="small" onClick={handleSearch} disabled={searching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleSearch}
+          disabled={searching}
+          sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+        >
           {searching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
         </Button>
       </Box>
@@ -295,7 +305,13 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={saving}>
+        <Button
+          variant="contained"
+          size="small"
+          color="inherit"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancel
         </Button>
         <Button size="small" onClick={handleSave} disabled={saving}>

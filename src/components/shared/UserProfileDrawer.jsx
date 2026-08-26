@@ -449,9 +449,9 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     return groupPermissionsByModule(filteredPermissions);
   }, [filteredPermissions]);
 
-  const toggleModuleCollapse = (moduleKey) => {
-    setCollapsedModules((prev) => ({ ...prev, [moduleKey]: !prev[moduleKey] }));
-  };
+  // const toggleModuleCollapse = (moduleKey) => {
+  //   setCollapsedModules((prev) => ({ ...prev, [moduleKey]: !prev[moduleKey] }));
+  // };
 
   const formatDOB = (val) => {
     if (!val || val === '—') return '—';
@@ -645,25 +645,37 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const [submittingProfile, setSubmittingProfile] = useState(false);
+
   const handleSaveProfile = async () => {
     const newFullName = `${editForm.fname} ${editForm.mname ? editForm.mname + ' ' : ''}${editForm.lname}`.trim();
     const targetId = targetUser?.id || targetUser?.user_id;
 
+    setSubmittingProfile(true);
+
     if (isLandlordView) {
-      api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
+      api.post('/v1/landlord/update_agent_profile', {
+        ...(targetId ? { user_id: targetId } : {}),
+        ...editForm,
+      })
         .then((res) => {
-          if (res?.data) setProfileData(res.data?.data || res.data);
+          const updatedData = res.data?.data || res.data;
+          if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
           showToast('Profile details updated successfully!');
           setActiveModal(null);
         })
         .catch((err) => {
           console.error('Failed to save profile changes to database:', err);
           showToast('Failed to save profile changes on server', 'error');
+        })
+        .finally(() => {
+          setSubmittingProfile(false);
         });
       return;
     }
 
     const payload = new FormData();
+    if (targetId) payload.append('user_id', targetId);
     payload.append('fname', editForm.fname || '');
     if (editForm.mname) payload.append('mname', editForm.mname);
     payload.append('lname', editForm.lname || '');
@@ -713,6 +725,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     } catch (err) {
       console.error('Failed to save profile changes:', err);
       showToast(err.response?.data?.error || err.response?.data?.message || 'Failed to save profile changes', 'error');
+    } finally {
+      setSubmittingProfile(false);
     }
   };
 
@@ -728,15 +742,22 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     }
   };
 
+  const [submittingPicture, setSubmittingPicture] = useState(false);
+
   const handleSavePicture = async () => {
     if (!imageFile && !imagePreview) return;
 
     const targetId = targetUser?.id || targetUser?.user_id;
+    setSubmittingPicture(true);
 
     if (isLandlordView) {
-      api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
+      api.post('/v1/landlord/update_agent_profile', {
+        ...(targetId ? { user_id: targetId } : {}),
+        avatar: imagePreview,
+      })
         .then((res) => {
-          if (res?.data) setProfileData(res.data?.data || res.data);
+          const updatedData = res.data?.data || res.data;
+          if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
           showToast('Profile picture updated successfully!');
           setActiveModal(null);
           setImageFile(null);
@@ -745,11 +766,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
         .catch((err) => {
           console.error('Failed to update picture on server:', err);
           showToast('Failed to update picture on server', 'error');
+        })
+        .finally(() => {
+          setSubmittingPicture(false);
         });
       return;
     }
 
     const payload = new FormData();
+    if (targetId) payload.append('user_id', targetId);
     if (imageFile) {
       payload.append('avatar', imageFile);
     }
@@ -785,6 +810,8 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     } catch (err) {
       console.error('Failed to update profile picture:', err);
       showToast(err.response?.data?.error || 'Failed to update profile picture', 'error');
+    } finally {
+      setSubmittingPicture(false);
     }
   };
 
@@ -814,12 +841,14 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingPassword(true);
 
     const updatePromise = isLandlordView
-      ? api.post(`/v1/landlord/users/${targetId}/password`, {
+      ? api.put('/v1/landlord/change_password', {
+        ...(targetId ? { user_id: targetId } : {}),
         current_password: passwordForm.current_password,
-        new_password: passwordForm.new_password,
-        confirm_password: passwordForm.confirm_password,
+        password: passwordForm.new_password,
+        password_confirmation: passwordForm.confirm_password,
       })
       : tenantApi.put('/change_password', {
+        ...(targetId ? { user_id: targetId } : {}),
         current_password: passwordForm.current_password,
         password: passwordForm.new_password,
         password_confirmation: passwordForm.confirm_password,
@@ -1438,47 +1467,56 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       <Dialog open={activeModal === 'edit_profile'} onClose={() => setActiveModal(null)} maxWidth="sm" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Edit Profile Details</Typography>
-          <IconButton onClick={() => setActiveModal(null)} size="small"><IconX size={20} /></IconButton>
+          <IconButton onClick={() => setActiveModal(null)} size="small" disabled={submittingProfile}><IconX size={20} /></IconButton>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
           <Grid container spacing={2}>
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="First Name" name="fname" value={editForm.fname} onChange={handleEditFormChange} />
+              <TextField fullWidth size="small" label="First Name" name="fname" value={editForm.fname} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="Middle Name" name="mname" value={editForm.mname} onChange={handleEditFormChange} />
+              <TextField fullWidth size="small" label="Middle Name" name="mname" value={editForm.mname} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="Last Name" name="lname" value={editForm.lname} onChange={handleEditFormChange} />
+              <TextField fullWidth size="small" label="Last Name" name="lname" value={editForm.lname} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="Email Address" type="email" name="email" value={editForm.email} onChange={handleEditFormChange} />
+              <TextField fullWidth size="small" label="Email Address" type="email" name="email" value={editForm.email} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
             <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-              <TextField fullWidth size="small" label="Phone Number" name="phone" value={editForm.phone} onChange={handleEditFormChange} />
+              <TextField fullWidth size="small" label="Phone Number" name="phone" value={editForm.phone} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
             {!isLandlordView && (
               <Grid item size={{ xs: 6, md: 6, sm: 12 }}>
-                <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} />
+                <TextField fullWidth size="small" label="Date of Birth" type="date" name="dob" value={editForm.dob} InputLabelProps={{ shrink: true }} onChange={handleEditFormChange} disabled={submittingProfile} />
               </Grid>
             )}
             {!isLandlordView && (
               <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-                <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange}>
+                <TextField fullWidth size="small" select label="Gender" name="sex" value={editForm.sex} onChange={handleEditFormChange} disabled={submittingProfile}>
                   <MenuItem value="Male">Male</MenuItem>
                   <MenuItem value="Female">Female</MenuItem>
                 </TextField>
               </Grid>
             )}
             <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-              <TextField fullWidth multiline rows={2} size="small" label="Address" name="address" value={editForm.address} onChange={handleEditFormChange} />
+              <TextField fullWidth multiline rows={2} size="small" label="Address" name="address" value={editForm.address} onChange={handleEditFormChange} disabled={submittingProfile} />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small">Cancel</Button>
-          <Button onClick={handleSaveProfile} variant="contained" size="small" color="primary">Save Changes</Button>
+          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small" disabled={submittingProfile}>Cancel</Button>
+          <Button
+            onClick={handleSaveProfile}
+            variant="contained"
+            size="small"
+            color="primary"
+            disabled={submittingProfile}
+            startIcon={submittingProfile ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            Save Changes
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1486,7 +1524,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       <Dialog open={activeModal === 'change_picture'} onClose={() => setActiveModal(null)} maxWidth="xs" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Change Profile Picture</Typography>
-          <IconButton onClick={() => setActiveModal(null)} size="small"><IconX size={20} /></IconButton>
+          <IconButton onClick={() => setActiveModal(null)} size="small" disabled={submittingPicture}><IconX size={20} /></IconButton>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 3, textAlign: 'center' }}>
@@ -1496,14 +1534,23 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
           >
             {getInitials()}
           </Avatar>
-          <Button variant="outlined" size="small" component="label" startIcon={<IconUpload size={18} />}>
+          <Button variant="outlined" size="small" component="label" disabled={submittingPicture} startIcon={<IconUpload size={18} />}>
             Select Image
-            <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            <input type="file" hidden accept="image/*" onChange={handleImageChange} disabled={submittingPicture} />
           </Button>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small">Cancel</Button>
-          <Button onClick={handleSavePicture} variant="contained" size="small" color="primary" disabled={!imagePreview}>Update Picture</Button>
+          <Button onClick={() => setActiveModal(null)} variant="outlined" size="small" disabled={submittingPicture}>Cancel</Button>
+          <Button
+            onClick={handleSavePicture}
+            variant="contained"
+            size="small"
+            color="primary"
+            disabled={!imagePreview || submittingPicture}
+            startIcon={submittingPicture ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            Update Picture
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1511,7 +1558,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
       <Dialog open={activeModal === 'change_password'} onClose={() => setActiveModal(null)} maxWidth="xs" fullWidth>
         <DialogTitle display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>Change Password</Typography>
-          <IconButton onClick={() => setActiveModal(null)} size="small"><IconX size={20} /></IconButton>
+          <IconButton onClick={() => setActiveModal(null)} size="small" disabled={submittingPassword}><IconX size={20} /></IconButton>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
@@ -1579,8 +1626,15 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setActiveModal(null)} variant="outlined" size="small" disabled={submittingPassword}>Cancel</Button>
-          <Button onClick={handleSavePassword} variant="contained" size="small" color="primary" disabled={submittingPassword}>
-            {submittingPassword ? 'Updating...' : 'Update Password'}
+          <Button
+            onClick={handleSavePassword}
+            variant="contained"
+            size="small"
+            color="primary"
+            disabled={submittingPassword}
+            startIcon={submittingPassword ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            Update Password
           </Button>
         </DialogActions>
       </Dialog>

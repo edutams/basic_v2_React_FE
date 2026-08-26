@@ -1,77 +1,96 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Grid, Paper, Skeleton, Typography, useTheme } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import { useNotification } from 'src/hooks/useNotification';
+import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
-import {
-  BLUE,
-  GREEN,
-  ORANGE,
-  PURPLE,
-  RED,
-  MOCK_TEACHER_ANALYTICS,
-  num,
-} from './constants';
+
 import DashboardHeader from './components/DashboardHeader';
-import GlobalOverviewPanel from './components/GlobalOverviewPanel';
-import GlobalOverviewSkeleton from './components/GlobalOverviewSkeleton';
-import TeacherAnalyticsPanel from './components/TeacherAnalyticsPanel';
-import LearnerAnalyticsPanel from './components/LearnerAnalyticsPanel';
-import AdmissionOverviewPanel from './components/AdmissionOverviewPanel';
-import BursaryOverviewPanel from './components/BursaryOverviewPanel';
+import TopStatCards from './components/TopStatCards';
+import QuickActions from './components/QuickActions';
+import SearchAndRoleBar from './components/SearchAndRoleBar';
+import FinancialOverviewBar from './components/FinancialOverviewBar';
+import AcademicPerformanceOverview from './components/AcademicPerformanceOverview';
+import AttendanceOverview from './components/AttendanceOverview';
+import TermCalendarCard from './components/TermCalendarCard';
+import QuickReportsCard from './components/QuickReportsCard';
+import AnnouncementsCard from './components/AnnouncementsCard';
+import EnrolmentByClass from './components/EnrolmentByClass';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
 
 /**
- * Skeleton placeholder that mirrors the dashboard panel layout
- * (icon + title bar, then content) while a section is being fetched.
- */
-const PanelSkeleton = ({ height = 240 }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2.5,
-        borderRadius: 3,
-        background: isDark ? theme.palette.background.paper : '#fff',
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${theme.palette.grey[200]}`,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
-        <Skeleton variant="rounded" width={36} height={36} />
-        <Skeleton variant="text" width={160} height={16} />
-      </Box>
-      <Skeleton variant="rounded" height={height} sx={{ width: '100%' }} />
-    </Paper>
-  );
-};
-
-/**
- * ── Admin Dashboard ───────────────────────────────────────────────────
- * Each analytics section is fetched from its own endpoint and loads
- * independently, so panels appear as soon as their data is ready.
+ * ── Re-implemented Admin Officer Dashboard (School Administrator) ────────────
+ *
+ * Layout (matches design):
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  DashboardHeader (Greeting + Session Term + Bell + Profile) │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │  TopStatCards (4 KPI cards)                                 │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │  QuickActions (7 action buttons)                            │
+ * ├───────────────────────────────┬─────────────────────────────┤
+ * │  SearchAndRoleBar             │  EnrolmentByClass           │
+ * │  FinancialOverviewBar         │  (spans Search + Financial  │
+ * │  Academic + Attendance        │   + Academic/Attendance)    │
+ * ├───────────┬───────────┬──────┴─────────────────────────────┤
+ * │  Term     │  Quick    │  Announcements                     │
+ * │  Calendar │  Reports  │  (full width)                      │
+ * └───────────┴───────────┴────────────────────────────────────┘
  */
 const AdminDashboard = () => {
-  const navigate = useNavigate();
-  const notify = useNotification();
-
-  // Breakdown modal state — holds the stat card type clicked on Global Overview.
   const [breakdownType, setBreakdownType] = useState(null);
+  const [sessionTerm, setSessionTerm] = useState('all');
+  const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+  const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
 
-  // Each section manages its own { data, loading } state.
+  // Load session terms
+  useEffect(() => {
+    const loadSessionTerms = async () => {
+      try {
+        const response = await fetchSessionTerms();
+        if (response.status) {
+          const sess_terms = [
+            { id: 'all', label: 'All Sessions' },
+            ...response.data.map((sterm) => ({
+              id: sterm.id,
+              label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+            })),
+          ];
+          setSessionTerms(sess_terms);
+
+          try {
+            const active = await fetchActiveSessionTerm();
+            const activeId = active?.data?.session_term_id;
+            if (active?.status && activeId != null) {
+              const match = sess_terms.find((s) => String(s.id) === String(activeId));
+              if (match) setSessionTerm(match.id);
+            }
+          } catch (err) {
+            console.error('Failed to fetch active session term:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch session terms:', error);
+      } finally {
+        setSessionTermsLoaded(true);
+      }
+    };
+
+    loadSessionTerms();
+  }, []);
+
+  // Section data hook
   const useSection = (path) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+      if (!sessionTermsLoaded) return;
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path)
+        .get(path, {
+          params: sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {},
+        })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -84,181 +103,89 @@ const AdminDashboard = () => {
       return () => {
         mounted = false;
       };
-    }, [path]);
+    }, [path, sessionTerm, sessionTermsLoaded]);
 
     return { data, loading };
   };
 
-  const go = useSection('/dashboard/admin/global-overview');
-  // Teacher analytics is mocked for now — the endpoint is implemented, but the
-  // frontend call is commented out so the panel (including the Top Resource
-  // Usage chart with Quizzes) renders mock data until it's reconnected.
-  // const ta = useSection('/dashboard/admin/teacher-analytics');
-  const ta = { data: MOCK_TEACHER_ANALYTICS, loading: false };
-  // Learner analytics is one endpoint per card, so each card loads (and shows
-  // its own built-in skeleton) independently.
-  const laAttendance = useSection('/dashboard/admin/learner/attendance');
-  const laExam = useSection('/dashboard/admin/learner/exam-performance');
-  const laUnderperforming = useSection('/dashboard/admin/learner/underperforming');
-  const laAtRisk = useSection('/dashboard/admin/learner/at-risk');
-  const laDropOut = useSection('/dashboard/admin/learner/drop-out-risk');
-  const laAssignment = useSection('/dashboard/admin/learner/assignment-completion');
-  const laResources = useSection('/dashboard/admin/learner/resource-engagement');
-  const ao = useSection('/dashboard/admin/admission-overview');
-  const bo = useSection('/dashboard/admin/bursary-overview');
-
-  // Report export — Excel/PDF are generated server-side (PhpSpreadsheet/Dompdf)
-  // and streamed back as binary blobs, mirroring the other dashboard exports.
-  const [exporting, setExporting] = useState(null);
-
-  const handleExport = async (format) => {
-    setExporting(format);
-    try {
-      const res = await tenantApi.get('/dashboard/admin/export-report', {
-        params: { format },
-        responseType: 'blob',
-      });
-      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.setAttribute('download', `admin-dashboard-report.${format === 'pdf' ? 'pdf' : 'xlsx'}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-      notify.success(`Report exported as ${format.toUpperCase()}`);
-    } catch {
-      notify.error(`Failed to export ${format.toUpperCase()} report`);
-    } finally {
-      setExporting(null);
-    }
-  };
-
-  // Derived chart data (computed from loaded sections).
-  const staffDonut = (go.data?.staff_distribution || []).map((s) => ({
-    name: s.name,
-    value: num(s.value),
-    count: num(s.count),
-    color: s.name === 'Teaching' ? BLUE : ORANGE,
-  }));
-
-  const revenueColors = [BLUE, GREEN, ORANGE, PURPLE, RED];
-  const revenueDonut = (bo.data?.revenue_distribution || []).map((r, i) => ({
-    name: r.category,
-    value: num(r.percentage),
-    amount: num(r.amount),
-    color: revenueColors[i % revenueColors.length],
-  }));
-
-  const paymentData = (bo.data?.payment_categories || []).map((p) => ({
-    name: p.category,
-    amount: num(p.amount),
-    percentage: num(p.percentage),
-  }));
-  const maxPayment = Math.max(...paymentData.map((p) => p.amount), 1);
-
-  const enrollmentByClass =
-    (ao.data?.enrollment_by_class || []).length > 0
-      ? ao.data.enrollment_by_class
-      : [
-          { class_name: 'JSS 1', applications: 245, enrollments: 210 },
-          { class_name: 'JSS 2', applications: 220, enrollments: 198 },
-          { class_name: 'SSS 1', applications: 192, enrollments: 176 },
-          { class_name: 'SSS 2', applications: 170, enrollments: 158 },
-          { class_name: 'SSS 3', applications: 162, enrollments: 156 },
-        ];
-  const enrollmentBySession =
-    (ao.data?.enrollment_by_sessions || []).length > 0
-      ? ao.data.enrollment_by_sessions
-      : [
-          { session: '2023/24', applications: 1960, enrollments: 1842 },
-          { session: '2024/25', applications: 2240, enrollments: 2105 },
-          { session: '2025/26', applications: 2510, enrollments: 2384 },
-        ];
-  // Domain must span both series so applications bars aren't clipped when enrollments are 0.
-  const maxEnrollment = Math.max(
-    ...enrollmentByClass.flatMap((c) => [num(c.applications), num(c.enrollments)]),
-    1,
-  );
-
-  const matrix = bo.data?.class_level_collection_matrix || [];
+  const overview = useSection('/dashboard/admin/global-overview');
+  const financial = useSection('/dashboard/bursary/revenue-performance');
 
   return (
-    <PageContainer title="Admin Dashboard" description="School-wide overview">
+    <PageContainer title="Admin Dashboard" description="School Administrator Overview">
+      {/* ── Top Header Bar (Greeting + Session Term dropdown ONLY) ─────── */}
       <DashboardHeader
-        onExportExcel={() => handleExport('excel')}
-        onExportPdf={() => handleExport('pdf')}
-        exporting={exporting}
+        sessionTerm={sessionTerm}
+        sessionTerms={sessionTerms}
+        onSessionChange={setSessionTerm}
       />
 
-      {go.loading ? (
-        <GlobalOverviewSkeleton />
-      ) : (
-        <GlobalOverviewPanel
-          go={go.data}
-          staffDonut={staffDonut}
-          onCardClick={setBreakdownType}
-        />
-      )}
+      {/* ── Top 4 KPI Stat Cards ────────────────────────────────────── */}
+      <TopStatCards
+        total_students={overview.data?.students_count ?? 2486}
+        teaching_staff={overview.data?.teachers_count ?? 142}
+        non_teaching_staff={overview.data?.non_teaching_staff_count ?? 58}
+        attendance_rate={overview.data?.attendance_rate ? `${overview.data.attendance_rate}%` : '94.6%'}
+        onCardClick={setBreakdownType}
+      />
 
-      {/* ── Teacher Analytics | Learner Analytics ───────────────────── */}
-      <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          {ta.loading ? (
-            <PanelSkeleton height={340} />
-          ) : (
-            <TeacherAnalyticsPanel
-              ta={ta.data}
-              onViewAll={() => notify.info('Full teacher analytics coming soon')}
-              onTileClick={setBreakdownType}
-            />
-          )}
-        </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <LearnerAnalyticsPanel
-            attendance={laAttendance}
-            exam={laExam}
-            underperforming={laUnderperforming}
-            atRisk={laAtRisk}
-            dropOut={laDropOut}
-            assignment={laAssignment}
-            resources={laResources}
-            onViewAll={() => notify.info('Full learner analytics coming soon')}
-            onTileClick={setBreakdownType}
+      {/* ── Quick Actions Bar ───────────────────────────────────────── */}
+      <QuickActions />
+
+      {/* ── Middle Section: Left (Search + Financial + Charts) | Right (Enrolment) ── */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' },
+          gap: 2.5,
+          alignItems: 'start',
+        }}
+      >
+        {/* Left Column */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Search Student/Staff & Switch Role Bar */}
+          <SearchAndRoleBar currentRole="administrator" />
+
+          {/* Financial Overview Bar (4 Mini Fee Cards) */}
+          <FinancialOverviewBar
+            expectedIncome={financial.data?.total_expected_income ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}` : '₦ 98,450,000'}
+            collectedIncome={financial.data?.total_collected_income ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}` : '₦ 62,340,000'}
+            outstandingBalance={financial.data?.total_outstanding_balance ? `₦ ${Number(financial.data.total_outstanding_balance).toLocaleString()}` : '₦ 36,110,000'}
+            efficiency={financial.data?.collection_efficiency ? `${financial.data.collection_efficiency}%` : '63.3%'}
+            onCardClick={setBreakdownType}
           />
+
+          {/* Row: Academic Performance & Attendance */}
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <AcademicPerformanceOverview />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <AttendanceOverview />
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Right Column: Enrolment By Class */}
+        <Box sx={{ height: '100%' }}>
+          <EnrolmentByClass />
+        </Box>
+      </Box>
+
+      {/* ── Bottom Row: Term Calendar, Quick Reports, Announcements (FULL WIDTH) ── */}
+      <Grid container spacing={2.5} sx={{ mt: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <TermCalendarCard />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <QuickReportsCard />
+        </Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <AnnouncementsCard />
         </Grid>
       </Grid>
 
-      {ao.loading ? (
-        <PanelSkeleton height={330} />
-      ) : (
-        <AdmissionOverviewPanel
-          ao={ao.data}
-          enrollmentByClass={enrollmentByClass}
-          enrollmentBySession={enrollmentBySession}
-          maxEnrollment={maxEnrollment}
-          onSwitchRole={() => navigate('/dashboard/admission')}
-          onFooterClick={() => navigate('/dashboard/admission')}
-          onTileClick={setBreakdownType}
-        />
-      )}
-
-      {bo.loading ? (
-        <PanelSkeleton height={340} />
-      ) : (
-        <BursaryOverviewPanel
-          bo={bo.data}
-          revenueDonut={revenueDonut}
-          paymentData={paymentData}
-          maxPayment={maxPayment}
-          matrix={matrix}
-          onSwitchRole={() => navigate('/dashboard/bursary')}
-          onFooterClick={() => navigate('/dashboard/bursary')}
-          onTileClick={setBreakdownType}
-        />
-      )}
-
-      {/* ── Global Overview stat card breakdown modal ──────────────── */}
+      {/* ── Stat Card Breakdown Modal ──────────────────────────────── */}
       <OverviewBreakdownModal
         open={Boolean(breakdownType)}
         type={breakdownType}

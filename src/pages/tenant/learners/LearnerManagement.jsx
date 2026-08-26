@@ -56,7 +56,7 @@ import LinkParentModal from '@/components/tenant/learners/LinkParentModal';
 import ViewParentsModal from '@/components/tenant/learners/ViewParentsModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
@@ -65,6 +65,7 @@ const LearnerManagement = () => {
   const notify = useNotification();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { impersonateStudent } = useContext(TenantAuthContext);
 
@@ -114,6 +115,15 @@ const LearnerManagement = () => {
   const [uploadLearnerOpen, setUploadLearnerOpen] = useState(false);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [downloadClassId, setDownloadClassId] = useState('');
+
+  // Auto-open Add Learner modal when navigated from Quick Actions
+  useEffect(() => {
+    if (location.state?.openAdd) {
+      setAddLearnerOpen(true);
+      // Clear the state so it doesn't re-open on back navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchLearners = useCallback(async () => {
     try {

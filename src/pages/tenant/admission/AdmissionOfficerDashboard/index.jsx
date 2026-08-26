@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Typography, Paper, Skeleton, useTheme } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { useNotification } from 'src/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
-import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
 import { useNavigate } from 'react-router-dom';
 
 import DashboardHeader from './components/DashboardHeader';
@@ -25,7 +24,6 @@ const AdmissionOfficerDashboard = () => {
   const navigate = useNavigate();
 
   const [breakdownType, setBreakdownType] = useState(null);
-  const [createBatchModalOpen, setCreateBatchModalOpen] = useState(false);
 
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
@@ -102,14 +100,9 @@ const AdmissionOfficerDashboard = () => {
     loadSessionTerms();
   }, []);
 
-  const handleApplyBatch = (batch) => {
-    setCreateBatchModalOpen(false);
-    navigate('/admission/new-application', { state: { batch } });
-  };
-
   return (
     <PageContainer title="Admission Dashboard" description="Overview of admissions performance and activities">
-      {/* ── Top Bar: Session Term Selector & Profile above stat cards ─────── */}
+      {/* ── Top Bar: Title + Session Term Selector ONLY ─────────────────────── */}
       <DashboardHeader
         sessionTerm={sessionTerm}
         sessionTerms={sessionTerms}
@@ -125,7 +118,7 @@ const AdmissionOfficerDashboard = () => {
         onCardClick={setBreakdownType}
       />
 
-      {/* ── Main Dashboard Layout: Left Column (Actions & Charts) | Right Column (Activity Log) ── */}
+      {/* ── Main Dashboard Layout: Left Column (Actions, Search & Charts) | Right Column (Activity Log) ── */}
       <Box
         sx={{
           display: 'grid',
@@ -137,10 +130,7 @@ const AdmissionOfficerDashboard = () => {
         {/* ── Left Column ─────────────────────────────────────────────── */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {/* Quick Actions Bar */}
-          <QuickActions
-            onCreateBatch={() => setCreateBatchModalOpen(true)}
-            onAdmissionReport={() => navigate('/admission/tracker')}
-          />
+          <QuickActions />
 
           {/* Row 1 Charts: Application Trend & Admission Funnel */}
           <Grid container spacing={2.5} mb={2.5}>
@@ -175,13 +165,6 @@ const AdmissionOfficerDashboard = () => {
         type={breakdownType}
         sessionTerm={sessionTerm}
         onClose={() => setBreakdownType(null)}
-      />
-
-      {/* ── Admission Batch Creation Modal ─────────────────────────────── */}
-      <AdmissionBatchModal
-        open={createBatchModalOpen}
-        onClose={() => setCreateBatchModalOpen(false)}
-        onApply={handleApplyBatch}
       />
     </PageContainer>
   );

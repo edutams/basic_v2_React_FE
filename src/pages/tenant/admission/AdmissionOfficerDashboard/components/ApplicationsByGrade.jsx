@@ -148,7 +148,7 @@ const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport })
       <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
         <Button
           disableRipple
-          onClick={() => (onViewFullReport ? onViewFullReport() : navigate('/admission/tracker'))}
+          onClick={() => (onViewFullReport ? onViewFullReport() : navigate('/application-tracker'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
           sx={{
             fontSize: '12px',

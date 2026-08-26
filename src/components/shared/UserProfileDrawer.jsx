@@ -654,9 +654,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingProfile(true);
 
     if (isLandlordView) {
-      api.post(`/v1/landlord/users/${targetId}/profile`, editForm)
+      api.post('/v1/landlord/update_agent_profile', editForm)
         .then((res) => {
-          if (res?.data) setProfileData(res.data?.data || res.data);
+          const updatedData = res.data?.data || res.data;
+          if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
           showToast('Profile details updated successfully!');
           setActiveModal(null);
         })
@@ -746,9 +747,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingPicture(true);
 
     if (isLandlordView) {
-      api.post(`/v1/landlord/users/${targetId}/profile`, { avatar: imagePreview })
+      api.post('/v1/landlord/update_agent_profile', { avatar: imagePreview })
         .then((res) => {
-          if (res?.data) setProfileData(res.data?.data || res.data);
+          const updatedData = res.data?.data || res.data;
+          if (updatedData) setProfileData((prev) => ({ ...(prev || {}), ...updatedData }));
           showToast('Profile picture updated successfully!');
           setActiveModal(null);
           setImageFile(null);
@@ -831,10 +833,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
     setSubmittingPassword(true);
 
     const updatePromise = isLandlordView
-      ? api.post(`/v1/landlord/users/${targetId}/password`, {
+      ? api.put('/v1/landlord/change_password', {
         current_password: passwordForm.current_password,
-        new_password: passwordForm.new_password,
-        confirm_password: passwordForm.confirm_password,
+        password: passwordForm.new_password,
+        password_confirmation: passwordForm.confirm_password,
       })
       : tenantApi.put('/change_password', {
         current_password: passwordForm.current_password,

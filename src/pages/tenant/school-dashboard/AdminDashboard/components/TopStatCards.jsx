@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Paper, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import { Groups, PersonAddAlt1, PeopleAlt, CalendarMonth, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 const StatCardItem = ({
@@ -25,7 +25,7 @@ const StatCardItem = ({
   const isNegative = trendDirection === 'down';
   const trendColor = isNegative ? '#EF4444' : '#16A34A';
 
-  return (
+  const card = (
     <Paper
       elevation={0}
       onClick={onClick}
@@ -35,17 +35,18 @@ const StatCardItem = ({
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 150ms ease, box-shadow 150ms ease',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
               transform: 'translateY(-2px)',
-              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
             }
           : {},
       }}
@@ -122,18 +123,47 @@ const StatCardItem = ({
       </Box>
     </Paper>
   );
+
+  if (!onClick) {
+    return card;
+  }
+
+  return (
+    <Tooltip title="Click to view breakdown" placement="top" arrow>
+      {card}
+    </Tooltip>
+  );
 };
 
 /**
  * TopStatCards Row (Total Students, Teaching Staff, Non-Teaching Staff, Attendance Rate)
  */
 const TopStatCards = ({
-  total_students = 2486,
-  teaching_staff = 142,
-  non_teaching_staff = 58,
-  attendance_rate = '94.6%',
+  total_students = 0,
+  teaching_staff = 0,
+  non_teaching_staff = 0,
+  attendance_rate = '—',
+  student_growth,
+  teaching_growth,
+  non_teaching_growth,
+  attendance_growth,
   onCardClick,
 }) => {
+  const renderTrend = (growth) => {
+    if (growth == null) return { text: '— vs last term', direction: 'up' };
+    const val = Number(growth);
+    const isNeg = val < 0;
+    return {
+      text: `${Math.abs(val).toFixed(1)}% vs last term`,
+      direction: isNeg ? 'down' : 'up',
+    };
+  };
+
+  const studentTrend = renderTrend(student_growth);
+  const teachingTrend = renderTrend(teaching_growth);
+  const nonTeachingTrend = renderTrend(non_teaching_growth);
+  const attendanceTrend = renderTrend(attendance_growth);
+
   return (
     <Grid container spacing={2} mb={2.5}>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -142,8 +172,8 @@ const TopStatCards = ({
           value={total_students.toLocaleString()}
           icon={Groups}
           colorScheme="blue"
-          trendText="8.2% vs last term"
-          trendDirection="up"
+          trendText={studentTrend.text}
+          trendDirection={studentTrend.direction}
           subText="Active learners"
           onClick={() => onCardClick && onCardClick('students')}
         />
@@ -155,8 +185,8 @@ const TopStatCards = ({
           value={teaching_staff.toLocaleString()}
           icon={PersonAddAlt1}
           colorScheme="green"
-          trendText="5.3% vs last term"
-          trendDirection="up"
+          trendText={teachingTrend.text}
+          trendDirection={teachingTrend.direction}
           subText="Full & part time"
           onClick={() => onCardClick && onCardClick('teaching_staff')}
         />
@@ -168,8 +198,8 @@ const TopStatCards = ({
           value={non_teaching_staff.toLocaleString()}
           icon={PeopleAlt}
           colorScheme="purple"
-          trendText="2.0% vs last term"
-          trendDirection="up"
+          trendText={nonTeachingTrend.text}
+          trendDirection={nonTeachingTrend.direction}
           subText="Administrative & support"
           onClick={() => onCardClick && onCardClick('non_teaching_staff')}
         />
@@ -181,8 +211,8 @@ const TopStatCards = ({
           value={attendance_rate}
           icon={CalendarMonth}
           colorScheme="orange"
-          trendText="3.7% vs last term"
-          trendDirection="up"
+          trendText={attendanceTrend.text}
+          trendDirection={attendanceTrend.direction}
           subText="Average this term"
           onClick={() => onCardClick && onCardClick('attendance')}
         />

@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, LinearProgress, Button, useTheme } from '@mui/material';
+import { Box, Typography, Paper, LinearProgress, Button, useTheme, CircularProgress } from '@mui/material';
 import { CalendarMonth, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,6 +8,7 @@ const TermCalendarCard = ({
   termStart = '8 Sept 2025',
   expectedEnd = '12 Dec 2025',
   progressPct = 53,
+  loading = false,
   onViewCalendar,
 }) => {
   const navigate = useNavigate();
@@ -30,6 +31,11 @@ const TermCalendarCard = ({
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
       }}
     >
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress size={28} />
+        </Box>
+      ) : (
       <Box>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -222,39 +228,40 @@ const TermCalendarCard = ({
             }}
           />
         </Box>
-      </Box>
 
-      {/* Footer Link */}
-      <Box
-        sx={{
-          pt: 1.5,
-          textAlign: 'center',
-          borderTop: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
-          mt: 2,
-        }}
-      >
-        <Button
-          disableRipple
-          onClick={() => (onViewCalendar ? onViewCalendar() : navigate('/curriculum/session-mapping'))}
-          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+        {/* Footer Link */}
+        <Box
           sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            '&:hover': {
-              bgcolor: 'transparent',
-              textDecoration: 'underline',
-            },
-            '&:hover::before': {
-              display: 'none',
-            },
+            pt: 1.5,
+            textAlign: 'center',
+            borderTop: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+            mt: 2,
           }}
         >
-          View School Calendar
-        </Button>
+          <Button
+            disableRipple
+            onClick={() => (onViewCalendar ? onViewCalendar() : navigate('/curriculum/session-mapping'))}
+            endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+            sx={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#2563eb',
+              textTransform: 'none',
+              '&:hover': {
+                bgcolor: 'transparent',
+                textDecoration: 'underline',
+              },
+              '&:hover::before': {
+                display: 'none',
+              },
+            }}
+          >
+            View School Calendar
+          </Button>
+        </Box>
       </Box>
+      )}
     </Paper>
   );
 };

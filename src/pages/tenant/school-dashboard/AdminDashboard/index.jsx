@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -17,9 +17,9 @@ import AnnouncementsCard from './components/AnnouncementsCard';
 import EnrolmentByClass from './components/EnrolmentByClass';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
 
-
 const AdminDashboard = () => {
   const [breakdownType, setBreakdownType] = useState(null);
+  const [breakdownExtra, setBreakdownExtra] = useState({});
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
   const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
   }, []);
 
   // Section data hook
-  const useSection = (path) => {
+  const useSection = (path, extra = {}) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
@@ -71,7 +71,10 @@ const AdminDashboard = () => {
       setLoading(true);
       tenantApi
         .get(path, {
-          params: sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {},
+          params: {
+            ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+            ...extra,
+          },
         })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
@@ -85,13 +88,74 @@ const AdminDashboard = () => {
       return () => {
         mounted = false;
       };
-    }, [path, sessionTerm, sessionTermsLoaded]);
+    }, [path, sessionTerm, sessionTermsLoaded, JSON.stringify(extra)]);
 
     return { data, loading };
   };
 
   const overview = useSection('/dashboard/admin/global-overview');
   const financial = useSection('/dashboard/bursary/revenue-performance');
+  const termCalendar = useSection('/dashboard/admin/term-calendar');
+  const enrollmentByClass = useSection('/dashboard/admin/enrollment-by-class');
+
+  // Attendance needs its own period state
+  const [attendancePeriod, setAttendancePeriod] = useState('this_term');
+  const [attendanceData, setAttendanceData] = useState({});
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
+
+  const fetchAttendance = useCallback(async () => {
+    if (!sessionTermsLoaded) return;
+    setAttendanceLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/admin/attendance-overview', {
+        params: {
+          period: attendancePeriod,
+          ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+        },
+      });
+      setAttendanceData(res.data?.status ? res.data.data : {});
+    } catch {
+      setAttendanceData({});
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, [attendancePeriod, sessionTerm, sessionTermsLoaded]);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [fetchAttendance]);
+
+  // Enrollment by class period filter
+  const [enrollmentPeriod, setEnrollmentPeriod] = useState('this_term');
+  const [enrollmentData, setEnrollmentData] = useState([]);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+
+  const fetchEnrollment = useCallback(async () => {
+    if (!sessionTermsLoaded) return;
+    setEnrollmentLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/admin/enrollment-by-class', {
+        params: {
+          period: enrollmentPeriod,
+          ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+        },
+      });
+      setEnrollmentData(res.data?.status ? res.data.data : []);
+    } catch {
+      setEnrollmentData([]);
+    } finally {
+      setEnrollmentLoading(false);
+    }
+  }, [enrollmentPeriod, sessionTerm, sessionTermsLoaded]);
+
+  useEffect(() => {
+    fetchEnrollment();
+  }, [fetchEnrollment]);
+
+  const handleBreakdownClick = (type, extra = {}) => {
+    setBreakdownType(type);
+    setBreakdownExtra(extra);
+  };
 
   return (
     <PageContainer title="Admin Dashboard" description="School Administrator Overview">
@@ -104,11 +168,15 @@ const AdminDashboard = () => {
 
       {/* ── Top 4 KPI Stat Cards ────────────────────────────────────── */}
       <TopStatCards
-        total_students={overview.data?.students_count ?? 2486}
-        teaching_staff={overview.data?.teachers_count ?? 142}
-        non_teaching_staff={overview.data?.non_teaching_staff_count ?? 58}
-        attendance_rate={overview.data?.attendance_rate ? `${overview.data.attendance_rate}%` : '94.6%'}
-        onCardClick={setBreakdownType}
+        total_students={overview.data?.total_students ?? 0}
+        teaching_staff={overview.data?.teaching_staff ?? 0}
+        non_teaching_staff={overview.data?.non_teaching_staff ?? 0}
+        attendance_rate={overview.data?.attendance_rate != null ? `${overview.data.attendance_rate}%` : '0%'}
+        student_growth={overview.data?.student_growth}
+        teaching_growth={overview.data?.teaching_growth}
+        non_teaching_growth={overview.data?.non_teaching_growth}
+        attendance_growth={overview.data?.attendance_growth}
+        onCardClick={handleBreakdownClick}
       />
 
       {/* ── Quick Actions Bar ───────────────────────────────────────── */}
@@ -130,11 +198,15 @@ const AdminDashboard = () => {
 
           {/* Financial Overview Bar (4 Mini Fee Cards) */}
           <FinancialOverviewBar
-            expectedIncome={financial.data?.total_expected_income ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}` : '₦ 98,450,000'}
-            collectedIncome={financial.data?.total_collected_income ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}` : '₦ 62,340,000'}
-            outstandingBalance={financial.data?.total_outstanding_balance ? `₦ ${Number(financial.data.total_outstanding_balance).toLocaleString()}` : '₦ 36,110,000'}
-            efficiency={financial.data?.collection_efficiency ? `${financial.data.collection_efficiency}%` : '63.3%'}
-            onCardClick={setBreakdownType}
+            expectedIncome={financial.data?.total_expected_income != null ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}` : '₦ 0'}
+            collectedIncome={financial.data?.total_collected_income != null ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}` : '₦ 0'}
+            outstandingBalance={financial.data?.total_outstanding_balance != null ? `₦ ${Number(financial.data.total_outstanding_balance).toLocaleString()}` : '₦ 0'}
+            efficiency={financial.data?.collection_efficiency != null ? `${financial.data.collection_efficiency}%` : '0%'}
+            efficiencyTrend={financial.data?.efficiency_trend}
+            collectedTrend={financial.data?.collected_trend}
+            outstandingTrend={financial.data?.outstanding_trend}
+            expectedTrend={financial.data?.expected_trend}
+            onCardClick={handleBreakdownClick}
           />
 
           {/* Row: Academic Performance & Attendance */}
@@ -143,21 +215,43 @@ const AdminDashboard = () => {
               <AcademicPerformanceOverview />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <AttendanceOverview />
+              <AttendanceOverview
+                data={attendanceData.chart}
+                avgAttendance={attendanceData.avg_attendance ? `${attendanceData.avg_attendance}%` : '—'}
+                trend={attendanceData.trend ? `${attendanceData.trend}%` : '0%'}
+                period={attendancePeriod}
+                onPeriodChange={setAttendancePeriod}
+                loading={attendanceLoading}
+              />
             </Grid>
           </Grid>
         </Box>
 
         {/* Right Column: Enrolment By Class */}
         <Box sx={{ height: '100%' }}>
-          <EnrolmentByClass />
+          <EnrolmentByClass
+            classData={enrollmentData}
+            loading={enrollmentLoading}
+            period={enrollmentPeriod}
+            onPeriodChange={setEnrollmentPeriod}
+            onCellClick={(classCode, sex) => {
+              handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
+            }}
+          />
         </Box>
       </Box>
 
       {/* ── Bottom Row: Term Calendar, Quick Reports, Announcements (FULL WIDTH) ── */}
       <Grid container spacing={2.5} sx={{ mt: 2.5 }}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <TermCalendarCard />
+          <TermCalendarCard
+            dayCurrent={termCalendar.data?.day_current}
+            dayTotal={termCalendar.data?.day_total}
+            termStart={termCalendar.data?.term_start}
+            expectedEnd={termCalendar.data?.expected_end}
+            progressPct={termCalendar.data?.progress_pct}
+            loading={termCalendar.loading}
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
           <QuickReportsCard />
@@ -171,7 +265,8 @@ const AdminDashboard = () => {
       <OverviewBreakdownModal
         open={Boolean(breakdownType)}
         type={breakdownType}
-        onClose={() => setBreakdownType(null)}
+        extra={breakdownExtra}
+        onClose={() => { setBreakdownType(null); setBreakdownExtra({}); }}
       />
     </PageContainer>
   );

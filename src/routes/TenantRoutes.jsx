@@ -17,6 +17,9 @@ const AdmissionOfficerDashboard = Loadable(
 const BursaryOfficerDashboard = Loadable(
   lazy(() => import('@/pages/tenant/finance/BursaryOfficerDashboard')),
 );
+const TeacherDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/staff-manager/teacher-dashboard/TeacherDashboard')),
+);
 const SetupWelcome = Loadable(lazy(() => import('@/pages/tenant/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/InitialSetup')));
 const CompleteSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/CompleteSetup')));
@@ -508,6 +511,7 @@ const TenantRoutes = [
       // ── Role-specific dashboards (linked from the Admin Dashboard) ──
       { path: 'dashboard/admission', element: <AdmissionOfficerDashboard /> },
       { path: 'dashboard/bursary', element: <BursaryOfficerDashboard /> },
+      { path: 'staff-manager/teacher-dashboard', element: <TeacherDashboard /> },
 
       // ── Parent-specific routes ──
       { path: 'pay-school-fees', element: <PaySchoolFees /> },

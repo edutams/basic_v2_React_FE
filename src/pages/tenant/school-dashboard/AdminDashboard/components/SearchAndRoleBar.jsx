@@ -35,11 +35,11 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
     if (!query.trim() || query.trim().length < 2) return;
     setSearchLoading(true);
     try {
-      const res = await tenantApi.get('/learners', {
+      const res = await tenantApi.get('/dashboard/admin/global-search', {
         params: { search: query.trim() },
       });
       if (res.data?.status) {
-        const list = res.data.data?.data || res.data.data || [];
+        const list = res.data.data || [];
         setSearchResults(Array.isArray(list) ? list : []);
       } else {
         setSearchResults([]);
@@ -58,10 +58,17 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
     }
   };
 
-  const handleResultClick = (student) => {
-    const id = student.id || student.learner_id;
-    if (id) {
-      navigate(`/learner-management`);
+  const handleResultClick = (result) => {
+    const id = result.id;
+    const userType = result.user_type;
+    if (!id) return;
+
+    if (userType === 'student') {
+      navigate('/learner-management');
+    } else if (userType === 'staff') {
+      navigate('/staff-manager');
+    } else {
+      navigate('/learner-management');
     }
   };
 
@@ -173,14 +180,17 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                 </Box>
               ) : searchResults.length > 0 ? (
                 <Stack spacing={0}>
-                  {searchResults.map((student, i) => {
-                    const name = student.full_name || `${student.fname || ''} ${student.lname || ''}`.trim() || 'Unknown';
-                    const className = student.class_name || student.grade_level || '';
-                    const admNo = student.admission_number || student.adm_no || student.form_number || '';
+                  {searchResults.map((result, i) => {
+                    const name = result.full_name || `${result.fname || ''} ${result.lname || ''}`.trim() || 'Unknown';
+                    const className = result.class_name || '';
+                    const idTag = result.admission_number || result.staff_id || '';
+                    const userType = result.user_type || 'student';
+                    const userTypeLabel = result.user_type_label || 'Student';
+                    const tagColor = userType === 'staff' ? { bg: '#FEF3C7', color: '#92400E' } : { bg: '#EEF2FF', color: '#4338CA' };
                     return (
                       <Box
-                        key={student.id || admNo || i}
-                        onClick={() => handleResultClick(student)}
+                        key={result.id || idTag || i}
+                        onClick={() => handleResultClick(result)}
                         sx={{
                           px: 1.5,
                           py: 1,
@@ -208,11 +218,23 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                             {name}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 0.75, mt: 0.2, flexWrap: 'wrap', alignItems: 'center' }}>
-                            {admNo && (
+                            {idTag && (
                               <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 500 }}>
-                                {admNo}
+                                {idTag}
                               </Typography>
                             )}
+                            <Chip
+                              label={userTypeLabel}
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.55rem',
+                                fontWeight: 600,
+                                bgcolor: tagColor.bg,
+                                color: tagColor.color,
+                                '& .MuiChip-label': { px: 0.75 },
+                              }}
+                            />
                             {className && (
                               <Chip
                                 label={className}
@@ -221,8 +243,8 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                                   height: 16,
                                   fontSize: '0.55rem',
                                   fontWeight: 600,
-                                  bgcolor: '#EEF2FF',
-                                  color: '#4338CA',
+                                  bgcolor: '#DCFCE7',
+                                  color: '#166534',
                                   '& .MuiChip-label': { px: 0.75 },
                                 }}
                               />

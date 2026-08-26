@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -14,41 +14,58 @@ import {
   MenuItem,
   Button,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const defaultClassData = [
-  { className: 'Pre-K', male: 78, female: 64, total: 142 },
-  { className: 'Nursery 1', male: 72, female: 66, total: 138 },
-  { className: 'Nursery 2', male: 75, female: 70, total: 145 },
-  { className: 'Primary 1', male: 96, female: 90, total: 186 },
-  { className: 'Primary 2', male: 102, female: 96, total: 198 },
-  { className: 'Primary 3', male: 105, female: 100, total: 205 },
-  { className: 'Primary 4', male: 110, female: 100, total: 210 },
-  { className: 'Primary 5', male: 104, female: 98, total: 202 },
-  { className: 'JSS 1', male: 112, female: 108, total: 220 },
-  { className: 'JSS 2', male: 105, female: 110, total: 215 },
-  { className: 'JSS 3', male: 107, female: 101, total: 208 },
-  { className: 'SS 1', male: 100, female: 95, total: 195 },
-  { className: 'SS 2', male: 98, female: 90, total: 188 },
-  { className: 'SS 3', male: 92, female: 92, total: 184 },
-];
+const ClickableCell = ({ value, onClick, align = 'center', fontWeight = 600, color }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-/**
- * Enrolment By Class Component
- */
-const EnrolmentByClass = ({ classData = defaultClassData, onViewEnrolmentReport }) => {
-  const [filter, setFilter] = useState('this_term');
+  return (
+    <TableCell
+      align={align}
+      onClick={onClick}
+      sx={{
+        fontSize: '12px',
+        fontWeight,
+        color: color || (isDark ? '#cbd5e1' : '#334155'),
+        py: 0.85,
+        px: 1.25,
+        cursor: 'pointer',
+        borderRadius: '4px',
+        transition: 'all 0.15s ease',
+        '&:hover': {
+          bgcolor: isDark ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.08)',
+          color: '#2563eb',
+          fontWeight: 700,
+          transform: 'scale(1.05)',
+        },
+      }}
+    >
+      {value}
+    </TableCell>
+  );
+};
+
+const EnrolmentByClass = ({
+  classData = [],
+  loading = false,
+  period = 'this_term',
+  onPeriodChange,
+  onCellClick,
+  onViewEnrolmentReport,
+}) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const totals = classData.reduce(
     (acc, item) => ({
-      male: acc.male + item.male,
-      female: acc.female + item.female,
-      total: acc.total + item.total,
+      male: acc.male + (item.male || 0),
+      female: acc.female + (item.female || 0),
+      total: acc.total + (item.total || 0),
     }),
     { male: 0, female: 0, total: 0 }
   );
@@ -86,8 +103,8 @@ const EnrolmentByClass = ({ classData = defaultClassData, onViewEnrolmentReport 
 
           <FormControl size="small" sx={{ minWidth: 110 }}>
             <Select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={period}
+              onChange={(e) => onPeriodChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -104,6 +121,11 @@ const EnrolmentByClass = ({ classData = defaultClassData, onViewEnrolmentReport 
         </Box>
 
         {/* Table */}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
         <TableContainer sx={{ maxHeight: 600 }}>
           <Table size="small" stickyHeader>
             <TableHead>
@@ -116,19 +138,25 @@ const EnrolmentByClass = ({ classData = defaultClassData, onViewEnrolmentReport 
             </TableHead>
             <TableBody>
               {classData.map((row) => (
-                <TableRow key={row.className} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableRow key={row.class_name} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 0.85, px: 1.25 }}>
-                    {row.className}
+                    {row.class_name}
                   </TableCell>
-                  <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#334155', py: 0.85, px: 1.25 }}>
-                    {row.male}
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#334155', py: 0.85, px: 1.25 }}>
-                    {row.female}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 0.85, px: 1.25 }}>
-                    {row.total}
-                  </TableCell>
+                  <ClickableCell
+                    value={row.male}
+                    onClick={() => onCellClick?.(row.class_name, 'male')}
+                  />
+                  <ClickableCell
+                    value={row.female}
+                    onClick={() => onCellClick?.(row.class_name, 'female')}
+                  />
+                  <ClickableCell
+                    value={row.total}
+                    align="right"
+                    fontWeight={800}
+                    color="#2563eb"
+                    onClick={() => onCellClick?.(row.class_name, 'total')}
+                  />
                 </TableRow>
               ))}
 
@@ -150,6 +178,7 @@ const EnrolmentByClass = ({ classData = defaultClassData, onViewEnrolmentReport 
             </TableBody>
           </Table>
         </TableContainer>
+        )}
       </Box>
 
       {/* Footer Link */}

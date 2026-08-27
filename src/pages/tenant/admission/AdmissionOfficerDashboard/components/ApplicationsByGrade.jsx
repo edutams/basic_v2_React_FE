@@ -101,7 +101,7 @@ const ApplicationsByGrade = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.length === 0 ? (
+              {data.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
@@ -109,8 +109,8 @@ const ApplicationsByGrade = ({
                     </Typography>
                   </TableCell>
                 </TableRow>
-              ) : (
-              data.map((row) => (
+              )}
+              {data.map((row) => (
                 <TableRow key={row.grade} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 1, px: 1 }}>
                     {row.grade}
@@ -148,7 +148,6 @@ const ApplicationsByGrade = ({
                   </TableCell>
                 </TableRow>
               ))}
-              )}
             </TableBody>
           </Table>
         </TableContainer>

@@ -153,8 +153,10 @@ const MetricCards = ({
   const acceptedCount = (total_accepted.count ?? 0).toLocaleString();
   const acceptanceRate = total_accepted.rate ?? 0;
 
-  const applicantsGrowth = total_applicants.growth;
-  const admittedGrowth = total_admitted.growth;
+  const applicantsGrowth = total_applicants.growth_percentage;
+  const applicantsGrowthType = total_applicants.growth_type;
+  const admittedGrowth = total_admitted.growth_percentage;
+  const admittedGrowthType = total_admitted.growth_type;
 
   return (
     <Grid container spacing={2} mb={2.5}>
@@ -164,8 +166,8 @@ const MetricCards = ({
           value={applicantsCount}
           icon={PersonOutline}
           colorScheme="blue"
-          trendType={applicantsGrowth != null ? (Number(applicantsGrowth) >= 0 ? 'up' : 'warning') : 'up'}
-          trendText={applicantsGrowth != null ? `${Number(applicantsGrowth) >= 0 ? '+' : ''}${applicantsGrowth}% vs last term` : '—'}
+          trendType={applicantsGrowthType === 'increase' ? 'up' : 'warning'}
+          trendText={applicantsGrowth != null ? `${applicantsGrowthType === 'increase' ? '+' : ''}${applicantsGrowth}% vs last term` : '—'}
           onClick={() => onCardClick && onCardClick('applicants')}
         />
       </Grid>
@@ -188,8 +190,8 @@ const MetricCards = ({
           value={admittedCount}
           icon={PersonAddAlt1Outlined}
           colorScheme="green"
-          trendType={admittedGrowth != null ? (Number(admittedGrowth) >= 0 ? 'up' : 'warning') : 'up'}
-          trendText={admittedGrowth != null ? `${Number(admittedGrowth) >= 0 ? '+' : ''}${admittedGrowth}% vs last term` : '—'}
+          trendType={admittedGrowthType === 'increase' ? 'up' : 'warning'}
+          trendText={admittedGrowth != null ? `${admittedGrowthType === 'increase' ? '+' : ''}${admittedGrowth}% vs last term` : '—'}
           onClick={() => onCardClick && onCardClick('admitted')}
         />
       </Grid>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -32,11 +32,18 @@ const defaultGradeData = [
 /**
  * Applications by Grade Level Table Component
  */
-const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport }) => {
-  const [sessionFilter, setSessionFilter] = useState('this_session');
+const ApplicationsByGrade = ({
+  gradeData,
+  onViewFullReport,
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
+}) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  const data = gradeData || defaultGradeData;
 
   return (
     <Paper
@@ -55,7 +62,7 @@ const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport })
       }}
     >
       <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        {/* Header with Title & Filter */}
+        {/* Header with Title & Session Term Filter */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Typography
             sx={{
@@ -69,10 +76,10 @@ const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport })
             APPLICATIONS BY GRADE LEVEL
           </Typography>
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
-              value={sessionFilter}
-              onChange={(e) => setSessionFilter(e.target.value)}
+              value={sessionTerm}
+              onChange={(e) => onSessionChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -82,8 +89,11 @@ const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport })
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
               }}
             >
-              <MenuItem value="this_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Session</MenuItem>
-              <MenuItem value="last_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Session</MenuItem>
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                  {st.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
@@ -101,7 +111,7 @@ const ApplicationsByGrade = ({ gradeData = defaultGradeData, onViewFullReport })
               </TableRow>
             </TableHead>
             <TableBody>
-              {gradeData.map((row) => (
+              {data.map((row) => (
                 <TableRow key={row.grade} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 1, px: 1 }}>
                     {row.grade}

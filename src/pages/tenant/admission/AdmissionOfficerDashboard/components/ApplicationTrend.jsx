@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, useTheme } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
@@ -32,11 +32,17 @@ const defaultTrendData = [
 /**
  * Application Trend Line Chart Component
  */
-const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
-  const [filter, setFilter] = useState('this_session');
+const ApplicationTrend = ({
+  trendData,
+  metrics = {},
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const data = trendData || defaultTrendData;
   const totalApps = (metrics.total_applications ?? 3842).toLocaleString();
   const newThisMonth = (metrics.new_this_month ?? 512).toLocaleString();
   const avgPerMonth = (metrics.avg_per_month ?? 349).toLocaleString();
@@ -58,7 +64,7 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
       }}
     >
-      {/* Header with Title + Legend & Session Filter */}
+      {/* Header with Title + Session Term Filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         <Typography
           sx={{
@@ -89,10 +95,10 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
             </Box>
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={sessionTerm}
+              onChange={(e) => onSessionChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -102,8 +108,11 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
               }}
             >
-              <MenuItem value="this_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Session</MenuItem>
-              <MenuItem value="last_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Session</MenuItem>
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                  {st.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
@@ -112,7 +121,7 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
       {/* Chart */}
       <Box sx={{ width: '100%', height: 220, mb: 2 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'} />
             <XAxis
               dataKey="month"

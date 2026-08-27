@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -28,6 +28,7 @@ const AdmissionOfficerDashboard = () => {
   const [sessionTerm, setSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
   const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
 
   // Section loader helper
   const useSection = (path, extra = {}) => {
@@ -58,13 +59,12 @@ const AdmissionOfficerDashboard = () => {
         mounted = false;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [path, sessionTerm, JSON.stringify(extra), sessionTermsLoaded]);
+    }, [path, sessionTerm, sessionTermsLoaded, JSON.stringify(extra)]);
 
     return { data, loading };
   };
 
-  const overview = useSection('/dashboard/admission/overview');
-
+  // ── Session terms ───────────────────────────────────────────────────
   useEffect(() => {
     const loadSessionTerms = async () => {
       try {
@@ -83,6 +83,7 @@ const AdmissionOfficerDashboard = () => {
             const active = await fetchActiveSessionTerm();
             const activeId = active?.data?.session_term_id;
             if (active?.status && activeId != null) {
+              setActiveSessionTermId(activeId);
               const match = sess_terms.find((s) => String(s.id) === String(activeId));
               if (match) setSessionTerm(match.id);
             }
@@ -100,6 +101,82 @@ const AdmissionOfficerDashboard = () => {
     loadSessionTerms();
   }, []);
 
+  // ── Main dashboard data (uses global sessionTerm from header) ────────
+  const overview = useSection('/dashboard/admission/overview');
+
+  // ── Application Trend: independent session term ─────────────────────
+  const [trendSessionTerm, setTrendSessionTerm] = useState('all');
+  const [trendData, setTrendData] = useState({});
+  const [trendLoading, setTrendLoading] = useState(true);
+
+  useEffect(() => {
+    if (sessionTermsLoaded && trendSessionTerm === 'all') {
+      const match = activeSessionTermId != null
+        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
+        : sessionTerms.find((s) => s.id !== 'all');
+      if (match) setTrendSessionTerm(match.id);
+    }
+  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
+
+  const fetchTrend = useCallback(async () => {
+    if (!sessionTermsLoaded) return;
+    setTrendLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/admission/application-trend', {
+        params: {
+          ...(trendSessionTerm !== 'all' ? { session_term_id: trendSessionTerm } : {}),
+        },
+      });
+      setTrendData(res.data?.status ? res.data.data : {});
+    } catch {
+      setTrendData({});
+    } finally {
+      setTrendLoading(false);
+    }
+  }, [trendSessionTerm, sessionTermsLoaded]);
+
+  useEffect(() => {
+    fetchTrend();
+  }, [fetchTrend]);
+
+  // ── Applications by Grade: independent session term ──────────────────
+  const [gradeSessionTerm, setGradeSessionTerm] = useState('all');
+  const [gradeData, setGradeData] = useState({});
+  const [gradeLoading, setGradeLoading] = useState(true);
+
+  useEffect(() => {
+    if (sessionTermsLoaded && gradeSessionTerm === 'all') {
+      const match = activeSessionTermId != null
+        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
+        : sessionTerms.find((s) => s.id !== 'all');
+      if (match) setGradeSessionTerm(match.id);
+    }
+  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
+
+  const fetchGrade = useCallback(async () => {
+    if (!sessionTermsLoaded) return;
+    setGradeLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/admission/applications-by-grade', {
+        params: {
+          ...(gradeSessionTerm !== 'all' ? { session_term_id: gradeSessionTerm } : {}),
+        },
+      });
+      setGradeData(res.data?.status ? res.data.data : {});
+    } catch {
+      setGradeData({});
+    } finally {
+      setGradeLoading(false);
+    }
+  }, [gradeSessionTerm, sessionTermsLoaded]);
+
+  useEffect(() => {
+    fetchGrade();
+  }, [fetchGrade]);
+
+  // ── Conversion Funnel: uses global sessionTerm ──────────────────────
+  const conversionFunnel = useSection('/dashboard/admission/conversion-funnel');
+
   return (
     <PageContainer title="Admission Dashboard" description="Overview of admissions performance and activities">
       {/* ── Top Bar: Title + Session Term Selector ONLY ─────────────────────── */}
@@ -111,10 +188,10 @@ const AdmissionOfficerDashboard = () => {
 
       {/* ── Row 1: Top 4 KPI Stat Cards ───────────────────────────────────── */}
       <MetricCards
-        total_applicants={overview.data.total_applicants || { count: 3842 }}
-        pending_review={overview.data.pending_review || { count: 624, due_today: 86 }}
-        total_admitted={overview.data.total_admitted || { count: 1256 }}
-        total_accepted={overview.data.total_accepted || { count: 1045, rate: 83.2 }}
+        total_applicants={overview.data?.total_applicants || {}}
+        pending_review={overview.data?.pending_review || {}}
+        total_admitted={overview.data?.total_admitted || {}}
+        total_accepted={overview.data?.total_accepted || {}}
         onCardClick={setBreakdownType}
       />
 
@@ -135,17 +212,30 @@ const AdmissionOfficerDashboard = () => {
           {/* Row 1 Charts: Application Trend & Admission Funnel */}
           <Grid container spacing={2.5} mb={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <ApplicationTrend />
+              <ApplicationTrend
+                trendData={trendData.trend_data}
+                metrics={trendData.metrics}
+                sessionTerms={sessionTerms}
+                sessionTerm={trendSessionTerm}
+                onSessionChange={setTrendSessionTerm}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <AdmissionFunnel />
+              <AdmissionFunnel
+                funnel={conversionFunnel.data?.funnel_stages}
+              />
             </Grid>
           </Grid>
 
           {/* Row 2 Analytics: Grade Level Breakdown & Application Sources */}
           <Grid container spacing={2.5} sx={{ flex: 1 }}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <ApplicationsByGrade />
+              <ApplicationsByGrade
+                gradeData={gradeData.grade_data}
+                sessionTerms={sessionTerms}
+                sessionTerm={gradeSessionTerm}
+                onSessionChange={setGradeSessionTerm}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TopApplicationSources />

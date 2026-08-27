@@ -183,7 +183,8 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                   {searchResults.map((result, i) => {
                     const name = result.full_name || `${result.fname || ''} ${result.lname || ''}`.trim() || 'Unknown';
                     const className = result.class_name || '';
-                    const idTag = result.admission_number || result.staff_id || '';
+                    const idTag = result.admission_no || result.staff_id || '';
+                    const email = result.email || '';
                     const userType = result.user_type || 'student';
                     const userTypeLabel = result.user_type_label || 'Student';
                     const tagColor = userType === 'staff' ? { bg: '#FEF3C7', color: '#92400E' } : { bg: '#EEF2FF', color: '#4338CA' };
@@ -204,6 +205,7 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                         }}
                       >
                         <Avatar
+                          src={result.avatar || ''}
                           sx={{
                             width: 32,
                             height: 32,
@@ -214,15 +216,10 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                           {name.charAt(0)?.toUpperCase() || '?'}
                         </Avatar>
                         <Box sx={{ minWidth: 0, flex: 1 }}>
-                          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#fff' : '#111827', lineHeight: 1.3 }}>
-                            {name}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 0.75, mt: 0.2, flexWrap: 'wrap', alignItems: 'center' }}>
-                            {idTag && (
-                              <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 500 }}>
-                                {idTag}
-                              </Typography>
-                            )}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#fff' : '#111827', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {name}
+                            </Typography>
                             <Chip
                               label={userTypeLabel}
                               size="small"
@@ -232,6 +229,7 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                                 fontWeight: 600,
                                 bgcolor: tagColor.bg,
                                 color: tagColor.color,
+                                flexShrink: 0,
                                 '& .MuiChip-label': { px: 0.75 },
                               }}
                             />
@@ -245,9 +243,25 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
                                   fontWeight: 600,
                                   bgcolor: '#DCFCE7',
                                   color: '#166534',
+                                  flexShrink: 0,
                                   '& .MuiChip-label': { px: 0.75 },
                                 }}
                               />
+                            )}
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 0.75, mt: 0.15, alignItems: 'center' }}>
+                            {userType === 'student' ? (
+                              idTag && (
+                                <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 500 }}>
+                                  {idTag}
+                                </Typography>
+                              )
+                            ) : (
+                              email && (
+                                <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {email}
+                                </Typography>
+                              )
                             )}
                           </Box>
                         </Box>

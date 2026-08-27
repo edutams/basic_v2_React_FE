@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const [breakdownType, setBreakdownType] = useState(null);
   const [breakdownExtra, setBreakdownExtra] = useState({});
   const [sessionTerm, setSessionTerm] = useState('all');
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
   const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
 
@@ -43,6 +44,7 @@ const AdminDashboard = () => {
             const active = await fetchActiveSessionTerm();
             const activeId = active?.data?.session_term_id;
             if (active?.status && activeId != null) {
+              setActiveSessionTermId(activeId);
               const match = sess_terms.find((s) => String(s.id) === String(activeId));
               if (match) setSessionTerm(match.id);
             }
@@ -96,12 +98,21 @@ const AdminDashboard = () => {
   const overview = useSection('/dashboard/admin/global-overview');
   const financial = useSection('/dashboard/bursary/revenue-performance');
   const termCalendar = useSection('/dashboard/admin/term-calendar');
-  const enrollmentByClass = useSection('/dashboard/admin/enrollment-by-class');
 
-  // Attendance needs its own period state
-  const [attendancePeriod, setAttendancePeriod] = useState('this_term');
+  // Attendance: independent session term
+  const [attendanceSessionTerm, setAttendanceSessionTerm] = useState('all');
   const [attendanceData, setAttendanceData] = useState({});
   const [attendanceLoading, setAttendanceLoading] = useState(true);
+
+  // Auto-select active session term for attendance when loaded
+  useEffect(() => {
+    if (sessionTermsLoaded && attendanceSessionTerm === 'all') {
+      const match = activeSessionTermId != null
+        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
+        : sessionTerms.find((s) => s.id !== 'all');
+      if (match) setAttendanceSessionTerm(match.id);
+    }
+  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
 
   const fetchAttendance = useCallback(async () => {
     if (!sessionTermsLoaded) return;
@@ -109,8 +120,7 @@ const AdminDashboard = () => {
     try {
       const res = await tenantApi.get('/dashboard/admin/attendance-overview', {
         params: {
-          period: attendancePeriod,
-          ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+          ...(attendanceSessionTerm !== 'all' ? { session_term_id: attendanceSessionTerm } : {}),
         },
       });
       setAttendanceData(res.data?.status ? res.data.data : {});
@@ -119,16 +129,26 @@ const AdminDashboard = () => {
     } finally {
       setAttendanceLoading(false);
     }
-  }, [attendancePeriod, sessionTerm, sessionTermsLoaded]);
+  }, [attendanceSessionTerm, sessionTermsLoaded]);
 
   useEffect(() => {
     fetchAttendance();
   }, [fetchAttendance]);
 
-  // Enrollment by class period filter
-  const [enrollmentPeriod, setEnrollmentPeriod] = useState('this_term');
+  // Enrollment by class: independent session term
+  const [enrollmentSessionTerm, setEnrollmentSessionTerm] = useState('all');
   const [enrollmentData, setEnrollmentData] = useState([]);
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+
+  // Auto-select active session term for enrollment when loaded
+  useEffect(() => {
+    if (sessionTermsLoaded && enrollmentSessionTerm === 'all') {
+      const match = activeSessionTermId != null
+        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
+        : sessionTerms.find((s) => s.id !== 'all');
+      if (match) setEnrollmentSessionTerm(match.id);
+    }
+  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
 
   const fetchEnrollment = useCallback(async () => {
     if (!sessionTermsLoaded) return;
@@ -136,8 +156,7 @@ const AdminDashboard = () => {
     try {
       const res = await tenantApi.get('/dashboard/admin/enrollment-by-class', {
         params: {
-          period: enrollmentPeriod,
-          ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
+          ...(enrollmentSessionTerm !== 'all' ? { session_term_id: enrollmentSessionTerm } : {}),
         },
       });
       setEnrollmentData(res.data?.status ? res.data.data : []);
@@ -146,11 +165,47 @@ const AdminDashboard = () => {
     } finally {
       setEnrollmentLoading(false);
     }
-  }, [enrollmentPeriod, sessionTerm, sessionTermsLoaded]);
+  }, [enrollmentSessionTerm, sessionTermsLoaded]);
 
   useEffect(() => {
     fetchEnrollment();
   }, [fetchEnrollment]);
+
+  // Academic performance: independent session term
+  const [academicSessionTerm, setAcademicSessionTerm] = useState('all');
+  const [academicData, setAcademicData] = useState({});
+  const [academicLoading, setAcademicLoading] = useState(true);
+
+  // Auto-select active session term for academic when loaded
+  useEffect(() => {
+    if (sessionTermsLoaded && academicSessionTerm === 'all') {
+      const match = activeSessionTermId != null
+        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
+        : sessionTerms.find((s) => s.id !== 'all');
+      if (match) setAcademicSessionTerm(match.id);
+    }
+  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
+
+  const fetchAcademic = useCallback(async () => {
+    if (!sessionTermsLoaded) return;
+    setAcademicLoading(true);
+    try {
+      const res = await tenantApi.get('/dashboard/admin/learner/exam-performance', {
+        params: {
+          ...(academicSessionTerm !== 'all' ? { session_term_id: academicSessionTerm } : {}),
+        },
+      });
+      setAcademicData(res.data?.status ? res.data.data : {});
+    } catch {
+      setAcademicData({});
+    } finally {
+      setAcademicLoading(false);
+    }
+  }, [academicSessionTerm, sessionTermsLoaded]);
+
+  useEffect(() => {
+    fetchAcademic();
+  }, [fetchAcademic]);
 
   const handleBreakdownClick = (type, extra = {}) => {
     setBreakdownType(type);
@@ -212,15 +267,23 @@ const AdminDashboard = () => {
           {/* Row: Academic Performance & Attendance */}
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <AcademicPerformanceOverview />
+              <AcademicPerformanceOverview
+                data={academicData.exam_performance_overview}
+                avgScore={academicData.exam_performance != null ? `${academicData.exam_performance}%` : '0%'}
+                sessionTerms={sessionTerms}
+                sessionTerm={academicSessionTerm}
+                onSessionChange={setAcademicSessionTerm}
+                loading={academicLoading}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <AttendanceOverview
                 data={attendanceData.chart}
                 avgAttendance={attendanceData.avg_attendance ? `${attendanceData.avg_attendance}%` : '—'}
-                trend={attendanceData.trend ? `${attendanceData.trend}%` : '0%'}
-                period={attendancePeriod}
-                onPeriodChange={setAttendancePeriod}
+                trend={attendanceData.trend ? `${attendanceData.trend > 0 ? '+' : ''}${attendanceData.trend}%` : '0%'}
+                sessionTerms={sessionTerms}
+                sessionTerm={attendanceSessionTerm}
+                onSessionChange={setAttendanceSessionTerm}
                 loading={attendanceLoading}
               />
             </Grid>
@@ -232,8 +295,9 @@ const AdminDashboard = () => {
           <EnrolmentByClass
             classData={enrollmentData}
             loading={enrollmentLoading}
-            period={enrollmentPeriod}
-            onPeriodChange={setEnrollmentPeriod}
+            sessionTerms={sessionTerms}
+            sessionTerm={enrollmentSessionTerm}
+            onSessionChange={setEnrollmentSessionTerm}
             onCellClick={(classCode, sex) => {
               handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
             }}

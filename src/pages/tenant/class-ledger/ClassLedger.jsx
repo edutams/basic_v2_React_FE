@@ -637,7 +637,7 @@ const ClassLedger = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid size={{ xs: 12, md: 2 }}>
             <TextField
               select
               fullWidth
@@ -654,7 +654,7 @@ const ClassLedger = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid size={{ xs: 12, md: 2.5 }}>
             <TextField
               select
               fullWidth
@@ -669,7 +669,7 @@ const ClassLedger = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, md: 3.5 }}>
             <TextField
               placeholder="Search by name"
               size="small"

@@ -633,6 +633,12 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+
+      // ── Catch-all: route unmatched paths to Page Under Development ──
+      {
+        path: '*',
+        element: <PageUnderDevelopment />, 
+      },
     ],
   },
 ];

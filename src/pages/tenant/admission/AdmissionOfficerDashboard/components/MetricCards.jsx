@@ -145,13 +145,16 @@ const MetricCards = ({
   total_accepted = {},
   onCardClick,
 }) => {
-  const applicantsCount = (total_applicants.count ?? 3842).toLocaleString();
-  const pendingCount = (pending_review.count ?? 624).toLocaleString();
-  const pendingDueToday = pending_review.due_today ?? 86;
+  const applicantsCount = (total_applicants.count ?? 0).toLocaleString();
+  const pendingCount = (pending_review.count ?? 0).toLocaleString();
+  const pendingDueToday = pending_review.due_today ?? 0;
 
-  const admittedCount = (total_admitted.count ?? 1256).toLocaleString();
-  const acceptedCount = (total_accepted.count ?? 1045).toLocaleString();
-  const acceptanceRate = total_accepted.rate ?? '83.2';
+  const admittedCount = (total_admitted.count ?? 0).toLocaleString();
+  const acceptedCount = (total_accepted.count ?? 0).toLocaleString();
+  const acceptanceRate = total_accepted.rate ?? 0;
+
+  const applicantsGrowth = total_applicants.growth;
+  const admittedGrowth = total_admitted.growth;
 
   return (
     <Grid container spacing={2} mb={2.5}>
@@ -161,8 +164,8 @@ const MetricCards = ({
           value={applicantsCount}
           icon={PersonOutline}
           colorScheme="blue"
-          trendType="up"
-          trendText="18% vs 2023/24"
+          trendType={applicantsGrowth != null ? (Number(applicantsGrowth) >= 0 ? 'up' : 'warning') : 'up'}
+          trendText={applicantsGrowth != null ? `${Number(applicantsGrowth) >= 0 ? '+' : ''}${applicantsGrowth}% vs last term` : '—'}
           onClick={() => onCardClick && onCardClick('applicants')}
         />
       </Grid>
@@ -174,7 +177,7 @@ const MetricCards = ({
           icon={FindInPageOutlined}
           colorScheme="orange"
           trendType="warning"
-          trendText={`${pendingDueToday} due today`}
+          trendText={pendingDueToday > 0 ? `${pendingDueToday} due today` : 'No items due today'}
           onClick={() => onCardClick && onCardClick('pending_review')}
         />
       </Grid>
@@ -185,8 +188,8 @@ const MetricCards = ({
           value={admittedCount}
           icon={PersonAddAlt1Outlined}
           colorScheme="green"
-          trendType="up"
-          trendText="15% vs 2023/24"
+          trendType={admittedGrowth != null ? (Number(admittedGrowth) >= 0 ? 'up' : 'warning') : 'up'}
+          trendText={admittedGrowth != null ? `${Number(admittedGrowth) >= 0 ? '+' : ''}${admittedGrowth}% vs last term` : '—'}
           onClick={() => onCardClick && onCardClick('admitted')}
         />
       </Grid>
@@ -197,7 +200,7 @@ const MetricCards = ({
           value={acceptedCount}
           icon={SchoolOutlined}
           colorScheme="purple"
-          subText={`${acceptanceRate}% acceptance rate`}
+          subText={acceptanceRate > 0 ? `${acceptanceRate}% acceptance rate` : '—'}
           onClick={() => onCardClick && onCardClick('accepted')}
         />
       </Grid>

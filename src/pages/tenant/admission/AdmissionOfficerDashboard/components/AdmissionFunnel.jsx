@@ -3,19 +3,7 @@ import { Box, Typography, Paper, Stack, Button, useTheme } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const defaultFunnelData = [
-  { stage: 'Applicants', count: 3842, pct: 100, color: '#581c87' },
-  { stage: 'Screened', count: 2915, pct: 75.9, color: '#2563eb' },
-  { stage: 'Shortlisted', count: 2118, pct: 55.2, color: '#0d9488' },
-  { stage: 'Admitted', count: 1256, pct: 32.7, color: '#16a34a' },
-  { stage: 'Accepted', count: 1045, pct: 27.2, color: '#d97706' },
-  { stage: 'Enrolled', count: 842, pct: 21.9, color: '#dc2626' },
-];
-
-/**
- * Admission Funnel Component matching screenshot
- */
-const AdmissionFunnel = ({ funnel = defaultFunnelData, onViewFullReport }) => {
+const AdmissionFunnel = ({ funnel = [], onViewFullReport }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -52,6 +40,13 @@ const AdmissionFunnel = ({ funnel = defaultFunnelData, onViewFullReport }) => {
 
         {/* Funnel Rows */}
         <Stack spacing={1.25} sx={{ px: { xs: 0, sm: 1 } }}>
+          {funnel.length === 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+                No funnel data available
+              </Typography>
+            </Box>
+          )}
           {funnel.map((item) => (
             <Box
               key={item.stage}
@@ -124,12 +119,18 @@ const AdmissionFunnel = ({ funnel = defaultFunnelData, onViewFullReport }) => {
         <Button
           onClick={() => (onViewFullReport ? onViewFullReport() : navigate('/admission/tracker'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
+           sx={{
             fontSize: '12px',
             fontWeight: 700,
             color: '#2563eb',
             textTransform: 'none',
-            '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+            borderRadius: '8px',
+            '&:hover': {
+              bgcolor: '#EFF6FF',
+              color: '#1d4ed8',
+              textDecoration: 'underline',
+              opacity: 1,
+            },
           }}
         >
           View Full Funnel Report

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, useTheme } from '@mui/material';
+import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, CircularProgress, useTheme } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -12,28 +12,10 @@ import {
 } from 'recharts';
 
 /**
- * Default monthly trend data matching the design mockup (Sep 2024 - Aug 2025)
- */
-const defaultTrendData = [
-  { month: 'Sep 2024', thisSession: 950, lastSession: 720 },
-  { month: 'Oct 2024', thisSession: 1120, lastSession: 880 },
-  { month: 'Nov 2024', thisSession: 1350, lastSession: 1050 },
-  { month: 'Dec 2024', thisSession: 1600, lastSession: 1250 },
-  { month: 'Jan 2025', thisSession: 1900, lastSession: 1480 },
-  { month: 'Feb 2025', thisSession: 2050, lastSession: 1620 },
-  { month: 'Mar 2025', thisSession: 2380, lastSession: 1890 },
-  { month: 'Apr 2025', thisSession: 2750, lastSession: 2150 },
-  { month: 'May 2025', thisSession: 2820, lastSession: 2380 },
-  { month: 'Jun 2025', thisSession: 3200, lastSession: 2600 },
-  { month: 'Jul 2025', thisSession: 3450, lastSession: 2850 },
-  { month: 'Aug 2025', thisSession: 3842, lastSession: 3120 },
-];
-
-/**
  * Application Trend Line Chart Component
  */
 const ApplicationTrend = ({
-  trendData,
+  trendData = [],
   metrics = {},
   sessionTerms = [],
   sessionTerm = 'all',
@@ -42,11 +24,11 @@ const ApplicationTrend = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const data = trendData || defaultTrendData;
-  const totalApps = (metrics.total_applications ?? 3842).toLocaleString();
-  const newThisMonth = (metrics.new_this_month ?? 512).toLocaleString();
-  const avgPerMonth = (metrics.avg_per_month ?? 349).toLocaleString();
-  const vsLastSession = metrics.vs_last_session ?? '18%';
+  const data = trendData;
+  const totalApps = (metrics.total_applications ?? 0).toLocaleString();
+  const newThisMonth = (metrics.new_this_month ?? 0).toLocaleString();
+  const avgPerMonth = (metrics.avg_per_month ?? 0).toLocaleString();
+  const vsLastSession = metrics.vs_last_session ?? '0%';
 
   return (
     <Paper
@@ -120,6 +102,13 @@ const ApplicationTrend = ({
 
       {/* Chart */}
       <Box sx={{ width: '100%', height: 220, mb: 2 }}>
+        {data.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+              No trend data available
+            </Typography>
+          </Box>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'} />
@@ -164,6 +153,7 @@ const ApplicationTrend = ({
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </Box>
 
       {/* Bottom Metrics Bar */}

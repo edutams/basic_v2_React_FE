@@ -592,14 +592,20 @@ const ClassLedger = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button variant="contained" size="small" startIcon={<DownloadIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<DownloadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handleDownloadExcel}
               >
                 View In CSV Format
               </Button>
 
-              <Button variant="contained" size="small" startIcon={<UploadIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<UploadIcon />}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={handlePrintPaymentList}
               >
@@ -683,7 +689,13 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button variant="contained" size="small" fullWidth onClick={fetchClassLedgerData} disabled={!programme || !classLevel}>
+            <Button
+              variant="contained"
+              size="small"
+              fullWidth
+              onClick={fetchClassLedgerData}
+              disabled={!programme || !classLevel}
+            >
               Fetch
             </Button>
           </Grid>
@@ -714,22 +726,21 @@ const ClassLedger = () => {
                 </TableRow>
               ) : ledgerData.length > 0 ? (
                 ledgerData.map((student, index) => {
-                  const user = student.users || student.user || {};
                   return (
                     <TableRow key={student.user_id || index} hover>
                       {/* <TableCell>{index + 1}</TableCell> */}
                       <TableCell>{(meta?.from || 0) + index}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar src={user.avatar || user.image} sx={{ width: 36, height: 36 }}>
+                          <Avatar src={student.avatar} sx={{ width: 36, height: 36 }}>
                             <PersonOutlineIcon sx={{ fontSize: 20 }} />
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>
-                              {user.full_name || `${user.fname} ${user.lname}`}
+                              {student.full_name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {user.user_id || '—'}
+                              {student.student_number || '—'}
                             </Typography>
                           </Box>
                         </Box>
@@ -819,7 +830,7 @@ const ClassLedger = () => {
                 const sUserId = activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
                 window.open(
                   `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
-                  '_blank'
+                  '_blank',
                 );
               }
             }}
@@ -899,8 +910,6 @@ const ClassLedger = () => {
           onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
-
-
 
       <StudentLedgerModal
         open={isLedgerModalOpen}

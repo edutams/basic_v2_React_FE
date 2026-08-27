@@ -412,7 +412,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <PaymentShedule />
           </TenantProtectedRoute>
         ),
@@ -420,7 +420,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/:session_term_id/:class_id',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceStudentsView />
           </TenantProtectedRoute>
         ),
@@ -477,7 +477,7 @@ const TenantRoutes = [
       {
         path: 'bursary-setup',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.setup.index">
             <BursarySetup />
           </TenantProtectedRoute>
         ),
@@ -507,11 +507,39 @@ const TenantRoutes = [
         ),
       },
       // ── Dashboard route (handles both school and parent dashboards) ──
-      { path: 'dashboard', element: <SchoolDashboardMain /> },
+      {
+        path: 'dashboard',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <SchoolDashboardMain />
+          </TenantProtectedRoute>
+        ),
+      },
       // ── Role-specific dashboards (linked from the Admin Dashboard) ──
-      { path: 'dashboard/admission', element: <AdmissionOfficerDashboard /> },
-      { path: 'dashboard/bursary', element: <BursaryOfficerDashboard /> },
-      { path: 'staff-manager/teacher-dashboard', element: <TeacherDashboard /> },
+      {
+        path: 'dashboard/admission',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.dashboard.index">
+            <AdmissionOfficerDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/bursary',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.dashboard.index">
+            <BursaryOfficerDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'staff-manager/teacher-dashboard',
+        element: (
+          <TenantProtectedRoute permission="teacher_dashboard.dashboard.index">
+            <TeacherDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
 
       // ── Parent-specific routes ──
       { path: 'pay-school-fees', element: <PaySchoolFees /> },

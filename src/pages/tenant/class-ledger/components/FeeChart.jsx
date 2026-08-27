@@ -33,7 +33,7 @@ const DrilldownModal = ({ open, onClose, title, students, loading }) => {
     const headers = ['SN', 'Student Name', 'Paid Amount'];
     const rows = students.map((s, i) => [
       i + 1,
-      [s.fname, s.lname, s.mname].filter(Boolean).join(' '),
+      [s.lname, s.fname, s.mname].filter(Boolean).join(' '),
       s.amount ?? s.paid_amount ?? s.total_paid ?? 0,
     ]);
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
@@ -120,7 +120,7 @@ const DrilldownModal = ({ open, onClose, title, students, loading }) => {
               </TableHead>
               <TableBody>
                 {students.map((s, i) => {
-                  const name = [s.fname, s.lname, s.mname].filter(Boolean).join(' ');
+                  const name = [s.lname, s.fname, s.mname].filter(Boolean).join(' ');
                   const amount = s.amount ?? s.paid_amount ?? s.total_paid ?? 0;
                   return (
                     <TableRow key={s.user_id || i} hover>

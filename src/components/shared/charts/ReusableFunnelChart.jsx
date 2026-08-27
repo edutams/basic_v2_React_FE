@@ -1,4 +1,5 @@
 import React from 'react';
+import Chart from 'react-apexcharts';
 import {
   Box,
   Typography,
@@ -423,6 +424,134 @@ const ReusableFunnelChart = ({
     );
   }
 
+  // ─── Layout: apex (ApexCharts trapezoid funnel) ───
+  if (layout === 'apex') {
+    const ROW_HEIGHT = 46;
+    const categories = data.map((item) => item.stage ?? item.label ?? '');
+    const seriesData = data.map((item) => item.count ?? 0);
+    const apexColors = data.map((item, i) => item.color ?? resolvedColors[i % resolvedColors.length]);
+    const chartHeight = data.length * ROW_HEIGHT;
+
+    const apexOptions = {
+      chart: {
+        type: 'bar',
+        toolbar: { show: false },
+        fontFamily: theme.typography.fontFamily,
+        animations: { enabled: true, speed: 400 },
+        sparkline: { enabled: false },
+      },
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          barHeight: '100%',
+          distributed: true,
+          isFunnel3d: true,
+        },
+      },
+      colors: apexColors,
+      dataLabels: {
+        enabled: true,
+        formatter: (val) => val.toLocaleString(),
+        style: { fontSize: '13px', fontWeight: 800, colors: ['#fff'] },
+        dropShadow: { enabled: false },
+      },
+      xaxis: {
+        categories,
+        labels: { show: false },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+      },
+      yaxis: { labels: { show: false } },
+      grid: { show: false, padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+      legend: { show: false },
+      tooltip: {
+        theme: isDark ? 'dark' : 'light',
+        y: {
+          formatter: (val, { dataPointIndex }) =>
+            `${val.toLocaleString()} (${data[dataPointIndex]?.pct ?? data[dataPointIndex]?.percentage ?? 0}%)`,
+        },
+      },
+      states: { hover: { filter: { type: 'lighten', value: 0.08 } } },
+    };
+
+    const apexSeries = [{ name: title || 'Count', data: seriesData }];
+
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.25,
+          borderRadius: '14px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+          boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+          ...cardSx,
+        }}
+      >
+        <Box>
+          {renderHeader()}
+          {data.length === 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+                No data available
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1.5 }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Chart options={apexOptions} series={apexSeries} type="bar" height={chartHeight} />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: chartHeight }}>
+                {data.map((item, i) => {
+                  const pct = item.pct ?? item.percentage ?? 0;
+                  return (
+                    <Box
+                      key={item.stage ?? item.label ?? i}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 2,
+                        height: ROW_HEIGHT,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: isDark ? 'rgba(255,255,255,0.85)' : '#334155',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {item.stage ?? item.label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {pct}%
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+        </Box>
+        {renderFooter()}
+      </Paper>
+    );
+  }
+
   return null;
 };
 
@@ -439,7 +568,7 @@ ReusableFunnelChart.propTypes = {
   ).isRequired,
   title: PropTypes.string,
   subtitle: PropTypes.string,
-  layout: PropTypes.oneOf(['bars', 'progress', 'steps', 'classic']),
+  layout: PropTypes.oneOf(['bars', 'progress', 'steps', 'classic', 'apex']),
   colors: PropTypes.arrayOf(PropTypes.string),
   showPercentage: PropTypes.bool,
   showCount: PropTypes.bool,

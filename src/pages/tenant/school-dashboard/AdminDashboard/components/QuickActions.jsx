@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, Snackbar, Alert, useTheme } from '@mui/material';
+import { Box, Typography, Button, Paper, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
 import {
   PersonAddOutlined,
   GroupOutlined,
@@ -10,7 +10,7 @@ import {
   DescriptionOutlined,
 } from '@mui/icons-material';
 
-const QuickActions = () => {
+const QuickActions = ({ loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
@@ -79,6 +79,28 @@ const QuickActions = () => {
         QUICK ACTIONS
       </Typography>
 
+      {loading ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(4, 1fr)',
+              md: 'repeat(7, 1fr)',
+            },
+            gap: 1.25,
+          }}
+        >
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={48}
+              sx={{ borderRadius: '10px' }}
+            />
+          ))}
+        </Box>
+      ) : (
       <Box
         sx={{
           display: 'grid',
@@ -126,6 +148,7 @@ const QuickActions = () => {
           </Button>
         ))}
       </Box>
+      )}
 
       <Snackbar
         open={snackbar.open}

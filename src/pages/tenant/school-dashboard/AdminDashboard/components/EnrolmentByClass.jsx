@@ -14,7 +14,7 @@ import {
   MenuItem,
   Button,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -126,8 +126,15 @@ const EnrolmentByClass = ({
 
         {/* Table */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={28} />
+          <Box sx={{ py: 1 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Box key={i} sx={{ display: 'flex', gap: 1.5, px: 1.25, py: 0.85 }}>
+                <Skeleton variant="text" width="30%" height={20} />
+                <Skeleton variant="text" width="15%" height={20} />
+                <Skeleton variant="text" width="15%" height={20} />
+                <Skeleton variant="text" width="15%" height={20} sx={{ ml: 'auto' }} />
+              </Box>
+            ))}
           </Box>
         ) : (
         <TableContainer sx={{ maxHeight: 600 }}>

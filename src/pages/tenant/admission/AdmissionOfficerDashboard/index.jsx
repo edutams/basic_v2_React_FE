@@ -193,6 +193,7 @@ const AdmissionOfficerDashboard = () => {
         total_admitted={overview.data?.total_admitted || {}}
         total_accepted={overview.data?.total_accepted || {}}
         onCardClick={setBreakdownType}
+        loading={overview.loading}
       />
 
       {/* ── Main Dashboard Layout: Left Column (Actions, Search & Charts) | Right Column (Activity Log) ── */}
@@ -207,7 +208,7 @@ const AdmissionOfficerDashboard = () => {
         {/* ── Left Column ─────────────────────────────────────────────── */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {/* Quick Actions Bar */}
-          <QuickActions />
+          <QuickActions loading={overview.loading} />
 
           {/* Row 1 Charts: Application Trend & Admission Funnel */}
           <Grid container spacing={2.5} mb={2.5}>
@@ -218,11 +219,13 @@ const AdmissionOfficerDashboard = () => {
                 sessionTerms={sessionTerms}
                 sessionTerm={trendSessionTerm}
                 onSessionChange={setTrendSessionTerm}
+                loading={trendLoading}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <AdmissionFunnel
                 funnel={conversionFunnel.data?.funnel_stages}
+                loading={conversionFunnel.loading}
               />
             </Grid>
           </Grid>
@@ -235,6 +238,7 @@ const AdmissionOfficerDashboard = () => {
                 sessionTerms={sessionTerms}
                 sessionTerm={gradeSessionTerm}
                 onSessionChange={setGradeSessionTerm}
+                loading={gradeLoading}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>

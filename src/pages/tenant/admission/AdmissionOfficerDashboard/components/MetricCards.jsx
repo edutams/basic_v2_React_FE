@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Grid, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import { PersonOutline, FindInPageOutlined, PersonAddAlt1Outlined, SchoolOutlined, ArrowUpward, WarningAmberOutlined } from '@mui/icons-material';
+import MetricCardsSkeleton from './MetricCardsSkeleton';
 
 /**
  * Top KPI Stat Card Component matching Bursary/Parent Dashboard style
@@ -144,7 +145,9 @@ const MetricCards = ({
   total_admitted = {},
   total_accepted = {},
   onCardClick,
+  loading = false,
 }) => {
+  if (loading) return <MetricCardsSkeleton />;
   const applicantsCount = (total_applicants.count ?? 0).toLocaleString();
   const pendingCount = (pending_review.count ?? 0).toLocaleString();
   const pendingDueToday = pending_review.due_today ?? 0;

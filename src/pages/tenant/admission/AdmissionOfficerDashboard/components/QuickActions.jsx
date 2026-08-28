@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip } from '@mui/material';
+import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip, Skeleton } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import {
   AddBoxOutlined,
@@ -24,7 +24,7 @@ const ACTIONS = [
 /**
  * Quick Actions — card grid matching the Bursary dashboard style, with embedded search.
  */
-const QuickActions = () => {
+const QuickActions = ({ loading = false }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -132,6 +132,19 @@ const QuickActions = () => {
       </Box>
 
       {/* Responsive action grid */}
+      {loading ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+            gap: 1,
+          }}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={72} sx={{ borderRadius: '12px' }} />
+          ))}
+        </Box>
+      ) : (
       <Box
         sx={{
           display: 'grid',
@@ -204,6 +217,7 @@ const QuickActions = () => {
           );
         })}
       </Box>
+      )}
 
       {/* Divider */}
       <Box sx={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB'}`, mt: 1.25, mb: 1 }} />

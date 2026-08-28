@@ -158,15 +158,9 @@ const ReusableFunnelChart = ({
         }}
       >
         <Button
+          disableRipple
           onClick={onFooterClick}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
-          }}
         >
           {footerLabel}
         </Button>

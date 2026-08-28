@@ -15,6 +15,8 @@ import {
   Stack,
   Avatar,
   Chip,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, PersonOutline, InfoOutlined } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +29,7 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -59,17 +62,8 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
   };
 
   const handleResultClick = (result) => {
-    const id = result.id;
-    const userType = result.user_type;
-    if (!id) return;
-
-    if (userType === 'student') {
-      navigate('/learner-management');
-    } else if (userType === 'staff') {
-      navigate('/staff-manager');
-    } else {
-      navigate('/learner-management');
-    }
+    setSnackbar({ open: true, message: 'This page is currently under development.' });
+    setSearchResults(null);
   };
 
   const handleSwitchRole = (newRole) => {
@@ -340,6 +334,22 @@ const SearchAndRoleBar = ({ currentRole = 'administrator', onRoleChange }) => {
           </Select>
         </FormControl>
       </Paper>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

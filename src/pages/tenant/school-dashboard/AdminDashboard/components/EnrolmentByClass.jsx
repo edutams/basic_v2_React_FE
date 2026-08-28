@@ -142,24 +142,24 @@ const EnrolmentByClass = ({
             </TableHead>
             <TableBody>
               {classData.map((row) => (
-                <TableRow key={row.class_name} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                <TableRow key={row.class_code} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 0.85, px: 1.25 }}>
-                    {row.class_name}
+                    {row.class_code}
                   </TableCell>
                   <ClickableCell
                     value={row.male}
-                    onClick={() => onCellClick?.(row.class_name, 'male')}
+                    onClick={() => onCellClick?.(row.class_code, 'male')}
                   />
                   <ClickableCell
                     value={row.female}
-                    onClick={() => onCellClick?.(row.class_name, 'female')}
+                    onClick={() => onCellClick?.(row.class_code, 'female')}
                   />
                   <ClickableCell
                     value={row.total}
                     align="right"
                     fontWeight={800}
                     color="#2563eb"
-                    onClick={() => onCellClick?.(row.class_name, 'total')}
+                    onClick={() => onCellClick?.(row.class_code, 'total')}
                   />
                 </TableRow>
               ))}
@@ -188,21 +188,9 @@ const EnrolmentByClass = ({
       {/* Footer Link */}
       <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
         <Button
+          disableRipple
           onClick={() => (onViewEnrolmentReport ? onViewEnrolmentReport() : navigate('/reports/general-report'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#EFF6FF',
-              color: '#1d4ed8',
-              textDecoration: 'underline',
-              opacity: 1,
-            },
-          }}
         >
           View Enrolment Report
         </Button>

@@ -3,6 +3,8 @@ import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
+import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
+import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 
 import DashboardHeader from './components/DashboardHeader';
 import TopStatCards from './components/TopStatCards';
@@ -16,6 +18,7 @@ import QuickReportsCard from './components/QuickReportsCard';
 import AnnouncementsCard from './components/AnnouncementsCard';
 import EnrolmentByClass from './components/EnrolmentByClass';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
+import { SchoolCalendarModal as CalendarModal } from '@/pages/tenant/staff-manager/non-teaching-dashboard/components/School-calendar';
 
 const AdminDashboard = () => {
   const [breakdownType, setBreakdownType] = useState(null);
@@ -24,6 +27,58 @@ const AdminDashboard = () => {
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
   const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarWeeks, setCalendarWeeks] = useState([]);
+  const [calendarHolidays, setCalendarHolidays] = useState([]);
+  const [calendarTermStats, setCalendarTermStats] = useState({
+    totalSchoolDays: 0,
+    daysSpent: 0,
+    daysRemaining: 0,
+    totalHolidays: 0,
+    pctCompleted: 0,
+  });
+
+  useEffect(() => {
+    if (!calendarModalOpen) return;
+    let mounted = true;
+    const load = async () => {
+      try {
+        const activeRes = await tenantApi.get('/curriculum/active-session-term');
+        const activeTermId = activeRes?.data?.data?.session_term_id;
+        if (!activeTermId) return;
+
+        const [weeksRes, holidaysRes] = await Promise.allSettled([
+          fetchWeeks(activeTermId),
+          fetchHolidays(activeTermId),
+        ]);
+
+        if (!mounted) return;
+
+        const weeksData = weeksRes.status === 'fulfilled' ? weeksRes.value : null;
+        const fetchedWeeks = Array.isArray(weeksData) ? weeksData : weeksData?.data || [];
+        setCalendarWeeks(fetchedWeeks);
+
+        const holidaysData = holidaysRes.status === 'fulfilled' ? holidaysRes.value : null;
+        const fetchedHolidays = Array.isArray(holidaysData) ? holidaysData : holidaysData?.data || [];
+        setCalendarHolidays(fetchedHolidays);
+
+        if (weeksData?.stats) {
+          const s = weeksData.stats;
+          setCalendarTermStats({
+            totalSchoolDays: s.total_school_days ?? 0,
+            daysSpent: s.days_spent ?? 0,
+            daysRemaining: s.remaining_school_days ?? 0,
+            totalHolidays: s.holiday_days_allocated ?? 0,
+            pctCompleted: s.pct_completed ?? 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load calendar data:', err);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [calendarModalOpen]);
 
   // Load session terms
   useEffect(() => {
@@ -232,6 +287,7 @@ const AdminDashboard = () => {
         non_teaching_growth={overview.data?.non_teaching_growth}
         attendance_growth={overview.data?.attendance_growth}
         onCardClick={handleBreakdownClick}
+        loading={overview.loading}
       />
 
       {/* ── Quick Actions Bar ───────────────────────────────────────── */}
@@ -262,6 +318,7 @@ const AdminDashboard = () => {
             outstandingTrend={financial.data?.outstanding_trend}
             expectedTrend={financial.data?.expected_trend}
             onCardClick={handleBreakdownClick}
+            loading={financial.loading}
           />
 
           {/* Row: Academic Performance & Attendance */}
@@ -315,6 +372,7 @@ const AdminDashboard = () => {
             expectedEnd={termCalendar.data?.expected_end}
             progressPct={termCalendar.data?.progress_pct}
             loading={termCalendar.loading}
+            onViewCalendar={() => setCalendarModalOpen(true)}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
@@ -331,6 +389,15 @@ const AdminDashboard = () => {
         type={breakdownType}
         extra={breakdownExtra}
         onClose={() => { setBreakdownType(null); setBreakdownExtra({}); }}
+      />
+
+      {/* ── Full Calendar Modal ────────────────────────────────────── */}
+      <CalendarModal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        weeks={calendarWeeks}
+        holidays={calendarHolidays}
+        termStats={calendarTermStats}
       />
     </PageContainer>
   );

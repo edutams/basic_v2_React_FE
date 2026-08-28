@@ -15,6 +15,14 @@ const TermCalendarCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const handleViewCalendar = () => {
+    if (onViewCalendar) {
+      onViewCalendar();
+    } else {
+      navigate('/curriculum/session-mapping');
+    }
+  };
+
   return (
     <Paper
       elevation={0}
@@ -241,21 +249,9 @@ const TermCalendarCard = ({
         >
           <Button
             disableRipple
-            onClick={() => (onViewCalendar ? onViewCalendar() : navigate('/curriculum/session-mapping'))}
+            onClick={handleViewCalendar}
             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-           sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#EFF6FF',
-              color: '#1d4ed8',
-              textDecoration: 'underline',
-              opacity: 1,
-            },
-          }}
+            
           >
             View School Calendar
           </Button>

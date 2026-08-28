@@ -51,11 +51,11 @@ const AttendanceOverview = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#16a34a' }} />
-                <Typography variant="caption" fontWeight={600} sx={{ fontSize: '10.5px', color: '#16a34a' }}>Present</Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ fontSize: '10.5px', color: '#16a34a' }}>Present Marks</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#dc2626' }} />
-                <Typography variant="caption" fontWeight={600} sx={{ fontSize: '10.5px', color: '#dc2626' }}>Absent</Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ fontSize: '10.5px', color: '#dc2626' }}>Absent Marks</Typography>
               </Box>
             </Box>
 
@@ -121,13 +121,14 @@ const AttendanceOverview = ({
                   borderRadius: 8,
                   fontSize: 12,
                 }}
+                formatter={(value, name) => [`${value}%`, name]}
                 labelFormatter={(label, payload) => {
                   const item = payload?.[0]?.payload;
                   return item?.label || label;
                 }}
               />
-              <Bar dataKey="Present" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={16} />
-              <Bar dataKey="Absent" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={16} />
+              <Bar dataKey="Present" name="Present Marks" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={16} />
+              <Bar dataKey="Absent" name="Absent Marks" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={16} />
             </BarChart>
           </ResponsiveContainer>
         </Box>

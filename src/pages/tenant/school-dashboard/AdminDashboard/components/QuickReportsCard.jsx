@@ -92,19 +92,6 @@ const QuickReportsCard = ({ reports = defaultReports, onViewAllReports }) => {
           disableRipple
           onClick={() => (onViewAllReports ? onViewAllReports() : navigate('/reports/general-report'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#EFF6FF',
-              color: '#1d4ed8',
-              textDecoration: 'underline',
-              opacity: 1,
-            },
-          }}
         >
           View All Reports
         </Button>

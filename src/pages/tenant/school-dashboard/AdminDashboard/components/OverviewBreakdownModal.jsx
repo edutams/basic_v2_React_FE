@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,19 +25,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
-/**
- * Admin dashboard stat card breakdown modal.
- *
- * Fetches a paginated list for the clicked stat card and renders it as a
- * table. Supports:
- *   - `search`      → text filter sent to the backend
- *   - `sessionTerm` → dropdown of subscribed session terms sent as
- *                     session_term_id (all types honor it where applicable)
- *   - `type`        → drives the column layout (see columnsFor)
- */
 const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -50,19 +40,24 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
   const [searchInput, setSearchInput] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
   const [sessionTermId, setSessionTermId] = useState('');
-  const searchTimer = useRef(null);
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+  const [termsLoaded, setTermsLoaded] = useState(false);
 
-  // Load session terms once (for the dropdown).
   useEffect(() => {
     let mounted = true;
-    fetchSessionTerms()
-      .then((res) => {
-        if (mounted && res?.status) setSessionTerms(res.data || []);
-      })
-      .catch((err) => console.error('Failed to fetch session terms:', err));
-    return () => {
-      mounted = false;
-    };
+    Promise.all([
+      fetchSessionTerms(),
+      fetchActiveSessionTerm(),
+    ]).then(([termsRes, activeRes]) => {
+      if (!mounted) return;
+      if (termsRes?.status) setSessionTerms(termsRes.data || []);
+      const activeId = activeRes?.data?.session_term_id;
+      if (activeRes?.status && activeId != null) {
+        setActiveSessionTermId(activeId);
+      }
+      setTermsLoaded(true);
+    }).catch(() => { if (mounted) setTermsLoaded(true); });
+    return () => { mounted = false; };
   }, []);
 
   const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
@@ -93,147 +88,147 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         if (!cancelled) setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   };
 
-  // Reset page + refetch whenever the modal opens or the type changes.
   useEffect(() => {
     if (!open || !type) return;
     setPage(0);
     setSearch('');
     setSearchInput('');
-    setSessionTermId('');
-    return fetchBreakdown(0, rowsPerPage, '', '');
+    if (termsLoaded && activeSessionTermId != null) {
+      const match = sessionTerms.find((s) => String(s.id) === String(activeSessionTermId));
+      setSessionTermId(match ? String(match.id) : '');
+    } else {
+      setSessionTermId('');
+    }
+    return fetchBreakdown(0, rowsPerPage, termsLoaded && activeSessionTermId != null
+      ? String(sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))?.id || '')
+      : '', '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, type]);
+  }, [open, type, termsLoaded]);
 
   const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
+    setSearchInput(e.target.value);
+  };
 
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setSearch(value);
-      setPage(0);
-      fetchBreakdown(0, rowsPerPage, sessionTermId, value);
-    }, 400);
+  const handleFetch = () => {
+    setPage(0);
+    fetchBreakdown(0, rowsPerPage, sessionTermId, searchInput);
   };
 
   const handleTermChange = (e) => {
-    const value = e.target.value;
-    setSessionTermId(value);
-    setPage(0);
-    fetchBreakdown(0, rowsPerPage, value, search);
+    setSessionTermId(e.target.value);
   };
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
-    fetchBreakdown(newPage, rowsPerPage, sessionTermId, search);
+    fetchBreakdown(newPage, rowsPerPage, sessionTermId, searchInput);
   };
 
   const handleChangeRowsPerPage = (e) => {
     const rpp = parseInt(e.target.value, 10);
     setRowsPerPage(rpp);
     setPage(0);
-    fetchBreakdown(0, rpp, sessionTermId, search);
+    fetchBreakdown(0, rpp, sessionTermId, searchInput);
   };
 
   const rows = data?.rows || [];
-  const title = data?.title || 'Breakdown';
+  const baseTitle = data?.title || 'Breakdown';
+  const title = type === 'enrollment_by_class' && extra.class_code
+    ? `Enrollment by Class for ${extra.class_code}`
+    : baseTitle;
   const total = data?.total || 0;
 
-  // ── Per-type column definition ────────────────────────────────────
+  const headerBg = isDark ? '#1e293b' : '#f1f5f9';
+  const headerColor = isDark ? 'rgba(255,255,255,0.7)' : '#475569';
+
   const columnsFor = () => {
     switch (type) {
       case 'teaching_staff':
       case 'non_teaching_staff':
         return [
-          { key: 'staff_id', label: 'Staff ID' },
-          { key: 'staff_type', label: 'Type' },
-          { key: 'staff_status', label: 'Status' },
-          { key: 'sex', label: 'Gender' },
+          { key: 'staff_id', label: 'Staff ID', badge: true },
+          { key: 'staff_status', label: 'Employment Status' },
+          { key: 'sex', label: 'Gender', badge: true },
         ];
       case 'applicants':
       case 'admitted':
       case 'accepted':
         return [
-          { key: 'form_number', label: 'Form No.' },
-          { key: 'class', label: 'Class' },
-          { key: 'sex', label: 'Gender' },
-          { key: 'status', label: 'Status' },
+          { key: 'form_number', label: 'Form Number', badge: true },
+          { key: 'class', label: 'Intending Class' },
+          { key: 'sex', label: 'Gender', badge: true },
+          { key: 'status', label: 'Admission Status' },
         ];
       case 'batches':
         return [
-          { key: 'batch_name', label: 'Batch' },
-          { key: 'applicants', label: 'Applicants', numeric: true },
-          { key: 'admitted', label: 'Admitted', numeric: true },
-          { key: 'status', label: 'Status' },
+          { key: 'batch_name', label: 'Batch Name' },
+          { key: 'applicants', label: 'Total Applicants', numeric: true },
+          { key: 'admitted', label: 'Admitted Count', numeric: true },
+          { key: 'status', label: 'Batch Status' },
         ];
       case 'bursary_students':
         return [
+          { key: 'user_id', label: 'Student ID', badge: true },
           { key: 'class', label: 'Class' },
-          { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
-          { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
-          { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
-          { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
+          { key: 'expected_fees', label: 'Expected Fees', numeric: true, currency: true },
+          { key: 'collected_fees', label: 'Collected Fees', numeric: true, currency: true },
+          { key: 'outstanding_fees', label: 'Outstanding Fees', numeric: true, currency: true },
+          { key: 'efficiency', label: 'Collection Rate', numeric: true, percent: true },
         ];
       case 'collection_matrix':
         return [
           { key: 'status', label: 'Status' },
-          { key: 'expected_fees', label: 'Expected', numeric: true, currency: true },
-          { key: 'collected_fees', label: 'Collected', numeric: true, currency: true },
-          { key: 'outstanding_fees', label: 'Outstanding', numeric: true, currency: true },
-          { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
+          { key: 'expected_fees', label: 'Expected Fees', numeric: true, currency: true },
+          { key: 'collected_fees', label: 'Collected Fees', numeric: true, currency: true },
+          { key: 'outstanding_fees', label: 'Outstanding Fees', numeric: true, currency: true },
+          { key: 'efficiency', label: 'Collection Rate', numeric: true, percent: true },
         ];
       case 'expected_income':
         return [
-          { key: 'student_name', label: 'Student' },
-          { key: 'class_name', label: 'Class' },
-          { key: 'expected_amount', label: 'Expected', numeric: true, currency: true },
-          { key: 'term_label', label: 'Term' },
+          { key: 'class_code', label: 'Class' },
+          { key: 'expected_amount', label: 'Expected Amount', numeric: true, currency: true },
         ];
       case 'collected_income':
         return [
-          { key: 'student_name', label: 'Student' },
-          { key: 'class_name', label: 'Class' },
+          { key: 'user_id', label: 'Student ID', badge: true },
+          { key: 'class_code', label: 'Class' },
           { key: 'amount_paid', label: 'Amount Paid', numeric: true, currency: true },
-          { key: 'payment_date', label: 'Date' },
         ];
       case 'outstanding_balance':
         return [
-          { key: 'student_name', label: 'Student' },
-          { key: 'class_name', label: 'Class' },
-          { key: 'total_expected', label: 'Expected', numeric: true, currency: true },
-          { key: 'total_paid', label: 'Paid', numeric: true, currency: true },
-          { key: 'balance', label: 'Outstanding', numeric: true, currency: true },
+          { key: 'user_id', label: 'Student ID', badge: true },
+          { key: 'class_code', label: 'Class' },
+          { key: 'total_expected', label: 'Expected Amount', numeric: true, currency: true },
+          { key: 'total_paid', label: 'Amount Paid', numeric: true, currency: true },
+          { key: 'balance', label: 'Outstanding Balance', numeric: true, currency: true },
         ];
       case 'collection_efficiency':
         return [
           { key: 'class_name', label: 'Class' },
-          { key: 'expected', label: 'Expected', numeric: true, currency: true },
-          { key: 'collected', label: 'Collected', numeric: true, currency: true },
-          { key: 'outstanding', label: 'Outstanding', numeric: true, currency: true },
-          { key: 'efficiency', label: 'Rate', numeric: true, percent: true },
+          { key: 'expected', label: 'Expected Fees', numeric: true, currency: true },
+          { key: 'collected', label: 'Collected Fees', numeric: true, currency: true },
+          { key: 'outstanding', label: 'Outstanding Fees', numeric: true, currency: true },
+          { key: 'efficiency', label: 'Collection Rate', numeric: true, percent: true },
         ];
       case 'lesson_plans':
         return [
-          { key: 'creator', label: 'Teacher' },
+          { key: 'creator', label: 'Created By (Teacher)' },
           { key: 'class', label: 'Class' },
           { key: 'status', label: 'Status' },
         ];
       case 'quizzes':
         return [
-          { key: 'creator', label: 'Created By' },
+          { key: 'creator', label: 'Created By (Teacher)' },
           { key: 'class', label: 'Class' },
           { key: 'subject', label: 'Subject' },
-          { key: 'questions', label: 'Questions', numeric: true },
+          { key: 'questions', label: 'Total Questions', numeric: true },
           { key: 'status', label: 'Status' },
         ];
       case 'assignments':
         return [
-          { key: 'creator', label: 'Created By' },
+          { key: 'creator', label: 'Created By (Teacher)' },
           { key: 'class', label: 'Class' },
           { key: 'subject', label: 'Subject' },
           { key: 'due_date', label: 'Due Date' },
@@ -246,7 +241,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         ];
       case 'resources':
         return [
-          { key: 'resource_type', label: 'Type' },
+          { key: 'resource_type', label: 'Resource Type' },
           { key: 'creator', label: 'Created By' },
           { key: 'class', label: 'Class' },
           { key: 'status', label: 'Status' },
@@ -255,47 +250,47 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
       case 'attendance_rate':
         return [
           { key: 'class', label: 'Class' },
-          { key: 'total_students', label: 'Students', numeric: true },
-          { key: 'present', label: 'Present', numeric: true },
-          { key: 'absent', label: 'Absent', numeric: true },
-          { key: 'attendance_rate', label: 'Rate', numeric: true, percent: true },
+          { key: 'total_students', label: 'Total Students', numeric: true },
+          { key: 'present', label: 'Total Present Marks', numeric: true },
+          { key: 'absent', label: 'Total Absent Marks', numeric: true },
+          { key: 'attendance_rate', label: 'Attendance Rate (%)', numeric: true, percent: true },
         ];
       case 'assignment_completion':
         return [
           { key: 'class', label: 'Class' },
-          { key: 'submissions', label: 'Submissions', numeric: true },
+          { key: 'submissions', label: 'Total Submissions', numeric: true },
           { key: 'due_date', label: 'Due Date' },
           { key: 'status', label: 'Status' },
         ];
       case 'exam_performance':
         return [
+          { key: 'user_id', label: 'Student ID', badge: true },
           { key: 'class', label: 'Class' },
-          { key: 'sex', label: 'Gender' },
-          { key: 'exams_taken', label: 'Exams', numeric: true },
-          { key: 'avg_score', label: 'Avg %', numeric: true, percent: true },
+          { key: 'sex', label: 'Gender', badge: true },
+          { key: 'exams_taken', label: 'Exams Taken', numeric: true },
+          { key: 'avg_score', label: 'Average Score (%)', numeric: true, percent: true },
         ];
       case 'underperforming_learners':
       case 'at_risk_grade':
       case 'drop_out_risk':
         return [
+          { key: 'user_id', label: 'Student ID', badge: true },
           { key: 'class', label: 'Class' },
-          { key: 'sex', label: 'Gender' },
-          { key: 'attendance_rate', label: 'Attendance', numeric: true, percent: true },
-          { key: 'avg_score', label: 'Avg Score', numeric: true, percent: true },
+          { key: 'sex', label: 'Gender', badge: true },
+          { key: 'attendance_rate', label: 'Attendance Rate (%)', numeric: true, percent: true },
+          { key: 'avg_score', label: 'Average Score (%)', numeric: true, percent: true },
         ];
       case 'enrollment_by_class':
         return [
-          { key: 'user_id', label: 'User ID' },
-          { key: 'student_name', label: 'Name' },
-          { key: 'sex', label: 'Gender' },
-          { key: 'class_name', label: 'Class' },
+          { key: 'user_id', label: 'Student ID', badge: true },
+          { key: 'sex', label: 'Gender', badge: true },
         ];
       case 'students':
       default:
         return [
-          { key: 'admission_no', label: 'Admission No.' },
+          { key: 'admission_no', label: 'Admission No.', badge: true },
           { key: 'class', label: 'Class' },
-          { key: 'sex', label: 'Gender' },
+          { key: 'sex', label: 'Gender', badge: true },
           { key: 'status', label: 'Status' },
         ];
     }
@@ -312,6 +307,40 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
 
   const isStatusChip = (col) => col.key === 'staff_status' || col.key === 'status';
 
+  const isBadgeChip = (col) => col.badge;
+
+  const getBadgeColor = (col, value) => {
+    const v = String(value || '').toLowerCase();
+    if (col.key === 'sex') return v === 'male' ? 'info' : v === 'female' ? 'secondary' : 'default';
+    if (col.key === 'admission_no' || col.key === 'user_id' || col.key === 'staff_id' || col.key === 'form_number') return 'primary';
+    return 'default';
+  };
+
+  const showNameColumn = type !== 'attendance' && type !== 'attendance_rate'
+    && type !== 'collection_matrix'
+    && type !== 'expected_income'
+    && type !== 'batches';
+
+  const idKeyForType = {
+    teaching_staff: 'staff_id',
+    non_teaching_staff: 'staff_id',
+    applicants: 'form_number',
+    admitted: 'form_number',
+    accepted: 'form_number',
+    students: 'admission_no',
+    enrollment_by_class: 'user_id',
+    bursary_students: 'user_id',
+    collected_income: 'user_id',
+    outstanding_balance: 'user_id',
+    underperforming_learners: 'user_id',
+    at_risk_grade: 'user_id',
+    drop_out_risk: 'user_id',
+    exam_performance: 'user_id',
+  };
+  const idKey = idKeyForType[type] || null;
+  const firstCol = idKey ? columns.find((c) => c.key === idKey) : null;
+  const restCols = idKey ? columns.filter((c) => c.key !== idKey) : columns;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -324,13 +353,13 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         />
       </DialogTitle>
 
-      {/* Search + session term filter */}
       <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
-          placeholder="Search…"
+          placeholder="Search by name, ID, gender…"
           value={searchInput}
           onChange={handleSearchChange}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleFetch(); }}
           sx={{ flex: '1 1 220px', maxWidth: 320 }}
           InputProps={{
             startAdornment: (
@@ -357,6 +386,14 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
             </MenuItem>
           ))}
         </TextField>
+        <Button
+          variant="contained"
+          size="small"
+          disableRipple
+          onClick={handleFetch}
+        >
+          Fetch
+        </Button>
       </Box>
 
       <DialogContent dividers>
@@ -365,7 +402,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
             <CircularProgress size={28} />
           </Box>
         ) : !data ? (
-          <Alert severity="info">No breakdown data available yet.</Alert>
+          <Alert severity="info">No breakdown data available yet. Select filters and click Fetch.</Alert>
         ) : rows.length === 0 ? (
           <Alert severity="info">No records match your search.</Alert>
         ) : (
@@ -373,10 +410,24 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Name</TableCell>
-                  {columns.map((col) => (
-                    <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
+                  <TableCell sx={{ bgcolor: headerBg, color: headerColor, fontWeight: 700, fontSize: '11px' }}>#</TableCell>
+                  {firstCol && (
+                    <TableCell
+                      align={firstCol.numeric ? 'right' : 'left'}
+                      sx={{ bgcolor: headerBg, color: headerColor, fontWeight: 700, fontSize: '11px' }}
+                    >
+                      {firstCol.label}
+                    </TableCell>
+                  )}
+                  {showNameColumn && (
+                    <TableCell sx={{ bgcolor: headerBg, color: headerColor, fontWeight: 700, fontSize: '11px' }}>Name</TableCell>
+                  )}
+                  {restCols.map((col) => (
+                    <TableCell
+                      key={col.key}
+                      align={col.numeric ? 'right' : 'left'}
+                      sx={{ bgcolor: headerBg, color: headerColor, fontWeight: 700, fontSize: '11px' }}
+                    >
                       {col.label}
                     </TableCell>
                   ))}
@@ -386,28 +437,63 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
                 {rows.map((row, i) => (
                   <TableRow key={row.user_id || row.form_number || row.batch_name || row.id || i}>
                     <TableCell sx={{ color: 'text.secondary' }}>{page * rowsPerPage + i + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar
-                          src={row.avatar || ''}
-                          alt={row.name || row.student_name || row.class || row.batch_name}
-                          sx={{ width: 34, height: 34, fontSize: 14, bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300] }}
-                        >
-                          {(row.name || row.student_name || row.class || row.batch_name || '?').charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
-                            {row.name || row.student_name || row.class || row.batch_name || '—'}
-                          </Typography>
-                          {row.email && (
-                            <Typography variant="caption" color="text.secondary">
-                              {row.email}
+                    {firstCol && (
+                      <TableCell align={firstCol.numeric ? 'right' : 'left'}>
+                        {isStatusChip(firstCol) ? (
+                          <Chip
+                            label={formatValue(row, firstCol)}
+                            size="small"
+                            color={
+                              String(row[firstCol.key]).toLowerCase() === 'active' ||
+                              String(row[firstCol.key]).toLowerCase() === 'admitted' ||
+                              String(row[firstCol.key]).toLowerCase() === 'accepted' ||
+                              String(row[firstCol.key]).toLowerCase() === 'open' ||
+                              String(row[firstCol.key]).toLowerCase() === 'graded'
+                                ? 'success'
+                                : String(row[firstCol.key]).toLowerCase() === 'pending' ||
+                                    String(row[firstCol.key]).toLowerCase() === 'scheduled'
+                                  ? 'warning'
+                                  : 'default'
+                            }
+                            sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                          />
+                        ) : isBadgeChip(firstCol) ? (
+                          <Chip
+                            label={formatValue(row, firstCol)}
+                            size="small"
+                            color={getBadgeColor(firstCol, row[firstCol.key])}
+                            variant="outlined"
+                            sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                          />
+                        ) : (
+                          formatValue(row, firstCol)
+                        )}
+                      </TableCell>
+                    )}
+                    {showNameColumn && (
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={row.avatar || ''}
+                            alt={row.name || row.student_name || row.class || row.batch_name}
+                            sx={{ width: 34, height: 34, fontSize: 14, bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300] }}
+                          >
+                            {(row.name || row.student_name || row.class || row.batch_name || '?').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
+                              {row.name || row.student_name || row.class || row.batch_name || '—'}
                             </Typography>
-                          )}
+                            {row.email && (
+                              <Typography variant="caption" color="text.secondary">
+                                {row.email}
+                              </Typography>
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    {columns.map((col) => (
+                      </TableCell>
+                    )}
+                    {restCols.map((col) => (
                       <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
                         {isStatusChip(col) ? (
                           <Chip
@@ -425,6 +511,14 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
                                   ? 'warning'
                                   : 'default'
                             }
+                            sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                          />
+                        ) : isBadgeChip(col) ? (
+                          <Chip
+                            label={formatValue(row, col)}
+                            size="small"
+                            color={getBadgeColor(col, row[col.key])}
+                            variant="outlined"
                             sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
                           />
                         ) : (
@@ -452,7 +546,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         )}
       </DialogContent>
       <DialogActions sx={{ px: 2.5, py: 1.5 }}>
-        <Button onClick={onClose}>Close</Button>
+        <Button disableRipple onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

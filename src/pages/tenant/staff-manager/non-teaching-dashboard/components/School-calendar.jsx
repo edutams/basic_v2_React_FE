@@ -1087,4 +1087,5 @@ const SchoolCalendarModal = ({ open, onClose, weeks, holidays, termStats }) => {
   );
 };
 
+export { SchoolCalendarModal };
 export default SchoolCalendar;

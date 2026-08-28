@@ -249,6 +249,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
       case 'enrollment_by_class':
         return [
           { key: 'user_id', label: 'Student ID', badge: true },
+          { key: 'class_code', label: 'Class' },
           { key: 'sex', label: 'Gender', badge: true },
         ];
       case 'students':

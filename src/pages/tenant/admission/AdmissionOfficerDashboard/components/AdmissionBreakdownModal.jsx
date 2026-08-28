@@ -136,14 +136,22 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   // ── Per-type column definition ────────────────────────────────────
   const columnsFor = () => {
     switch (type) {
-      case 'applicants':
       case 'admitted':
       case 'accepted':
+        return [
+          { key: 'form_number', label: 'Form No.', badge: true },
+          { key: 'name', label: 'Name' },
+          { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
+          { key: 'gender', label: 'Gender' },
+          { key: 'status', label: 'Status' },
+        ];
+      case 'applicants':
       case 'pending_review':
         return [
           { key: 'form_number', label: 'Form No.', badge: true },
           { key: 'name', label: 'Name' },
-          { key: 'class', label: 'Class' },
+          { key: 'intending_class', label: 'Intending Class' },
           { key: 'gender', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];
@@ -179,7 +187,11 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const columns = columnsFor();
 
   const formatValue = (row, col) => {
-    const v = row[col.key];
+    let v = row[col.key];
+    if (col.concat) {
+      const extra = row[col.concat];
+      v = [v, extra].filter(Boolean).join(' ');
+    }
     if (col.currency) return `₦${Number(v || 0).toLocaleString('en-NG')}`;
     if (col.percent) return `${Number(v || 0).toFixed(1)}%`;
     if (col.numeric) return Number(v || 0).toLocaleString();

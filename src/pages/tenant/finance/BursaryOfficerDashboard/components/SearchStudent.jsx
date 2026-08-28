@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, InputAdornment, Button, useTheme, CircularProgress, Stack, Avatar, Chip } from '@mui/material';
+import { Box, Typography, TextField, InputAdornment, Button, useTheme, CircularProgress, Stack, Avatar, Chip, Snackbar } from '@mui/material';
 import { Search } from '@mui/icons-material';
 
 /**
@@ -13,6 +13,7 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   const handleSearch = () => {
     if (onSearch && searchQuery.length >= 2) {
@@ -29,6 +30,7 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
   const showResults = results && results.length > 0;
 
   return (
+    <>
     <Box
       sx={{
         borderRadius: '14px',
@@ -140,7 +142,7 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
             {results.map((student, i) => (
               <Box
                 key={student.id || student.user_id || i}
-                onClick={() => onStudentClick && onStudentClick(student)}
+                onClick={() => setSnackbar({ open: true, message: 'This page is currently under development.' })}
                 sx={{
                   px: 1.5,
                   py: 1,
@@ -206,6 +208,15 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
         </Box>
       )}
     </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        message={snackbar.message}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
+    </>
   );
 };
 

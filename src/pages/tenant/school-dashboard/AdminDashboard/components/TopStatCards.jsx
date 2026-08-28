@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Paper, Tooltip, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Paper, Tooltip, Skeleton, useTheme } from '@mui/material';
 import { Groups, PersonAddAlt1, PeopleAlt, CalendarMonth, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 const StatCardItem = ({
@@ -10,6 +10,7 @@ const StatCardItem = ({
   trendDirection = 'up',
   subText,
   onClick,
+  loading = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -25,12 +26,38 @@ const StatCardItem = ({
   const isNegative = trendDirection === 'down';
   const trendColor = isNegative ? '#EF4444' : '#16A34A';
 
+  if (loading) {
+    return (        <Paper
+        elevation={0}
+        sx={{
+        p: 1,
+          borderRadius: '14px',
+          height: '100%',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: '12px' }} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="60%" height={14} />
+            <Skeleton variant="text" width="40%" height={28} />
+          </Box>
+        </Box>
+        <Box sx={{ pt: 1.25, borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }}>
+          <Skeleton variant="text" width="50%" height={12} />
+        </Box>
+      </Paper>
+    );
+  }
+
   const card = (
     <Paper
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 2,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -148,6 +175,7 @@ const TopStatCards = ({
   non_teaching_growth,
   attendance_growth,
   onCardClick,
+  loading = false,
 }) => {
   const renderTrend = (growth) => {
     if (growth == null) return { text: '— vs last term', direction: 'up' };
@@ -176,6 +204,7 @@ const TopStatCards = ({
           trendDirection={studentTrend.direction}
           subText="Active learners"
           onClick={() => onCardClick && onCardClick('students')}
+          loading={loading}
         />
       </Grid>
 
@@ -189,6 +218,7 @@ const TopStatCards = ({
           trendDirection={teachingTrend.direction}
           subText="Full & part time"
           onClick={() => onCardClick && onCardClick('teaching_staff')}
+          loading={loading}
         />
       </Grid>
 
@@ -202,6 +232,7 @@ const TopStatCards = ({
           trendDirection={nonTeachingTrend.direction}
           subText="Administrative & support"
           onClick={() => onCardClick && onCardClick('non_teaching_staff')}
+          loading={loading}
         />
       </Grid>
 
@@ -215,6 +246,7 @@ const TopStatCards = ({
           trendDirection={attendanceTrend.direction}
           subText="Average this term"
           onClick={() => onCardClick && onCardClick('attendance')}
+          loading={loading}
         />
       </Grid>
     </Grid>

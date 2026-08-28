@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, CircularProgress, useTheme } from '@mui/material';
+import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, CircularProgress, useTheme, Skeleton } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -20,6 +20,7 @@ const ApplicationTrend = ({
   sessionTerms = [],
   sessionTerm = 'all',
   onSessionChange,
+  loading = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -102,7 +103,17 @@ const ApplicationTrend = ({
 
       {/* Chart */}
       <Box sx={{ width: '100%', height: 220, mb: 2 }}>
-        {data.length === 0 ? (
+        {loading ? (
+          <Box sx={{ py: 3, px: 2 }}>
+            <Skeleton variant="text" width="60%" height={16} sx={{ mb: 2 }} />
+            <Skeleton variant="rounded" width="100%" height={160} sx={{ borderRadius: 1 }} />
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} variant="text" width="20%" height={14} />
+              ))}
+            </Box>
+          </Box>
+        ) : data.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
               No trend data available

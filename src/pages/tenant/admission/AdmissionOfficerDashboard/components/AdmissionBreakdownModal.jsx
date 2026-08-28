@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,7 +7,6 @@ import {
   Button,
   Box,
   Typography,
-  Avatar,
   Chip,
   TextField,
   InputAdornment,
@@ -69,7 +68,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const [searchInput, setSearchInput] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
   const [sessionTermId, setSessionTermId] = useState(sessionTerm || '');
-  const searchTimer = useRef(null);
 
   // Load session terms once (for the dropdown).
   useEffect(() => {
@@ -116,8 +114,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
     };
   };
 
-  // Reset page + filters and refetch whenever the modal opens or the type
-  // changes. Defaults the session term to the dashboard's current selection.
+  // Auto-fetch on open/type change; reset filters.
   useEffect(() => {
     if (!open || !type) return;
     setPage(0);
@@ -129,22 +126,17 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   }, [open, type, sessionTerm]);
 
   const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setSearch(value);
-      setPage(0);
-      fetchBreakdown(0, rowsPerPage, sessionTermId, value);
-    }, 400);
+    setSearchInput(e.target.value);
   };
 
   const handleTermChange = (e) => {
-    const value = e.target.value;
-    setSessionTermId(value);
+    setSessionTermId(e.target.value);
+  };
+
+  const handleFetch = () => {
+    setSearch(searchInput);
     setPage(0);
-    fetchBreakdown(0, rowsPerPage, value, search);
+    fetchBreakdown(0, rowsPerPage, sessionTermId, searchInput);
   };
 
   const handleChangePage = (_, newPage) => {
@@ -170,7 +162,8 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
       case 'admitted':
       case 'accepted':
         return [
-          { key: 'form_number', label: 'Form No.' },
+          { key: 'form_number', label: 'Form No.', badge: true },
+          { key: 'name', label: 'Name' },
           { key: 'class', label: 'Class' },
           { key: 'gender', label: 'Gender' },
           { key: 'status', label: 'Status' },
@@ -216,9 +209,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
 
   const isStatusChip = (col) => col.key === 'status';
 
-  // Row label — fee rows are keyed by class; applicant/batch rows by name/batch.
-  const rowName = (row) => row.name || row.class || row.batch_name || '—';
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -231,7 +221,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
         />
       </DialogTitle>
 
-      {/* Search + session term filter */}
+      {/* Search + session term filter + Fetch */}
       <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
@@ -264,6 +254,13 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
             </MenuItem>
           ))}
         </TextField>
+        <Button
+          variant="contained"
+          disableRipple
+          onClick={handleFetch}
+        >
+          Fetch
+        </Button>
       </Box>
 
       <DialogContent dividers>
@@ -281,7 +278,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Name</TableCell>
                   {columns.map((col) => (
                     <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
                       {col.label}
@@ -293,30 +289,16 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
                 {rows.map((row, i) => (
                   <TableRow key={row.user_id || row.form_number || row.batch_name || row.id || i}>
                     <TableCell sx={{ color: 'text.secondary' }}>{page * rowsPerPage + i + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar
-                          src={row.avatar || ''}
-                          alt={rowName(row)}
-                          sx={{ width: 34, height: 34, fontSize: 14, bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300] }}
-                        >
-                          {rowName(row).charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
-                            {rowName(row)}
-                          </Typography>
-                          {row.email && (
-                            <Typography variant="caption" color="text.secondary">
-                              {row.email}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
                     {columns.map((col) => (
                       <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
-                        {isStatusChip(col) ? (
+                        {col.badge ? (
+                          <Chip
+                            label={formatValue(row, col)}
+                            size="small"
+                            color="primary"
+                            sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                          />
+                        ) : isStatusChip(col) ? (
                           <Chip
                             label={formatValue(row, col)}
                             size="small"

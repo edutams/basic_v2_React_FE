@@ -23,7 +23,6 @@ const MetricCardsSkeleton = () => {
               display: 'flex',
               flexDirection: 'column',
               background: isDark ? theme.palette.background.paper : '#fff',
-              border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
             }}
           >

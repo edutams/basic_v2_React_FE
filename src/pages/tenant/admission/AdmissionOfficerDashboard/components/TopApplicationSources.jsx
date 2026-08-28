@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Stack, Button, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Stack, Button, useTheme, Skeleton } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -16,10 +16,44 @@ const defaultSourcesData = [
 /**
  * Top Application Sources Donut Chart Component
  */
-const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants = 3842, onViewSourceReport }) => {
+const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants = 3842, onViewSourceReport, loading = false }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  if (loading) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 1.5, sm: 2.25 },
+          borderRadius: '14px',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+          boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+        }}
+      >
+        <Skeleton variant="text" width="55%" height={14} sx={{ mb: 2 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Skeleton variant="circular" width={130} height={130} />
+          <Stack spacing={1} sx={{ flex: 1 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Skeleton variant="text" width="55%" height={12} />
+                <Skeleton variant="text" width="20%" height={12} />
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+        <Skeleton variant="text" width="35%" height={12} sx={{ mt: 2, mx: 'auto' }} />
+      </Paper>
+    );
+  }
 
   return (
     <Paper
@@ -135,19 +169,6 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
           disableRipple
           onClick={() => (onViewSourceReport ? onViewSourceReport() : navigate('/application-tracker'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#EFF6FF',
-              color: '#1d4ed8',
-              textDecoration: 'underline',
-              opacity: 1,
-            },
-          }}
         >
           View Source Report
         </Button>

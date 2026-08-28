@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Grid, Skeleton, useTheme } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 // Custom SVG Icons matching the design mockup image exactly
@@ -37,17 +37,41 @@ const PercentIcon = (props) => (
 /**
  * Mini Card Item Component
  */
-const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconComponent, onClick }) => {
+const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconComponent, onClick, loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  if (loading) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 1.25,
+          borderRadius: '12px',
+          height: '100%',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.25 }}>
+          <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: '10px' }} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="70%" height={14} />
+            <Skeleton variant="text" width="50%" height={20} />
+          </Box>
+        </Box>
+        <Skeleton variant="text" width="40%" height={12} />
+      </Paper>
+    );
+  }
 
   return (
     <Paper
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 1.75,
-        px: 2,
+        p: 1.25,
         borderRadius: '12px',
         fontSize:'9px',
         height: '100%',
@@ -144,6 +168,7 @@ const FinancialOverviewBar = ({
   outstandingBalance = '₦ 36,110,000',
   efficiency = '63.3%',
   onCardClick,
+  loading = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -152,7 +177,7 @@ const FinancialOverviewBar = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -181,6 +206,7 @@ const FinancialOverviewBar = ({
             isPositive={true}
             icon={WalletIcon}
             onClick={() => onCardClick && onCardClick('expected_income')}
+            loading={loading}
           />
         </Grid>
 
@@ -192,6 +218,7 @@ const FinancialOverviewBar = ({
             isPositive={true}
             icon={StackedCoinsIcon}
             onClick={() => onCardClick && onCardClick('collected_income')}
+            loading={loading}
           />
         </Grid>
 
@@ -203,6 +230,7 @@ const FinancialOverviewBar = ({
             isPositive={false}
             icon={ClockIcon}
             onClick={() => onCardClick && onCardClick('outstanding_balance')}
+            loading={loading}
           />
         </Grid>
 
@@ -214,6 +242,7 @@ const FinancialOverviewBar = ({
             isPositive={true}
             icon={PercentIcon}
             onClick={() => onCardClick && onCardClick('collection_efficiency')}
+            loading={loading}
           />
         </Grid>
       </Grid>

@@ -163,9 +163,9 @@ const AdmissionActivityLog = ({ onViewAll }) => {
             RECENT ACTIVITY
           </Typography>
           <Button
+            disableRipple
             onClick={() => setOpenModal(true)}
             endIcon={<ArrowForwardIcon sx={{ fontSize: '13px !important' }} />}
-            sx={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', textTransform: 'none' }}
           >
             View All
           </Button>

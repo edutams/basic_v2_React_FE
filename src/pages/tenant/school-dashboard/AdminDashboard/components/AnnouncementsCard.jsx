@@ -34,21 +34,20 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
         borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
       }}
     >
-      <Box>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexShrink: 0 }}>
           <CampaignOutlined sx={{ fontSize: 18, color: '#16a34a' }} />
           <Typography
             sx={{
@@ -64,7 +63,7 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
         </Box>
 
         {/* Announcement items list */}
-        <Stack spacing={0}>
+        <Stack spacing={0} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', '&::-webkit-scrollbar': { width: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 4 } }}>
           {announcements.map((item, index) => (
             <Stack
               key={item.id}
@@ -110,24 +109,11 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
       </Box>
 
       {/* Footer Link */}
-      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
-        <Button
+      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5, flexShrink: 0 }}>          <Button
           disableRipple
           onClick={() => (onViewAllAnnouncements ? onViewAllAnnouncements() : navigate('/communications/broadcast-messaging'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#2563eb',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#EFF6FF',
-              color: '#1d4ed8',
-              textDecoration: 'underline',
-              opacity: 1,
-            },
-          }}
+          sx={{ fontSize: '12px' }}
         >
           View All Announcements
         </Button>

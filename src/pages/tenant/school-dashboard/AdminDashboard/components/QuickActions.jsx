@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Typography, Button, Paper, useTheme } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Button, Paper, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
 import {
   PersonAddOutlined,
   GroupOutlined,
@@ -9,58 +9,47 @@ import {
   CampaignOutlined,
   DescriptionOutlined,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 
-/**
- * Quick Actions Bar for Admin Officer Dashboard
- */
-const QuickActions = () => {
-  const navigate = useNavigate();
+const QuickActions = ({ loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   const actions = [
     {
       id: 'add_student',
       label: 'Add Student',
       icon: <PersonAddOutlined sx={{ fontSize: 18, color: '#2563eb' }} />,
-      onClick: () => navigate('/learner-management', { state: { openAdd: true } }),
     },
     {
       id: 'manage_students',
       label: 'Manage Students',
       icon: <GroupOutlined sx={{ fontSize: 18, color: '#16a34a' }} />,
-      onClick: () => navigate('/learner-management'),
     },
     {
       id: 'manage_staff',
       label: 'Manage Staff',
       icon: <PeopleOutline sx={{ fontSize: 18, color: '#7c3aed' }} />,
-      onClick: () => navigate('/staff-setup'),
     },
     {
       id: 'upload_results',
       label: 'Upload Results',
       icon: <AssignmentOutlined sx={{ fontSize: 18, color: '#d97706' }} />,
-      onClick: () => navigate('/assessments/broadsheet'),
     },
     {
       id: 'view_attendance',
       label: 'View Attendance',
       icon: <CalendarMonthOutlined sx={{ fontSize: 18, color: '#0284c7' }} />,
-      onClick: () => navigate('/attendance-psychomotor'),
     },
     {
       id: 'create_announcement',
       label: 'Create Announcement',
       icon: <CampaignOutlined sx={{ fontSize: 18, color: '#16a34a' }} />,
-      onClick: () => navigate('/communications/broadcast-messaging'),
     },
     {
       id: 'generate_report',
       label: 'Generate Report',
       icon: <DescriptionOutlined sx={{ fontSize: 18, color: '#2563eb' }} />,
-      onClick: () => navigate('/reports/general-report'),
     },
   ];
 
@@ -68,8 +57,8 @@ const QuickActions = () => {
     <Paper
       elevation={0}
       sx={{
-        p: 2,
-        mb: 2.5,
+        p: 1,
+        py: 0.75,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -81,40 +70,54 @@ const QuickActions = () => {
         sx={{
           fontSize: '11px',
           fontWeight: 800,
-          color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-          mb: 1.5,
+          color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            mb: 0.5,
         }}
       >
         QUICK ACTIONS
       </Typography>
 
+      {loading ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 0.75,
+          }}
+          >
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={36}
+              sx={{ borderRadius: '10px' }}
+            />
+          ))}
+        </Box>
+      ) : (
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            sm: 'repeat(4, 1fr)',
-            md: 'repeat(7, 1fr)',
-          },
-          gap: 1.25,
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 0.75,
         }}
       >
         {actions.map((act) => (
           <Button
             key={act.id}
             variant="outlined"
-            onClick={act.onClick}
+            disableRipple
+            onClick={() => setSnackbar({ open: true, message: `${act.label} — Page under development` })}
             startIcon={act.icon}
             sx={{
-              py: 1.25,
-              px: 1.25,
+              py: 0.75,
+              px: 1,
               borderRadius: '10px',
               borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0',
               bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
               color: isDark ? '#ffffff' : '#1e293b',
-              fontSize: '11.5px',
+              fontSize: '10.5px',
               fontWeight: 700,
               textTransform: 'none',
               justifyContent: 'flex-start',
@@ -136,6 +139,23 @@ const QuickActions = () => {
           </Button>
         ))}
       </Box>
+      )}
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };

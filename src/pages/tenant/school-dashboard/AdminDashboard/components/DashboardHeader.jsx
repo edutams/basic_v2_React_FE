@@ -1,16 +1,25 @@
 import React from 'react';
 import { Box, Typography, FormControl, Select, MenuItem, useTheme } from '@mui/material';
-import { CalendarMonth, KeyboardArrowDown } from '@mui/icons-material';
+import { PersonOutline, KeyboardArrowDown } from '@mui/icons-material';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
+import { useNavigate } from 'react-router-dom';
 
 /**
- * Admin Dashboard Header — Greeting + Session Term Dropdown ONLY
+ * Admin Dashboard Header — Greeting + Role Switcher
  */
-const DashboardHeader = ({ sessionTerm, sessionTerms = [], onSessionChange }) => {
+const DashboardHeader = ({ currentRole = 'administrator' }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user } = useTenantAuth();
   const userRole = user?.role_name || user?.role || 'School Administrator';
+  const navigate = useNavigate();
+
+  const handleSwitchRole = (newRole) => {
+    if (newRole === 'administrator') return;
+    if (newRole === 'admission') navigate('/dashboard/admission');
+    else if (newRole === 'bursary') navigate('/dashboard/bursary');
+    else if (newRole === 'teacher') navigate('/staff-manager/teacher-dashboard');
+  };
 
   return (
     <Box
@@ -33,23 +42,31 @@ const DashboardHeader = ({ sessionTerm, sessionTerms = [], onSessionChange }) =>
         </Typography>
       </Box>
 
-      {/* Right: Session Term Dropdown ONLY */}
-      <FormControl size="small" sx={{ minWidth: 200, ml: 'auto' }}>
-        <Select
-          value={sessionTerm || 'all'}
-          onChange={(e) => onSessionChange && onSessionChange(e.target.value)}
-          renderValue={(v) => {
-            const label = sessionTerms.find((s) => String(s.id) === String(v))?.label || '2024/2025 Session';
-            return (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CalendarMonth sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
-                  {label}
-                </Typography>
-                <KeyboardArrowDown sx={{ fontSize: 16, color: 'text.secondary', ml: 'auto' }} />
-              </Box>
-            );
+      {/* Right: Role Switcher */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+        <Typography
+          sx={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+            whiteSpace: 'nowrap',
           }}
+        >
+          Switch Role
+        </Typography>
+      <FormControl size="small" sx={{ minWidth: 220 }}>
+        <Select
+          value={currentRole}
+          onChange={(e) => handleSwitchRole(e.target.value)}
+          renderValue={(val) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PersonOutline sx={{ fontSize: 18, color: '#2563eb' }} />
+              <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                {val === 'administrator' ? 'School Administrator' : val === 'admission' ? 'Admission Officer' : val === 'bursary' ? 'Bursary Officer' : 'Teacher'}
+              </Typography>
+              <KeyboardArrowDown sx={{ fontSize: 16, color: 'text.secondary', ml: 'auto' }} />
+            </Box>
+          )}
           sx={{
             bgcolor: 'background.paper',
             borderRadius: '10px',
@@ -58,13 +75,13 @@ const DashboardHeader = ({ sessionTerm, sessionTerms = [], onSessionChange }) =>
             boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}
         >
-          {sessionTerms.map((st) => (
-            <MenuItem key={st.id} value={st.id} sx={{ fontSize: '13px', fontWeight: 600 }}>
-              {st.label}
-            </MenuItem>
-          ))}
+          <MenuItem value="administrator" sx={{ fontSize: '13px', fontWeight: 600 }}>School Administrator</MenuItem>
+          <MenuItem value="admission" sx={{ fontSize: '13px', fontWeight: 600 }}>Admission Officer</MenuItem>
+          <MenuItem value="bursary" sx={{ fontSize: '13px', fontWeight: 600 }}>Bursary Officer</MenuItem>
+          <MenuItem value="teacher" sx={{ fontSize: '13px', fontWeight: 600 }}>Teacher / Instructor</MenuItem>
         </Select>
       </FormControl>
+      </Box>
     </Box>
   );
 };

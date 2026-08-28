@@ -243,19 +243,19 @@ const TermCalendarCard = ({
             disableRipple
             onClick={() => (onViewCalendar ? onViewCalendar() : navigate('/curriculum/session-mapping'))}
             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-            sx={{
-              fontSize: '12px',
-              fontWeight: 700,
-              color: '#2563eb',
-              textTransform: 'none',
-              '&:hover': {
-                bgcolor: 'transparent',
-                textDecoration: 'underline',
-              },
-              '&:hover::before': {
-                display: 'none',
-              },
-            }}
+           sx={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#2563eb',
+            textTransform: 'none',
+            borderRadius: '8px',
+            '&:hover': {
+              bgcolor: '#EFF6FF',
+              color: '#1d4ed8',
+              textDecoration: 'underline',
+              opacity: 1,
+            },
+          }}
           >
             View School Calendar
           </Button>

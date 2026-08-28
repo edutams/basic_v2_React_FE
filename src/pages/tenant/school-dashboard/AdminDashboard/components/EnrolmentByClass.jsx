@@ -52,8 +52,9 @@ const ClickableCell = ({ value, onClick, align = 'center', fontWeight = 600, col
 const EnrolmentByClass = ({
   classData = [],
   loading = false,
-  period = 'this_term',
-  onPeriodChange,
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
   onCellClick,
   onViewEnrolmentReport,
 }) => {
@@ -101,10 +102,10 @@ const EnrolmentByClass = ({
             ENROLMENT BY CLASS
           </Typography>
 
-          <FormControl size="small" sx={{ minWidth: 110 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
-              value={period}
-              onChange={(e) => onPeriodChange?.(e.target.value)}
+              value={sessionTerm}
+              onChange={(e) => onSessionChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -114,8 +115,11 @@ const EnrolmentByClass = ({
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
               }}
             >
-              <MenuItem value="this_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Term</MenuItem>
-              <MenuItem value="last_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Term</MenuItem>
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                  {st.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
@@ -191,7 +195,13 @@ const EnrolmentByClass = ({
             fontWeight: 700,
             color: '#2563eb',
             textTransform: 'none',
-            '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+            borderRadius: '8px',
+            '&:hover': {
+              bgcolor: '#EFF6FF',
+              color: '#1d4ed8',
+              textDecoration: 'underline',
+              opacity: 1,
+            },
           }}
         >
           View Enrolment Report

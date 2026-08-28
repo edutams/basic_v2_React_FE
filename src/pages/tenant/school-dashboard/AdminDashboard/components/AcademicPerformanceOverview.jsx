@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme, CircularProgress } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -13,10 +13,19 @@ const defaultAcademicData = [
 /**
  * Academic Performance Overview Bar Chart Component
  */
-const AcademicPerformanceOverview = ({ data = defaultAcademicData, avgScore = '68.4%', trend = '4.2%' }) => {
-  const [filter, setFilter] = useState('this_term');
+const AcademicPerformanceOverview = ({
+  data = defaultAcademicData,
+  avgScore = '68.4%',
+  trend = '4.2%',
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
+  loading = false,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  const chartData = (data && data.length > 0) ? data : defaultAcademicData;
 
   return (
     <Paper
@@ -49,10 +58,10 @@ const AcademicPerformanceOverview = ({ data = defaultAcademicData, avgScore = '6
             ACADEMIC PERFORMANCE OVERVIEW
           </Typography>
 
-          <FormControl size="small" sx={{ minWidth: 110 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={sessionTerm}
+              onChange={(e) => onSessionChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -62,16 +71,24 @@ const AcademicPerformanceOverview = ({ data = defaultAcademicData, avgScore = '6
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
               }}
             >
-              <MenuItem value="this_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Term</MenuItem>
-              <MenuItem value="last_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Term</MenuItem>
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                  {st.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
 
         {/* Chart */}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
         <Box sx={{ width: '100%', height: 180, mb: 1.5 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
+            <BarChart data={chartData} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
               <XAxis
                 dataKey="category"
                 tick={{ fontSize: 11, fontWeight: 700, fill: isDark ? '#cbd5e1' : '#334155' }}
@@ -94,13 +111,14 @@ const AcademicPerformanceOverview = ({ data = defaultAcademicData, avgScore = '6
                 formatter={(val) => [`${val}%`, 'Students']}
               />
               <Bar dataKey="val" radius={[6, 6, 0, 0]} barSize={40}>
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Box>
+        )}
       </Box>
 
       {/* Bottom Summary */}

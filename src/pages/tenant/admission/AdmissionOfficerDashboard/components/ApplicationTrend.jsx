@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, useTheme } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, CircularProgress, useTheme } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -12,35 +12,23 @@ import {
 } from 'recharts';
 
 /**
- * Default monthly trend data matching the design mockup (Sep 2024 - Aug 2025)
- */
-const defaultTrendData = [
-  { month: 'Sep 2024', thisSession: 950, lastSession: 720 },
-  { month: 'Oct 2024', thisSession: 1120, lastSession: 880 },
-  { month: 'Nov 2024', thisSession: 1350, lastSession: 1050 },
-  { month: 'Dec 2024', thisSession: 1600, lastSession: 1250 },
-  { month: 'Jan 2025', thisSession: 1900, lastSession: 1480 },
-  { month: 'Feb 2025', thisSession: 2050, lastSession: 1620 },
-  { month: 'Mar 2025', thisSession: 2380, lastSession: 1890 },
-  { month: 'Apr 2025', thisSession: 2750, lastSession: 2150 },
-  { month: 'May 2025', thisSession: 2820, lastSession: 2380 },
-  { month: 'Jun 2025', thisSession: 3200, lastSession: 2600 },
-  { month: 'Jul 2025', thisSession: 3450, lastSession: 2850 },
-  { month: 'Aug 2025', thisSession: 3842, lastSession: 3120 },
-];
-
-/**
  * Application Trend Line Chart Component
  */
-const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
-  const [filter, setFilter] = useState('this_session');
+const ApplicationTrend = ({
+  trendData = [],
+  metrics = {},
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const totalApps = (metrics.total_applications ?? 3842).toLocaleString();
-  const newThisMonth = (metrics.new_this_month ?? 512).toLocaleString();
-  const avgPerMonth = (metrics.avg_per_month ?? 349).toLocaleString();
-  const vsLastSession = metrics.vs_last_session ?? '18%';
+  const data = trendData;
+  const totalApps = (metrics.total_applications ?? 0).toLocaleString();
+  const newThisMonth = (metrics.new_this_month ?? 0).toLocaleString();
+  const avgPerMonth = (metrics.avg_per_month ?? 0).toLocaleString();
+  const vsLastSession = metrics.vs_last_session ?? '0%';
 
   return (
     <Paper
@@ -58,7 +46,7 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
       }}
     >
-      {/* Header with Title + Legend & Session Filter */}
+      {/* Header with Title + Session Term Filter */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         <Typography
           sx={{
@@ -89,10 +77,10 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
             </Box>
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              value={sessionTerm}
+              onChange={(e) => onSessionChange?.(e.target.value)}
               sx={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -102,8 +90,11 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
                 '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
               }}
             >
-              <MenuItem value="this_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Session</MenuItem>
-              <MenuItem value="last_session" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Session</MenuItem>
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                  {st.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
@@ -111,8 +102,15 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
 
       {/* Chart */}
       <Box sx={{ width: '100%', height: 220, mb: 2 }}>
+        {data.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+              No trend data available
+            </Typography>
+          </Box>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'} />
             <XAxis
               dataKey="month"
@@ -155,6 +153,7 @@ const ApplicationTrend = ({ trendData = defaultTrendData, metrics = {} }) => {
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </Box>
 
       {/* Bottom Metrics Bar */}

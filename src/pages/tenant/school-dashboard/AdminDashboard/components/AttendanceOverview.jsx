@@ -1,14 +1,15 @@
 import React from 'react';
 import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme, CircularProgress } from '@mui/material';
-import { ArrowUpward } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 const AttendanceOverview = ({
   data = [],
   avgAttendance = '—',
   trend = '0%',
-  period = 'this_term',
-  onPeriodChange,
+  sessionTerms = [],
+  sessionTerm = 'all',
+  onSessionChange,
   loading = false,
 }) => {
   const theme = useTheme();
@@ -58,11 +59,11 @@ const AttendanceOverview = ({
               </Box>
             </Box>
 
-            {/* Period Filter Dropdown */}
-            <FormControl size="small" sx={{ minWidth: 110 }}>
+            {/* Session Term Filter */}
+            <FormControl size="small" sx={{ minWidth: 130 }}>
               <Select
-                value={period}
-                onChange={(e) => onPeriodChange?.(e.target.value)}
+                value={sessionTerm}
+                onChange={(e) => onSessionChange?.(e.target.value)}
                 sx={{
                   fontSize: '11.5px',
                   fontWeight: 700,
@@ -72,8 +73,11 @@ const AttendanceOverview = ({
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
                 }}
               >
-                <MenuItem value="this_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>This Term</MenuItem>
-                <MenuItem value="last_term" sx={{ fontSize: '11.5px', fontWeight: 600 }}>Last Term</MenuItem>
+                {sessionTerms.map((st) => (
+                  <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
+                    {st.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
@@ -84,15 +88,26 @@ const AttendanceOverview = ({
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress size={28} />
           </Box>
+        ) : data.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+              No attendance data available
+            </Typography>
+          </Box>
         ) : (
         <Box sx={{ width: '100%', height: 180, mb: 1.5 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <XAxis
-                dataKey="day"
-                tick={{ fontSize: 11, fontWeight: 700, fill: isDark ? '#cbd5e1' : '#334155' }}
+                dataKey="week"
+                tick={{ fontSize: 10, fontWeight: 700, fill: isDark ? '#cbd5e1' : '#334155' }}
                 axisLine={false}
                 tickLine={false}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={50}
+                padding={{ left: 10, right: 10 }}
               />
               <YAxis
                 tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
@@ -105,6 +120,10 @@ const AttendanceOverview = ({
                   borderColor: isDark ? '#334155' : '#cbd5e1',
                   borderRadius: 8,
                   fontSize: 12,
+                }}
+                labelFormatter={(label, payload) => {
+                  const item = payload?.[0]?.payload;
+                  return item?.label || label;
                 }}
               />
               <Bar dataKey="Present" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={16} />
@@ -138,9 +157,9 @@ const AttendanceOverview = ({
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: '#16a34a' }}>
-          <ArrowUpward sx={{ fontSize: 14 }} />
-          <Typography variant="subtitle2" fontWeight={800} sx={{ fontSize: '13px', color: '#16a34a' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: trend.startsWith('-') ? '#dc2626' : '#16a34a' }}>
+          {trend.startsWith('-') ? <ArrowDownward sx={{ fontSize: 14 }} /> : <ArrowUpward sx={{ fontSize: 14 }} />}
+          <Typography variant="subtitle2" fontWeight={800} sx={{ fontSize: '13px', color: trend.startsWith('-') ? '#dc2626' : '#16a34a' }}>
             {trend} vs last week
           </Typography>
         </Box>

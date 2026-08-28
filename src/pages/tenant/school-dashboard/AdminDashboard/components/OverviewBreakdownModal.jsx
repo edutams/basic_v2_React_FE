@@ -251,9 +251,11 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
           { key: 'class', label: 'Class' },
           { key: 'status', label: 'Status' },
         ];
+      case 'attendance':
       case 'attendance_rate':
         return [
           { key: 'class', label: 'Class' },
+          { key: 'total_students', label: 'Students', numeric: true },
           { key: 'present', label: 'Present', numeric: true },
           { key: 'absent', label: 'Absent', numeric: true },
           { key: 'attendance_rate', label: 'Rate', numeric: true, percent: true },

@@ -42,21 +42,6 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
-const defaultActivities = [
-  { id: 1, type: 'applicant', title: 'New application received', category: 'Maryam O. (Primary 2)', time: '10 mins ago' },
-  { id: 2, type: 'document', title: 'Documents uploaded', category: 'Tunde A. (JSS 1)', time: '25 mins ago' },
-  { id: 3, type: 'review', title: 'Application moved to review', category: 'John D. (Primary 4)', time: '45 mins ago' },
-  { id: 4, type: 'admitted', title: 'Applicant admitted', category: 'Grace B. (SS 1)', time: '1 hour ago' },
-  { id: 5, type: 'accepted', title: 'Offer accepted', category: 'David K. (Primary 1)', time: '2 hours ago' },
-  { id: 6, type: 'applicant', title: 'New application received', category: 'Ismail H. (Nursery 1)', time: '2 hours ago' },
-  { id: 7, type: 'document', title: 'Documents uploaded', category: 'Aisha M. (Primary 3)', time: '3 hours ago' },
-  { id: 8, type: 'admitted', title: 'Application shortlisted', category: 'Samuel O. (Primary 2)', time: '3 hours ago' },
-  { id: 9, type: 'review', title: 'Application moved to review', category: 'Fatima L. (JSS 1)', time: '4 hours ago' },
-  { id: 10, type: 'admitted', title: 'Applicant admitted', category: 'Michael E. (SS 1)', time: '5 hours ago' },
-  { id: 11, type: 'accepted', title: 'Offer accepted', category: 'Blessing A. (JSS 1)', time: '5 hours ago' },
-  { id: 12, type: 'document', title: 'Documents uploaded', category: 'Daniel E. (Primary 5)', time: '6 hours ago' },
-];
-
 const getActivityIcon = (type) => {
   switch (type) {
     case 'applicant':
@@ -105,7 +90,7 @@ const AdmissionActivityLog = ({ onViewAll }) => {
   const isDark = theme.palette.mode === 'dark';
   const { user } = useTenantAuth();
   const [loading, setLoading] = useState(true);
-  const [activitiesList, setActivitiesList] = useState(defaultActivities);
+  const [activitiesList, setActivitiesList] = useState([]);
   const [openModal, setOpenModal] = useState(false);
 
   const fetchUserActivities = async (isMounted = true) => {
@@ -142,7 +127,7 @@ const AdmissionActivityLog = ({ onViewAll }) => {
         setActivitiesList(formatted);
       }
     } catch (err) {
-      console.warn('Using default activity logs fallback:', err);
+      console.warn('Failed to fetch activity logs:', err);
     } finally {
       if (isMounted) setLoading(false);
     }

@@ -29,7 +29,7 @@ const DashboardHeader = ({ sessionTerm, sessionTerms = [], onSessionChange }) =>
           value={sessionTerm || 'all'}
           onChange={(e) => onSessionChange && onSessionChange(e.target.value)}
           renderValue={(v) => {
-            const label = sessionTerms.find((s) => String(s.id) === String(v))?.label || '2024/2025 Session';
+            const label = sessionTerms.find((s) => String(s.id) === String(v))?.label || 'Select Session';
             return (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CalendarMonth sx={{ fontSize: 16, color: 'text.secondary' }} />

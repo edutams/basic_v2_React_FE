@@ -69,7 +69,7 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
     : actions.filter((a) => a.title !== 'Apply for Admission');
 
   return (
-    <Box mb={2.5} height="100%">
+    <Box mb={1} height="100%">
       {/* White wrapper card around title + action grid */}
       <Box
         sx={{
@@ -77,7 +77,7 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
           bgcolor: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '14px',
-          px: 1.2,
+          px: 1,
           py: 0.2,
           boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
         }}
@@ -94,7 +94,7 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
               sm: 'repeat(3, 1fr)',
               md: 'repeat(3, 1fr)',
             },
-            gap: 1.25,
+            gap: 1,
           }}
         >
         {visibleActions.map((item) => {
@@ -105,14 +105,14 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
               elevation={0}
               onClick={item.onClick}
               sx={{
-                p: 1.25,
+                p: 1,
                 borderRadius: '10px',
                 bgcolor: '#ffffff',
                 border: '1px solid #e2e8f0',
                 boxShadow: '0 4px 16px rgba(15, 23, 42, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.25,
+                gap: 1,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {

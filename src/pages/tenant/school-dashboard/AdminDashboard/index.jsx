@@ -291,7 +291,7 @@ const AdminDashboard = () => {
       />
 
       {/* ── Quick Actions Bar ───────────────────────────────────────── */}
-      <QuickActions />
+      <QuickActions loading={overview.loading} />
 
       {/* ── Middle Section: Left (Search + Financial + Charts) | Right (Enrolment) ── */}
       <Box

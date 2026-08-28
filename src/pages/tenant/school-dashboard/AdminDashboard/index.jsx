@@ -189,33 +189,19 @@ const AdminDashboard = () => {
         loading={overview.loading}
       />
 
-      {/* ── Quick Actions Bar ───────────────────────────────────────── */}
-      <QuickActions loading={overview.loading} />
-
       {/* ── Middle Section: Left (Search + Calendar + Financial + Charts) | Right (Enrolment + Announcements) ── */}
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' },
-          gap: 1.5,
+          gap: 1.3,
           alignItems: 'start',
         }}
       >
         {/* Left Column */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {/* Search + Term Calendar side by side */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 2 }}>
-            <SearchAndRoleBar />
-            <TermCalendarCard
-              dayCurrent={termCalendar.data?.day_current}
-              dayTotal={termCalendar.data?.day_total}
-              termStart={termCalendar.data?.term_start}
-              expectedEnd={termCalendar.data?.expected_end}
-              progressPct={termCalendar.data?.progress_pct}
-              loading={termCalendar.loading}
-              onViewCalendar={() => setCalendarModalOpen(true)}
-            />
-          </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <SearchAndRoleBar />
+          <QuickActions loading={overview.loading} />
 
           {/* Financial Overview Bar (4 Mini Fee Cards) */}
           <FinancialOverviewBar
@@ -251,12 +237,23 @@ const AdminDashboard = () => {
           </Grid>
         </Box>
 
-        {/* Right Column: Announcements on top, Enrolment By Class below (scrollable) */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxHeight: 600 }}>
+        {/* Right Column: Term Calendar, Announcements, Enrolment By Class */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
+          <Box sx={{ flexShrink: 0 }}>
+            <TermCalendarCard
+              dayCurrent={termCalendar.data?.day_current}
+              dayTotal={termCalendar.data?.day_total}
+              termStart={termCalendar.data?.term_start}
+              expectedEnd={termCalendar.data?.expected_end}
+              progressPct={termCalendar.data?.progress_pct}
+              loading={termCalendar.loading}
+              onViewCalendar={() => setCalendarModalOpen(true)}
+            />
+          </Box>
           <Box sx={{ flexShrink: 0 }}>
             <AnnouncementsCard />
           </Box>
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <Box sx={{ flexShrink: 0 }}>
             <EnrolmentByClass
               classData={enrollmentData}
               loading={enrollmentLoading}

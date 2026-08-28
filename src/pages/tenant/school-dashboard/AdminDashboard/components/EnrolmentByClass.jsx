@@ -28,8 +28,8 @@ const ClickableCell = ({ value, onClick, align = 'center', fontWeight = 600, col
         fontSize: '12px',
         fontWeight,
         color: color || (isDark ? '#cbd5e1' : '#334155'),
-        py: 0.85,
-        px: 1.25,
+        py: 0.5,
+        px: 1,
         cursor: 'pointer',
         borderRadius: '4px',
         transition: 'all 0.15s ease',
@@ -69,9 +69,9 @@ const EnrolmentByClass = ({
     <Paper
       elevation={0}
       sx={{
-        p: 1,
+        p: 0.75,
         borderRadius: '14px',
-        height: '100%',
+        maxHeight: 250,
         display: 'flex',
         flexDirection: 'column',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -82,7 +82,7 @@ const EnrolmentByClass = ({
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header */}
-        <Box sx={{ mb: 1.5, flexShrink: 0 }}>
+        <Box sx={{ mb: 0.5, flexShrink: 0 }}>
           <Typography
             sx={{
               fontSize: '11px',
@@ -113,16 +113,16 @@ const EnrolmentByClass = ({
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 1, px: 1.25, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Class</TableCell>
-                <TableCell align="center" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 1, px: 1.25, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Male</TableCell>
-                <TableCell align="center" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 1, px: 1.25, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Female</TableCell>
-                <TableCell align="right" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 1, px: 1.25, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Total</TableCell>
+                <TableCell sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 0.5, px: 1, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Class</TableCell>
+                <TableCell align="center" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 0.5, px: 1, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Male</TableCell>
+                <TableCell align="center" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 0.5, px: 1, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Female</TableCell>
+                <TableCell align="right" sx={{ fontSize: '11px', fontWeight: 700, color: '#64748b', py: 0.5, px: 1, bgcolor: isDark ? '#1e293b' : '#f8fafc' }}>Total</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {classData.map((row) => (
                 <TableRow key={row.class_code} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 0.85, px: 1.25 }}>
+                  <TableCell sx={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#fff' : '#1e293b', py: 0.5, px: 1 }}>
                     {row.class_code}
                   </TableCell>
                   <ClickableCell
@@ -145,16 +145,16 @@ const EnrolmentByClass = ({
 
               {/* Summary Total Row */}
               <TableRow sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }}>
-                <TableCell sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 1, px: 1.25 }}>
+                <TableCell sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 0.5, px: 1 }}>
                   Total
                 </TableCell>
-                <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 1, px: 1.25 }}>
+                <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 0.5, px: 1 }}>
                   {totals.male.toLocaleString()}
                 </TableCell>
-                <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 1, px: 1.25 }}>
+                <TableCell align="center" sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', py: 0.5, px: 1 }}>
                   {totals.female.toLocaleString()}
                 </TableCell>
-                <TableCell align="right" sx={{ fontSize: '12.5px', fontWeight: 800, color: '#2563eb', py: 1, px: 1.25 }}>
+                <TableCell align="right" sx={{ fontSize: '12.5px', fontWeight: 800, color: '#2563eb', py: 0.5, px: 1 }}>
                   {totals.total.toLocaleString()}
                 </TableCell>
               </TableRow>
@@ -165,7 +165,7 @@ const EnrolmentByClass = ({
       </Box>
 
       {/* Footer Link */}
-      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5, flexShrink: 0 }}>
+      <Box sx={{ pt: 0.75, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 0.75, flexShrink: 0 }}>
         <Button
           disableRipple
           onClick={() => (onViewEnrolmentReport ? onViewEnrolmentReport() : navigate('/reports/general-report'))}

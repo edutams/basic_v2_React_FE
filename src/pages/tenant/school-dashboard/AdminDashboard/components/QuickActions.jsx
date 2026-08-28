@@ -57,8 +57,8 @@ const QuickActions = ({ loading = false }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 1.25,
-        mb: 2.5,
+        p: 1,
+        py: 0.75,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -70,10 +70,9 @@ const QuickActions = ({ loading = false }) => {
         sx={{
           fontSize: '11px',
           fontWeight: 800,
-          color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-          mb: 1.5,
+          color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            mb: 0.5,
         }}
       >
         QUICK ACTIONS
@@ -83,19 +82,15 @@ const QuickActions = ({ loading = false }) => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(2, 1fr)',
-              sm: 'repeat(4, 1fr)',
-              md: 'repeat(7, 1fr)',
-            },
-            gap: 1.25,
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 0.75,
           }}
-        >
+          >
           {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton
               key={i}
               variant="rounded"
-              height={48}
+              height={36}
               sx={{ borderRadius: '10px' }}
             />
           ))}
@@ -104,12 +99,8 @@ const QuickActions = ({ loading = false }) => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            sm: 'repeat(4, 1fr)',
-            md: 'repeat(7, 1fr)',
-          },
-          gap: 1.25,
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 0.75,
         }}
       >
         {actions.map((act) => (
@@ -120,8 +111,8 @@ const QuickActions = ({ loading = false }) => {
             onClick={() => setSnackbar({ open: true, message: `${act.label} — Page under development` })}
             startIcon={act.icon}
             sx={{
-              py: 1.25,
-              px: 1.25,
+              py: 0.75,
+              px: 1,
               borderRadius: '10px',
               borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0',
               bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',

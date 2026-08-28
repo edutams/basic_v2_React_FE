@@ -65,7 +65,8 @@ const SearchAndRoleBar = () => {
       <Paper
         elevation={0}
         sx={{
-          p: 1,
+          px: 1,
+          py: 0.5,
           borderRadius: '14px',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
@@ -80,13 +81,13 @@ const SearchAndRoleBar = () => {
             color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
             textTransform: 'uppercase',
             letterSpacing: 0.5,
-            mb: 1.25,
+            mb: 0.5,
           }}
         >
           SEARCH STUDENT / STAFF
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'nowrap', position: 'relative' }}>
+        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'nowrap', position: 'relative' }}>
           <TextField
             fullWidth
             size="small"
@@ -115,7 +116,7 @@ const SearchAndRoleBar = () => {
             disableRipple
             onClick={handleSearch}
             disabled={searchLoading || query.trim().length < 2}
-            sx={{ px: 3.5, flexShrink: 0, fontSize: '12px' }}
+            sx={{ px: 2.5, py: 0.5, flexShrink: 0, fontSize: '12px' }}
           >
             {searchLoading ? <CircularProgress size={18} color="inherit" /> : 'Search'}
           </Button>

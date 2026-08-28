@@ -43,7 +43,18 @@ const DashboardHeader = ({ currentRole = 'administrator' }) => {
       </Box>
 
       {/* Right: Role Switcher */}
-      <FormControl size="small" sx={{ minWidth: 220, ml: 'auto' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+        <Typography
+          sx={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Switch Role
+        </Typography>
+      <FormControl size="small" sx={{ minWidth: 220 }}>
         <Select
           value={currentRole}
           onChange={(e) => handleSwitchRole(e.target.value)}
@@ -70,6 +81,7 @@ const DashboardHeader = ({ currentRole = 'administrator' }) => {
           <MenuItem value="teacher" sx={{ fontSize: '13px', fontWeight: 600 }}>Teacher / Instructor</MenuItem>
         </Select>
       </FormControl>
+      </Box>
     </Box>
   );
 };

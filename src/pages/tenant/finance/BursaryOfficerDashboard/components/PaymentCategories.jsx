@@ -11,7 +11,6 @@ import {
   MoreHoriz,
 } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
-import SessionSelect from './SessionSelect';
 
 const CATEGORY_META = [
   { icon: School, color: '#3B82F6', bg: '#EBF5FF' },
@@ -30,9 +29,6 @@ const CATEGORY_META = [
  */
 const PaymentCategories = ({
   payment_categories = [],
-  session = 'This Session',
-  sessions = [],
-  onSessionChange,
 }) => {
   const catData = payment_categories;
   const theme = useTheme();
@@ -56,8 +52,8 @@ const PaymentCategories = ({
       {/* Header */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2,
+          px: 1,
+          py: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -69,12 +65,12 @@ const PaymentCategories = ({
             Payment Categories
           </Typography>
         </Box>
-        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
+
       </Box>
-      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+      <Box sx={{ mx: 1, borderTop: '1px solid #E5E7EB' }} />
 
       {/* List */}
-      <Stack spacing={0} sx={{ flexGrow: 1, px: 2.5, py: 1 }}>
+      <Stack spacing={0} sx={{ flexGrow: 1, px: 1, py: 0.5 }}>
         {catData.length > 0 ? (
           catData.map((cat, i) => {
             const meta = CATEGORY_META[i % CATEGORY_META.length];

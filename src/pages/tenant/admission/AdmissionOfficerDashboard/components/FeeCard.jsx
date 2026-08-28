@@ -20,7 +20,7 @@ const FeeCard = ({ colorName = 'primary', title, value, sub, onClick }) => {
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 2,
+          p: 1,
           borderRadius: '16px',
           height: '100%',
           display: 'flex',
@@ -65,7 +65,7 @@ const FeeCard = ({ colorName = 'primary', title, value, sub, onClick }) => {
             color: isDark ? 'rgba(255,255,255,0.72)' : colors.accentColor,
             textTransform: 'uppercase',
             letterSpacing: 0.3,
-            fontSize: 10,
+            fontSize: '11px',
           }}
         >
           {title}
@@ -78,7 +78,7 @@ const FeeCard = ({ colorName = 'primary', title, value, sub, onClick }) => {
         sx={{
           my: 1,
           color: isDark ? '#fff' : colors.accentColor,
-          fontSize: { xs: 20, md: 24 },
+          fontSize: { xs: '22px', sm: '26px' },
           lineHeight: 1.1,
         }}
       >

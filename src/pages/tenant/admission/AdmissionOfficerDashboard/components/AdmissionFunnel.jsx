@@ -13,7 +13,7 @@ const AdmissionFunnel = ({ funnel = [], onViewFullReport, loading = false }) => 
       <Paper
         elevation={0}
         sx={{
-          p: 2.25,
+          p: 1,
           borderRadius: '14px',
           height: '100%',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',

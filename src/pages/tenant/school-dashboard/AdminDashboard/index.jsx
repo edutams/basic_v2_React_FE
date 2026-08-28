@@ -199,7 +199,7 @@ const AdminDashboard = () => {
         }}
       >
         {/* Left Column */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
           <SearchAndRoleBar />
           <QuickActions loading={overview.loading} />
 

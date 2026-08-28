@@ -8,9 +8,9 @@ import { BLUE, GREEN, ORANGE, PURPLE, num } from '../constants';
  * At a Glance — right-hand card listing key ratios with tinted rows and a footer link.
  */
 const AtAGlance = ({ at_a_glance, onViewFullReports }) => (
-  <CardShell sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
-    <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: 13, mb: 1.75 }}>
-      At a Glance
+  <CardShell sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, mb: 1.75 }}>
+      AT A GLANCE
     </Typography>
     <Stack spacing={1.25}>
       <GlanceRow
@@ -62,7 +62,7 @@ const AtAGlance = ({ at_a_glance, onViewFullReports }) => (
         gap: 0.5,
         color: 'primary.main',
         fontWeight: 700,
-        fontSize: 12,
+        fontSize: 11,
         cursor: 'pointer',
         '&:hover': { gap: 0.75, textDecoration: 'underline' },
         transition: 'all 0.2s ease',

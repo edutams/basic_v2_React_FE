@@ -17,7 +17,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
         borderRadius: '14px',
         bgcolor: '#ffffff',
         border: '1px solid #e2e8f0',
-        p: 2,
+        p: 1,
         boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
         transition: 'all 0.2s ease',
         '&:hover': {

@@ -158,8 +158,8 @@ const AdmissionActivityLog = ({ onViewAll }) => {
         }}
       >
         {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.25, pt: 2.25, pb: 1.5 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: 13, color: isDark ? '#ffffff' : '#0f172a', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, pt: 1, pb: 0.75 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: '11px', color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b', textTransform: 'uppercase', letterSpacing: 0.5 }}>
             RECENT ACTIVITY
           </Typography>
           <Button
@@ -177,8 +177,8 @@ const AdmissionActivityLog = ({ onViewAll }) => {
             flex: 1,
             minHeight: 0,
             overflowY: 'auto',
-            px: 2.25,
-            pb: 2,
+            px: 1,
+            pb: 1,
             '&::-webkit-scrollbar': { width: 4 },
             '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#334155' : '#d1d5db', borderRadius: 4 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },

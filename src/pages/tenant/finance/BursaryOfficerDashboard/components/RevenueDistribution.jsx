@@ -3,19 +3,14 @@ import { Box, Typography, Stack, useTheme } from '@mui/material';
 import { PieChartOutline } from '@mui/icons-material';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import { COLORS, formatCompact, formatCurrency } from '../constants';
-import SessionSelect from './SessionSelect';
 
 /**
  * Revenue Distribution — donut chart + per-category legend with amounts.
- * Includes a session dropdown in the header.
  */
 const RevenueDistribution = ({
   revenue_distribution = [],
   totalRevenue = 0,
   onClick,
-  session = 'This Session',
-  sessions = [],
-  onSessionChange,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -47,8 +42,8 @@ const RevenueDistribution = ({
       {/* Header */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2,
+          px: 1,
+          py: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -74,12 +69,12 @@ const RevenueDistribution = ({
           </Typography>
         </Box>
 
-        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
+
       </Box>
-      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+      <Box sx={{ mx: 1, borderTop: '1px solid #E5E7EB' }} />
 
       {/* Content */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 2.5, flexGrow: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 1, flexGrow: 1, minHeight: 0 }}>
         {distData.length > 0 ? (
           <>
             <Box sx={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>

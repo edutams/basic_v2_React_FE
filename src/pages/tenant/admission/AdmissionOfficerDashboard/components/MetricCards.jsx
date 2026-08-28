@@ -33,7 +33,7 @@ const StatCardItem = ({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -85,7 +85,7 @@ const StatCardItem = ({
           </Typography>
           <Typography
             sx={{
-              fontSize: { xs: '24px', sm: '28px' },
+              fontSize: { xs: '22px', sm: '26px' },
               fontWeight: 800,
               color: isDark ? '#ffffff' : '#0f172a',
               lineHeight: 1.1,
@@ -162,7 +162,7 @@ const MetricCards = ({
   const admittedGrowthType = total_admitted.growth_type;
 
   return (
-    <Grid container spacing={2} mb={2.5}>
+    <Grid container spacing={2} mb={1.3}>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <StatCardItem
           label="Total Applicants"

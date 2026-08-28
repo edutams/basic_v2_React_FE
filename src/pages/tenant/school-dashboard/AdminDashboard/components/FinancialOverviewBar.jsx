@@ -191,7 +191,6 @@ const FinancialOverviewBar = ({
           fontWeight: 800,
           textTransform: 'uppercase',
           letterSpacing: 0.5,
-          mb: 1,
         }}
       >
         FINANCIAL OVERVIEW

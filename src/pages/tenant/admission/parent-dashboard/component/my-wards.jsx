@@ -76,7 +76,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         border: '1.5px solid',
         borderColor: isSelected ? '#dc2626' : '#e2e8f0',
         bgcolor: isSelected ? '#fff5f5' : '#ffffff',
-        p: 1.75,
+        p: 1,
         boxShadow: isSelected ? '0 4px 16px rgba(220, 38, 38, 0.12)' : '0 4px 16px rgba(15, 23, 42, 0.08)',
         display: 'flex',
         flexDirection: 'column',

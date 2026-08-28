@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Card, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
 import {
   PersonAddOutlined,
   GroupOutlined,
@@ -8,138 +9,233 @@ import {
   CalendarMonthOutlined,
   CampaignOutlined,
   DescriptionOutlined,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 
 const QuickActions = ({ loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   const actions = [
     {
       id: 'add_student',
-      label: 'Add Student',
-      icon: <PersonAddOutlined sx={{ fontSize: 18, color: '#2563eb' }} />,
+      icon: PersonAddOutlined,
+      iconColor: '#2563eb',
+      iconBg: '#dbeafe',
+      title: 'Add Student',
+      subtitle: 'Register a new student',
+      onClick: () => setSnackbar({ open: true, message: 'Add Student — Page under development' }),
     },
     {
       id: 'manage_students',
-      label: 'Manage Students',
-      icon: <GroupOutlined sx={{ fontSize: 18, color: '#16a34a' }} />,
+      icon: GroupOutlined,
+      iconColor: '#16a34a',
+      iconBg: '#dcfce7',
+      title: 'Manage Students',
+      subtitle: 'View & edit student records',
+      onClick: () => setSnackbar({ open: true, message: 'Manage Students — Page under development' }),
     },
     {
       id: 'manage_staff',
-      label: 'Manage Staff',
-      icon: <PeopleOutline sx={{ fontSize: 18, color: '#7c3aed' }} />,
+      icon: PeopleOutline,
+      iconColor: '#7c3aed',
+      iconBg: '#f3e8ff',
+      title: 'Manage Staff',
+      subtitle: 'View & manage staff list',
+      onClick: () => setSnackbar({ open: true, message: 'Manage Staff — Page under development' }),
     },
     {
       id: 'upload_results',
-      label: 'Upload Results',
-      icon: <AssignmentOutlined sx={{ fontSize: 18, color: '#d97706' }} />,
+      icon: AssignmentOutlined,
+      iconColor: '#d97706',
+      iconBg: '#fef3c7',
+      title: 'Upload Results',
+      subtitle: 'Upload student results',
+      onClick: () => setSnackbar({ open: true, message: 'Upload Results — Page under development' }),
     },
     {
       id: 'view_attendance',
-      label: 'View Attendance',
-      icon: <CalendarMonthOutlined sx={{ fontSize: 18, color: '#0284c7' }} />,
+      icon: CalendarMonthOutlined,
+      iconColor: '#0284c7',
+      iconBg: '#e0f2fe',
+      title: 'View Attendance',
+      subtitle: 'Check attendance records',
+      onClick: () => setSnackbar({ open: true, message: 'View Attendance — Page under development' }),
     },
     {
       id: 'create_announcement',
-      label: 'Create Announcement',
-      icon: <CampaignOutlined sx={{ fontSize: 18, color: '#16a34a' }} />,
+      icon: CampaignOutlined,
+      iconColor: '#16a34a',
+      iconBg: '#dcfce7',
+      title: 'Create Announcement',
+      subtitle: 'Post school-wide alerts',
+      onClick: () => setSnackbar({ open: true, message: 'Create Announcement — Page under development' }),
     },
     {
       id: 'generate_report',
-      label: 'Generate Report',
-      icon: <DescriptionOutlined sx={{ fontSize: 18, color: '#2563eb' }} />,
+      icon: DescriptionOutlined,
+      iconColor: '#2563eb',
+      iconBg: '#dbeafe',
+      title: 'Generate Report',
+      subtitle: 'Create academic reports',
+      onClick: () => setSnackbar({ open: true, message: 'Generate Report — Page under development' }),
     },
   ];
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 1,
-        py: 0.75,
-        borderRadius: '14px',
-        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-        border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
-      }}
-    >
-      <Typography
-        sx={{
-          fontSize: '11px',
-          fontWeight: 800,
-          color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            mb: 0.5,
-        }}
-      >
-        QUICK ACTIONS
-      </Typography>
-
-      {loading ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 0.75,
-          }}
-          >
-          {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              variant="rounded"
-              height={36}
-              sx={{ borderRadius: '10px' }}
-            />
-          ))}
-        </Box>
-      ) : (
+    <Box  height="100%">
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 0.75,
+          height: '100%',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+          borderRadius: '14px',
+          px: 1.2,
+          py: 0.5,
+          boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
         }}
       >
-        {actions.map((act) => (
-          <Button
-            key={act.id}
-            variant="outlined"
-            disableRipple
-            onClick={() => setSnackbar({ open: true, message: `${act.label} — Page under development` })}
-            startIcon={act.icon}
+        <Typography
+          sx={{
+            fontSize: '11px',
+            fontWeight: 800,
+            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            mb: 1,
+          }}
+        >
+          QUICK ACTIONS
+        </Typography>
+
+        {loading ? (
+          <Box
             sx={{
-              py: 0.75,
-              px: 1,
-              borderRadius: '10px',
-              borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0',
-              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-              color: isDark ? '#ffffff' : '#1e293b',
-              fontSize: '10.5px',
-              fontWeight: 700,
-              textTransform: 'none',
-              justifyContent: 'flex-start',
-              whiteSpace: 'nowrap',
-              boxShadow: 'none',
-              transition: 'background-color 0.15s ease, border-color 0.15s ease',
-              '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#eff6ff',
-                borderColor: '#2563eb',
-                color: isDark ? '#ffffff' : '#1e293b',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.12)',
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(1, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(3, 1fr)',
               },
-              '&:hover::before': {
-                display: 'none',
-              },
+              gap: 1,
             }}
           >
-            {act.label}
-          </Button>
-        ))}
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                variant="rounded"
+                height={52}
+                sx={{ borderRadius: '10px' }}
+              />
+            ))}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(1, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 1,
+            }}
+          >
+            {actions.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Card
+                  key={item.id}
+                  elevation={0}
+                  onClick={item.onClick}
+                  sx={{
+                    p: 1,
+                    borderRadius: '10px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                    border: '1px solid',
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+                    boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      borderColor: item.iconColor,
+                      boxShadow: `0 4px 16px rgba(15, 23, 42, 0.08)`,
+                      '& .action-arrow': {
+                        color: item.iconColor,
+                        transform: 'translateX(3px)',
+                      },
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      minWidth: 34,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.iconBg,
+                      color: item.iconColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon sx={{ fontSize: 17 }} />
+                  </Box>
+
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 11,
+                        color: isDark ? 'rgba(255,255,255,0.9)' : '#0f172a',
+                        lineHeight: 1.2,
+                        mb: 0.15,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {item.title}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 9,
+                        color: isDark ? 'rgba(255,255,255,0.5)' : '#64748b',
+                        lineHeight: 1.2,
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {item.subtitle}
+                    </Typography>
+                  </Box>
+
+                  <ArrowForwardIcon
+                    className="action-arrow"
+                    sx={{
+                      fontSize: 14,
+                      color: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                    }}
+                  />
+                </Card>
+              );
+            })}
+          </Box>
+        )}
       </Box>
-      )}
 
       <Snackbar
         open={snackbar.open}
@@ -156,7 +252,7 @@ const QuickActions = ({ loading = false }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Paper>
+    </Box>
   );
 };
 

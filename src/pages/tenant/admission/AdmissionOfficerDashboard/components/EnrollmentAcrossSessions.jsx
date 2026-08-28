@@ -9,7 +9,7 @@ import { BLUE, GREEN, num } from '../constants';
  * The class dropdown filters the chart via its own enrollment-by-sessions endpoint.
  */
 const EnrollmentAcrossSessions = ({ bySessions, classes = [], selectedClass = 'all', onClassChange }) => (
-  <CardShell sx={{ p: 2.5, height: '100%' }}>
+  <CardShell sx={{ p: 1, height: '100%' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: 12.5 }}>
         Enrollment Across Sessions

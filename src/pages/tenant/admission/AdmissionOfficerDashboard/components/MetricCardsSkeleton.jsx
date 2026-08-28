@@ -17,7 +17,7 @@ const MetricCardsSkeleton = () => {
           <Paper
             elevation={0}
             sx={{
-              p: 2,
+              p: 1,
               borderRadius: '16px',
               height: '100%',
               display: 'flex',
@@ -43,7 +43,7 @@ const MetricCardsSkeleton = () => {
                 pt: 1.5,
               }}
             >
-              <Skeleton variant="text" width="45%" height={24} />
+              <Skeleton variant="text" width="45%" height={22} />
               <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
                 <Skeleton variant="text" width={70} height={10} />
                 <Skeleton variant="text" width={70} height={10} />

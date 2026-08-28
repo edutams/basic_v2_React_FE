@@ -26,7 +26,7 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
       <Paper
         elevation={0}
         sx={{
-          p: { xs: 1.5, sm: 2.25 },
+          p: 1,
           borderRadius: '14px',
           height: '100%',
           display: 'flex',
@@ -59,7 +59,7 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 1.5, sm: 2.25 },
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
@@ -168,7 +168,8 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
         <Button
           disableRipple
           onClick={() => (onViewSourceReport ? onViewSourceReport() : navigate('/application-tracker'))}
-          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+            sx={{ fontSize: '12px' }}
         >
           View Source Report
         </Button>

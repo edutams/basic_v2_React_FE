@@ -120,12 +120,12 @@ const QuickActions = ({ loading = false }) => {
         bgcolor: isDark ? theme.palette.background.paper : '#fff',
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
         p: '8px 10px',
-        mb: 2.5,
+        mb: 1.3,
       }}
     >
       {/* Quick Actions header */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Typography fontWeight={800} sx={{ fontSize: '0.82rem', color: '#111827', letterSpacing: 0.3, whiteSpace: 'nowrap' }}>
+        <Typography fontWeight={800} sx={{ fontSize: '11px', color: '#111827', letterSpacing: 0.3, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
           QUICK ACTIONS
         </Typography>
         <Box sx={{ flex: 1, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB'}` }} />
@@ -200,8 +200,8 @@ const QuickActions = ({ loading = false }) => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '0.5rem', sm: '0.58rem' },
-                  fontWeight: 600,
+                  fontSize: '11px',
+                  fontWeight: 700,
                   color: '#374151',
                   textAlign: 'center',
                   lineHeight: 1.2,

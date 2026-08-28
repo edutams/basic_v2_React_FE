@@ -23,7 +23,7 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 2,
+          p: 1,
           borderRadius: '16px',
           height: '100%',
           display: 'flex',

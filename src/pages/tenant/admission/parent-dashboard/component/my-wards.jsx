@@ -76,7 +76,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         border: '1.5px solid',
         borderColor: isSelected ? '#dc2626' : '#e2e8f0',
         bgcolor: isSelected ? '#fff5f5' : '#ffffff',
-        p: 1.75,
+        p: 1,
         boxShadow: isSelected ? '0 4px 16px rgba(220, 38, 38, 0.12)' : '0 4px 16px rgba(15, 23, 42, 0.08)',
         display: 'flex',
         flexDirection: 'column',
@@ -355,7 +355,7 @@ const MyWards = ({
 
   if (loading) {
     return (
-      <Box mb={2.5}>
+      <Box>
         <Skeleton variant="text" width={120} height={24} sx={{ mb: 1.5 }} />
         <Stack direction="row" spacing={2}>
           {[0, 1, 2].map((i) => (
@@ -367,7 +367,7 @@ const MyWards = ({
   }
 
   return (
-    <Box mb={2.5} height="100%">
+    <Box  height="100%">
       {/* Wrapper panel wrapping the title, session-term filter, prev/next controls and the ward cards */}
       <Box
         sx={{
@@ -377,12 +377,12 @@ const MyWards = ({
           bgcolor: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '14px',
-          p: 1.5,
+          p: 1.3,
           boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
         }}
       >
         {/* Header with Title, Session-Term Filter, and Prev/Next Navigation Controls */}
-          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.25}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
               My Wards
             </Typography>

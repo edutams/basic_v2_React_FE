@@ -193,7 +193,7 @@ const TopStatCards = ({
   const attendanceTrend = renderTrend(attendance_growth);
 
   return (
-    <Grid container spacing={2} mb={2.5}>
+    <Grid container spacing={2} mb={1.5}>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <StatCardItem
           label="Total Students"

@@ -10,7 +10,6 @@ import {
   Chip,
   TextField,
   InputAdornment,
-  MenuItem,
   TableContainer,
   Table,
   TableHead,
@@ -25,7 +24,6 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 // Fallback titles used until the backend returns a `title` for the payload —
 // keeps the dialog header meaningful for every admission card type.
@@ -34,6 +32,7 @@ const TITLES = {
   batches: 'Total Batches Created',
   admitted: 'Total Admitted',
   accepted: 'Total Accepted',
+  pending_review: 'Pending Review',
   pre_application_fees: 'Pre-Application Fees',
   post_application_fees: 'Post-Application Fees',
   total_fees: 'Total Fees Collected',
@@ -66,23 +65,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [sessionTermId, setSessionTermId] = useState(sessionTerm || '');
-
-  // Load session terms once (for the dropdown).
-  useEffect(() => {
-    let mounted = true;
-    fetchSessionTerms()
-      .then((res) => {
-        if (mounted && res?.status) setSessionTerms(res.data || []);
-      })
-      .catch((err) => console.error('Failed to fetch session terms:', err));
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
+  const fetchBreakdown = (p = 0, rpp = rowsPerPage, term = search) => {
     if (!open || !type) return;
 
     let cancelled = false;
@@ -95,7 +78,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
           page: p + 1,
           per_page: rpp,
           search: term || undefined,
-          session_term_id: termId || undefined,
+          session_term_id: sessionTerm || undefined,
         },
       })
       .then((res) => {
@@ -120,8 +103,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
     setPage(0);
     setSearch('');
     setSearchInput('');
-    setSessionTermId(sessionTerm || '');
-    return fetchBreakdown(0, rowsPerPage, sessionTerm || '', '');
+    return fetchBreakdown(0, rowsPerPage, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, type, sessionTerm]);
 
@@ -129,26 +111,22 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
     setSearchInput(e.target.value);
   };
 
-  const handleTermChange = (e) => {
-    setSessionTermId(e.target.value);
-  };
-
   const handleFetch = () => {
     setSearch(searchInput);
     setPage(0);
-    fetchBreakdown(0, rowsPerPage, sessionTermId, searchInput);
+    fetchBreakdown(0, rowsPerPage, searchInput);
   };
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
-    fetchBreakdown(newPage, rowsPerPage, sessionTermId, search);
+    fetchBreakdown(newPage, rowsPerPage, search);
   };
 
   const handleChangeRowsPerPage = (e) => {
     const rpp = parseInt(e.target.value, 10);
     setRowsPerPage(rpp);
     setPage(0);
-    fetchBreakdown(0, rpp, sessionTermId, search);
+    fetchBreakdown(0, rpp, search);
   };
 
   const rows = data?.rows || [];
@@ -158,13 +136,23 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   // ── Per-type column definition ────────────────────────────────────
   const columnsFor = () => {
     switch (type) {
-      case 'applicants':
       case 'admitted':
       case 'accepted':
         return [
           { key: 'form_number', label: 'Form No.', badge: true },
           { key: 'name', label: 'Name' },
-          { key: 'class', label: 'Class' },
+          { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
+          { key: 'gender', label: 'Gender' },
+          { key: 'status', label: 'Status' },
+        ];
+      case 'applicants':
+      case 'pending_review':
+        return [
+          { key: 'form_number', label: 'Form No.', badge: true },
+          { key: 'name', label: 'Name' },
+          { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
           { key: 'gender', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];
@@ -200,7 +188,11 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const columns = columnsFor();
 
   const formatValue = (row, col) => {
-    const v = row[col.key];
+    let v = row[col.key];
+    if (col.concat) {
+      const extra = row[col.concat];
+      v = [v, extra].filter(Boolean).join(' ');
+    }
     if (col.currency) return `₦${Number(v || 0).toLocaleString('en-NG')}`;
     if (col.percent) return `${Number(v || 0).toFixed(1)}%`;
     if (col.numeric) return Number(v || 0).toLocaleString();
@@ -221,13 +213,14 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
         />
       </DialogTitle>
 
-      {/* Search + session term filter + Fetch */}
+      {/* Search + Fetch */}
       <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
           placeholder="Search…"
           value={searchInput}
           onChange={handleSearchChange}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleFetch(); }}
           sx={{ flex: '1 1 220px', maxWidth: 320 }}
           InputProps={{
             startAdornment: (
@@ -237,23 +230,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
             ),
           }}
         />
-        <TextField
-          select
-          size="small"
-          label="Session Term"
-          value={sessionTermId}
-          onChange={handleTermChange}
-          sx={{ flex: '1 1 200px', maxWidth: 260 }}
-        >
-          <MenuItem value="">
-            <em>All session terms</em>
-          </MenuItem>
-          {sessionTerms.map((st) => (
-            <MenuItem key={st.id} value={String(st.id)}>
-              {st.session?.sesname} — {st.display_term?.display_name}
-            </MenuItem>
-          ))}
-        </TextField>
         <Button
           variant="contained"
           disableRipple

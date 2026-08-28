@@ -16,7 +16,7 @@ const SectionCard = ({ icon: Icon, title, color, children, sx = {}, onClick }) =
         border: '1px solid',
         borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'grey.200',
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-        p: 2.5,
+        p: 1,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',

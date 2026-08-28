@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
-import SessionSelect from './SessionSelect';
 
 /**
  * Outstanding Balance by Class — table of per-class expected/collected/outstanding
@@ -26,9 +25,6 @@ const CollectionMatrix = ({
   totals,
   totalEfficiency,
   onRowClick,
-  session = 'This Session',
-  sessions = [],
-  onSessionChange,
 }) => {
   const theme = useTheme();
   const displayMatrix = matrix;
@@ -63,8 +59,8 @@ const CollectionMatrix = ({
       {/* Header */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2,
+          px: 1,
+          py: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -77,9 +73,9 @@ const CollectionMatrix = ({
           </Typography>
           <InfoOutlined sx={{ fontSize: 14, color: '#9CA3AF', ml: 0.5 }} />
         </Box>
-        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
+
       </Box>
-      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+      <Box sx={{ mx: 1, borderTop: '1px solid #E5E7EB' }} />
 
       <TableContainer sx={{ flexGrow: 1 }}>
         <Table sx={{ minWidth: 700 }}>

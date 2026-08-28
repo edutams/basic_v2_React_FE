@@ -10,9 +10,6 @@ import {
   TableCell,
   TableBody,
   LinearProgress,
-  FormControl,
-  Select,
-  MenuItem,
   Button,
   useTheme,
   Skeleton,
@@ -26,9 +23,6 @@ import { useNavigate } from 'react-router-dom';
 const ApplicationsByGrade = ({
   gradeData = [],
   onViewFullReport,
-  sessionTerms = [],
-  sessionTerm = 'all',
-  onSessionChange,
   loading = false,
 }) => {
   const navigate = useNavigate();
@@ -41,7 +35,7 @@ const ApplicationsByGrade = ({
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 1.5, sm: 2.25 },
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
@@ -68,26 +62,7 @@ const ApplicationsByGrade = ({
             APPLICATIONS BY GRADE LEVEL
           </Typography>
 
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={sessionTerm}
-              onChange={(e) => onSessionChange?.(e.target.value)}
-              sx={{
-                fontSize: '11.5px',
-                fontWeight: 700,
-                borderRadius: '8px',
-                height: 30,
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
-              }}
-            >
-              {sessionTerms.map((st) => (
-                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
-                  {st.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
         </Box>
 
         {/* Table */}
@@ -174,7 +149,8 @@ const ApplicationsByGrade = ({
         <Button
           disableRipple
           onClick={() => (onViewFullReport ? onViewFullReport() : navigate('/application-tracker'))}
-          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+            sx={{ fontSize: '12px' }}
         >
           View Full Grade Level Report
         </Button>

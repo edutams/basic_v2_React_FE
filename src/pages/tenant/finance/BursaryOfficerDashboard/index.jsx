@@ -5,9 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from 'src/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { formatCurrency } from './constants';
-import DashboardHeader from './components/DashboardHeader';
 import KpiCard, { EfficiencyRing } from './components/KpiCard';
 import RevenueDistribution from './components/RevenueDistribution';
 import PaymentCategories from './components/PaymentCategories';
@@ -18,14 +17,6 @@ import QuickActions from './components/QuickActions';
 import SearchStudent from './components/SearchStudent';
 import StudentDetailModal from './components/StudentDetailModal';
 
-/**
- * Skeleton placeholder that mirrors the dashboard panel layout
- * (icon + title bar, then content) while a section is being fetched.
- */
-/**
- * Sections that return arrays may briefly hold {} (initial state, or after a
- * failed request) — coerce to [] so reducers/maps never crash during render.
- */
 const asArray = (data) => (Array.isArray(data) ? data : []);
 
 const PanelSkeleton = ({ height = 240 }) => {
@@ -36,7 +27,7 @@ const PanelSkeleton = ({ height = 240 }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 2.5,
+        p: 1,
         borderRadius: '10px',
         background: isDark ? theme.palette.background.paper : '#fff',
         border: isDark
@@ -54,105 +45,53 @@ const PanelSkeleton = ({ height = 240 }) => {
   );
 };
 
-/**
- * ── Bursary Officer Dashboard ─────────────────────────────────────────
- * Each analytics section is fetched from its own endpoint and loads
- * independently, so panels appear as soon as their data is ready.
- */
 const BursaryOfficerDashboard = () => {
   const notify = useNotification();
-
   const navigate = useNavigate();
 
-  // Breakdown modal state — holds the clicked KPI/panel type so the modal
-  // knows which table to render (same pattern as the admin/admission dashboards).
   const [breakdownType, setBreakdownType] = useState(null);
-
-  // Revenue trend period (today / this_week / this_month / this_year)
   const [trendPeriod, setTrendPeriod] = useState('this_month');
   const [periodValue, setPeriodValue] = useState(null);
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  // Fetch active session term once
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const active = await fetchActiveSessionTerm();
+        const activeId = active?.data?.session_term_id;
+        if (active?.status && activeId != null) {
+          setActiveSessionTermId(activeId);
+        }
+      } catch (err) {
+        console.error('Failed to fetch active session term:', err);
+      } finally {
+        setReady(true);
+      }
+    };
+    load();
+  }, []);
 
   const handleTrendPeriodChange = (newPeriod) => {
     setTrendPeriod(newPeriod);
     setPeriodValue(null);
   };
 
-  // Search student state
-  const [searchResults, setSearchResults] = useState(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-
-  // Student detail modal state
-  const [selectedStudent, setSelectedStudent] = useState(null);
-
-  // Session / term filtering
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [selectedSession, setSelectedSession] = useState('');
-  const [selectedTerm, setSelectedTerm] = useState('');
-  const [sessionTermId, setSessionTermId] = useState('');
-
-  // Fetch session terms for the selectors
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetchSessionTerms();
-        if (res?.status) setSessionTerms(res.data || []);
-      } catch (error) {
-        console.error('Failed to fetch session terms:', error);
-      }
-    };
-    load();
-  }, []);
-
-  // Default to the first session/term once terms arrive
-  useEffect(() => {
-    if (!sessionTerms.length || selectedSession) return;
-    const first = sessionTerms[0];
-    setSelectedSession(first.session?.sesname || '');
-    setSelectedTerm(first.display_term?.display_name || '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionTerms]);
-
-  // Derive the session_term_id from the two selectors
-  useEffect(() => {
-    if (!sessionTerms.length) return;
-    const match = sessionTerms.find(
-      (s) =>
-        s.session?.sesname === selectedSession && s.display_term?.display_name === selectedTerm,
-    );
-    setSessionTermId(match ? String(match.id) : '');
-  }, [sessionTerms, selectedSession, selectedTerm]);
-
-  const sessions = useMemo(
-    () => [...new Set(sessionTerms.map((s) => s.session?.sesname).filter(Boolean))],
-    [sessionTerms],
-  );
-
-  const termsForSession = useMemo(
-    () =>
-      sessionTerms
-        .filter((s) => s.session?.sesname === selectedSession)
-        .map((s) => s.display_term?.display_name)
-        .filter(Boolean),
-    [sessionTerms, selectedSession],
-  );
-
-  // Each section manages its own { data, loading } state; requests wait
-  // until the term resolves so the first fetch already carries the filter.
+  // Section loader — auto-uses active session term
   const useSection = (path) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
-    // Only fetch when a session term is preselected — the dependency array
-    // on sessionTermId means the endpoint fires once (and again whenever the
-    // session/term selector changes), never before a term is resolved.
     useEffect(() => {
-      if (!sessionTermId) {
-        return;
-      }
+      if (!ready || !activeSessionTermId) return;
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path, { params: { session_term_id: sessionTermId } })
+        .get(path, { params: { session_term_id: activeSessionTermId } })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -165,10 +104,8 @@ const BursaryOfficerDashboard = () => {
       return () => {
         mounted = false;
       };
-      // sessionTermId is valid reactive state, but the inline custom hook
-      // confuses exhaustive-deps into flagging it as unnecessary — keep it.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [path, sessionTermId]);
+    }, [path, ready, activeSessionTermId]);
 
     return { data, loading };
   };
@@ -178,17 +115,17 @@ const BursaryOfficerDashboard = () => {
   const paymentCategories = useSection('/dashboard/bursary/payment-categories');
   const collectionMatrix = useSection('/dashboard/bursary/collection-matrix');
 
-  // Revenue trend: re-fetch whenever sessionTermId, period, or sub-period changes.
+  // Revenue trend
   const [revenueTrendData, setRevenueTrendData] = useState({});
   const [revenueTrendLoading, setRevenueTrendLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionTermId) return;
+    if (!ready || !activeSessionTermId) return;
     let mounted = true;
     setRevenueTrendLoading(true);
 
     const params = {
-      session_term_id: sessionTermId,
+      session_term_id: activeSessionTermId,
       period: trendPeriod,
     };
 
@@ -218,7 +155,7 @@ const BursaryOfficerDashboard = () => {
     return () => {
       mounted = false;
     };
-  }, [sessionTermId, trendPeriod, periodValue]);
+  }, [ready, activeSessionTermId, trendPeriod, periodValue]);
 
   const dataAsOf = new Date().toLocaleDateString('en-US', {
     month: 'long',
@@ -245,15 +182,14 @@ const BursaryOfficerDashboard = () => {
     0,
   );
 
-  // Report export — Excel/PDF are generated server-side (PhpSpreadsheet/Dompdf)
-  // and streamed back as binary blobs, scoped to the currently selected term.
+  // Report export
   const [exporting, setExporting] = useState(null);
 
   const handleExport = async (format) => {
     setExporting(format);
     try {
       const res = await tenantApi.get('/dashboard/bursary/export-report', {
-        params: { format, session_term_id: sessionTermId || undefined },
+        params: { format, session_term_id: activeSessionTermId || undefined },
         responseType: 'blob',
       });
       const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
@@ -275,24 +211,16 @@ const BursaryOfficerDashboard = () => {
     }
   };
 
-  const handleSessionChange = (value) => {
-    setSelectedSession(value);
-    const firstTerm = sessionTerms.find((s) => s.session?.sesname === value)?.display_term
-      ?.display_name;
-    setSelectedTerm(firstTerm || '');
-  };
-
-  // Handle quick actions — navigate to the relevant bursary page.
   const handleQuickAction = useCallback((action) => {
     const routes = {
       create_invoice: '/payment-schedule',
       bulk_invoice: '/payment-schedule',
       record_payment: '/class-ledger',
       manage_fees: '/class-ledger',
-      generate_report: null, // triggers export
+      generate_report: null,
       send_reminder: '/bursary-setup',
       fee_structure: '/bursary-setup',
-      export_data: null, // triggers export
+      export_data: null,
     };
     if (action === 'generate_report') {
       handleExport('excel');
@@ -310,7 +238,6 @@ const BursaryOfficerDashboard = () => {
     }
   }, [navigate, notify]);
 
-  // Search student — fetches learners regardless of session term.
   const handleSearchStudent = useCallback(async (query) => {
     setSearchLoading(true);
     try {
@@ -334,9 +261,6 @@ const BursaryOfficerDashboard = () => {
     }
   }, [notify]);
 
-  // KPI skeleton — one skeleton card per stat that mirrors the KpiCard layout
-  // (uppercase label, icon chip top-right, big value, progress + sublabel) so
-  // the header area keeps its shape while revenue-performance loads.
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -345,19 +269,6 @@ const BursaryOfficerDashboard = () => {
       title="Bursary Dashboard"
       description="Overview of revenue performance and collections"
     >
-      <DashboardHeader
-        dataAsOf={dataAsOf}
-        sessions={sessions}
-        selectedSession={selectedSession}
-        onSessionChange={handleSessionChange}
-        termsForSession={termsForSession}
-        selectedTerm={selectedTerm}
-        onTermChange={setSelectedTerm}
-        onExportExcel={() => handleExport('excel')}
-        onExportPdf={() => handleExport('pdf')}
-        exporting={exporting}
-      />
-
       {/* ── KPI Cards ──────────────────────────────────────────── */}
       {rp.loading ? (
         <Grid container spacing={1.25} mb={2}>
@@ -433,9 +344,8 @@ const BursaryOfficerDashboard = () => {
         </Grid>
       )}
 
-      {/* ── Main content: left column (charts) | right column (actions + categories) ─── */}
+      {/* ── Main content ──────────────────────────────────────── */}
       <Grid container spacing={2} mb={2}>
-        {/* Left column — Revenue Trend & Revenue Distribution stacked */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Grid container spacing={2}>
@@ -443,8 +353,8 @@ const BursaryOfficerDashboard = () => {
                 {revenueTrendLoading ? (
                   <PanelSkeleton height={480} />
                 ) : (
-                  <RevenueTrend 
-                    revenue_trend={asArray(revenueTrendData)} 
+                  <RevenueTrend
+                    revenue_trend={asArray(revenueTrendData)}
                     onClick={() => setBreakdownType('revenue_trend')}
                     period={trendPeriod}
                     periodValue={periodValue}
@@ -461,14 +371,10 @@ const BursaryOfficerDashboard = () => {
                     revenue_distribution={asArray(revenueDistribution.data)}
                     totalRevenue={totalRevenue}
                     onClick={() => setBreakdownType('revenue_distribution')}
-                    session={selectedSession || 'This Session'}
-                    sessions={sessions}
-                    onSessionChange={handleSessionChange}
                   />
                 )}
               </Grid>
             </Grid>
-            {/* Outstanding Balance by Class — below the charts, full left-column width */}
             {collectionMatrix.loading ? (
               <PanelSkeleton height={420} />
             ) : (
@@ -476,9 +382,6 @@ const BursaryOfficerDashboard = () => {
                 matrix={matrixRows}
                 totals={totals}
                 totalEfficiency={totalEfficiency}
-                session={selectedSession || 'This Session'}
-                sessions={sessions}
-                onSessionChange={handleSessionChange}
                 onRowClick={(className) =>
                   notify.info(`Detailed breakdown for ${className} is coming soon`)
                 }
@@ -487,7 +390,6 @@ const BursaryOfficerDashboard = () => {
           </Box>
         </Grid>
 
-        {/* Right column — Search Student + Quick Actions + Payment Categories */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <SearchStudent
@@ -501,12 +403,9 @@ const BursaryOfficerDashboard = () => {
             {paymentCategories.loading ? (
               <PanelSkeleton height={420} />
             ) : (
-              <PaymentCategories 
-                payment_categories={asArray(paymentCategories.data)} 
-                session={selectedSession || 'This Session'}
-                sessions={sessions}
-                onSessionChange={handleSessionChange}
-                onClick={() => setBreakdownType('payment_categories')} 
+              <PaymentCategories
+                payment_categories={asArray(paymentCategories.data)}
+                onClick={() => setBreakdownType('payment_categories')}
               />
             )}
           </Box>
@@ -517,7 +416,7 @@ const BursaryOfficerDashboard = () => {
       <BursaryBreakdownModal
         open={Boolean(breakdownType)}
         type={breakdownType}
-        sessionTermId={sessionTermId}
+        sessionTermId={activeSessionTermId}
         onClose={() => setBreakdownType(null)}
       />
 
@@ -525,6 +424,7 @@ const BursaryOfficerDashboard = () => {
       <StudentDetailModal
         open={Boolean(selectedStudent)}
         student={selectedStudent}
+        sessionTermId={activeSessionTermId}
         onClose={() => setSelectedStudent(null)}
       />
     </PageContainer>

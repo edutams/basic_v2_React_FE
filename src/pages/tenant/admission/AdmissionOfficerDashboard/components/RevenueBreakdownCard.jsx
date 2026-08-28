@@ -18,7 +18,7 @@ const RevenueBreakdownCard = ({ donutData, totalFees }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 2,
+        p: 1,
         borderRadius: '16px',
         height: '100%',
         display: 'flex',
@@ -63,7 +63,7 @@ const RevenueBreakdownCard = ({ donutData, totalFees }) => {
             color: isDark ? 'rgba(255,255,255,0.72)' : colors.accentColor,
             textTransform: 'uppercase',
             letterSpacing: 0.3,
-            fontSize: 10,
+            fontSize: '11px',
           }}
         >
           Revenue Breakdown

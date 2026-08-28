@@ -152,6 +152,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         ];
       case 'expected_income':
         return [
+          { key: 'user_id', label: 'Student ID', badge: true },
           { key: 'class_code', label: 'Class' },
           { key: 'expected_amount', label: 'Expected Amount', numeric: true, currency: true },
         ];
@@ -248,6 +249,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
       case 'enrollment_by_class':
         return [
           { key: 'user_id', label: 'Student ID', badge: true },
+          { key: 'class_code', label: 'Class' },
           { key: 'sex', label: 'Gender', badge: true },
         ];
       case 'students':
@@ -283,7 +285,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
 
   const showNameColumn = type !== 'attendance' && type !== 'attendance_rate'
     && type !== 'collection_matrix'
-    && type !== 'expected_income'
+    && type !== 'collection_efficiency'
     && type !== 'batches';
 
   const idKeyForType = {
@@ -295,6 +297,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
     students: 'admission_no',
     enrollment_by_class: 'user_id',
     bursary_students: 'user_id',
+    expected_income: 'user_id',
     collected_income: 'user_id',
     outstanding_balance: 'user_id',
     underperforming_learners: 'user_id',

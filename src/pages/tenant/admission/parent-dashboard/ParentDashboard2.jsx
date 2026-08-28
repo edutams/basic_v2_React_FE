@@ -182,7 +182,7 @@ const ParentDashboard2 = () => {
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 340px' },
-          gap: 2.5,
+          gap: 1.25,
           alignItems: 'stretch',
           pt: 1,
         }}

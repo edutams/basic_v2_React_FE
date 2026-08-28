@@ -64,7 +64,7 @@ const KpiCard = ({
       }}
     >
       {/* Top section: icon + label + value */}
-      <Box sx={{ p: '18px 20px 14px', flex: 1 }}>
+      <Box sx={{ p: '8px 10px 6px', flex: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
           {/* Icon chip */}
           <Box
@@ -113,7 +113,7 @@ const KpiCard = ({
       </Box>
 
       {/* Divider line */}
-      <Box sx={{ mx: '18px', borderTop: '1px solid #F3F4F6' }} />
+      <Box sx={{ mx: '10px', borderTop: '1px solid #F3F4F6' }} />
 
       {/* Bottom row: sublabel | trend | vs last session */}
       <Box
@@ -121,8 +121,8 @@ const KpiCard = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          px: '18px',
-          py: '12px',
+          px: '10px',
+          py: '6px',
         }}
       >
         <Typography

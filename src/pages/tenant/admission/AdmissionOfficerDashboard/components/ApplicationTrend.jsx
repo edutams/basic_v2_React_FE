@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, Grid, CircularProgress, useTheme, Skeleton } from '@mui/material';
+import { Box, Typography, Paper, Grid, CircularProgress, useTheme, Skeleton } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -17,9 +17,6 @@ import {
 const ApplicationTrend = ({
   trendData = [],
   metrics = {},
-  sessionTerms = [],
-  sessionTerm = 'all',
-  onSessionChange,
   loading = false,
 }) => {
   const theme = useTheme();
@@ -35,7 +32,7 @@ const ApplicationTrend = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
@@ -78,26 +75,7 @@ const ApplicationTrend = ({
             </Box>
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={sessionTerm}
-              onChange={(e) => onSessionChange?.(e.target.value)}
-              sx={{
-                fontSize: '11.5px',
-                fontWeight: 700,
-                borderRadius: '8px',
-                height: 30,
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
-              }}
-            >
-              {sessionTerms.map((st) => (
-                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
-                  {st.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
         </Box>
       </Box>
 
@@ -182,7 +160,7 @@ const ApplicationTrend = ({
             <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
               Total Applications
             </Typography>
-            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '15px', color: isDark ? '#fff' : '#0f172a' }}>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
               {totalApps}
             </Typography>
           </Grid>
@@ -191,7 +169,7 @@ const ApplicationTrend = ({
             <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
               New This Month
             </Typography>
-            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '15px', color: isDark ? '#fff' : '#0f172a' }}>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
               {newThisMonth}
             </Typography>
           </Grid>
@@ -200,7 +178,7 @@ const ApplicationTrend = ({
             <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
               Avg. Per Month
             </Typography>
-            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '15px', color: isDark ? '#fff' : '#0f172a' }}>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
               {avgPerMonth}
             </Typography>
           </Grid>
@@ -211,7 +189,7 @@ const ApplicationTrend = ({
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: '#16a34a' }}>
               <ArrowUpward sx={{ fontSize: 14 }} />
-              <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '15px', color: '#16a34a' }}>
+              <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: '#16a34a' }}>
                 {vsLastSession}
               </Typography>
             </Box>

@@ -152,6 +152,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
           { key: 'form_number', label: 'Form No.', badge: true },
           { key: 'name', label: 'Name' },
           { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
           { key: 'gender', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];

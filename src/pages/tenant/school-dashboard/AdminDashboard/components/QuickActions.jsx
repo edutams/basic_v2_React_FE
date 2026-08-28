@@ -57,7 +57,7 @@ const QuickActions = ({ loading = false }) => {
     <Paper
       elevation={0}
       sx={{
-        p: 2,
+        p: 1.25,
         mb: 2.5,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -126,7 +126,7 @@ const QuickActions = ({ loading = false }) => {
               borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0',
               bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
               color: isDark ? '#ffffff' : '#1e293b',
-              fontSize: '11.5px',
+              fontSize: '10.5px',
               fontWeight: 700,
               textTransform: 'none',
               justifyContent: 'flex-start',

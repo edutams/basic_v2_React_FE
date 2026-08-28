@@ -9,9 +9,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  FormControl,
-  Select,
-  MenuItem,
   Button,
   useTheme,
   Skeleton,
@@ -52,9 +49,6 @@ const ClickableCell = ({ value, onClick, align = 'center', fontWeight = 600, col
 const EnrolmentByClass = ({
   classData = [],
   loading = false,
-  sessionTerms = [],
-  sessionTerm = 'all',
-  onSessionChange,
   onCellClick,
   onViewEnrolmentReport,
 }) => {
@@ -75,21 +69,20 @@ const EnrolmentByClass = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
         borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
       }}
     >
-      <Box>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Box sx={{ mb: 1.5, flexShrink: 0 }}>
           <Typography
             sx={{
               fontSize: '11px',
@@ -101,27 +94,6 @@ const EnrolmentByClass = ({
           >
             ENROLMENT BY CLASS
           </Typography>
-
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={sessionTerm}
-              onChange={(e) => onSessionChange?.(e.target.value)}
-              sx={{
-                fontSize: '11.5px',
-                fontWeight: 700,
-                borderRadius: '8px',
-                height: 30,
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
-              }}
-            >
-              {sessionTerms.map((st) => (
-                <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
-                  {st.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </Box>
 
         {/* Table */}
@@ -137,7 +109,7 @@ const EnrolmentByClass = ({
             ))}
           </Box>
         ) : (
-        <TableContainer sx={{ maxHeight: 600 }}>
+        <TableContainer sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
@@ -193,11 +165,12 @@ const EnrolmentByClass = ({
       </Box>
 
       {/* Footer Link */}
-      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
+      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5, flexShrink: 0 }}>
         <Button
           disableRipple
           onClick={() => (onViewEnrolmentReport ? onViewEnrolmentReport() : navigate('/reports/general-report'))}
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+          sx={{ fontSize: '12px' }}
         >
           View Enrolment Report
         </Button>

@@ -27,11 +27,10 @@ const StatCardItem = ({
   const trendColor = isNegative ? '#EF4444' : '#16A34A';
 
   if (loading) {
-    return (
-      <Paper
+    return (        <Paper
         elevation={0}
         sx={{
-          p: 2,
+        p: 1,
           borderRadius: '14px',
           height: '100%',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -58,7 +57,7 @@ const StatCardItem = ({
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 2,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',

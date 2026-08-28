@@ -46,8 +46,7 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
       <Paper
         elevation={0}
         sx={{
-          p: 1.75,
-          px: 2,
+          p: 1.25,
           borderRadius: '12px',
           height: '100%',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
@@ -72,8 +71,7 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 1.75,
-        px: 2,
+        p: 1.25,
         borderRadius: '12px',
         fontSize:'9px',
         height: '100%',
@@ -179,7 +177,7 @@ const FinancialOverviewBar = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',

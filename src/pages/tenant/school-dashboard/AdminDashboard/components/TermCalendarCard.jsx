@@ -27,7 +27,7 @@ const TermCalendarCard = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
@@ -251,7 +251,7 @@ const TermCalendarCard = ({
             disableRipple
             onClick={handleViewCalendar}
             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-            
+            sx={{ fontSize: '12px' }}
           >
             View School Calendar
           </Button>

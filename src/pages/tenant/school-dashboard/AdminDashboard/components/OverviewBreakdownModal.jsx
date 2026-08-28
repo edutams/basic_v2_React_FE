@@ -11,7 +11,6 @@ import {
   Chip,
   TextField,
   InputAdornment,
-  MenuItem,
   TableContainer,
   Table,
   TableHead,
@@ -25,7 +24,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
 
 const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
@@ -38,29 +36,8 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [sessionTermId, setSessionTermId] = useState('');
-  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
-  const [termsLoaded, setTermsLoaded] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    Promise.all([
-      fetchSessionTerms(),
-      fetchActiveSessionTerm(),
-    ]).then(([termsRes, activeRes]) => {
-      if (!mounted) return;
-      if (termsRes?.status) setSessionTerms(termsRes.data || []);
-      const activeId = activeRes?.data?.session_term_id;
-      if (activeRes?.status && activeId != null) {
-        setActiveSessionTermId(activeId);
-      }
-      setTermsLoaded(true);
-    }).catch(() => { if (mounted) setTermsLoaded(true); });
-    return () => { mounted = false; };
-  }, []);
-
-  const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
+  const fetchBreakdown = (p = 0, rpp = rowsPerPage, term = search) => {
     if (!open || !type) return;
 
     let cancelled = false;
@@ -73,7 +50,6 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
           page: p + 1,
           per_page: rpp,
           search: term || undefined,
-          session_term_id: termId || undefined,
           ...extra,
         },
       })
@@ -96,17 +72,9 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
     setPage(0);
     setSearch('');
     setSearchInput('');
-    if (termsLoaded && activeSessionTermId != null) {
-      const match = sessionTerms.find((s) => String(s.id) === String(activeSessionTermId));
-      setSessionTermId(match ? String(match.id) : '');
-    } else {
-      setSessionTermId('');
-    }
-    return fetchBreakdown(0, rowsPerPage, termsLoaded && activeSessionTermId != null
-      ? String(sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))?.id || '')
-      : '', '');
+    return fetchBreakdown(0, rowsPerPage, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, type, termsLoaded]);
+  }, [open, type]);
 
   const handleSearchChange = (e) => {
     setSearchInput(e.target.value);
@@ -114,23 +82,20 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
 
   const handleFetch = () => {
     setPage(0);
-    fetchBreakdown(0, rowsPerPage, sessionTermId, searchInput);
-  };
-
-  const handleTermChange = (e) => {
-    setSessionTermId(e.target.value);
+    setSearch(searchInput);
+    fetchBreakdown(0, rowsPerPage, searchInput);
   };
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
-    fetchBreakdown(newPage, rowsPerPage, sessionTermId, searchInput);
+    fetchBreakdown(newPage, rowsPerPage, search);
   };
 
   const handleChangeRowsPerPage = (e) => {
     const rpp = parseInt(e.target.value, 10);
     setRowsPerPage(rpp);
     setPage(0);
-    fetchBreakdown(0, rpp, sessionTermId, searchInput);
+    fetchBreakdown(0, rpp, search);
   };
 
   const rows = data?.rows || [];
@@ -353,7 +318,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
         />
       </DialogTitle>
 
-      <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Box sx={{ px: 2, pt: 0.75, pb: 0.75, display: 'flex', gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
           placeholder="Search by name, ID, gender…"
@@ -369,23 +334,6 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
             ),
           }}
         />
-        <TextField
-          select
-          size="small"
-          label="Session Term"
-          value={sessionTermId}
-          onChange={handleTermChange}
-          sx={{ flex: '1 1 200px', maxWidth: 260 }}
-        >
-          <MenuItem value="">
-            <em>All session terms</em>
-          </MenuItem>
-          {sessionTerms.map((st) => (
-            <MenuItem key={st.id} value={String(st.id)}>
-              {st.session?.sesname} — {st.display_term?.display_name}
-            </MenuItem>
-          ))}
-        </TextField>
         <Button
           variant="contained"
           size="small"
@@ -545,7 +493,7 @@ const OverviewBreakdownModal = ({ open, type, extra = {}, onClose }) => {
           </TableContainer>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 2.5, py: 1.5 }}>
+      <DialogActions sx={{ px: 2, py: 1 }}>
         <Button disableRipple onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, FormControl, Select, MenuItem, useTheme, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -7,9 +7,6 @@ const AttendanceOverview = ({
   data = [],
   avgAttendance = '—',
   trend = '0%',
-  sessionTerms = [],
-  sessionTerm = 'all',
-  onSessionChange,
   loading = false,
 }) => {
   const theme = useTheme();
@@ -19,7 +16,7 @@ const AttendanceOverview = ({
     <Paper
       elevation={0}
       sx={{
-        p: 2.25,
+        p: 1,
         borderRadius: '14px',
         height: '100%',
         display: 'flex',
@@ -58,28 +55,6 @@ const AttendanceOverview = ({
                 <Typography variant="caption" fontWeight={600} sx={{ fontSize: '10.5px', color: '#dc2626' }}>Absent Marks</Typography>
               </Box>
             </Box>
-
-            {/* Session Term Filter */}
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <Select
-                value={sessionTerm}
-                onChange={(e) => onSessionChange?.(e.target.value)}
-                sx={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  height: 30,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' },
-                }}
-              >
-                {sessionTerms.map((st) => (
-                  <MenuItem key={st.id} value={st.id} sx={{ fontSize: '11.5px', fontWeight: 600 }}>
-                    {st.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
           </Box>
         </Box>
 
@@ -99,14 +74,11 @@ const AttendanceOverview = ({
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <XAxis
-                dataKey="week"
+                dataKey="day"
                 tick={{ fontSize: 10, fontWeight: 700, fill: isDark ? '#cbd5e1' : '#334155' }}
                 axisLine={false}
                 tickLine={false}
                 interval={0}
-                angle={-45}
-                textAnchor="end"
-                height={50}
                 padding={{ left: 10, right: 10 }}
               />
               <YAxis
@@ -139,7 +111,6 @@ const AttendanceOverview = ({
       <Box
         sx={{
           p: 1.25,
-          px: 2,
           borderRadius: '10px',
           bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
           border: '1px solid',

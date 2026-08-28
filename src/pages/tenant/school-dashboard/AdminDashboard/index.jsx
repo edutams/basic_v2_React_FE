@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import { fetchSessionTerms, fetchActiveSessionTerm } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
@@ -14,7 +13,6 @@ import FinancialOverviewBar from './components/FinancialOverviewBar';
 import AcademicPerformanceOverview from './components/AcademicPerformanceOverview';
 import AttendanceOverview from './components/AttendanceOverview';
 import TermCalendarCard from './components/TermCalendarCard';
-import QuickReportsCard from './components/QuickReportsCard';
 import AnnouncementsCard from './components/AnnouncementsCard';
 import EnrolmentByClass from './components/EnrolmentByClass';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
@@ -23,10 +21,6 @@ import { SchoolCalendarModal as CalendarModal } from '@/pages/tenant/staff-manag
 const AdminDashboard = () => {
   const [breakdownType, setBreakdownType] = useState(null);
   const [breakdownExtra, setBreakdownExtra] = useState({});
-  const [sessionTerm, setSessionTerm] = useState('all');
-  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
-  const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
-  const [sessionTermsLoaded, setSessionTermsLoaded] = useState(false);
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [calendarHolidays, setCalendarHolidays] = useState([]);
@@ -80,59 +74,16 @@ const AdminDashboard = () => {
     return () => { mounted = false; };
   }, [calendarModalOpen]);
 
-  // Load session terms
-  useEffect(() => {
-    const loadSessionTerms = async () => {
-      try {
-        const response = await fetchSessionTerms();
-        if (response.status) {
-          const sess_terms = [
-            { id: 'all', label: 'All Sessions' },
-            ...response.data.map((sterm) => ({
-              id: sterm.id,
-              label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
-            })),
-          ];
-          setSessionTerms(sess_terms);
-
-          try {
-            const active = await fetchActiveSessionTerm();
-            const activeId = active?.data?.session_term_id;
-            if (active?.status && activeId != null) {
-              setActiveSessionTermId(activeId);
-              const match = sess_terms.find((s) => String(s.id) === String(activeId));
-              if (match) setSessionTerm(match.id);
-            }
-          } catch (err) {
-            console.error('Failed to fetch active session term:', err);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch session terms:', error);
-      } finally {
-        setSessionTermsLoaded(true);
-      }
-    };
-
-    loadSessionTerms();
-  }, []);
-
-  // Section data hook
+  // Section data hook — no session_term_id, backend uses active term
   const useSection = (path, extra = {}) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-      if (!sessionTermsLoaded) return;
       let mounted = true;
       setLoading(true);
       tenantApi
-        .get(path, {
-          params: {
-            ...(sessionTerm !== 'all' ? { session_term_id: sessionTerm } : {}),
-            ...extra,
-          },
-        })
+        .get(path, { params: { ...extra } })
         .then((res) => {
           if (mounted) setData(res.data?.status ? res.data.data : {});
         })
@@ -145,7 +96,7 @@ const AdminDashboard = () => {
       return () => {
         mounted = false;
       };
-    }, [path, sessionTerm, sessionTermsLoaded, JSON.stringify(extra)]);
+    }, [path, JSON.stringify(extra)]);
 
     return { data, loading };
   };
@@ -154,109 +105,61 @@ const AdminDashboard = () => {
   const financial = useSection('/dashboard/bursary/revenue-performance');
   const termCalendar = useSection('/dashboard/admin/term-calendar');
 
-  // Attendance: independent session term
-  const [attendanceSessionTerm, setAttendanceSessionTerm] = useState('all');
+  // Attendance — backend uses active session term
   const [attendanceData, setAttendanceData] = useState({});
   const [attendanceLoading, setAttendanceLoading] = useState(true);
 
-  // Auto-select active session term for attendance when loaded
-  useEffect(() => {
-    if (sessionTermsLoaded && attendanceSessionTerm === 'all') {
-      const match = activeSessionTermId != null
-        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
-        : sessionTerms.find((s) => s.id !== 'all');
-      if (match) setAttendanceSessionTerm(match.id);
-    }
-  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
-
   const fetchAttendance = useCallback(async () => {
-    if (!sessionTermsLoaded) return;
     setAttendanceLoading(true);
     try {
-      const res = await tenantApi.get('/dashboard/admin/attendance-overview', {
-        params: {
-          ...(attendanceSessionTerm !== 'all' ? { session_term_id: attendanceSessionTerm } : {}),
-        },
-      });
+      const res = await tenantApi.get('/dashboard/admin/attendance-overview');
       setAttendanceData(res.data?.status ? res.data.data : {});
     } catch {
       setAttendanceData({});
     } finally {
       setAttendanceLoading(false);
     }
-  }, [attendanceSessionTerm, sessionTermsLoaded]);
+  }, []);
 
   useEffect(() => {
     fetchAttendance();
   }, [fetchAttendance]);
 
-  // Enrollment by class: independent session term
-  const [enrollmentSessionTerm, setEnrollmentSessionTerm] = useState('all');
+  // Enrollment by class — backend uses active session term
   const [enrollmentData, setEnrollmentData] = useState([]);
   const [enrollmentLoading, setEnrollmentLoading] = useState(true);
 
-  // Auto-select active session term for enrollment when loaded
-  useEffect(() => {
-    if (sessionTermsLoaded && enrollmentSessionTerm === 'all') {
-      const match = activeSessionTermId != null
-        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
-        : sessionTerms.find((s) => s.id !== 'all');
-      if (match) setEnrollmentSessionTerm(match.id);
-    }
-  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
-
   const fetchEnrollment = useCallback(async () => {
-    if (!sessionTermsLoaded) return;
     setEnrollmentLoading(true);
     try {
-      const res = await tenantApi.get('/dashboard/admin/enrollment-by-class', {
-        params: {
-          ...(enrollmentSessionTerm !== 'all' ? { session_term_id: enrollmentSessionTerm } : {}),
-        },
-      });
+      const res = await tenantApi.get('/dashboard/admin/enrollment-by-class');
       setEnrollmentData(res.data?.status ? res.data.data : []);
     } catch {
       setEnrollmentData([]);
     } finally {
       setEnrollmentLoading(false);
     }
-  }, [enrollmentSessionTerm, sessionTermsLoaded]);
+  }, []);
 
   useEffect(() => {
     fetchEnrollment();
   }, [fetchEnrollment]);
 
-  // Academic performance: independent session term
-  const [academicSessionTerm, setAcademicSessionTerm] = useState('all');
+  // Academic performance — backend uses active session term
   const [academicData, setAcademicData] = useState({});
   const [academicLoading, setAcademicLoading] = useState(true);
 
-  // Auto-select active session term for academic when loaded
-  useEffect(() => {
-    if (sessionTermsLoaded && academicSessionTerm === 'all') {
-      const match = activeSessionTermId != null
-        ? sessionTerms.find((s) => String(s.id) === String(activeSessionTermId))
-        : sessionTerms.find((s) => s.id !== 'all');
-      if (match) setAcademicSessionTerm(match.id);
-    }
-  }, [sessionTermsLoaded, sessionTerms, activeSessionTermId]);
-
   const fetchAcademic = useCallback(async () => {
-    if (!sessionTermsLoaded) return;
     setAcademicLoading(true);
     try {
-      const res = await tenantApi.get('/dashboard/admin/learner/exam-performance', {
-        params: {
-          ...(academicSessionTerm !== 'all' ? { session_term_id: academicSessionTerm } : {}),
-        },
-      });
+      const res = await tenantApi.get('/dashboard/admin/learner/exam-performance');
       setAcademicData(res.data?.status ? res.data.data : {});
     } catch {
       setAcademicData({});
     } finally {
       setAcademicLoading(false);
     }
-  }, [academicSessionTerm, sessionTermsLoaded]);
+  }, []);
 
   useEffect(() => {
     fetchAcademic();
@@ -269,12 +172,8 @@ const AdminDashboard = () => {
 
   return (
     <PageContainer title="Admin Dashboard" description="School Administrator Overview">
-      {/* ── Top Header Bar (Greeting + Session Term dropdown ONLY) ─────── */}
-      <DashboardHeader
-        sessionTerm={sessionTerm}
-        sessionTerms={sessionTerms}
-        onSessionChange={setSessionTerm}
-      />
+      {/* ── Top Header Bar (Greeting + Role Switcher) ─────── */}
+      <DashboardHeader currentRole="administrator" />
 
       {/* ── Top 4 KPI Stat Cards ────────────────────────────────────── */}
       <TopStatCards
@@ -293,19 +192,30 @@ const AdminDashboard = () => {
       {/* ── Quick Actions Bar ───────────────────────────────────────── */}
       <QuickActions loading={overview.loading} />
 
-      {/* ── Middle Section: Left (Search + Financial + Charts) | Right (Enrolment) ── */}
+      {/* ── Middle Section: Left (Search + Calendar + Financial + Charts) | Right (Enrolment + Announcements) ── */}
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' },
-          gap: 2,
+          gap: 1.5,
           alignItems: 'start',
         }}
       >
         {/* Left Column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {/* Search Student/Staff & Switch Role Bar */}
-          <SearchAndRoleBar currentRole="administrator" />
+          {/* Search + Term Calendar side by side */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 2 }}>
+            <SearchAndRoleBar />
+            <TermCalendarCard
+              dayCurrent={termCalendar.data?.day_current}
+              dayTotal={termCalendar.data?.day_total}
+              termStart={termCalendar.data?.term_start}
+              expectedEnd={termCalendar.data?.expected_end}
+              progressPct={termCalendar.data?.progress_pct}
+              loading={termCalendar.loading}
+              onViewCalendar={() => setCalendarModalOpen(true)}
+            />
+          </Box>
 
           {/* Financial Overview Bar (4 Mini Fee Cards) */}
           <FinancialOverviewBar
@@ -327,61 +237,36 @@ const AdminDashboard = () => {
               <AcademicPerformanceOverview
                 data={academicData.exam_performance_overview}
                 avgScore={academicData.exam_performance != null ? `${academicData.exam_performance}%` : '0%'}
-                sessionTerms={sessionTerms}
-                sessionTerm={academicSessionTerm}
-                onSessionChange={setAcademicSessionTerm}
                 loading={academicLoading}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <AttendanceOverview
-                data={attendanceData.chart}
+                data={attendanceData.current_week_days}
                 avgAttendance={attendanceData.avg_attendance ? `${attendanceData.avg_attendance}%` : '—'}
                 trend={attendanceData.trend ? `${attendanceData.trend > 0 ? '+' : ''}${attendanceData.trend}%` : '0%'}
-                sessionTerms={sessionTerms}
-                sessionTerm={attendanceSessionTerm}
-                onSessionChange={setAttendanceSessionTerm}
                 loading={attendanceLoading}
               />
             </Grid>
           </Grid>
         </Box>
 
-        {/* Right Column: Enrolment By Class */}
-        <Box sx={{ height: '100%' }}>
-          <EnrolmentByClass
-            classData={enrollmentData}
-            loading={enrollmentLoading}
-            sessionTerms={sessionTerms}
-            sessionTerm={enrollmentSessionTerm}
-            onSessionChange={setEnrollmentSessionTerm}
-            onCellClick={(classCode, sex) => {
-              handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
-            }}
-          />
+        {/* Right Column: Announcements on top, Enrolment By Class below (scrollable) */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxHeight: 600 }}>
+          <Box sx={{ flexShrink: 0 }}>
+            <AnnouncementsCard />
+          </Box>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <EnrolmentByClass
+              classData={enrollmentData}
+              loading={enrollmentLoading}
+              onCellClick={(classCode, sex) => {
+                handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
+              }}
+            />
+          </Box>
         </Box>
       </Box>
-
-      {/* ── Bottom Row: Term Calendar, Quick Reports, Announcements (FULL WIDTH) ── */}
-      <Grid container spacing={2.5} sx={{ mt: 2.5 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <TermCalendarCard
-            dayCurrent={termCalendar.data?.day_current}
-            dayTotal={termCalendar.data?.day_total}
-            termStart={termCalendar.data?.term_start}
-            expectedEnd={termCalendar.data?.expected_end}
-            progressPct={termCalendar.data?.progress_pct}
-            loading={termCalendar.loading}
-            onViewCalendar={() => setCalendarModalOpen(true)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <QuickReportsCard />
-        </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <AnnouncementsCard />
-        </Grid>
-      </Grid>
 
       {/* ── Stat Card Breakdown Modal ──────────────────────────────── */}
       <OverviewBreakdownModal

@@ -44,219 +44,209 @@ const TermCalendarCard = ({
           <CircularProgress size={28} />
         </Box>
       ) : (
-      <Box>
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <CalendarMonth sx={{ fontSize: 18, color: '#2563eb' }} />
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 800,
-              color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            TERM CALENDAR
-          </Typography>
-        </Box>
-
-        {/* Info Row: Day Badge | Dates */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'stretch',
-            gap: 1.5,
-            mb: 2.5,
-          }}
-        >
-          {/* Day Badge — standalone */}
-          <Box
-            sx={{
-              flex: '0 0 auto',
-              px: 2,
-              py: 1.5,
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-              border: '1px solid',
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-              textAlign: 'center',
-              minWidth: 72,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: '10px',
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                lineHeight: 1,
-              }}
-            >
-              Day
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '26px',
-                fontWeight: 800,
-                color: isDark ? '#ffffff' : '#0f172a',
-                lineHeight: 1.2,
-              }}
-            >
-              {dayCurrent}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '10px',
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                lineHeight: 1,
-              }}
-            >
-              of {dayTotal}
-            </Typography>
-          </Box>
-
-          {/* Dates — together in one box */}
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-              border: '1px solid',
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Term Started */}
-            <Box
-              sx={{
-                flex: 1,
-                px: 2,
-                py: 1.5,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                  lineHeight: 1.2,
-                  mb: 0.5,
-                }}
-              >
-                Term Started
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: isDark ? '#fff' : '#0f172a',
-                  lineHeight: 1.2,
-                }}
-              >
-                {termStart}
-              </Typography>
-            </Box>
-
-            {/* Divider */}
-            <Box sx={{ width: '1px', bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} />
-
-            {/* Expected End */}
-            <Box
-              sx={{
-                flex: 1,
-                px: 2,
-                py: 1.5,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
-                  lineHeight: 1.2,
-                  mb: 0.5,
-                }}
-              >
-                Expected End
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: isDark ? '#fff' : '#0f172a',
-                  lineHeight: 1.2,
-                }}
-              >
-                {expectedEnd}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Progress Bar */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-            <Typography
-              sx={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: isDark ? 'rgba(255,255,255,0.85)' : '#334155',
-              }}
+          {/* Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CalendarMonth sx={{ fontSize: 18, color: '#2563eb' }} />
+              <Typography
+                sx={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
+                TERM CALENDAR
+              </Typography>
+            </Box>
+            <Button
+              size='small'
+              onClick={handleViewCalendar}
+              endIcon={<ArrowForward sx={{ fontSize: '14px !important' }} />}
+              sx={{ fontSize: '12px' }}
             >
-              Term Progress
-            </Typography>
-            <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#16a34a' }}>
-              {progressPct}%
-            </Typography>
+              View School Calendar
+            </Button>
           </Box>
 
-          <LinearProgress
-            variant="determinate"
-            value={progressPct}
+          {/* Info Row: Day Badge | Dates */}
+          <Box
             sx={{
-              height: 8,
-              borderRadius: 4,
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
-              '& .MuiLinearProgress-bar': {
-                bgcolor: '#16a34a',
-                borderRadius: 4,
-              },
+              display: 'flex',
+              alignItems: 'stretch',
+              gap: 1.5,
+              mb: 2.5,
             }}
-          />
-        </Box>
-
-        {/* Footer Link */}
-        <Box
-          sx={{
-            pt: 1.5,
-            textAlign: 'center',
-            borderTop: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
-            mt: 2,
-          }}
-        >
-          <Button
-            disableRipple
-            onClick={handleViewCalendar}
-            endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-            sx={{ fontSize: '12px' }}
           >
-            View School Calendar
-          </Button>
+            {/* Day Badge — standalone */}
+            <Box
+              sx={{
+                flex: '0 0 auto',
+                px: 2,
+                py: 1.5,
+                borderRadius: '10px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+                textAlign: 'center',
+                minWidth: 72,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {/* <Typography
+                sx={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                  lineHeight: 1,
+                }}
+              >
+                Day
+              </Typography> */}
+              <Typography
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  color: isDark ? '#ffffff' : '#0f172a',
+                  lineHeight: 1.2,
+                }}
+              >
+                {dayCurrent}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                  lineHeight: 1,
+                }}
+              >
+                Days of {dayTotal}
+              </Typography>
+            </Box>
+
+            {/* Dates — together in one box */}
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                borderRadius: '10px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Term Started */}
+              <Box
+                sx={{
+                  flex: 1,
+                  px: 2,
+                  py: 1.5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                    lineHeight: 1.2,
+                    mb: 0.5,
+                  }}
+                >
+                  Term Started
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: isDark ? '#fff' : '#0f172a',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {termStart}
+                </Typography>
+              </Box>
+
+              {/* Divider */}
+              <Box sx={{ width: '1px', bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0' }} />
+
+              {/* Expected End */}
+              <Box
+                sx={{
+                  flex: 1,
+                  px: 2,
+                  py: 1.5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8',
+                    lineHeight: 1.2,
+                    mb: 0.5,
+                  }}
+                >
+                  Expected End
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: isDark ? '#fff' : '#0f172a',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {expectedEnd}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Progress Bar */}
+          <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: isDark ? 'rgba(255,255,255,0.85)' : '#334155',
+                }}
+              >
+                Term Progress
+              </Typography>
+              <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#16a34a' }}>
+                {progressPct}%
+              </Typography>
+            </Box>
+
+            <LinearProgress
+              variant="determinate"
+              value={progressPct}
+              sx={{
+                height: 8,
+                borderRadius: 4,
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: '#16a34a',
+                  borderRadius: 4,
+                },
+              }}
+            />
+          </Box>
         </Box>
-      </Box>
       )}
     </Paper>
   );

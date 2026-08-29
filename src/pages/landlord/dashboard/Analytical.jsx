@@ -410,7 +410,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Row 2: Charts and Login Activities */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card
               sx={{
@@ -740,7 +740,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Row 3: Top Agents Table */}
-        <Grid container spacing={3}>
+        <Grid container spacing={1.5}>
           <Grid size={12}>
             <ParentCard
               title={
@@ -789,15 +789,15 @@ export default function Dashboard() {
             >
               <Box
                 sx={{
-                  mt: 2,
-                  p: 1,
+                  mt: 1,
+                  p: 0.75,
                   borderRadius: '8px',
                   bgcolor: isDark ? theme.palette.background.default : '#f8fafc',
                 }}
               >
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
-                  spacing={2}
+                  spacing={1}
                   alignItems={{ xs: 'stretch', sm: 'center' }}
                   flexWrap="wrap"
                 >

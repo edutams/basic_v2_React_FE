@@ -117,12 +117,9 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
 
       if (!activeTermId) {
         const sessionTermsRes = await fetchSessionTerms();
-        const termsList = Array.isArray(sessionTermsRes)
-          ? sessionTermsRes
-          : sessionTermsRes?.data || [];
-        const activeTerm =
-          termsList.find((t) => t.status === 'active' || t.is_active || t.active) || termsList[0];
-        activeTermId = activeTerm?.session_term_id || activeTerm?.id;
+        const termsList = sessionTermsRes?.data ?? (Array.isArray(sessionTermsRes) ? sessionTermsRes : []);
+        const activeTerm = termsList.find((t) => t.status === 'active') || termsList[0];
+        activeTermId = activeTerm?.id;
       }
 
       if (activeTermId) {
@@ -132,13 +129,11 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
         ]);
 
         const weeksData = weeksRes.status === 'fulfilled' ? weeksRes.value : null;
-        const fetchedWeeks = Array.isArray(weeksData) ? weeksData : weeksData?.data || [];
+        const fetchedWeeks = weeksData?.data ?? [];
         setWeeksList(fetchedWeeks);
 
         const holidaysData = holidaysRes.status === 'fulfilled' ? holidaysRes.value : null;
-        const fetchedHolidays = Array.isArray(holidaysData)
-          ? holidaysData
-          : holidaysData?.data || [];
+        const fetchedHolidays = holidaysData?.data ?? [];
         setHolidaysList(fetchedHolidays);
 
         const startDates = fetchedWeeks
@@ -238,7 +233,7 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
       });
 
       const isHoliday = !!holidayObj;
-      const holidayName = holidayObj?.name || holidayObj?.holiday_name || '';
+      const holidayName = holidayObj?.name ?? '';
 
       const hasEvent =
         isHoliday || weeksList.some((w) => w.start_date === dateStr || w.end_date === dateStr);
@@ -1051,7 +1046,7 @@ const SchoolCalendarModal = ({ open, onClose, weeks, holidays, termStats }) => {
                     <TableRow key={h.id || idx} hover>
                       <TableCell sx={{ fontSize: '12.5px' }}>{idx + 1}</TableCell>
                       <TableCell sx={{ fontWeight: 600, fontSize: '12.5px' }}>
-                        {h.name || h.holiday_name || 'Holiday'}
+                        {h.name}
                       </TableCell>
                       <TableCell sx={{ fontSize: '12.5px', color: '#475569' }}>
                         {h.start_date ? dayjs(h.start_date).format('MMM D, YYYY') : '—'}

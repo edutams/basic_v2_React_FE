@@ -209,8 +209,8 @@ const TeachingStaffTab = ({
                             <IconUsers size={18} color="#1976d2" />
                           </Box> */}
                           <Avatar
-                            src={staffMember.user.avatar}
-                            alt={staffMember.user.lname[0]}
+                            src={staffMember.user?.avatar}
+                            alt={staffMember.user?.lname?.[0]}
                             sx={{
                               width: 30,
                               height: 30,

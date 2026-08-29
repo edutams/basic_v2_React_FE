@@ -22,14 +22,14 @@ export default function TeacherDashboard() {
               md: "8fr 4fr",
             },
             gap: 2.5,
-            alignItems: "stretch",
+            alignItems: "start",
           }}
         >
-          <Box sx={{ minWidth: 0, height: "100%", display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <Box sx={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 2.5 }}>
             <QuickActions />
             <Analytics />
           </Box>
-          <Box sx={{ minWidth: 0, height: "100%" }}>
+          <Box sx={{ minWidth: 0 }}>
             <ActivityLog />
           </Box>
         </Box>

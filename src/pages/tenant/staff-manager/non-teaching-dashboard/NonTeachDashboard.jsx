@@ -45,10 +45,10 @@ const NonTeachDashboard = () => {
                     setDaysInSchoolState({
                         daysSpent: String(s.days_spent ?? 0),
                         overview: [
-                            { label: "Total Term Days", value: s.total_school_days || 0 },
-                            { label: "Days Spent", value: s.days_spent || 0 },
-                            { label: "Holiday Days", value: s.holiday_days_allocated ?? s.holiday_days ?? 0 },
-                            { label: "Days Remaining", value: s.remaining_school_days || 0 },
+                            { label: "Total Term Days", value: s.total_school_days ?? 0 },
+                            { label: "Days Spent", value: s.days_spent ?? 0 },
+                            { label: "Holiday Days", value: s.holiday_days_allocated ?? 0 },
+                            { label: "Days Remaining", value: s.remaining_school_days ?? 0 },
                         ],
                     });
                 }

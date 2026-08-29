@@ -319,9 +319,7 @@ function DaysInTermChart() {
         ]);
 
         const termsRes = termsResult.status === "fulfilled" ? termsResult.value : null;
-        const termsList = Array.isArray(termsRes)
-          ? termsRes
-          : termsRes?.data || [];
+        const termsList = termsRes?.data ?? (Array.isArray(termsRes) ? termsRes : []);
 
         if (isMounted && termsList.length > 0) {
           setSessionTerms(termsList);
@@ -339,7 +337,7 @@ function DaysInTermChart() {
           const activeTerm =
             termsList.find((t) => t.status === "active" || t.is_active || t.active) ||
             termsList[0];
-          activeTermId = String(activeTerm?.session_term_id || activeTerm?.id || "");
+          activeTermId = String(activeTerm?.id || activeTerm?.session_term_id || "");
         }
 
         if (isMounted && activeTermId) {
@@ -372,28 +370,14 @@ function DaysInTermChart() {
           fetchHolidays(selectedTermId),
         ]);
 
-        const rawWeeks = weeksRes.status === "fulfilled" ? weeksRes.value : null;
-        let fetchedWeeks = [];
-        if (Array.isArray(rawWeeks)) {
-          fetchedWeeks = rawWeeks;
-        } else if (Array.isArray(rawWeeks?.data)) {
-          fetchedWeeks = rawWeeks.data;
-        } else if (Array.isArray(rawWeeks?.data?.data)) {
-          fetchedWeeks = rawWeeks.data.data;
-        }
+        const weeksData = weeksRes.status === "fulfilled" ? weeksRes.value : null;
+        const fetchedWeeks = weeksData?.data ?? [];
 
-        const rawHolidays = holidaysRes.status === "fulfilled" ? holidaysRes.value : null;
-        let fetchedHolidays = [];
-        if (Array.isArray(rawHolidays)) {
-          fetchedHolidays = rawHolidays;
-        } else if (Array.isArray(rawHolidays?.data)) {
-          fetchedHolidays = rawHolidays.data;
-        } else if (Array.isArray(rawHolidays?.data?.data)) {
-          fetchedHolidays = rawHolidays.data.data;
-        }
+        const holidaysData = holidaysRes.status === "fulfilled" ? holidaysRes.value : null;
+        const fetchedHolidays = holidaysData?.data ?? [];
 
         if (isMounted) {
-          const s = rawWeeks?.stats;
+          const s = weeksData?.stats;
           const endDates = fetchedWeeks.map((w) => w.end_date).filter(Boolean).sort();
           const termEndDate =
             endDates.length > 0

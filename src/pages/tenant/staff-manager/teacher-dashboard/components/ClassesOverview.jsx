@@ -106,10 +106,10 @@ function ClassCard({ cls, idx, isAdmin }) {
                 <Typography
                   sx={{ fontWeight: 800, fontSize: 17, color: '#1e293b', lineHeight: 1.2 }}
                 >
-                  {cls.code || cls.class_name || 'Class'}
+                  {cls.code}
                 </Typography>
                 <Typography sx={{ fontSize: 12.5, color: '#64748b', mt: 0.25, fontWeight: 500 }}>
-                  {cls.subject || cls.subject_name || 'Subject'}
+                  {cls.subject}
                 </Typography>
                 {isAdmin && cls.teacherName && (
                   <Typography
@@ -263,64 +263,39 @@ export default function ClassesOverview() {
         setLoading(true);
 
         const res = await tenantApi.get('/allocations/my-allocations');
-        const payload = res?.data?.data || res?.data || {};
+        const allocationsData = res?.data?.data ?? {};
 
-        const rawSubjects = Array.isArray(payload.subject_allocations)
-          ? payload.subject_allocations
-          : [];
-        const rawClasses = Array.isArray(payload.class_allocations)
-          ? payload.class_allocations
-          : [];
+        const rawSubjects = allocationsData.subject_allocations ?? [];
+        const rawClasses = allocationsData.class_allocations ?? [];
 
-        // Mark subjects as subject allocations, and classes as class allocations
-        const subjects = rawSubjects.map((item) => ({ ...item, is_subject: true }));
-        const classes = rawClasses.map((item) => ({ ...item, is_subject: false }));
-
-        const combined = [...subjects, ...classes];
+        const combined = [...rawSubjects, ...rawClasses];
 
         if (isMounted) {
-          if (combined.length > 0) {
-            const mapped = combined.map((item, index) => {
-              const className =
-                item.class_name || item.class_arm?.programme_class?.class?.class_name;
-              const armName = item.arm_names || item.class_arm?.arm_names;
+          const mapped = combined.map((item, index) => {
+            const isSubject = Boolean(item.is_subject);
+            const className = item.class_name;
+            const armName = item.arm_names;
+            const fullClassName =
+              className && armName
+                ? `${className} - ${armName}`
+                : className || armName || `Class ${index + 1}`;
 
-              const fullClassName =
-                className && armName
-                  ? `${className} - ${armName}`
-                  : className || armName || item.code || `Class ${index + 1}`;
+            const subjectTitle = isSubject ? (item.subject_name || 'Subject') : 'Class Teacher';
+            const studentCount = Number(item.student_count ?? 0);
 
-              const isSubject = Boolean(item.is_subject || item.subject_id || item.subject?.id);
+            return {
+              id: item.id ?? index,
+              code: fullClassName,
+              subject: subjectTitle,
+              teacherName: item.teacher_name ?? '',
+              isSubject,
+              students: studentCount,
+              attendance: item.attendance ?? '92%',
+              performance: item.performance ?? '88%',
+            };
+          });
 
-              const subjectTitle =
-                item.subject?.subject_name ||
-                item.subject_name ||
-                (isSubject ? 'Subject' : 'Class Teacher');
-
-              const studentCount =
-                item.student_count !== undefined && item.student_count !== null
-                  ? Number(item.student_count)
-                  : item.students_count !== undefined
-                    ? Number(item.students_count)
-                    : item.students !== undefined
-                      ? Number(item.students)
-                      : 0;
-
-              return {
-                id: item.id || index,
-                code: fullClassName,
-                subject: subjectTitle,
-                teacherName: item.teacher_name || '',
-                isSubject: isSubject,
-                students: studentCount,
-                attendance: item.attendance || '92%',
-                performance: item.performance || '88%',
-              };
-            });
-            setClassesList(mapped);
-          } else {
-            setClassesList([]);
-          }
+          setClassesList(mapped);
         }
       } catch (err) {
         console.warn('Failed to fetch logged-in teacher allocations:', err);

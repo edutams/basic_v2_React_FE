@@ -24,8 +24,8 @@ const PageWrapper = styled('div')(() => ({
   flexGrow: 1,
   flexDirection: 'column',
   zIndex: 1,
-  // backgroundColor: 'transparent',
-  backgroundColor: '#e4e4e4a9',
+  backgroundColor: 'transparent',
+  // backgroundColor: '#e4e4e4a9',
   overflowX: 'auto',
 }));
 

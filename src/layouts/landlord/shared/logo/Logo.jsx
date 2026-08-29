@@ -5,113 +5,55 @@ import { ReactComponent as LogoDark } from 'src/assets/images/logos/logo-dark.sv
 import { ReactComponent as LogoDarkRTL } from 'src/assets/images/logos/rtl-logo-dark.svg';
 import { ReactComponent as LogoLight } from 'src/assets/images/logos/logo-white.svg';
 import { ReactComponent as LogoLightRTL } from 'src/assets/images/logos/rtl-logo-white.svg';
-import { styled } from '@mui/material';
+import { styled, Box, Typography } from '@mui/material';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
+import EduTAMSLogo from '@/assets/images/logos/EduTAMS2.png';
+
 const Logo = () => {
-  const { isCollapse, isSidebarHover, activeDir, activeMode } = useContext(CustomizerContext);
+  const { isCollapse, isSidebarHover } = useContext(CustomizerContext);
   const TopbarHeight = config.topbarHeight;
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,
-    width: isCollapse == 'mini-sidebar' && !isSidebarHover ? '36px' : '180px',
-    marginLeft: isCollapse == 'mini-sidebar' && !isSidebarHover ? '6px' : '0',
+    width: isCollapse === 'mini-sidebar' && !isSidebarHover ? '40px' : '180px',
+    marginLeft: isCollapse === 'mini-sidebar' && !isSidebarHover ? '6px' : '0',
     overflow: 'hidden',
-    display: 'block',
+    display: 'flex',
+    alignItems: 'center',
+    textDecoration: 'none',
   }));
 
-  if (activeDir === 'ltr') {
-    return (
-      <LinkStyled
-        to="/"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {isCollapse === 'mini-sidebar' && !isSidebarHover ? (
-          <h2
-            style={{
-              fontSize: '16px',
-              margin: 0,
-              fontWeight: 'bold',
-              color: 'inherit',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            BV
-          </h2>
-        ) : (
-          <h2
-            style={{
-              fontSize: '20px',
-              margin: 0,
-              fontWeight: 'bold',
-              color: 'inherit',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            BASIC V2
-          </h2>
-        )}
-        {/* {activeMode === 'dark' ? (
-          <LogoLight />
-        ) : (
-          <LogoDark />
-        )} */}
-      </LinkStyled>
-    );
-  }
+  const isMini = isCollapse === 'mini-sidebar' && !isSidebarHover;
 
   return (
-    <LinkStyled
-      to="/"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {isCollapse === 'mini-sidebar' && !isSidebarHover ? (
-        <h2
+    <LinkStyled to="/">
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <img
+          src={EduTAMSLogo}
+          alt="EduTAMS Logo"
           style={{
-            fontSize: '16px',
-            margin: 0,
-            fontWeight: 'bold',
-            color: 'inherit',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            height: isMini ? '30px' : '34px',
+            width: 'auto',
+            objectFit: 'contain',
           }}
-        >
-          BV
-        </h2>
-      ) : (
-        <h2
-          style={{
-            fontSize: '20px',
-            margin: 0,
-            fontWeight: 'bold',
-            color: 'inherit',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          BASIC V2
-        </h2>
-      )}
-      {/* {activeMode === 'dark' ? (
-        <LogoLightRTL />
-      ) : (
-        <LogoDarkRTL />
-      )} */}
+        />
+        {!isMini && (
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              color: 'text.primary',
+              letterSpacing: '-0.3px',
+              fontSize: '18px',
+              lineHeight: 1,
+            }}
+          >
+            EduTAMS
+          </Typography>
+        )}
+      </Box>
     </LinkStyled>
   );
 };

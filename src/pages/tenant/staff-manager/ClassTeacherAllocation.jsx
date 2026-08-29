@@ -308,8 +308,8 @@ const ClassTeacherAllocation = () => {
                       >
                         <MenuItem value="">Select Teacher</MenuItem>
                         {teachers.map((teacher) => (
-                          <MenuItem key={teacher.id || teacher.user_id} value={teacher.user_id || teacher.id}>
-                            {teacher.user?.fname} {teacher.user?.lname} ({teacher.staff_id})
+                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                            {teacher.user.full_name} ({teacher.staff_id})
                           </MenuItem>
                         ))}
                       </TextField>

@@ -18,27 +18,35 @@ const DashboardStatCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const scheme = schemeMap[colorIndex % schemeMap.length];
+
   return (
     <Card
       onClick={onClick}
       sx={{
         p: '0px !important',
         height: '100%',
-        borderRadius: '16px',
-        boxShadow: isDark
-          ? '0 6px 24px rgba(0,0,0,0.28)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-            boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
-            transform: 'translateY(-3px)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            }
           : {},
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         ...sx,
       }}
     >
@@ -50,7 +58,11 @@ const DashboardStatCard = ({
           <Box
             onClick={(e) => { e.stopPropagation(); onIconClick?.(); }}
             sx={{
-              borderRadius: '6px',
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+              color: isDark ? '#ffffff' : scheme.color,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -58,7 +70,7 @@ const DashboardStatCard = ({
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={18} color='white' />
+            <IconChartBar size={18} color="currentColor" />
           </Box>
         </Box>
 

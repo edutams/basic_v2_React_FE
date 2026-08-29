@@ -416,10 +416,17 @@ export default function Dashboard() {
               sx={{
                 p: 0,
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box
@@ -555,14 +562,19 @@ export default function Dashboard() {
               sx={{
                 p: 0,
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
-                // border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
-                // background: getStatCardColor(null, 4, isDark, theme).cardBg,
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                 position: 'relative',
                 overflow: 'hidden',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -577,20 +589,19 @@ export default function Dashboard() {
                   <Box
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
                     sx={{
-                      // background: getStatCardColor(null, 4, isDark, theme).iconBg,
-                      p: 0.5,
-                      borderRadius: '4px',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F3E8FF',
+                      color: isDark ? '#ffffff' : '#9333EA',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      // boxShadow: isDark
-                      //   ? '0 6px 16px rgba(0,0,0,.3)'
-                      //   : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
-                      // '&:hover': { opacity: 0.8 }
+                      '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={20} />
+                    <IconChartBar size={18} color="currentColor" />
                   </Box>
                 </Box>
 
@@ -614,7 +625,6 @@ export default function Dashboard() {
                         variant="h5"
                         fontWeight="600"
                         sx={{
-                          // color: getStatCardColor(null, 4, isDark, theme).accentColor,
                           fontSize: '20px'
                         }}
                       >
@@ -632,11 +642,18 @@ export default function Dashboard() {
               sx={{
                 p: '10px !important',
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                 position: 'relative',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box
@@ -657,14 +674,19 @@ export default function Dashboard() {
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    borderRadius: '4px',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#FEF3C7',
+                    color: isDark ? '#ffffff' : '#D97706',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    '&:hover': { opacity: 0.85 },
                   }}
                 >
-                  <IconChartBar size={20} />
+                  <IconChartBar size={18} color="currentColor" />
                 </Box>
               </Box>
               <Box

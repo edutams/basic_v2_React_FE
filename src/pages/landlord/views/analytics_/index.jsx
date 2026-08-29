@@ -24,7 +24,7 @@ import {
   fetchEnrollments,
   fetchGeographic,
   fetchOnboardingFunnel,
-} from '../../../../api/landlord/analytics/analyticsApi';
+} from '@/api/landlord/analytics/analyticsApi';
 
 const Analytics = () => {
   const [activeTab, setActiveTab] = useState(0);

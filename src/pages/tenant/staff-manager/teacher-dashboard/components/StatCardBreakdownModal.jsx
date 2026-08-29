@@ -37,17 +37,16 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
       setLoading(true);
       try {
         const res = await tenantApi.get('/allocations/my-allocations');
-        const payload = res?.data?.data || res?.data || {};
+        const allocationsData = res?.data?.data ?? {};
 
-        const list = Array.isArray(payload.students) ? payload.students : [];
-        const count =
-          payload.total_students !== undefined ? Number(payload.total_students) : list.length;
+        const list = allocationsData.students ?? [];
+        const count = Number(allocationsData.total_students ?? list.length);
 
         // Group summary count by class arm
         const armSummaryMap = new Map();
         list.forEach((reg) => {
-          const className = reg.class_name || reg.class_arm?.programme_class?.class?.class_name;
-          const armName = reg.arm_names || reg.class_arm?.arm_names;
+          const className = reg.class_name ?? '';
+          const armName = reg.arm_names ?? '';
           const fullArmName =
             className && armName
               ? `${className} - ${armName}`

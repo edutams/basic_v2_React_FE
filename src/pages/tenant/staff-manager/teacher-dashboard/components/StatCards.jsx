@@ -96,10 +96,10 @@ export default function StatCards() {
       try {
         setLoadingStats(true);
         const res = await tenantApi.get("/allocations/my-allocations");
-        const payload = res?.data?.data || res?.data || {};
+        const allocationsData = res?.data?.data ?? {};
 
-        const count = payload.total_students !== undefined ? Number(payload.total_students) : 0;
-        const attendanceVal = payload.overall_attendance || "0%";
+        const count = Number(allocationsData.total_students ?? 0);
+        const attendanceVal = allocationsData.overall_attendance ?? "0%";
 
         if (isMounted) {
           setTotalStudents(String(count));

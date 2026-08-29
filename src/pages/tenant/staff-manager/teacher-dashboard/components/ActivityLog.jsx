@@ -73,10 +73,10 @@ export default function ActivityLog() {
         const res = await tenantApi.get(`/activity-logs/causer/${currentUserId}`, {
           params: { limit: 5 },
         });
-        const list = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
+        const list = res?.data?.data ?? [];
 
         if (isMounted) {
-          setLogs(Array.isArray(list) ? list.slice(0, 5) : []);
+          setLogs(list.slice(0, 5));
         }
       } catch (err) {
         console.warn("Failed to fetch logged-in user activity logs:", err);

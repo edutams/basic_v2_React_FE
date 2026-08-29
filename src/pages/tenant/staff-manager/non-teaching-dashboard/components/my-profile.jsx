@@ -32,10 +32,8 @@ const getInitials = (nameStr) => {
 
 const formatRoleName = (roleVal) => {
   if (!roleVal) return "";
-  if (typeof roleVal === "object") {
-    roleVal = roleVal.name || roleVal.label || roleVal.role || "";
-  }
-  return String(roleVal)
+  const rawStr = typeof roleVal === "object" ? roleVal.name : String(roleVal);
+  return String(rawStr)
     .replace(/[_-]+/g, " ")
     .split(" ")
     .filter(Boolean)
@@ -50,20 +48,10 @@ const getRoleChipsList = (authUser, explicitRole) => {
   }
   if (authUser?.roles && Array.isArray(authUser.roles) && authUser.roles.length > 0) {
     const list = authUser.roles
-      .map((r) => {
-        const raw = typeof r === "object" ? (r.name || r.role || r.label || "") : String(r);
-        return formatRoleName(raw);
-      })
+      .map((r) => formatRoleName(r))
       .filter(Boolean);
     if (list.length > 0) return list;
   }
-  if (authUser?.role) {
-    const raw = typeof authUser.role === "object" ? (authUser.role.name || authUser.role.label || "") : String(authUser.role);
-    return [formatRoleName(raw)];
-  }
-  if (authUser?.designation) return [formatRoleName(authUser.designation)];
-  if (authUser?.job_title) return [formatRoleName(authUser.job_title)];
-  if (authUser?.user_type) return [formatRoleName(authUser.user_type)];
   return ["Non-Teaching Staff"];
 };
 
@@ -186,60 +174,30 @@ const MyProfile = ({
   const displayName =
     name ||
     (authUser
-      ? [authUser.fname, authUser.mname, authUser.lname]
-        .filter(Boolean)
-        .join(" ") ||
-      authUser.full_name ||
-      authUser.name
-      : null) ||
-    "Staff Member";
+      ? [authUser.fname, authUser.mname, authUser.lname].filter(Boolean).join(" ") || authUser.full_name
+      : "Staff Member");
 
   const roleChips = getRoleChipsList(authUser, role);
 
-  const displayEmployeeId =
-    employeeId ||
-    authUser?.user_id ||
-    authUser?.employee_id ||
-    authUser?.staff_id ||
-    authUser?.code ||
-    "N/A";
+  const displayEmployeeId = employeeId || authUser?.user_id || "N/A";
 
   const displayEmail = email || authUser?.email || "N/A";
 
-  const displayPhone =
-    phone || authUser?.phone || authUser?.phone_number || "N/A";
+  const displayPhone = phone || authUser?.phone || "N/A";
 
-  const displaySex =
-    authUser?.sex ||
-    authUser?.gender ||
-    authUser?.gender_name ||
-    "N/A";
+  const displaySex = authUser?.sex || "N/A";
 
   const formattedSex =
     displaySex !== "N/A"
       ? String(displaySex).charAt(0).toUpperCase() + String(displaySex).slice(1).toLowerCase()
       : "N/A";
 
-  const displayOffice =
-    office ||
-    tenantInfo?.address ||
-    "N/A";
+  const displayOffice = office || tenantInfo?.address || "N/A";
 
   const displayJoined =
-    joined ||
-    (authUser?.joined_at || authUser?.created_at
-      ? formatJoinedDate(authUser?.joined_at || authUser?.created_at)
-      : "N/A");
+    joined || (authUser?.created_at ? formatJoinedDate(authUser.created_at) : "N/A");
 
-  const rawAvatar =
-    profileImage ||
-    authUser?.avatar ||
-    authUser?.image ||
-    authUser?.profile_photo ||
-    authUser?.profile_photo_url ||
-    authUser?.avatar_url ||
-    authUser?.photo ||
-    "";
+  const rawAvatar = profileImage || authUser?.avatar || "";
 
   const displayAvatar = getImageUrl(rawAvatar);
 

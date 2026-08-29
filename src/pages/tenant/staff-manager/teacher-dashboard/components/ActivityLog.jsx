@@ -103,10 +103,6 @@ export default function ActivityLog() {
           borderColor: "grey.200",
           borderRadius: "10px",
           p: 2,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
           transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
           "&:hover": {
             transform: "translateY(-2px)",

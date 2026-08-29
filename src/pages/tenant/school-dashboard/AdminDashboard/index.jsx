@@ -8,7 +8,6 @@ import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 import DashboardHeader from './components/DashboardHeader';
 import TopStatCards from './components/TopStatCards';
 import QuickActions from './components/QuickActions';
-import SearchAndRoleBar from './components/SearchAndRoleBar';
 import FinancialOverviewBar from './components/FinancialOverviewBar';
 import AcademicPerformanceOverview from './components/AcademicPerformanceOverview';
 import AttendanceOverview from './components/AttendanceOverview';
@@ -200,7 +199,6 @@ const AdminDashboard = () => {
       >
         {/* Left Column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
-          <SearchAndRoleBar />
           <QuickActions loading={overview.loading} />
 
           {/* Financial Overview Bar (4 Mini Fee Cards) */}

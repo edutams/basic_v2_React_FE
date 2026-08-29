@@ -71,12 +71,12 @@ export default function ActivityLog() {
       try {
         setLoading(true);
         const res = await tenantApi.get(`/activity-logs/causer/${currentUserId}`, {
-          params: { limit: 5 },
+          params: { limit: 8 },
         });
         const list = res?.data?.data ?? [];
 
         if (isMounted) {
-          setLogs(list.slice(0, 5));
+          setLogs(list.slice(0, 8));
         }
       } catch (err) {
         console.warn("Failed to fetch logged-in user activity logs:", err);
@@ -111,16 +111,19 @@ export default function ActivityLog() {
         }}
       >
         <Box>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
             <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2 }}>
               Activity Log
             </Typography>
             <Button
               variant="contained"
+              size="small"
               sx={{
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: "pointer",
+                py: 0.35,
+                px: 1.25,
               }}
               onClick={() => setModalOpen(true)}
             >
@@ -130,7 +133,7 @@ export default function ActivityLog() {
 
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-              <CircularProgress size={26} />
+              <CircularProgress size={24} />
             </Box>
           ) : logs.length === 0 ? (
             <Box textAlign="center" py={3.5}>
@@ -143,58 +146,71 @@ export default function ActivityLog() {
               </Typography>
             </Box>
           ) : (
-            <Stack divider={<Divider flexItem />} spacing={1}>
-              {logs.map((item, idx) => {
-                const meta = getLogMeta(item.description, item.log_name, idx);
-                const Icon = meta.icon;
-                const titleText = item.description || "System Action";
-                const subtitleText = item.log_name || item.event || "Activity";
-                const timeText = item.my_updated_at || (item.created_at ? dayjs(item.created_at).fromNow() : "Recently");
+            <Box sx={{ maxHeight: 600, overflowY: "auto", pr: 0.5 }}>
+              <Stack divider={<Divider flexItem />} spacing={1.5}>
+                {logs.map((item, idx) => {
+                  const meta = getLogMeta(item.description, item.log_name, idx);
+                  const Icon = meta.icon;
+                  const titleText = item.description || "System Action";
+                  const subtitleText = item.log_name || item.event || "Activity";
+                  const timeText = item.my_updated_at || (item.created_at ? dayjs(item.created_at).fromNow() : "Recently");
 
-                return (
-                  <Stack
-                    key={item.id || idx}
-                    direction="row"
-                    spacing={1.25}
-                    alignItems="flex-start"
-                    sx={{
-                      pt: 0.2,
-                      transition: "transform 150ms ease",
-                      "&:hover": { transform: "translateX(2px)" },
-                    }}
-                  >
-                    <Box
+                  return (
+                    <Stack
+                      key={item.id || idx}
+                      direction="row"
+                      spacing={1.25}
+                      alignItems="flex-start"
                       sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 1.5,
-                        bgcolor: meta.bg,
-                        color: meta.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        py: 1,
+                        transition: "transform 150ms ease",
+                        "&:hover": { transform: "translateX(2px)" },
                       }}
                     >
-                      <Icon sx={{ fontSize: 17 }} />
-                    </Box>
+                      <Box
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 1.5,
+                          bgcolor: meta.bg,
+                          color: meta.color,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 16 }} />
+                      </Box>
 
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3, color: "#1e293b" }}>
-                        {titleText}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: "text.secondary", lineHeight: 1.3 }}>
-                        {subtitleText}
-                      </Typography>
-                    </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            lineHeight: 1.3,
+                            color: "#1e293b",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {titleText}
+                        </Typography>
+                        <Typography sx={{ fontSize: 11, color: "text.secondary", lineHeight: 1.25, mt: 0.25 }}>
+                          {subtitleText}
+                        </Typography>
+                      </Box>
 
-                    <Typography sx={{ fontSize: 10.5, color: "text.disabled", whiteSpace: "nowrap" }}>
-                      {timeText}
-                    </Typography>
-                  </Stack>
-                );
-              })}
-            </Stack>
+                      <Typography sx={{ fontSize: 10, color: "text.disabled", whiteSpace: "nowrap" }}>
+                        {timeText}
+                      </Typography>
+                    </Stack>
+                  );
+                })}
+              </Stack>
+            </Box>
           )}
         </Box>
       </Box>

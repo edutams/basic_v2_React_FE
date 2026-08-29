@@ -27,7 +27,7 @@ import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
 import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
-import { getStatCardColor } from '@/utils/statCardColors';
+// import { getStatCardColor } from '@/utils/statCardColors';
 import {
   flexRender,
   getCoreRowModel,
@@ -340,9 +340,8 @@ export default function Dashboard() {
 
   return (
     <PageContainer title="Analytical Dashboard" description="this is Dashboard">
-      <Box mt={3}>
-        {/* Row 1: Stat Cards — new design */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Box mt={1.5}>
+        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total School"
@@ -421,13 +420,11 @@ export default function Dashboard() {
                 boxShadow: isDark
                   ? '0 6px 24px rgba(0,0,0,0.28)'
                   : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 3, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 3, isDark, theme).cardBg,
               }}
             >
               <Box
                 sx={{
-                  p: 2,
+                  p: 1,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -492,7 +489,6 @@ export default function Dashboard() {
               <Box
                 sx={{
                   background: 'transparent',
-                  p: 2,
                   '& .apexcharts-canvas': {
                     background: 'transparent !important',
                   },
@@ -511,7 +507,7 @@ export default function Dashboard() {
                       zoom: { enabled: false },
                       background: 'transparent',
                     },
-                    colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
+                    // colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
                     plotOptions: {
                       bar: {
                         borderRadius: 4,
@@ -563,13 +559,13 @@ export default function Dashboard() {
                 boxShadow: isDark
                   ? '0 6px 24px rgba(0,0,0,0.28)'
                   : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 4, isDark, theme).cardBg,
+                // border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
+                // background: getStatCardColor(null, 4, isDark, theme).cardBg,
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
-              <Box sx={{ p: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
                   <Typography
                     variant="subtitle2"
@@ -581,24 +577,24 @@ export default function Dashboard() {
                   <Box
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
                     sx={{
-                      background: getStatCardColor(null, 4, isDark, theme).iconBg,
+                      // background: getStatCardColor(null, 4, isDark, theme).iconBg,
                       p: 0.5,
                       borderRadius: '4px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      boxShadow: isDark
-                        ? '0 6px 16px rgba(0,0,0,.3)'
-                        : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
-                      '&:hover': { opacity: 0.8 }
+                      // boxShadow: isDark
+                      //   ? '0 6px 16px rgba(0,0,0,.3)'
+                      //   : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
+                      // '&:hover': { opacity: 0.8 }
                     }}
                   >
-                    <IconChartBar size={20} color={getStatCardColor(null, 4, isDark, theme).iconColor} />
+                    <IconChartBar size={20} />
                   </Box>
                 </Box>
 
-                <Stack spacing={2.5} sx={{ px: 2, flex: 1 }}>
+                <Stack spacing={2.5} sx={{ flex: 1 }}>
                   {(loginActivitiesLoading
                     ? [{ label: 'Loading...', value: '...' }]
                     : loginActivities
@@ -618,7 +614,7 @@ export default function Dashboard() {
                         variant="h5"
                         fontWeight="600"
                         sx={{
-                          color: getStatCardColor(null, 4, isDark, theme).accentColor,
+                          // color: getStatCardColor(null, 4, isDark, theme).accentColor,
                           fontSize: '20px'
                         }}
                       >
@@ -634,14 +630,12 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <Card
               sx={{
-                p: '24px !important',
+                p: '10px !important',
                 height: '100%',
                 borderRadius: '12px',
                 boxShadow: isDark
                   ? '0 6px 24px rgba(0,0,0,0.28)'
                   : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 5, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 5, isDark, theme).cardBg,
                 position: 'relative',
               }}
             >
@@ -663,20 +657,14 @@ export default function Dashboard() {
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    background: getStatCardColor(null, 5, isDark, theme).iconBg,
-                    p: 0.5,
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    boxShadow: isDark
-                      ? '0 6px 16px rgba(0,0,0,.3)'
-                      : `0 8px 22px -2px ${getStatCardColor(null, 5, isDark, theme).iconGlow}`,
-                    '&:hover': { opacity: 0.8 },
                   }}
                 >
-                  <IconChartBar size={20} color={getStatCardColor(null, 5, isDark, theme).iconColor} />
+                  <IconChartBar size={20} />
                 </Box>
               </Box>
               <Box
@@ -700,7 +688,7 @@ export default function Dashboard() {
                     },
                     labels: planLabels,
                     colors: [
-                      getStatCardColor(null, 5, isDark, theme).accentColor,
+                      "#ff1804",
                       '#2196f3',
                       '#ff4081',
                       '#9c27b0'

@@ -11,12 +11,12 @@ const DashboardHeader = ({ currentRole = 'administrator' }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user } = useTenantAuth();
-  const userRole = user?.role_name || user?.role || 'School Administrator';
+  const userRole = user?.role_name || user?.role || 'School Admin';
   const navigate = useNavigate();
 
   const handleSwitchRole = (newRole) => {
-    if (newRole === 'administrator') return;
-    if (newRole === 'admission') navigate('/dashboard/admission');
+    if (!newRole) return;
+    else if (newRole === 'admission') navigate('/dashboard/admission');
     else if (newRole === 'bursary') navigate('/dashboard/bursary');
     else if (newRole === 'teacher') navigate('/staff-manager/teacher-dashboard');
   };
@@ -32,7 +32,6 @@ const DashboardHeader = ({ currentRole = 'administrator' }) => {
         gap: 2,
       }}
     >
-      {/* Left Greeting */}
       <Box>
         <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 20, sm: 22 }, color: isDark ? '#fff' : '#0f172a' }}>
           Good morning, {userRole}! 👋
@@ -42,45 +41,42 @@ const DashboardHeader = ({ currentRole = 'administrator' }) => {
         </Typography>
       </Box>
 
-      {/* Right: Role Switcher */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
-        <Typography
-          sx={{
-            fontSize: '12px',
-            fontWeight: 700,
-            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Switch Role
-        </Typography>
-      <FormControl size="small" sx={{ minWidth: 220 }}>
-        <Select
-          value={currentRole}
-          onChange={(e) => handleSwitchRole(e.target.value)}
-          renderValue={(val) => (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PersonOutline sx={{ fontSize: 18, color: '#2563eb' }} />
-              <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
-                {val === 'administrator' ? 'School Administrator' : val === 'admission' ? 'Admission Officer' : val === 'bursary' ? 'Bursary Officer' : 'Teacher'}
-              </Typography>
-              <KeyboardArrowDown sx={{ fontSize: 16, color: 'text.secondary', ml: 'auto' }} />
-            </Box>
-          )}
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: '10px',
-            fontSize: '13px',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          }}
-        >
-          <MenuItem value="administrator" sx={{ fontSize: '13px', fontWeight: 600 }}>School Administrator</MenuItem>
-          <MenuItem value="admission" sx={{ fontSize: '13px', fontWeight: 600 }}>Admission Officer</MenuItem>
-          <MenuItem value="bursary" sx={{ fontSize: '13px', fontWeight: 600 }}>Bursary Officer</MenuItem>
-          <MenuItem value="teacher" sx={{ fontSize: '13px', fontWeight: 600 }}>Teacher / Instructor</MenuItem>
-        </Select>
-      </FormControl>
+      <Box sx={{ ml: 'auto' }}>
+        <FormControl size="small" sx={{ minWidth: 190 }}>
+          <Select
+            displayEmpty
+            value=""
+            onChange={(e) => handleSwitchRole(e.target.value)}
+            renderValue={() => (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PersonOutline sx={{ fontSize: 18, color: '#2563eb' }} />
+                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13, color: isDark ? '#fff' : '#1e293b' }}>
+                  Switch Role
+                </Typography>
+              </Box>
+            )}
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: '10px',
+              fontSize: '13px',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <MenuItem value="" disabled sx={{ fontSize: '13px', fontWeight: 600 }}>
+              Select Role to Switch
+            </MenuItem>
+            <MenuItem value="admission" sx={{ fontSize: '13px', fontWeight: 600 }}>
+              Admission Officer
+            </MenuItem>
+            <MenuItem value="bursary" sx={{ fontSize: '13px', fontWeight: 600 }}>
+              Bursary Officer
+            </MenuItem>
+            <MenuItem value="teacher" sx={{ fontSize: '13px', fontWeight: 600 }}>
+              Teacher / Instructor
+            </MenuItem>
+          </Select>
+        </FormControl>
       </Box>
     </Box>
   );

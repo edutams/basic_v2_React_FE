@@ -3,7 +3,16 @@ import { Grid, Card, CardContent, Box, Typography, Stack, Divider, useTheme } fr
 import { IconChartBar } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
-const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats = [], onIconClick, onClick }) => {
+const StatCard = ({
+  title,
+  value,
+  valueColor,
+  valueBg,
+  colorIndex = 0,
+  subStats = [],
+  onIconClick,
+  onClick,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -38,10 +47,23 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
           : {},
       }}
     >
-      <CardContent sx={{ p: '14px !important', '&:last-child': { pb: '14px !important' }, height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <CardContent
+        sx={{
+          p: '14px !important',
+          '&:last-child': { pb: '14px !important' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" fontWeight="700" sx={{ color: 'text.secondary', fontSize: '13px' }}>
+          <Typography
+            variant="subtitle2"
+            fontWeight="700"
+            sx={{ color: 'text.secondary', fontSize: '13px' }}
+          >
             {title}
           </Typography>
           <Box
@@ -120,12 +142,18 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
             </Stack>
           </>
         )}
-      </Box>
+      </CardContent>
     </Card>
   );
 };
 
-const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, accessLevel = 1 }) => {
+const StatCards = ({
+  stats,
+  onTransactionClick,
+  onSubAgentClick,
+  onSchoolClick,
+  accessLevel = 1,
+}) => {
   const getSubAgentLevels = () => {
     switch (accessLevel) {
       case 1:
@@ -147,9 +175,7 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, 
           { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
         ];
       case 4:
-        return [
-          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
-        ];
+        return [{ label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' }];
       case 5:
         return [];
       default:

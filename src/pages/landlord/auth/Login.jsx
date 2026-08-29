@@ -30,15 +30,15 @@ const Login = () => {
       description="Login page for EduTams Agent & Partner Portal"
     >
       <Grid container spacing={0} sx={{ minHeight: '100vh', overflowX: 'hidden' }}>
-        {/* Left Hero Panel (Wider: lg=7, xl=8) */}
+        {/* Left Hero Panel (Tablet md: 6, Desktop lg: 7, xl: 8) */}
         <Grid
-          size={{ xs: 12, lg: 7, xl: 8 }}
+          size={{ xs: 12, md: 6, lg: 7, xl: 8 }}
           sx={{
-            display: { xs: 'none', lg: 'flex' },
+            display: { xs: 'none', md: 'flex' },
             flexDirection: 'column',
             justifyContent: 'space-between',
             position: 'relative',
-            p: { lg: 5, xl: 6 },
+            p: { md: 4, lg: 5, xl: 6 },
             background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)',
             color: '#ffffff',
             overflow: 'hidden',
@@ -89,7 +89,7 @@ const Login = () => {
             <Typography
               variant="h1"
               sx={{
-                fontSize: { lg: '36px', xl: '44px' },
+                fontSize: { md: '28px', lg: '36px', xl: '44px' },
                 fontWeight: 800,
                 lineHeight: 1.2,
                 color: '#ffffff',
@@ -102,7 +102,7 @@ const Login = () => {
 
             <Typography
               sx={{
-                fontSize: '15px',
+                fontSize: { md: '14px', lg: '15px' },
                 color: 'rgba(226, 232, 240, 0.85)',
                 lineHeight: 1.6,
                 mb: 4,
@@ -119,11 +119,11 @@ const Login = () => {
                 { icon: AccountBalanceWallet, title: 'Commission Payouts', desc: 'Real-time revenue tracking & payouts' },
                 { icon: TrendingUp, title: 'Sub-Agent Network', desc: 'Multi-level organization hierarchy' },
               ].map((item, idx) => (
-                <Grid size={{ xs: 12, sm: 4 }} key={idx}>
+                <Grid size={{ xs: 12, sm: 4, md: 12, lg: 4 }} key={idx}>
                   <Paper
                     elevation={0}
                     sx={{
-                      p: 2.5,
+                      p: { md: 2, lg: 2.5 },
                       borderRadius: '14px',
                       bgcolor: 'rgba(255, 255, 255, 0.05)',
                       backdropFilter: 'blur(10px)',
@@ -163,21 +163,21 @@ const Login = () => {
           </Box>
         </Grid>
 
-        {/* Right Form Panel (Right Column: lg=5, xl=4) */}
+        {/* Right Form Panel (Tablet md: 6, Desktop lg: 5, xl: 4) */}
         <Grid
-          size={{ xs: 12, lg: 5, xl: 4 }}
+          size={{ xs: 12, md: 6, lg: 5, xl: 4 }}
           sx={{
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             bgcolor: '#f8fafc',
-            p: { xs: 3, sm: 6 },
+            p: { xs: 3, sm: 4, lg: 6 },
           }}
         >
           <Box sx={{ width: '100%', maxWidth: 440 }}>
             {/* Mobile Logo display */}
-            <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3, textAlign: 'center' }}>
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, mb: 3, justifyContent: 'center' }}>
               <Logo />
             </Box>
 

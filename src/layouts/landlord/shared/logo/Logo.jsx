@@ -17,10 +17,10 @@ const Logo = () => {
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,
-    width: isCollapse === 'mini-sidebar' && !isSidebarHover ? '40px' : '180px',
+    width: isCollapse === 'mini-sidebar' && !isSidebarHover ? '40px' : 'auto',
+    maxWidth: '100%',
     marginLeft: isCollapse === 'mini-sidebar' && !isSidebarHover ? '6px' : '0',
-    overflow: 'hidden',
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     textDecoration: 'none',
   }));
@@ -29,30 +29,18 @@ const Logo = () => {
 
   return (
     <LinkStyled to="/">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <img
           src={EduTAMSLogo}
           alt="EduTAMS Logo"
           style={{
-            height: isMini ? '30px' : '34px',
+            height: isMini ? '32px' : '42px',
             width: 'auto',
+            maxWidth: '100%',
             objectFit: 'contain',
+            display: 'block',
           }}
         />
-        {!isMini && (
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 800,
-              color: 'text.primary',
-              letterSpacing: '-0.3px',
-              fontSize: '18px',
-              lineHeight: 1,
-            }}
-          >
-            EduTAMS
-          </Typography>
-        )}
       </Box>
     </LinkStyled>
   );

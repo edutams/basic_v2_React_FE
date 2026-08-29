@@ -1,51 +1,47 @@
 import React from 'react';
-import { Grid, Card, Box, Typography, Stack, Divider, useTheme } from '@mui/material';
+import { Grid, Card, CardContent, Box, Typography, Stack, Divider, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
 import PropTypes from 'prop-types';
 
 const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats = [], onIconClick, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const softColors = getStatCardColor(valueColor, colorIndex, isDark, theme);
-  const resolvedValueColor = valueColor || softColors.accentColor;
-  const resolvedValueBg = valueBg || softColors.valueBg;
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Card
       onClick={onClick}
       sx={{
+        p: '0px !important',
         height: '100%',
-        borderRadius: '16px',
-        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${softColors.borderColor}`,
-        background: isDark ? theme.palette.background.paper : `${softColors.cardBg} !important`,
-        boxShadow: isDark
-          ? '0 6px 24px rgba(0,0,0,0.28)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': onClick
           ? {
-            boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
-            transform: 'translateY(-3px)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            }
           : {},
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
-      <Box sx={{ p: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ p: '14px !important', '&:last-child': { pb: '14px !important' }, height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {/* Header */}
-        <Box
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
-        >
-          <Typography
-            variant="subtitle2"
-            fontWeight="600"
-            sx={{ color: isDark ? 'text.secondary' : 'text.primary', fontSize: '13px' }}
-          >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="subtitle2" fontWeight="700" sx={{ color: 'text.secondary', fontSize: '13px' }}>
             {title}
           </Typography>
           <Box
@@ -54,46 +50,35 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
               onIconClick?.();
             }}
             sx={{
-              background: `${softColors.iconBg} !important`,
-              boxShadow: isDark
-                ? '0 4px 12px rgba(0,0,0,0.3)'
-                : `0 4px 14px ${softColors.iconGlow}`,
-              p: 0.6,
-              borderRadius: '6px',
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+              color: isDark ? '#ffffff' : scheme.color,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: onIconClick ? 'pointer' : 'default',
-              flexShrink: 0,
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={18} color={softColors.iconColor || 'white'} />
+            <IconChartBar size={18} color="currentColor" />
           </Box>
         </Box>
 
         {/* Value */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          <Box
+          <Typography
+            fontWeight="800"
             sx={{
-              bgcolor: resolvedValueBg,
-              borderRadius: '10px',
-              px: 2.5,
-              py: 1.2,
+              color: isDark ? '#ffffff' : '#0f172a',
+              fontSize: '28px',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
             }}
           >
-            <Typography
-              fontWeight="800"
-              sx={{
-                color: resolvedValueColor,
-                fontSize: '28px',
-                lineHeight: 1,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {value}
-            </Typography>
-          </Box>
+            {value}
+          </Typography>
         </Box>
 
         {/* Sub stats */}

@@ -78,7 +78,7 @@ const FullLayout = () => {
             {/* ------------------------------------------- */}
             {/* PageContent */}
             {/* ------------------------------------------- */}
-            <Box sx={{ flex: 1, overflowX: 'auto', py: 3 }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', py: 1 }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

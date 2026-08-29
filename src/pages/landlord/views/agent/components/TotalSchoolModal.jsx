@@ -17,51 +17,57 @@ import Chart from 'react-apexcharts';
 import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar, IconBuildingCommunity } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
-import { getStatCardColor } from '@/utils/statCardColors';
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+];
 
 const TopCard = ({ label, value, icon: Icon, colorIndex = 0 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { cardBg, iconBg, iconGlow, iconColor, accentColor, borderColor } =
-    getStatCardColor(null, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
+
   return (
     <Card
       elevation={0}
       sx={{
-        p: 2.5,
-        borderRadius: '12px',
-        background: isDark ? theme.palette.background.paper : cardBg,
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : borderColor}`,
-        boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+        p: 2,
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         height: '100%',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
         <Box
           sx={{
-            width: 46,
-            height: 46,
-            borderRadius: '50%',
-            background: iconBg,
-            color: iconColor,
+            width: 36,
+            height: 36,
+            borderRadius: '8px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+            color: isDark ? '#ffffff' : scheme.color,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: isDark ? '0 6px 16px rgba(0,0,0,.3)' : `0 8px 22px -2px ${iconGlow}`,
           }}
         >
-          <Icon size={22} color={iconColor} />
+          <Icon size={18} color="currentColor" />
         </Box>
-        <Box
-          sx={{
-            flex: 1,
-            textAlign: 'right',
-          }}
-        >
+        <Box sx={{ flex: 1, textAlign: 'right' }}>
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '22px', color: isDark ? '#fff' : accentColor, lineHeight: 1.1 }}
+            sx={{ fontSize: '20px', color: isDark ? '#ffffff' : '#0f172a', lineHeight: 1.1 }}
           >
             {value}
           </Typography>

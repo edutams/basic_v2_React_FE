@@ -74,18 +74,6 @@ const QuickActions = ({ loading = false }) => {
           boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
         }}
       >
-        <Typography
-          sx={{
-            fontSize: '11px',
-            fontWeight: 800,
-            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-            textTransform: 'uppercase',
-            letterSpacing: 0.5,
-            mb: 1,
-          }}
-        >
-          QUICK ACTIONS
-        </Typography>
 
         {loading ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -109,9 +97,9 @@ const QuickActions = ({ loading = false }) => {
                 onClick={item.onClick}
                 sx={{
                   borderRadius: '8px',
-                  px: 1.75,
-                  py: 0.75,
-                  fontSize: '12px',
+                  px: 1.60,
+                  py: 0.65,
+                  fontSize: '10px',
                   fontWeight: 700,
                   textTransform: 'none',
                   bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.iconBg,

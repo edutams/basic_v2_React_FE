@@ -46,6 +46,7 @@ import {
   rejectProspectiveTenant,
   updateSchool,
   approveSchoolOnboarding,
+  deleteProspectiveTenant,
 } from '@/api/landlord/school/schoolApi';
 import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
@@ -392,21 +393,33 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             Only Level 1 organizations can approve or reject applications
           </Typography>
         )}
-        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onClose}
+          color="inherit"
+          sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}
+        >
           Close
         </Button>
         {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
               <>
-                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Reject
                 </Button>
-                <Button variant="contained" size="small" startIcon={<CheckCircleOutlineIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CheckCircleOutlineIcon />}
                   onClick={() => onApprove(prospect.id)}
                   disabled={loading}
                   sx={{
@@ -419,13 +432,20 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </>
             ) : (
               <>
-                <Button variant="contained" size="small" color="inherit" onClick={() => setShowRejectInput(false)}
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="inherit"
+                  onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => setOpenConfirmReject(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -799,11 +819,13 @@ const SchoolsTab = ({
                 sx={{
                   p: 3,
                   borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                  background: isDark
+                    ? theme.palette.background.paper
+                    : `${statColor0.cardBg} !important`,
+                  border: isDark
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor0.borderColor}`,
+                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
                 }}
               >
                 <Box
@@ -823,7 +845,9 @@ const SchoolsTab = ({
                       onClick={() => setOpenTotalSchoolModal(true)}
                       sx={{
                         background: `${statColor0.iconBg} !important`,
-                        boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                        boxShadow: isDark
+                          ? '0 4px 12px rgba(0,0,0,0.3)'
+                          : `0 4px 14px ${statColor0.iconGlow}`,
                         borderRadius: 1,
                         '&:hover': { opacity: 0.85 },
                       }}
@@ -842,7 +866,13 @@ const SchoolsTab = ({
                     mb: 5,
                   }}
                 >
-                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: isDark ? '#ffffff' : statColor0.accentColor,
+                    }}
+                  >
                     {schoolSummary.total}
                   </Typography>
                 </Box>
@@ -853,14 +883,22 @@ const SchoolsTab = ({
                     </Typography>
                     <Typography fontWeight={600}>{schoolSummary.active}</Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: statColor0.borderColor }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Pending
                     </Typography>
                     <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: statColor0.borderColor }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Rejected
@@ -876,11 +914,13 @@ const SchoolsTab = ({
                 sx={{
                   p: 3,
                   borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                  background: isDark
+                    ? theme.palette.background.paper
+                    : `${statColor1.cardBg} !important`,
+                  border: isDark
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor1.borderColor}`,
+                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
                 }}
               >
                 <Box
@@ -898,7 +938,9 @@ const SchoolsTab = ({
                     size="small"
                     sx={{
                       background: `${statColor1.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                      boxShadow: isDark
+                        ? '0 4px 12px rgba(0,0,0,0.3)'
+                        : `0 4px 14px ${statColor1.iconGlow}`,
                       borderRadius: 1,
                       '&:hover': { opacity: 0.85 },
                     }}
@@ -916,7 +958,13 @@ const SchoolsTab = ({
                     mb: 5,
                   }}
                 >
-                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: isDark ? '#ffffff' : statColor1.accentColor,
+                    }}
+                  >
                     {schoolSummary.subscriptions}
                   </Typography>
                 </Box>
@@ -927,7 +975,11 @@ const SchoolsTab = ({
                     </Typography>
                     <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: statColor1.borderColor }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Secondary
@@ -943,11 +995,13 @@ const SchoolsTab = ({
                 sx={{
                   p: 3,
                   borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                  background: isDark
+                    ? theme.palette.background.paper
+                    : `${statColor2.cardBg} !important`,
+                  border: isDark
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor2.borderColor}`,
+                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
                 }}
               >
                 <Box
@@ -966,7 +1020,9 @@ const SchoolsTab = ({
                     onClick={() => setOpenLoginModal(true)}
                     sx={{
                       background: `${statColor2.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
+                      boxShadow: isDark
+                        ? '0 4px 12px rgba(0,0,0,0.3)'
+                        : `0 4px 14px ${statColor2.iconGlow}`,
                       borderRadius: 1,
                       '&:hover': { opacity: 0.85 },
                     }}
@@ -975,11 +1031,14 @@ const SchoolsTab = ({
                   </IconButton>
                 </Box>
                 <Box sx={{ pb: 0 }}>
-                  {(loginActivities && loginActivities.length > 0 ? loginActivities : [
-                    { label: 'Staffs', value: 0 },
-                    { label: 'Agents', value: 0 },
-                    { label: 'Total', value: 0 },
-                  ]).map((activity) => (
+                  {(loginActivities && loginActivities.length > 0
+                    ? loginActivities
+                    : [
+                        { label: 'Staffs', value: 0 },
+                        { label: 'Agents', value: 0 },
+                        { label: 'Total', value: 0 },
+                      ]
+                  ).map((activity) => (
                     <Box
                       key={activity.label}
                       sx={{
@@ -992,7 +1051,11 @@ const SchoolsTab = ({
                       <Typography variant="body2" color="text.secondary">
                         {activity.label}
                       </Typography>
-                      <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                      >
                         {activity.value}
                       </Typography>
                     </Box>
@@ -1006,11 +1069,13 @@ const SchoolsTab = ({
                 sx={{
                   p: 3,
                   borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                  background: isDark
+                    ? theme.palette.background.paper
+                    : `${statColor3.cardBg} !important`,
+                  border: isDark
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : `1px solid ${statColor3.borderColor}`,
+                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
                 }}
               >
                 <Box
@@ -1029,7 +1094,9 @@ const SchoolsTab = ({
                     onClick={() => setOpenPlanModal(true)}
                     sx={{
                       background: `${statColor3.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                      boxShadow: isDark
+                        ? '0 4px 12px rgba(0,0,0,0.3)'
+                        : `0 4px 14px ${statColor3.iconGlow}`,
                       borderRadius: 1,
                       '&:hover': { opacity: 0.85 },
                     }}
@@ -1131,7 +1198,10 @@ const SchoolsTab = ({
             <Box />
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
               {activeTab === 0 && can('landlord.school.create') && (
-                <Button variant="contained" size="small" startIcon={<IconUserPlus />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconUserPlus />}
                   onClick={() => setOpenAddModal(true)}
                   sx={{
                     textTransform: 'none',
@@ -1142,7 +1212,10 @@ const SchoolsTab = ({
                   Add New School
                 </Button>
               )}
-              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconAdjustmentsHorizontal />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
                   textTransform: 'none',
@@ -1154,7 +1227,6 @@ const SchoolsTab = ({
                 }}
               >
                 Filters
-
                 {activeFilterCount > 0 && (
                   <Box
                     component="span"

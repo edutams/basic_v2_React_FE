@@ -76,6 +76,15 @@ export default defineConfig({
 
   build: {
     target: 'esnext', // enables top-level await
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mui: ['@mui/material', '@mui/icons-material', '@mui/lab', '@mui/utils', '@mui/x-charts', '@mui/x-date-pickers', '@mui/x-tree-view'],
+          charts: ['react-apexcharts', 'apexcharts', 'recharts'],
+          tiptap: ['@tiptap/core', '@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-image', '@tiptap/extension-table'],
+        },
+      },
+    },
   },
   plugins: [svgr(), react(), stripCspPlugin()],
   server: {

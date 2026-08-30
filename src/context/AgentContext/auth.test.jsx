@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AuthProvider, AuthContext } from './auth';
 import { CustomizerContext } from '../CustomizerContext';
 import api from '@/api/landlord/landlord_api';
@@ -95,5 +95,45 @@ describe('impersonateTenant', () => {
       expect(api.post).toHaveBeenCalled();
     });
     expect(window.open).not.toHaveBeenCalled();
+  });
+});
+
+describe('contextValue stability', () => {
+  it('keeps handler references stable across an unrelated re-render', async () => {
+    const capturedLogins = [];
+    // Stable across renders, like the real CustomizerContextProvider's
+    // useState setter would be — a fresh mock here would falsely make
+    // every useCallback depending on it look unstable too.
+    const stableCustomizerValue = { setPrimaryColor: vi.fn() };
+
+    function Capture() {
+      const { login } = useContext(AuthContext);
+      capturedLogins.push(login);
+      return null;
+    }
+
+    function Harness() {
+      const [count, setCount] = useState(0);
+      return (
+        <CustomizerContext.Provider value={stableCustomizerValue}>
+          <AuthProvider>
+            <Capture />
+          </AuthProvider>
+          <button onClick={() => setCount((c) => c + 1)}>bump {count}</button>
+        </CustomizerContext.Provider>
+      );
+    }
+
+    render(<Harness />);
+
+    // Let the mount-time restoreUser effect settle before capturing the
+    // "before" reference, so we're not conflating it with our own bump.
+    await waitFor(() => expect(capturedLogins.length).toBeGreaterThan(0));
+    const before = capturedLogins[capturedLogins.length - 1];
+
+    fireEvent.click(screen.getByText(/bump/));
+
+    const after = capturedLogins[capturedLogins.length - 1];
+    expect(after).toBe(before);
   });
 });

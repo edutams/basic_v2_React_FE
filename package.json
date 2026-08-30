@@ -43,6 +43,7 @@
     "chance": "1.1.12",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "dompurify": "^3.4.14",
     "emoji-picker-react": "4.12.2",
     "formik": "2.4.6",
     "formik-mui": "^5.0.0-alpha.1",
@@ -50,7 +51,7 @@
     "fslightbox-react": "1.8.0",
     "gray-matter": "^4.0.3",
     "i18next": "25.1.1",
-    "lodash": "4.17.21",
+    "lodash": "4.18.1",
     "moment": "2.30.1",
     "msw": "^2.7.6",
     "mui-tiptap": "^1.18.1",
@@ -93,7 +94,12 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.4.20",
     "jsdom": "^30.0.1",
-    "vite": "6.3.5",
+    "vite": "6.4.3",
     "vitest": "^4.1.11"
+  },
+  "allowScripts": {
+    "core-js-pure@3.49.0": true,
+    "esbuild@0.25.12": true,
+    "fsevents@2.3.3": true
   }
 }

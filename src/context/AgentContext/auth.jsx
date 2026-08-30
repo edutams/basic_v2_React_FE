@@ -3,6 +3,7 @@ import api from '@/api/landlord/landlord_api';
 import { PermissionProvider } from './permissions';
 import axios from 'axios';
 import { CustomizerContext } from '../CustomizerContext';
+import { safeWindowOpen } from '@/utils/safeWindowOpen';
 
 export const AuthContext = createContext(undefined);
 
@@ -254,10 +255,7 @@ export const AuthProvider = ({ children }) => {
       const meRes = await api.get('/v1/landlord/auth/me');
       const freshPermissions = meRes.data?.permissions || [];
 
-      //  THE FIX: write the impersonated user into localStorage
-      // so restoreUser() picks it up correctly after a refresh
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('permissions', JSON.stringify([])); // or pull from res.data if API returns them
+      localStorage.setItem('permissions', JSON.stringify(freshPermissions));
 
       setUser(newUser);
       setPermissions(freshPermissions);
@@ -287,7 +285,9 @@ export const AuthProvider = ({ children }) => {
 
       // Check if there's a redirect URL (open in new tab approach)
       if (redirect_url) {
-        window.open(redirect_url, '_blank');
+        if (!safeWindowOpen(redirect_url)) {
+          return { success: false, error: 'Received an invalid redirect URL' };
+        }
         return { success: true, redirect_url };
       }
 

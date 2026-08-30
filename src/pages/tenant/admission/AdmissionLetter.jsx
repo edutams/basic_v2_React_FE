@@ -17,6 +17,7 @@ import {
   getAdmissionLetterDetails,
 } from '@/api/tenant/admission/admissionApi';
 import { useNotification } from 'src/hooks/useNotification';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 const MOCK_LETTER = {
   reference: 'TASUES/ADM/2025/10428',
@@ -153,7 +154,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           variant="body2"
           mb={3}
           lineHeight={1.8}
-          dangerouslySetInnerHTML={{ __html: letter.offer_letter }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(letter.offer_letter) }}
         />
 
         {/* <Paper sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>

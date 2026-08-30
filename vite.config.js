@@ -83,4 +83,10 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: true,
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    css: true,
+  },
 });

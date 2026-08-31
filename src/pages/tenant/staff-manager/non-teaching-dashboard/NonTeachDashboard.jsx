@@ -13,7 +13,7 @@ import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import PageContainer from "@/components/container/PageContainer";
 
 // API Helpers
-import tenantApi from "@/api/tenant/tenant_api";
+import { fetchActiveSessionTermId } from "@/api/tenant/session-term/sessionTermApi";
 import { fetchWeeks } from "@/api/tenant/term-weeks/weekApi";
 
 // Dashboard Components
@@ -35,8 +35,7 @@ const NonTeachDashboard = () => {
     useEffect(() => {
         const loadDaysInSchool = async () => {
             try {
-                const activeRes = await tenantApi.get("/curriculum/active-session-term");
-                const activeTermId = activeRes?.data?.data?.session_term_id;
+                const activeTermId = await fetchActiveSessionTermId();
                 if (!activeTermId) return;
 
                 const weeksData = await fetchWeeks(activeTermId);

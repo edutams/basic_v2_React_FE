@@ -195,12 +195,12 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>{st.admission_no}</TableCell>
                     <TableCell fontWeight={600}>{st.name}</TableCell>
-                    <TableCell>{st.arm_name ? `Arm ${st.arm_name}` : '-'}</TableCell>
+                    <TableCell>({st.arm_name ? st.arm_name : '-'})</TableCell>
                     <TableCell>
                       <Chip
                         label={st.gender}
                         size="small"
-                        color={st.gender === 'MALE' ? 'primary' : 'success'}
+                        color={st.gender === 'male' ? 'primary' : 'success'}
                         sx={{ fontSize: 10, height: 18, fontWeight: 700 }}
                       />
                     </TableCell>

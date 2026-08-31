@@ -13,7 +13,7 @@ import StatCard from '@/components/shared/StatCard';
 import { getStatCardColor } from '@/utils/statCardColors';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
 
@@ -69,26 +69,44 @@ const BursarySetup = () => {
   };
 
   const loadSessionTerms = async () => {
-    try {
-      const [termsRes, activeTermRes] = await Promise.all([
-        fetchSessionTerms(),
-        fetchActiveSessionTerm(),
-      ]);
+    // Independent requests: getActiveBursarySessionTerm 404s whenever the
+    // bursary-specific active term hasn't been configured yet (the common
+    // case for a fresh setup) — that must not stop the session-terms list
+    // itself from loading, so these are settled independently rather than
+    // via Promise.all (which fails the whole call on the first rejection).
+    const [termsResult, activeTermResult] = await Promise.allSettled([
+      fetchTenantSessionTerms({ per_page: 100 }),
+      fetchActiveSessionTerm(),
+    ]);
 
-      if (termsRes.status) {
-        const sess_terms = termsRes.data.map((sterm) => ({
-          id: sterm.id,
-          label:
-            `${sterm.session?.session_name || ''} ${sterm.term?.term_name || ''}`.trim(),
-        }));
-        setSessionTerms(sess_terms);
-      }
+    if (termsResult.status === 'rejected') {
+      console.error('Failed to fetch session terms:', termsResult.reason);
+    }
 
-      if (activeTermRes.status && activeTermRes.data) {
-        setSelectedSessionTerm(activeTermRes.data.session_term_id);
-      }
-    } catch (error) {
-      console.error('Failed to fetch session terms:', error);
+    const termsRes = termsResult.status === 'fulfilled' ? termsResult.value : null;
+    const activeTermRes = activeTermResult.status === 'fulfilled' ? activeTermResult.value : null;
+
+    if (termsRes?.status) {
+      // List every session term (not just the active one) — this dropdown
+      // is how an admin explicitly chooses which term bursary fees apply
+      // to, which is deliberately independent of the tenant-wide active
+      // term (e.g. setting it up ahead of time for an upcoming term).
+      const sess_terms = termsRes.data.map((sterm) => ({
+        id: sterm.id,
+        label: `${sterm.session?.session_name || ''} ${sterm.term?.term_name || ''}`.trim(),
+        status: sterm.status,
+      }));
+      setSessionTerms(sess_terms);
+    }
+
+    if (activeTermRes?.status && activeTermRes.data) {
+      // Bursary has its own explicitly-configured active session term.
+      setSelectedSessionTerm(activeTermRes.data.session_term_id);
+    } else if (termsRes?.status) {
+      // Not configured yet — default to whichever session term is
+      // currently active tenant-wide, so the dropdown isn't left blank.
+      const activeTerm = termsRes.data.find((sterm) => sterm.status === 'active');
+      if (activeTerm) setSelectedSessionTerm(activeTerm.id);
     }
   };
 

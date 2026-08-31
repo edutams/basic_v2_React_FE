@@ -6,42 +6,60 @@ export const fetchCurrentSession = async () => {
   return response.data;
 };
 
-// Fetch all available landlord terms for the tenant
+// Fetch this tenant's own terms
 export const fetchTerms = async () => {
-  const response = await api.get('/curriculum/terms/list');
+  const response = await api.get('/terms');
   return response.data;
 };
 
-// Fetch session terms with display names (pass sessionId to filter, or nothing for all subscribed)
+// Fetch this tenant's session-terms (pass sessionId to filter to one session, or
+// nothing for the full list across all sessions). Each row carries both the raw
+// shape (id, session_id, term_id, status, session:{session_name}, term:{term_name})
+// AND legacy aliases (session_term_id, term_name, display_name, is_subscribed,
+// app_term_id) so every existing consumer's field names keep working regardless
+// of which naming convention it was written against — display terms are gone,
+// so display_name is just an alias for term_name, and is_subscribed just mirrors
+// status (only one session-term is ever active tenant-wide).
 export const fetchSessionTerms = async (sessionId = null) => {
-  const params = {};
+  const params = { per_page: 100 };
   if (sessionId) params.session_id = sessionId;
 
-  const response = await api.get('/curriculum/session-terms', { params });
-  return response.data;
+  const response = await api.get('/session-terms', { params });
+  const data = (response.data.data ?? []).map((row) => ({
+    ...row,
+    app_term_id: row.term_id,
+    term_name: row.term?.term_name ?? null,
+    display_term_id: row.term_id,
+    display_name: row.term?.term_name ?? null,
+    is_subscribed: row.status === 'active' ? 'yes' : 'no',
+    session_term_id: row.id,
+    start_date: row.start_date ?? null,
+  }));
+
+  return { ...response.data, data };
 };
 
-// Update display name for a term
+// Rename a term for this tenant (e.g. "First Term" -> "Harmattan"); the term id is unchanged.
 export const updateDisplayName = async (appTermId, displayName) => {
-  const response = await api.post('/curriculum/update-display-name', {
-    app_term_id: appTermId,
-    display_name: displayName,
+  const response = await api.put(`/terms/${appTermId}`, {
+    term_name: displayName,
   });
   return response.data;
 };
 
-// Subscribe to a session term
+// Create/activate a session-term mapping
 export const subscribeSessionTerm = async (sessionId, appTermId) => {
-  const response = await api.post('/curriculum/subscribe-session-term', {
+  const response = await api.post('/session-terms', {
     session_id: sessionId,
-    app_term_id: appTermId,
+    term_id: appTermId,
+    status: 'active',
   });
   return response.data;
 };
 
 // Toggle session term status
 export const toggleSessionTermStatus = async (id) => {
-  const response = await api.post(`/curriculum/toggle-session-term-status/${id}`);
+  const response = await api.put(`/session-terms/${id}/toggle-status`);
   return response.data;
 };
 
@@ -87,6 +105,13 @@ export const syncLandlordTerms = async () => {
 export const fetchActiveTenantSessionTerm = async () => {
   const response = await api.get('/session-terms/active');
   return response.data;
+};
+
+// Convenience for imperative call sites that only need the active session-term's id
+// (adapts the /session-terms/active shape's `id` field to what callers ask for).
+export const fetchActiveSessionTermId = async () => {
+  const response = await fetchActiveTenantSessionTerm();
+  return response?.data?.id ?? null;
 };
 
 // Fetch the tenant's session-term mappings (paginated; pass sessionId to filter)

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import api from '@/api/tenant/tenant_api';
 import { PermissionProvider } from './permissions';
 import { validateTenantDomain } from '../../api/tenant/set-up/tenant-setup';
@@ -33,7 +33,7 @@ export const TenantAuthProvider = ({ children }) => {
   const { setPrimaryColor } = useContext(CustomizerContext);
 
   // ── shared internal helper ──────────────────────────────────────────
-  const _applyImpersonationToken = (res) => {
+  const _applyImpersonationToken = useCallback((res) => {
     const { access_token, expires_in } = res.data;
 
     // Preserve the admin token so stopImpersonation can restore it
@@ -45,10 +45,10 @@ export const TenantAuthProvider = ({ children }) => {
     localStorage.setItem('tenant_access_token', access_token);
     localStorage.setItem('tenant_token_expires_in', String(expires_in));
     localStorage.setItem('isImpersonating', 'true');
-  };
+  }, []);
 
   // ── impersonateStaff ────────────────────────────────────────────────
-  const impersonateStaff = async (staffId) => {
+  const impersonateStaff = useCallback(async (staffId) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -73,10 +73,10 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [_applyImpersonationToken]);
 
   // ── impersonateStudent ──────────────────────────────────────────────
-  const impersonateStudent = async (studentId) => {
+  const impersonateStudent = useCallback(async (studentId) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -100,10 +100,10 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [_applyImpersonationToken]);
 
   // ── impersonateParent ───────────────────────────────────────────────
-  const impersonateParent = async (parentId) => {
+  const impersonateParent = useCallback(async (parentId) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -127,9 +127,9 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [_applyImpersonationToken]);
 
-  const checkTenantDomain = async () => {
+  const checkTenantDomain = useCallback(async () => {
     if (window.location.pathname === '/school-not-found') return;
 
     const hostname = window.location.hostname;
@@ -144,9 +144,28 @@ export const TenantAuthProvider = ({ children }) => {
         setPrimaryColor(data.primary_color);
       }
     }
-  };
+  }, [setPrimaryColor]);
 
-  const fetchTenantOnboardingInfo = async () => {
+  // refreshTenantInfo is declared before fetchTenantOnboardingInfo (which calls
+  // it) since a useCallback dependency array can't reference a const declared
+  // later in the same scope.
+  const refreshTenantInfo = useCallback(async () => {
+    try {
+      const res = await tenantApi.get('/school_setup/get_academic_info');
+      const { academic_session, academic_term, academic_week, logo_url } = res.data;
+      setTenantInfo((prev) => ({
+        ...prev,
+        academic_session,
+        academic_term,
+        academic_week,
+        logo_url,
+      }));
+    } catch (err) {
+      console.error('Failed to refresh academic info', err);
+    }
+  }, []);
+
+  const fetchTenantOnboardingInfo = useCallback(async () => {
     try {
       const res = await tenantApi.get('/school_setup/get_current_tenant');
       const freshData = res.data?.data;
@@ -157,7 +176,7 @@ export const TenantAuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to fetch tenant onboarding info', err);
     }
-  };
+  }, [refreshTenantInfo]);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -207,7 +226,7 @@ export const TenantAuthProvider = ({ children }) => {
 
     restoreUser();
     checkTenantDomain();
-  }, []);
+  }, [checkTenantDomain, fetchTenantOnboardingInfo]);
 
   useEffect(() => {
     const handleAuthExpired = () => {
@@ -229,31 +248,7 @@ export const TenantAuthProvider = ({ children }) => {
     return () => window.removeEventListener('tenant_auth:expired', handleAuthExpired);
   }, []);
 
-  // const refreshTenantInfo = async () => {
-  //   const hostname = window.location.hostname;
-  //   const data = await validateTenantDomain(hostname);
-  //   if (data && data.status !== false) {
-  //     setTenantInfo(data);
-  //   }
-  // };
-
-  const refreshTenantInfo = async () => {
-    try {
-      const res = await tenantApi.get('/school_setup/get_academic_info');
-      const { academic_session, academic_term, academic_week, logo_url } = res.data;
-      setTenantInfo((prev) => ({
-        ...prev,
-        academic_session,
-        academic_term,
-        academic_week,
-        logo_url,
-      }));
-    } catch (err) {
-      console.error('Failed to refresh academic info', err);
-    }
-  };
-
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -293,9 +288,9 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchTenantOnboardingInfo, setPrimaryColor]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -317,11 +312,11 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
-  const updateUser = async (data, isMultipart = false) => {
+  const updateUser = useCallback(async (data, isMultipart = false) => {
     setError(null);
     try {
       const res = await api.post('/update_user', data, {
@@ -335,16 +330,16 @@ export const TenantAuthProvider = ({ children }) => {
       setError(msg);
       return { success: false, error: msg };
     }
-  };
+  }, []);
 
-  const changePassword = async (passwordData) => {
+  const changePassword = useCallback(async (passwordData) => {
     setError(null);
     const res = await api.put('/change_password', passwordData);
 
     return res.data;
-  };
+  }, []);
 
-  const stopImpersonation = async () => {
+  const stopImpersonation = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await impersonationApi.stopImpersonation();
@@ -377,9 +372,9 @@ export const TenantAuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     user,
     isAuthenticated,
     isLoading,
@@ -401,7 +396,27 @@ export const TenantAuthProvider = ({ children }) => {
     stopImpersonation,
     tenantInfo,
     refreshTenantInfo,
-  };
+  }), [
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    logout,
+    updateUser,
+    changePassword,
+    clearError,
+    permissions,
+    roles,
+    isImpersonated,
+    impersonatorId,
+    impersonateStaff,
+    impersonateStudent,
+    impersonateParent,
+    stopImpersonation,
+    tenantInfo,
+    refreshTenantInfo,
+  ]);
 
   return (
     <TenantAuthContext.Provider value={contextValue}>

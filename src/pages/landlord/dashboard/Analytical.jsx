@@ -52,35 +52,16 @@ import TotalSubAgentModal from '@/pages/landlord/views/agent/components/TotalSub
 
 const columnHelper = createColumnHelper();
 
+const PLAN_DISTRIBUTION_COLORS = ['#2196f3', '#9c27b0', '#ff4081', '#4caf50', '#ff9800'];
+
+function formatNaira(value) {
+  return `₦${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
-
-  // Revenue Trend Mock Data
-  const revenueSeries = [
-    { name: 'Revenue', data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5] },
-  ];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39, 25];
-  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
-
-
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -130,43 +111,53 @@ export default function Dashboard() {
   // Table filter states
   const [searchName, setSearchName] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
-  const [filterGateway, setFilterGateway] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [tableLoading, setTableLoading] = useState(false);
 
   const [data, setData] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await agentApi.getAll();
-        const paginator = response.status === true ? response.data : response;
-        const agentsArray = paginator.data || [];
+  const fetchTopAgents = async (filters = {}) => {
+    setTableLoading(true);
+    try {
+      const response = await agentApi.getAll(filters);
+      const paginator = response.status === true ? response.data : response;
+      const agentsArray = paginator.data || [];
 
-        if (agentsArray.length > 0) {
-          const mappedData = agentsArray.slice(0, 10).map((agent) => ({
-            s_n: agent.id,
-            agentDetails: agent.organization_name || agent.name,
-            organizationName: agent.organization_name || agent.org_name,
-            imgsrc: agent.organization_logo || agent.image,
-            tenants_count: agent.tenants_count || 0,
-            sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
-            access_level: agent.access_level,
-            phoneNumber: agent.organization_phone || agent.phone,
-            contactDetails: agent.organization_email || agent.email,
-            primaryColor: agent.primary_color || '#4a3aff',
-            status: agent.status
-              ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
-              : 'Inactive',
-            tenants: agent.tenants || [],
-          }));
-          setData(mappedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch top performing agents', error);
-      }
-    };
-    fetchData();
+      const mappedData = agentsArray.slice(0, 10).map((agent) => ({
+        s_n: agent.id,
+        agentDetails: agent.organization_name || agent.name,
+        organizationName: agent.organization_name || agent.org_name,
+        imgsrc: agent.organization_logo || agent.image,
+        tenants_count: agent.tenants_count || 0,
+        sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
+        access_level: agent.access_level,
+        phoneNumber: agent.organization_phone || agent.phone,
+        contactDetails: agent.organization_email || agent.email,
+        primaryColor: agent.primary_color || '#4a3aff',
+        status: agent.status
+          ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
+          : 'Inactive',
+        tenants: agent.tenants || [],
+      }));
+      setData(mappedData);
+    } catch (error) {
+      console.error('Failed to fetch top performing agents', error);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopAgents();
   }, []);
+
+  const handleFilterClick = () => {
+    fetchTopAgents({
+      search: searchName || undefined,
+      access_level: filterLevel || undefined,
+      status: filterStatus || undefined,
+    });
+  };
 
   const columns = useMemo(
     () => [
@@ -227,15 +218,6 @@ export default function Dashboard() {
             </Stack>
           );
         },
-      }),
-      columnHelper.display({
-        id: 'gateway',
-        header: () => 'Gateway',
-        cell: () => (
-          <Typography variant="subtitle2" fontWeight="500" color="textSecondary">
-            -
-          </Typography>
-        ),
       }),
       columnHelper.accessor('sub_agents_count', {
         header: () => 'Sub Org.',
@@ -369,11 +351,17 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Transaction Value"
-              value="₦7,000,234.00"
+              value={analyticsLoading ? '...' : formatNaira(analytics?.transactionVolume)}
               colorIndex={1}
               subStats={[
-                { label: 'Commission', value: '₦100,000,000' },
-                { label: 'Volume', value: '304,043,000' },
+                {
+                  label: 'Collected',
+                  value: analyticsLoading ? '...' : formatNaira(analytics?.transactionVolume),
+                },
+                {
+                  label: 'Pending',
+                  value: analyticsLoading ? '...' : formatNaira(analytics?.transactionPending),
+                },
               ]}
               onIconClick={() => setIsTransactionModalOpen(true)}
               onClick={() => setIsTransactionModalOpen(true)}
@@ -443,55 +431,8 @@ export default function Dashboard() {
                   fontWeight="600"
                   sx={{ color: 'text.secondary' }}
                 >
-                  Transaction
+                  Transaction — Collected vs Pending
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Select
-                    size="small"
-                    value="year"
-                    sx={{
-                      minWidth: 100,
-                      height: '35px',
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                      borderRadius: '8px',
-                      color: isDark ? '#fff' : 'inherit',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-                      },
-                      '& .MuiSelect-icon': {
-                        color: isDark ? '#fff' : 'inherit',
-                      },
-                    }}
-                  >
-                    <MenuItem value="year">Year</MenuItem>
-                  </Select>
-
-                  <Select
-                    size="small"
-                    value="gateway"
-                    sx={{
-                      minWidth: 100,
-                      height: '35px',
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                      borderRadius: '8px',
-                      color: isDark ? '#fff' : 'inherit',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-                      },
-                      '& .MuiSelect-icon': {
-                        color: isDark ? '#fff' : 'inherit',
-                      },
-                    }}
-                  >
-                    <MenuItem value="gateway">Gateway</MenuItem>
-                  </Select>
-                </Stack>
               </Box>
               <Box
                 sx={{
@@ -514,12 +455,12 @@ export default function Dashboard() {
                       zoom: { enabled: false },
                       background: 'transparent',
                     },
-                    // colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
+                    colors: ['#16a34a', '#e11d48'],
                     plotOptions: {
                       bar: {
                         borderRadius: 4,
-                        columnWidth: '45%',
-                        distributed: false,
+                        columnWidth: '35%',
+                        distributed: true,
                       },
                     },
                     dataLabels: { enabled: false },
@@ -531,24 +472,26 @@ export default function Dashboard() {
                       yaxis: { lines: { show: true } }
                     },
                     xaxis: {
-                      categories: months,
+                      categories: ['Collected', 'Pending'],
                       axisBorder: { show: false },
-                      title: {
-                        text: 'Month',
-                        style: { color: '#adb0bb', fontWeight: 400 }
-                      }
                     },
                     yaxis: {
                       labels: {
                         show: true,
-                        formatter: (val) => `N${val.toFixed(1)}M`,
+                        formatter: (val) => formatNaira(val),
                       },
                     },
                     tooltip: {
                       theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+                      y: { formatter: (val) => formatNaira(val) },
                     },
                   }}
-                  series={revenueSeries}
+                  series={[
+                    {
+                      name: 'Amount',
+                      data: [analytics?.transactionVolume ?? 0, analytics?.transactionPending ?? 0],
+                    },
+                  ]}
                   type="bar"
                   height={250}
                   width="100%"
@@ -708,13 +651,8 @@ export default function Dashboard() {
                       toolbar: { show: false },
                       background: 'transparent',
                     },
-                    labels: planLabels,
-                    colors: [
-                      "#ff1804",
-                      '#2196f3',
-                      '#ff4081',
-                      '#9c27b0'
-                    ],
+                    labels: (analytics?.planDistribution ?? []).map((p) => p.label),
+                    colors: PLAN_DISTRIBUTION_COLORS,
                     plotOptions: {
                       pie: {
                         donut: {
@@ -751,7 +689,7 @@ export default function Dashboard() {
                       fillSeriesColor: false,
                     },
                   }}
-                  series={planSeries}
+                  series={(analytics?.planDistribution ?? []).map((p) => p.total)}
                   type="donut"
                   height={200}
                   width="100%"
@@ -852,25 +790,21 @@ export default function Dashboard() {
                   <Select
                     size="small"
                     displayEmpty
-                    value={filterGateway}
-                    onChange={(e) => setFilterGateway(e.target.value)}
-                    sx={{ minWidth: 140 }}
-                  >
-                    <MenuItem value="">Gateway</MenuItem>
-                    <MenuItem value="skoolpay">Skoolpay</MenuItem>
-                  </Select>
-                  <Select
-                    size="small"
-                    displayEmpty
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                     sx={{ minWidth: 120 }}
                   >
                     <MenuItem value="">Status</MenuItem>
-                    <MenuItem value="Active">Active</MenuItem>
-                    <MenuItem value="Inactive">Inactive</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
                   </Select>
-                  <Button variant="contained" size="small" sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none', }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleFilterClick}
+                    disabled={tableLoading}
+                    sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
+                  >
                     Filter
                   </Button>
                 </Stack>
@@ -911,7 +845,11 @@ export default function Dashboard() {
       </Box>
 
       {/* Agent Modals */}
-      <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+      <PlanDistributionModal
+        open={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        planDistribution={analytics?.planDistribution ?? []}
+      />
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}
         onClose={() => setIsLoggedInUsersModalOpen(false)}
@@ -937,6 +875,8 @@ export default function Dashboard() {
       <TotalTransactionModal
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
+        transactionVolume={analytics?.transactionVolume ?? 0}
+        transactionPending={analytics?.transactionPending ?? 0}
       />
       <TotalSubAgentModal
         open={isSubAgentModalOpen}

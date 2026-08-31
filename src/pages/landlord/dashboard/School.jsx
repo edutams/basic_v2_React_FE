@@ -794,8 +794,9 @@ const SchoolDashboard = () => {
     try {
       const result = await impersonateTenant(school.id);
       if (result.success) {
-        if (result.redirect_url) window.open(result.redirect_url, '_blank');
-        else {
+        // impersonateTenant() already opens the new tab itself when a
+        // redirect_url is present — only handle the in-app bookkeeping here.
+        if (!result.redirect_url) {
           localStorage.setItem('isImpersonating', 'true');
           localStorage.setItem('impersonator_id', school.id);
         }

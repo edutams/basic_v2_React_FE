@@ -30,7 +30,7 @@ import {
 import PropTypes from 'prop-types';
 import { getLearnersByClass } from '@/api/tenant/set-up/tenant-setup';
 
-const LearnerListModal = ({ open, onClose, classId, className }) => {
+const LearnerListModal = ({ open, onClose, programmeClassId, className }) => {
   const [learners, setLearners] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -43,18 +43,18 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (open && classId) {
+    if (open && programmeClassId) {
       setPage(0);
       setSearch('');
       setSearchInput('');
       setError(null);
     }
-  }, [open, classId]);
+  }, [open, programmeClassId]);
 
   useEffect(() => {
-    if (!open || !classId) return;
+    if (!open || !programmeClassId) return;
     fetchLearners();
-  }, [open, classId, page, rowsPerPage, search]);
+  }, [open, programmeClassId, page, rowsPerPage, search]);
 
   const fetchLearners = async () => {
     setLoading(true);
@@ -67,7 +67,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
         search: search,
       };
 
-      const res = await getLearnersByClass(classId, params);
+      const res = await getLearnersByClass(programmeClassId, params);
 
       setLearners(res.data || []);
       setTotalRows(res.total || 0);
@@ -254,7 +254,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
 LearnerListModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  classId: PropTypes.number,
+  programmeClassId: PropTypes.number,
   className: PropTypes.string,
 };
 

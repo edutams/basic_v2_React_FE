@@ -32,6 +32,7 @@ import {
   IconGripVertical,
   IconEdit,
   IconDotsVertical,
+  IconCheck,
 } from '@tabler/icons-react';
 import { IconFilter } from '@tabler/icons-react';
 
@@ -65,7 +66,9 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
         <Typography sx={{ pt: 1 }}>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onCancel}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button size="small" color="error" onClick={onConfirm}>
           Yes, Proceed
         </Button>
@@ -108,7 +111,7 @@ function SessionsPanel({ isLevel1 }) {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // session being edited
-  const [form, setForm] = useState({ sesname: '', status: 'active' });
+  const [form, setForm] = useState({ session_name: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
@@ -162,7 +165,7 @@ function SessionsPanel({ isLevel1 }) {
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch = !activeFilters.search
       ? true
-      : session.sesname.toLowerCase().includes(activeFilters.search.toLowerCase());
+      : session.session_name.toLowerCase().includes(activeFilters.search.toLowerCase());
     const matchesStatus = !activeFilters.status ? true : session.status === activeFilters.status;
     const matchesCurrent = !activeFilters.is_current
       ? true
@@ -182,13 +185,13 @@ function SessionsPanel({ isLevel1 }) {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ sesname: '', status: 'active' });
+    setForm({ session_name: '', status: 'active' });
     setErrors({});
     setCreateOpen(true);
   };
   const openEdit = (s) => {
     setEditTarget(s);
-    setForm({ sesname: s.sesname, status: s.status });
+    setForm({ session_name: s.session_name, status: s.status });
     setErrors({});
     setCreateOpen(true);
   };
@@ -231,8 +234,8 @@ function SessionsPanel({ isLevel1 }) {
 
   const validate = () => {
     const errs = {};
-    if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname))
-      errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
+    if (!form.session_name || !/^\d{4}\/\d{4}$/.test(form.session_name))
+      errs.session_name = 'Must be YYYY/YYYY (e.g. 2024/2025)';
     if (!form.status) errs.status = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -260,31 +263,34 @@ function SessionsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (s) =>
+  const handleDeactivate = (s) => {
+    const isInactive = s.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Session',
-      message: `Delete "${s.sesname}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Session' : 'De-activate Session',
+      message: isInactive ? `Activate "${s.session_name}"?` : `De-activate "${s.session_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/sessions/${s.id}`);
-          notify.success('Session deleted');
+          await agentApi.put(`/v1/landlord/calendar/sessions/${s.id}/toggle-status`);
+          notify.success(isInactive ? 'Session activated' : 'Session de-activated');
           fetchSessions();
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (s) => {
     handleMenuClose();
     openEdit(s);
   };
 
-  const handleDeleteClick = (s) => {
+  const handleDeactivateClick = (s) => {
     handleMenuClose();
-    handleDelete(s);
+    handleDeactivate(s);
   };
 
   const handleMenuOpen = (event, session) => {
@@ -327,7 +333,10 @@ function SessionsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -398,7 +407,7 @@ function SessionsPanel({ isLevel1 }) {
                   {filteredSessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{s.sesname}</TableCell>
+                      <TableCell>{s.session_name}</TableCell>
                       <TableCell>{s.sort_order}</TableCell>
                       <TableCell>
                         <Chip
@@ -452,15 +461,22 @@ function SessionsPanel({ isLevel1 }) {
                             </MenuItem>
                             <MenuItem onClick={() => handleSetCurrent(s)}>
                               <IconPlus size={16} style={{ marginRight: 8 }} />
-                              Set as Current
+                              {s.is_current === 'yes' ? 'Unset as Current' : 'Set as Current'}
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(s)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {s.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(s)}>
+                                <IconCheck size={16} style={{ marginRight: 8 }} />
+                                Activate
+                              </MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(s)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -480,14 +496,14 @@ function SessionsPanel({ isLevel1 }) {
           <TextField
             fullWidth
             label="Session Name (e.g. 2024/2025)"
-            value={form.sesname}
-            error={!!errors.sesname}
-            helperText={errors.sesname}
+            value={form.session_name}
+            error={!!errors.session_name}
+            helperText={errors.session_name}
             onChange={(e) => {
-              setErrors((p) => ({ ...p, sesname: undefined }));
+              setErrors((p) => ({ ...p, session_name: undefined }));
               const raw = e.target.value;
-              if (raw.length < (form.sesname || '').length) {
-                setForm((p) => ({ ...p, sesname: raw }));
+              if (raw.length < (form.session_name || '').length) {
+                setForm((p) => ({ ...p, session_name: raw }));
                 return;
               }
               const digitsOnly = raw.replace(/[^0-9/]/g, '');
@@ -496,18 +512,18 @@ function SessionsPanel({ isLevel1 }) {
                 const firstYear = parseInt(parts[0], 10);
                 const nextYear = (firstYear + 1).toString();
                 if (parts.length === 1) {
-                  setForm((p) => ({ ...p, sesname: `${parts[0]}/${nextYear}` }));
+                  setForm((p) => ({ ...p, session_name: `${parts[0]}/${nextYear}` }));
                   return;
                 }
                 if (parts.length === 2) {
                   if (nextYear.startsWith(parts[1])) {
-                    setForm((p) => ({ ...p, sesname: digitsOnly }));
+                    setForm((p) => ({ ...p, session_name: digitsOnly }));
                   }
                   return;
                 }
               }
               if (parts.length === 1 && parts[0].length <= 4) {
-                setForm((p) => ({ ...p, sesname: parts[0] }));
+                setForm((p) => ({ ...p, session_name: parts[0] }));
               }
             }}
             margin="normal"
@@ -531,7 +547,9 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
@@ -554,7 +572,7 @@ function SessionsPanel({ isLevel1 }) {
         <DialogTitle>Set Current Session</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Updating current session status for <strong>{selectedSession?.sesname}</strong>
+            Updating current session status for <strong>{selectedSession?.session_name}</strong>
           </Typography>
           <TextField
             fullWidth
@@ -569,7 +587,9 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Update Status'}
           </Button>
@@ -735,31 +755,34 @@ function TermsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (t) =>
+  const handleDeactivate = (t) => {
+    const isInactive = t.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Term',
-      message: `Delete "${t.term_name}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Term' : 'De-activate Term',
+      message: isInactive ? `Activate "${t.term_name}"?` : `De-activate "${t.term_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/terms/${t.id}`);
-          notify.success('Term deleted');
+          await agentApi.put(`/v1/landlord/calendar/terms/${t.id}/toggle-status`);
+          notify.success(isInactive ? 'Term activated' : 'Term de-activated');
           fetchTerms();
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (t) => {
     handleMenuClose();
     openEdit(t);
   };
 
-  const handleDeleteClick = (t) => {
+  const handleDeactivateClick = (t) => {
     handleMenuClose();
-    handleDelete(t);
+    handleDeactivate(t);
   };
 
   const handleMenuOpen = (event, term) => {
@@ -778,7 +801,10 @@ function TermsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -814,7 +840,7 @@ function TermsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -882,13 +908,17 @@ function TermsPanel({ isLevel1 }) {
                               <IconEdit size={16} style={{ marginRight: 8 }} />
                               Edit
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(t)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {t.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(t)}>Activate</MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(t)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -935,7 +965,9 @@ function TermsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
@@ -1061,11 +1093,11 @@ function MappingsPanel() {
     }
   };
 
-  const handleDelete = (m) =>
+  const handleDeactivate = (m) =>
     setConfirm({
       open: true,
       title: 'Delete Mapping',
-      message: `Delete "${m.session?.sesname} / ${m.term?.term_name}"? This cannot be undone.`,
+      message: `Delete "${m.session?.session_name} / ${m.term?.term_name}"? This cannot be undone.`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
@@ -1082,7 +1114,7 @@ function MappingsPanel() {
     setConfirm({
       open: true,
       title: 'Activate Mapping',
-      message: `Activate "${m.session?.sesname} / ${m.term?.term_name}"? All others will be set to inactive.`,
+      message: `Activate "${m.session?.session_name} / ${m.term?.term_name}"? All others will be set to inactive.`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
@@ -1121,7 +1153,12 @@ function MappingsPanel() {
       </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">My Session–Term Mappings</Typography>
-        <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={() => setDialogOpen(true)}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<IconPlus />}
+          onClick={() => setDialogOpen(true)}
+        >
           Add Mapping
         </Button>
       </Box>
@@ -1130,7 +1167,7 @@ function MappingsPanel() {
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -1164,7 +1201,7 @@ function MappingsPanel() {
                   {mappings.map((m, idx) => (
                     <SortableRow key={m.id} id={m.id}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{m.session?.sesname}</TableCell>
+                      <TableCell>{m.session?.session_name}</TableCell>
                       <TableCell>{m.term?.term_name}</TableCell>
                       <TableCell>{m.sort_order}</TableCell>
                       <TableCell>
@@ -1207,7 +1244,7 @@ function MappingsPanel() {
                           <MenuItem
                             onClick={() => {
                               handleMenuClose();
-                              handleDelete(m);
+                              handleDeactivate(m);
                             }}
                             sx={{ color: 'error.main' }}
                           >
@@ -1244,7 +1281,7 @@ function MappingsPanel() {
             <MenuItem value="">Select Session</MenuItem>
             {sessions.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.sesname}
+                {s.session_name}
               </MenuItem>
             ))}
           </TextField>
@@ -1286,7 +1323,9 @@ function MappingsPanel() {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
           </Button>

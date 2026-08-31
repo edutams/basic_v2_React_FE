@@ -46,7 +46,7 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
         const armSummaryMap = new Map();
         list.forEach((reg) => {
           const className = reg.class_name ?? '';
-          const armName = reg.arm_names ?? '';
+          const armName = reg.class_arm_names ?? '';
           const fullArmName =
             className && armName
               ? `${className} - ${armName}`
@@ -149,7 +149,7 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                             {reg?.fname} {reg?.lname} {reg?.mname}
                           </TableCell>
                           <TableCell>
-                            {reg?.class_name} ({reg?.arm_names})
+                            {reg?.class_name} ({reg?.class_arm_names})
                           </TableCell>
                           <TableCell>
                             <Chip

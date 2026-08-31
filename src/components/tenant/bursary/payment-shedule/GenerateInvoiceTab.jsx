@@ -74,10 +74,10 @@ const GenerateInvoiceTab = ({
     !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
 
   const selectedSessionLabel =
-    sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
+    sessions.find((s) => s.id === selectedSessionTermId)?.session?.session_name || '';
 
   const selectedTermLabel =
-    sessions.find((s) => s.id === selectedSessionTermId)?.displayTerm?.display_name || '';
+    sessions.find((s) => s.id === selectedSessionTermId)?.term?.term_name || '';
 
   const selectedClassName =
     classes.find((c) => String(c.id) === String(selectedClass))?.class_name || selectedClass;
@@ -300,7 +300,7 @@ const GenerateInvoiceTab = ({
               ) : (
                 sessions.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
-                    {item.session?.sesname} - {item.display_term?.display_name}
+                    {item.session?.session_name} - {item.term?.term_name}
                   </MenuItem>
                 ))
               )}

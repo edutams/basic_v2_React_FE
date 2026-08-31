@@ -121,7 +121,7 @@ const SettlementTransactionsModal = ({ open, onClose, settlementId, bankLabel })
                       <TableCell>
                         {`${row.fname || ''} ${row.mname || ''} ${row.lname || ''}`.trim() || 'N/A'}
                         <Typography variant="body2" color="text.secondary">
-                          {row.class_name} - {row.arm_names}
+                          {row.class_name} - {row.class_arm_names}
                         </Typography>
                       </TableCell>
                       <TableCell>{row.description || '—'}</TableCell>

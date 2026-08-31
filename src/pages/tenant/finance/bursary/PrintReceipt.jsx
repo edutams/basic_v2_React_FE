@@ -106,8 +106,8 @@ const PrintReceipt = () => {
         </Box>
 
         <Typography variant="h5" textAlign="center" fontWeight={600} mb={2}>
-          PAYMENT RECEIPT FOR {sessionDetails?.session?.sesname || ''}{' '}
-          {sessionDetails?.display_term?.display_name || ''}
+          PAYMENT RECEIPT FOR {sessionDetails?.session?.session_name || ''}{' '}
+          {sessionDetails?.term?.term_name || ''}
         </Typography>
 
         <Typography variant="h6" textAlign="center" fontSize={40} fontWeight={600} mb={4}>

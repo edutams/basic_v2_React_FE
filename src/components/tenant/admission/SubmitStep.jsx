@@ -79,7 +79,7 @@ const SubmitStep = ({
 
   // Build admission batch string
   const admissionBatch = selectedBatch
-    ? `${selectedBatch.session_term?.session?.sesname || ''} ${selectedBatch.session_term?.display_term?.display_name || ''} - ${selectedBatch.batch_name || ''}`
+    ? `${selectedBatch.session_term?.session?.session_name || ''} ${selectedBatch.session_term?.term?.term_name || ''} - ${selectedBatch.batch_name || ''}`
     : '';
 
   // Calculate total paid (if payment is required)
@@ -104,11 +104,7 @@ const SubmitStep = ({
           intendingClass={intendingClass}
           selectedBatch={selectedBatch}
         />
-        {selectedBatch?.require_payment && (
-          <PaymentReview 
-            admissionId={admissionId}
-          />
-        )}
+        {selectedBatch?.require_payment && <PaymentReview admissionId={admissionId} />}
         <DocumentsReview
           documentsData={documentsData}
           hasPreviousSchool={Boolean(academicData?.has_previous_school)}
@@ -126,7 +122,11 @@ const SubmitStep = ({
         )}
 
         <Box display="flex" sx={{ mt: 1, mb: 2 }}>
-          <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />}
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            startIcon={<ArrowBackIcon />}
             onClick={onBack}
             disabled={isLoading}
           >

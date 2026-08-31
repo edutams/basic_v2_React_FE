@@ -84,7 +84,7 @@ const FeeChart = ({
 
                   {sessions.map((session) => (
                     <MenuItem key={session.id} value={session.id}>
-                      {session.sesname}
+                      {session.session_name}
                     </MenuItem>
                   ))}
                 </Select>

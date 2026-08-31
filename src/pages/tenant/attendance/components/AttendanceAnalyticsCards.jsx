@@ -72,12 +72,8 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
         p: 2.5,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark
-          ? '1px solid rgba(255,255,255,0.12)'
-          : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
         cursor: clickable ? 'pointer' : 'default',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -85,9 +81,7 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
           ? {
               '&:hover': {
                 transform: 'translateY(-3px)',
-                boxShadow: isDark
-                  ? '0 8px 30px rgba(0,0,0,0.35)'
-                  : '0 6px 24px rgba(0,0,0,0.12)',
+                boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 6px 24px rgba(0,0,0,0.12)',
               },
             }
           : {}),
@@ -100,9 +94,22 @@ const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onCl
 };
 
 // ── Reusable filter dropdowns for modals (local state) ────────
-const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arms, initialFilters, onApply, applyLabel = 'Apply Filter', activeWeekId }) => {
+const ModalFilterDropdowns = ({
+  sessions,
+  terms,
+  weeks,
+  programmes,
+  classes,
+  arms,
+  initialFilters,
+  onApply,
+  applyLabel = 'Apply Filter',
+  activeWeekId,
+}) => {
   const activeWeekIdRef = useRef(activeWeekId);
-  useEffect(() => { activeWeekIdRef.current = activeWeekId; }, [activeWeekId]);
+  useEffect(() => {
+    activeWeekIdRef.current = activeWeekId;
+  }, [activeWeekId]);
 
   const normalizedInitial = {
     session: String(initialFilters?.session || ''),
@@ -123,20 +130,30 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
   // Sync localFilters when initialFilters change (key may not always trigger remount)
   useEffect(() => {
     setLocalFilters(normalizedInitial);
-  }, [normalizedInitial.session, normalizedInitial.term, normalizedInitial.week, normalizedInitial.programme, normalizedInitial.class, normalizedInitial.arm]);
+  }, [
+    normalizedInitial.session,
+    normalizedInitial.term,
+    normalizedInitial.week,
+    normalizedInitial.programme,
+    normalizedInitial.class,
+    normalizedInitial.arm,
+  ]);
 
   useEffect(() => {
     if (!localFilters.session) return;
-    fetchTerms(localFilters.session).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setLocalTerms(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchTerms(localFilters.session)
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setLocalTerms(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [localFilters.session]);
 
   useEffect(() => {
     if (!localFilters.session || !localFilters.term) return;
     let cancelled = false;
-    attendanceApi.getWeeksBySessionTerm({ session_id: localFilters.session, term_id: localFilters.term })
+    attendanceApi
+      .getWeeksBySessionTerm({ session_id: localFilters.session, term_id: localFilters.term })
       .then((r) => {
         if (cancelled) return;
         const d = r.data?.data || [];
@@ -144,10 +161,9 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
         setLocalWeeks(weeks);
         const wkId = activeWeekIdRef.current;
         if (weeks.length > 0 && !localFilters.week) {
-          const match = wkId
-            ? weeks.find((w) => String(w.week_id) === wkId)
-            : null;
-          const active = match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
+          const match = wkId ? weeks.find((w) => String(w.week_id) === wkId) : null;
+          const active =
+            match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
           if (active) {
             setLocalFilters((prev) => {
               if (prev.week) return prev;
@@ -157,15 +173,19 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
         }
       })
       .catch(console.error);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [localFilters.session, localFilters.term]);
 
   useEffect(() => {
     if (!localFilters.programme) return;
-    fetchClassesByProgramme(localFilters.programme).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setLocalClasses(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassesByProgramme(localFilters.programme)
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setLocalClasses(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [localFilters.programme]);
 
   useEffect(() => {
@@ -191,9 +211,15 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Session</InputLabel>
-          <Select value={String(localFilters.session || '')} label="Session" onChange={(e) => handleChange('session', e.target.value)}>
+          <Select
+            value={String(localFilters.session || '')}
+            label="Session"
+            onChange={(e) => handleChange('session', e.target.value)}
+          >
             {sessions.map((s) => (
-              <MenuItem key={s.id} value={String(s.id)}>{s.sesname || s.name || s.id}</MenuItem>
+              <MenuItem key={s.id} value={String(s.id)}>
+                {s.session_name || s.name || s.id}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -201,9 +227,15 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Term</InputLabel>
-          <Select value={String(localFilters.term || '')} label="Term" onChange={(e) => handleChange('term', e.target.value)}>
+          <Select
+            value={String(localFilters.term || '')}
+            label="Term"
+            onChange={(e) => handleChange('term', e.target.value)}
+          >
             {localTerms.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>{t.term_name}</MenuItem>
+              <MenuItem key={t.id} value={String(t.id)}>
+                {t.term_name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -211,11 +243,17 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Week</InputLabel>
-          <Select value={String(localFilters.week || '')} label="Week" onChange={(e) => handleChange('week', e.target.value)}>
+          <Select
+            value={String(localFilters.week || '')}
+            label="Week"
+            onChange={(e) => handleChange('week', e.target.value)}
+          >
             {localWeeks.map((w) => {
               const weekId = String(w.wk_id ?? w.week_id ?? w.id);
               return (
-                <MenuItem key={weekId} value={weekId}>{w.week_name || `Week ${weekId}`}</MenuItem>
+                <MenuItem key={weekId} value={weekId}>
+                  {w.week_name || `Week ${weekId}`}
+                </MenuItem>
               );
             })}
           </Select>
@@ -224,9 +262,15 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Programme</InputLabel>
-          <Select value={String(localFilters.programme || '')} label="Programme" onChange={(e) => handleChange('programme', e.target.value)}>
+          <Select
+            value={String(localFilters.programme || '')}
+            label="Programme"
+            onChange={(e) => handleChange('programme', e.target.value)}
+          >
             {programmes.map((p) => (
-              <MenuItem key={p.id} value={String(p.id)}>{p.programme_name || p.name}</MenuItem>
+              <MenuItem key={p.id} value={String(p.id)}>
+                {p.programme_name || p.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -234,9 +278,15 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Class</InputLabel>
-          <Select value={String(localFilters.class || '')} label="Class" onChange={(e) => handleChange('class', e.target.value)}>
+          <Select
+            value={String(localFilters.class || '')}
+            label="Class"
+            onChange={(e) => handleChange('class', e.target.value)}
+          >
             {localClasses.map((c) => (
-              <MenuItem key={c.id} value={String(c.id)}>{c.class_name || c.name}</MenuItem>
+              <MenuItem key={c.id} value={String(c.id)}>
+                {c.class_name || c.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -244,9 +294,15 @@ const ModalFilterDropdowns = ({ sessions, terms, weeks, programmes, classes, arm
       <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Class/Arm</InputLabel>
-          <Select value={String(localFilters.arm || '')} label="Class/Arm" onChange={(e) => handleChange('arm', e.target.value)}>
+          <Select
+            value={String(localFilters.arm || '')}
+            label="Class/Arm"
+            onChange={(e) => handleChange('arm', e.target.value)}
+          >
             {localArms.map((a) => (
-              <MenuItem key={a.id} value={String(a.id)}>{a.arm_names}</MenuItem>
+              <MenuItem key={a.id} value={String(a.id)}>
+                {a.class_arm_names}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -269,7 +325,8 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
     if (!day || day.__holiday) return { label: '—', color: 'text.secondary' };
     const morning = day.morning?.is_present;
     const afternoon = day.afternoon?.is_present;
-    if (morning === 'present' || afternoon === 'present') return { label: 'Present', color: 'success.main' };
+    if (morning === 'present' || afternoon === 'present')
+      return { label: 'Present', color: 'success.main' };
     if (morning || afternoon) return { label: 'Absent', color: 'error.main' };
     return { label: '—', color: 'text.secondary' };
   };
@@ -286,7 +343,8 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
   return (
     <Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Number of learners present per day and individual learner attendance status for the selected week.
+        Number of learners present per day and individual learner attendance status for the selected
+        week.
       </Typography>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
@@ -299,11 +357,24 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, height: 280, overflow: 'auto' }}>
+          <TableContainer
+            elevation={0}
+            variant="outlined"
+            sx={{ borderRadius: 2, height: 280, overflow: 'auto' }}
+          >
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 160, position: 'sticky', left: 0, zIndex: 2, bgcolor: isDark ? '#1e1e1e' : '#fff' }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      minWidth: 160,
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 2,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                    }}
+                  >
                     Learner Name
                   </TableCell>
                   {dates.map((date) => {
@@ -313,34 +384,50 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
                         <Typography variant="caption" fontWeight={700} sx={{ display: 'block' }}>
                           {dayName}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '10px' }}
+                        >
                           {date}
                         </Typography>
                       </TableCell>
                     );
                   })}
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 60 }}>Total</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 60 }}>
+                    Total
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {learners.map((learner) => {
                   const att = learner.attendance || {};
-                  const totalPresent = dates.reduce((sum, date) => sum + countPresentForDay(att, date), 0);
+                  const totalPresent = dates.reduce(
+                    (sum, date) => sum + countPresentForDay(att, date),
+                    0,
+                  );
                   return (
                     <TableRow key={learner.student_reg_id} hover>
-                      <TableCell sx={{
-                        fontWeight: 600,
-                        position: 'sticky', left: 0, zIndex: 1,
-                        bgcolor: isDark ? '#1e1e1e' : '#fff',
-                        borderRight: `1px solid ${theme.palette.divider}`,
-                      }}>
+                      <TableCell
+                        sx={{
+                          fontWeight: 600,
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 1,
+                          bgcolor: isDark ? '#1e1e1e' : '#fff',
+                          borderRight: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
                         {learner.name}
                       </TableCell>
                       {dates.map((date) => {
                         const { label, color } = getDayStatus(att, date);
                         return (
                           <TableCell key={date} align="center">
-                            <Typography variant="body2" sx={{ color, fontWeight: label === 'Present' ? 700 : 400 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color, fontWeight: label === 'Present' ? 700 : 400 }}
+                            >
                               {label}
                             </Typography>
                           </TableCell>
@@ -368,31 +455,24 @@ const TermTrendContent = ({ weeklyData, theme }) => {
   const fmtPct = (v) => (isNaN(v) ? '—' : `${Math.round(v)}%`);
 
   const weeklyRates = weeklyData.map((w) => {
-    const rate = w.present + w.absent > 0
-      ? (w.present / (w.present + w.absent)) * 100
-      : 0;
-    const completion = w.total_students * w.total_school_days > 0
-      ? ((w.present + w.absent) / (w.total_students * w.total_school_days)) * 100
-      : 0;
+    const rate = w.present + w.absent > 0 ? (w.present / (w.present + w.absent)) * 100 : 0;
+    const completion =
+      w.total_students * w.total_school_days > 0
+        ? ((w.present + w.absent) / (w.total_students * w.total_school_days)) * 100
+        : 0;
     return { ...w, rate, completion };
   });
 
   const totalPresent = weeklyRates.reduce((s, w) => s + w.present, 0);
   const totalAbsent = weeklyRates.reduce((s, w) => s + w.absent, 0);
-  const totalPossible = weeklyRates.reduce(
-    (s, w) => s + w.total_students * w.total_school_days, 0
-  );
-  const termRate = totalPresent + totalAbsent > 0
-    ? (totalPresent / (totalPresent + totalAbsent)) * 100
-    : 0;
-  const termCompletion = totalPossible > 0
-    ? ((totalPresent + totalAbsent) / totalPossible) * 100
-    : 0;
+  const totalPossible = weeklyRates.reduce((s, w) => s + w.total_students * w.total_school_days, 0);
+  const termRate =
+    totalPresent + totalAbsent > 0 ? (totalPresent / (totalPresent + totalAbsent)) * 100 : 0;
+  const termCompletion =
+    totalPossible > 0 ? ((totalPresent + totalAbsent) / totalPossible) * 100 : 0;
 
   const colorForRate = (rate) =>
-    rate >= 75 ? 'success.main'
-    : rate >= 50 ? 'warning.main'
-    : 'error.main';
+    rate >= 75 ? 'success.main' : rate >= 50 ? 'warning.main' : 'error.main';
 
   return (
     <Box>
@@ -400,28 +480,44 @@ const TermTrendContent = ({ weeklyData, theme }) => {
       <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" color="text.secondary">Term Attendance Rate</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Term Attendance Rate
+            </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, color: colorForRate(termRate) }}>
               {fmtPct(termRate)}
             </Typography>
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" color="text.secondary">Term Completion Rate</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Term Completion Rate
+            </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
               {fmtPct(termCompletion)}
             </Typography>
           </Grid>
           <Grid size={{ xs: 4, sm: 2 }}>
-            <Typography variant="caption" color="text.secondary">Total Present</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>{totalPresent}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total Present
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
+              {totalPresent}
+            </Typography>
           </Grid>
           <Grid size={{ xs: 4, sm: 2 }}>
-            <Typography variant="caption" color="text.secondary">Total Absent</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>{totalAbsent}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total Absent
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'error.main' }}>
+              {totalAbsent}
+            </Typography>
           </Grid>
           <Grid size={{ xs: 4, sm: 2 }}>
-            <Typography variant="caption" color="text.secondary">Total Possible</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>{totalPossible}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total Possible
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              {totalPossible}
+            </Typography>
           </Grid>
         </Grid>
       </Paper>
@@ -441,18 +537,41 @@ const TermTrendContent = ({ weeklyData, theme }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, height: 320, overflow: 'auto' }}>
+          <TableContainer
+            elevation={0}
+            variant="outlined"
+            sx={{ borderRadius: 2, height: 320, overflow: 'auto' }}
+          >
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 100, position: 'sticky', left: 0, zIndex: 2, bgcolor: isDark ? '#1e1e1e' : '#fff' }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      minWidth: 100,
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 2,
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                    }}
+                  >
                     Week
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Present</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Absent</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Not Marked</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Rate</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>Completion</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>
+                    Present
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>
+                    Absent
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>
+                    Not Marked
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>
+                    Rate
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 55 }}>
+                    Completion
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -469,10 +588,15 @@ const TermTrendContent = ({ weeklyData, theme }) => {
                         <Chip label={week.absent} size="small" color="error" variant="soft" />
                       </TableCell>
                       <TableCell align="center">
-                        <Typography variant="body2" color="text.secondary">{notMarked}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {notMarked}
+                        </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: colorForRate(week.rate) }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, color: colorForRate(week.rate) }}
+                        >
                           {fmtPct(week.rate)}
                         </Typography>
                       </TableCell>
@@ -494,10 +618,25 @@ const TermTrendContent = ({ weeklyData, theme }) => {
 };
 
 // ── Main Component ─────────────────────────────────────────────
-const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false, classArmId, sessionId, termId, weekId, programmeId, classId }) => {
+const AttendanceAnalyticsCards = ({
+  metrics,
+  schoolDaysMetrics,
+  loading = false,
+  classArmId,
+  sessionId,
+  termId,
+  weekId,
+  programmeId,
+  classId,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
+  const [analyticsModal, setAnalyticsModal] = useState({
+    open: false,
+    title: '',
+    content: null,
+    loading: false,
+  });
   // Ref counter forces ModalFilterDropdowns to remount fresh each time
   // Using a ref instead of state avoids stale closure issues
   const filterKeyRef = useRef(0);
@@ -515,7 +654,11 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
   const [riskLearners, setRiskLearners] = useState([]);
   const [selectedRiskLearners, setSelectedRiskLearners] = useState({});
   const [sendingRiskAlert, setSendingRiskAlert] = useState(false);
-  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [alertSnackbar, setAlertSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // Risk modal data (stored separately to avoid stale closures in modal content)
   const [riskModalData, setRiskModalData] = useState(null);
@@ -547,9 +690,7 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
 
         if (activeSessId) {
           // Find matching session to preserve the correct type (string vs number)
-          const matchSession = sessionsData.find(
-            (s) => String(s.id) === String(activeSessId)
-          );
+          const matchSession = sessionsData.find((s) => String(s.id) === String(activeSessId));
           setActiveSessionId(matchSession ? matchSession.id : activeSessId);
           if (activeTerm) setActiveTermId(activeTerm);
 
@@ -559,9 +700,7 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
 
           // Now match term ID against loaded terms
           if (activeTerm && termsData.length > 0) {
-            const matchTerm = termsData.find(
-              (t) => String(t.id) === String(activeTerm)
-            );
+            const matchTerm = termsData.find((t) => String(t.id) === String(activeTerm));
             setActiveTermId(matchTerm ? matchTerm.id : activeTerm);
           }
         } else if (sessionsData.length > 0) {
@@ -577,8 +716,12 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
           if (ackRes?.academic_week_id) {
             setActiveWeekId(String(ackRes.academic_week_id));
           }
-        } catch (e) { /* best-effort */ }
-      } catch (e) { console.error(e); }
+        } catch (e) {
+          /* best-effort */
+        }
+      } catch (e) {
+        console.error(e);
+      }
     };
     load();
   }, []);
@@ -589,380 +732,654 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
   };
 
   // ── Week Attendance Rate Analysis ────────────────────────────
-  const openWeekBreakdown = useCallback(async (classArmId, _weekId, localFilters) => {
-    const effectiveArmId = localFilters?.arm || classArmId;
-    const effectiveWeekId = localFilters?.week || _weekId || weekId;
-    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-    const effectiveTerm = localFilters?.term || termId || activeTermId;
+  const openWeekBreakdown = useCallback(
+    async (classArmId, _weekId, localFilters) => {
+      const effectiveArmId = localFilters?.arm || classArmId;
+      const effectiveWeekId = localFilters?.week || _weekId || weekId;
+      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+      const effectiveTerm = localFilters?.term || termId || activeTermId;
 
-    if (!effectiveArmId || !effectiveWeekId) {
-      openCardModal('Week Attendance Rate Analysis', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
-          />
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
-              Select Filters to View Data
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
-              Please select a <strong>Class/Arm</strong> and <strong>Week</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the daily attendance breakdown.
-            </Typography>
-          </Box>
-        </Box>
-      ));
-      return;
-    }
-
-    setAnalyticsModal({ open: true, title: 'Week Attendance Rate Analysis', content: null, loading: true });
-    try {
-      const [breakdownRes, learnersRes] = await Promise.all([
-        attendanceApi.getDailyBreakdown({
-          class_arm_id: effectiveArmId || undefined,
-          week_term_id: effectiveWeekId || undefined,
-          session_id: effectiveSession || undefined,
-          term_id: effectiveTerm || undefined,
-        }),
-        attendanceApi.getAttendanceLearners({
-          class_arm_id: effectiveArmId || undefined,
-          week_term_id: effectiveWeekId || undefined,
-          session_id: effectiveSession || undefined,
-          term_id: effectiveTerm || undefined,
-        }),
-      ]);
-      const data = breakdownRes.data?.data || [];
-      const learnerData = learnersRes.data?.data;
-      const students = learnerData?.students || [];
-      const dates = learnerData?.dates || data.map((d) => d.date) || [];
-      const hasData = data.length > 0 && data.some(d => d.present_count > 0);
-
-      openCardModal('Week Attendance Rate Analysis', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
-          />
-          {!hasData ? (
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
-                📊 No attendance data found
+      if (!effectiveArmId || !effectiveWeekId) {
+        openCardModal(
+          'Week Attendance Rate Analysis',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: effectiveWeekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
+            />
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Select Filters to View Data
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-                No attendance records have been recorded for this week. Please mark attendance first to see the daily breakdown.
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+                Please select a <strong>Class/Arm</strong> and <strong>Week</strong> from the
+                dropdowns above, then click <strong>Apply Filter</strong> to view the daily
+                attendance breakdown.
               </Typography>
             </Box>
-          ) : (
-            <Box sx={{ py: 1 }}>
-              <WeekBreakdownContent
-                dailyData={data}
-                learners={students}
-                dates={dates}
-                totalCount={data.length > 0 ? data[0].total_count : 0}
-                theme={theme}
-              />
-            </Box>
-          )}
-        </Box>
-      ));
-    } catch (e) {
-      console.error('Failed to fetch daily breakdown:', e);
-      openCardModal('Week Attendance Rate Analysis', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
-            onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
-          />
-          <Typography color="error">Failed to load data.</Typography>
-        </Box>
-      ));
-    }
-  }, [theme, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
+          </Box>,
+        );
+        return;
+      }
+
+      setAnalyticsModal({
+        open: true,
+        title: 'Week Attendance Rate Analysis',
+        content: null,
+        loading: true,
+      });
+      try {
+        const [breakdownRes, learnersRes] = await Promise.all([
+          attendanceApi.getDailyBreakdown({
+            class_arm_id: effectiveArmId || undefined,
+            week_term_id: effectiveWeekId || undefined,
+            session_id: effectiveSession || undefined,
+            term_id: effectiveTerm || undefined,
+          }),
+          attendanceApi.getAttendanceLearners({
+            class_arm_id: effectiveArmId || undefined,
+            week_term_id: effectiveWeekId || undefined,
+            session_id: effectiveSession || undefined,
+            term_id: effectiveTerm || undefined,
+          }),
+        ]);
+        const data = breakdownRes.data?.data || [];
+        const learnerData = learnersRes.data?.data;
+        const students = learnerData?.students || [];
+        const dates = learnerData?.dates || data.map((d) => d.date) || [];
+        const hasData = data.length > 0 && data.some((d) => d.present_count > 0);
+
+        openCardModal(
+          'Week Attendance Rate Analysis',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: effectiveWeekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
+            />
+            {!hasData ? (
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  📊 No attendance data found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 360, mx: 'auto' }}
+                >
+                  No attendance records have been recorded for this week. Please mark attendance
+                  first to see the daily breakdown.
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ py: 1 }}>
+                <WeekBreakdownContent
+                  dailyData={data}
+                  learners={students}
+                  dates={dates}
+                  totalCount={data.length > 0 ? data[0].total_count : 0}
+                  theme={theme}
+                />
+              </Box>
+            )}
+          </Box>,
+        );
+      } catch (e) {
+        console.error('Failed to fetch daily breakdown:', e);
+        openCardModal(
+          'Week Attendance Rate Analysis',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: localFilters?.session || sessionId || activeSessionId,
+                term: localFilters?.term || termId || activeTermId,
+                week: localFilters?.week || weekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: localFilters?.arm || classArmId,
+              }}
+              onApply={(lf) => openWeekBreakdown(classArmId, undefined, lf)}
+            />
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
+        );
+      }
+    },
+    [
+      theme,
+      sessionId,
+      termId,
+      weekId,
+      activeSessionId,
+      activeTermId,
+      activeWeekId,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+    ],
+  );
 
   // ── Term Attendance Trend ────────────────────────────────────
-  const openTermTrend = useCallback(async (classArmId, localFilters) => {
-    const effectiveArmId = localFilters?.arm || classArmId;
-    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-    const effectiveTerm = localFilters?.term || termId || activeTermId;
+  const openTermTrend = useCallback(
+    async (classArmId, localFilters) => {
+      const effectiveArmId = localFilters?.arm || classArmId;
+      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+      const effectiveTerm = localFilters?.term || termId || activeTermId;
 
-    if (!effectiveArmId) {
-      openCardModal('Term Attendance Trend', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={(lf) => openTermTrend(classArmId, lf)}
-          />
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
-              Select Filters to View Data
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
-              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the term attendance trend.
-            </Typography>
-          </Box>
-        </Box>
-      ));
-      return;
-    }
+      if (!effectiveArmId) {
+        openCardModal(
+          'Term Attendance Trend',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: '',
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={(lf) => openTermTrend(classArmId, lf)}
+            />
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Select Filters to View Data
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+                Please select a <strong>Class/Arm</strong> from the dropdowns above, then click{' '}
+                <strong>Apply Filter</strong> to view the term attendance trend.
+              </Typography>
+            </Box>
+          </Box>,
+        );
+        return;
+      }
 
-    setAnalyticsModal({ open: true, title: 'Term Attendance Trend', content: null, loading: true });
-    try {
-      const res = await attendanceApi.getWeeklyTrend({
-        class_arm_id: effectiveArmId || undefined,
-        session_id: effectiveSession || undefined,
-        term_id: effectiveTerm || undefined,
+      setAnalyticsModal({
+        open: true,
+        title: 'Term Attendance Trend',
+        content: null,
+        loading: true,
       });
-      const data = res.data?.data || [];
-      const hasData = data.length > 0 && data.some(w => w.present > 0);
+      try {
+        const res = await attendanceApi.getWeeklyTrend({
+          class_arm_id: effectiveArmId || undefined,
+          session_id: effectiveSession || undefined,
+          term_id: effectiveTerm || undefined,
+        });
+        const data = res.data?.data || [];
+        const hasData = data.length > 0 && data.some((w) => w.present > 0);
 
-      openCardModal('Term Attendance Trend', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={(lf) => openTermTrend(classArmId, lf)}
-          />
-          {!hasData ? (
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography variant="h5" sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}>
-                📈 No attendance data found
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-                No attendance records exist for this term yet. Start marking attendance to see the term trend.
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ py: 1 }}>
-              <TermTrendContent weeklyData={data} theme={theme} />
-            </Box>
-          )}
-        </Box>
-      ));
-    } catch (e) {
-      console.error('Failed to fetch weekly trend:', e);
-      openCardModal('Term Attendance Trend', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || '', programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
-            onApply={(lf) => openTermTrend(classArmId, lf)}
-          />
-          <Typography color="error">Failed to load data.</Typography>
-        </Box>
-      ));
-    }
-  }, [theme, sessionId, termId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
+        openCardModal(
+          'Term Attendance Trend',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: '',
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={(lf) => openTermTrend(classArmId, lf)}
+            />
+            {!hasData ? (
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  📈 No attendance data found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 360, mx: 'auto' }}
+                >
+                  No attendance records exist for this term yet. Start marking attendance to see the
+                  term trend.
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ py: 1 }}>
+                <TermTrendContent weeklyData={data} theme={theme} />
+              </Box>
+            )}
+          </Box>,
+        );
+      } catch (e) {
+        console.error('Failed to fetch weekly trend:', e);
+        openCardModal(
+          'Term Attendance Trend',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: localFilters?.session || sessionId || activeSessionId,
+                term: localFilters?.term || termId || activeTermId,
+                week: localFilters?.week || '',
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: localFilters?.arm || classArmId,
+              }}
+              onApply={(lf) => openTermTrend(classArmId, lf)}
+            />
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
+        );
+      }
+    },
+    [
+      theme,
+      sessionId,
+      termId,
+      activeSessionId,
+      activeTermId,
+      activeWeekId,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+    ],
+  );
 
   // ── Absentees Summary (Table) ────────────────────────────────
-  const openAbsenteesBreakdown = useCallback(async (localFilters) => {
-    const effectiveArmId = localFilters?.arm || classArmId;
-    const effectiveWeekId = localFilters?.week || weekId;
-    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-    const effectiveTerm = localFilters?.term || termId || activeTermId;
+  const openAbsenteesBreakdown = useCallback(
+    async (localFilters) => {
+      const effectiveArmId = localFilters?.arm || classArmId;
+      const effectiveWeekId = localFilters?.week || weekId;
+      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+      const effectiveTerm = localFilters?.term || termId || activeTermId;
 
-    if (!effectiveArmId) {
-      openCardModal('Absentees Summary', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={openAbsenteesBreakdown}
-          />
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
-              Select Filters to View Data
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
-              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the absentees list.
-            </Typography>
-          </Box>
-        </Box>
-      ));
-      return;
-    }
-
-    setAnalyticsModal({ open: true, title: 'Absentees Summary', content: null, loading: true });
-    try {
-      const res = await attendanceApi.getAbsenteesList({
-        class_arm_id: effectiveArmId || undefined,
-        week_term_id: effectiveWeekId || undefined,
-        session_id: effectiveSession || undefined,
-        term_id: effectiveTerm || undefined,
-      });
-      const payload = res.data?.data || {};
-      const learners = payload.learners || [];
-
-      openCardModal('Absentees Summary', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={openAbsenteesBreakdown}
-          />
-          {learners.length === 0 ? (
-            <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>No absentees recorded for the selected filters.</Typography>
-          ) : (
-            <Box sx={{ py: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {learners.length} absent learner(s) — list of absentee names with their class arms.
+      if (!effectiveArmId) {
+        openCardModal(
+          'Absentees Summary',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: effectiveWeekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={openAbsenteesBreakdown}
+            />
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Select Filters to View Data
               </Typography>
-              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxHeight: 350, overflow: 'auto' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Learner Name</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Class Arm</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {learners.map((l, idx) => (
-                      <TableRow key={l.student_reg_id || idx} hover>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <Typography variant="body2" fontWeight={600}>{l.name}</Typography>
-                            {l.gender && (
-                              <Chip
-                                icon={l.gender === 'MALE' ? <MaleIcon fontSize="small" /> : <FemaleIcon fontSize="small" />}
-                                label={l.gender}
-                                size="small"
-                                color={l.gender === 'MALE' ? 'primary' : 'success'}
-                                variant="soft"
-                                sx={{ height: 18, fontSize: '9px', fontWeight: 600 }}
-                              />
-                            )}
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={l.arm_name || 'N/A'} size="small" variant="outlined" color="error" />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">{l.admission_no || '—'}</Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'right' }}>
-                Total: {learners.length} absentee(s)
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+                Please select a <strong>Class/Arm</strong> from the dropdowns above, then click{' '}
+                <strong>Apply Filter</strong> to view the absentees list.
               </Typography>
             </Box>
-          )}
-        </Box>
-      ));
-    } catch (e) {
-      console.error('Failed to fetch absentees:', e);
-      openCardModal('Absentees Summary', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
-            onApply={openAbsenteesBreakdown}
-          />
-          <Typography color="error">Failed to load data.</Typography>
-        </Box>
-      ));
-    }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
+          </Box>,
+        );
+        return;
+      }
+
+      setAnalyticsModal({ open: true, title: 'Absentees Summary', content: null, loading: true });
+      try {
+        const res = await attendanceApi.getAbsenteesList({
+          class_arm_id: effectiveArmId || undefined,
+          week_term_id: effectiveWeekId || undefined,
+          session_id: effectiveSession || undefined,
+          term_id: effectiveTerm || undefined,
+        });
+        const payload = res.data?.data || {};
+        const learners = payload.learners || [];
+
+        openCardModal(
+          'Absentees Summary',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: effectiveWeekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={openAbsenteesBreakdown}
+            />
+            {learners.length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                No absentees recorded for the selected filters.
+              </Typography>
+            ) : (
+              <Box sx={{ py: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {learners.length} absent learner(s) — list of absentee names with their class
+                  arms.
+                </Typography>
+                <TableContainer
+                  component={Paper}
+                  variant="outlined"
+                  sx={{ borderRadius: 2, maxHeight: 350, overflow: 'auto' }}
+                >
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Learner Name</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Class Arm</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {learners.map((l, idx) => (
+                        <TableRow key={l.student_reg_id || idx} hover>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                              <Typography variant="body2" fontWeight={600}>
+                                {l.name}
+                              </Typography>
+                              {l.gender && (
+                                <Chip
+                                  icon={
+                                    l.gender === 'MALE' ? (
+                                      <MaleIcon fontSize="small" />
+                                    ) : (
+                                      <FemaleIcon fontSize="small" />
+                                    )
+                                  }
+                                  label={l.gender}
+                                  size="small"
+                                  color={l.gender === 'MALE' ? 'primary' : 'success'}
+                                  variant="soft"
+                                  sx={{ height: 18, fontSize: '9px', fontWeight: 600 }}
+                                />
+                              )}
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={l.arm_name || 'N/A'}
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {l.admission_no || '—'}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: 'block', textAlign: 'right' }}
+                >
+                  Total: {learners.length} absentee(s)
+                </Typography>
+              </Box>
+            )}
+          </Box>,
+        );
+      } catch (e) {
+        console.error('Failed to fetch absentees:', e);
+        openCardModal(
+          'Absentees Summary',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: localFilters?.session || sessionId || activeSessionId,
+                term: localFilters?.term || termId || activeTermId,
+                week: localFilters?.week || weekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: localFilters?.arm || classArmId,
+              }}
+              onApply={openAbsenteesBreakdown}
+            />
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
+        );
+      }
+    },
+    [
+      classArmId,
+      sessionId,
+      termId,
+      weekId,
+      activeSessionId,
+      activeTermId,
+      activeWeekId,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+    ],
+  );
 
   // ── At-Risk Learners Overview (Table) ────────────────────────
-  const openAtRiskBreakdown = useCallback(async (localFilters) => {
-    const effectiveArmId = localFilters?.arm || classArmId;
-    const effectiveWeekId = localFilters?.week || weekId;
-    const effectiveSession = localFilters?.session || sessionId || activeSessionId;
-    const effectiveTerm = localFilters?.term || termId || activeTermId;
+  const openAtRiskBreakdown = useCallback(
+    async (localFilters) => {
+      const effectiveArmId = localFilters?.arm || classArmId;
+      const effectiveWeekId = localFilters?.week || weekId;
+      const effectiveSession = localFilters?.session || sessionId || activeSessionId;
+      const effectiveTerm = localFilters?.term || termId || activeTermId;
 
-    const appliedFilters = {
-      session: effectiveSession,
-      term: effectiveTerm,
-      week: effectiveWeekId,
-      programme: localFilters?.programme || programmeId || '',
-      class: localFilters?.class || classId || '',
-      arm: effectiveArmId,
-    };
-    setAtRiskFilters(appliedFilters);
+      const appliedFilters = {
+        session: effectiveSession,
+        term: effectiveTerm,
+        week: effectiveWeekId,
+        programme: localFilters?.programme || programmeId || '',
+        class: localFilters?.class || classId || '',
+        arm: effectiveArmId,
+      };
+      setAtRiskFilters(appliedFilters);
 
-    if (!effectiveArmId) {
-      openCardModal('At-Risk Learners Overview', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: effectiveSession, term: effectiveTerm, week: effectiveWeekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: effectiveArmId }}
-            onApply={openAtRiskBreakdown}
-          />
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
-              Select Filters to View Data
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
-              Please select a <strong>Class/Arm</strong> from the dropdowns above, then click <strong>Apply Filter</strong> to view the at-risk learners list.
-            </Typography>
-          </Box>
-        </Box>
-      ));
-      return;
-    }
+      if (!effectiveArmId) {
+        openCardModal(
+          'At-Risk Learners Overview',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: effectiveSession,
+                term: effectiveTerm,
+                week: effectiveWeekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: effectiveArmId,
+              }}
+              onApply={openAtRiskBreakdown}
+            />
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+                Select Filters to View Data
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
+                Please select a <strong>Class/Arm</strong> from the dropdowns above, then click{' '}
+                <strong>Apply Filter</strong> to view the at-risk learners list.
+              </Typography>
+            </Box>
+          </Box>,
+        );
+        return;
+      }
 
-    setAnalyticsModal({ open: true, title: 'At-Risk Learners Overview', content: null, loading: true });
-    try {
-      const res = await attendanceApi.getAtRiskLearners({
-        class_arm_id: effectiveArmId || undefined,
-        week_term_id: effectiveWeekId || undefined,
-        session_id: effectiveSession || undefined,
-        term_id: effectiveTerm || undefined,
+      setAnalyticsModal({
+        open: true,
+        title: 'At-Risk Learners Overview',
+        content: null,
+        loading: true,
       });
-      const payload = res.data?.data || {};
-      const learners = payload.learners || [];
-      setRiskLearners(learners);
-      // Reset selected learners to all checked by default
-      const initialSelected = {};
-      learners.forEach((l) => { initialSelected[l.student_reg_id] = true; });
-      setSelectedRiskLearners(initialSelected);
-      setRiskModalData(learners);
-      setAnalyticsModal((prev) => ({ ...prev, loading: false }));
-    } catch (e) {
-      console.error('Failed to fetch at-risk learners:', e);
-      openCardModal('At-Risk Learners Overview', (
-        <Box>
-          <ModalFilterDropdowns key={filterKeyRef.current}
-            sessions={sessions} terms={terms} weeks={weeks}
-            programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-            initialFilters={{ session: localFilters?.session || sessionId || activeSessionId, term: localFilters?.term || termId || activeTermId, week: localFilters?.week || weekId, programme: localFilters?.programme || programmeId || '', class: localFilters?.class || classId || '', arm: localFilters?.arm || classArmId }}
-            onApply={openAtRiskBreakdown}
-          />
-          <Typography color="error">Failed to load data.</Typography>
-        </Box>
-      ));
-    }
-  }, [classArmId, sessionId, termId, weekId, activeSessionId, activeTermId, activeWeekId, sessions, terms, weeks, programmes, classes, arms]);
+      try {
+        const res = await attendanceApi.getAtRiskLearners({
+          class_arm_id: effectiveArmId || undefined,
+          week_term_id: effectiveWeekId || undefined,
+          session_id: effectiveSession || undefined,
+          term_id: effectiveTerm || undefined,
+        });
+        const payload = res.data?.data || {};
+        const learners = payload.learners || [];
+        setRiskLearners(learners);
+        // Reset selected learners to all checked by default
+        const initialSelected = {};
+        learners.forEach((l) => {
+          initialSelected[l.student_reg_id] = true;
+        });
+        setSelectedRiskLearners(initialSelected);
+        setRiskModalData(learners);
+        setAnalyticsModal((prev) => ({ ...prev, loading: false }));
+      } catch (e) {
+        console.error('Failed to fetch at-risk learners:', e);
+        openCardModal(
+          'At-Risk Learners Overview',
+          <Box>
+            <ModalFilterDropdowns
+              key={filterKeyRef.current}
+              sessions={sessions}
+              terms={terms}
+              weeks={weeks}
+              programmes={programmes}
+              classes={classes}
+              arms={arms}
+              activeWeekId={activeWeekId}
+              initialFilters={{
+                session: localFilters?.session || sessionId || activeSessionId,
+                term: localFilters?.term || termId || activeTermId,
+                week: localFilters?.week || weekId,
+                programme: localFilters?.programme || programmeId || '',
+                class: localFilters?.class || classId || '',
+                arm: localFilters?.arm || classArmId,
+              }}
+              onApply={openAtRiskBreakdown}
+            />
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
+        );
+      }
+    },
+    [
+      classArmId,
+      sessionId,
+      termId,
+      weekId,
+      activeSessionId,
+      activeTermId,
+      activeWeekId,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+    ],
+  );
 
   const handleSendRiskAlerts = async () => {
     // Only send alerts for selected learners
@@ -971,7 +1388,11 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
       .map((l) => Number(l.student_reg_id))
       .filter(Boolean);
     if (selectedIds.length === 0) {
-      setAlertSnackbar({ open: true, message: 'No learners selected to send risk alerts for', severity: 'warning' });
+      setAlertSnackbar({
+        open: true,
+        message: 'No learners selected to send risk alerts for',
+        severity: 'warning',
+      });
       return;
     }
     setSendingRiskAlert(true);
@@ -1009,310 +1430,388 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
       ) : (
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {/* Card 1: DAYS SCHOOL OPEN */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard colorName="success" colorIndex={1}>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{
-                color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
-                textTransform: 'uppercase',
-              }}
-            >
-              DAYS SCHOOL OPEN
-            </Typography>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
-            >
-              {Math.min(Math.round(schoolDaysMetrics?.scope === 'week'
-                ? schoolDaysMetrics.weekElapsedPercentage
-                : schoolDaysMetrics?.termElapsedPercentage || 0), 100)}%
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(Math.round(schoolDaysMetrics?.scope === 'week'
-                ? schoolDaysMetrics.weekElapsedPercentage
-                : schoolDaysMetrics?.termElapsedPercentage || 0), 100)}
-              sx={{
-                my: 1,
-                height: 5,
-                borderRadius: 2,
-                bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: colors.success.accentColor,
-                },
-              }}
-            />
-            <Stack direction="column" alignItems="flex-start" spacing={0.4}>
-              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                {schoolDaysMetrics?.scope === 'week' ? (
-                  <>
-                    {schoolDaysMetrics.weekDaysElapsed} used · {schoolDaysMetrics.weekDaysRemaining} remaining of {schoolDaysMetrics.weekDaysOpen} (this week)
-                  </>
-                ) : (
-                  <>
-                    {schoolDaysMetrics?.termDaysElapsed || 0} used · {schoolDaysMetrics?.termDaysRemaining || 0} remaining of {schoolDaysMetrics?.termDaysOpen || 0} (school term)
-                  </>
-                )}
-              </Typography>
-              <CalendarMonthIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
-            </Stack>
-          </StatCard>
-        </Grid>
-
-        {/* Card 2: WEEK ATTENDANCE RATE */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view weekly attendance breakdown" arrow placement="top">
-            <StatCard
-              colorName="warning"
-              colorIndex={3}
-              clickable
-              onClick={() => openWeekBreakdown(classArmId, undefined)}
-            >
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard colorName="success" colorIndex={1}>
               <Typography
                 variant="caption"
                 fontWeight={700}
                 sx={{
-                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
                   textTransform: 'uppercase',
                 }}
               >
-                WEEK ATTENDANCE RATE
+                DAYS SCHOOL OPEN
               </Typography>
               <Typography
                 variant="h4"
                 fontWeight={700}
-                sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+                sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
               >
-                {metrics.weekRate}%
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={metrics.weekRate}
-                sx={{
-                  my: 1,
-                  height: 5,
-                  borderRadius: 2,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: colors.warning.accentColor,
-                  },
-                }}
-              />
-              <Stack direction="row" alignItems="center" spacing={0.4}>
-                <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                  {metrics.weekTrendText || 'No previous data'}
-                </Typography>
-                {metrics.weekRateChange > 0 ? (
-                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
-                ) : metrics.weekRateChange < 0 ? (
-                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
-                ) : (
-                  <TrendingFlatIcon sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+                {Math.min(
+                  Math.round(
+                    schoolDaysMetrics?.scope === 'week'
+                      ? schoolDaysMetrics.weekElapsedPercentage
+                      : schoolDaysMetrics?.termElapsedPercentage || 0,
+                  ),
+                  100,
                 )}
-              </Stack>
-            </StatCard>
-          </Tooltip>
-        </Grid>
-
-        {/* Card 3: TERM ATTENDANCE RATE */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view term attendance trend" arrow placement="top">
-            <StatCard
-              colorName="info"
-              colorIndex={2}
-              clickable
-              onClick={() => openTermTrend(classArmId)}
-            >
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{
-                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor,
-                  textTransform: 'uppercase',
-                }}
-              >
-                TERM ATTENDANCE RATE
-              </Typography>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{ my: 0.5, color: isDark ? '#fff' : colors.info.accentColor }}
-              >
-                {metrics.termRate}%
+                %
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={metrics.termRate}
-                sx={{
-                  my: 1,
-                  height: 5,
-                  borderRadius: 2,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: colors.info.accentColor,
-                  },
-                }}
-              />
-              <Stack direction="row" alignItems="center" spacing={0.4}>
-                <Typography variant="caption" fontWeight={600} sx={{ color: colors.info.accentColor }}>
-                  {metrics.termTrendText || 'No previous data'}
-                </Typography>
-                {metrics.termRateChange > 0 ? (
-                  <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
-                ) : metrics.termRateChange < 0 ? (
-                  <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
-                ) : (
-                  <TrendingFlatIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
+                value={Math.min(
+                  Math.round(
+                    schoolDaysMetrics?.scope === 'week'
+                      ? schoolDaysMetrics.weekElapsedPercentage
+                      : schoolDaysMetrics?.termElapsedPercentage || 0,
+                  ),
+                  100,
                 )}
-              </Stack>
-            </StatCard>
-          </Tooltip>
-        </Grid>
-
-        {/* Card 4: TOTAL ABSENTEES */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view absentees list" arrow placement="top">
-            <StatCard
-              colorName="error"
-              colorIndex={4}
-              clickable
-              onClick={openAbsenteesBreakdown}
-              sx={{ position: 'relative' }}
-            >
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{
-                  color: isDark ? 'rgba(255,255,255,0.72)' : colors.error.accentColor,
-                  textTransform: 'uppercase',
-                }}
-              >
-                TOTAL ABSENTEES
-              </Typography>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{ my: 0.5, color: isDark ? '#fff' : colors.error.accentColor }}
-              >
-                {metrics.totalAbsentees}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={metrics.totalStudents > 0 ? Math.round((metrics.totalAbsentees / metrics.totalStudents) * 100) : 0}
                 sx={{
                   my: 1,
                   height: 5,
                   borderRadius: 2,
                   bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: colors.error.accentColor,
+                    bgcolor: colors.success.accentColor,
                   },
                 }}
               />
-              <Stack direction="row" alignItems="center" spacing={0.4}>
-                <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}>
-                  Current Session Term
+              <Stack direction="column" alignItems="flex-start" spacing={0.4}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                >
+                  {schoolDaysMetrics?.scope === 'week' ? (
+                    <>
+                      {schoolDaysMetrics.weekDaysElapsed} used ·{' '}
+                      {schoolDaysMetrics.weekDaysRemaining} remaining of{' '}
+                      {schoolDaysMetrics.weekDaysOpen} (this week)
+                    </>
+                  ) : (
+                    <>
+                      {schoolDaysMetrics?.termDaysElapsed || 0} used ·{' '}
+                      {schoolDaysMetrics?.termDaysRemaining || 0} remaining of{' '}
+                      {schoolDaysMetrics?.termDaysOpen || 0} (school term)
+                    </>
+                  )}
                 </Typography>
-                <EventNoteIcon sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }} />
+                <CalendarMonthIcon
+                  sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }}
+                />
               </Stack>
             </StatCard>
-          </Tooltip>
-        </Grid>
+          </Grid>
 
-        {/* Card 5: AT-RISK STUDENTS */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Tooltip title="Click to view at-risk learners" arrow placement="top">
-            <StatCard
-              colorName="error"
-              colorIndex={4}
-              clickable
-              onClick={openAtRiskBreakdown}
-              sx={{
-                border: (t) =>
-                  t.palette.mode === 'dark'
-                    ? '2px solid rgba(239,68,68,0.5)'
-                    : `2px solid ${colors.error.accentColor}`,
-              }}
-            >
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{ color: colors.error.accentColor, textTransform: 'uppercase' }}
+          {/* Card 2: WEEK ATTENDANCE RATE */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Tooltip title="Click to view weekly attendance breakdown" arrow placement="top">
+              <StatCard
+                colorName="warning"
+                colorIndex={3}
+                clickable
+                onClick={() => openWeekBreakdown(classArmId, undefined)}
               >
-                AT-RISK STUDENTS
-              </Typography>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{ my: 0.5, color: colors.error.accentColor }}
-              >
-                {metrics.atRisk}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={metrics.totalStudents > 0 ? Math.round((metrics.atRisk / metrics.totalStudents) * 100) : 0}
-                sx={{
-                  my: 1,
-                  height: 5,
-                  borderRadius: 2,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: colors.error.accentColor,
-                  },
-                }}
-              />
-              <Stack direction="row" alignItems="center" spacing={0.4}>
-                <Typography variant="caption" sx={{ color: colors.error.accentColor }}>
-                  1+ Week Absence
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  WEEK ATTENDANCE RATE
                 </Typography>
-                <WarningIcon sx={{ fontSize: 13, color: colors.error.accentColor }} />
-              </Stack>
-            </StatCard>
-          </Tooltip>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+                >
+                  {metrics.weekRate}%
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={metrics.weekRate}
+                  sx={{
+                    my: 1,
+                    height: 5,
+                    borderRadius: 2,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: colors.warning.accentColor,
+                    },
+                  }}
+                />
+                <Stack direction="row" alignItems="center" spacing={0.4}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                  >
+                    {metrics.weekTrendText || 'No previous data'}
+                  </Typography>
+                  {metrics.weekRateChange > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                  ) : metrics.weekRateChange < 0 ? (
+                    <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                  ) : (
+                    <TrendingFlatIcon
+                      sx={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }}
+                    />
+                  )}
+                </Stack>
+              </StatCard>
+            </Tooltip>
+          </Grid>
+
+          {/* Card 3: TERM ATTENDANCE RATE */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Tooltip title="Click to view term attendance trend" arrow placement="top">
+              <StatCard
+                colorName="info"
+                colorIndex={2}
+                clickable
+                onClick={() => openTermTrend(classArmId)}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  TERM ATTENDANCE RATE
+                </Typography>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.info.accentColor }}
+                >
+                  {metrics.termRate}%
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={metrics.termRate}
+                  sx={{
+                    my: 1,
+                    height: 5,
+                    borderRadius: 2,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: colors.info.accentColor,
+                    },
+                  }}
+                />
+                <Stack direction="row" alignItems="center" spacing={0.4}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={600}
+                    sx={{ color: colors.info.accentColor }}
+                  >
+                    {metrics.termTrendText || 'No previous data'}
+                  </Typography>
+                  {metrics.termRateChange > 0 ? (
+                    <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                  ) : metrics.termRateChange < 0 ? (
+                    <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                  ) : (
+                    <TrendingFlatIcon sx={{ fontSize: 14, color: colors.info.accentColor }} />
+                  )}
+                </Stack>
+              </StatCard>
+            </Tooltip>
+          </Grid>
+
+          {/* Card 4: TOTAL ABSENTEES */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Tooltip title="Click to view absentees list" arrow placement="top">
+              <StatCard
+                colorName="error"
+                colorIndex={4}
+                clickable
+                onClick={openAbsenteesBreakdown}
+                sx={{ position: 'relative' }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.error.accentColor,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  TOTAL ABSENTEES
+                </Typography>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.error.accentColor }}
+                >
+                  {metrics.totalAbsentees}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={
+                    metrics.totalStudents > 0
+                      ? Math.round((metrics.totalAbsentees / metrics.totalStudents) * 100)
+                      : 0
+                  }
+                  sx={{
+                    my: 1,
+                    height: 5,
+                    borderRadius: 2,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: colors.error.accentColor,
+                    },
+                  }}
+                />
+                <Stack direction="row" alignItems="center" spacing={0.4}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                  >
+                    Current Session Term
+                  </Typography>
+                  <EventNoteIcon
+                    sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }}
+                  />
+                </Stack>
+              </StatCard>
+            </Tooltip>
+          </Grid>
+
+          {/* Card 5: AT-RISK STUDENTS */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Tooltip title="Click to view at-risk learners" arrow placement="top">
+              <StatCard
+                colorName="error"
+                colorIndex={4}
+                clickable
+                onClick={openAtRiskBreakdown}
+                sx={{
+                  border: (t) =>
+                    t.palette.mode === 'dark'
+                      ? '2px solid rgba(239,68,68,0.5)'
+                      : `2px solid ${colors.error.accentColor}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{ color: colors.error.accentColor, textTransform: 'uppercase' }}
+                >
+                  AT-RISK STUDENTS
+                </Typography>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ my: 0.5, color: colors.error.accentColor }}
+                >
+                  {metrics.atRisk}
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={
+                    metrics.totalStudents > 0
+                      ? Math.round((metrics.atRisk / metrics.totalStudents) * 100)
+                      : 0
+                  }
+                  sx={{
+                    my: 1,
+                    height: 5,
+                    borderRadius: 2,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: colors.error.accentColor,
+                    },
+                  }}
+                />
+                <Stack direction="row" alignItems="center" spacing={0.4}>
+                  <Typography variant="caption" sx={{ color: colors.error.accentColor }}>
+                    1+ Week Absence
+                  </Typography>
+                  <WarningIcon sx={{ fontSize: 13, color: colors.error.accentColor }} />
+                </Stack>
+              </StatCard>
+            </Tooltip>
+          </Grid>
         </Grid>
-      </Grid>
       )}
 
       {riskModalData ? (
         <AnalyticsModal
           open={analyticsModal.open}
-          onClose={() => { setAnalyticsModal({ open: false, title: '', content: null }); setRiskModalData(null); }}
+          onClose={() => {
+            setAnalyticsModal({ open: false, title: '', content: null });
+            setRiskModalData(null);
+          }}
           title={analyticsModal.title}
           loading={analyticsModal.loading}
           content={(() => {
             const learners = riskModalData;
             return (
               <Box>
-                <ModalFilterDropdowns key={filterKeyRef.current}
-                  sessions={sessions} terms={terms} weeks={weeks}
-                  programmes={programmes} classes={classes} arms={arms}
-            activeWeekId={activeWeekId}
-                  initialFilters={atRiskFilters || { session: sessionId || activeSessionId, term: termId || activeTermId, week: weekId, programme: programmeId || '', class: classId || '', arm: classArmId }}
-                  onApply={(lf) => { setRiskModalData(null); openAtRiskBreakdown(lf); }}
+                <ModalFilterDropdowns
+                  key={filterKeyRef.current}
+                  sessions={sessions}
+                  terms={terms}
+                  weeks={weeks}
+                  programmes={programmes}
+                  classes={classes}
+                  arms={arms}
+                  activeWeekId={activeWeekId}
+                  initialFilters={
+                    atRiskFilters || {
+                      session: sessionId || activeSessionId,
+                      term: termId || activeTermId,
+                      week: weekId,
+                      programme: programmeId || '',
+                      class: classId || '',
+                      arm: classArmId,
+                    }
+                  }
+                  onApply={(lf) => {
+                    setRiskModalData(null);
+                    openAtRiskBreakdown(lf);
+                  }}
                 />
                 {learners.length === 0 ? (
-                  <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>No at-risk learners for the selected filters.</Typography>
+                  <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                    No at-risk learners for the selected filters.
+                  </Typography>
                 ) : (
                   <Box sx={{ py: 1 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {learners.length} at-risk learner(s) — learners with persistent absence.
                     </Typography>
-                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxHeight: 350, overflow: 'auto' }}>
+                    <TableContainer
+                      component={Paper}
+                      variant="outlined"
+                      sx={{ borderRadius: 2, maxHeight: 350, overflow: 'auto' }}
+                    >
                       <Table size="small" stickyHeader>
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 700, width: 40 }}>
                               <Checkbox
                                 size="small"
-                                checked={learners.length > 0 && learners.every((l) => selectedRiskLearners[l.student_reg_id])}
-                                indeterminate={learners.some((l) => selectedRiskLearners[l.student_reg_id]) && !learners.every((l) => selectedRiskLearners[l.student_reg_id])}
+                                checked={
+                                  learners.length > 0 &&
+                                  learners.every((l) => selectedRiskLearners[l.student_reg_id])
+                                }
+                                indeterminate={
+                                  learners.some((l) => selectedRiskLearners[l.student_reg_id]) &&
+                                  !learners.every((l) => selectedRiskLearners[l.student_reg_id])
+                                }
                                 onChange={() => {
-                                  const allSelected = learners.every((l) => selectedRiskLearners[l.student_reg_id]);
+                                  const allSelected = learners.every(
+                                    (l) => selectedRiskLearners[l.student_reg_id],
+                                  );
                                   const updated = {};
-                                  learners.forEach((l) => { updated[l.student_reg_id] = !allSelected; });
+                                  learners.forEach((l) => {
+                                    updated[l.student_reg_id] = !allSelected;
+                                  });
                                   setSelectedRiskLearners(updated);
                                 }}
                                 sx={{ p: 0.25 }}
@@ -1329,9 +1828,15 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
                               key={l.student_reg_id || idx}
                               hover
                               selected={selectedRiskLearners[l.student_reg_id]}
-                              sx={{ cursor: 'pointer', '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.04) } }}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.04) },
+                              }}
                               onClick={() => {
-                                setSelectedRiskLearners((prev) => ({ ...prev, [l.student_reg_id]: !prev[l.student_reg_id] }));
+                                setSelectedRiskLearners((prev) => ({
+                                  ...prev,
+                                  [l.student_reg_id]: !prev[l.student_reg_id],
+                                }));
                               }}
                             >
                               <TableCell sx={{ width: 40 }}>
@@ -1340,26 +1845,42 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
                                   checked={!!selectedRiskLearners[l.student_reg_id]}
                                   onClick={(e) => e.stopPropagation()}
                                   onChange={() => {
-                                    setSelectedRiskLearners((prev) => ({ ...prev, [l.student_reg_id]: !prev[l.student_reg_id] }));
+                                    setSelectedRiskLearners((prev) => ({
+                                      ...prev,
+                                      [l.student_reg_id]: !prev[l.student_reg_id],
+                                    }));
                                   }}
                                   sx={{ p: 0.25 }}
                                 />
                               </TableCell>
                               <TableCell>{idx + 1}</TableCell>
                               <TableCell>
-                                <Typography variant="body2" fontWeight={600}>{l.name}</Typography>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {l.name}
+                                </Typography>
                               </TableCell>
                               <TableCell>
-                                <Chip label={l.arm_name || 'N/A'} size="small" variant="outlined" color="error" />
+                                <Chip
+                                  label={l.arm_name || 'N/A'}
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                />
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </TableContainer>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ mt: 1 }}
+                    >
                       <Typography variant="caption" color="text.secondary">
-                        {Object.values(selectedRiskLearners).filter(Boolean).length} of {learners.length} at-risk learner(s) selected
+                        {Object.values(selectedRiskLearners).filter(Boolean).length} of{' '}
+                        {learners.length} at-risk learner(s) selected
                       </Typography>
                       <Button
                         variant="contained"
@@ -1367,14 +1888,22 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
                         size="small"
                         startIcon={<NotificationsActiveIcon />}
                         onClick={() => {
-                          const selectedCount = Object.values(selectedRiskLearners).filter(Boolean).length;
+                          const selectedCount =
+                            Object.values(selectedRiskLearners).filter(Boolean).length;
                           if (selectedCount === 0) {
-                            setAlertSnackbar({ open: true, message: 'Please select at least one learner to send alerts for', severity: 'warning' });
+                            setAlertSnackbar({
+                              open: true,
+                              message: 'Please select at least one learner to send alerts for',
+                              severity: 'warning',
+                            });
                             return;
                           }
                           setRiskAlertOpen(true);
                         }}
-                        disabled={learners.length === 0 || Object.values(selectedRiskLearners).filter(Boolean).length === 0}
+                        disabled={
+                          learners.length === 0 ||
+                          Object.values(selectedRiskLearners).filter(Boolean).length === 0
+                        }
                       >
                         Send Risk Alerts
                       </Button>
@@ -1402,7 +1931,9 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
         content={
           <Box sx={{ py: 2 }}>
             <Typography variant="body1" gutterBottom fontWeight={500}>
-              You are about to send risk alerts to the guardians of {Object.values(selectedRiskLearners).filter(Boolean).length} selected at-risk learner(s).
+              You are about to send risk alerts to the guardians of{' '}
+              {Object.values(selectedRiskLearners).filter(Boolean).length} selected at-risk
+              learner(s).
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Risk alerts notify guardians that their ward is at risk due to poor attendance.
@@ -1411,13 +1942,17 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
         }
         actions={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" size="small" onClick={() => setRiskAlertOpen(false)}>Cancel</Button>
+            <Button variant="outlined" size="small" onClick={() => setRiskAlertOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant="contained"
               color="error"
               size="small"
               onClick={handleSendRiskAlerts}
-              disabled={sendingRiskAlert || Object.values(selectedRiskLearners).filter(Boolean).length === 0}
+              disabled={
+                sendingRiskAlert || Object.values(selectedRiskLearners).filter(Boolean).length === 0
+              }
               autoFocus
             >
               {sendingRiskAlert ? 'Sending...' : 'Send'}
@@ -1432,7 +1967,11 @@ const AttendanceAnalyticsCards = ({ metrics, schoolDaysMetrics, loading = false,
         onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={alertSnackbar.severity} onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))} variant="filled">
+        <Alert
+          severity={alertSnackbar.severity}
+          onClose={() => setAlertSnackbar((p) => ({ ...p, open: false }))}
+          variant="filled"
+        >
           {alertSnackbar.message}
         </Alert>
       </Snackbar>

@@ -144,8 +144,8 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, inten
         Selected Admission Batch Detail
       </Typography>
       <Typography variant="h5" fontWeight={800} mb={2}>
-        Session: {batch?.session_term?.session?.sesname}{' '}
-        {batch?.session_term?.display_term?.display_name}
+        Session: {batch?.session_term?.session?.session_name}{' '}
+        {batch?.session_term?.term?.term_name}
         {' • '}
         Admission Batch: {batch?.batch_name ?? '2'}
       </Typography>
@@ -829,8 +829,8 @@ const NewApplication = () => {
                 Application Form
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Session: {selectedBatch?.session_term?.session?.sesname}{' '}
-                {selectedBatch?.session_term?.display_term?.display_name}
+                Session: {selectedBatch?.session_term?.session?.session_name}{' '}
+                {selectedBatch?.session_term?.term?.term_name}
                 &nbsp;·&nbsp;
                 {selectedBatch?.require_payment && selectedBatch?.application_fee !== '0.00' && (
                   <>

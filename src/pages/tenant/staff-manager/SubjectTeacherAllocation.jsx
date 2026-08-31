@@ -252,7 +252,7 @@ const SubjectTeacherAllocation = () => {
           >
             {sessionTerms.map((term) => (
               <MenuItem key={term.id} value={term.id}>
-                {term.session.sesname} · {term.display_term.display_name}
+                {term.session.session_name} · {term.term?.term_name}
               </MenuItem>
             ))}
           </TextField>
@@ -288,7 +288,7 @@ const SubjectTeacherAllocation = () => {
             <MenuItem value="">Select Class</MenuItem>
             {availableClasses.map((cls) => (
               <MenuItem key={cls.id} value={cls.id}>
-                {cls.programme_class.class.class_name} - {cls.arm_names}
+                {cls.programme_class.class.class_name} - {cls.class_arm_names}
               </MenuItem>
             ))}
           </TextField>
@@ -397,4 +397,3 @@ const SubjectTeacherAllocation = () => {
 };
 
 export default SubjectTeacherAllocation;
-

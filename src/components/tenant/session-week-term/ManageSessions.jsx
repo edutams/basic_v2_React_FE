@@ -129,7 +129,7 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession, data, isRe
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     {data ? (
                       <>
-                        <TableCell>{item.session?.sesname || 'N/A'}</TableCell>
+                        <TableCell>{item.session?.session_name || 'N/A'}</TableCell>
                         <TableCell>{item.term?.term_name || 'N/A'}</TableCell>
                       </>
                     ) : (

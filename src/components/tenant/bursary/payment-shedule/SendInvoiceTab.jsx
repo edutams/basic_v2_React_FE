@@ -727,7 +727,12 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               </Typography>
               <Stack spacing={0.75}>
                 {INVOICE_PLACEHOLDER_FIELDS.map((field) => (
-                  <Button variant="contained" size="small" key={field.value} fullWidth onClick={() => handleInsertPlaceholder(field.value)}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    key={field.value}
+                    fullWidth
+                    onClick={() => handleInsertPlaceholder(field.value)}
                     sx={{
                       justifyContent: 'flex-start',
                       textTransform: 'none',
@@ -750,7 +755,13 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           </Grid>
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button variant="contained" size="small" color="primary" onClick={handleSendInvoice} disabled={sendingInvoice || selectedParents.length === 0}>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleSendInvoice}
+              disabled={sendingInvoice || selectedParents.length === 0}
+            >
               {sendingInvoice ? (
                 <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               ) : null}
@@ -1146,7 +1157,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               ) : (
                 sessionTerms.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
-                    {item.session?.sesname} - {item.display_term?.display_name}
+                    {item.session?.session_name} - {item.term?.term_name}
                   </MenuItem>
                 ))
               )}
@@ -1213,18 +1224,31 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               },
             }}
           />
-          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} >
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+          >
             Search
           </Button>
         </Box>
 
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-            <Button variant="contained" size="small" onClick={handleGenerateExcelInvoice} disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleGenerateExcelInvoice}
+              disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}
+            >
               {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
             </Button>
             {excelBlobUrl && (
-              <Button size="small" endIcon={<DownloadIcon />}
+              <Button
+                size="small"
+                endIcon={<DownloadIcon />}
                 component="a"
                 href={excelBlobUrl}
                 download={`Invoices_${selectedClassName || 'Class'}.xlsx`}
@@ -1268,10 +1292,19 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseEditDialog}
+            disabled={savingEdit}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleSaveEdit}
+            disabled={savingEdit}
+            startIcon={savingEdit ? <CircularProgress /> : null}
           >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>

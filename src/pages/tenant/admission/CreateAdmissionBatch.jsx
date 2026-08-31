@@ -140,8 +140,12 @@ const CreateAdmissionBatch = () => {
   const [enablePayment, setEnablePayment] = useState(existingBatch?.require_payment ?? false);
   const [preAppFee, setPreAppFee] = useState(existingBatch?.application_fee ?? '');
   const [postAppFee, setPostAppFee] = useState(existingBatch?.acceptance_fee ?? '');
-  const [preAppPayments, setPreAppPayments] = useState(existingBatch?.pre_application_payments ?? []);
-  const [postAppPayments, setPostAppPayments] = useState(existingBatch?.post_application_payments ?? []);
+  const [preAppPayments, setPreAppPayments] = useState(
+    existingBatch?.pre_application_payments ?? [],
+  );
+  const [postAppPayments, setPostAppPayments] = useState(
+    existingBatch?.post_application_payments ?? [],
+  );
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [currentPaymentType, setCurrentPaymentType] = useState('pre-application');
 
@@ -425,7 +429,7 @@ const CreateAdmissionBatch = () => {
                   ) : (
                     entrySessionTermOptions.map((st) => (
                       <MenuItem key={st.id} value={st.id}>
-                        {st?.session?.sesname} {st?.display_term?.display_name}
+                        {st?.session?.session_name} {st?.term?.term_name}
                       </MenuItem>
                     ))
                   )}
@@ -475,7 +479,7 @@ const CreateAdmissionBatch = () => {
                     disabled={!programmeId || classesLoading}
                     getOptionLabel={(option) => {
                       const classCode = option.class_code || option.class_name || '';
-                      const arms = option.arm_names || option.arms || '';
+                      const arms = option.class_arm_names || option.arms || '';
                       return arms ? `${classCode} (${arms})` : classCode;
                     }}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -488,8 +492,8 @@ const CreateAdmissionBatch = () => {
                         <Chip
                           key={option.id}
                           label={
-                            option.arm_names
-                              ? `${option.class_code} (${option.arm_names})`
+                            option.class_arm_names
+                              ? `${option.class_code} (${option.class_arm_names})`
                               : option.class_code || option.class_name
                           }
                           size="small"
@@ -603,7 +607,12 @@ const CreateAdmissionBatch = () => {
               {enablePayment && (
                 <Stack spacing={2} mt={-1}>
                   <Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={0.75}
+                    >
                       <Typography variant="caption" fontWeight={700} display="block">
                         Pre-Application
                       </Typography>
@@ -685,7 +694,12 @@ const CreateAdmissionBatch = () => {
                   </Box>
 
                   <Box>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={0.75}
+                    >
                       <Typography variant="caption" fontWeight={700} display="block">
                         Post-Application
                       </Typography>
@@ -786,13 +800,21 @@ const CreateAdmissionBatch = () => {
           />
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button variant="contained" size="small" onClick={() => navigate('/admission-setup')}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => navigate('/admission-setup')}
               sx={{ fontWeight: 700, px: 3, mr: 2 }}
               disabled={submitting}
             >
               Cancel
             </Button>
-            <Button size="small" onClick={handleSubmit} disabled={submitting} sx={{ fontWeight: 700, px: 4 }} startIcon={submitting ? <CircularProgress color="inherit" /> : null}
+            <Button
+              size="small"
+              onClick={handleSubmit}
+              disabled={submitting}
+              sx={{ fontWeight: 700, px: 4 }}
+              startIcon={submitting ? <CircularProgress color="inherit" /> : null}
             >
               {submitting
                 ? isEdit

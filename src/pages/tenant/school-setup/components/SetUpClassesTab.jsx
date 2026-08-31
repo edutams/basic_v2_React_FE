@@ -100,7 +100,7 @@ const SetUpClassesTab = forwardRef(
                 division_name: division.division_name,
                 programme_class_id: cls.pivot?.id ?? null,
                 no_of_arms: cls.class_arms?.length || 0,
-                arm_names: cls.class_arms?.map((a) => a.arm_names) || [],
+                class_arm_names: cls.class_arms?.map((a) => a.class_arm_names) || [],
                 arms: cls.arms || [],
                 status: cls.status || 'active',
               });
@@ -120,7 +120,7 @@ const SetUpClassesTab = forwardRef(
 
     // Notify parent when at least one class has arms generated
     useEffect(() => {
-      const isReady = classes.some((c) => c.arm_names?.length > 0);
+      const isReady = classes.some((c) => c.class_arm_names?.length > 0);
       onReadyChange?.(isReady);
     }, [classes, onReadyChange]);
 
@@ -134,7 +134,7 @@ const SetUpClassesTab = forwardRef(
           class_name: cls.class_name,
           status: cls.status,
           no_of_arms: cls.no_of_arms || 0,
-          arm_names: cls.arm_names || [],
+          class_arm_names: cls.class_arm_names || [],
         }));
 
         await saveClasses(classesData);
@@ -202,7 +202,7 @@ const SetUpClassesTab = forwardRef(
         prev.map((cls) => {
           if (cls.unique_key === uniqueKey) {
             const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
-            return { ...cls, arm_names: defaultArms };
+            return { ...cls, class_arm_names: defaultArms };
           }
           return cls;
         }),
@@ -224,9 +224,9 @@ const SetUpClassesTab = forwardRef(
       setClasses((prev) =>
         prev.map((cls) => {
           if (cls.unique_key === uniqueKey) {
-            const newArmNames = [...cls.arm_names];
+            const newArmNames = [...cls.class_arm_names];
             newArmNames[armIndex] = value;
-            return { ...cls, arm_names: newArmNames };
+            return { ...cls, class_arm_names: newArmNames };
           }
           return cls;
         }),
@@ -241,7 +241,7 @@ const SetUpClassesTab = forwardRef(
       });
     }, [classes, searchTerm]);
 
-    const showHint = !classes.some((c) => c.arm_names?.length > 0);
+    const showHint = !classes.some((c) => c.class_arm_names?.length > 0);
 
     if (loading) {
       return (
@@ -264,13 +264,31 @@ const SetUpClassesTab = forwardRef(
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    width: '25%',
+                    bgcolor: isDark ? 'background.paper' : '#fff',
+                  }}
+                >
                   Classes
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    width: '25%',
+                    bgcolor: isDark ? 'background.paper' : '#fff',
+                  }}
+                >
                   No. of Arms
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '50%', bgcolor: isDark ? 'background.paper' : '#fff' }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    width: '50%',
+                    bgcolor: isDark ? 'background.paper' : '#fff',
+                  }}
+                >
                   Class Arm Names
                 </TableCell>
               </TableRow>
@@ -356,7 +374,12 @@ const SetUpClassesTab = forwardRef(
                           }}
                         />
 
-                        <Button variant="contained" size="small" ref={index === 0 ? generateBtnRef : null} disabled={isInactive} onClick={() => handleGenerateArms(classItem.unique_key)}
+                        <Button
+                          variant="contained"
+                          size="small"
+                          ref={index === 0 ? generateBtnRef : null}
+                          disabled={isInactive}
+                          onClick={() => handleGenerateArms(classItem.unique_key)}
                         >
                           Generate
                         </Button>
@@ -406,8 +429,8 @@ const SetUpClassesTab = forwardRef(
                       )}
 
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {classItem.arm_names && classItem.arm_names.length > 0 ? (
-                          classItem.arm_names.map((armName, i) => (
+                        {classItem.class_arm_names && classItem.class_arm_names.length > 0 ? (
+                          classItem.class_arm_names.map((armName, i) => (
                             <TextField
                               key={i}
                               size="small"
@@ -446,7 +469,12 @@ const SetUpClassesTab = forwardRef(
         </TableContainer>
 
         <Box mt={2} sx={{ display: 'none' }}>
-          <Button variant="contained" size="small" onClick={handleSaveAndContinue} disabled={!hasChanges || saving}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSaveAndContinue}
+            disabled={!hasChanges || saving}
+          >
             {saving ? 'Saving...' : 'Save & Continue'}
           </Button>
         </Box>

@@ -113,7 +113,7 @@ const StatCard = ({
                     <Divider
                       orientation="vertical"
                       flexItem
-                      sx={{ mx: 2, borderColor: softColors.borderColor }}
+                      sx={{ mx: 2, borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}
                     />
                   )}
                   <Box sx={{ flex: 1 }}>

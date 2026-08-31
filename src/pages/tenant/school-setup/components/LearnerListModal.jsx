@@ -210,7 +210,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
 
                     <TableCell>{learner.users?.sex || '-'}</TableCell>
 
-                    <TableCell>{learner.class_arm?.arm_names || '-'}</TableCell>
+                    <TableCell>{learner.class_arm?.class_arm_names || '-'}</TableCell>
                   </TableRow>
                 ))
               ) : (

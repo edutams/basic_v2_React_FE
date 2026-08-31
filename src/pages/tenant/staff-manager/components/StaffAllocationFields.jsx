@@ -493,7 +493,7 @@ const StaffAllocationFields = ({
                   <MenuItem value="">Select Session Term</MenuItem>
                   {sessionTerms.map((st) => (
                     <MenuItem key={st.id} value={st.id}>
-                      {st.session.sesname} - {st?.display_term?.display_name}
+                      {st.session.session_name} - {st?.term?.term_name}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -558,7 +558,7 @@ const StaffAllocationFields = ({
                   <MenuItem value="">Select Class Arm</MenuItem>
                   {(classArms[index] || []).map((c) => (
                     <MenuItem key={c.id} value={c.id}>
-                      {c.programme_class?.class?.class_code || 'N/A'} - {c.arm_names}
+                      {c.programme_class?.class?.class_code || 'N/A'} - {c.class_arm_names}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -625,7 +625,7 @@ const StaffAllocationFields = ({
                   <MenuItem value="">Select Session Term</MenuItem>
                   {sessionTerms.map((st) => (
                     <MenuItem key={st.id} value={st.id}>
-                      {st.session.sesname} - {st?.display_term?.display_name}
+                      {st.session.session_name} - {st?.term?.term_name}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -690,7 +690,7 @@ const StaffAllocationFields = ({
                   <MenuItem value="">Select Class Arm</MenuItem>
                   {(subjectClassArms[index] || []).map((c) => (
                     <MenuItem key={c.id} value={c.id}>
-                      {c.programme_class?.class?.class_code || 'N/A'} - {c.arm_names}
+                      {c.programme_class?.class?.class_code || 'N/A'} - {c.class_arm_names}
                     </MenuItem>
                   ))}
                 </TextField>

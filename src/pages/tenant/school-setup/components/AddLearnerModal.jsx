@@ -153,25 +153,25 @@ const AddLearnerModal = ({
     initialValues:
       isEdit && initialValues
         ? {
-          learner_id: initialValues.learner_id ?? '',
-          class_id: initialValues.class_id ?? classId ?? '',
-          class_arm_id: initialValues.class_arm_id ?? '',
-          last_name: initialValues.last_name ?? '',
-          first_name: initialValues.first_name ?? '',
-          middle_name: initialValues.middle_name ?? '',
-          gender: initialValues.gender ?? '',
-          date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
-        }
+            learner_id: initialValues.learner_id ?? '',
+            class_id: initialValues.class_id ?? classId ?? '',
+            class_arm_id: initialValues.class_arm_id ?? '',
+            last_name: initialValues.last_name ?? '',
+            first_name: initialValues.first_name ?? '',
+            middle_name: initialValues.middle_name ?? '',
+            gender: initialValues.gender ?? '',
+            date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
+          }
         : {
-          learner_id: '',
-          class_id: classId || '',
-          class_arm_id: '',
-          last_name: '',
-          first_name: '',
-          middle_name: '',
-          gender: '',
-          date_of_birth: null,
-        },
+            learner_id: '',
+            class_id: classId || '',
+            class_arm_id: '',
+            last_name: '',
+            first_name: '',
+            middle_name: '',
+            gender: '',
+            date_of_birth: null,
+          },
     enableReinitialize: true,
     onSubmit: (values) => {
       onSave(
@@ -361,7 +361,7 @@ const AddLearnerModal = ({
               <MenuItem value="">Select Arm</MenuItem>
               {classArms.map((arm) => (
                 <MenuItem key={arm.id} value={arm.id}>
-                  {arm.display_name || arm.arm_names || `Arm ${arm.id}`}
+                  {arm.display_name || arm.class_arm_names || `Arm ${arm.id}`}
                 </MenuItem>
               ))}
             </Select>
@@ -405,7 +405,13 @@ const AddLearnerModal = ({
                       },
                     }}
                   />
-                  <Button variant="contained" size="small" onClick={handleParentSearch} disabled={parentSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleParentSearch}
+                    disabled={parentSearching}
+                    sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+                  >
                     {parentSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
                   </Button>
                 </Box>

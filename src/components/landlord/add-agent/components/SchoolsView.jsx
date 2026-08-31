@@ -28,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import agentApi from '../../../../api/landlord/organizations/agent';
 import { useAuth } from '../../../../hooks/useAuth';
+import { safeWindowOpen } from '../../../../utils/safeWindowOpen';
 
 const SchoolsView = ({ selectedAgent }) => {
   const { user } = useAuth();
@@ -119,9 +120,8 @@ const SchoolsView = ({ selectedAgent }) => {
     try {
       const response = await agentApi.impersonateTenant(selectedSchool.id);
 
-      if (response?.redirect_url) {
-        window.open(response.redirect_url, '_blank');
-      } else {
+      const opened = response?.redirect_url && safeWindowOpen(response.redirect_url);
+      if (!opened) {
         alert(response?.error || 'Failed to impersonate tenant');
       }
     } catch (error) {

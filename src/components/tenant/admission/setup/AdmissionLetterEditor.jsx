@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Grid, Typography, Button, Stack, Paper, Tooltip, Divider } from '@mui/material';
 import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 const PLACEHOLDER_FIELDS = [
   { label: "Student's First Name", value: "[@FIRST_NAME]" },
@@ -284,7 +285,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                       '& em': { fontStyle: 'italic' },
                       '& ul, & ol': { pl: 2.5, mb: 0.75 },
                     }}
-                    dangerouslySetInnerHTML={{ __html: applyPreviewSamples(letterContent) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(applyPreviewSamples(letterContent)) }}
                   />
                 ) : (
                   <Typography variant="caption" color="text.disabled">

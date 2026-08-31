@@ -1,60 +1,23 @@
 import React from 'react';
-import {
-  Grid,
-  Box,
-  Typography,
-  Stack,
-  Select,
-  MenuItem,
-  Card,
-  Divider,
-  useTheme,
-} from '@mui/material';
+import { Grid, Box, Typography, Stack, Card, useTheme } from '@mui/material';
 import Chart from 'react-apexcharts';
 import StandardModal from '@/components/shared/StandardModal';
-import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconBuildingBank } from '@tabler/icons-react';
-const plans = [
-  {
-    label: 'Freemium',
-    value: '₦7,000,234.00',
-    colorIndex: 0,
-    schoolCount: 300,
-  },
-  { 
-    label: 'Basic', 
-    value: '₦7,000,234.00', 
-    colorIndex: 1, 
-    schoolCount: 400 
-  },
-  {
-    label: 'Basic +',
-    value: '₦7,000,234.00',
-    colorIndex: 2,
-    schoolCount: 400,
-  },
-  {
-    label: 'Basic ++',
-    value: '₦7,000,234.00',
-    colorIndex: 3,
-    schoolCount: 50,
-  },
-];
-
-const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
+import { getStatCardColor } from '@/utils/statCardColors';
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
   { bg: '#DCFCE7', color: '#16A34A' },
   { bg: '#F3E8FF', color: '#9333EA' },
   { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FFE4E6', color: '#E11D48' },
 ];
 
 const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const scheme = schemeMap[colorIndex % schemeMap.length];
-  
+
   return (
     <Card
       sx={{
@@ -97,13 +60,13 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
             {value}
           </Typography>
           <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3} justifyContent="flex-end">
-            <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
+            <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: scheme.color }} />
             <Typography
               variant="caption"
-              sx={{ 
-                color: isDark ? '#ffffff' : '#4B5563', 
-                fontWeight: 500, 
-                fontSize: '12px' 
+              sx={{
+                color: isDark ? '#ffffff' : '#4B5563',
+                fontWeight: 500,
+                fontSize: '12px',
               }}
             >
               {label}
@@ -119,7 +82,7 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  
+
   return (
     <Stack
       direction="row"
@@ -177,70 +140,36 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
   );
 };
 
-const PlanDistributionModal = ({ open, onClose }) => {
+const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [year, setYear] = React.useState('2026');
+
+  const totalOrganizations = planDistribution.reduce((sum, p) => sum + (p.total ?? 0), 0);
 
   const chartOptions = {
     chart: {
       type: 'bar',
-      toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: false,
-          zoom: false,
-          zoomin: false,
-          zoomout: false,
-          pan: false,
-          reset: false,
-        },
-      },
+      toolbar: { show: false },
       fontFamily: 'inherit',
       foreColor: isDark ? '#aaa' : '#64748B',
     },
-    plotOptions: { bar: { horizontal: false, columnWidth: '65%', borderRadius: 0 } },
+    plotOptions: { bar: { horizontal: true, barHeight: '55%', borderRadius: 4, distributed: true } },
     dataLabels: { enabled: false },
-    colors: plans.map((p) => p.color),
+    colors: schemeMap.map((s) => s.color),
     xaxis: {
-      categories: Array(10).fill('Olasegun Obasanjo'),
-      labels: {
-        rotate: -45,
-        style: { fontSize: '10px', fontWeight: 600, colors: isDark ? '#aaa' : '#333' },
-      },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
+      categories: planDistribution.map((p) => p.label),
+      title: { text: 'Organizations', style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' } },
+      labels: { style: { colors: isDark ? '#aaa' : '#333' } },
     },
     yaxis: {
-      title: {
-        text: 'NO of Schools',
-        style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' },
-      },
-      labels: { style: { colors: isDark ? '#aaa' : '#333' } },
-      min: 0,
-      max: 100,
-      tickAmount: 10,
+      labels: { style: { colors: isDark ? '#aaa' : '#333', fontWeight: 600 } },
     },
-    legend: {
-      position: 'top',
-      horizontalAlign: 'center',
-      fontSize: '13px',
-      fontWeight: 700,
-      markers: { radius: 12 },
-      itemMargin: { horizontal: 12, vertical: 8 },
-      labels: { colors: isDark ? '#fff' : '#333' },
-    },
+    legend: { show: false },
     grid: { borderColor: isDark ? '#333' : '#f1f1f1', strokeDashArray: 4 },
     tooltip: { theme: isDark ? 'dark' : 'light' },
   };
 
-  const chartSeries = [
-    { name: 'Freemium', data: [55, 10, 8, 12, 25, 10, 10, 45, 12, 12] },
-    { name: 'Basic', data: [38, 40, 15, 40, 30, 15, 12, 32, 32, 32] },
-    { name: 'Basic +', data: [30, 82, 32, 35, 28, 28, 5, 32, 32, 72] },
-    { name: 'Basic ++', data: [48, 15, 12, 18, 50, 32, 8, 32, 55, 52] },
-  ];
+  const chartSeries = [{ name: 'Organizations', data: planDistribution.map((p) => p.total) }];
 
   return (
     <StandardModal
@@ -253,54 +182,20 @@ const PlanDistributionModal = ({ open, onClose }) => {
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
-      {/* Top 4 plan cards */}
+      {/* Top card per plan */}
       <Grid container spacing={2} mb={3}>
-        {plans.map((plan, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <TopCard
-              label={plan.label}
-              value={plan.value}
-              colorIndex={plan.colorIndex}
-              icon={IconBuildingBank}
-            />
+        {planDistribution.map((plan, i) => (
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={plan.label}>
+            <TopCard label={plan.label} value={plan.total} colorIndex={i} icon={IconBuildingBank} />
           </Grid>
         ))}
-      </Grid>
-
-      {/* Filter row — full width, floated right */}
-      <Grid container spacing={2} mb={1}>
-        <Grid size={{ xs: 12 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end">
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
-                borderRadius: '6px',
-                bgcolor: isDark ? '#2d2d2d' : 'white',
-                overflow: 'hidden',
-              }}
-            >
-              <Select
-                size="small"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                renderValue={(v) => `Year ${v}`}
-                sx={{
-                  '& fieldset': { border: 'none' },
-                  minWidth: 120,
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: isDark ? '#fff' : '#333',
-                }}
-              >
-                <MenuItem value="2026">2026</MenuItem>
-                <MenuItem value="2025">2025</MenuItem>
-              </Select>
-            </Box>
-            <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px' }}>Filter</PrimaryButton>
-          </Stack>
-        </Grid>
+        {planDistribution.length === 0 && (
+          <Grid size={12}>
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              No active plan assignments yet.
+            </Typography>
+          </Grid>
+        )}
       </Grid>
 
       {/* Chart md:9 + side panel md:3 */}
@@ -333,14 +228,14 @@ const PlanDistributionModal = ({ open, onClose }) => {
               fontWeight={700}
               sx={{ mb: 1.5, color: isDark ? '#fff' : '#1a1a1a' }}
             >
-              Plan per School
+              Plan per Organization
             </Typography>
-            {plans.map((plan, i) => (
+            {planDistribution.map((plan, i) => (
               <SideStatRow
-                key={i}
+                key={plan.label}
                 label={plan.label}
-                count={plan.schoolCount}
-                colorIndex={plan.colorIndex}
+                count={plan.total}
+                colorIndex={i}
                 icon={IconBuildingBank}
               />
             ))}
@@ -370,13 +265,13 @@ const PlanDistributionModal = ({ open, onClose }) => {
                   fontWeight={800}
                   sx={{ fontSize: '20px', color: isDark ? '#fff' : '#1E3A5F', lineHeight: 1 }}
                 >
-                  {totalSchools.toLocaleString()}
+                  {totalOrganizations.toLocaleString()}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: isDark ? '#aaa' : '#64748B', fontSize: '11px' }}
                 >
-                  Total School
+                  Total Organizations
                 </Typography>
               </Box>
             </Stack>

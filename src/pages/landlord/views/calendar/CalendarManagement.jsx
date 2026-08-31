@@ -32,6 +32,7 @@ import {
   IconGripVertical,
   IconEdit,
   IconDotsVertical,
+  IconCheck,
 } from '@tabler/icons-react';
 import { IconFilter } from '@tabler/icons-react';
 
@@ -65,7 +66,9 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
         <Typography sx={{ pt: 1 }}>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onCancel}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button size="small" color="error" onClick={onConfirm}>
           Yes, Proceed
         </Button>
@@ -260,31 +263,34 @@ function SessionsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (s) =>
+  const handleDeactivate = (s) => {
+    const isInactive = s.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Session',
-      message: `Delete "${s.sesname}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Session' : 'De-activate Session',
+      message: isInactive ? `Activate "${s.sesname}"?` : `De-activate "${s.sesname}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/sessions/${s.id}`);
-          notify.success('Session deleted');
+          await agentApi.put(`/v1/landlord/calendar/sessions/${s.id}/toggle-status`);
+          notify.success(isInactive ? 'Session activated' : 'Session de-activated');
           fetchSessions();
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (s) => {
     handleMenuClose();
     openEdit(s);
   };
 
-  const handleDeleteClick = (s) => {
+  const handleDeactivateClick = (s) => {
     handleMenuClose();
-    handleDelete(s);
+    handleDeactivate(s);
   };
 
   const handleMenuOpen = (event, session) => {
@@ -327,7 +333,10 @@ function SessionsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -452,15 +461,22 @@ function SessionsPanel({ isLevel1 }) {
                             </MenuItem>
                             <MenuItem onClick={() => handleSetCurrent(s)}>
                               <IconPlus size={16} style={{ marginRight: 8 }} />
-                              Set as Current
+                              {s.is_current === 'yes' ? 'Unset as Current' : 'Set as Current'}
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(s)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {s.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(s)}>
+                                <IconCheck size={16} style={{ marginRight: 8 }} />
+                                Activate
+                              </MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(s)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -531,7 +547,9 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
@@ -569,7 +587,9 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Update Status'}
           </Button>
@@ -735,31 +755,34 @@ function TermsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (t) =>
+  const handleDeactivate = (t) => {
+    const isInactive = t.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Term',
-      message: `Delete "${t.term_name}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Term' : 'De-activate Term',
+      message: isInactive ? `Activate "${t.term_name}"?` : `De-activate "${t.term_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/terms/${t.id}`);
-          notify.success('Term deleted');
+          await agentApi.put(`/v1/landlord/calendar/terms/${t.id}/toggle-status`);
+          notify.success(isInactive ? 'Term activated' : 'Term de-activated');
           fetchTerms();
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (t) => {
     handleMenuClose();
     openEdit(t);
   };
 
-  const handleDeleteClick = (t) => {
+  const handleDeactivateClick = (t) => {
     handleMenuClose();
-    handleDelete(t);
+    handleDeactivate(t);
   };
 
   const handleMenuOpen = (event, term) => {
@@ -778,7 +801,10 @@ function TermsPanel({ isLevel1 }) {
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconFilter />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -814,7 +840,7 @@ function TermsPanel({ isLevel1 }) {
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -882,13 +908,17 @@ function TermsPanel({ isLevel1 }) {
                               <IconEdit size={16} style={{ marginRight: 8 }} />
                               Edit
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(t)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {t.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(t)}>Activate</MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(t)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -935,7 +965,9 @@ function TermsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <CircularProgress size={20} />
@@ -1061,7 +1093,7 @@ function MappingsPanel() {
     }
   };
 
-  const handleDelete = (m) =>
+  const handleDeactivate = (m) =>
     setConfirm({
       open: true,
       title: 'Delete Mapping',
@@ -1121,7 +1153,12 @@ function MappingsPanel() {
       </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">My Session–Term Mappings</Typography>
-        <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={() => setDialogOpen(true)}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<IconPlus />}
+          onClick={() => setDialogOpen(true)}
+        >
           Add Mapping
         </Button>
       </Box>
@@ -1130,7 +1167,7 @@ function MappingsPanel() {
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -1207,7 +1244,7 @@ function MappingsPanel() {
                           <MenuItem
                             onClick={() => {
                               handleMenuClose();
-                              handleDelete(m);
+                              handleDeactivate(m);
                             }}
                             sx={{ color: 'error.main' }}
                           >
@@ -1286,7 +1323,9 @@ function MappingsPanel() {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
           </Button>

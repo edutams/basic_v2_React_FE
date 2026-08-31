@@ -89,13 +89,13 @@ const SubcriptionFormLink = ({
   // Filter plans by the selected student population (matched against plan.data.students_limit)
   const filteredPlans = form.studentpopulation
     ? options.plans.filter((plan) => {
-      const data = plan?.plan?.data
-        ? typeof plan.plan.data === 'string'
-          ? JSON.parse(plan.plan.data)
-          : plan.plan.data
-        : {};
-      return data.students_limit === form.studentpopulation;
-    })
+        const data = plan?.plan?.data
+          ? typeof plan.plan.data === 'string'
+            ? JSON.parse(plan.plan.data)
+            : plan.plan.data
+          : {};
+        return data.students_limit === form.studentpopulation;
+      })
     : [];
 
   const handleSubmit = async (e) => {
@@ -161,7 +161,7 @@ const SubcriptionFormLink = ({
         <MenuItem value="">Select Session</MenuItem>
         {options.sessions.map((session) => (
           <MenuItem key={session.id} value={session.id.toString()}>
-            {session.sesname}
+            {session.session_name}
           </MenuItem>
         ))}
       </TextField>
@@ -246,7 +246,14 @@ const SubcriptionFormLink = ({
         <MenuItem value="inactive">Inactive</MenuItem>
       </TextField>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-        <Button variant="contained" size="small" sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button
+          variant="contained"
+          size="small"
+          sx={{ mr: 1 }}
+          color="inherit"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
           Cancel
         </Button>
         <Button size="small" type="submit" color="primary" disabled={isLoading}>

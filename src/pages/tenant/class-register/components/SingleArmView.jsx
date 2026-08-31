@@ -426,7 +426,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             >
               {sessions.map((s) => (
                 <MenuItem key={s.id} value={s.id}>
-                  {s.sesname || s.name || s.id}
+                  {s.session_name || s.name || s.id}
                 </MenuItem>
               ))}
             </Select>
@@ -478,7 +478,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             <Select value={saArm} label="Arm" onChange={(e) => setSaArm(e.target.value)}>
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
-                  {a.arm_names || a.name}
+                  {a.class_arm_names || a.name}
                 </MenuItem>
               ))}
             </Select>
@@ -503,21 +503,21 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                 }
               }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            // slotProps={{
-            //   input: {
-            //     startAdornment: (
-            //       <InputAdornment position="start">
-            //         <SearchIcon fontSize="small" />
-            //       </InputAdornment>
-            //     ),
-            //   },
-            // }}
+              // slotProps={{
+              //   input: {
+              //     startAdornment: (
+              //       <InputAdornment position="start">
+              //         <SearchIcon fontSize="small" />
+              //       </InputAdornment>
+              //     ),
+              //   },
+              // }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleSearch}
-            // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+              // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
             </Button>
@@ -576,11 +576,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         </Grid>
       </Grid>
 
-      <TableContainer
-        elevation={0}
-        variant="outlined"
-        sx={{ borderRadius: 2, overflowX: 'auto' }}
-      >
+      <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
@@ -626,9 +622,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                 const statusCfg = getStatusConfig(student.status);
                 return (
                   <TableRow key={student.student_reg_id || index} hover>
-                    <TableCell>
-                      {(meta?.current_page - 1) * meta?.per_page + index + 1}
-                    </TableCell>
+                    <TableCell>{(meta?.current_page - 1) * meta?.per_page + index + 1}</TableCell>
 
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -676,9 +670,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                               ? 'info.light'
                               : 'success.light',
                           color:
-                            student.gender?.toUpperCase() === 'MALE'
-                              ? 'info.main'
-                              : 'success.main',
+                            student.gender?.toUpperCase() === 'MALE' ? 'info.main' : 'success.main',
                         }}
                       />
                     </TableCell>

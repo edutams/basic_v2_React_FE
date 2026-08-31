@@ -189,7 +189,7 @@ const PaymentShedule = () => {
   }, []);
 
   const selectedSessionLabel =
-    sessions.find((s) => s.id === selectedSessionTerm)?.session?.sesname || '';
+    sessions.find((s) => s.id === selectedSessionTerm)?.session?.session_name || '';
 
   const selectedCategoryLabel =
     categories.find((c) => String(c.id) === String(selectedCategory))?.name || '';
@@ -232,7 +232,7 @@ const PaymentShedule = () => {
     Boolean(activeSubTermId) && Boolean(firstSubTermId) && activeSubTermId !== firstSubTermId;
 
   const getSubTermLabel = (term) =>
-    term?.display_term?.display_name || term?.displayTerm?.display_name || 'Term';
+    term?.term?.term_name || term?.display_term?.display_name || term?.displayTerm?.display_name || 'Term';
 
   const handleActionTabChange = (e, v) => setActionTab(v);
   const handleScheduleTabChange = (e, v) => setScheduleTab(v);
@@ -1063,7 +1063,7 @@ const PaymentShedule = () => {
                       ) : (
                         sessions.map((item) => (
                           <MenuItem key={item.id} value={item.id}>
-                            {item.session?.sesname}
+                            {item.session?.session_name}
                           </MenuItem>
                         ))
                       )}

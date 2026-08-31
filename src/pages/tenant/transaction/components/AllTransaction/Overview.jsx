@@ -361,7 +361,7 @@ const Overview = () => {
                 <MenuItem value="">-- All session --</MenuItem>
                 {sessions.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.sesname}
+                    {s.session_name}
                   </MenuItem>
                 ))}
               </Select>

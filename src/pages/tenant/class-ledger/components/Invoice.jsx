@@ -195,8 +195,8 @@ const Invoice = () => {
 
   const optTotal = optionalEnabled
     ? optFees.reduce((acc, f) => {
-      return f.checked ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal) : acc;
-    }, 0)
+        return f.checked ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal) : acc;
+      }, 0)
     : 0;
 
   const grandTotal = compTotal + optTotal;
@@ -421,7 +421,7 @@ const Invoice = () => {
           setSessionInfo({
             session_id: active.session_id,
             term_id: active.term_id,
-            session: active.sesname || '',
+            session: active.session_name || '',
             term: active.term_name || '',
           });
 
@@ -1191,7 +1191,10 @@ const Invoice = () => {
                   },
                 }}
               />
-              <Button variant="contained" size="small" startIcon={<AddIcon />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
                 onClick={handleOpenOptionalModal}
                 sx={{
                   textTransform: 'none',
@@ -1537,7 +1540,10 @@ const Invoice = () => {
 
         {/* UPDATE INVOICE BUTTON */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Button variant="contained" size="small" onClick={() => setConfirmDialogOpen(true)}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setConfirmDialogOpen(true)}
             disabled={loading || updating}
             sx={{
               px: 6,
@@ -1720,8 +1726,15 @@ const Invoice = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>Cancel</Button>
-          <Button size="small" onClick={handleAddOptionalPayments} disabled={selectedOptionalIds.size === 0} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" size="small" onClick={handleCloseOptionalModal}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            onClick={handleAddOptionalPayments}
+            disabled={selectedOptionalIds.size === 0}
+            sx={{ fontWeight: 600 }}
+          >
             Add
           </Button>
         </DialogActions>
@@ -1739,13 +1752,20 @@ const Invoice = () => {
           <Typography variant="body1">Are you sure you want to Update the Invoice</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmDialogOpen(false)}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => setConfirmDialogOpen(false)}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={() => {
-            setConfirmDialogOpen(false);
-            handleUpdateInvoice();
-          }}
+          <Button
+            size="small"
+            onClick={() => {
+              setConfirmDialogOpen(false);
+              handleUpdateInvoice();
+            }}
             sx={{ fontWeight: 600 }}
           >
             Confirm
@@ -1777,8 +1797,16 @@ const Invoice = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setGlobalModal({ ...globalModal, open: false })}>Cancel</Button>
-          <Button size="small" onClick={handleGlobalModalConfirm}>Apply</Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setGlobalModal({ ...globalModal, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button size="small" onClick={handleGlobalModalConfirm}>
+            Apply
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -120,7 +120,7 @@ const ClassLedger = () => {
           classesRes.data.map((c) => ({
             value: c.class_arm_id,
             label: c.class_code,
-            arm_names: c.arm_names,
+            class_arm_names: c.class_arm_names,
             class_id: c.class_id,
           })),
         );
@@ -146,7 +146,7 @@ const ClassLedger = () => {
   // find the selected class label for display
   const selectedClassName = useMemo(() => {
     const cls = classes.find((c) => c.value === classLevel);
-    return cls ? `${cls.label} ${cls.arm_names}` : '';
+    return cls ? `${cls.label} ${cls.class_arm_names}` : '';
   }, [classes, classLevel]);
 
   const handleDownloadExcel = async () => {
@@ -372,7 +372,7 @@ const ClassLedger = () => {
           const mapped = classesRes.data.map((c) => ({
             value: c.class_arm_id,
             label: c.class_code,
-            arm_names: c.arm_names,
+            class_arm_names: c.class_arm_names,
           }));
           setClasses(mapped);
           if (mapped.length > 0) {
@@ -648,7 +648,7 @@ const ClassLedger = () => {
             >
               {classes.map((c) => (
                 <MenuItem key={c.value} value={c.value}>
-                  {c.label} ({c.arm_names})
+                  {c.label} ({c.class_arm_names})
                 </MenuItem>
               ))}
             </TextField>

@@ -74,8 +74,8 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
             Session
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch?.session_term?.session?.sesname}{' '}
-            {batch?.session_term?.display_term?.display_name}
+            {batch?.session_term?.session?.session_name}{' '}
+            {batch?.session_term?.term?.term_name}
           </Typography>
 
           <Typography
@@ -272,8 +272,8 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                     >
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {batch?.session_term?.session?.sesname}{' '}
-                          {batch?.session_term?.display_term?.display_name}
+                          {batch?.session_term?.session?.session_name}{' '}
+                          {batch?.session_term?.term?.term_name}
                         </Typography>
                       </TableCell>
 

@@ -16,10 +16,11 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
     : '';
 
   // Get intending class - prioritize relationship data from academicData
-  const selectedClass = academicData?.intending_class || selectedBatch?.classes?.find(
-    cls => cls.id == academicData?.intending_class_id
-  );
-  const displayIntendingClass = selectedClass?.class_code || selectedClass?.class_name || intendingClass || 'N/A';
+  const selectedClass =
+    academicData?.intending_class ||
+    selectedBatch?.classes?.find((cls) => cls.id == academicData?.intending_class_id);
+  const displayIntendingClass =
+    selectedClass?.class_code || selectedClass?.class_name || intendingClass || 'N/A';
 
   // Fetch state and LGA names based on IDs
   useEffect(() => {
@@ -35,14 +36,14 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
         // Otherwise, fetch from API using the IDs
         if (wardData?.state_of_origin) {
           const states = await getAllStates();
-          const state = states.find(s => s.id === parseInt(wardData.state_of_origin));
+          const state = states.find((s) => s.id === parseInt(wardData.state_of_origin));
           if (state) {
             setStateName(state.state_name);
 
             // Fetch LGAs for this state
             if (wardData?.lga_id) {
               const lgas = await getLgasByState(state.id);
-              const lga = lgas.find(l => l.id === parseInt(wardData.lga_id));
+              const lga = lgas.find((l) => l.id === parseInt(wardData.lga_id));
               if (lga) {
                 setLgaName(lga.lga_name);
               } else {
@@ -72,7 +73,12 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
   }, [wardData]);
 
   return (
-    <ReviewSection number={1} title="Tell us about your ward" subtitle="Basic information" id="section-ward-detail">
+    <ReviewSection
+      number={1}
+      title="Tell us about your ward"
+      subtitle="Basic information"
+      id="section-ward-detail"
+    >
       <Box
         display="flex"
         flexDirection="column"
@@ -148,7 +154,8 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
           <Chip
             label={`Session: ${
               selectedBatch?.session_term
-                ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
+                ? `${selectedBatch.session_term.session?.session_name || ''} ${selectedBatch.session_term.term?.term_name || ''}`.trim() ||
+                  'N/A'
                 : 'N/A'
             }`}
             size="small"
@@ -160,22 +167,43 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
       </Box>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Surname" value={wardData?.surname || 'N/A'} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="First Name" value={wardData?.first_name || 'N/A'} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Other Name" value={wardData?.other_name || 'N/A'} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField
-          label="Date of Birth"
-          value={
-            wardData?.dob
-              ? dayjs(wardData.dob).format('DD MMM YYYY')
-              : 'N/A'
-          }
-        /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Select Gender" value={wardData?.gender ? wardData.gender.charAt(0).toUpperCase() + wardData.gender.slice(1) : 'N/A'} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Religion" value={wardData?.religion || 'N/A'} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="State of Origin" value={stateName} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="LGA of Origin" value={lgaName} /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Home Address" value={wardData?.home_address || 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="Surname" value={wardData?.surname || 'N/A'} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="First Name" value={wardData?.first_name || 'N/A'} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="Other Name" value={wardData?.other_name || 'N/A'} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField
+            label="Date of Birth"
+            value={wardData?.dob ? dayjs(wardData.dob).format('DD MMM YYYY') : 'N/A'}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField
+            label="Select Gender"
+            value={
+              wardData?.gender
+                ? wardData.gender.charAt(0).toUpperCase() + wardData.gender.slice(1)
+                : 'N/A'
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="Religion" value={wardData?.religion || 'N/A'} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="State of Origin" value={stateName} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="LGA of Origin" value={lgaName} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField label="Home Address" value={wardData?.home_address || 'N/A'} />
+        </Grid>
       </Grid>
     </ReviewSection>
   );

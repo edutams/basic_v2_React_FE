@@ -274,13 +274,13 @@ export default function ClassesOverview() {
           const mapped = combined.map((item, index) => {
             const isSubject = Boolean(item.is_subject);
             const className = item.class_name;
-            const armName = item.arm_names;
+            const armName = item.class_arm_names;
             const fullClassName =
               className && armName
                 ? `${className} - ${armName}`
                 : className || armName || `Class ${index + 1}`;
 
-            const subjectTitle = isSubject ? (item.subject_name || 'Subject') : 'Class Teacher';
+            const subjectTitle = isSubject ? item.subject_name || 'Subject' : 'Class Teacher';
             const studentCount = Number(item.student_count ?? 0);
 
             return {

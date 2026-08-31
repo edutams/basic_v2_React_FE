@@ -280,7 +280,7 @@ const AdmissionSetup = () => {
       if (selected) {
         setSelectedSessionTermId(selected.id);
         setSelectedSessionTermLabel(
-          `${selected.session.sesname} - ${selected.display_term.display_name}`,
+          `${selected.session.session_name} - ${selected.term?.term_name}`,
         );
       } else {
         setSelectedSessionTermId(null);
@@ -345,7 +345,7 @@ const AdmissionSetup = () => {
   const handleTermSelect = (session_term) => {
     setSelectedSessionTermId(session_term.id);
     setSelectedSessionTermLabel(
-      `${session_term.session.sesname} - ${session_term.display_term.display_name}`,
+      `${session_term.session.session_name} - ${session_term.term?.term_name}`,
     );
   };
 
@@ -629,7 +629,7 @@ const AdmissionSetup = () => {
       .replace(/\[:stdNum_2\]/g, '01')
       .replace(/\[:stdNum_3\]/g, '001')
       .replace(/\[:stdNum_4\]/g, '0001')
-      .replace(/\[:stdNum_5\]/g, '00001')
+      .replace(/\[:stdNum_5\]/g, '00001');
     // .replace(/\[:stdNum_6\]/g, '000001');
   };
 
@@ -684,7 +684,7 @@ const AdmissionSetup = () => {
                     >
                       {sessions.map((s) => (
                         <MenuItem key={s.id} value={s.id}>
-                          {s.sesname}
+                          {s.session_name}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -721,8 +721,8 @@ const AdmissionSetup = () => {
                                 >
                                   <TableCell>{i + 1}</TableCell>
                                   <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
-                                    {session_term?.session?.sesname}{' '}
-                                    {session_term?.display_term?.display_name}
+                                    {session_term?.session?.session_name}{' '}
+                                    {session_term?.term?.term_name}
                                   </TableCell>
                                   <TableCell align="center">
                                     {session_term?.is_subscribed === 'yes' ? (
@@ -734,7 +734,10 @@ const AdmissionSetup = () => {
                                     )}
                                   </TableCell>
                                   <TableCell align="center">
-                                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, term)}>
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) => handleMenuOpen(e, term)}
+                                    >
                                       <MoreVertIcon fontSize="small" />
                                     </IconButton>
                                   </TableCell>
@@ -925,9 +928,9 @@ const AdmissionSetup = () => {
           {/* ── Info alert ──────────────────────────────────────────────────── */}
           <Grid size={{ xs: 12 }}>
             <Alert severity="info" sx={{ mb: 1 }}>
-              Define the admission code format for your school. Type your school&apos;s short
-              name, insert <strong>[:year]</strong>, and choose the student number digit length. A
-              slash <strong>/</strong> is automatically added between segments.
+              Define the admission code format for your school. Type your school&apos;s short name,
+              insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
+              <strong>/</strong> is automatically added between segments.
             </Alert>
           </Grid>
 
@@ -942,7 +945,7 @@ const AdmissionSetup = () => {
                 <Grid container spacing={3}>
                   {/* ── Left grid (md=6) — Inputs & placeholders ──────────── */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant="outlined" >
+                    <Card variant="outlined">
                       <CardContent>
                         <Typography
                           variant="subtitle2"
@@ -1016,9 +1019,7 @@ const AdmissionSetup = () => {
                                   fontSize="small"
                                   sx={{
                                     color:
-                                      copiedPlaceholder === '[:year]'
-                                        ? 'success.main'
-                                        : 'inherit',
+                                      copiedPlaceholder === '[:year]' ? 'success.main' : 'inherit',
                                   }}
                                 />
                               }
@@ -1026,17 +1027,11 @@ const AdmissionSetup = () => {
                                 fontFamily: 'monospace',
                                 fontWeight: 700,
                                 borderColor:
-                                  copiedPlaceholder === '[:year]'
-                                    ? 'success.main'
-                                    : 'primary.main',
+                                  copiedPlaceholder === '[:year]' ? 'success.main' : 'primary.main',
                                 color:
-                                  copiedPlaceholder === '[:year]'
-                                    ? 'success.main'
-                                    : 'primary.main',
+                                  copiedPlaceholder === '[:year]' ? 'success.main' : 'primary.main',
                                 bgcolor:
-                                  copiedPlaceholder === '[:year]'
-                                    ? 'success.light'
-                                    : 'transparent',
+                                  copiedPlaceholder === '[:year]' ? 'success.light' : 'transparent',
                                 transition: 'all 0.2s ease',
                                 '&:hover': {
                                   bgcolor: 'primary.light',
@@ -1163,11 +1158,12 @@ const AdmissionSetup = () => {
                           color="text.secondary"
                           sx={{ mb: 1.5, display: 'block' }}
                         >
-                          The format is built automatically from your selections above. You can
-                          also edit it manually.
+                          The format is built automatically from your selections above. You can also
+                          edit it manually.
                         </Typography>
 
-                        {/* Format input */}<OutlinedInput
+                        {/* Format input */}
+                        <OutlinedInput
                           fullWidth
                           value={codeFormatInput}
                           onChange={handleCodeFormatInputChange}
@@ -1212,9 +1208,13 @@ const AdmissionSetup = () => {
                             >
                               {getExampleOutput()}
                             </Typography>
-                            <Typography variant="caption" color="success.dark" sx={{ mt: 0.5, display: 'block' }}>
-                              Using shortname: &quot;{schoolShortName.trim() || 'STPAULS'}&quot;
-                              | Year: 2026 | Sequential number starting from 001
+                            <Typography
+                              variant="caption"
+                              color="success.dark"
+                              sx={{ mt: 0.5, display: 'block' }}
+                            >
+                              Using shortname: &quot;{schoolShortName.trim() || 'STPAULS'}&quot; |
+                              Year: 2026 | Sequential number starting from 001
                             </Typography>
                           </Box>
                         )}
@@ -1423,7 +1423,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                  paymentViewBatch.pre_application_payments.length === 0 ? (
+                paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -1484,7 +1484,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                  paymentViewBatch.post_application_payments.length === 0 ? (
+                paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

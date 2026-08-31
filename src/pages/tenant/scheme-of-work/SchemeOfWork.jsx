@@ -676,7 +676,7 @@ const SchemeOfWork = () => {
             sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
           >
             {terms.map((term) => (
-              <Tab key={term.id} label={term.display_name} value={term.id} />
+              <Tab key={term.id} label={term.term_name} value={term.id} />
             ))}
           </Tabs>
         </Box>
@@ -1333,7 +1333,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -1431,7 +1431,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -1581,7 +1581,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>

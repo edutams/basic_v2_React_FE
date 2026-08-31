@@ -101,13 +101,13 @@ const fromSelected = (s) => {
         ? s.school_type[0] || ''
         : typeof s.school_type === 'string'
           ? (() => {
-            try {
-              const parsed = JSON.parse(s.school_type);
-              return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
-            } catch {
-              return s.school_type;
-            }
-          })()
+              try {
+                const parsed = JSON.parse(s.school_type);
+                return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
+              } catch {
+                return s.school_type;
+              }
+            })()
           : s.school_type
       : '',
     school_divisions: Array.isArray(s.school_divisions)
@@ -488,7 +488,7 @@ const RegisterSchoolForm = ({
               {currentSession &&
                 currentSession.map((session) => (
                   <MenuItem key={session.id} value={session.id}>
-                    {session.sesname} {session.is_current === 'yes' && '(Current)'}
+                    {session.session_name} {session.is_current === 'yes' && '(Current)'}
                   </MenuItem>
                 ))}
             </Select>
@@ -717,7 +717,12 @@ const RegisterSchoolForm = ({
         <Button variant="contained" size="small" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button size="small" type="submit" color="primary" disabled={loading} startIcon={loading ? <CircularProgress color="inherit" /> : null}
+        <Button
+          size="small"
+          type="submit"
+          color="primary"
+          disabled={loading}
+          startIcon={loading ? <CircularProgress color="inherit" /> : null}
         >
           {loading
             ? 'Processing...'

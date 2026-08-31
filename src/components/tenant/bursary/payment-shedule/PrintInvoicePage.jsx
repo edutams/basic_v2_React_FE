@@ -226,7 +226,7 @@ const PrintInvoicePage = () => {
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {invoiceData.student?.learnerId} · {invoiceData.student?.class_name} ·{' '}
-                {invoiceData.student?.term_name} · {invoiceData.student?.sesname}
+                {invoiceData.student?.term_name} · {invoiceData.student?.session_name}
               </Typography>
               {invoiceData.student?.wallet_no && (
                 <Box>

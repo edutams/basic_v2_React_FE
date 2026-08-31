@@ -32,7 +32,16 @@ const cardSx = {
   bgcolor: '#fff',
 };
 
-const SUBJECT_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#06B6D4', '#F43F5E', '#84CC16', '#6366F1'];
+const SUBJECT_COLORS = [
+  '#10B981',
+  '#3B82F6',
+  '#8B5CF6',
+  '#F59E0B',
+  '#06B6D4',
+  '#F43F5E',
+  '#84CC16',
+  '#6366F1',
+];
 
 const subjectMeta = (name, index) => {
   const n = String(name || '').toLowerCase();
@@ -50,7 +59,8 @@ const subjectMeta = (name, index) => {
 
 // Label for a session term, e.g. "2025/2026 · 1st Term".
 const termLabel = (t) =>
-  [t?.session?.sesname, t?.display_term?.display_name].filter(Boolean).join(' · ') || 'This Term';
+  [t?.session?.session_name, t?.term?.term_name].filter(Boolean).join(' · ') ||
+  'This Term';
 
 // Controlled term dropdown shared by the chart cards.
 const TermSelect = ({ value, onChange, sessionTerms, size = 'small' }) => (
@@ -69,7 +79,9 @@ const TermSelect = ({ value, onChange, sessionTerms, size = 'small' }) => (
     }}
   >
     {sessionTerms.length === 0 && (
-      <MenuItem value="this_term" sx={{ fontSize: '0.7rem' }}>This Term</MenuItem>
+      <MenuItem value="this_term" sx={{ fontSize: '0.7rem' }}>
+        This Term
+      </MenuItem>
     )}
     {sessionTerms.map((t) => (
       <MenuItem key={t.id} value={String(t.id)} sx={{ fontSize: '0.7rem' }}>
@@ -95,7 +107,13 @@ const CardSkeleton = ({ rows = 3 }) => (
 //   days_passed        – school days elapsed so far (excl. weekends & past holidays)
 //   term_end_date      – formatted end date of the last configured week
 //   present / absent / late – learner's personal attendance counts
-const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], termId = '', onTermChange = () => { } }) => {
+const DaysInTermCard = ({
+  attendance = {},
+  loading = false,
+  sessionTerms = [],
+  termId = '',
+  onTermChange = () => {},
+}) => {
   const absent = Number(attendance.absent || 0);
   const late = Number(attendance.late || 0);
 
@@ -108,7 +126,17 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
   const percentageCompleted = schoolDays > 0 ? Math.round((daysPassed / schoolDays) * 100) : 0;
 
   return (
-    <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Card
+      elevation={0}
+      sx={{
+        ...cardSx,
+        flex: { xs: '1 1 100%', md: 1 },
+        p: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}
+    >
       <Box>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.75}>
           <Typography fontWeight="700" sx={{ fontSize: '0.85rem', color: '#111827' }}>
@@ -140,12 +168,25 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
               />
             </Box>
 
-            <Stack direction="row" alignItems="center" justifyContent="space-around" sx={{ mt: 1.25, py: 0.5 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-around"
+              sx={{ mt: 1.25, py: 0.5 }}
+            >
               <Stack alignItems="center" spacing={0.4} sx={{ flex: 1 }}>
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#16a34a', lineHeight: 1 }}>
                   {schoolDays}
                 </Typography>
-                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.58rem',
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    fontWeight: 600,
+                  }}
+                >
                   Total School Days
                 </Typography>
               </Stack>
@@ -156,7 +197,15 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#2563EB', lineHeight: 1 }}>
                   {daysSpent}
                 </Typography>
-                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.58rem',
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    fontWeight: 600,
+                  }}
+                >
                   Days Spent
                 </Typography>
               </Stack>
@@ -167,7 +216,15 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#8B5CF6', lineHeight: 1 }}>
                   {daysRemaining}
                 </Typography>
-                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.58rem',
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    fontWeight: 600,
+                  }}
+                >
                   Days Remaining
                 </Typography>
               </Stack>
@@ -178,7 +235,15 @@ const DaysInTermCard = ({ attendance = {}, loading = false, sessionTerms = [], t
                 <Typography fontWeight="800" sx={{ fontSize: 18, color: '#e11d48', lineHeight: 1 }}>
                   {absent + late}
                 </Typography>
-                <Typography sx={{ fontSize: '0.58rem', color: '#6B7280', textAlign: 'center', lineHeight: 1.2, fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.58rem',
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    fontWeight: 600,
+                  }}
+                >
                   Absent Days
                 </Typography>
               </Stack>
@@ -217,8 +282,8 @@ const Analytics = ({
   sessionTerms = [],
   academicTermId = '',
   attendanceTermId = '',
-  onAcademicTermChange = () => { },
-  onAttendanceTermChange = () => { },
+  onAcademicTermChange = () => {},
+  onAttendanceTermChange = () => {},
   onCardClick,
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];
@@ -228,11 +293,24 @@ const Analytics = ({
       {/* ─── ROW 1: Academic Performance & Days in the Term ─── */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
         {/* Academic Performance */}
-        <Card elevation={0} sx={{ ...cardSx, flex: { xs: '1 1 100%', md: 1.45 }, p: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <Card
+          elevation={0}
+          sx={{
+            ...cardSx,
+            flex: { xs: '1 1 100%', md: 1.45 },
+            p: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
           <Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
               <Box>
-                <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827', lineHeight: 1.2 }}>
+                <Typography
+                  fontWeight="700"
+                  sx={{ fontSize: '0.88rem', color: '#111827', lineHeight: 1.2 }}
+                >
                   Academic Performance
                 </Typography>
                 <Typography sx={{ fontSize: '0.7rem', color: '#6B7280', mt: 0.1 }}>
@@ -249,7 +327,9 @@ const Analytics = ({
             {loading ? (
               <CardSkeleton rows={4} />
             ) : subjects.length === 0 ? (
-              <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}>
+              <Typography
+                sx={{ fontSize: '0.72rem', color: '#9CA3AF', py: 4, textAlign: 'center' }}
+              >
                 No results recorded for this term yet.
               </Typography>
             ) : (

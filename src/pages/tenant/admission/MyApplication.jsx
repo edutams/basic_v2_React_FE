@@ -44,7 +44,7 @@ const MyApplication = () => {
           ...response.data.map((sterm) => ({
             id: sterm.id,
             label:
-              `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+              `${sterm.session?.session_name || ''} ${sterm.term?.term_name || ''}`.trim(),
           })),
         ];
         setSessionTerms(sess_terms);
@@ -79,7 +79,7 @@ const MyApplication = () => {
           status: app.admission_status,
           applicationNo: app.form_number || '—',
           class: app.intending_class?.class_code || app.intending_class?.class_name || '—',
-          session: app.admission_batch?.session_term?.session?.sesname || '—',
+          session: app.admission_batch?.session_term?.session?.session_name || '—',
           batch: app.admission_batch?.batch_name || '—',
           currentStep: app.admission_stage || 0,
           acceptanceFee: app.admission_batch?.acceptance_fee || null,
@@ -150,14 +150,22 @@ const MyApplication = () => {
             </Select>
           </FormControl>
 
-          <Button variant="contained" size="small" onClick={() => setBatchModalOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setBatchModalOpen(true)}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
             New Application
           </Button>
         </Box>
       </Box>
 
       <Box mb={3}>
-        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/dashboard')}
           sx={{
             color: '#262292',
@@ -210,7 +218,9 @@ const MyApplication = () => {
               application to get your ward enrolled.
             </Typography>
           </Box>
-          <Button variant="contained" size="small" onClick={() => setBatchModalOpen(true)}>New Application</Button>
+          <Button variant="contained" size="small" onClick={() => setBatchModalOpen(true)}>
+            New Application
+          </Button>
         </Paper>
       ) : (
         <Grid container spacing={3} alignItems="flex-start">

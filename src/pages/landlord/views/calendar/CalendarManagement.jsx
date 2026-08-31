@@ -111,7 +111,7 @@ function SessionsPanel({ isLevel1 }) {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // session being edited
-  const [form, setForm] = useState({ sesname: '', status: 'active' });
+  const [form, setForm] = useState({ session_name: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
@@ -165,7 +165,7 @@ function SessionsPanel({ isLevel1 }) {
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch = !activeFilters.search
       ? true
-      : session.sesname.toLowerCase().includes(activeFilters.search.toLowerCase());
+      : session.session_name.toLowerCase().includes(activeFilters.search.toLowerCase());
     const matchesStatus = !activeFilters.status ? true : session.status === activeFilters.status;
     const matchesCurrent = !activeFilters.is_current
       ? true
@@ -185,13 +185,13 @@ function SessionsPanel({ isLevel1 }) {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ sesname: '', status: 'active' });
+    setForm({ session_name: '', status: 'active' });
     setErrors({});
     setCreateOpen(true);
   };
   const openEdit = (s) => {
     setEditTarget(s);
-    setForm({ sesname: s.sesname, status: s.status });
+    setForm({ session_name: s.session_name, status: s.status });
     setErrors({});
     setCreateOpen(true);
   };
@@ -234,8 +234,8 @@ function SessionsPanel({ isLevel1 }) {
 
   const validate = () => {
     const errs = {};
-    if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname))
-      errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
+    if (!form.session_name || !/^\d{4}\/\d{4}$/.test(form.session_name))
+      errs.session_name = 'Must be YYYY/YYYY (e.g. 2024/2025)';
     if (!form.status) errs.status = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -269,7 +269,7 @@ function SessionsPanel({ isLevel1 }) {
     setConfirm({
       open: true,
       title: isInactive ? 'Activate Session' : 'De-activate Session',
-      message: isInactive ? `Activate "${s.sesname}"?` : `De-activate "${s.sesname}"?`,
+      message: isInactive ? `Activate "${s.session_name}"?` : `De-activate "${s.session_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
@@ -407,7 +407,7 @@ function SessionsPanel({ isLevel1 }) {
                   {filteredSessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{s.sesname}</TableCell>
+                      <TableCell>{s.session_name}</TableCell>
                       <TableCell>{s.sort_order}</TableCell>
                       <TableCell>
                         <Chip
@@ -496,14 +496,14 @@ function SessionsPanel({ isLevel1 }) {
           <TextField
             fullWidth
             label="Session Name (e.g. 2024/2025)"
-            value={form.sesname}
-            error={!!errors.sesname}
-            helperText={errors.sesname}
+            value={form.session_name}
+            error={!!errors.session_name}
+            helperText={errors.session_name}
             onChange={(e) => {
-              setErrors((p) => ({ ...p, sesname: undefined }));
+              setErrors((p) => ({ ...p, session_name: undefined }));
               const raw = e.target.value;
-              if (raw.length < (form.sesname || '').length) {
-                setForm((p) => ({ ...p, sesname: raw }));
+              if (raw.length < (form.session_name || '').length) {
+                setForm((p) => ({ ...p, session_name: raw }));
                 return;
               }
               const digitsOnly = raw.replace(/[^0-9/]/g, '');
@@ -512,18 +512,18 @@ function SessionsPanel({ isLevel1 }) {
                 const firstYear = parseInt(parts[0], 10);
                 const nextYear = (firstYear + 1).toString();
                 if (parts.length === 1) {
-                  setForm((p) => ({ ...p, sesname: `${parts[0]}/${nextYear}` }));
+                  setForm((p) => ({ ...p, session_name: `${parts[0]}/${nextYear}` }));
                   return;
                 }
                 if (parts.length === 2) {
                   if (nextYear.startsWith(parts[1])) {
-                    setForm((p) => ({ ...p, sesname: digitsOnly }));
+                    setForm((p) => ({ ...p, session_name: digitsOnly }));
                   }
                   return;
                 }
               }
               if (parts.length === 1 && parts[0].length <= 4) {
-                setForm((p) => ({ ...p, sesname: parts[0] }));
+                setForm((p) => ({ ...p, session_name: parts[0] }));
               }
             }}
             margin="normal"
@@ -572,7 +572,7 @@ function SessionsPanel({ isLevel1 }) {
         <DialogTitle>Set Current Session</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Updating current session status for <strong>{selectedSession?.sesname}</strong>
+            Updating current session status for <strong>{selectedSession?.session_name}</strong>
           </Typography>
           <TextField
             fullWidth
@@ -1097,7 +1097,7 @@ function MappingsPanel() {
     setConfirm({
       open: true,
       title: 'Delete Mapping',
-      message: `Delete "${m.session?.sesname} / ${m.term?.term_name}"? This cannot be undone.`,
+      message: `Delete "${m.session?.session_name} / ${m.term?.term_name}"? This cannot be undone.`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
@@ -1114,7 +1114,7 @@ function MappingsPanel() {
     setConfirm({
       open: true,
       title: 'Activate Mapping',
-      message: `Activate "${m.session?.sesname} / ${m.term?.term_name}"? All others will be set to inactive.`,
+      message: `Activate "${m.session?.session_name} / ${m.term?.term_name}"? All others will be set to inactive.`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
@@ -1201,7 +1201,7 @@ function MappingsPanel() {
                   {mappings.map((m, idx) => (
                     <SortableRow key={m.id} id={m.id}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{m.session?.sesname}</TableCell>
+                      <TableCell>{m.session?.session_name}</TableCell>
                       <TableCell>{m.term?.term_name}</TableCell>
                       <TableCell>{m.sort_order}</TableCell>
                       <TableCell>
@@ -1281,7 +1281,7 @@ function MappingsPanel() {
             <MenuItem value="">Select Session</MenuItem>
             {sessions.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.sesname}
+                {s.session_name}
               </MenuItem>
             ))}
           </TextField>

@@ -341,7 +341,7 @@ const LearnerManagement = () => {
 
   const getClassArmLabel = (learner) => {
     const arm = learner.class_arm;
-    const armNames = arm?.arm_names;
+    const armNames = arm?.class_arm_names;
     const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : armNames || '';
     const className = arm?.programme_class?.class?.class_name || '';
     return [className, armLabel].filter(Boolean).join(' ') || '—';

@@ -78,7 +78,8 @@ const BursarySetup = () => {
       if (termsRes.status) {
         const sess_terms = termsRes.data.map((sterm) => ({
           id: sterm.id,
-          label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+          label:
+            `${sterm.session?.session_name || ''} ${sterm.term?.term_name || ''}`.trim(),
         }));
         setSessionTerms(sess_terms);
       }
@@ -156,7 +157,9 @@ const BursarySetup = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor0.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -238,7 +241,9 @@ const BursarySetup = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor1.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -308,7 +313,9 @@ const BursarySetup = () => {
                 p: 3,
                 borderRadius: '16px',
                 height: '100%',
-                background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
+                background: isDark
+                  ? theme.palette.background.paper
+                  : `${statColor2.cardBg} !important`,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.12)'

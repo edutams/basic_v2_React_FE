@@ -113,7 +113,7 @@ const ManageSubscriptionList = () => {
   const filteredRows = rows.filter((row) => {
     const sessionTermStr = row.sessionterm
       ? row.sessionterm
-      : `${row.sessions?.sesname || ''} ${row.terms?.term_name || ''}`;
+      : `${row.sessions?.session_name || ''} ${row.terms?.term_name || ''}`;
 
     return sessionTermStr.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -247,7 +247,13 @@ const ManageSubscriptionList = () => {
             gap={1}
           >
             <Typography variant="h5">Manage Subcription</Typography>
-            <Button variant="contained" size="small" color="primary" onClick={handleAddClick} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleAddClick}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Add New Subcription
             </Button>
           </Box>
@@ -304,7 +310,7 @@ const ManageSubscriptionList = () => {
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
-                          {row.sessions?.sesname} / {row.terms?.term_name}
+                          {row.sessions?.session_name} / {row.terms?.term_name}
                         </TableCell>
                         <TableCell>
                           {row.my_plans?.display_name} ({row.plans?.description})

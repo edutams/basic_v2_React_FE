@@ -102,7 +102,10 @@ const DomainCard = ({ title, children, color, isEmpty, onSync }) => {
             color="inherit"
             startIcon={<SyncIcon />}
             onClick={onSync}
-            sx={{ bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.2)',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+            }}
           >
             Sync
           </Button>
@@ -110,9 +113,7 @@ const DomainCard = ({ title, children, color, isEmpty, onSync }) => {
       </Box>
 
       {/* Body */}
-      <Box sx={{ p: 2 }}>
-        {children}
-      </Box>
+      <Box sx={{ p: 2 }}>{children}</Box>
     </Paper>
   );
 };
@@ -141,7 +142,11 @@ const SetupAffectivePsychomotorTab = () => {
   const [selArm, setSelArm] = useState('');
   const [autoSendReport, setAutoSendReport] = useState(false);
   const [togglingReport, setTogglingReport] = useState(false);
-  const [weeklySnackbar, setWeeklySnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [weeklySnackbar, setWeeklySnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
   const [weeklyReportLoading, setWeeklyReportLoading] = useState(false);
   // Cache weekly report states per arm so they persist across arm selections
   const reportCacheRef = useRef({});
@@ -281,9 +286,10 @@ const SetupAffectivePsychomotorTab = () => {
     if (!editName.trim()) return;
     setSaving(true);
     try {
-      const saveFn = editModal.type === 'affective'
-        ? resultSetupApi.saveAffectiveDomain
-        : resultSetupApi.savePsychomotorDomain;
+      const saveFn =
+        editModal.type === 'affective'
+          ? resultSetupApi.saveAffectiveDomain
+          : resultSetupApi.savePsychomotorDomain;
 
       await saveFn({ id: editModal.domain.id, name: editName.trim() });
       await fetchDomains();
@@ -309,9 +315,10 @@ const SetupAffectivePsychomotorTab = () => {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const deleteFn = deleteConfirm.type === 'affective'
-        ? resultSetupApi.deleteAffectiveDomain
-        : resultSetupApi.deletePsychomotorDomain;
+      const deleteFn =
+        deleteConfirm.type === 'affective'
+          ? resultSetupApi.deleteAffectiveDomain
+          : resultSetupApi.deletePsychomotorDomain;
 
       await deleteFn(deleteConfirm.domain.id);
       await fetchDomains();
@@ -340,9 +347,10 @@ const SetupAffectivePsychomotorTab = () => {
     if (!addName.trim()) return;
     setSaving(true);
     try {
-      const saveFn = addModal.type === 'affective'
-        ? resultSetupApi.saveAffectiveDomain
-        : resultSetupApi.savePsychomotorDomain;
+      const saveFn =
+        addModal.type === 'affective'
+          ? resultSetupApi.saveAffectiveDomain
+          : resultSetupApi.savePsychomotorDomain;
 
       await saveFn({ name: addName.trim() });
       await fetchDomains();
@@ -391,10 +399,14 @@ const SetupAffectivePsychomotorTab = () => {
           <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
             Affective & Psychomotor Domain Not Configured
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
-            The affective and psychomotor domain keys are yet to be configured.
-            Click the <b>Sync Configuration</b> button below to synchronize the configuration
-            and create the default domain keys for the current session term.
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}
+          >
+            The affective and psychomotor domain keys are yet to be configured. Click the{' '}
+            <b>Sync Configuration</b> button below to synchronize the configuration and create the
+            default domain keys for the current session term.
           </Typography>
           <Button
             variant="contained"
@@ -462,8 +474,8 @@ const SetupAffectivePsychomotorTab = () => {
               </Stack>
 
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                Select a class arm below to configure whether weekly attendance reports are automatically
-                sent to parents/guardians via the scheduler.
+                Select a class arm below to configure whether weekly attendance reports are
+                automatically sent to parents/guardians via the scheduler.
               </Typography>
 
               {/* Class Arm Selector */}
@@ -471,9 +483,15 @@ const SetupAffectivePsychomotorTab = () => {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Programme</InputLabel>
-                    <Select value={selProgramme} label="Programme" onChange={(e) => setSelProgramme(e.target.value)}>
+                    <Select
+                      value={selProgramme}
+                      label="Programme"
+                      onChange={(e) => setSelProgramme(e.target.value)}
+                    >
                       {programmes.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.programme_name || p.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -481,9 +499,15 @@ const SetupAffectivePsychomotorTab = () => {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControl fullWidth size="small" disabled={!selProgramme}>
                     <InputLabel>Class</InputLabel>
-                    <Select value={selClass} label="Class" onChange={(e) => setSelClass(e.target.value)}>
+                    <Select
+                      value={selClass}
+                      label="Class"
+                      onChange={(e) => setSelClass(e.target.value)}
+                    >
                       {classes.map((c) => (
-                        <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+                        <MenuItem key={c.id} value={c.id}>
+                          {c.class_name || c.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -491,9 +515,15 @@ const SetupAffectivePsychomotorTab = () => {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControl fullWidth size="small" disabled={!selClass}>
                     <InputLabel>Class/Arm</InputLabel>
-                    <Select value={selArm} label="Class/Arm" onChange={(e) => setSelArm(e.target.value)}>
+                    <Select
+                      value={selArm}
+                      label="Class/Arm"
+                      onChange={(e) => setSelArm(e.target.value)}
+                    >
                       {arms.map((a) => (
-                        <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+                        <MenuItem key={a.id} value={a.id}>
+                          {a.class_arm_names}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -506,9 +536,13 @@ const SetupAffectivePsychomotorTab = () => {
                   sx={{
                     p: 1.5,
                     borderRadius: 1,
-                    bgcolor: isDark ? 'rgba(255,255,255,0.04)' : alpha(theme.palette.primary.main, 0.04),
+                    bgcolor: isDark
+                      ? 'rgba(255,255,255,0.04)'
+                      : alpha(theme.palette.primary.main, 0.04),
                     border: '1px solid',
-                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : alpha(theme.palette.primary.main, 0.12),
+                    borderColor: isDark
+                      ? 'rgba(255,255,255,0.08)'
+                      : alpha(theme.palette.primary.main, 0.12),
                     opacity: togglingReport ? 0.6 : 1,
                     transition: 'opacity 0.2s',
                   }}
@@ -563,7 +597,8 @@ const SetupAffectivePsychomotorTab = () => {
                 <Alert severity="info" variant="outlined" sx={{ borderRadius: 1 }}>
                   <Typography variant="body2">
                     Select a <strong>Programme</strong>, <strong>Class</strong>, and{' '}
-                    <strong>Class/Arm</strong> above to configure the weekly report setting for that class arm.
+                    <strong>Class/Arm</strong> above to configure the weekly report setting for that
+                    class arm.
                   </Typography>
                 </Alert>
               )}
@@ -572,7 +607,12 @@ const SetupAffectivePsychomotorTab = () => {
 
           {/* ── Psychomotor Setup (Domain Keys) ───────────── */}
           <InnerTabPanel value={innerTab} index={1}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 2 }}
+            >
               <Typography variant="subtitle2" color="text.secondary">
                 Manage affective and psychomotor domain keys for the current session term.
               </Typography>
@@ -580,7 +620,9 @@ const SetupAffectivePsychomotorTab = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  startIcon={syncing ? <CircularProgress size={14} color="inherit" /> : <SyncIcon />}
+                  startIcon={
+                    syncing ? <CircularProgress size={14} color="inherit" /> : <SyncIcon />
+                  }
                   onClick={handleSync}
                   disabled={syncing}
                 >
@@ -599,7 +641,11 @@ const SetupAffectivePsychomotorTab = () => {
                   onSync={handleSync}
                 >
                   {affectives.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ textAlign: 'center', py: 4 }}
+                    >
                       No affective domain keys configured.
                     </Typography>
                   ) : (
@@ -610,7 +656,9 @@ const SetupAffectivePsychomotorTab = () => {
                             <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                             <TableCell sx={{ fontWeight: 700 }}>Key</TableCell>
                             <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>
+                              Actions
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -635,7 +683,11 @@ const SetupAffectivePsychomotorTab = () => {
                                 <IconButton size="small" onClick={() => openEdit('affective', af)}>
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton size="small" color="error" onClick={() => openDelete('affective', af)}>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => openDelete('affective', af)}
+                                >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </TableCell>
@@ -657,7 +709,11 @@ const SetupAffectivePsychomotorTab = () => {
                   onSync={handleSync}
                 >
                   {psychomotors.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ textAlign: 'center', py: 4 }}
+                    >
                       No psychomotor domain keys configured.
                     </Typography>
                   ) : (
@@ -668,7 +724,9 @@ const SetupAffectivePsychomotorTab = () => {
                             <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                             <TableCell sx={{ fontWeight: 700 }}>Skill</TableCell>
                             <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>
+                              Actions
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -690,10 +748,17 @@ const SetupAffectivePsychomotorTab = () => {
                                 />
                               </TableCell>
                               <TableCell align="right">
-                                <IconButton size="small" onClick={() => openEdit('psychomotor', ps)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openEdit('psychomotor', ps)}
+                                >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton size="small" color="error" onClick={() => openDelete('psychomotor', ps)}>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => openDelete('psychomotor', ps)}
+                                >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </TableCell>
@@ -754,11 +819,7 @@ const SetupAffectivePsychomotorTab = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={closeAdd}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleAdd}
-            disabled={saving || !addName.trim()}
-          >
+          <Button variant="contained" onClick={handleAdd} disabled={saving || !addName.trim()}>
             {saving ? 'Adding...' : 'Add'}
           </Button>
         </DialogActions>
@@ -778,12 +839,7 @@ const SetupAffectivePsychomotorTab = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={closeDelete}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>

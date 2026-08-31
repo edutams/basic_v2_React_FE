@@ -55,7 +55,15 @@ const BCrumb = [
 ];
 
 // ── Theme-aware stat card component ─────────────────────────────
-const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0, loading = false, onClick }) => {
+const AnalyticsStatCard = ({
+  icon: Icon,
+  value,
+  label,
+  colorName,
+  colorIndex = 0,
+  loading = false,
+  onClick,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
@@ -68,26 +76,22 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0
         p: 3,
         borderRadius: '16px',
         background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark
-          ? '1px solid rgba(255,255,255,0.12)'
-          : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
+        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
         height: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: 2,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        ...(onClick ? {
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
-          },
-        } : {}),
+        ...(onClick
+          ? {
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 6px 24px rgba(0,0,0,0.12)',
+              },
+            }
+          : {}),
       }}
     >
       <Box
@@ -100,9 +104,7 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: isDark
-            ? '0 6px 16px rgba(0,0,0,.3)'
-            : `0 8px 22px -2px ${colors.iconGlow}`,
+          boxShadow: isDark ? '0 6px 16px rgba(0,0,0,.3)' : `0 8px 22px -2px ${colors.iconGlow}`,
         }}
       >
         {Icon && <Icon sx={{ fontSize: 26, color: colors.iconColor }} />}
@@ -135,9 +137,6 @@ const AnalyticsStatCard = ({ icon: Icon, value, label, colorName, colorIndex = 0
   );
 };
 
-
-
-
 // ── Main Page ───────────────────────────────────────────────────
 const SubjectRegistration = () => {
   const theme = useTheme();
@@ -168,117 +167,159 @@ const SubjectRegistration = () => {
   });
 
   // ── Analytics Modal ────────────────────────────────────────
-  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
+  const [analyticsModal, setAnalyticsModal] = useState({
+    open: false,
+    title: '',
+    content: null,
+    loading: false,
+  });
 
   const openCardModal = (title, content) => {
     setAnalyticsModal({ open: true, title, content });
   };
 
-  const fetchAndShowSubjects = useCallback(async (type, title) => {
-    if (!pClass) return;
-    setAnalyticsModal({ open: true, title, content: null, loading: true });
+  const fetchAndShowSubjects = useCallback(
+    async (type, title) => {
+      if (!pClass) return;
+      setAnalyticsModal({ open: true, title, content: null, loading: true });
 
-    try {
-      let subjects = [];
-      if (type === 'all') {
-        const [gen, opt, trade] = await Promise.all([
-          subjectRegistrationApi.getGeneralSubjects(pClass, {
+      try {
+        let subjects = [];
+        if (type === 'all') {
+          const [gen, opt, trade] = await Promise.all([
+            subjectRegistrationApi.getGeneralSubjects(pClass, {
+              programme_id: pProgramme || undefined,
+              session_id: pSession || undefined,
+              term_id: pTermId || undefined,
+            }),
+            subjectRegistrationApi.getOptionalSubjects(pClass, {
+              programme_id: pProgramme || undefined,
+              session_id: pSession || undefined,
+              term_id: pTermId || undefined,
+            }),
+            subjectRegistrationApi.getTradeSubjects(pClass, {
+              programme_id: pProgramme || undefined,
+              session_id: pSession || undefined,
+              term_id: pTermId || undefined,
+            }),
+          ]);
+          const genData = gen.data?.data || gen.data || [];
+          const optData = opt.data?.data || opt.data || [];
+          const tradeData = trade.data?.data || trade.data || [];
+          subjects = [
+            ...(Array.isArray(genData) ? genData : []).map((s) => ({
+              ...s,
+              category: 'Compulsory',
+            })),
+            ...(Array.isArray(optData) ? optData : []).map((s) => ({ ...s, category: 'Optional' })),
+            ...(Array.isArray(tradeData) ? tradeData : []).map((s) => ({
+              ...s,
+              category: 'Trade',
+            })),
+          ];
+        } else {
+          const apiFn =
+            type === 'compulsory'
+              ? subjectRegistrationApi.getGeneralSubjects
+              : type === 'optional'
+                ? subjectRegistrationApi.getOptionalSubjects
+                : subjectRegistrationApi.getTradeSubjects;
+          const res = await apiFn(pClass, {
             programme_id: pProgramme || undefined,
             session_id: pSession || undefined,
             term_id: pTermId || undefined,
-          }),
-          subjectRegistrationApi.getOptionalSubjects(pClass, {
-            programme_id: pProgramme || undefined,
-            session_id: pSession || undefined,
-            term_id: pTermId || undefined,
-          }),
-          subjectRegistrationApi.getTradeSubjects(pClass, {
-            programme_id: pProgramme || undefined,
-            session_id: pSession || undefined,
-            term_id: pTermId || undefined,
-          }),
-        ]);
-        const genData = gen.data?.data || gen.data || [];
-        const optData = opt.data?.data || opt.data || [];
-        const tradeData = trade.data?.data || trade.data || [];
-        subjects = [
-          ...(Array.isArray(genData) ? genData : []).map(s => ({ ...s, category: 'Compulsory' })),
-          ...(Array.isArray(optData) ? optData : []).map(s => ({ ...s, category: 'Optional' })),
-          ...(Array.isArray(tradeData) ? tradeData : []).map(s => ({ ...s, category: 'Trade' })),
-        ];
-      } else {
-        const apiFn = type === 'compulsory'
-          ? subjectRegistrationApi.getGeneralSubjects
-          : type === 'optional'
-            ? subjectRegistrationApi.getOptionalSubjects
-            : subjectRegistrationApi.getTradeSubjects;
-        const res = await apiFn(pClass, {
-          programme_id: pProgramme || undefined,
-          session_id: pSession || undefined,
-          term_id: pTermId || undefined,
-        });
-        const data = res.data?.data || res.data || [];
-        subjects = Array.isArray(data) ? data.map(s => ({ ...s, category: title })) : [];
-      }
+          });
+          const data = res.data?.data || res.data || [];
+          subjects = Array.isArray(data) ? data.map((s) => ({ ...s, category: title })) : [];
+        }
 
-      if (subjects.length === 0) {
-        openCardModal(title, (
-          <Box sx={{ py: 3, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600 }}>
-              No subjects found
+        if (subjects.length === 0) {
+          openCardModal(
+            title,
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 600 }}>
+                No subjects found
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                No {title.toLowerCase()} subjects have been configured for this class.
+              </Typography>
+            </Box>,
+          );
+          return;
+        }
+
+        const totalRegistrations = subjects.reduce((sum, s) => sum + (s.registered_count || 0), 0);
+
+        openCardModal(
+          title,
+          <Box sx={{ py: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {subjects.length} subject(s) · {totalRegistrations} total student registrations
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              No {title.toLowerCase()} subjects have been configured for this class.
-            </Typography>
-          </Box>
-        ));
-        return;
-      }
-
-      const totalRegistrations = subjects.reduce((sum, s) => sum + (s.registered_count || 0), 0);
-
-      openCardModal(title, (
-        <Box sx={{ py: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {subjects.length} subject(s) · {totalRegistrations} total student registrations
-          </Typography>
-          <TableContainer sx={{ maxHeight: 400 }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>SUBJECT NAME</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">SUBJECT CODE</TableCell>
-                  {type === 'all' && <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">CATEGORY</TableCell>}
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">REGISTERED COUNT</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {subjects.map((s, i) => (
-                  <TableRow key={s.id} hover>
-                    <TableCell sx={{ fontSize: '0.8rem' }}>{i + 1}</TableCell>
-                    <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>{s.subject_name}</TableCell>
-                    <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{s.subject_code || '—'}</TableCell>
+            <TableContainer sx={{ maxHeight: 400 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                      SUBJECT NAME
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
+                      SUBJECT CODE
+                    </TableCell>
                     {type === 'all' && (
-                      <TableCell align="center">
-                        <Chip label={s.category} size="small" color={s.category === 'Compulsory' ? 'info' : s.category === 'Optional' ? 'warning' : 'error'} sx={{ height: 20, fontSize: 10, fontWeight: 600 }} />
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
+                        CATEGORY
                       </TableCell>
                     )}
-                    <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{s.registered_count || 0}</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
+                      REGISTERED COUNT
+                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      ));
-    } catch (e) {
-      console.error(`Failed to fetch subjects for ${type}:`, e);
-      openCardModal(title, (
-        <Typography color="error">Failed to load subject data.</Typography>
-      ));
-    }
-  }, [pClass, pProgramme, pSession, pTermId]);
+                </TableHead>
+                <TableBody>
+                  {subjects.map((s, i) => (
+                    <TableRow key={s.id} hover>
+                      <TableCell sx={{ fontSize: '0.8rem' }}>{i + 1}</TableCell>
+                      <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                        {s.subject_name}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                        {s.subject_code || '—'}
+                      </TableCell>
+                      {type === 'all' && (
+                        <TableCell align="center">
+                          <Chip
+                            label={s.category}
+                            size="small"
+                            color={
+                              s.category === 'Compulsory'
+                                ? 'info'
+                                : s.category === 'Optional'
+                                  ? 'warning'
+                                  : 'error'
+                            }
+                            sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                        {s.registered_count || 0}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>,
+        );
+      } catch (e) {
+        console.error(`Failed to fetch subjects for ${type}:`, e);
+        openCardModal(title, <Typography color="error">Failed to load subject data.</Typography>);
+      }
+    },
+    [pClass, pProgramme, pSession, pTermId],
+  );
 
   const subjectTypeByTab = ['compulsory', 'optional', 'trade'];
 
@@ -351,42 +392,49 @@ const SubjectRegistration = () => {
         } else if (sessionsData.length > 0) {
           setPSession(sessionsData[0].id);
         }
-
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     };
     load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!pSession) return;
-    fetchTerms(pSession).then((r) => {
-      const termsData = r.data?.data || r.data || [];
-      setTerms(termsData);
-      if (Array.isArray(termsData) && termsData.length > 0) {
-        const match = termsData.find((t) => String(t.id) === String(pTermId));
-        if (match) {
-          setPTerm(match.id);
-        } else {
-          setPTerm(termsData[0].id);
+    fetchTerms(pSession)
+      .then((r) => {
+        const termsData = r.data?.data || r.data || [];
+        setTerms(termsData);
+        if (Array.isArray(termsData) && termsData.length > 0) {
+          const match = termsData.find((t) => String(t.id) === String(pTermId));
+          if (match) {
+            setPTerm(match.id);
+          } else {
+            setPTerm(termsData[0].id);
+          }
         }
-      }
-    }).catch(console.error);
+      })
+      .catch(console.error);
   }, [pSession]);
 
   useEffect(() => {
     if (!pProgramme) return;
-    fetchClassesByProgramme(pProgramme).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setClasses(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassesByProgramme(pProgramme)
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setClasses(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [pProgramme]);
 
   useEffect(() => {
     if (!pClass) return;
-    fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined }).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setArms(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined })
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setArms(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [pClass, pProgramme]);
 
   return (
@@ -448,7 +496,9 @@ const SubjectRegistration = () => {
             <InputLabel>Session</InputLabel>
             <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
               {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name || s.name || s.id}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -456,14 +506,20 @@ const SubjectRegistration = () => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
-            <Select value={pTerm} label="Term" onChange={(e) => {
-              const val = e.target.value;
-              setPTerm(val);
-              const term = terms.find((t) => t.id === val);
-              if (term) setPTermId(term.id);
-            }}>
+            <Select
+              value={pTerm}
+              label="Term"
+              onChange={(e) => {
+                const val = e.target.value;
+                setPTerm(val);
+                const term = terms.find((t) => t.id === val);
+                if (term) setPTermId(term.id);
+              }}
+            >
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term_name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -471,9 +527,15 @@ const SubjectRegistration = () => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={pProgramme} label="Programme" onChange={(e) => setPProgramme(e.target.value)}>
+            <Select
+              value={pProgramme}
+              label="Programme"
+              onChange={(e) => setPProgramme(e.target.value)}
+            >
               {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.programme_name || p.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -483,7 +545,9 @@ const SubjectRegistration = () => {
             <InputLabel>Class</InputLabel>
             <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+                <MenuItem key={c.id} value={c.id}>
+                  {c.class_name || c.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -493,7 +557,9 @@ const SubjectRegistration = () => {
             <InputLabel>Arm</InputLabel>
             <Select value={pArm} label="Arm" onChange={(e) => setPArm(e.target.value)}>
               {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>
+                  {a.class_arm_names}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>

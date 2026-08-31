@@ -13,8 +13,7 @@ import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import { EmojiEventsOutlined, CalendarTodayOutlined } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
-import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessionTerms, fetchActiveSessionTermId } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 
@@ -335,7 +334,7 @@ function DaysInTermChart() {
         setLoading(true);
         const [termsResult, activeResult] = await Promise.allSettled([
           fetchSessionTerms(),
-          tenantApi.get('/curriculum/active-session-term'),
+          fetchActiveSessionTermId(),
         ]);
 
         const termsRes = termsResult.status === 'fulfilled' ? termsResult.value : null;
@@ -346,11 +345,8 @@ function DaysInTermChart() {
         }
 
         let activeTermId = null;
-        if (
-          activeResult.status === 'fulfilled' &&
-          activeResult.value?.data?.data?.session_term_id
-        ) {
-          activeTermId = String(activeResult.value.data.data.session_term_id);
+        if (activeResult.status === 'fulfilled' && activeResult.value) {
+          activeTermId = String(activeResult.value);
         }
 
         if (!activeTermId && termsList.length > 0) {

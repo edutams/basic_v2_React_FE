@@ -37,7 +37,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessionTerms, fetchActiveSessionTermId } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 import ParentCard from '@/components/shared/ParentCard';
@@ -100,26 +100,20 @@ const SchoolCalendar = ({ onViewFullCalendar }) => {
 
       const [acadResult, activeTermResult] = await Promise.allSettled([
         tenantApi.get('/school_setup/get_academic_info'),
-        tenantApi.get('/curriculum/active-session-term'),
+        fetchActiveSessionTermId(),
       ]);
 
       if (acadResult.status === 'fulfilled') {
         setAcademicInfo(acadResult.value?.data || {});
       }
 
-      let activeTermId = null;
-      if (
-        activeTermResult.status === 'fulfilled' &&
-        activeTermResult.value?.data?.data?.session_term_id
-      ) {
-        activeTermId = activeTermResult.value.data.data.session_term_id;
-      }
+      let activeTermId = activeTermResult.status === 'fulfilled' ? activeTermResult.value : null;
 
       if (!activeTermId) {
         const sessionTermsRes = await fetchSessionTerms();
         const termsList = sessionTermsRes?.data ?? (Array.isArray(sessionTermsRes) ? sessionTermsRes : []);
         const activeTerm = termsList.find((t) => t.status === 'active') || termsList[0];
-        activeTermId = activeTerm?.id;
+        activeTermId = activeTerm?.session_term_id;
       }
 
       if (activeTermId) {

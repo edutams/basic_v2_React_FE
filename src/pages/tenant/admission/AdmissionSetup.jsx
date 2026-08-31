@@ -725,13 +725,7 @@ const AdmissionSetup = () => {
                                     {session_term?.term?.term_name}
                                   </TableCell>
                                   <TableCell align="center">
-                                    {session_term?.is_subscribed === 'yes' ? (
-                                      <StatusChip status={session_term?.status} />
-                                    ) : (
-                                      <Typography variant="caption" color="text.disabled">
-                                        —
-                                      </Typography>
-                                    )}
+                                    <StatusChip status={session_term?.status} />
                                   </TableCell>
                                   <TableCell align="center">
                                     <IconButton

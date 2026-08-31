@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import tenantApi from '@/api/tenant/tenant_api';
+import { fetchActiveSessionTermId } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 
@@ -36,8 +37,7 @@ const AdminDashboard = () => {
     let mounted = true;
     const load = async () => {
       try {
-        const activeRes = await tenantApi.get('/curriculum/active-session-term');
-        const activeTermId = activeRes?.data?.data?.session_term_id;
+        const activeTermId = await fetchActiveSessionTermId();
         if (!activeTermId) return;
 
         const [weeksRes, holidaysRes] = await Promise.allSettled([

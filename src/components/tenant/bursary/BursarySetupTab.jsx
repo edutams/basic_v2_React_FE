@@ -26,6 +26,7 @@ import {
   ListItemText,
   Alert,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
@@ -257,11 +258,11 @@ const BursarySetupTab = ({
     }
   };
 
-  const handleBursarySessionTermChange = async (termId) => {
-    setSelectedSessionTerm(termId);
+  const handleSetActiveSessionTerm = async () => {
+    if (!selectedSessionTerm) return;
     setSavingCode('active_ses_term');
     try {
-      const res = await setActiveSessionTerm(termId);
+      const res = await setActiveSessionTerm(selectedSessionTerm);
       showSnackbar(res.message || 'Bursary session term updated successfully');
     } catch {
       showSnackbar('Failed to update bursary session term', 'error');
@@ -393,21 +394,39 @@ const BursarySetupTab = ({
             <Typography variant="body2" color="text.secondary" mb={1.5}>
               This determines which session term bursary fees are being collected for.
             </Typography>
-            <TextField
-              select
-              label="Select Session Term"
-              value={selectedSessionTerm}
-              onChange={(e) => handleBursarySessionTermChange(e.target.value)}
-              size="small"
-              disabled={savingCode === 'active_ses_term'}
-              sx={{ minWidth: 280 }}
-            >
-              {sessionTerms.map((term) => (
-                <MenuItem key={term.id} value={term.id}>
-                  {term.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                select
+                label="Select Session Term"
+                value={selectedSessionTerm}
+                onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                size="small"
+                disabled={savingCode === 'active_ses_term'}
+                sx={{ minWidth: 280 }}
+              >
+                {sessionTerms.map((term) => (
+                  <MenuItem key={term.id} value={term.id}>
+                    {term.label}
+                    {term.status === 'active' ? ' (Active)' : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  savingCode === 'active_ses_term' ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <IconCheck size={16} />
+                  )
+                }
+                onClick={handleSetActiveSessionTerm}
+                disabled={savingCode === 'active_ses_term' || !selectedSessionTerm}
+              >
+                Set
+              </Button>
+            </Box>
           </Box>
 
           <Divider sx={{ mb: 3 }} />

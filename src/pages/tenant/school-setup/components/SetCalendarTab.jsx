@@ -27,7 +27,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconTrash, IconPlus, IconRefresh } from '@tabler/icons-react';
+import { IconTrash, IconPlus, IconRefresh, IconEdit } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
 import ArrowHint from '@/components/shared/ArrowHint';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
@@ -38,6 +38,7 @@ import {
   toggleTenantSessionStatus,
   fetchTenantTerms,
   syncLandlordTerms,
+  updateDisplayName,
   fetchActiveTenantSessionTerm,
   fetchTenantSessionTerms,
   createTenantSessionTerm,
@@ -72,6 +73,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   // Terms
   const [tenantTerms, setTenantTerms] = useState([]);
+  const [editTermOpen, setEditTermOpen] = useState(false);
+  const [editTermForm, setEditTermForm] = useState({ id: null, term_name: '' });
 
   // Session/Term mappings
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -331,6 +334,36 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     }
   };
 
+  const openEditTerm = (term) => {
+    setEditTermForm({ id: term.id, term_name: term.term_name });
+    setEditTermOpen(true);
+  };
+
+  const handleSaveTermName = async () => {
+    const { id, term_name } = editTermForm;
+    if (!term_name.trim()) {
+      showSnackbar('Term name is required', 'error');
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await updateDisplayName(id, term_name.trim());
+      if (res.status) {
+        showSnackbar('Term renamed successfully', 'success');
+        setEditTermOpen(false);
+        loadTenantTerms();
+        loadSessionTerms();
+        loadActiveSessionTerm();
+      } else {
+        showSnackbar(res.message || 'Failed to rename term', 'error');
+      }
+    } catch (error) {
+      showSnackbar(error.response?.data?.message || 'Failed to rename term', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ── Session/Term mapping ───────────────────────────────────────────────
   const openSetSessionTerm = async () => {
     setSessionTermForm({ session_id: '', term_id: '', status: 'active' });
@@ -505,6 +538,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                 sx={{ mb: 2, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
               >
                 <Tab label="All Sessions" value="sessions" />
+                <Tab label="Terms" value="terms" />
                 <Tab label="Session/Term" value="session-term" />
               </Tabs>
 
@@ -597,6 +631,74 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       setSessionsPage(0);
                     }}
                   />
+                </>
+              ) : activeTab === 'terms' ? (
+                <>
+                  <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<IconRefresh size={16} />}
+                      onClick={handleSyncTerms}
+                    >
+                      Sync Terms
+                    </Button>
+                  </Box>
+                  <TableContainer>
+                    <Table sx={{ whiteSpace: 'nowrap' }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Term Name</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            Status
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            Action
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {tenantTerms.length > 0 ? (
+                          tenantTerms.map((term, i) => (
+                            <TableRow key={term.id} hover>
+                              <TableCell>{i + 1}</TableCell>
+                              <TableCell sx={{ fontWeight: 500 }}>{term.term_name}</TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={term.status}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: term.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                    color: term.status === 'active' ? '#166534' : '#92400e',
+                                    fontWeight: 500,
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openEditTerm(term)}
+                                  title="Rename term"
+                                >
+                                  <IconEdit size={16} />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                              <Typography color="textSecondary">
+                                No terms synced yet. Click "Sync Terms" to pull them from the
+                                landlord.
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </>
               ) : (
                 <>
@@ -909,6 +1011,37 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             size="small"
             onClick={handleAddSession}
             disabled={loading || !selectedLandlordSessionId}
+          >
+            {loading ? <CircularProgress size={20} /> : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Edit Term Name Modal ── */}
+      <Dialog open={editTermOpen} onClose={() => setEditTermOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Rename Term</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+            Give this term whatever name your school uses — e.g. "Harmattan" instead of
+            "First Term". This only changes the name; the term id stays the same.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Term Name"
+            value={editTermForm.term_name}
+            onChange={(e) => setEditTermForm((p) => ({ ...p, term_name: e.target.value }))}
+            margin="normal"
+            size="small"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" size="small" onClick={() => setEditTermOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            onClick={handleSaveTermName}
+            disabled={loading || !editTermForm.term_name.trim()}
           >
             {loading ? <CircularProgress size={20} /> : 'Save'}
           </Button>

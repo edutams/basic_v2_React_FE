@@ -102,7 +102,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         setClasses(flatClasses);
         const countsObj = {};
         (countsData || []).forEach((item) => {
-          countsObj[item.class_id] = item.count;
+          countsObj[item.programme_class_id] = item.count;
         });
         setStudentCounts(countsObj);
       } catch (error) {
@@ -148,7 +148,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         const countsData = await getStudentCountByClass();
         const countsObj = {};
         (countsData || []).forEach((item) => {
-          countsObj[item.class_id] = item.count;
+          countsObj[item.programme_class_id] = item.count;
         });
         setStudentCounts(countsObj);
         onLearnerAdded?.();
@@ -176,7 +176,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     const countsData = await getStudentCountByClass();
     const countsObj = {};
     (countsData || []).forEach((item) => {
-      countsObj[item.class_id] = item.count;
+      countsObj[item.programme_class_id] = item.count;
     });
     setStudentCounts(countsObj);
     onLearnerAdded?.();
@@ -274,7 +274,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
                     <Typography variant="subtitle2" align="center">
                       <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
-                        {studentCounts[item.id] || 0}
+                        {studentCounts[item.programme_class_id] || 0}
                       </Link>
                     </Typography>
                   </TableCell>

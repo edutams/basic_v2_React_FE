@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
 import { AuthContext } from '@/context/AgentContext/auth';
 
 import {
@@ -36,7 +35,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
-  Divider
+  Divider,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -831,10 +830,10 @@ const Agent = () => {
             p: 3,
             borderRadius: '16px',
             background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor0.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -855,7 +854,9 @@ const Agent = () => {
                 height: 30,
                 borderRadius: 1,
                 background: `${statColor0.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                boxShadow: isDark
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor0.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -879,7 +880,13 @@ const Agent = () => {
               mb: 5,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : statColor0.accentColor,
+              }}
+            >
               {analytics.totalSchools ?? 0}
             </Typography>
           </Box>
@@ -889,27 +896,29 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Approved
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.activeSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.activeSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: statColor0.borderColor, mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Pending
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.pendingSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.pendingSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: statColor0.borderColor, mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Rejected
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.rejectedSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.rejectedSchools ?? 0}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -921,10 +930,10 @@ const Agent = () => {
             p: 3,
             borderRadius: '16px',
             background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor1.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -945,7 +954,9 @@ const Agent = () => {
                 height: 30,
                 borderRadius: 1,
                 background: `${statColor1.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                boxShadow: isDark
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor1.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -969,7 +980,13 @@ const Agent = () => {
               mb: 5,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : statColor1.accentColor,
+              }}
+            >
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -986,20 +1003,20 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Primary
               </Typography>
-              <Typography fontWeight={600}>
-                {schoolSummary.primary}
-              </Typography>
+              <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
             </Box>
 
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor, mx: 2 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: statColor1.borderColor, mx: 2 }}
+            />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Secondary
               </Typography>
-              <Typography fontWeight={600}>
-                {schoolSummary.secondary}
-              </Typography>
+              <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -1011,10 +1028,10 @@ const Agent = () => {
             p: 3,
             borderRadius: '16px',
             background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor2.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -1035,7 +1052,9 @@ const Agent = () => {
                 height: 30,
                 borderRadius: 1,
                 background: `${statColor2.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
+                boxShadow: isDark
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor2.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1054,11 +1073,14 @@ const Agent = () => {
                 <CircularProgress size={24} />
               </Box>
             ) : (
-              (loginActivities.length > 0 ? loginActivities : [
-                { label: 'Staffs', value: 0 },
-                { label: 'Agents', value: 0 },
-                { label: 'Total', value: 0 },
-              ]).map((item, index) => (
+              (loginActivities.length > 0
+                ? loginActivities
+                : [
+                    { label: 'Staffs', value: 0 },
+                    { label: 'Agents', value: 0 },
+                    { label: 'Total', value: 0 },
+                  ]
+              ).map((item, index) => (
                 <Box
                   key={index}
                   sx={{
@@ -1072,7 +1094,11 @@ const Agent = () => {
                   <Typography variant="body2" color="text.secondary">
                     {item.label}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                  >
                     {item.value}
                   </Typography>
                 </Box>
@@ -1088,10 +1114,10 @@ const Agent = () => {
             p: 3,
             borderRadius: '16px',
             background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : `1px solid ${statColor3.borderColor}`,
+            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
           }}
         >
           <Box
@@ -1112,7 +1138,9 @@ const Agent = () => {
                 height: 30,
                 borderRadius: 1,
                 background: `${statColor3.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                boxShadow: isDark
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : `0 4px 14px ${statColor3.iconGlow}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1196,7 +1224,10 @@ const Agent = () => {
                   </Box>
                   <Typography variant="h5">List of Organizations</Typography>
                 </Stack>
-                <Button variant="contained" size="small" startIcon={<AddIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{
                     fontSize: {
@@ -1227,7 +1258,10 @@ const Agent = () => {
                 justifyContent: 'flex-end',
               }}
             >
-              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconAdjustmentsHorizontal />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
                   textTransform: 'none',
@@ -1259,7 +1293,7 @@ const Agent = () => {
               </Button>
             </Box>
 
-            <TableContainer >
+            <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -1310,11 +1344,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1614,14 +1648,20 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setImpersonateConfirmOpen(false);
-              setAgentToImpersonate(null);
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={() => {
+                setImpersonateConfirmOpen(false);
+                setAgentToImpersonate(null);
+              }}
             >
               Cancel
             </Button>
-            <Button size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
+            <Button size="small" onClick={handleConfirmedImpersonate}>
+              Yes, Login As
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -1662,7 +1702,12 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={handleCancelDeleteOrganization}>
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={handleCancelDeleteOrganization}
+            >
               Cancel
             </Button>
             <Button size="small" color="error" onClick={handleConfirmDeleteOrganization}>
@@ -1689,13 +1734,16 @@ const Agent = () => {
             setIsViewUsersListModalOpen(true);
           }}
           stats={loginActivities}
-          usersData={data.flatMap(agent =>
-            (agent.tenants || []).map(tenant => ({
+          usersData={data.flatMap((agent) =>
+            (agent.tenants || []).map((tenant) => ({
               id: tenant.id,
               school: tenant.tenant_name,
-              url: (agent.organization_domain || agent.organizationDomain)
-                ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
-                : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
+              url:
+                agent.organization_domain || agent.organizationDomain
+                  ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
+                  : tenant.tenant_short_name
+                    ? `https://${tenant.tenant_short_name}`
+                    : '',
               agent: agent.organizationName || agent.organization_name,
               accessLevel: 'Level ' + (agent.access_level || 2),
               date: tenant.created_at,
@@ -1703,9 +1751,9 @@ const Agent = () => {
                 Teacher: 0,
                 Student: 0,
                 SPA: 0,
-                Total: 0
-              }
-            }))
+                Total: 0,
+              },
+            })),
           )}
         />
         <ViewUsersListModal

@@ -145,48 +145,59 @@ const PlanDistributionModal = ({ open, onClose }) => {
         {/* Top Plan Value Cards */}
         <Grid container spacing={2} mb={3}>
           {plans.map((plan, i) => {
-            const colors = getStatCardColor(null, plan.colorIndex, isDark, theme);
+            const schemeMap = [
+              { bg: '#DBEAFE', color: '#2563EB' },
+              { bg: '#DCFCE7', color: '#16A34A' },
+              { bg: '#F3E8FF', color: '#9333EA' },
+              { bg: '#FEF3C7', color: '#D97706' },
+            ];
+            const scheme = schemeMap[i % schemeMap.length];
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
                 <Card
                   sx={{
                     p: 2,
-                    boxShadow: 'none',
-                    borderRadius: '12px',
-                    border: `1px solid ${colors.borderColor}`,
-                    background: `${colors.cardBg} !important`,
+                    borderRadius: '14px',
+                    bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                    border: '1px solid',
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      borderColor: '#94a3b8',
+                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                    },
                   }}
                 >
                   <Box
                     sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: '10px',
-                      background: colors.iconBg,
+                      width: 36,
+                      height: 36,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+                      color: isDark ? '#ffffff' : scheme.color,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      boxShadow: isDark
-                        ? '0 6px 16px rgba(0,0,0,.3)'
-                        : `0 8px 22px -2px ${colors.iconGlow}`,
                     }}
                   >
-                    <IconBuildingBank size={22} color={colors.iconColor} />
+                    <IconBuildingBank size={18} color="currentColor" />
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography
                       variant="h6"
                       fontWeight="800"
-                      sx={{ color: colors.accentColor, fontSize: '16px', lineHeight: 1.2 }}
+                      sx={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '16px', lineHeight: 1.2 }}
                     >
                       {plan.value}
                     </Typography>
                     <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5} mt={0.3}>
-                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
+                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: scheme.color }} />
                       <Typography
                         variant="caption"
                         fontWeight="600"

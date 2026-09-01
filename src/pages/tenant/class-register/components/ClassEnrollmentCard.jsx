@@ -33,14 +33,14 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
       sx={{
         p: '12px',
         borderRadius: '14px',
-        bgcolor: '#dfddddff',
+        bgcolor: 'white',
         border: '1px solid #E5E7EB',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
+          // borderColor: '#94a3b8',
           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
         },
         height: '100%',
@@ -130,7 +130,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         p: '10px',
                         borderRadius: '14px',
                         bgcolor: '#ffffff',
-                        border: '1px solid #E5E7EB',
+                        border: '1px solid #94a3b8',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                         cursor: 'pointer',
@@ -139,7 +139,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         justifyContent: 'space-between',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          borderColor: '#94a3b8',
+                          // borderColor: '#94a3b8',
                           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                         },
                       }}

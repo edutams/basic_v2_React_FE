@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar } from '@mui/material';
-import { IconSettings, IconFileText } from '@tabler/icons-react';
+import { IconSettings, IconFileText, IconChartBar } from '@tabler/icons-react';
 import {
   Settings as SettingsIcon,
   CreditCard as CreditCardIcon,
@@ -10,7 +10,6 @@ import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import StatCard from '@/components/shared/StatCard';
-import { getStatCardColor } from '@/utils/statCardColors';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
 import { fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
@@ -23,9 +22,17 @@ const BursarySetup = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
 
   const [currentTab, setCurrentTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -172,29 +179,44 @@ const BursarySetup = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor0.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor0.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Total Payment Items
-              </Typography>
+              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                    color: isDark ? '#fff' : s0.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Total Payment Items
+                </Typography>
+              </Box>
               <Typography
                 variant="h2"
                 fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}
+                sx={{ color: isDark ? '#ffffff' : s0.color }}
                 mb={2}
               >
                 {paymentNameStats.total}
@@ -256,30 +278,45 @@ const BursarySetup = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor1.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor1.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Settlement Accounts
-              </Typography>
+              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                    color: isDark ? '#fff' : s1.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Settlement Accounts
+                </Typography>
+              </Box>
 
               <Typography
                 variant="h2"
                 fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : statColor1.accentColor }}
+                sx={{ color: isDark ? '#ffffff' : s1.color }}
                 mb={2}
               >
                 {bankCount}
@@ -287,7 +324,7 @@ const BursarySetup = () => {
 
               <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="textSecondary">
                     Banks Configured
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
@@ -296,7 +333,7 @@ const BursarySetup = () => {
                 </Grid>
 
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="textSecondary">
                     Status
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
@@ -314,7 +351,7 @@ const BursarySetup = () => {
                     bgcolor: bankCount > 0 ? 'success.main' : 'warning.main',
                   }}
                 />
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="textSecondary">
                   {bankCount > 0
                     ? `${bankCount} bank(s) configured`
                     : 'No settlement accounts configured'}
@@ -328,29 +365,44 @@ const BursarySetup = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor2.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor2.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Typography variant="h6" fontWeight={600} mb={2}>
-                Fee Bearer Distribution
-              </Typography>
+              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                    color: isDark ? '#fff' : s2.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Fee Bearer Distribution
+                </Typography>
+              </Box>
               <Typography
                 variant="h2"
                 fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                sx={{ color: isDark ? '#ffffff' : s2.color }}
                 mb={2}
               >
                 {paymentNameStats.total}

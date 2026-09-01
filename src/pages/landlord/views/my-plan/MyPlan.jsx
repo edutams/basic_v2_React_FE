@@ -19,7 +19,7 @@ import {
   Alert,
   Button,
   TextField,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import api from '@/api/landlord/landlord_api';
 import { IconSchool } from '@tabler/icons-react';
@@ -230,11 +230,15 @@ const MyPlan = () => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 5 }}>
-                    <CircularProgress size={40} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(8)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : paginatedPlans.length > 0 ? (
                 paginatedPlans.map((plan, index) => {
                   const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};

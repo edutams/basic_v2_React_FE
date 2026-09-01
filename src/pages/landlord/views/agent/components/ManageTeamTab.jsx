@@ -24,7 +24,7 @@ import {
   IconButton,
   Menu,
   Checkbox,
-  CircularProgress,
+  Skeleton,
   Alert,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
@@ -309,8 +309,10 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
       </Stack>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={6}>
-          <CircularProgress size={32} />
+        <Box sx={{ py: 2 }}>
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={60} sx={{ mb: 1, borderRadius: 1 }} />
+          ))}
         </Box>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
@@ -671,7 +673,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Member'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Add Member'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -801,7 +803,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -852,7 +854,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -878,7 +880,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color='inherit' onClick={handleRemoveMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Remove'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Remove'}
           </Button>
         </DialogActions>
       </Dialog>

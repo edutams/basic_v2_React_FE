@@ -5,7 +5,7 @@ import {
   Checkbox,
   FormControlLabel,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   Divider,
   IconButton,
@@ -198,8 +198,10 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+        ))}
       </Box>
     );
   }
@@ -267,7 +269,7 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pb: 1 }}>
         <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
 
-        <Button size="small" onClick={handleSave} startIcon={saving && <CircularProgress color="inherit" />}
+        <Button size="small" onClick={handleSave} startIcon={saving && <Skeleton variant="text" width={16} height={16} />}
           disabled={saving}
         >
           {saving ? 'Saving...' : 'Save Changes'}

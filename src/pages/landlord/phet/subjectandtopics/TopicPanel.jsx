@@ -18,6 +18,7 @@ import {
   Chip,
   Button,
   TextField,
+  Skeleton,
   InputAdornment,
   Alert
 } from '@mui/material';
@@ -99,7 +100,11 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
           </Alert>
         </Box>
       ) : isLoading ? (
-        <Typography sx={{ p: 2 }}>Loading...</Typography>
+        <Box sx={{ p: 2 }}>
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+          ))}
+        </Box>
       ) : (
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>

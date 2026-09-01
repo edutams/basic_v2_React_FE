@@ -11,7 +11,7 @@ import { TenantAuthContext } from '../../context/TenantContext/auth';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
 import ScrollToTop from '../../components/shared/ScrollToTop';
-import LoadingBar from '../../LoadingBar';
+// import LoadingBar from '../../LoadingBar';
 import config from 'src/context/config';
 
 const MainWrapper = styled('div')(() => ({
@@ -40,7 +40,7 @@ const SchoolLayout = () => {
 
   return (
     <>
-      <LoadingBar />
+      {/* <LoadingBar /> */}
 
       <MainWrapper>
         {activeLayout === 'horizontal' ? '' : <SchoolSidebar />}

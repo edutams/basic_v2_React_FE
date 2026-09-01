@@ -23,7 +23,7 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { IconSchool, IconEdit, IconPackage, IconTrash } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -346,11 +346,15 @@ const Plan = () => {
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <CircularProgress size={40} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedPlans.length > 0 ? (
                   paginatedPlans.map((plan, index) => (
                     <TableRow key={plan.id} hover>

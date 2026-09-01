@@ -12,7 +12,7 @@ import {
   TextField,
   InputAdornment,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   TablePagination,
   Dialog,
@@ -657,8 +657,10 @@ const ActivityLog = () => {
 
           {/* Activity Logs Table */}
           {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress size={32} />
+            <Box sx={{ py: 2 }}>
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+              ))}
             </Box>
           ) : error ? (
             <Alert severity="error">{error}</Alert>

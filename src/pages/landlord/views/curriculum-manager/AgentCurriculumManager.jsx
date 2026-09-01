@@ -42,7 +42,7 @@ import {
   DialogActions,
   Alert,
   Snackbar,
-  CircularProgress,
+  Skeleton,
   Menu,
   MenuList,
   MenuItem as MenuItemComponent,
@@ -553,11 +553,15 @@ const AgentCurriculumManager = () => {
                         </TableHead>
                         <TableBody>
                           {loadingCurriculums ? (
-                            <TableRow>
-                              <TableCell colSpan={4} align="center">
-                                <CircularProgress size={24} />
-                              </TableCell>
-                            </TableRow>
+                            [...Array(4)].map((_, i) => (
+                              <TableRow key={i}>
+                                {[...Array(4)].map((_, j) => (
+                                  <TableCell key={j}>
+                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
                           ) : curriculumData.length > 0 ? (
                             curriculumData.map((item, i) => (
                               <TableRow key={item.id} hover>
@@ -670,11 +674,15 @@ const AgentCurriculumManager = () => {
                         </TableHead>
                         <TableBody>
                           {loadingSubjects ? (
-                            <TableRow>
-                              <TableCell colSpan={7} align="center">
-                                <CircularProgress size={24} />
-                              </TableCell>
-                            </TableRow>
+                            [...Array(4)].map((_, i) => (
+                              <TableRow key={i}>
+                                {[...Array(7)].map((_, j) => (
+                                  <TableCell key={j}>
+                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
                           ) : subjectsList.length > 0 ? (
                             subjectsList.map((item, i) => (
                               <TableRow key={item.id} hover>
@@ -901,7 +909,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseCreateModal}>Cancel</Button>
           <Button size="small" onClick={handleCreateCurriculum} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Create'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -935,7 +943,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
           <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Update'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Update'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -957,7 +965,7 @@ const AgentCurriculumManager = () => {
             Cancel
           </Button>
           <Button size="small" onClick={handleDeleteCurriculum} color="error" disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1103,7 +1111,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" color='inherit' onClick={handleCloseAddSubjectModal}>Cancel</Button>
           <Button size="small" onClick={handleCreateSubject} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
+            {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Save Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1246,7 +1254,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal}>Cancel</Button>
           <Button size="small" onClick={handleUpdateSubject} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Update Subject'}
+            {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Update Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1272,7 +1280,7 @@ const AgentCurriculumManager = () => {
             color="inherit"
             onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
           <Button size="small" onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

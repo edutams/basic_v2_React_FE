@@ -17,7 +17,7 @@ import {
   Menu,
   MenuItem,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Alert,
   Tooltip,
   Dialog,
@@ -161,8 +161,10 @@ const AgentSubscriptionList = ({ status }) => {
       </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={5}>
-          <CircularProgress />
+        <Box sx={{ py: 2 }}>
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+          ))}
         </Box>
       ) : (
         <Box>

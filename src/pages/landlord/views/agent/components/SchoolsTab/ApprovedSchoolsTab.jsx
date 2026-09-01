@@ -16,7 +16,7 @@ import {
   MenuItem,
   TableFooter,
   TablePagination,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Link,
   Alert,
@@ -94,8 +94,10 @@ const ApprovedSchoolsTab = ({
 
   if (schoolLoading) {
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+        ))}
       </Box>
     );
   }

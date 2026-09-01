@@ -17,6 +17,7 @@ import {
   Button,
   Chip,
   Alert,
+  Skeleton,
 } from '@mui/material';
 import { FilterList as FilterListIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconFilter } from '@tabler/icons-react';
@@ -177,11 +178,15 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
             </TableHead>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <Typography>Loading...</Typography>
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(5)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : j === 4 ? 50 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : gatewaysList.length > 0 ? (
                 gatewaysList.map((gateway, index) => (
                   <TableRow key={gateway.id} hover>

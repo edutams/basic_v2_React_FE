@@ -24,7 +24,7 @@ import {
   Tabs,
   Tab,
   TextField,
-  CircularProgress,
+  Skeleton,
   Grid,
   Stack,
   Avatar,
@@ -552,6 +552,7 @@ const AlcManager = () => {
                   icon={IconShield}
                   color="primary"
                   subtitle="All defined roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -562,6 +563,7 @@ const AlcManager = () => {
                   icon={IconShieldLock}
                   color="success"
                   subtitle="Platform default roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -572,6 +574,7 @@ const AlcManager = () => {
                   icon={IconShield}
                   color="warning"
                   subtitle="Custom created roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -582,6 +585,7 @@ const AlcManager = () => {
                   icon={IconUsers}
                   color="info"
                   subtitle="Users with roles"
+                  loading={loading}
                 />
               </Grid>
             </Grid>
@@ -739,11 +743,24 @@ const AlcManager = () => {
 
                     <TableBody>
                       {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                            <CircularProgress size={28} />
-                          </TableCell>
-                        </TableRow>
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <TableRow key={`skel-${i}`}>
+                            <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                            <TableCell>
+                              <Stack direction="row" spacing={1.5} alignItems="center">
+                                <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: '50%' }} />
+                                <Box>
+                                  <Skeleton variant="text" width={120} height={16} />
+                                  <Skeleton variant="text" width={80} height={12} />
+                                </Box>
+                              </Stack>
+                            </TableCell>
+                            <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="text" width={30} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="text" width={30} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="rounded" width={24} height={24} sx={{ borderRadius: '8px', mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
                       ) : rows.length > 0 ? (
                         rows.map((row, index) => {
                           const isSysRole = row.is_sys === 'yes' || row.is_system;

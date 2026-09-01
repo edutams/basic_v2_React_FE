@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Box, Paper, Typography, CircularProgress, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, Skeleton, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import PropTypes from 'prop-types';
@@ -11,6 +11,29 @@ const schemeMap = [
   { bg: '#FEF3C7', color: '#D97706' },
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
+
+const StatCardSkeleton = ({ isDark, theme }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      borderRadius: '14px',
+      p: '14px',
+      width: '100%',
+      bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+      border: '1px solid',
+      borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    }}
+  >
+    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: '12px', flexShrink: 0 }} />
+    <Box sx={{ flexGrow: 1, pl: 1, textAlign: 'right' }}>
+      <Skeleton variant="text" width="50%" height={28} sx={{ ml: 'auto' }} />
+      <Skeleton variant="text" width="40%" height={16} sx={{ ml: 'auto' }} />
+    </Box>
+  </Paper>
+);
 
 const StatCard = ({
   count,
@@ -28,6 +51,10 @@ const StatCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const scheme = schemeMap[colorIndex % schemeMap.length];
+
+  if (loading) {
+    return <StatCardSkeleton isDark={isDark} theme={theme} />;
+  }
 
   const cardContent = (
     <Paper
@@ -84,53 +111,40 @@ const StatCard = ({
           zIndex: 1,
         }}
       >
-        {loading ? (
-          <CircularProgress
-            size={22}
+        <Typography
+          sx={{
+            fontSize: 22,
+            fontWeight: 800,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+            color: isDark ? '#fff' : scheme.color,
+          }}
+        >
+          {count}
+        </Typography>
+
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontSize: 13,
+            fontWeight: 600,
+            color: isDark ? '#ffffff' : '#4B5563',
+          }}
+        >
+          {label}
+        </Typography>
+
+        {subtitle && (
+          <Typography
             sx={{
-              color: scheme.color,
+              mt: 0.25,
+              fontSize: 11,
+              fontWeight: 500,
+              color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
             }}
-          />
-        ) : (
-          <>
-            <Typography
-              sx={{
-                fontSize: 22,
-                fontWeight: 800,
-                lineHeight: 1,
-                letterSpacing: '-0.02em',
-                color: isDark ? '#fff' : scheme.color,
-              }}
-            >
-              {count}
-            </Typography>
-
-            <Typography
-              sx={{
-                mt: 0.5,
-                fontSize: 13,
-                fontWeight: 600,
-                color: isDark
-                  ? '#ffffff'
-                  : '#4B5563',
-              }}
-            >
-              {label}
-            </Typography>
-
-            {subtitle && (
-              <Typography
-                sx={{
-                  mt: 0.25,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
-                }}
-              >
-                {subtitle}
-              </Typography>
-            )}
-          </>
+          >
+            {subtitle}
+          </Typography>
         )}
       </Box>
     </Paper>

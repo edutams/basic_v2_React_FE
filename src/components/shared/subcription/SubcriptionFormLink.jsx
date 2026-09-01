@@ -10,7 +10,7 @@ import {
   FormControlLabel,
   Radio,
   Alert,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { stimulationLinkValidationSchema } from './validation/subcriptionValidationSchema';
@@ -119,8 +119,10 @@ const SubcriptionFormLink = ({
 
   if (fetchingOptions) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+        ))}
       </Box>
     );
   }

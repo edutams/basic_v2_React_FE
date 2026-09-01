@@ -13,7 +13,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  CircularProgress,
+  Skeleton,
   Alert,
   TextField,
   InputAdornment,
@@ -226,11 +226,15 @@ const SchoolRoleUsersModal = ({ open, onClose, role, onUserRemoved }) => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(4)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : users.length > 0 ? (
                 users.map((item, index) => {
                   const u = item.users || item.user || item;

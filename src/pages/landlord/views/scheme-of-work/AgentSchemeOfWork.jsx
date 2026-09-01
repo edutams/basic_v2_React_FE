@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
+  Skeleton,
   Chip,
   Alert,
 } from '@mui/material';
@@ -1004,7 +1004,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                     {loading ? (
-                      <CircularProgress size={24} />
+                      [...Array(3)].map((_, i) => (
+                        <Skeleton key={i} variant="text" height={40} sx={{ mb: 0.5, borderRadius: 1 }} />
+                      ))
                     ) : (
                       <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
                         No records found. Select filters to begin.
@@ -1083,7 +1085,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             sx={{ mb: 2 }}
           />
           <Button variant="contained" size="small" type="submit" fullWidth disabled={savingTopic}>
-            {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+            {savingTopic ? <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
         </Box>
@@ -1129,7 +1131,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             sx={{ mb: 2 }}
           />
           <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
-            {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+            {savingSubtopic ? <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
         </Box>
@@ -1559,7 +1561,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <Skeleton variant="text" width={16} height={16} /> : <IconUpload size={16} />
           }
             sx={{ textTransform: 'none' }}
           >
@@ -1667,7 +1669,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<Skeleton variant="text" width={16} height={16} />
           ) : (
             <IconDownload size={16} />
           )
@@ -1703,8 +1705,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         </DialogTitle>
         <DialogContent dividers>
           {loadingDetails ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-              <CircularProgress />
+            <Box sx={{ py: 2 }}>
+              <Skeleton variant="rounded" height={40} sx={{ mb: 2 }} />
+              <Skeleton variant="rounded" height={200} sx={{ borderRadius: 1 }} />
             </Box>
           ) : viewDetailsData ? (
             <Box ref={printRef} sx={{ p: 2 }}>

@@ -20,7 +20,7 @@ import {
   MenuItem,
   ListItemIcon,
   Alert,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Grid,
   FormControl,
@@ -684,11 +684,15 @@ const SchoolAssignmentManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      <CircularProgress size={28} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(6)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');

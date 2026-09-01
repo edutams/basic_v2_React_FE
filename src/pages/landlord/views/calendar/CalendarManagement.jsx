@@ -20,7 +20,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  CircularProgress,
+  Skeleton,
   Alert,
   Tooltip,
   Backdrop,
@@ -387,12 +387,15 @@ function SessionsPanel({ isLevel1 }) {
             </TableHead>
             <TableBody>
               {loading || reordering ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <CircularProgress size={24} />
-                    {reordering && <Typography variant="body2">Order updating...</Typography>}
-                  </TableCell>
-                </TableRow>
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : filteredSessions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
@@ -552,7 +555,7 @@ function SessionsPanel({ isLevel1 }) {
           </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <CircularProgress size={20} />
+              <Skeleton variant="text" width={80} height={20} />
             ) : editTarget ? (
               'Save Changes'
             ) : (
@@ -591,7 +594,7 @@ function SessionsPanel({ isLevel1 }) {
             Cancel
           </Button>
           <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : 'Update Status'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -854,12 +857,15 @@ function TermsPanel({ isLevel1 }) {
             </TableHead>
             <TableBody>
               {loading || reordering ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <CircularProgress size={24} />
-                    {reordering && <Typography variant="body2">Order updating...</Typography>}
-                  </TableCell>
-                </TableRow>
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(6)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : filteredTerms.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
@@ -973,7 +979,7 @@ function TermsPanel({ isLevel1 }) {
           </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <CircularProgress size={20} />
+              <Skeleton variant="text" width={80} height={20} />
             ) : editTarget ? (
               'Save Changes'
             ) : (
@@ -1151,7 +1157,7 @@ function MappingsPanel() {
         }}
         open={reordering}
       >
-        <CircularProgress color="inherit" />
+        <Skeleton variant="circular" width={40} height={40} />
         <Typography variant="h6">Order updating...</Typography>
       </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -1185,11 +1191,15 @@ function MappingsPanel() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : mappings.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
@@ -1330,7 +1340,7 @@ function MappingsPanel() {
             Cancel
           </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Save Mapping'}
           </Button>
         </DialogActions>
       </Dialog>

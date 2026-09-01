@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
+import { Box, Tab, Grid, useTheme, Skeleton, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
@@ -227,8 +227,18 @@ const ViewAgent = () => {
         <Breadcrumb title="View Profile" items={BCrumb} />
 
         {isLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress />
+          <Box sx={{ py: 4 }}>
+            <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+              <Skeleton variant="rounded" width={300} height={200} sx={{ borderRadius: 2 }} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} />
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 3 }}>
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} variant="rounded" height={120} sx={{ borderRadius: 2 }} />
+              ))}
+            </Box>
           </Box>
         ) : agentData ? (
           <>

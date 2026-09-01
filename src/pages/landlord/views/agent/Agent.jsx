@@ -34,7 +34,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  CircularProgress,
+  Skeleton,
   Divider,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
@@ -1082,8 +1082,10 @@ const Agent = () => {
 
           <Box sx={{ pb: 0 }}>
             {loginActivitiesLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <CircularProgress size={24} />
+              <Box sx={{ py: 1 }}>
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={30} sx={{ mb: 0.5 }} />
+                ))}
               </Box>
             ) : (
               (loginActivities.length > 0
@@ -1343,11 +1345,15 @@ const Agent = () => {
                 </TableHead>
                 <TableBody>
                   {tableLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
+                    [...Array(4)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(10)].map((_, j) => (
+                          <TableCell key={j}>
+                            <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   ) : !emptyState.isEmpty ? (
                     filteredData.map((agent) => {
                       const initials = (agent.organizationName || 'NA')

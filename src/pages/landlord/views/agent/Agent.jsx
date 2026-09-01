@@ -351,6 +351,7 @@ const Agent = () => {
   const [loginActivities, setLoginActivities] = useState([]);
   const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
   const [selectedUserFilters, setSelectedUserFilters] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({
     totalAgents: 0,
     totalSubAgents: 0,
@@ -359,6 +360,7 @@ const Agent = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
       try {
         const response = await agentApi.getAnalytics();
         if (response.status === true && response.data) {
@@ -366,6 +368,8 @@ const Agent = () => {
         }
       } catch (error) {
         console.error('Failed to fetch analytics', error);
+      } finally {
+        setAnalyticsLoading(false);
       }
     };
     fetchAnalytics();
@@ -818,23 +822,42 @@ const Agent = () => {
 
   return (
     <PageContainer title="Organization Page" description="This is the Organization page">
-      <Box sx={{ mt: 1 }}>
-        <Breadcrumb title="Organization" items={BCrumb} />
-      </Box>
+      <Breadcrumb title="Organization" items={BCrumb} />
 
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
           gap: 2,
-          mb: 3,
+          // mb: 3,
         }}
       >
+        {analyticsLoading ? (
+          [...Array(4)].map((_, i) => (
+            <Paper key={i} elevation={0} sx={{ p: '14px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Skeleton variant="text" width={120} height={24} />
+                <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+              </Box>
+              <Skeleton variant="rounded" width={60} height={36} sx={{ borderRadius: 1, mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {[...Array(3)].map((_, j) => (
+                  <Box key={j} sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={14} />
+                    <Skeleton variant="text" width="40%" height={20} />
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          ))
+        ) : (
+        <>
         {/* Total School */}
         <Paper
           elevation={0}
           sx={{
-            p: '14px',
+            px: '3px',
+            py: '3px',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -886,7 +909,7 @@ const Agent = () => {
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 5,
+              mb:5
             }}
           >
             <Typography
@@ -936,7 +959,8 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: '14px',
+           px: '3px',
+            py: '3px',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1036,7 +1060,8 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: '14px',
+            px: '3px',
+            py: '3px',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1126,7 +1151,8 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: '14px',
+           px: '3px',
+            py: '3px',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1173,7 +1199,7 @@ const Agent = () => {
           <Box sx={{ width: '100%' }}>
             <Box
               sx={{
-                height: 160,
+                height: 150,
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
@@ -1185,16 +1211,18 @@ const Agent = () => {
                 series={planSeries}
                 colors={planColors}
                 labels={planLabels}
-                height={160}
+                height={150}
                 width="100%"
                 hideCard
               />
             </Box>
           </Box>
-        </Paper>
+        </Paper>  
+        </>
+        )}
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={tab}

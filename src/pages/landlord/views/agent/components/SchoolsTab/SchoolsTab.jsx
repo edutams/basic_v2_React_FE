@@ -823,7 +823,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -922,7 +923,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1007,7 +1009,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1085,7 +1088,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                  px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1127,13 +1131,13 @@ const SchoolsTab = ({
                   </IconButton>
                 </Box>
                 <Box
-                  sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                  sx={{ height: 130, display: 'flex', alignItems: 'center', }}
                 >
                   <ReusablePieChart
                     series={planSeries}
                     colors={planColors}
                     labels={planLabels}
-                    height={170}
+                    height={130}
                     hideCard
                   />
                 </Box>

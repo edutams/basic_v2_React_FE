@@ -47,7 +47,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   );
 });
 
-const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
+const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = false }) => {
   const theme = useTheme();
   const isLevelOne = accessLevel === 1;
   const notify = useNotification();
@@ -279,34 +279,37 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
     }
   };
 
-  return (
-    <Box title="Manage Team">
-      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              bgcolor: '#2ca87f',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" fontWeight="bold">
-              T
-            </Typography>
-          </Box>
-          <Typography variant="h5">Manage Team</Typography>
-        </Stack>
-        {!(accessLevel === 1 && isViewingProfile) && (
-          <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
-            Add Team Member
-          </Button>
-        )}
+  const headerContent = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Box
+          sx={{
+            width: 24,
+            height: 24,
+            bgcolor: '#2ca87f',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+          }}
+        >
+          <Typography variant="body2" fontWeight="bold">
+            T
+          </Typography>
+        </Box>
+        <Typography variant="h5">Manage Team</Typography>
       </Stack>
+      {!(accessLevel === 1 && isViewingProfile) && (
+        <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+          Add Team Member
+        </Button>
+      )}
+    </Box>
+  );
+
+  const content = (
+    <>
 
       {loading ? (
         <Box sx={{ py: 2 }}>
@@ -884,7 +887,24 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
+  );
+
+  if (hideCard) {
+    return (
+      <Box>
+        {headerContent}
+        <Box sx={{ mt: 2 }}>
+          {content}
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <ParentCard title={headerContent}>
+      {content}
+    </ParentCard>
   );
 };
 

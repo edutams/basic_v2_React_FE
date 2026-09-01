@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Card, CardContent, Box, Typography, Stack, Divider, useTheme } from '@mui/material';
+import { Grid, Card, CardContent, Box, Typography, Stack, Divider, Skeleton, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
@@ -145,12 +145,63 @@ const StatCard = ({
   );
 };
 
+const StatCardSkeleton = ({ colorIndex = 0, subStatCount = 3, titleWidth = '60%', valueWidth = 80 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Card
+      sx={{
+        p: '0px !important',
+        height: '100%',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+      }}
+    >
+      <CardContent
+        sx={{
+          p: '14px !important',
+          '&:last-child': { pb: '14px !important' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Skeleton variant="text" width={titleWidth} height={16} />
+          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Skeleton variant="text" width={valueWidth} height={32} />
+        </Box>
+        {subStatCount > 0 && (
+          <Stack direction="row" spacing={0} sx={{ mt: 2 }}>
+            {[...Array(subStatCount)].map((_, i) => (
+              <Box key={i} sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="70%" height={10} />
+                <Skeleton variant="text" width="50%" height={14} />
+              </Box>
+            ))}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const StatCards = ({
   stats,
   onTransactionClick,
   onSubAgentClick,
   onSchoolClick,
   accessLevel = 1,
+  loading = false,
+  loadingTransaction = false,
+  loadingSubAgents = false,
+  loadingSchools = false,
 }) => {
   const getSubAgentLevels = () => {
     switch (accessLevel) {
@@ -186,49 +237,65 @@ const StatCards = ({
     }
   };
 
+  const showTransactionLoading = loading || loadingTransaction;
+  const showSubAgentsLoading = loading || loadingSubAgents;
+  const showSchoolsLoading = loading || loadingSchools;
+
   return (
     <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
       {/* Total Transaction Value */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total Transaction Value"
-          value={`₦${stats?.totalTransaction || 0}`}
-          colorIndex={2}
-          subStats={[
-            { label: 'Commission', value: `₦${stats?.commission || 0}` },
-            { label: 'Volume', value: stats?.volume || 0 },
-          ]}
-          onIconClick={onTransactionClick}
-          onClick={onTransactionClick}
-        />
+        {showTransactionLoading ? (
+          <StatCardSkeleton colorIndex={2} subStatCount={2} titleWidth="75%" valueWidth={120} />
+        ) : (
+          <StatCard
+            title="Total Transaction Value"
+            value={`₦${stats?.totalTransaction || 0}`}
+            colorIndex={2}
+            subStats={[
+              { label: 'Commission', value: `₦${stats?.commission || 0}` },
+              { label: 'Volume', value: stats?.volume || 0 },
+            ]}
+            onIconClick={onTransactionClick}
+            onClick={onTransactionClick}
+          />
+        )}
       </Grid>
 
       {/* Total Sub Agents */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total Sub Organizations"
-          value={stats.totalSubAgents}
-          colorIndex={1}
-          subStats={getSubAgentLevels()}
-          onIconClick={onSubAgentClick}
-          onClick={onSubAgentClick}
-        />
+        {showSubAgentsLoading ? (
+          <StatCardSkeleton colorIndex={1} subStatCount={accessLevel === 1 ? 4 : accessLevel === 2 ? 3 : accessLevel === 3 ? 2 : accessLevel === 4 ? 1 : 4} titleWidth="85%" valueWidth={60} />
+        ) : (
+          <StatCard
+            title="Total Sub Organizations"
+            value={stats.totalSubAgents}
+            colorIndex={1}
+            subStats={getSubAgentLevels()}
+            onIconClick={onSubAgentClick}
+            onClick={onSubAgentClick}
+          />
+        )}
       </Grid>
 
       {/* Total School */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total School"
-          value={stats.totalSchools}
-          colorIndex={0}
-          subStats={[
-            { label: 'Active', value: stats.activeSchools?.toString() || '0' },
-            { label: 'Pending', value: stats.pendingSchools?.toString() || '0' },
-            { label: 'Rejected', value: stats.rejectedSchools?.toString() || '0' },
-          ]}
-          onIconClick={onSchoolClick}
-          onClick={onSchoolClick}
-        />
+        {showSchoolsLoading ? (
+          <StatCardSkeleton colorIndex={0} subStatCount={3} titleWidth="55%" valueWidth={90} />
+        ) : (
+          <StatCard
+            title="Total School"
+            value={stats.totalSchools}
+            colorIndex={0}
+            subStats={[
+              { label: 'Active', value: stats.activeSchools?.toString() || '0' },
+              { label: 'Pending', value: stats.pendingSchools?.toString() || '0' },
+              { label: 'Rejected', value: stats.rejectedSchools?.toString() || '0' },
+            ]}
+            onIconClick={onSchoolClick}
+            onClick={onSchoolClick}
+          />
+        )}
       </Grid>
     </Grid>
   );
@@ -253,6 +320,10 @@ StatCards.propTypes = {
     }),
   }).isRequired,
   accessLevel: PropTypes.number,
+  loading: PropTypes.bool,
+  loadingTransaction: PropTypes.bool,
+  loadingSubAgents: PropTypes.bool,
+  loadingSchools: PropTypes.bool,
   onTransactionClick: PropTypes.func,
   onSubAgentClick: PropTypes.func,
   onSchoolClick: PropTypes.func,

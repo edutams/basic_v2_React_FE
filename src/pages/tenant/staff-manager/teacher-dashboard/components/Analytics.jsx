@@ -8,6 +8,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import { EmojiEventsOutlined, CalendarTodayOutlined } from '@mui/icons-material';
@@ -63,12 +64,13 @@ const metricLegend = [
   { label: 'Tests', color: '#f97316' },
 ];
 
-const panelSx = {
-  bgcolor: '#fff',
+const getPanelSx = (isDark, theme) => ({
+  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
   border: '1px solid',
-  borderColor: 'grey.200',
-  borderRadius: '10px',
-  p: 2.5,
+  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+  borderRadius: '14px',
+  p: 2,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -76,9 +78,10 @@ const panelSx = {
   transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.05)',
+    borderColor: '#94a3b8',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
   },
-};
+});
 
 // Helper to format session term labels
 const termLabel = (t) =>
@@ -119,11 +122,13 @@ const TermSelect = ({ value, onChange, sessionTerms = [], size = 'small' }) => (
 );
 
 function TeachingEngagementChart() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const maxVal = 40;
   const yTicks = [40, 30, 20, 10, 0];
 
   return (
-    <Box sx={panelSx}>
+    <Box sx={getPanelSx(isDark, theme)}>
       <Box>
         <Typography
           sx={{ fontWeight: 700, fontSize: 17, letterSpacing: -0.3, color: '#1e293b', mb: 1.5 }}
@@ -314,6 +319,8 @@ function TeachingEngagementChart() {
 }
 
 function DaysInTermChart() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedTermId, setSelectedTermId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -436,7 +443,7 @@ function DaysInTermChart() {
   }, [selectedTermId]);
 
   return (
-    <Box sx={panelSx}>
+    <Box sx={getPanelSx(isDark, theme)}>
       <Box>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography sx={{ fontWeight: 700, fontSize: 17, letterSpacing: -0.3, color: '#1e293b' }}>

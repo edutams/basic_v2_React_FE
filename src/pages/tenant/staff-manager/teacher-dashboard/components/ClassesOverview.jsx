@@ -15,12 +15,18 @@ import {
   ListItemIcon,
   ListItemText,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useTheme,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 
 import tenantApi from '@/api/tenant/tenant_api';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
@@ -34,9 +40,10 @@ const colorPresets = [
 ];
 
 function ClassCard({ cls, idx, isAdmin }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
-  const menuOpen = Boolean(anchorEl);
 
   const preset = colorPresets[idx % colorPresets.length];
   const color = cls.color || preset.color;
@@ -71,15 +78,15 @@ function ClassCard({ cls, idx, isAdmin }) {
         sx={{
           borderRadius: '14px',
           height: '100%',
-          bgcolor: '#ffffff',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
-          borderColor: '#cbd5e1',
-          boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
           '&:hover': {
-            transform: 'translateY(-3px)',
+            transform: 'translateY(-2px)',
             borderColor: '#94a3b8',
-            boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
           },
         }}
       >
@@ -104,18 +111,18 @@ function ClassCard({ cls, idx, isAdmin }) {
               </Box>
               <Box>
                 <Typography
-                  sx={{ fontWeight: 800, fontSize: 17, color: '#1e293b', lineHeight: 1.2 }}
+                  sx={{ fontWeight: 800, fontSize: 17, color: isDark ? '#fff' : '#1e293b', lineHeight: 1.2 }}
                 >
                   {cls.code}
                 </Typography>
-                <Typography sx={{ fontSize: 12.5, color: '#64748b', mt: 0.25, fontWeight: 500 }}>
+                <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.25, fontWeight: 500 }}>
                   {cls.subject}
                 </Typography>
                 {isAdmin && cls.teacherName && (
                   <Typography
                     sx={{
                       fontSize: 11.5,
-                      color: '#475569',
+                      color: 'text.secondary',
                       mt: 0.5,
                       fontWeight: 600,
                     }}
@@ -129,7 +136,7 @@ function ClassCard({ cls, idx, isAdmin }) {
             <IconButton
               size="small"
               onClick={handleMenuOpen}
-              sx={{ mt: -0.5, mr: -0.5, color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}
+              sx={{ mt: -0.5, mr: -0.5, color: 'text.secondary' }}
             >
               <MoreVertIcon fontSize="small" />
             </IconButton>
@@ -140,27 +147,27 @@ function ClassCard({ cls, idx, isAdmin }) {
             direction="row"
             alignItems="center"
             justifyContent="space-between"
-            sx={{ mt: 2.5, pt: 1.75, borderTop: '1px solid', borderTopColor: '#f1f5f9' }}
+            sx={{ mt: 2.5, pt: 1.75, borderTop: '1px solid', borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9' }}
           >
             {/* Students Column */}
             <Box sx={{ flex: 1 }}>
               <Stack direction="row" alignItems="center" spacing={0.75}>
-                <PeopleOutlineIcon sx={{ fontSize: 20, color: '#1e1b4b' }} />
-                <Typography sx={{ fontWeight: 800, fontSize: 17, color: '#0f172a', lineHeight: 1 }}>
+                <PeopleOutlineIcon sx={{ fontSize: 20, color: isDark ? '#fff' : '#1e1b4b' }} />
+                <Typography sx={{ fontWeight: 800, fontSize: 17, color: isDark ? '#fff' : '#0f172a', lineHeight: 1 }}>
                   {cls.students ?? cls.student_count ?? 0}
                 </Typography>
               </Stack>
               <Typography
-                sx={{ fontSize: 11, color: '#64748b', fontWeight: 500, mt: 0.5, pl: 3.5 }}
+                sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 500, mt: 0.5, pl: 3.5 }}
               >
                 Students
               </Typography>
             </Box>
 
             {/* Vertical Divider */}
-            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: '#e2e8f0' }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' }} />
 
-            {/* 2nd Stat Column: Performance for Subject Teacher vs Attendance for Class Teacher */}
+            {/* 2nd Stat Column */}
             <Box sx={{ flex: 1, pl: 1 }}>
               <Stack direction="row" alignItems="center" spacing={0.75}>
                 <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
@@ -184,63 +191,93 @@ function ClassCard({ cls, idx, isAdmin }) {
                     }}
                   />
                 </Box>
-                <Typography sx={{ fontWeight: 800, fontSize: 17, color: '#0f172a', lineHeight: 1 }}>
+                <Typography sx={{ fontWeight: 800, fontSize: 17, color: isDark ? '#fff' : '#0f172a', lineHeight: 1 }}>
                   {displayText}
                 </Typography>
               </Stack>
               <Typography
-                sx={{ fontSize: 11, color: '#64748b', fontWeight: 500, mt: 0.5, pl: 3.5 }}
+                sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 500, mt: 0.5, pl: 3.5 }}
               >
                 {statLabel}
               </Typography>
             </Box>
           </Stack>
         </CardContent>
-      </Card>
 
-      {/* Class Action Options Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={menuOpen}
-        onClose={handleMenuClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          elevation: 3,
-          sx: { borderRadius: 2, minWidth: 160, mt: 0.5 },
-        }}
-      >
-        {!isSubject && (
+        {/* Action Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          PaperProps={{ sx: { borderRadius: '12px', minWidth: 170 } }}
+        >
           <MenuItem onClick={() => handleNavigate('/attendance-psychomotor')}>
             <ListItemIcon>
-              <HowToRegOutlinedIcon fontSize="small" sx={{ color: '#0d9488' }} />
+              <HowToRegOutlinedIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText
-              primary="Take Attendance"
-              primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
-            />
+            <ListItemText primary="Take Attendance" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
           </MenuItem>
-        )}
-        <MenuItem onClick={() => handleNavigate('/class-register')}>
-          <ListItemIcon>
-            <ClassOutlinedIcon fontSize="small" sx={{ color: '#2563eb' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="Class Register"
-            primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
-          />
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/subject-registration')}>
-          <ListItemIcon>
-            <MenuBookOutlinedIcon fontSize="small" sx={{ color: '#7c3aed' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="Subject Setup"
-            primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
-          />
-        </MenuItem>
-      </Menu>
+          <MenuItem onClick={() => handleNavigate('/class-register')}>
+            <ListItemIcon>
+              <ClassOutlinedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Class Register" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+          </MenuItem>
+        </Menu>
+      </Card>
     </>
+  );
+}
+
+function AllocationInsightCard() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: '14px',
+        height: '100%',
+        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+        border: '1px dashed',
+        borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}
+    >
+      <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', '&:last-child': { pb: 2 } }}>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(37,99,235,0.2)' : '#dbeafe',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ClassOutlinedIcon sx={{ fontSize: 20 }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, color: isDark ? '#fff' : '#0f172a' }}>
+              Teaching Portal
+            </Typography>
+            <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
+              Active Academic Allocation
+            </Typography>
+          </Box>
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12, mt: 0.5, lineHeight: 1.4 }}>
+          Track student performance, course materials, and assessment records for your active classes this term.
+        </Typography>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -251,7 +288,6 @@ export default function ClassesOverview() {
     ['school_admin', 'super_admin'].includes(typeof role === 'string' ? role : role.name),
   );
 
-  const navigate = useNavigate();
   const [classesList, setClassesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -298,7 +334,7 @@ export default function ClassesOverview() {
           setClassesList(mapped);
         }
       } catch (err) {
-        console.warn('Failed to fetch logged-in teacher allocations:', err);
+        console.error('Failed to fetch allocations:', err);
         if (isMounted) setClassesList([]);
       } finally {
         if (isMounted) setLoading(false);
@@ -311,28 +347,45 @@ export default function ClassesOverview() {
     };
   }, []);
 
+  const [expanded, setExpanded] = useState(false);
+
+  const displayedClasses = expanded ? classesList : classesList.slice(0, 3);
+  const showInsightCard = classesList.length < 3;
+
   return (
-    <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: '#1e293b' }}>
+    <Box
+      sx={{
+        bgcolor: (theme) => theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        borderRadius: '14px',
+        p: 2,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: (theme) => theme.palette.mode === 'dark' ? '#fff' : '#0f172a' }}>
           {isAdmin ? 'Teacher Allocations' : 'My Classes Overview'}
         </Typography>
-        <Button
-          variant="contained"
-          onClick={() => navigate('/class-register')}
-          sx={{
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          View all classes
-        </Button>
+        {classesList.length > 3 && (
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setExpanded((prev) => !prev)}
+            sx={{
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            {expanded ? 'View less' : `View all (${classesList.length})`}
+          </Button>
+        )}
       </Stack>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" py={5}>
-          <CircularProgress size={32} />
+        <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+          <CircularProgress size={30} />
         </Box>
       ) : classesList.length === 0 ? (
         <Paper
@@ -340,19 +393,20 @@ export default function ClassesOverview() {
           sx={{
             p: 4,
             textAlign: 'center',
-            border: '1px dashed #cbd5e1',
-            borderRadius: 2,
-            bgcolor: '#f8fafc',
+            border: '1px dashed',
+            borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
+            borderRadius: '14px',
+            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
           }}
         >
           <ClassOutlinedIcon sx={{ fontSize: 36, color: 'text.disabled', mb: 1 }} />
           <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
-            {isAdmin ? 'No Teacher Allocations Yet' : 'No Classes Allocated Yet'}{' '}
+            {isAdmin ? 'No Teacher Allocations Yet' : 'No Classes Allocated Yet'}
           </Typography>
           <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
             {isAdmin
               ? 'There are no active subject or class teacher allocations for this session term.'
-              : 'You do not have any active subject or class allocations assigned for this session term.'}{' '}
+              : 'You do not have any active subject or class allocations assigned for this session term.'}
           </Typography>
         </Paper>
       ) : (
@@ -361,17 +415,22 @@ export default function ClassesOverview() {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)',
+              sm: classesList.length === 1 ? '1fr 1fr' : 'repeat(3, 1fr)',
             },
             gap: 2,
           }}
         >
-          {classesList.map((cls, idx) => (
+          {displayedClasses.map((cls, idx) => (
             <Box key={cls.id || idx} sx={{ minWidth: 0, height: '100%' }}>
               <ClassCard cls={cls} idx={idx} isAdmin={isAdmin} />
             </Box>
           ))}
+
+          {showInsightCard && (
+            <Box sx={{ minWidth: 0, height: '100%' }}>
+              <AllocationInsightCard />
+            </Box>
+          )}
         </Box>
       )}
     </Box>

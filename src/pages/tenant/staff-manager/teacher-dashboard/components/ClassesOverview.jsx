@@ -56,22 +56,26 @@ function EnrolledStudentsModal({ open, onClose, cls }) {
   const isDark = theme.palette.mode === 'dark';
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
 
   useEffect(() => {
     if (!open || !cls) return;
 
     let isMounted = true;
+    setSearchInput('');
+    setAppliedSearch('');
+
     const fetchStudents = async () => {
       setLoading(true);
       try {
         let res = null;
-        if (cls.classId && cls.armId) {
-          res = await tenantApi.get(`/students/by-class/${cls.classId}`, { params: { arm_id: cls.armId } });
+        if (cls.armId) {
+          res = await tenantApi.get('/students/by-class-arm', { params: { class_arm_id: cls.armId, per_page: 100 } });
         } else if (cls.classId) {
-          res = await tenantApi.get(`/students/by-class/${cls.classId}`);
+          res = await tenantApi.get(`/students/by-class/${cls.classId}`, { params: { per_page: 100 } });
         } else {
-          res = await tenantApi.get('/students', { params: cls.armId ? { arm_id: cls.armId } : {} });
+          res = await tenantApi.get('/students/by-class/all', { params: { per_page: 100 } });
         }
 
         const data = res?.data?.data ?? res?.data ?? [];
@@ -102,22 +106,40 @@ function EnrolledStudentsModal({ open, onClose, cls }) {
     };
   }, [open, cls]);
 
+  const handleTriggerSearch = () => {
+    setAppliedSearch(searchInput.trim());
+  };
+
+  const handleClearFilter = () => {
+    setSearchInput('');
+    setAppliedSearch('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTriggerSearch();
+    }
+  };
+
   const filteredStudents = students.filter((s) => {
-    const name = `${s.first_name || ''} ${s.last_name || ''} ${s.name || s.student_name || ''}`.toLowerCase();
-    const adm = (s.admission_number || s.adm_no || '').toLowerCase();
-    const q = search.toLowerCase();
-    return name.includes(q) || adm.includes(q);
+    if (!appliedSearch) return true;
+    const q = appliedSearch.toLowerCase();
+    const name = (s.name || '').toLowerCase();
+    const adm = (s.admission_no || '').toLowerCase();
+    const arm = (s.class_arm || '').toLowerCase();
+    return name.includes(q) || adm.includes(q) || arm.includes(q);
   });
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Box>
           <Typography variant="h6" fontWeight={800} sx={{ color: isDark ? '#fff' : '#0f172a' }}>
-            Enrolled Students
+            Enrolled Students Roster
           </Typography>
           {cls && (
-            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            <Typography variant="body2" color="primary" fontWeight={500}>
               {cls.code} • {cls.subject} ({cls.students ?? students.length} Students)
             </Typography>
           )}
@@ -128,21 +150,67 @@ function EnrolledStudentsModal({ open, onClose, cls }) {
       </DialogTitle>
 
       <DialogContent dividers sx={{ py: 2 }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search student by name or admission no..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" color="action" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        {/* Search & Filter Bar */}
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search student by name, admission no, or class arm..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: searchInput && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchInput('')}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            disableElevation
+            onClick={handleTriggerSearch}
+            sx={{
+              borderRadius: '8px',
+              px: 2.5,
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'none',
+              whiteSpace: 'nowrap',
+              height: 38,
+            }}
+          >
+            Search
+          </Button>
+
+          {(searchInput || appliedSearch) && (
+            <Button
+              variant="outlined"
+              onClick={handleClearFilter}
+              sx={{
+                borderRadius: '8px',
+                px: 2,
+                fontSize: '12px',
+                fontWeight: 600,
+                textTransform: 'none',
+                whiteSpace: 'nowrap',
+                height: 38,
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+                color: isDark ? '#cbd5e1' : '#64748b',
+              }}
+            >
+              Clear Filter
+            </Button>
+          )}
+        </Stack>
 
         {loading ? (
           <Stack spacing={1.5}>
@@ -152,43 +220,70 @@ function EnrolledStudentsModal({ open, onClose, cls }) {
           </Stack>
         ) : filteredStudents.length === 0 ? (
           <Alert severity="info" sx={{ justifyContent: 'center', my: 2 }}>
-            {search ? 'No student matches your search query.' : 'No enrolled students found for this class.'}
+            {appliedSearch ? `No student matches "${appliedSearch}".` : 'No enrolled students found for this class.'}
           </Alert>
         ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0', borderRadius: '12px' }}>
             <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}>
                 <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12, width: 45 }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Student</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Admission No</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Class Arm</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Gender</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredStudents.map((std, idx) => {
-                  const fullName = `${std.first_name || ''} ${std.last_name || ''}`.trim() || std.name || std.student_name || `Student #${idx + 1}`;
-                  const admNo = std.admission_number || std.adm_no || std.reg_no || 'N/A';
-                  const gender = (std.gender || std.sex || '').toLowerCase();
-                  const genderLabel = gender.startsWith('f') ? 'Female' : gender.startsWith('m') ? 'Male' : 'N/A';
-                  const genderColor = genderLabel === 'Female' ? 'secondary' : genderLabel === 'Male' ? 'primary' : 'default';
+                  const genderVal = (std.gender || '').toLowerCase();
+                  const isFemale = genderVal.startsWith('f');
+                  const isMale = genderVal.startsWith('m');
+                  const genderLabel = isFemale ? 'Female' : isMale ? 'Male' : (std.gender || '—');
+                  
+                  const genderStyle = isFemale
+                    ? { bgcolor: isDark ? 'rgba(219, 39, 119, 0.15)' : '#fce7f3', color: isDark ? '#f472b6' : '#db2777' }
+                    : isMale
+                    ? { bgcolor: isDark ? 'rgba(2, 132, 199, 0.15)' : '#e0f2fe', color: isDark ? '#38bdf8' : '#0284c7' }
+                    : { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b' };
 
                   return (
-                    <TableRow key={std.id || idx} hover>
+                    <TableRow key={std.student_registration_id || idx} hover>
+                      <TableCell sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
+                        {idx + 1}
+                      </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1.25} alignItems="center">
-                          <Avatar sx={{ width: 28, height: 28, fontSize: 12, fontWeight: 700, bgcolor: theme.palette.primary.main }}>
-                            {fullName.charAt(0).toUpperCase()}
-                          </Avatar>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar
+                            src={std.avatar || ''}
+                            alt={std.name}
+                            sx={{ width: 34, height: 34 }}
+                          />
                           <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: isDark ? '#fff' : '#1e293b' }}>
-                            {fullName}
+                            {std.name}
                           </Typography>
                         </Stack>
                       </TableCell>
                       <TableCell sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
-                        {admNo}
+                        {std.admission_no || '—'}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
+                        {std.class_arm || '—'}
                       </TableCell>
                       <TableCell align="right">
-                        <Chip label={genderLabel} size="small" color={genderColor} variant="outlined" sx={{ height: 20, fontSize: 10, fontWeight: 700 }} />
+                        <Chip
+                          label={genderLabel}
+                          size="small"
+                          sx={{
+                            height: 22,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            borderRadius: '6px',
+                            border: 'none',
+                            px: 0.5,
+                            ...genderStyle,
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   );

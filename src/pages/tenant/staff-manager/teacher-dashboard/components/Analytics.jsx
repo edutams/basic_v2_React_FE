@@ -586,7 +586,7 @@ export default function Analytics() {
   return (
     <Stack spacing={2.5}>
       {/* Teaching Engagement + Days in Term */}
-      <Grid container spacing={2.5}>
+      <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
           <TeachingEngagementChart />
         </Grid>

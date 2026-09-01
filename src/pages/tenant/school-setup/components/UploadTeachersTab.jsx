@@ -135,14 +135,18 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         onboarding: true,
       });
       const transformedTeachers = (response.data || []).map((teacher) => {
-        // Class-teacher assignment isn't a flat field on the staff record —
-        // it only comes through the eager-loaded `classTeachers` relation
-        // (classTeachers[0].class_arm_id / .classArm.programmeClass.class_id).
-        // Reading teacher.class_id / teacher.class_arm_id directly (as this
-        // used to) always resolved to undefined, which silently made every
-        // class teacher look like a non-class teacher when editing.
-        const classAssignment = teacher.classTeachers?.[0] || null;
-        const classArm = classAssignment?.classArm || null;
+        // The staff record's primary key IS `user_id` — there is no separate
+        // top-level `id` field in the API response. Using teacher.id here
+        // (undefined for every row) broke React's per-row identity: every
+        // row's key and every row's menu-open check collapsed to the same
+        // `undefined === undefined`, so clicking Edit on one row could act
+        // on a different row's data.
+        //
+        // Relation keys come back snake_case (class_teachers, class_arm,
+        // programme_class), matching the JSON column names, not the PHP
+        // relation method names (classTeachers, classArm, programmeClass).
+        const classAssignment = teacher.class_teachers?.[0] || null;
+        const classArm = classAssignment?.class_arm || null;
         const armLabel = classArm?.class_arm_names
           ? typeof classArm.class_arm_names === 'string'
             ? classArm.class_arm_names
@@ -150,7 +154,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           : null;
 
         return {
-          id: teacher.id,
+          id: teacher.user_id,
           staff_id: teacher.user?.user_id || '',
           surname: teacher.user?.lname || '',
           first_name: teacher.user?.fname || '',
@@ -161,7 +165,8 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           arm: armLabel || teacher.staff_type || 'General',
           user_id: teacher.user_id,
           class_arm_id: classAssignment?.class_arm_id || '',
-          class_id: classArm?.programmeClass?.class_id || classArm?.programmeClass?.class?.id || '',
+          class_id:
+            classArm?.programme_class?.class_id || classArm?.programme_class?.class?.id || '',
           staff_type: teacher.staff_type || 'teaching',
         };
       });
@@ -351,7 +356,9 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
               <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Phone</TableCell>
               <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>Gender</TableCell>
               <TableCell sx={{ fontWeight: 600, width: '18%', bgcolor: '#fff' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>
+                Staff Type/Class Arm
+              </TableCell>
               <TableCell align="center" sx={{ width: '5%', bgcolor: '#fff' }}>
                 Actions
               </TableCell>

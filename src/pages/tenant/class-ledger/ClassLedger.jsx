@@ -33,6 +33,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
@@ -487,6 +489,7 @@ const ClassLedger = () => {
             title="Total Invoice(Compulsory Bill)"
             value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
             colorIndex={1}
+            loading={loadingAnalytics}
             subStats={[
               {
                 label: 'Total Paid',
@@ -517,6 +520,7 @@ const ClassLedger = () => {
             title="Total Invoice (Optional Bill)"
             value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
             colorIndex={2}
+            loading={loadingAnalytics}
             subStats={[
               {
                 label: 'Total Paid',
@@ -546,6 +550,7 @@ const ClassLedger = () => {
             title="Total Payable"
             value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
             colorIndex={0}
+            loading={loadingAnalytics}
             subStats={[
               {
                 label: 'Total Paid',
@@ -719,11 +724,25 @@ const ClassLedger = () => {
             </TableHead>
             <TableBody>
               {loadingTable ? (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
-                    <CircularProgress size={30} />
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Skeleton variant="circular" width={36} height={36} />
+                        <Skeleton variant="text" width={140} height={20} />
+                      </Box>
+                    </TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))
               ) : ledgerData.length > 0 ? (
                 ledgerData.map((student, index) => {
                   return (
@@ -782,8 +801,10 @@ const ClassLedger = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
-                    No students found for the selected class.
+                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      No students found for the selected class.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

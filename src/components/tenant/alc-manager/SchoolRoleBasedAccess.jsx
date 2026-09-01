@@ -28,7 +28,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  LinearProgress,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -701,13 +700,21 @@ const SchoolRoleBasedAccess = () => {
 
                   <TableBody>
                     {loading ? (
-                      [...Array(5)].map((_, i) => (
+                      Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          {[...Array(8)].map((_, j) => (
-                            <TableCell key={j}>
-                              <Skeleton variant="text" width={j === 0 ? 30 : 80} />
-                            </TableCell>
-                          ))}
+                          <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={36} height={36} />
+                              <Skeleton variant="text" width={140} height={20} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width="85%" height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
                         </TableRow>
                       ))
                     ) : displayRoles.length > 0 ? (

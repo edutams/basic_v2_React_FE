@@ -136,7 +136,7 @@ const NonTeachDashboard = () => {
 
     return (
         <PageContainer title="Staff Dashboard" description="Non-teaching staff portal">
-            <Stack spacing={3}>
+            <Stack spacing={1.3}>
                 {/* STATISTICS CARDS */}
                 <Box
                     sx={{

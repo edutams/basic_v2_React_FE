@@ -79,23 +79,22 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
             color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
             textTransform: 'uppercase',
             letterSpacing: 0.5,
-            mb: 2,
+            mb: 0.75,
           }}
         >
           TOP APPLICATION SOURCES
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
-          {/* Donut Chart with Center Text */}
-          <Box sx={{ position: 'relative', width: { xs: 130, sm: 170 }, height: { xs: 130, sm: 170 }, flexShrink: 0, mx: 'auto' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ position: 'relative', width: 170, height: 170, flexShrink: 0, mx: 'auto' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={sources}
                   cx="50%"
                   cy="50%"
-                  innerRadius={'40%'}
-                  outerRadius={'58%'}
+                  innerRadius={'42%'}
+                  outerRadius={'62%'}
                   paddingAngle={3}
                   dataKey="value"
                 >
@@ -115,7 +114,6 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Centered Total Text */}
             <Box
               sx={{
                 position: 'absolute',
@@ -129,21 +127,20 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
               <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block', lineHeight: 1 }}>
                 Total
               </Typography>
-              <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '15px', color: isDark ? '#fff' : '#0f172a', lineHeight: 1.2 }}>
+              <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '16px', color: isDark ? '#fff' : '#0f172a', lineHeight: 1.2 }}>
                 {totalApplicants.toLocaleString()}
               </Typography>
             </Box>
           </Box>
 
-          {/* Legend */}
-          <Stack spacing={0.75} sx={{ flex: 1, minWidth: 150 }}>
+          <Stack spacing={1} sx={{ width: '100%' }}>
             {sources.map((src) => (
               <Box key={src.name} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: src.color, flexShrink: 0 }} />
                   <Typography
                     sx={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 600,
                       color: isDark ? '#cbd5e1' : '#334155',
                       whiteSpace: 'nowrap',
@@ -154,8 +151,8 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
                     {src.name}
                   </Typography>
                 </Box>
-                <Typography sx={{ fontSize: '11px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', flexShrink: 0 }}>
-                  {src.value.toLocaleString()} <Typography component="span" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>({src.pct}%)</Typography>
+                <Typography sx={{ fontSize: '12px', fontWeight: 800, color: isDark ? '#fff' : '#0f172a', flexShrink: 0 }}>
+                  {src.value.toLocaleString()} <Typography component="span" sx={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>({src.pct}%)</Typography>
                 </Typography>
               </Box>
             ))}
@@ -163,13 +160,12 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
         </Box>
       </Box>
 
-      {/* Footer Link */}
       <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
         <Button
           disableRipple
           onClick={() => (onViewSourceReport ? onViewSourceReport() : navigate('/application-tracker'))}
-             endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-            sx={{ fontSize: '12px' }}
+          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
+          sx={{ fontSize: '12px' }}
         >
           View Source Report
         </Button>

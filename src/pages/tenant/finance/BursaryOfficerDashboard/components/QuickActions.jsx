@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography, Button, Stack, useTheme } from '@mui/material';
 import {
   Receipt,
   Payment,
@@ -23,8 +23,7 @@ const ACTIONS = [
 ];
 
 /**
- * Quick Actions — 4x2 grid of action cards matching the design image.
- * Each card navigates to the relevant bursary page.
+ * Quick Actions — badge pill buttons matching Teacher Dashboard / Admin Dashboard style.
  */
 const QuickActions = ({ onAction }) => {
   const theme = useTheme();
@@ -33,109 +32,61 @@ const QuickActions = ({ onAction }) => {
   return (
     <Box
       sx={{
-        height: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-        p: '8px 10px',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        borderRadius: '14px',
+        p: 1.5,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}
     >
-      {/* Quick Actions section */}
-      <Box
+      <Typography
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          mb: 1,
+          fontWeight: 800,
+          fontSize: 14,
+          mb: 1.25,
+          letterSpacing: '-0.2px',
+          color: isDark ? '#fff' : '#0f172a',
         }}
       >
-        <Typography
-          fontWeight={800}
-          sx={{ fontSize: '0.82rem', color: '#111827', letterSpacing: 0.3, whiteSpace: 'nowrap' }}
-        >
-          QUICK ACTIONS
-        </Typography>
-        <Box sx={{ flex: 1, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB'}` }} />
-      </Box>
-
-      {/* Responsive action grid */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            md: 'repeat(2, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 1,
-          flexGrow: 1,
-          alignContent: 'center',
-        }}
-      >
+        Quick Actions
+      </Typography>
+      <Stack direction="row" flexWrap="wrap" gap={1}>
         {ACTIONS.map((item) => {
           const Icon = item.icon;
           return (
-            <Box
+            <Button
               key={item.action}
+              variant="contained"
+              disableElevation
               onClick={() => onAction && onAction(item.action)}
+              startIcon={<Icon sx={{ fontSize: 16 }} />}
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 0.75,
-                py: 1.5,
-                px: 0.5,
-                minWidth: 0,
-                borderRadius: '12px',
+                borderRadius: '8px',
+                px: 1.6,
+                py: 0.65,
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'none',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.bg,
+                color: item.color,
                 border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : `${item.color}26`,
-                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : `${item.color}0f`,
-                cursor: 'pointer',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                transition: 'all 0.18s ease',
                 '&:hover': {
-                  borderColor: isDark ? 'rgba(255,255,255,0.2)' : `${item.color}40`,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : `${item.color}1a`,
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.12)',
+                  bgcolor: item.color,
+                  color: '#ffffff',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                 },
               }}
             >
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '10px',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.65)',
-                  color: isDark ? '#fff' : item.color,
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : `${item.color}26`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon sx={{ fontSize: 19 }} />
-              </Box>
-              <Typography
-                sx={{
-                  fontSize: '0.58rem',
-                  fontWeight: 600,
-                  color: '#374151',
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {item.label}
-              </Typography>
-            </Box>
+              {item.label}
+            </Button>
           );
         })}
-      </Box>
+      </Stack>
     </Box>
   );
 };

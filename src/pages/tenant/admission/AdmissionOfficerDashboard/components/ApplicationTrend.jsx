@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, CircularProgress, useTheme, Skeleton } from '@mui/material';
+import { Box, Typography, Paper, Grid, CircularProgress, useTheme, Skeleton, Alert } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -92,10 +92,10 @@ const ApplicationTrend = ({
             </Box>
           </Box>
         ) : data.length === 0 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', px: 2 }}>
+            <Alert severity="info" sx={{ justifyContent: 'center', width: '100%' }}>
               No trend data available
-            </Typography>
+            </Alert>
           </Box>
         ) : (
         <ResponsiveContainer width="100%" height="100%">

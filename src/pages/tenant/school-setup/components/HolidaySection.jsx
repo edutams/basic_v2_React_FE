@@ -27,6 +27,7 @@ import {
   Grid,
   Stack,
   useTheme,
+  Skeleton,
 } from '@mui/material';
 import {
   IconCalendar,
@@ -696,11 +697,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
           </TextField>
         </Box>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" sx={{ py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : !selectedTermId ? (
+        {!selectedTermId ? (
           <Alert severity="info">Select a session and term to view holidays.</Alert>
         ) : (
           <Box>
@@ -718,12 +715,22 @@ const HolidaySectionInner = ({ refreshKey }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedHolidays.length === 0 ? (
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={160} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                        <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : paginatedHolidays.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                        <Typography color="textSecondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No holidays found for this term.
-                        </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   ) : (

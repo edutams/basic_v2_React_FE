@@ -27,6 +27,7 @@ import {
   Radio,
   Autocomplete,
   Grid,
+  Skeleton,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -571,11 +572,13 @@ const SubjectBank = () => {
                     </TableHead>
                     <TableBody>
                       {loadingCurriculums ? (
-                        <TableRow>
-                          <TableCell colSpan={3} align="center">
-                            <CircularProgress size={24} />
-                          </TableCell>
-                        </TableRow>
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="circular" width={20} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          </TableRow>
+                        ))
                       ) : curriculumData.length > 0 ? (
                         curriculumData.map((item, i) => (
                           <TableRow key={item.id} hover>
@@ -739,11 +742,17 @@ const SubjectBank = () => {
 
                     <TableBody>
                       {loadingSubjectGroups ? (
-                        <TableRow>
-                          <TableCell colSpan={7} align="center">
-                            <CircularProgress size={24} />
-                          </TableCell>
-                        </TableRow>
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                            <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
                       ) : subjectGroupsList.length > 0 ? (
                         subjectGroupsList.map((grp, i) => (
                           <TableRow key={grp.id} hover>

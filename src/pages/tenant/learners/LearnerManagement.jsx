@@ -35,6 +35,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -510,11 +511,21 @@ const LearnerManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Skeleton variant="circular" width={36} height={36} />
+                          <Skeleton variant="text" width={140} height={20} />
+                        </Box>
+                      </TableCell>
+                      <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
                 ) : rows.length > 0 ? (
                   rows.map((row, index) => (
                     <TableRow key={row.id}>

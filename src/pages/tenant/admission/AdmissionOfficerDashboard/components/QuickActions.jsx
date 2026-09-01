@@ -116,107 +116,65 @@ const QuickActions = ({ loading = false }) => {
         flexDirection: 'column',
         borderRadius: '14px',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
         bgcolor: isDark ? theme.palette.background.paper : '#fff',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-        p: '8px 10px',
-        mb: 1.3,
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+        p: '12px 14px',
+        mb: 0.5,
       }}
     >
       {/* Quick Actions header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <Typography fontWeight={800} sx={{ fontSize: '11px', color: '#111827', letterSpacing: 0.3, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Typography fontWeight={800} sx={{ fontSize: '12px', color: isDark ? '#fff' : '#0f172a', letterSpacing: 0.3, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
           QUICK ACTIONS
         </Typography>
         <Box sx={{ flex: 1, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB'}` }} />
       </Box>
 
-      {/* Responsive action grid */}
+      {/* Action Badge Pills */}
       {loading ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
-            gap: 1,
-          }}
-        >
+        <Stack direction="row" flexWrap="wrap" gap={1}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={72} sx={{ borderRadius: '12px' }} />
+            <Skeleton key={i} variant="rounded" width={110} height={34} sx={{ borderRadius: '8px' }} />
           ))}
-        </Box>
+        </Stack>
       ) : (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
-          gap: 1,
-          flexGrow: 1,
-          alignContent: 'center',
-        }}
-      >
-        {ACTIONS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Box
-              key={item.action}
-              onClick={() => handleAction(item.action)}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 0.75,
-                py: { xs: 1, sm: 1.5 },
-                px: { xs: 0.25, sm: 0.5 },
-                minWidth: 0,
-                borderRadius: '12px',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : `${item.color}26`,
-                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : `${item.color}0f`,
-                cursor: 'pointer',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease',
-                '&:hover': {
-                  borderColor: isDark ? 'rgba(255,255,255,0.2)' : `${item.color}40`,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : `${item.color}1a`,
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.12)',
-                },
-              }}
-            >
-              <Box
+        <Stack direction="row" flexWrap="wrap" gap={1}>
+          {ACTIONS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Button
+                key={item.action}
+                variant="contained"
+                disableElevation
+                startIcon={<Icon sx={{ fontSize: 16 }} />}
+                onClick={() => handleAction(item.action)}
                 sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '10px',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.65)',
-                  color: isDark ? '#fff' : item.color,
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : `${item.color}26`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon sx={{ fontSize: 19 }} />
-              </Box>
-              <Typography
-                sx={{
+                  borderRadius: '8px',
+                  px: 1.6,
+                  py: 0.65,
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#374151',
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%',
+                  textTransform: 'none',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.bg,
+                  color: item.color,
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  transition: 'all 0.18s ease',
+                  '&:hover': {
+                    bgcolor: item.color,
+                    color: '#ffffff',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
+                  },
                 }}
               >
                 {item.label}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
+              </Button>
+            );
+          })}
+        </Stack>
       )}
 
       {/* Divider */}

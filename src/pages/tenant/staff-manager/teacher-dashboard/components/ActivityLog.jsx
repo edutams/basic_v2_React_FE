@@ -5,7 +5,8 @@ import {
   Typography,
   Divider,
   CircularProgress,
-  Button
+  Button,
+  useTheme,
 } from "@mui/material";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
@@ -51,6 +52,8 @@ const getLogMeta = (description = "", logName = "", index = 0) => {
 };
 
 export default function ActivityLog() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const authContext = useContext(TenantAuthContext);
   const currentUserId = authContext?.user?.id;
 
@@ -98,121 +101,124 @@ export default function ActivityLog() {
     <>
       <Box
         sx={{
-          bgcolor: "#fff",
+          bgcolor: isDark ? theme.palette.background.paper : "#ffffff",
           border: "1px solid",
-          borderColor: "grey.200",
-          borderRadius: "10px",
+          borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0",
+          borderRadius: "14px",
           p: 2,
+          height: { xs: 360, lg: 445 },
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
           "&:hover": {
             transform: "translateY(-2px)",
-            boxShadow: "0 8px 18px rgba(15, 23, 42, 0.05)",
+            borderColor: "#94a3b8",
+            boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
           },
         }}
       >
-        <Box>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2 }}>
-              Activity Log
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2, flexShrink: 0 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 15, letterSpacing: -0.2, color: isDark ? "#fff" : "#0f172a" }}>
+            Activity Log
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              py: 0.35,
+              px: 1.25,
+            }}
+            onClick={() => setModalOpen(true)}
+          >
+            View all
+          </Button>
+        </Stack>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" flex={1}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : logs.length === 0 ? (
+          <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" flex={1} py={3.5}>
+            <HistoryOutlinedIcon sx={{ fontSize: 32, color: "text.disabled", mb: 0.5 }} />
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.secondary" }}>
+              No recent activity recorded
             </Typography>
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                py: 0.35,
-                px: 1.25,
-              }}
-              onClick={() => setModalOpen(true)}
-            >
-              View all
-            </Button>
-          </Stack>
+            <Typography sx={{ fontSize: 11, color: "text.disabled", mt: 0.25, textAlign: "center" }}>
+              Your actions will appear here as you perform activities.
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1, overflowY: "auto", pr: 0.5, minHeight: 0 }}>
+            <Stack divider={<Divider flexItem />} spacing={1.5}>
+              {logs.map((item, idx) => {
+                const meta = getLogMeta(item.description, item.log_name, idx);
+                const Icon = meta.icon;
+                const titleText = item.description || "System Action";
+                const subtitleText = item.log_name || item.event || "Activity";
+                const timeText = item.my_updated_at || (item.created_at ? dayjs(item.created_at).fromNow() : "Recently");
 
-          {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : logs.length === 0 ? (
-            <Box textAlign="center" py={3.5}>
-              <HistoryOutlinedIcon sx={{ fontSize: 32, color: "text.disabled", mb: 0.5 }} />
-              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.secondary" }}>
-                No recent activity recorded
-              </Typography>
-              <Typography sx={{ fontSize: 11, color: "text.disabled", mt: 0.25 }}>
-                Your actions will appear here as you perform activities.
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ maxHeight: 600, overflowY: "auto", pr: 0.5 }}>
-              <Stack divider={<Divider flexItem />} spacing={1.5}>
-                {logs.map((item, idx) => {
-                  const meta = getLogMeta(item.description, item.log_name, idx);
-                  const Icon = meta.icon;
-                  const titleText = item.description || "System Action";
-                  const subtitleText = item.log_name || item.event || "Activity";
-                  const timeText = item.my_updated_at || (item.created_at ? dayjs(item.created_at).fromNow() : "Recently");
-
-                  return (
-                    <Stack
-                      key={item.id || idx}
-                      direction="row"
-                      spacing={1.25}
-                      alignItems="flex-start"
+                return (
+                  <Stack
+                    key={item.id || idx}
+                    direction="row"
+                    spacing={1.25}
+                    alignItems="flex-start"
+                    sx={{
+                      py: 1,
+                      transition: "transform 150ms ease",
+                      "&:hover": { transform: "translateX(2px)" },
+                    }}
+                  >
+                    <Box
                       sx={{
-                        py: 1,
-                        transition: "transform 150ms ease",
-                        "&:hover": { transform: "translateX(2px)" },
+                        width: 30,
+                        height: 30,
+                        borderRadius: 1.5,
+                        bgcolor: meta.bg,
+                        color: meta.color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
-                      <Box
+                      <Icon sx={{ fontSize: 16 }} />
+                    </Box>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
                         sx={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 1.5,
-                          bgcolor: meta.bg,
-                          color: meta.color,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          lineHeight: 1.3,
+                          color: isDark ? "#fff" : "#1e293b",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
                         }}
                       >
-                        <Icon sx={{ fontSize: 16 }} />
-                      </Box>
-
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            lineHeight: 1.3,
-                            color: "#1e293b",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {titleText}
-                        </Typography>
-                        <Typography sx={{ fontSize: 11, color: "text.secondary", lineHeight: 1.25, mt: 0.25 }}>
-                          {subtitleText}
-                        </Typography>
-                      </Box>
-
-                      <Typography sx={{ fontSize: 10, color: "text.disabled", whiteSpace: "nowrap" }}>
-                        {timeText}
+                        {titleText}
                       </Typography>
-                    </Stack>
-                  );
-                })}
-              </Stack>
-            </Box>
-          )}
-        </Box>
+                      <Typography sx={{ fontSize: 11, color: "text.secondary", lineHeight: 1.25, mt: 0.25 }}>
+                        {subtitleText}
+                      </Typography>
+                    </Box>
+
+                    <Typography sx={{ fontSize: 10, color: "text.disabled", whiteSpace: "nowrap" }}>
+                      {timeText}
+                    </Typography>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          </Box>
+        )}
       </Box>
 
       {/* Full Activity Log Modal */}

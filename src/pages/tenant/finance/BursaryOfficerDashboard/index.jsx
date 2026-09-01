@@ -271,7 +271,7 @@ const BursaryOfficerDashboard = () => {
     >
       {/* ── KPI Cards ──────────────────────────────────────────── */}
       {rp.loading ? (
-        <Grid container spacing={1.25} mb={2}>
+        <Grid container spacing={1.3} mb={1.3}>
           {[0, 1, 2, 3].map((i) => (
             <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper
@@ -280,7 +280,7 @@ const BursaryOfficerDashboard = () => {
                   p: 2,
                   borderRadius: '14px',
                   border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
                   background: isDark ? theme.palette.background.paper : '#fff',
                   boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
                 }}
@@ -296,7 +296,7 @@ const BursaryOfficerDashboard = () => {
           ))}
         </Grid>
       ) : (
-        <Grid container spacing={1.25} mb={2}>
+        <Grid container spacing={1.3} mb={1.3}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               label="Total Expected Income"
@@ -345,10 +345,10 @@ const BursaryOfficerDashboard = () => {
       )}
 
       {/* ── Main content ──────────────────────────────────────── */}
-      <Grid container spacing={2} mb={2}>
+      <Grid container spacing={1.3} mb={1.3}>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Grid container spacing={2}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
+            <Grid container spacing={1.3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 {revenueTrendLoading ? (
                   <PanelSkeleton height={480} />
@@ -391,7 +391,7 @@ const BursaryOfficerDashboard = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
             <SearchStudent
               onSearch={handleSearchStudent}
               loading={searchLoading}

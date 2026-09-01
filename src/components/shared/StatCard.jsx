@@ -83,23 +83,32 @@ const StatCard = ({
       }}
     >
       {/* Icon Badge */}
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '12px',
-          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
-          color: isDark ? '#ffffff' : scheme.color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {Icon && <Icon size={22} />}
-      </Box>
+      {loading ? (
+        <Skeleton
+          variant="rounded"
+          width={40}
+          height={40}
+          sx={{ borderRadius: '12px', flexShrink: 0 }}
+        />
+      ) : (
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '12px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+            color: isDark ? '#ffffff' : scheme.color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {Icon && <Icon size={22} />}
+        </Box>
+      )}
 
       {/* Content */}
       <Box

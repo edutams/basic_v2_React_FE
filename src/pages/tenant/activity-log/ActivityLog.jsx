@@ -29,6 +29,7 @@ import {
   MenuItem,
   FormControl,
   Menu,
+  Skeleton,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -650,11 +651,7 @@ const ActivityLog = () => {
           </Box>
 
           {/* Activity Logs Table */}
-          {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress size={32} />
-            </Box>
-          ) : error ? (
+          {error ? (
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
@@ -675,7 +672,24 @@ const ActivityLog = () => {
                   </TableHead>
 
                   <TableBody>
-                    {displayLogs.length === 0 ? (
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={34} height={34} />
+                              <Skeleton variant="text" width={220} height={20} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : displayLogs.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                           <Alert severity="info" sx={{ justifyContent: 'center' }}>

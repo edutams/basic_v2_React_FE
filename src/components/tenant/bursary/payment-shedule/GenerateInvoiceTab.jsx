@@ -519,6 +519,7 @@ const GenerateInvoiceTab = ({
               severity="info"
               sx={{
                 mb: 2,
+                justifyContent: 'center',
                 '& .MuiAlert-message': { width: '100%' },
               }}
             >

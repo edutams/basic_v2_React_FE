@@ -28,6 +28,7 @@ import {
   TableFooter,
   TablePagination,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -579,7 +580,29 @@ const CompulsoryScheduleTab = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedSchedules.map((schedule, index) => (
+              {loadingTerms ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                    <TableCell>
+                      <Box display="flex" gap={1}>
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedSchedules.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>No payment schedules found</Alert>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedSchedules.map((schedule, index) => (
                 <TableRow key={index} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
@@ -732,7 +755,8 @@ const CompulsoryScheduleTab = ({
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
             </TableBody>
             <TableFooter>
               <TableRow>

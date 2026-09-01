@@ -35,6 +35,7 @@ import {
   InputLabel,
   Avatar,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -949,11 +950,23 @@ const SchoolAlcManager = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={36} height={36} />
+                              <Skeleton variant="text" width={140} height={20} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width="85%" height={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
                     ) : filteredRows.length > 0 ? (
                       filteredRows.map((row, index) => {
                         const isSystemRole = row.is_sys === 'yes';

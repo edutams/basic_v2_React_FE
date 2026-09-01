@@ -26,6 +26,8 @@ import {
   Tabs,
   Tab,
   Link,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
@@ -432,39 +434,56 @@ const Overview = () => {
           </Tabs>
         </Box>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" py={6}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
-            <Table>
-              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell width={20}>Transaction ID</TableCell>
-                  <TableCell>Paid For</TableCell>
-                  <TableCell>Wallet Account</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      No transactions found.
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          variant="outlined"
+          sx={{ borderRadius: 2 }}
+        >
+          <Table>
+            <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell width={20}>Transaction ID</TableCell>
+                <TableCell>Paid For</TableCell>
+                <TableCell>Wallet Account</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Skeleton variant="circular" width={36} height={36} />
+                        <Box>
+                          <Skeleton variant="text" width={120} height={20} />
+                          <Skeleton variant="text" width={70} height={16} />
+                        </Box>
+                      </Box>
                     </TableCell>
+                    <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={130} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                    <TableCell align="right"><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
                   </TableRow>
-                ) : (
+                ))
+              ) : tableData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>No transactions found.</Alert>
+                  </TableCell>
+                </TableRow>
+              ) : (
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
                       <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
@@ -544,7 +563,6 @@ const Overview = () => {
               </TableBody>
             </Table>
           </TableContainer>
-        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
           <Typography variant="body2" color="text.secondary">

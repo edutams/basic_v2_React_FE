@@ -8,6 +8,8 @@ import {
   Tooltip,
   useTheme,
   CircularProgress,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
@@ -26,19 +28,19 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
   const isDark = theme.palette.mode === 'dark';
 
   return (
-    <Paper
+    <Box
       elevation={0}
       sx={{
-        p: '14px',
+        p: '12px',
         borderRadius: '14px',
-        bgcolor: '#ffffff',
+        bgcolor: 'white',
         border: '1px solid #E5E7EB',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
+          // borderColor: '#94a3b8',
           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
         },
         height: '100%',
@@ -82,13 +84,38 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         }}
       >
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress size={30} />
-          </Box>
+          <Grid container spacing={1.5}>
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Grid size={{ xs: 6, sm: 2 }} key={idx}>
+                <Box
+                  sx={{
+                    p: '10px',
+                    borderRadius: '14px',
+                    bgcolor: '#ffffff',
+                    border: '1px solid #E5E7EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Skeleton variant="text" width={45} height={16} />
+                    <Skeleton variant="text" width={30} height={28} sx={{ mt: 0.5 }} />
+                  </Box>
+                  <Skeleton
+                    variant="rounded"
+                    width={36}
+                    height={36}
+                    sx={{ borderRadius: '10px', flexShrink: 0, ml: 1 }}
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
         ) : enrollmentData.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+          <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center', my: 2 }}>
             No enrollment data available. Please ensure class structure is set up.
-          </Typography>
+          </Alert>
         ) : (
           <Grid container spacing={1.5}>
             {enrollmentData.map((cls, index) => {
@@ -100,10 +127,10 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                     <Box
                       onClick={() => onClassClick(cls)}
                       sx={{
-                        p: '14px',
+                        p: '10px',
                         borderRadius: '14px',
                         bgcolor: '#ffffff',
-                        border: '1px solid #E5E7EB',
+                        border: '1px solid #94a3b8',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                         cursor: 'pointer',
@@ -112,7 +139,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                         justifyContent: 'space-between',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          borderColor: '#94a3b8',
+                          // borderColor: '#94a3b8',
                           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                         },
                       }}
@@ -178,7 +205,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
           </Grid>
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

@@ -10,7 +10,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   CircularProgress,
@@ -20,15 +19,29 @@ import {
   TablePagination,
   Chip,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
   VpnKeyOutlined as PermissionIcon,
+  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import aclApi from '@/api/tenant/acl/aclApi';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import { useNotification } from '@/hooks/useNotification';
 
-const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
+const formatRoleName = (name) => {
+  if (!name) return '—';
+  return name
+    .replace(/[_-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const SchoolRolePermissionsModal = ({ open, onClose, role, onPermissionRemoved }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -37,6 +50,11 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [selectedPermForRevoke, setSelectedPermForRevoke] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const notify = useNotification();
 
   useEffect(() => {
     if (open && role) {
@@ -95,7 +113,26 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
     setSearchInput('');
     setPage(0);
     setError(null);
+    setSelectedPermForRevoke(null);
+    setConfirmOpen(false);
     onClose();
+  };
+
+  const handleRemovePermission = async () => {
+    if (!selectedPermForRevoke || !role || removing) return;
+    setRemoving(true);
+    try {
+      await aclApi.revokeSchoolRolePermissions(role.id, [selectedPermForRevoke.name]);
+      notify.success('Permission removed from role successfully!');
+      setConfirmOpen(false);
+      setSelectedPermForRevoke(null);
+      fetchPermissions();
+      onPermissionRemoved?.();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to remove permission from role');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   return (
@@ -111,8 +148,8 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PermissionIcon fontSize="small" color="primary" />
-          <Typography variant="h6" component="span">
-            Permissions for this Role
+          <Typography variant="h6" component="span" sx={{ fontWeight: 700 }}>
+            Permissions for {role?.name ? <Box component="span" sx={{ color: 'primary.main' }}>{formatRoleName(role.name)}</Box> : 'this Role'}
           </Typography>
           {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
@@ -154,7 +191,10 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '10%' }}>#</TableCell>
-                <TableCell sx={{ width: '60%' }}>Permission Name</TableCell>
+                <TableCell sx={{ width: '70%' }}>Permission Name</TableCell>
+                <TableCell sx={{ width: '20%' }} align="center">
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -175,6 +215,21 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
                       <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
                         {perm.name}
                       </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Remove permission from role">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => {
+                            setSelectedPermForRevoke(perm);
+                            setConfirmOpen(true);
+                          }}
+                          disabled={removing}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))
@@ -219,6 +274,32 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
           Close
         </Button>
       </DialogActions>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setSelectedPermForRevoke(null);
+        }}
+        onConfirm={handleRemovePermission}
+        title="Remove permission from role?"
+        message={
+          <Typography component="span" variant="body2" color="text.secondary">
+            Are you sure you want to remove permission{' '}
+            <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+              "{selectedPermForRevoke?.description || selectedPermForRevoke?.name}"
+            </Typography>{' '}
+            from the "
+            <Typography component="span" variant="body2" fontWeight={700} sx={{ color: 'primary.main' }}>
+              {formatRoleName(role?.name || role?.role)}
+            </Typography>
+            " role?
+          </Typography>
+        }
+        confirmText="Remove"
+        cancelText="Cancel"
+        severity="error"
+      />
     </Dialog>
   );
 };

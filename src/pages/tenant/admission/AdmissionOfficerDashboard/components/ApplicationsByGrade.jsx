@@ -13,6 +13,7 @@ import {
   Button,
   useTheme,
   Skeleton,
+  Alert,
 } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -93,10 +94,10 @@ const ApplicationsByGrade = ({
             <TableBody>
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography sx={{ fontSize: '12px', color: '#9CA3AF' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
                       No grade data available
-                    </Typography>
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

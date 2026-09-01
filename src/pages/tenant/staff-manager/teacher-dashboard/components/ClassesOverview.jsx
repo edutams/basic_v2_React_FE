@@ -18,7 +18,18 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
+  TextField,
+  InputAdornment,
+  Avatar,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Alert,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -27,6 +38,7 @@ import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 
 import tenantApi from '@/api/tenant/tenant_api';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
@@ -39,7 +51,158 @@ const colorPresets = [
   { color: '#0d9488', bg: '#ccfbf1', trackColor: '#99f6e4', iconBg: '#14b8a6' },
 ];
 
-function ClassCard({ cls, idx, isAdmin }) {
+function EnrolledStudentsModal({ open, onClose, cls }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open || !cls) return;
+
+    let isMounted = true;
+    const fetchStudents = async () => {
+      setLoading(true);
+      try {
+        let res = null;
+        if (cls.classId && cls.armId) {
+          res = await tenantApi.get(`/students/by-class/${cls.classId}`, { params: { arm_id: cls.armId } });
+        } else if (cls.classId) {
+          res = await tenantApi.get(`/students/by-class/${cls.classId}`);
+        } else {
+          res = await tenantApi.get('/students', { params: cls.armId ? { arm_id: cls.armId } : {} });
+        }
+
+        const data = res?.data?.data ?? res?.data ?? [];
+        const studentArr = Array.isArray(data) ? data : data.data || [];
+
+        if (isMounted) {
+          if (studentArr.length > 0) {
+            setStudents(studentArr);
+          } else if (Array.isArray(cls.rawStudents) && cls.rawStudents.length > 0) {
+            setStudents(cls.rawStudents);
+          } else {
+            setStudents([]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch class students:', err);
+        if (isMounted) {
+          setStudents(Array.isArray(cls?.rawStudents) ? cls.rawStudents : []);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchStudents();
+    return () => {
+      isMounted = false;
+    };
+  }, [open, cls]);
+
+  const filteredStudents = students.filter((s) => {
+    const name = `${s.first_name || ''} ${s.last_name || ''} ${s.name || s.student_name || ''}`.toLowerCase();
+    const adm = (s.admission_number || s.adm_no || '').toLowerCase();
+    const q = search.toLowerCase();
+    return name.includes(q) || adm.includes(q);
+  });
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <Box>
+          <Typography variant="h6" fontWeight={800} sx={{ color: isDark ? '#fff' : '#0f172a' }}>
+            Enrolled Students
+          </Typography>
+          {cls && (
+            <Typography variant="body2" color="text.secondary" fontWeight={500}>
+              {cls.code} • {cls.subject} ({cls.students ?? students.length} Students)
+            </Typography>
+          )}
+        </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ py: 2 }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search student by name or admission no..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {loading ? (
+          <Stack spacing={1.5}>
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} variant="rounded" height={44} sx={{ borderRadius: '10px' }} />
+            ))}
+          </Stack>
+        ) : filteredStudents.length === 0 ? (
+          <Alert severity="info" sx={{ justifyContent: 'center', my: 2 }}>
+            {search ? 'No student matches your search query.' : 'No enrolled students found for this class.'}
+          </Alert>
+        ) : (
+          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0', borderRadius: '12px' }}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Student</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Admission No</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }} align="right">Gender</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredStudents.map((std, idx) => {
+                  const fullName = `${std.first_name || ''} ${std.last_name || ''}`.trim() || std.name || std.student_name || `Student #${idx + 1}`;
+                  const admNo = std.admission_number || std.adm_no || std.reg_no || 'N/A';
+                  const gender = (std.gender || std.sex || '').toLowerCase();
+                  const genderLabel = gender.startsWith('f') ? 'Female' : gender.startsWith('m') ? 'Male' : 'N/A';
+                  const genderColor = genderLabel === 'Female' ? 'secondary' : genderLabel === 'Male' ? 'primary' : 'default';
+
+                  return (
+                    <TableRow key={std.id || idx} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={1.25} alignItems="center">
+                          <Avatar sx={{ width: 28, height: 28, fontSize: 12, fontWeight: 700, bgcolor: theme.palette.primary.main }}>
+                            {fullName.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: isDark ? '#fff' : '#1e293b' }}>
+                            {fullName}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
+                        {admNo}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Chip label={genderLabel} size="small" color={genderColor} variant="outlined" sx={{ height: 20, fontSize: 10, fontWeight: 700 }} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ClassCard({ cls, idx, isAdmin, onStudentClick }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -80,12 +243,11 @@ function ClassCard({ cls, idx, isAdmin }) {
           height: '100%',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#94a3b8',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
           '&:hover': {
             transform: 'translateY(-2px)',
-            borderColor: '#94a3b8',
             boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
           },
         }}
@@ -149,8 +311,20 @@ function ClassCard({ cls, idx, isAdmin }) {
             justifyContent="space-between"
             sx={{ mt: 2.5, pt: 1.75, borderTop: '1px solid', borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9' }}
           >
-            {/* Students Column */}
-            <Box sx={{ flex: 1 }}>
+            {/* Clickable Students Column */}
+            <Box
+              onClick={() => onStudentClick && onStudentClick(cls)}
+              sx={{
+                flex: 1,
+                cursor: 'pointer',
+                p: 0.5,
+                borderRadius: '8px',
+                transition: 'background-color 150ms ease',
+                '&:hover': {
+                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+                },
+              }}
+            >
               <Stack direction="row" alignItems="center" spacing={0.75}>
                 <PeopleOutlineIcon sx={{ fontSize: 20, color: isDark ? '#fff' : '#1e1b4b' }} />
                 <Typography sx={{ fontWeight: 800, fontSize: 17, color: isDark ? '#fff' : '#0f172a', lineHeight: 1 }}>
@@ -290,6 +464,8 @@ export default function ClassesOverview() {
 
   const [classesList, setClassesList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const [selectedStudentClass, setSelectedStudentClass] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -326,6 +502,9 @@ export default function ClassesOverview() {
               teacherName: item.teacher_name ?? '',
               isSubject,
               students: studentCount,
+              classId: item.class_id || item.tenant_class_id,
+              armId: item.class_arm_id || item.arm_id,
+              rawStudents: item.students || item.students_list || [],
               attendance: item.attendance ?? '92%',
               performance: item.performance ?? '88%',
             };
@@ -347,92 +526,104 @@ export default function ClassesOverview() {
     };
   }, []);
 
-  const [expanded, setExpanded] = useState(false);
-
   const displayedClasses = expanded ? classesList : classesList.slice(0, 3);
   const showInsightCard = classesList.length < 3;
 
   return (
-    <Box
-      sx={{
-        bgcolor: (theme) => theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff',
-        border: '1px solid',
-        borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
-        borderRadius: '14px',
-        p: 2,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}
-    >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: (theme) => theme.palette.mode === 'dark' ? '#fff' : '#0f172a' }}>
-          {isAdmin ? 'Teacher Allocations' : 'My Classes Overview'}
-        </Typography>
-        {classesList.length > 3 && (
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => setExpanded((prev) => !prev)}
+    <>
+      <Box
+        sx={{
+          bgcolor: (theme) => theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#94a3b8',
+          borderRadius: '14px',
+          p: 2,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: -0.3, color: (theme) => theme.palette.mode === 'dark' ? '#fff' : '#0f172a' }}>
+            {isAdmin ? 'Teacher Allocations' : 'My Classes Overview'}
+          </Typography>
+          {classesList.length > 3 && (
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setExpanded((prev) => !prev)}
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {expanded ? 'View less' : `View all (${classesList.length})`}
+            </Button>
+          )}
+        </Stack>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+            <CircularProgress size={30} />
+          </Box>
+        ) : classesList.length === 0 ? (
+          <Paper
+            elevation={0}
             sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
+              p: 4,
+              textAlign: 'center',
+              border: '1px dashed',
+              borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
+              borderRadius: '14px',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
             }}
           >
-            {expanded ? 'View less' : `View all (${classesList.length})`}
-          </Button>
+            <ClassOutlinedIcon sx={{ fontSize: 36, color: 'text.disabled', mb: 1 }} />
+            <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
+              {isAdmin ? 'No Teacher Allocations Yet' : 'No Classes Allocated Yet'}
+            </Typography>
+            <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
+              {isAdmin
+                ? 'There are no active subject or class teacher allocations for this session term.'
+                : 'You do not have any active subject or class allocations assigned for this session term.'}
+            </Typography>
+          </Paper>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: classesList.length === 1 ? '1fr 1fr' : 'repeat(3, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            {displayedClasses.map((cls, idx) => (
+              <Box key={cls.id || idx} sx={{ minWidth: 0, height: '100%' }}>
+                <ClassCard
+                  cls={cls}
+                  idx={idx}
+                  isAdmin={isAdmin}
+                  onStudentClick={(selected) => setSelectedStudentClass(selected)}
+                />
+              </Box>
+            ))}
+
+            {showInsightCard && (
+              <Box sx={{ minWidth: 0, height: '100%' }}>
+                <AllocationInsightCard />
+              </Box>
+            )}
+          </Box>
         )}
-      </Stack>
+      </Box>
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-          <CircularProgress size={30} />
-        </Box>
-      ) : classesList.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            border: '1px dashed',
-            borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
-            borderRadius: '14px',
-            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-          }}
-        >
-          <ClassOutlinedIcon sx={{ fontSize: 36, color: 'text.disabled', mb: 1 }} />
-          <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
-            {isAdmin ? 'No Teacher Allocations Yet' : 'No Classes Allocated Yet'}
-          </Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
-            {isAdmin
-              ? 'There are no active subject or class teacher allocations for this session term.'
-              : 'You do not have any active subject or class allocations assigned for this session term.'}
-          </Typography>
-        </Paper>
-      ) : (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: classesList.length === 1 ? '1fr 1fr' : 'repeat(3, 1fr)',
-            },
-            gap: 2,
-          }}
-        >
-          {displayedClasses.map((cls, idx) => (
-            <Box key={cls.id || idx} sx={{ minWidth: 0, height: '100%' }}>
-              <ClassCard cls={cls} idx={idx} isAdmin={isAdmin} />
-            </Box>
-          ))}
-
-          {showInsightCard && (
-            <Box sx={{ minWidth: 0, height: '100%' }}>
-              <AllocationInsightCard />
-            </Box>
-          )}
-        </Box>
-      )}
-    </Box>
+      {/* Enrolled Students Roster Modal */}
+      <EnrolledStudentsModal
+        open={Boolean(selectedStudentClass)}
+        onClose={() => setSelectedStudentClass(null)}
+        cls={selectedStudentClass}
+      />
+    </>
   );
 }

@@ -146,7 +146,7 @@ const AdmissionActivityLog = ({ onViewAll }) => {
       <Card
         elevation={0}
         sx={{
-          height: '100%',
+          height: { xs: 340, lg: 400 },
           display: 'flex',
           flexDirection: 'column',
           borderRadius: '14px',

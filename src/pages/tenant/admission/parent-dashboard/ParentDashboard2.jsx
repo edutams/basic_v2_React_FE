@@ -7,10 +7,12 @@ import {
   getParentWards,
   getParentBatches,
   getParentFinance,
-
   getSessionTermWeeks,
 } from '@/api/tenant/admission/admissionApi';
-import { fetchActiveSessionTerm, fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchActiveSessionTerm,
+  fetchSessionTerms,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import MyWards from './component/my-wards';
 import QuickActions from './component/quick-actions';
@@ -30,9 +32,6 @@ const fmtDate = (d) => {
     year: 'numeric',
   });
 };
-
-
-
 
 const ParentDashboard2 = () => {
   const navigate = useNavigate();
@@ -60,8 +59,9 @@ const ParentDashboard2 = () => {
         setSessionTerms(
           (res.data || []).map((st) => ({
             id: st.id,
-            label: `${st.session?.sesname || ''} ${st.display_term?.display_name || ''}`.trim(),
-          }))
+            label:
+              `${st.session?.session_name || ''} ${st.term?.term_name || ''}`.trim(),
+          })),
         );
 
         if (mounted) {
@@ -100,7 +100,9 @@ const ParentDashboard2 = () => {
         setTermInfo({
           termName: `${session_name || ''} ${term_name || ''}`.trim(),
           daysCount: `${schoolDays} School Days`,
-          startDate: fmtDate(weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date),
+          startDate: fmtDate(
+            weeks.find((w) => new Date(w.start_date).getTime() === first)?.start_date,
+          ),
           endDate: fmtDate(weeks.find((w) => new Date(w.end_date).getTime() === last)?.end_date),
         });
       } catch (err) {
@@ -130,8 +132,6 @@ const ParentDashboard2 = () => {
       mounted = false;
     };
   }, [termsReady]);
-
-
 
   useEffect(() => {
     if (!termsReady) return;
@@ -165,7 +165,7 @@ const ParentDashboard2 = () => {
       return;
     }
     const stillThere = wards.some(
-      (w) => w.id === selectedWard?.id && w.class === selectedWard?.class
+      (w) => w.id === selectedWard?.id && w.class === selectedWard?.class,
     );
     if (!stillThere) setSelectedWard(wards[0]);
   }, [wards]);
@@ -177,7 +177,6 @@ const ParentDashboard2 = () => {
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent Portal Overview">
-      
       <Box
         sx={{
           display: 'grid',

@@ -69,13 +69,11 @@ const StatCardItem = ({
         justifyContent: 'space-between',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick
-          ? {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            }
-          : {},
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
       {/* Top: Icon + Label/Value */}

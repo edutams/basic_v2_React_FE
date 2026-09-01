@@ -25,7 +25,7 @@ const StudentDetailModal = ({ open, onClose, student }) => {
 
     const fetchGuardians = async () => {
       try {
-        const learnerId = student.user_id || student.users?.id || student.student_reg_id;
+        const learnerId = student.user_id || student.users?.id || student.student_registration_id;
         const res = await learnerApi.getParents(learnerId);
         if (cancelled) return;
         const parents = Array.isArray(res.data?.data) ? res.data.data : [];
@@ -48,32 +48,39 @@ const StudentDetailModal = ({ open, onClose, student }) => {
 
     fetchGuardians();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, student]);
 
   if (!student) return null;
 
   const classArmDisplay =
     student.class_arm ||
-    (student.class_name && student.arm_name
-      ? `${student.class_name} (${student.arm_name})`
-      : '—');
+    (student.class_name && student.arm_name ? `${student.class_name} (${student.arm_name})` : '—');
 
   const programmeDisplay =
     student.programme_name ||
     student.programme_code ||
-    (typeof student.programme === 'string' ? student.programme : student.programme?.programme_name || student.programme?.name);
+    (typeof student.programme === 'string'
+      ? student.programme
+      : student.programme?.programme_name || student.programme?.name);
 
   // Use background-fetched guardians, fall back to student prop data
-  const hasGuardian = guardians.length > 0 || !!(student.guardian_name || student.guardian_phone || student.guardian_email);
-  const fallbackGuardian = (student.guardian_name || student.guardian_phone || student.guardian_email)
-    ? [{
-      name: student.guardian_name || null,
-      phone: student.guardian_phone || null,
-      email: student.guardian_email || null,
-      relationship: null,
-    }]
-    : [];
+  const hasGuardian =
+    guardians.length > 0 ||
+    !!(student.guardian_name || student.guardian_phone || student.guardian_email);
+  const fallbackGuardian =
+    student.guardian_name || student.guardian_phone || student.guardian_email
+      ? [
+          {
+            name: student.guardian_name || null,
+            phone: student.guardian_phone || null,
+            email: student.guardian_email || null,
+            relationship: null,
+          },
+        ]
+      : [];
   const displayGuardians = guardians.length > 0 ? guardians : fallbackGuardian;
 
   return (
@@ -82,10 +89,7 @@ const StudentDetailModal = ({ open, onClose, student }) => {
       <DialogContent dividers>
         <Stack spacing={2}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar
-              src={student.avatar}
-              sx={{ width: 56, height: 56, fontSize: 20 }}
-            >
+            <Avatar src={student.avatar} sx={{ width: 56, height: 56, fontSize: 20 }}>
               {(student.name || '?').charAt(0)}
             </Avatar>
             <Box>
@@ -139,7 +143,11 @@ const StudentDetailModal = ({ open, onClose, student }) => {
               {displayGuardians.map((g, i) => (
                 <Box key={i} sx={{ mb: i < displayGuardians.length - 1 ? 1.5 : 0 }}>
                   {g.relationship && (
-                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize', fontWeight: 500 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ textTransform: 'capitalize', fontWeight: 500 }}
+                    >
                       {g.relationship}
                     </Typography>
                   )}
@@ -149,12 +157,18 @@ const StudentDetailModal = ({ open, onClose, student }) => {
                     </Typography>
                   )}
                   {(g.phone || g.email) && (
-                    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ mt: 0.25 }}>
-                      {g.phone && (
-                        <Typography variant="body2">📞 {g.phone}</Typography>
-                      )}
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="center"
+                      flexWrap="wrap"
+                      sx={{ mt: 0.25 }}
+                    >
+                      {g.phone && <Typography variant="body2">📞 {g.phone}</Typography>}
                       {g.email && (
-                        <Typography variant="body2" color="text.secondary">✉️ {g.email}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ✉️ {g.email}
+                        </Typography>
                       )}
                     </Stack>
                   )}

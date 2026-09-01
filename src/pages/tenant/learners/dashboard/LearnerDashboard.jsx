@@ -72,7 +72,7 @@ const LearnerDashboard = () => {
             const match = terms.find(
               (st) =>
                 String(st.session?.id || st.session_id) === String(activeData.session_id) &&
-                String(st.display_term?.id || st.term_id) === String(activeData.term_id),
+                String(st.term?.id || st.term_id) === String(activeData.term_id),
             );
             defaultId = match ? String(match.id) : String(terms[0].id);
           } else {

@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
 import { AuthContext } from '@/context/AgentContext/auth';
 
 import {
@@ -36,7 +35,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
-  Divider
+  Divider,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -46,7 +45,7 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
-import { getStatCardColor } from '@/utils/statCardColors';
+
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -263,10 +262,17 @@ const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
   const notify = useNotification();
 
   const [tab, setTab] = useState(0);
@@ -828,13 +834,19 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -851,26 +863,24 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor0.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                color: isDark ? '#fff' : s0.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsSchoolModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -879,7 +889,13 @@ const Agent = () => {
               mb: 5,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : s0.color,
+              }}
+            >
               {analytics.totalSchools ?? 0}
             </Typography>
           </Box>
@@ -889,27 +905,29 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Approved
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.activeSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.activeSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Pending
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.pendingSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.pendingSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Rejected
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.rejectedSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.rejectedSchools ?? 0}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -918,13 +936,19 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -941,26 +965,24 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -969,7 +991,13 @@ const Agent = () => {
               mb: 5,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : s1.color,
+              }}
+            >
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -986,20 +1014,20 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Primary
               </Typography>
-              <Typography fontWeight={600}>
-                {schoolSummary.primary}
-              </Typography>
+              <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
             </Box>
 
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor, mx: 2 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 2 }}
+            />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Secondary
               </Typography>
-              <Typography fontWeight={600}>
-                {schoolSummary.secondary}
-              </Typography>
+              <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -1008,13 +1036,19 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1031,20 +1065,18 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                color: isDark ? '#fff' : s2.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsLoggedInUsersModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
@@ -1054,11 +1086,14 @@ const Agent = () => {
                 <CircularProgress size={24} />
               </Box>
             ) : (
-              (loginActivities.length > 0 ? loginActivities : [
-                { label: 'Staffs', value: 0 },
-                { label: 'Agents', value: 0 },
-                { label: 'Total', value: 0 },
-              ]).map((item, index) => (
+              (loginActivities.length > 0
+                ? loginActivities
+                : [
+                    { label: 'Staffs', value: 0 },
+                    { label: 'Agents', value: 0 },
+                    { label: 'Total', value: 0 },
+                  ]
+              ).map((item, index) => (
                 <Box
                   key={index}
                   sx={{
@@ -1072,7 +1107,11 @@ const Agent = () => {
                   <Typography variant="body2" color="text.secondary">
                     {item.label}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ color: isDark ? '#ffffff' : s2.color }}
+                  >
                     {item.value}
                   </Typography>
                 </Box>
@@ -1085,13 +1124,19 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1108,20 +1153,18 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor3.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
@@ -1196,7 +1239,10 @@ const Agent = () => {
                   </Box>
                   <Typography variant="h5">List of Organizations</Typography>
                 </Stack>
-                <Button variant="contained" size="small" startIcon={<AddIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{
                     fontSize: {
@@ -1227,7 +1273,10 @@ const Agent = () => {
                 justifyContent: 'flex-end',
               }}
             >
-              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconAdjustmentsHorizontal />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
                   textTransform: 'none',
@@ -1259,7 +1308,7 @@ const Agent = () => {
               </Button>
             </Box>
 
-            <TableContainer >
+            <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -1310,11 +1359,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1614,14 +1663,20 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setImpersonateConfirmOpen(false);
-              setAgentToImpersonate(null);
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={() => {
+                setImpersonateConfirmOpen(false);
+                setAgentToImpersonate(null);
+              }}
             >
               Cancel
             </Button>
-            <Button size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
+            <Button size="small" onClick={handleConfirmedImpersonate}>
+              Yes, Login As
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -1662,7 +1717,12 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={handleCancelDeleteOrganization}>
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={handleCancelDeleteOrganization}
+            >
               Cancel
             </Button>
             <Button size="small" color="error" onClick={handleConfirmDeleteOrganization}>
@@ -1689,13 +1749,16 @@ const Agent = () => {
             setIsViewUsersListModalOpen(true);
           }}
           stats={loginActivities}
-          usersData={data.flatMap(agent =>
-            (agent.tenants || []).map(tenant => ({
+          usersData={data.flatMap((agent) =>
+            (agent.tenants || []).map((tenant) => ({
               id: tenant.id,
               school: tenant.tenant_name,
-              url: (agent.organization_domain || agent.organizationDomain)
-                ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
-                : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
+              url:
+                agent.organization_domain || agent.organizationDomain
+                  ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
+                  : tenant.tenant_short_name
+                    ? `https://${tenant.tenant_short_name}`
+                    : '',
               agent: agent.organizationName || agent.organization_name,
               accessLevel: 'Level ' + (agent.access_level || 2),
               date: tenant.created_at,
@@ -1703,9 +1766,9 @@ const Agent = () => {
                 Teacher: 0,
                 Student: 0,
                 SPA: 0,
-                Total: 0
-              }
-            }))
+                Total: 0,
+              },
+            })),
           )}
         />
         <ViewUsersListModal

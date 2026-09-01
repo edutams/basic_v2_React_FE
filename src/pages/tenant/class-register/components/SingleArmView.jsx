@@ -266,12 +266,12 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     let cancelled = false;
     const run = async () => {
       const results = await Promise.allSettled(
-        students.map((s) => learnerApi.getParents(s.user_id || s.student_reg_id)),
+        students.map((s) => learnerApi.getParents(s.user_id || s.student_registration_id)),
       );
       if (cancelled) return;
       const map = {};
       results.forEach((result, idx) => {
-        const sid = students[idx].student_reg_id;
+        const sid = students[idx].student_registration_id;
         if (result.status === 'fulfilled') {
           const parents = Array.isArray(result.value.data?.data) ? result.value.data.data : [];
           const display = parents.slice(0, 2).map((p) => {
@@ -336,11 +336,16 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     if (!selectedRow || !selectedStatus) return;
     setSavingStatus(true);
     try {
-      await classRegisterApi.updateStudentStatus(selectedRow.student_reg_id, selectedStatus);
+      await classRegisterApi.updateStudentStatus(
+        selectedRow.student_registration_id,
+        selectedStatus,
+      );
       notify.success('Student status updated successfully');
       setStudents((prev) =>
         prev.map((s) =>
-          s.student_reg_id === selectedRow.student_reg_id ? { ...s, status: selectedStatus } : s,
+          s.student_registration_id === selectedRow.student_registration_id
+            ? { ...s, status: selectedStatus }
+            : s,
         ),
       );
       setStatusModalOpen(false);
@@ -355,9 +360,11 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     if (!selectedRow) return;
     setRemovingStudent(true);
     try {
-      await classRegisterApi.removeFromClass(selectedRow.student_reg_id);
+      await classRegisterApi.removeFromClass(selectedRow.student_registration_id);
       notify.success(`${selectedRow.name} removed from class`);
-      setStudents((prev) => prev.filter((s) => s.student_reg_id !== selectedRow.student_reg_id));
+      setStudents((prev) =>
+        prev.filter((s) => s.student_registration_id !== selectedRow.student_registration_id),
+      );
       setRemoveModalOpen(false);
       if (onEnrollmentChange) onEnrollmentChange();
     } catch {
@@ -426,7 +433,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             >
               {sessions.map((s) => (
                 <MenuItem key={s.id} value={s.id}>
-                  {s.sesname || s.name || s.id}
+                  {s.session_name || s.name || s.id}
                 </MenuItem>
               ))}
             </Select>
@@ -478,7 +485,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             <Select value={saArm} label="Arm" onChange={(e) => setSaArm(e.target.value)}>
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
-                  {a.arm_names || a.name}
+                  {a.class_arm_names || a.name}
                 </MenuItem>
               ))}
             </Select>
@@ -503,21 +510,21 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                 }
               }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            // slotProps={{
-            //   input: {
-            //     startAdornment: (
-            //       <InputAdornment position="start">
-            //         <SearchIcon fontSize="small" />
-            //       </InputAdornment>
-            //     ),
-            //   },
-            // }}
+              // slotProps={{
+              //   input: {
+              //     startAdornment: (
+              //       <InputAdornment position="start">
+              //         <SearchIcon fontSize="small" />
+              //       </InputAdornment>
+              //     ),
+              //   },
+              // }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleSearch}
-            // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+              // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
             </Button>
@@ -576,11 +583,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         </Grid>
       </Grid>
 
-      <TableContainer
-        elevation={0}
-        variant="outlined"
-        sx={{ borderRadius: 2, overflowX: 'auto' }}
-      >
+      <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
@@ -625,10 +628,8 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
               students.map((student, index) => {
                 const statusCfg = getStatusConfig(student.status);
                 return (
-                  <TableRow key={student.student_reg_id || index} hover>
-                    <TableCell>
-                      {(meta?.current_page - 1) * meta?.per_page + index + 1}
-                    </TableCell>
+                  <TableRow key={student.student_registration_id || index} hover>
+                    <TableCell>{(meta?.current_page - 1) * meta?.per_page + index + 1}</TableCell>
 
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -676,9 +677,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                               ? 'info.light'
                               : 'success.light',
                           color:
-                            student.gender?.toUpperCase() === 'MALE'
-                              ? 'info.main'
-                              : 'success.main',
+                            student.gender?.toUpperCase() === 'MALE' ? 'info.main' : 'success.main',
                         }}
                       />
                     </TableCell>
@@ -698,7 +697,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
 
                     <TableCell>
                       {(() => {
-                        const guardians = parentsMap[student.student_reg_id];
+                        const guardians = parentsMap[student.student_registration_id];
                         if (guardians === undefined)
                           return (
                             <Typography variant="body2" color="text.disabled">

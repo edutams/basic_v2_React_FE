@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Alert,
-  Button,
-  Stack,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import { Box, CircularProgress, Typography, Alert, Button, Stack } from '@mui/material';
+import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
@@ -33,7 +24,9 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
     setError('');
     try {
       const [subjRes, learnerRes] = await Promise.all([
-        subjectRegistrationApi.getOptionalSubjects(classLevel, { programme_id: programme || undefined }),
+        subjectRegistrationApi.getOptionalSubjects(classLevel, {
+          programme_id: programme || undefined,
+        }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
           session_id: session || undefined,
           term_id: termId || undefined,
@@ -47,12 +40,12 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       if (learnerRes.data?.data) {
         const learnerData = learnerRes.data.data;
         const transformed = learnerData.map((l) => ({
-          id: l.student_reg_id,
+          id: l.student_registration_id,
           name: l.name,
           registered: {},
         }));
         learnerData.forEach((l) => {
-          const learner = transformed.find((t) => t.id === l.student_reg_id);
+          const learner = transformed.find((t) => t.id === l.student_registration_id);
           if (learner) {
             (l.registered_subjects || []).forEach((rs) => {
               learner.registered[rs.subject_id] = true;
@@ -62,7 +55,9 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
         setLearners(transformed);
 
         const orig = {};
-        transformed.forEach((l) => { orig[l.id] = { ...l.registered }; });
+        transformed.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
         setOriginalRegistered(orig);
         setPendingChanges({});
       }
@@ -119,7 +114,9 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       await subjectRegistrationApi.bulkToggle(changes);
       setPendingChanges({});
       const orig = {};
-      learners.forEach((l) => { orig[l.id] = { ...l.registered }; });
+      learners.forEach((l) => {
+        orig[l.id] = { ...l.registered };
+      });
       setOriginalRegistered(orig);
     } catch (e) {
       console.error('Save failed:', e);
@@ -133,7 +130,9 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
   return (
     <Box>
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
       {loading ? (
@@ -142,14 +141,11 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
         </Box>
       ) : subjects.length === 0 ? (
         <Alert severity="info">
-          No subjects have been created for this class. Please go to the Curriculum step to create subjects before registering learners.
+          No subjects have been created for this class. Please go to the Curriculum step to create
+          subjects before registering learners.
         </Alert>
       ) : (
-        <SubjectMatrixTable
-          subjects={subjects}
-          learners={learners}
-          onToggle={toggleRegistration}
-        />
+        <SubjectMatrixTable subjects={subjects} learners={learners} onToggle={toggleRegistration} />
       )}
 
       {pendingCount > 0 && (

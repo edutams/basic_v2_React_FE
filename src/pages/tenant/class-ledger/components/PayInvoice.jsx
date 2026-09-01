@@ -448,7 +448,7 @@ const PayInvoice = () => {
           setSessionInfo({
             session_id: active.session_id,
             term_id: active.term_id,
-            session: active.sesname || '',
+            session: active.session_name || '',
             term: active.term_name || '',
           });
           await fetchInvoiceData();

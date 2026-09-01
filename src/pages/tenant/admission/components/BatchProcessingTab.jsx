@@ -41,14 +41,7 @@ import {
   Download as DownloadIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import {
-  IconNote,
-  IconEdit,
-  IconEye,
-  IconHistory,
-  IconCheck,
-  IconX,
-} from '@tabler/icons-react';
+import { IconNote, IconEdit, IconEye, IconHistory, IconCheck, IconX } from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
@@ -97,7 +90,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
+  const [filter, setFilter] = useState({
+    appBatchId: '',
+    classId: '',
+    status: 'pending',
+    search: '',
+  });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -169,7 +167,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const getBatchLabel = (app) => {
-    const parts = [app.sesname, app.prog_name, app.batchname].filter(Boolean);
+    const parts = [app.session_name, app.prog_name, app.batchname].filter(Boolean);
     return parts.length ? `${parts[0]} - ${parts[1]} (${parts[2]})` : '—';
   };
 
@@ -362,7 +360,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           mname: app.mname || '',
           batchname: app.batchname,
           prog_name: app.prog_name,
-          sesname: app.sesname,
+          session_name: app.session_name,
         };
         await resetAdmissionOffer(payload);
         notify.success('Admission offer reset successfully');
@@ -749,7 +747,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               <MenuItem value="">-- Select Batch --</MenuItem>
               {allBatches.map((batch) => (
                 <MenuItem key={batch.batch_id} value={String(batch.batch_id)}>
-                  {batch.sesname} - {batch.prog_name} ({batch.batchname})
+                  {batch.session_name} - {batch.prog_name} ({batch.batchname})
                 </MenuItem>
               ))}
             </Select>
@@ -812,8 +810,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               revoked applications.
             </Typography>
             <Typography variant="body2">
-              Select (<strong>check</strong>) the applicant(s) you want to include before using
-              the <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
+              Select (<strong>check</strong>) the applicant(s) you want to include before using the{' '}
+              <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
               Only the checked applicants will be included in the downloaded template.
             </Typography>
           </Stack>
@@ -1056,7 +1054,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                           onClick={() => {
                             const form_number = selectedApp?.form_number;
                             handleMenuClose();
-                            if (form_number) navigate(`/admission/print-application/${form_number}`);
+                            if (form_number)
+                              navigate(`/admission/print-application/${form_number}`);
                           }}
                         >
                           <IconEye size={18} style={{ marginRight: 12 }} />
@@ -1096,7 +1095,10 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
                         {/* Reverse Admission Offer */}
                         {selectedApp && canResetOffer(selectedApp) && (
-                          <MenuItem onClick={() => openConfirmResetOffer(selectedApp)} sx={{ color: 'error.main' }}>
+                          <MenuItem
+                            onClick={() => openConfirmResetOffer(selectedApp)}
+                            sx={{ color: 'error.main' }}
+                          >
                             <IconX size={18} style={{ marginRight: 12 }} />
                             Reverse Admission Offer
                           </MenuItem>
@@ -1203,7 +1205,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class Arm --</MenuItem>
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
-                        {arm.arm_names}
+                        {arm.class_arm_names}
                         {arm.student_count !== undefined && (
                           <Typography
                             component="span"

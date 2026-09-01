@@ -11,7 +11,6 @@ import {
   Button,
   TextField,
   MenuItem,
-  IconButton,
   CircularProgress,
   Chip,
   Grid,
@@ -23,10 +22,9 @@ import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
 import {
   fetchProgrammes,
-  fetchSubjectsByProgramme,
   fetchClassArmsByProgramme,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
 const SubjectTeacherAllocation = () => {
@@ -34,7 +32,6 @@ const SubjectTeacherAllocation = () => {
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState([]);
   const [programmes, setProgrammes] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [availableClasses, setAvailableClasses] = useState([]);
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -43,7 +40,6 @@ const SubjectTeacherAllocation = () => {
   // Filters
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedProgramme, setSelectedProgramme] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState('');
   const [selectedClassArm, setSelectedClassArm] = useState('');
 
   // Confirmation Dialog
@@ -56,38 +52,36 @@ const SubjectTeacherAllocation = () => {
 
   const initData = async () => {
     try {
-      // Fetch all subscribed session terms
-      const termsRes = await fetchSessionTerms();
-      if (termsRes.status) {
-        const terms = termsRes.data || [];
-        setSessionTerms(terms);
+      setLoading(true);
+      const [termsRes, progsRes, staffRes] = await Promise.all([
+        fetchSessionTerms(),
+        fetchProgrammes(),
+        staffApi.getAll({ staff_type: 'teaching' }),
+      ]);
 
-        // Find active term
-        const activeTerm = terms.find((t) => t.status?.toUpperCase() === 'ACTIVE');
-        if (activeTerm) {
-          setActiveSessionTermId(activeTerm.id);
-          setSelectedTerm(activeTerm.id);
-        } else if (terms.length > 0) {
-          setActiveSessionTermId(terms[0].id);
-          setSelectedTerm(terms[0].id);
-        }
+      const terms = termsRes.data;
+      setSessionTerms(terms);
+
+      const activeTerm = terms.find((t) => t.status === 'active') || terms[0];
+      const initialTermId = activeTerm ? activeTerm.id : '';
+      if (initialTermId) {
+        setActiveSessionTermId(initialTermId);
+        setSelectedTerm(initialTermId);
       }
 
-      const progsRes = await fetchProgrammes();
-      const progs = progsRes.data || [];
+      const progs = progsRes.data;
       setProgrammes(progs);
-      if (progs.length > 0) {
-        handleProgrammeChange(progs[0].id);
-      }
+      setTeachers(staffRes.data);
 
-      // Fetch teaching staff
-      const staffRes = await staffApi.getAll({ staff_type: 'teaching' });
-      if (staffRes.status) {
-        setTeachers(staffRes.data || []);
+      if (progs.length > 0) {
+        const firstProgId = progs[0].id;
+        handleProgrammeChange(firstProgId, initialTermId);
       }
     } catch (error) {
       notify.error('Failed to initialize data');
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,27 +92,26 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const handleProgrammeChange = async (progId) => {
+  const handleProgrammeChange = async (progId, termId = null) => {
     setSelectedProgramme(progId);
     if (progId) {
       try {
-        const subjectsRes = await fetchSubjectsByProgramme(progId);
-        setSubjects(subjectsRes.data || []);
-
-        // Fetch class arms for this programme
         const classArmsRes = await fetchClassArmsByProgramme(progId);
-        const arms = classArmsRes.data || [];
+        const arms = classArmsRes.data;
         setAvailableClasses(arms);
 
-        // Auto-select the first class arm
         const firstArmId = arms.length > 0 ? arms[0].id : '';
         setSelectedClassArm(firstArmId);
-        fetchAllocations(progId, firstArmId, selectedTerm);
+
+        if (firstArmId) {
+          fetchAllocations(progId, firstArmId, termId || selectedTerm || activeSessionTermId);
+        } else {
+          setAllocations([]);
+        }
       } catch (error) {
-        notify.error('Failed to fetch subjects');
+        notify.error('Failed to fetch class arms');
       }
     } else {
-      setSubjects([]);
       setAllocations([]);
       setAvailableClasses([]);
       setSelectedClassArm('');
@@ -147,10 +140,7 @@ const SubjectTeacherAllocation = () => {
       }
 
       const response = await allocationApi.getSubjectTeacherAllocations(params);
-
-      if (response.status) {
-        setAllocations(response.data || []);
-      }
+      setAllocations(response.data);
     } catch (error) {
       notify.error('Failed to fetch allocations');
       console.error(error);
@@ -159,15 +149,13 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const handleTeacherChange = (index, teacherId) => {
-    const teacher = teachers.find((t) => t.id === teacherId);
+  const handleTeacherChange = (index, teacherUserId) => {
+    const teacher = teachers.find((t) => t.user_id === teacherUserId);
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
-      teacher_id: teacherId,
-      teacher_name: teacher
-        ? `${teacher.user?.fname} ${teacher.user?.lname} (${teacher.staff_id})`
-        : '',
+      teacher_id: teacherUserId,
+      teacher_name: teacher ? teacher.user.full_name : '',
     };
     setAllocations(updatedAllocations);
   };
@@ -182,7 +170,6 @@ const SubjectTeacherAllocation = () => {
 
     try {
       if (allocationToDelete.allocation_id) {
-        // Remove from backend
         const response = await allocationApi.removeSubjectTeacherAllocation(
           allocationToDelete.allocation_id,
         );
@@ -214,29 +201,28 @@ const SubjectTeacherAllocation = () => {
       return;
     }
 
-    if (!activeSessionTermId) {
+    const targetTermId = selectedTerm || activeSessionTermId;
+    if (!targetTermId) {
       notify.error('No active session term found');
       return;
     }
 
     try {
-      // Prepare allocations data
       const allocationsData = allocations
-        .filter((a) => a.teacher_id) // Only send allocations with teachers
+        .filter((a) => a.teacher_id)
         .map((a) => ({
           subject_id: a.subject_id,
           user_id: a.teacher_id,
         }));
 
       const response = await allocationApi.saveSubjectTeacherAllocations({
-        session_term_id: selectedTerm || activeSessionTermId,
+        session_term_id: targetTermId,
         class_arm_id: selectedClassArm,
         allocations: allocationsData,
       });
 
       if (response.status) {
         notify.success('Subject teacher allocations saved successfully');
-        // Refresh allocations
         if (selectedProgramme) {
           fetchAllocations(selectedProgramme, selectedClassArm);
         }
@@ -249,7 +235,6 @@ const SubjectTeacherAllocation = () => {
 
   return (
     <Box>
-      {/* Description */}
       <Alert severity="info" sx={{ mb: 3, color: '#000000', backgroundColor: '#FFFAE6' }}>
         Select from the list of subjects below and allocate a teacher to the subject
       </Alert>
@@ -267,7 +252,7 @@ const SubjectTeacherAllocation = () => {
           >
             {sessionTerms.map((term) => (
               <MenuItem key={term.id} value={term.id}>
-                {term.display_name}
+                {term.session.session_name} · {term.term?.term_name}
               </MenuItem>
             ))}
           </TextField>
@@ -303,7 +288,7 @@ const SubjectTeacherAllocation = () => {
             <MenuItem value="">Select Class</MenuItem>
             {availableClasses.map((cls) => (
               <MenuItem key={cls.id} value={cls.id}>
-                {cls.programme_class?.class?.class_name} {cls.arm_names}
+                {cls.programme_class.class.class_name} - {cls.class_arm_names}
               </MenuItem>
             ))}
           </TextField>
@@ -357,8 +342,8 @@ const SubjectTeacherAllocation = () => {
                       >
                         <MenuItem value="">Select Teacher</MenuItem>
                         {teachers.map((teacher) => (
-                          <MenuItem key={teacher.id} value={teacher.id}>
-                            {teacher.user?.fname} {teacher.user?.lname} ({teacher.staff_id})
+                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                            {teacher.user.full_name} ({teacher.staff_id})
                           </MenuItem>
                         ))}
                       </TextField>
@@ -391,9 +376,12 @@ const SubjectTeacherAllocation = () => {
       {/* Save Button */}
       {allocations.length > 0 && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'right' }}>
-          <Button variant="contained" size="small" onClick={handleSaveAll}>Save All</Button>
+          <Button variant="contained" size="small" onClick={handleSaveAll}>
+            Save All
+          </Button>
         </Box>
       )}
+
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         open={confirmOpen}

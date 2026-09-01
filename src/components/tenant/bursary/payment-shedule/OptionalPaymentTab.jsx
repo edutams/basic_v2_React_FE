@@ -304,7 +304,7 @@ const OptionalPaymentTab = ({
       <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
         <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
           Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.display_term.display_name} ({categoryLabel || '...'})
+          {terms[currentTerm]?.term?.term_name} ({categoryLabel || '...'})
         </Typography>
       </Alert>
 
@@ -336,7 +336,7 @@ const OptionalPaymentTab = ({
             {terms.map((term, idx) => (
               <Tab
                 key={idx}
-                label={term.display_term.display_name}
+                label={term.term?.term_name}
                 sx={{ textTransform: 'none', fontWeight: 600 }}
                 icon={
                   <Box

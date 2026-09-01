@@ -47,19 +47,29 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexShrink: 0 }}>
-          <CampaignOutlined sx={{ fontSize: 18, color: '#16a34a' }} />
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 800,
-              color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1.5, flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CampaignOutlined sx={{ fontSize: 18, color: '#16a34a' }} />
+            <Typography
+              sx={{
+                fontSize: '11px',
+                fontWeight: 800,
+                color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              ANNOUNCEMENTS
+            </Typography>
+          </Box>
+          <Button
+            size='small'
+            onClick={() => (onViewAllAnnouncements ? onViewAllAnnouncements() : navigate('/communications/broadcast-messaging'))}
+            endIcon={<ArrowForward sx={{ fontSize: '14px !important' }} />}
+            sx={{ fontSize: '12px' }}
           >
-            ANNOUNCEMENTS
-          </Typography>
+            View All
+          </Button>
         </Box>
 
         {/* Announcement items list */}
@@ -106,17 +116,6 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
             </Stack>
           ))}
         </Stack>
-      </Box>
-
-      {/* Footer Link */}
-      <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5, flexShrink: 0 }}>          <Button
-          disableRipple
-          onClick={() => (onViewAllAnnouncements ? onViewAllAnnouncements() : navigate('/communications/broadcast-messaging'))}
-          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{ fontSize: '12px' }}
-        >
-          View All Announcements
-        </Button>
       </Box>
     </Paper>
   );

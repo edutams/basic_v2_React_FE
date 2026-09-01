@@ -56,10 +56,10 @@ export const getClassesWithDivisions = async () => {
   }
 };
 
-export const getClassArms = async (classId) => {
+export const getClassArms = async (programme_class_id) => {
   try {
     const res = await api.get('school_setup/student/get_class_arms', {
-      params: { class_id: classId },
+      params: { programme_class_id: programme_class_id },
     });
     return res.data?.data;
   } catch (error) {
@@ -94,10 +94,10 @@ export const getStudentCountByClass = async () => {
   }
 };
 
-export const getLearnersByClass = async (classId, params = {}) => {
+export const getLearnersByClass = async (programmeClassId, params = {}) => {
   try {
     const res = await api.get('school_setup/student/get_learners_by_class', {
-      params: { class_id: classId, ...params },
+      params: { programme_class_id: programmeClassId, ...params },
     });
     return res.data || { data: [], total: 0, per_page: 10 };
   } catch (error) {

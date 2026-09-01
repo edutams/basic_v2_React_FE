@@ -92,7 +92,10 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                     size="small"
                     color="primary"
                   />
-                  <Button variant="contained" size="small" onClick={() => onViewSchemes(subject)}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => onViewSchemes(subject)}
                     disabled={!subject.schemes || Object.keys(subject.schemes).length === 0}
                   >
                     View
@@ -574,7 +577,10 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-setup-panel">
+        <Box
+          sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}
+          data-tour="curriculum-setup-panel"
+        >
           <ParentCard
             title={
               <Box
@@ -586,10 +592,20 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN} variant="contained" size="small" onClick={handleOpenImportModal}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleOpenImportModal}
+                  >
                     Import
                   </Button>
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN} variant="contained" size="small" onClick={handleOpenCreateModal}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleOpenCreateModal}
+                  >
                     Create Curriculum
                   </Button>
                 </Box>
@@ -613,7 +629,11 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
                         Imported
                       </TableCell>
-                      <TableCell data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER} align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
+                      <TableCell
+                        data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER}
+                        align="center"
+                        sx={{ fontWeight: 700, width: '8%', py: 1.5 }}
+                      >
                         Actions
                       </TableCell>
                     </TableRow>
@@ -634,7 +654,10 @@ const CurriculumSetup = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -647,12 +670,22 @@ const CurriculumSetup = () => {
                               label={item.status}
                               size="small"
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
-                                  : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
-                                  : (item.status === 'active' ? '#166534' : '#991b1b'),
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.status === 'active'
+                                      ? 'rgba(0, 194, 146, 0.2)'
+                                      : 'rgba(252, 75, 108, 0.2)'
+                                    : item.status === 'active'
+                                      ? '#dcfce7'
+                                      : '#fee2e2',
+                                color: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.status === 'active'
+                                      ? '#00c292'
+                                      : '#fc4b6c'
+                                    : item.status === 'active'
+                                      ? '#166534'
+                                      : '#991b1b',
                               }}
                             />
                           </TableCell>
@@ -661,12 +694,22 @@ const CurriculumSetup = () => {
                               label={item.agent_curriculum_id ? 'Yes' : 'No'}
                               size="small"
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.agent_curriculum_id ? 'rgba(30, 77, 183, 0.2)' : 'rgba(255, 255, 255, 0.08)')
-                                  : (item.agent_curriculum_id ? '#dbeafe' : '#f3f4f6'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.agent_curriculum_id ? '#4570EA' : '#adb0bb')
-                                  : (item.agent_curriculum_id ? '#1e40af' : '#6b7280'),
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.agent_curriculum_id
+                                      ? 'rgba(30, 77, 183, 0.2)'
+                                      : 'rgba(255, 255, 255, 0.08)'
+                                    : item.agent_curriculum_id
+                                      ? '#dbeafe'
+                                      : '#f3f4f6',
+                                color: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.agent_curriculum_id
+                                      ? '#4570EA'
+                                      : '#adb0bb'
+                                    : item.agent_curriculum_id
+                                      ? '#1e40af'
+                                      : '#6b7280',
                               }}
                             />
                           </TableCell>
@@ -730,7 +773,7 @@ const CurriculumSetup = () => {
                     </MenuItem>
                     {sessions.map((session) => (
                       <MenuItem key={session.id} value={session.id}>
-                        {session.sesname}
+                        {session.session_name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -751,7 +794,13 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN} variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleSaveAssignments}
+                    disabled={loadingSave}
+                  >
                     {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                   </Button>
                 </Box>
@@ -790,7 +839,10 @@ const CurriculumSetup = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -805,7 +857,10 @@ const CurriculumSetup = () => {
                               onChange={(e) => handleClassCurriculumChange(item.id, e.target.value)}
                               displayEmpty
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.03)'
+                                    : '#f8fafc',
                                 borderRadius: 2,
                                 width: '100%',
                               }}
@@ -890,10 +945,19 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseCreateModal} disabled={loadingCreate}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseCreateModal}
+            disabled={loadingCreate}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleCreateCurriculum} disabled={loadingCreate} startIcon={loadingCreate ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleCreateCurriculum}
+            disabled={loadingCreate}
+            startIcon={loadingCreate ? <CircularProgress /> : null}
           >
             {loadingCreate ? 'Creating...' : 'Create'}
           </Button>
@@ -930,10 +994,19 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditModal} disabled={loadingUpdate}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseEditModal}
+            disabled={loadingUpdate}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingUpdate} startIcon={loadingUpdate ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleUpdateCurriculum}
+            disabled={loadingUpdate}
+            startIcon={loadingUpdate ? <CircularProgress /> : null}
           >
             {loadingUpdate ? 'Updating...' : 'Update'}
           </Button>
@@ -950,10 +1023,20 @@ const CurriculumSetup = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseDeleteModal} disabled={loadingDelete}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseDeleteModal}
+            disabled={loadingDelete}
+          >
             Cancel
           </Button>
-          <Button size="small" color="error" onClick={handleDeleteCurriculum} disabled={loadingDelete} startIcon={loadingDelete ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            color="error"
+            onClick={handleDeleteCurriculum}
+            disabled={loadingDelete}
+            startIcon={loadingDelete ? <CircularProgress /> : null}
           >
             {loadingDelete ? 'Deleting...' : 'Delete'}
           </Button>
@@ -1165,7 +1248,11 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
 
-          <Button size="small" onClick={handleImportSelected} disabled={selectedCurriculums.length === 0}>
+          <Button
+            size="small"
+            onClick={handleImportSelected}
+            disabled={selectedCurriculums.length === 0}
+          >
             Import ({selectedCurriculums.length})
           </Button>
         </DialogActions>
@@ -1211,7 +1298,12 @@ const CurriculumSetup = () => {
           <Button variant="contained" size="small" onClick={() => setOpenImportConfirmModal(false)}>
             Cancel
           </Button>
-          <Button size="small" onClick={handleConfirmImport} color="primary" disabled={loadingImport} startIcon={loadingImport ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleConfirmImport}
+            color="primary"
+            disabled={loadingImport}
+            startIcon={loadingImport ? <CircularProgress /> : null}
           >
             {loadingImport ? 'Importing...' : 'Confirm Import'}
           </Button>
@@ -1271,7 +1363,9 @@ const CurriculumSetup = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseViewSchemes}>Close</Button>
+          <Button variant="contained" size="small" onClick={handleCloseViewSchemes}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 

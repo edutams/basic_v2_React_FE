@@ -33,7 +33,6 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import { usePermissions } from '@/context/AgentContext/permissions';
-import { getStatCardColor } from '@/utils/statCardColors';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -84,10 +83,19 @@ function a11yProps(index) {
 const EduTier = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
@@ -147,11 +155,19 @@ const EduTier = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -167,25 +183,23 @@ const EduTier = () => {
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor0.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                color: isDark ? '#fff' : s0.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenTotalTransactionModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box
             sx={{
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -194,7 +208,7 @@ const EduTier = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}>
               0
             </Typography>
           </Box>
@@ -203,7 +217,7 @@ const EduTier = () => {
               <Typography variant="caption" color="text.secondary">Commission</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 600 }}>100,000,000</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
               <Typography variant="caption" color="text.secondary">Volume</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 600 }}>304,043,000</Typography>
@@ -257,11 +271,19 @@ const EduTier = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -277,23 +299,22 @@ const EduTier = () => {
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor1.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                '&:hover': { opacity: 0.85 },
               }}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box
             sx={{
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -302,7 +323,7 @@ const EduTier = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}>
               0
             </Typography>
           </Box>
@@ -311,7 +332,7 @@ const EduTier = () => {
               <Typography variant="caption" color="text.secondary">Primary School</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
               <Typography variant="caption" color="text.secondary">Secondary School</Typography>
               <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
@@ -412,11 +433,19 @@ const EduTier = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -432,20 +461,18 @@ const EduTier = () => {
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor3.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenPlanDistributionModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box sx={{ height: 140, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>

@@ -60,7 +60,7 @@ const MultipleArmView = () => {
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState(''); 
+  const [searchInput, setSearchInput] = useState('');
 
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -74,10 +74,7 @@ const MultipleArmView = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [sessRes, progRes] = await Promise.all([
-          fetchSessions(),
-          fetchProgrammes(),
-        ]);
+        const [sessRes, progRes] = await Promise.all([fetchSessions(), fetchProgrammes()]);
         const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
           ? sessRes.data?.data || sessRes.data
           : [];
@@ -129,9 +126,7 @@ const MultipleArmView = () => {
     }
     fetchClassesByProgramme(programme)
       .then((res) => {
-        const data = Array.isArray(res.data?.data || res.data)
-          ? res.data?.data || res.data
-          : [];
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
         setClassLevel('');
         setArms([]);
@@ -148,9 +143,7 @@ const MultipleArmView = () => {
     }
     fetchClassArmsByClass(classLevel, programme ? { programme_id: programme } : {})
       .then((res) => {
-        const data = Array.isArray(res.data?.data || res.data)
-          ? res.data?.data || res.data
-          : [];
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setArms(data);
       })
       .catch(console.error);
@@ -205,9 +198,9 @@ const MultipleArmView = () => {
     if (students.length > 0) {
       const initial = {};
       students.forEach((s) => {
-        initial[s.student_reg_id] = {};
+        initial[s.student_registration_id] = {};
         arms.forEach((a) => {
-          initial[s.student_reg_id][a.id] = s.class_arm_id === a.id;
+          initial[s.student_registration_id][a.id] = s.class_arm_id === a.id;
         });
       });
       setArmSelections(initial);
@@ -251,7 +244,10 @@ const MultipleArmView = () => {
       Object.entries(armSelections).forEach(([studentRegId, armsMap]) => {
         const selectedArm = Object.entries(armsMap).find(([, selected]) => selected);
         if (selectedArm) {
-          assignments.push({ student_reg_id: Number(studentRegId), class_arm_id: Number(selectedArm[0]) });
+          assignments.push({
+            student_registration_id: Number(studentRegId),
+            class_arm_id: Number(selectedArm[0]),
+          });
         }
       });
 
@@ -309,8 +305,6 @@ const MultipleArmView = () => {
     }
   };
 
-
-
   return (
     <Box sx={{ pt: 1 }}>
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
@@ -319,7 +313,9 @@ const MultipleArmView = () => {
             <InputLabel>Session</InputLabel>
             <Select value={session} label="Session" onChange={(e) => setSession(e.target.value)}>
               {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name || s.name || s.id}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -329,7 +325,9 @@ const MultipleArmView = () => {
             <InputLabel>Term</InputLabel>
             <Select value={term} label="Term" onChange={(e) => setTerm(e.target.value)}>
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.term_name || t.display_name || t.name || t.id}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term_name || t.display_name || t.name || t.id}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -337,9 +335,15 @@ const MultipleArmView = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={programme} label="Programme" onChange={(e) => setProgramme(e.target.value)}>
+            <Select
+              value={programme}
+              label="Programme"
+              onChange={(e) => setProgramme(e.target.value)}
+            >
               {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.programme_name || p.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -347,9 +351,15 @@ const MultipleArmView = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class</InputLabel>
-            <Select value={classLevel} label="Class" onChange={(e) => setClassLevel(e.target.value)}>
+            <Select
+              value={classLevel}
+              label="Class"
+              onChange={(e) => setClassLevel(e.target.value)}
+            >
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+                <MenuItem key={c.id} value={c.id}>
+                  {c.class_name || c.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -394,7 +404,11 @@ const MultipleArmView = () => {
           </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Stack direction="row" spacing={1.5} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+          >
             <Button
               variant="contained"
               size="small"
@@ -441,7 +455,7 @@ const MultipleArmView = () => {
               {arms.map((arm) => (
                 <TableCell key={arm.id} align="center" sx={{ minWidth: 120 }}>
                   <Typography variant="subtitle2" fontWeight={700}>
-                    {arm.arm_names || `Arm ${arm.id}`}
+                    {arm.class_arm_names || `Arm ${arm.id}`}
                   </Typography>
                   <Stack direction="row" spacing={0.5} justifyContent="center" mt={0.5}>
                     <Tooltip title="Check All">
@@ -485,7 +499,7 @@ const MultipleArmView = () => {
               </TableRow>
             ) : (
               students.map((student, idx) => (
-                <TableRow key={student.student_reg_id || idx} hover>
+                <TableRow key={student.student_registration_id || idx} hover>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                       <Typography variant="body2" color="text.secondary" fontWeight={600}>
@@ -515,9 +529,9 @@ const MultipleArmView = () => {
                     <TableCell key={arm.id} align="center">
                       <IconButton
                         size="small"
-                        onClick={() => toggleArmEnrollment(student.student_reg_id, arm.id)}
+                        onClick={() => toggleArmEnrollment(student.student_registration_id, arm.id)}
                       >
-                        {armSelections[student.student_reg_id]?.[arm.id] ? (
+                        {armSelections[student.student_registration_id]?.[arm.id] ? (
                           <CheckCircleIcon color="success" fontSize="medium" />
                         ) : (
                           <CancelOutlinedIcon color="error" fontSize="medium" />

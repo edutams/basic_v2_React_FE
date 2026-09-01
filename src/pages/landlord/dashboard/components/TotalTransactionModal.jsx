@@ -13,56 +13,62 @@ import {
 import { IconCash, IconTrendingUp, IconCoins } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
-import { getStatCardColor } from '@/utils/statCardColors';
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+];
 
 const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Card
       sx={{
-        p: 2.5,
-        borderRadius: '16px',
-        border: isDark
-          ? '1px solid rgba(255, 255, 255, 0.12)'
-          : `1px solid ${colors.borderColor}`,
-        background: isDark ? theme.palette.background.paper : `${colors.cardBg} !important`,
-        boxShadow: isDark
-          ? '0 6px 24px rgba(0,0,0,0.28)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        p: 2,
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         height: '100%',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
         <Box
           sx={{
-            width: 42,
-            height: 42,
-            borderRadius: '10px',
-            background: `${colors.iconBg} !important`,
-            boxShadow: isDark
-              ? '0 4px 12px rgba(0,0,0,0.3)'
-              : `0 4px 14px ${colors.iconGlow}`,
+            width: 36,
+            height: 36,
+            borderRadius: '8px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+            color: isDark ? '#ffffff' : scheme.color,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={20} color={colors.iconColor || '#FFFFFF'} />
+          <Icon size={18} color="currentColor" />
         </Box>
-        <Box>
+        <Box sx={{ textAlign: 'right' }}>
           <Typography
             fontWeight={800}
-            sx={{ fontSize: '22px', color: colors.accentColor, lineHeight: 1.2 }}
+            sx={{ fontSize: '20px', color: isDark ? '#ffffff' : '#0f172a', lineHeight: 1.2 }}
           >
             ₦ {value}
           </Typography>
           <Typography
             variant="caption"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
+            sx={{ color: isDark ? '#ffffff' : '#64748B', fontWeight: 500, fontSize: '12px' }}
           >
             {label}
           </Typography>
@@ -75,16 +81,17 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
 const SideStatRow = ({ label, value, colorIndex = 0, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Stack
       direction="row"
       spacing={1.5}
       alignItems="center"
+      justifyContent="space-between"
       sx={{
         py: 1.2,
-        borderBottom: `1px solid ${isDark ? '#333' : '#f0f0f0'}`,
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}`,
         '&:last-child': { borderBottom: 'none' },
       }}
     >
@@ -93,23 +100,21 @@ const SideStatRow = ({ label, value, colorIndex = 0, icon: Icon }) => {
           width: 32,
           height: 32,
           borderRadius: '8px',
-          background: `${colors.iconBg} !important`,
-          boxShadow: isDark
-            ? '0 2px 8px rgba(0,0,0,0.3)'
-            : `0 2px 8px ${colors.iconGlow}`,
+          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+          color: isDark ? '#ffffff' : scheme.color,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={16} color={colors.iconColor || '#FFFFFF'} />
+        <Icon size={16} color="currentColor" />
       </Box>
-      <Box>
-        <Typography fontWeight={800} sx={{ fontSize: '14px', color: colors.accentColor, lineHeight: 1.2 }}>
+      <Box sx={{ textAlign: 'right' }}>
+        <Typography fontWeight={800} sx={{ fontSize: '14px', color: isDark ? '#ffffff' : '#0f172a', lineHeight: 1.2 }}>
           ₦{value}
         </Typography>
-        <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B', fontSize: '11px' }}>
+        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '11px', display: 'block' }}>
           {label}
         </Typography>
       </Box>

@@ -12,28 +12,28 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
   // Get programme and class details
   // Priority: 1. From academicData relationships (when resuming), 2. From selectedBatch lookup
   const programme = academicData?.intending_programme || selectedBatch?.programme;
-  const selectedClass = academicData?.intending_class || selectedBatch?.classes?.find(
-    cls => cls.id == academicData?.intending_class_id
-  );
+  const selectedClass =
+    academicData?.intending_class ||
+    selectedBatch?.classes?.find((cls) => cls.id == academicData?.intending_class_id);
 
   // Build programme class choice string
-  const programmeClassChoice = programme && selectedClass
-    ? `${programme.programme_name || programme.programme_code} — ${selectedClass.class_name || selectedClass.class_code}`
-    : 'N/A';
+  const programmeClassChoice =
+    programme && selectedClass
+      ? `${programme.programme_name || programme.programme_code} — ${selectedClass.class_name || selectedClass.class_code}`
+      : 'N/A';
 
   // Use intending class from relationship data if available, otherwise use prop
-  const displayIntendingClass = selectedClass?.class_code || selectedClass?.class_name || intendingClass || 'N/A';
+  const displayIntendingClass =
+    selectedClass?.class_code || selectedClass?.class_name || intendingClass || 'N/A';
 
   // Format boarding status
   const studyMode = academicData?.study_mode;
-  const boardingLabel = studyMode === 'day'
-    ? 'Day Student'
-    : studyMode === 'boarding'
-    ? 'Boarding Student'
-    : 'N/A';
+  const boardingLabel =
+    studyMode === 'day' ? 'Day Student' : studyMode === 'boarding' ? 'Boarding Student' : 'N/A';
 
   // Check if has previous school
-  const hasPreviousSchool = academicData?.has_previous_school === true || academicData?.has_previous_school === 1;
+  const hasPreviousSchool =
+    academicData?.has_previous_school === true || academicData?.has_previous_school === 1;
 
   // Resolve prev_school_state and prev_school_lga IDs → human-readable names
   useEffect(() => {
@@ -54,7 +54,7 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
     const resolve = async () => {
       try {
         const states = await getAllStates();
-        const state = states.find(s => s.id === parseInt(stateId));
+        const state = states.find((s) => s.id === parseInt(stateId));
 
         if (!state) {
           setPrevStateName('N/A');
@@ -70,7 +70,7 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
         }
 
         const lgas = await getLgasByState(state.id);
-        const lga = lgas.find(l => l.id === parseInt(lgaId));
+        const lga = lgas.find((l) => l.id === parseInt(lgaId));
         setPrevLgaName(lga?.lga_name || 'N/A');
       } catch (err) {
         console.error('Failed to resolve previous school location names:', err);
@@ -91,10 +91,18 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField label="Previous school name" value={academicData?.prev_school_name || 'N/A'} />
+              <ReadField
+                label="Previous school name"
+                value={academicData?.prev_school_name || 'N/A'}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField label="Previous school address" value={academicData?.prev_school_address || 'N/A'} multiline rows={2} />
+              <ReadField
+                label="Previous school address"
+                value={academicData?.prev_school_address || 'N/A'}
+                multiline
+                rows={2}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <ReadField label="State" value={prevStateName || 'N/A'} />
@@ -114,28 +122,23 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
           <ReadField label="Intending Class" value={displayIntendingClass} />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <ReadField
-            label="Programme Class Choice"
-            value={programmeClassChoice}
-          />
+          <ReadField label="Programme Class Choice" value={programmeClassChoice} />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <ReadField label="Study Mode" value={boardingLabel} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <ReadField 
-            label="Admission Batch" 
-            value={selectedBatch?.batch_name || 'N/A'} 
-          />
+          <ReadField label="Admission Batch" value={selectedBatch?.batch_name || 'N/A'} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <ReadField 
-            label="Session/Term" 
+          <ReadField
+            label="Session/Term"
             value={
               selectedBatch?.session_term
-                ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
+                ? `${selectedBatch.session_term.session?.session_name || ''} ${selectedBatch.session_term.term?.term_name || ''}`.trim() ||
+                  'N/A'
                 : 'N/A'
-            } 
+            }
           />
         </Grid>
       </Grid>

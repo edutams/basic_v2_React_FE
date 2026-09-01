@@ -44,7 +44,7 @@ export const autoAdmitApplications = async (data) => {
 /**
  * Reset admission offer for an applicant
  * POST /admission/process/reset-offer
- * @param {Object} payload - { form_number, status, fname, lname, mname, batchname, prog_name, sesname }
+ * @param {Object} payload - { form_number, status, fname, lname, mname, batchname, prog_name, session_name }
  */
 export const resetAdmissionOffer = async (payload) => {
   const response = await api.post('/admission/process/reset-offer', payload);

@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Stack,
-  CircularProgress,
-  Typography,
-  Alert,
-  Button,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import { Box, Stack, CircularProgress, Typography, Alert, Button } from '@mui/material';
+import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
@@ -34,7 +25,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
     setError('');
     try {
       const [subjRes, learnerRes] = await Promise.all([
-        subjectRegistrationApi.getGeneralSubjects(classLevel, { programme_id: programme || undefined }),
+        subjectRegistrationApi.getGeneralSubjects(classLevel, {
+          programme_id: programme || undefined,
+        }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
           session_id: session || undefined,
           term_id: termId || undefined,
@@ -48,12 +41,12 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       if (learnerRes.data?.data) {
         const learnerData = learnerRes.data.data;
         const transformed = learnerData.map((l) => ({
-          id: l.student_reg_id,
+          id: l.student_registration_id,
           name: l.name,
           registered: {},
         }));
         learnerData.forEach((l) => {
-          const learner = transformed.find((t) => t.id === l.student_reg_id);
+          const learner = transformed.find((t) => t.id === l.student_registration_id);
           if (learner) {
             (l.registered_subjects || []).forEach((rs) => {
               learner.registered[rs.subject_id] = true;
@@ -64,7 +57,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
 
         // Snapshot the original registration state
         const orig = {};
-        transformed.forEach((l) => { orig[l.id] = { ...l.registered }; });
+        transformed.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
         setOriginalRegistered(orig);
         setPendingChanges({});
       }
@@ -122,7 +117,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       setPendingChanges({});
       // Update original snapshot to match current state after save
       const orig = {};
-      learners.forEach((l) => { orig[l.id] = { ...l.registered }; });
+      learners.forEach((l) => {
+        orig[l.id] = { ...l.registered };
+      });
       setOriginalRegistered(orig);
     } catch (e) {
       console.error('Save failed:', e);
@@ -176,7 +173,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
   return (
     <Box>
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
       {loading ? (
@@ -185,7 +184,8 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
         </Box>
       ) : subjects.length === 0 ? (
         <Alert severity="info">
-          No subjects have been created for this class. Please go to the Curriculum step to create subjects before registering learners.
+          No subjects have been created for this class. Please go to the Curriculum step to create
+          subjects before registering learners.
         </Alert>
       ) : (
         <SubjectMatrixTable

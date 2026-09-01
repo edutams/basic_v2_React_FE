@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import tenantApi from '@/api/tenant/tenant_api';
+import { fetchActiveSessionTermId } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 
 import DashboardHeader from './components/DashboardHeader';
 import TopStatCards from './components/TopStatCards';
 import QuickActions from './components/QuickActions';
-import SearchAndRoleBar from './components/SearchAndRoleBar';
 import FinancialOverviewBar from './components/FinancialOverviewBar';
 import AcademicPerformanceOverview from './components/AcademicPerformanceOverview';
 import AttendanceOverview from './components/AttendanceOverview';
@@ -37,8 +37,7 @@ const AdminDashboard = () => {
     let mounted = true;
     const load = async () => {
       try {
-        const activeRes = await tenantApi.get('/curriculum/active-session-term');
-        const activeTermId = activeRes?.data?.data?.session_term_id;
+        const activeTermId = await fetchActiveSessionTermId();
         if (!activeTermId) return;
 
         const [weeksRes, holidaysRes] = await Promise.allSettled([
@@ -200,7 +199,6 @@ const AdminDashboard = () => {
       >
         {/* Left Column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
-          <SearchAndRoleBar />
           <QuickActions loading={overview.loading} />
 
           {/* Financial Overview Bar (4 Mini Fee Cards) */}

@@ -102,7 +102,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         setClasses(flatClasses);
         const countsObj = {};
         (countsData || []).forEach((item) => {
-          countsObj[item.class_id] = item.count;
+          countsObj[item.programme_class_id] = item.count;
         });
         setStudentCounts(countsObj);
       } catch (error) {
@@ -148,7 +148,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         const countsData = await getStudentCountByClass();
         const countsObj = {};
         (countsData || []).forEach((item) => {
-          countsObj[item.class_id] = item.count;
+          countsObj[item.programme_class_id] = item.count;
         });
         setStudentCounts(countsObj);
         onLearnerAdded?.();
@@ -176,7 +176,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     const countsData = await getStudentCountByClass();
     const countsObj = {};
     (countsData || []).forEach((item) => {
-      countsObj[item.class_id] = item.count;
+      countsObj[item.programme_class_id] = item.count;
     });
     setStudentCounts(countsObj);
     onLearnerAdded?.();
@@ -274,7 +274,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
                     <Typography variant="subtitle2" align="center">
                       <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
-                        {studentCounts[item.id] || 0}
+                        {studentCounts[item.programme_class_id] || 0}
                       </Link>
                     </Typography>
                   </TableCell>
@@ -284,7 +284,11 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                       sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
                       align="center"
                     >
-                      <Button variant="contained" size="small" onClick={() => handleAddNewLearner(item)}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleAddNewLearner(item)}
+                      >
                         Add New Learner
                       </Button>
                       {index === 0 && activeHint === 'add' && (
@@ -330,12 +334,20 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                       align="center"
                     >
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <Button variant="contained" size="small" startIcon={<DownloadIcon />}
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<DownloadIcon />}
                           onClick={() => handleDownloadTemplate(item.programme_class_id)}
                         >
                           Download Template
                         </Button>
-                        <Button variant="contained" size="small" startIcon={<UploadIcon />} onClick={handleUploadClick}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<UploadIcon />}
+                          onClick={handleUploadClick}
+                        >
                           Upload Template
                         </Button>
                       </Box>
@@ -389,13 +401,13 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveLearner}
-        classId={selectedClass?.id}
+        programmeClassId={selectedClass?.programme_class_id}
         className={selectedClass?.class_name}
       />
       <LearnerListModal
         open={learnerListModalOpen}
         onClose={() => setLearnerListModalOpen(false)}
-        classId={selectedClass?.id}
+        programmeClassId={selectedClass?.programme_class_id}
         className={selectedClass?.class_name}
       />
 

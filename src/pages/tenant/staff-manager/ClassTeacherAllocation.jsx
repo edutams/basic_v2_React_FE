@@ -132,15 +132,13 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleTeacherChange = (index, teacherId) => {
-    const teacher = teachers.find((t) => t.id === teacherId);
+  const handleTeacherChange = (index, teacherUserId) => {
+    const teacher = teachers.find((t) => t.user_id === teacherUserId);
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
-      teacher_id: teacherId,
-      teacher_name: teacher
-        ? `${teacher.user?.fname} ${teacher.user?.lname} (${teacher.staff_id})`
-        : '',
+      teacher_id: teacherUserId,
+      teacher_name: teacher ? teacher.user.full_name : '',
     };
     setAllocations(updatedAllocations);
   };
@@ -155,7 +153,6 @@ const ClassTeacherAllocation = () => {
 
     try {
       if (allocationToDelete.allocation_id) {
-        // Remove from backend
         const response = await allocationApi.removeClassTeacherAllocation(
           allocationToDelete.allocation_id,
         );
@@ -311,8 +308,8 @@ const ClassTeacherAllocation = () => {
                       >
                         <MenuItem value="">Select Teacher</MenuItem>
                         {teachers.map((teacher) => (
-                          <MenuItem key={teacher.id} value={teacher.id}>
-                            {teacher.user?.fname} {teacher.user?.lname} ({teacher.staff_id})
+                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                            {teacher.user.full_name} ({teacher.staff_id})
                           </MenuItem>
                         ))}
                       </TextField>

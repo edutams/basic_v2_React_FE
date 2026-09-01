@@ -158,19 +158,6 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {/* <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          bgcolor: '#e3f2fd',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <IconUsers size={18} color="#1976d2" />
-                      </Box> */}
                       <Avatar
                         src={staffMember.user.avatar}
                         alt={staffMember.user.lname[0]}
@@ -183,7 +170,6 @@ const NonTeachingStaffTab = ({
                           flexShrink: 0,
                         }}
                       >
-                        {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
                       </Avatar>
                       <Typography variant="body2">{staffMember.user?.full_name}</Typography>
                     </Box>

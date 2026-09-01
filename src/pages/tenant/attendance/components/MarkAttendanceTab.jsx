@@ -113,7 +113,8 @@ const defaultDateContent = () => ({
  * Returns 'unknown' if is_present is null.
  */
 const getPeriodStatus = (periodEntry) => {
-  if (!periodEntry || periodEntry.is_present === null || periodEntry.is_present === undefined) return 'unknown';
+  if (!periodEntry || periodEntry.is_present === null || periodEntry.is_present === undefined)
+    return 'unknown';
   return periodEntry.is_present;
 };
 
@@ -163,7 +164,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [attendanceType, setAttendanceType] = useState('morning');
 
   const { roles } = useTenantAuth();
-  const isClassTeacher = Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
+  const isClassTeacher =
+    Array.isArray(roles) &&
+    roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
 
   // ── Learners & Attendance Data ────────────────────────────
   const [learners, setLearners] = useState([]);
@@ -176,7 +179,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [alertConfirmOpen, setAlertConfirmOpen] = useState(false);
   const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
-  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [alertSnackbar, setAlertSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
   const [autoSendReport, setAutoSendReport] = useState(false);
   const [togglingReport, setTogglingReport] = useState(false);
 
@@ -221,7 +228,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           if (ackRes?.academic_week_id) {
             setActiveWeekId(String(ackRes.academic_week_id));
           }
-        } catch (e) { /* best-effort */ }
+        } catch (e) {
+          /* best-effort */
+        }
 
         // If class teacher, auto-populate programme/class/arm and load report setting
         if (isClassTeacher) {
@@ -238,7 +247,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               if (tcData.class_id) {
                 setAttClass(tcData.class_id);
                 // Fetch arms and pre-select
-                const armRes = await fetchClassArmsByClass(tcData.class_id, { programme_id: tcData.programme_id || undefined });
+                const armRes = await fetchClassArmsByClass(tcData.class_id, {
+                  programme_id: tcData.programme_id || undefined,
+                });
                 const armsData = armRes.data || [];
                 setArms(Array.isArray(armsData) ? armsData : []);
                 if (tcData.class_arm_id) {
@@ -246,43 +257,53 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 }
               }
             }
-          } catch (e) { console.error('Failed to load teacher class:', e); }
+          } catch (e) {
+            console.error('Failed to load teacher class:', e);
+          }
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     };
     load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!attSession) return;
-    fetchTerms(attSession).then((r) => {
-      const termsData = r.data?.data || r.data || [];
-      setTerms(termsData);
-      if (Array.isArray(termsData) && termsData.length > 0) {
-        const match = termsData.find((t) => String(t.id) === String(attTermId));
-        if (match) {
-          setAttTerm(match.id);
-        } else {
-          setAttTerm(termsData[0].id);
+    fetchTerms(attSession)
+      .then((r) => {
+        const termsData = r.data?.data || r.data || [];
+        setTerms(termsData);
+        if (Array.isArray(termsData) && termsData.length > 0) {
+          const match = termsData.find((t) => String(t.id) === String(attTermId));
+          if (match) {
+            setAttTerm(match.id);
+          } else {
+            setAttTerm(termsData[0].id);
+          }
         }
-      }
-    }).catch(console.error);
+      })
+      .catch(console.error);
   }, [attSession]);
 
   useEffect(() => {
     if (!attProgramme) return;
-    fetchClassesByProgramme(attProgramme).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setClasses(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassesByProgramme(attProgramme)
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setClasses(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [attProgramme]);
 
   useEffect(() => {
     if (!attClass) return;
-    fetchClassArmsByClass(attClass, { programme_id: attProgramme || undefined }).then((r) => {
-      const d = r.data || [];
-      setArms(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassArmsByClass(attClass, { programme_id: attProgramme || undefined })
+      .then((r) => {
+        const d = r.data || [];
+        setArms(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [attClass, attProgramme]);
 
   // ── Fetch Weeks when session or term changes ──────────────
@@ -297,19 +318,20 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         const data = res.data?.data || [];
         const weeks = Array.isArray(data) ? data : [];
         setWeeks(weeks);
-        const match = activeWeekId
-          ? weeks.find((w) => String(w.week_id) === activeWeekId)
-          : null;
+        const match = activeWeekId ? weeks.find((w) => String(w.week_id) === activeWeekId) : null;
         if (match) {
           setAttWeek(match.wk_id ?? match.week_id ?? match.id);
         } else {
-          const fallback = weeks.find((w) => w.status === 'active')
-            || (weeks.length > 0 ? weeks[weeks.length - 1] : null);
+          const fallback =
+            weeks.find((w) => w.status === 'active') ||
+            (weeks.length > 0 ? weeks[weeks.length - 1] : null);
           if (fallback) {
             setAttWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
           }
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     };
     fetchWeeks();
   }, [attSession, attTermId, activeWeekId]);
@@ -324,9 +346,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   }, [attWeek, weeks]);
 
   const fallbackWeekDates = React.useMemo(() => {
-    return selectedWeek?.start_date
-      ? generateWeekDates(selectedWeek.start_date)
-      : [];
+    return selectedWeek?.start_date ? generateWeekDates(selectedWeek.start_date) : [];
   }, [selectedWeek]);
 
   // ── Initialize selected days when week changes ───────────
@@ -342,7 +362,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       try {
         const raw = localStorage.getItem(storageKey);
         if (raw) saved = JSON.parse(raw);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     setSelectedDays((prev) => {
@@ -373,9 +395,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       });
       if (res.data?.status && res.data?.data) {
         const {
-          dates = [], holidays = {}, students = [],
-          learners_present_count, total_learners,
-          attendance_percent, comparison_diff, comparison_text,
+          dates = [],
+          holidays = {},
+          students = [],
+          learners_present_count,
+          total_learners,
+          attendance_percent,
+          comparison_diff,
+          comparison_text,
         } = res.data.data;
 
         if (learners_present_count !== undefined) setLearnersPresentCount(learners_present_count);
@@ -405,13 +432,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             if (holidays[date]) {
               seeded[date] = { __holiday: true };
             } else {
-              const content = existing[date] && typeof existing[date] === 'object'
-                ? { ...existing[date] }
-                : defaultDateContent();
+              const content =
+                existing[date] && typeof existing[date] === 'object'
+                  ? { ...existing[date] }
+                  : defaultDateContent();
               seeded[date] = content;
             }
           });
-          attMap[learner.student_reg_id] = seeded;
+          attMap[learner.student_registration_id] = seeded;
         });
         setAttendanceData(attMap);
       }
@@ -458,7 +486,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       if (storageKey) {
         try {
           localStorage.setItem(storageKey, JSON.stringify(next));
-        } catch { /* localStorage full or unavailable */ }
+        } catch {
+          /* localStorage full or unavailable */
+        }
       }
       return next;
     });
@@ -470,15 +500,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     if (onFilter) onFilter(attArm, attSession, attTermId, attWeek, attProgramme, attClass);
     // Load weekly report setting from backend when an arm is selected
     if (attArm) {
-      attendanceApi.getTeacherClass().then((res) => {
-        const tcData = res.data?.data;
-        if (tcData && String(tcData.class_arm_id) === String(attArm)) {
-          setAutoSendReport(tcData.auto_send_weekly_report === true);
-        } else {
-          // For admin-selected arms (not the teacher's own), set to false
-          // The toggle API will properly set it when user interacts with checkbox
-        }
-      }).catch(() => {});
+      attendanceApi
+        .getTeacherClass()
+        .then((res) => {
+          const tcData = res.data?.data;
+          if (tcData && String(tcData.class_arm_id) === String(attArm)) {
+            setAutoSendReport(tcData.auto_send_weekly_report === true);
+          } else {
+            // For admin-selected arms (not the teacher's own), set to false
+            // The toggle API will properly set it when user interacts with checkbox
+          }
+        })
+        .catch(() => {});
     }
   };
 
@@ -501,7 +534,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
           if (morningStatus !== null && morningStatus !== undefined) {
             records.push({
-              student_id: Number(learnerId),
+              student_registration_id: Number(learnerId),
               week_term_id: Number(attWeek),
               date: day,
               period: 'morning',
@@ -512,7 +545,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
           if (afternoonStatus !== null && afternoonStatus !== undefined) {
             records.push({
-              student_id: Number(learnerId),
+              student_registration_id: Number(learnerId),
               week_term_id: Number(attWeek),
               date: day,
               period: 'afternoon',
@@ -528,14 +561,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
         setAlertSnackbar({
           open: true,
-          message: `Attendance submitted successfully — ${records.length} record(s) saved.` +
+          message:
+            `Attendance submitted successfully — ${records.length} record(s) saved.` +
             (autoSendReport ? ' Weekly report will be sent automatically by the scheduler.' : ''),
           severity: 'success',
         });
       } else {
         setAlertSnackbar({
           open: true,
-          message: 'No attendance records to submit. Mark at least one student as present or absent on the selected days.',
+          message:
+            'No attendance records to submit. Mark at least one student as present or absent on the selected days.',
           severity: 'warning',
         });
       }
@@ -609,9 +644,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   const handleSendAlerts = async () => {
-    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    const ids = learners.map((l) => Number(l.student_registration_id)).filter(Boolean);
     if (ids.length === 0) {
-      setAlertSnackbar({ open: true, message: 'No learners to send alerts for', severity: 'warning' });
+      setAlertSnackbar({
+        open: true,
+        message: 'No learners to send alerts for',
+        severity: 'warning',
+      });
       return;
     }
     // Get only the checked (selected) days
@@ -632,9 +671,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   const handleSendRiskAlerts = async () => {
-    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    const ids = learners.map((l) => Number(l.student_registration_id)).filter(Boolean);
     if (ids.length === 0) {
-      setAlertSnackbar({ open: true, message: 'No learners to send risk alerts for', severity: 'warning' });
+      setAlertSnackbar({
+        open: true,
+        message: 'No learners to send risk alerts for',
+        severity: 'warning',
+      });
       return;
     }
     // Get only the checked (selected) days
@@ -687,7 +730,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   return (
     <Box sx={{ pt: 1 }}>
       {/* ── Action Buttons Row ──────────────────────────── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} mb={3} gap={1.5}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ sm: 'center' }}
+        mb={3}
+        gap={1.5}
+      >
         <Typography variant="h6" fontWeight={700}>
           Learner Attendance
         </Typography>
@@ -732,9 +781,15 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
-            <Select value={attSession} label="Session" onChange={(e) => setAttSession(e.target.value)}>
+            <Select
+              value={attSession}
+              label="Session"
+              onChange={(e) => setAttSession(e.target.value)}
+            >
               {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name || s.name || s.id}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -742,14 +797,20 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
-            <Select value={attTerm} label="Term" onChange={(e) => {
-              const val = e.target.value;
-              setAttTerm(val);
-              const term = terms.find((t) => t.id === val);
-              if (term) setAttTermId(term.id);
-            }}>
+            <Select
+              value={attTerm}
+              label="Term"
+              onChange={(e) => {
+                const val = e.target.value;
+                setAttTerm(val);
+                const term = terms.find((t) => t.id === val);
+                if (term) setAttTermId(term.id);
+              }}
+            >
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term_name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -772,9 +833,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={attProgramme} label="Programme" onChange={(e) => setAttProgramme(e.target.value)} disabled={isClassTeacher}>
+            <Select
+              value={attProgramme}
+              label="Programme"
+              onChange={(e) => setAttProgramme(e.target.value)}
+              disabled={isClassTeacher}
+            >
               {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.programme_name || p.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -782,9 +850,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class</InputLabel>
-            <Select value={attClass} label="Class" onChange={(e) => setAttClass(e.target.value)} disabled={isClassTeacher}>
+            <Select
+              value={attClass}
+              label="Class"
+              onChange={(e) => setAttClass(e.target.value)}
+              disabled={isClassTeacher}
+            >
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.class_name || c.name}</MenuItem>
+                <MenuItem key={c.id} value={c.id}>
+                  {c.class_name || c.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -792,15 +867,28 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={attArm} label="Class Arm" onChange={(e) => setAttArm(e.target.value)} disabled={isClassTeacher}>
+            <Select
+              value={attArm}
+              label="Class Arm"
+              onChange={(e) => setAttArm(e.target.value)}
+              disabled={isClassTeacher}
+            >
               {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>
+                  {a.class_arm_names}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1.8 }}>
-          <Button variant="contained" size="small" fullWidth startIcon={<FilterIcon />} onClick={handleApplyFilter}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            startIcon={<FilterIcon />}
+            onClick={handleApplyFilter}
+          >
             Filter
           </Button>
         </Grid>
@@ -824,9 +912,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             px: 1.5,
             py: 0.5,
             borderRadius: 1.5,
-            bgcolor: attendanceType === 'morning'
-              ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
-              : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
+            bgcolor:
+              attendanceType === 'morning'
+                ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
+                : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
             border: `1px solid ${
               attendanceType === 'morning'
                 ? alpha(theme.palette.warning.main, 0.3)
@@ -834,10 +923,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             }`,
           }}
         >
-          <PeriodIcon
-            fontSize="small"
-            color={attendanceType === 'morning' ? 'warning' : 'info'}
-          />
+          <PeriodIcon fontSize="small" color={attendanceType === 'morning' ? 'warning' : 'info'} />
           <Typography variant="caption" fontWeight={600}>
             {periodLabel} Session
           </Typography>
@@ -884,7 +970,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               lineHeight: 1.5,
             }}
           >
-            <Box component="span" sx={{ mr: 0.5 }} role="img" aria-label="info">ℹ️</Box>
+            <Box component="span" sx={{ mr: 0.5 }} role="img" aria-label="info">
+              ℹ️
+            </Box>
             {isMobile ? (
               <>
                 Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
@@ -893,7 +981,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             ) : (
               <>
                 Your attendance marks are saved <strong>locally</strong>. Click the{' '}
-                <strong>Submit Attendance</strong> button on the right to permanently save them to the system.
+                <strong>Submit Attendance</strong> button on the right to permanently save them to
+                the system.
               </>
             )}
           </Typography>
@@ -904,33 +993,58 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>
           {error && (
-            <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+            <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+              {error}
+            </Typography>
           )}
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(100vh - 320px)' }}>
+          <TableContainer
+            elevation={0}
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              overflowX: 'auto',
+              overflowY: 'auto',
+              maxHeight: 'calc(100vh - 320px)',
+            }}
+          >
             <Table sx={{ minWidth: 650 }} stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{
-                    width: 40,
-                    ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
-                    bgcolor: isDark ? '#1e1e1e' : '#fff',
-                    borderRight: `1px solid ${theme.palette.divider}`,
-                  }}>S/N</TableCell>
-                  <TableCell sx={{
-                    minWidth: 200,
-                    ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
-                    bgcolor: isDark ? '#1e1e1e' : '#fff',
-                    borderRight: `1px solid ${theme.palette.divider}`,
-                  }}>Learner's Name</TableCell>
+                  <TableCell
+                    sx={{
+                      width: 40,
+                      ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    S/N
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 200,
+                      ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
+                      bgcolor: isDark ? '#1e1e1e' : '#fff',
+                      borderRight: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    Learner's Name
+                  </TableCell>
                   {days.map((day) => {
                     const dayLabel = formatDayHeader(day);
                     const isSelected = selectedDays[day] === true;
                     return (
-                      <TableCell key={day} align="center" sx={{
-                        minWidth: 100,
-                        bgcolor: isSelected ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04) : 'transparent',
-                        transition: 'background-color 0.3s ease',
-                      }}>
+                      <TableCell
+                        key={day}
+                        align="center"
+                        sx={{
+                          minWidth: 100,
+                          bgcolor: isSelected
+                            ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04)
+                            : 'transparent',
+                          transition: 'background-color 0.3s ease',
+                        }}
+                      >
                         <Box>
                           {/* Weekday Checkbox - above the day name */}
                           <Checkbox
@@ -946,28 +1060,45 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                               mb: 0.25,
                             }}
                           />
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ display: 'block' }}>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            sx={{ display: 'block' }}
+                          >
                             {dayLabel}
                           </Typography>
                           {day !== dayLabel && (
-                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px', display: 'block' }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ fontSize: '10px', display: 'block' }}
+                            >
                               {day}
                             </Typography>
                           )}
                         </Box>
                         <Stack direction="row" spacing={0.25} justifyContent="center" mt={0.5}>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
-                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'present')}>
+                            <IconButton
+                              size="small"
+                              onClick={() => bulkSetDayStatus(day, 'present')}
+                            >
                               <CheckCircleIcon color="success" fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
-                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'absent')}>
+                            <IconButton
+                              size="small"
+                              onClick={() => bulkSetDayStatus(day, 'absent')}
+                            >
                               <CancelOutlinedIcon color="error" fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
-                            <IconButton size="small" onClick={() => bulkSetDayStatus(day, 'unknown')}>
+                            <IconButton
+                              size="small"
+                              onClick={() => bulkSetDayStatus(day, 'unknown')}
+                            >
                               <RadioButtonUncheckedIcon color="action" fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -979,9 +1110,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             mt: 0.5,
                             fontSize: '9px',
                             fontWeight: 600,
-                            color: attendanceType === 'morning'
-                              ? theme.palette.warning.main
-                              : theme.palette.info.main,
+                            color:
+                              attendanceType === 'morning'
+                                ? theme.palette.warning.main
+                                : theme.palette.info.main,
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
                           }}
@@ -1011,7 +1143,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       ) : (
                         <Alert severity="info" sx={{ justifyContent: 'center', py: 2 }}>
                           <Typography variant="body2">
-                            Select a <strong>Session</strong>, <strong>Term</strong>, <strong>Week</strong>, <strong>Programme</strong>, <strong>Class</strong>, and <strong>Class/Arm</strong> from the dropdowns above, then click the <strong>Filter</strong> button to load the attendance list.
+                            Select a <strong>Session</strong>, <strong>Term</strong>,{' '}
+                            <strong>Week</strong>, <strong>Programme</strong>,{' '}
+                            <strong>Class</strong>, and <strong>Class/Arm</strong> from the
+                            dropdowns above, then click the <strong>Filter</strong> button to load
+                            the attendance list.
                           </Typography>
                         </Alert>
                       )}
@@ -1019,23 +1155,39 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   </TableRow>
                 ) : (
                   learners.map((learner, idx) => {
-                    const att = attendanceData[learner.student_reg_id] || {};
+                    const att = attendanceData[learner.student_registration_id] || {};
                     return (
-                      <TableRow key={learner.student_reg_id} hover>
-                        <TableCell sx={{
-                          ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                          bgcolor: isDark ? '#1e1e1e' : '#fff',
-                          borderRight: `1px solid ${theme.palette.divider}`,
-                        }}>{idx + 1}</TableCell>
-                        <TableCell sx={{
-                          ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
-                          bgcolor: isDark ? '#1e1e1e' : '#fff',
-                          borderRight: `1px solid ${theme.palette.divider}`,
-                        }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                            <Typography variant="body2" fontWeight={600}>{learner.name}</Typography>
+                      <TableRow key={learner.student_registration_id} hover>
+                        <TableCell
+                          sx={{
+                            ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                            bgcolor: isDark ? '#1e1e1e' : '#fff',
+                            borderRight: `1px solid ${theme.palette.divider}`,
+                          }}
+                        >
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
+                            bgcolor: isDark ? '#1e1e1e' : '#fff',
+                            borderRight: `1px solid ${theme.palette.divider}`,
+                          }}
+                        >
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                          >
+                            <Typography variant="body2" fontWeight={600}>
+                              {learner.name}
+                            </Typography>
                             <Chip
-                              icon={learner.gender === 'MALE' ? <MaleIcon fontSize="small" /> : <FemaleIcon fontSize="small" />}
+                              icon={
+                                learner.gender === 'MALE' ? (
+                                  <MaleIcon fontSize="small" />
+                                ) : (
+                                  <FemaleIcon fontSize="small" />
+                                )
+                              }
                               label={learner.gender}
                               size="small"
                               color={learner.gender === 'MALE' ? 'primary' : 'success'}
@@ -1053,25 +1205,51 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           const isSelected = selectedDays[day] === true;
 
                           return (
-                            <TableCell key={day} align="center" sx={{
-                              bgcolor: isSelected ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04) : 'transparent',
-                              transition: 'background-color 0.3s ease',
-                              opacity: isSelected ? 1 : 0.5,
-                            }}>
+                            <TableCell
+                              key={day}
+                              align="center"
+                              sx={{
+                                bgcolor: isSelected
+                                  ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04)
+                                  : 'transparent',
+                                transition: 'background-color 0.3s ease',
+                                opacity: isSelected ? 1 : 0.5,
+                              }}
+                            >
                               {isHoliday ? (
-                                <Typography variant="caption" color="text.secondary" fontStyle="italic">Holiday</Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  fontStyle="italic"
+                                >
+                                  Holiday
+                                </Typography>
                               ) : (
                                 <RadioGroup
                                   row
                                   value={status}
-                                  onChange={(e) => isSelected && setDayStatus(learner.student_reg_id, day, e.target.value)}
+                                  onChange={(e) =>
+                                    isSelected &&
+                                    setDayStatus(
+                                      learner.student_registration_id,
+                                      day,
+                                      e.target.value,
+                                    )
+                                  }
                                   sx={{ justifyContent: 'center' }}
                                 >
                                   <Tooltip title={isSelected ? 'Present' : 'Select this day first'}>
                                     <span>
                                       <FormControlLabel
                                         value="present"
-                                        control={<Radio size="small" color="success" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        control={
+                                          <Radio
+                                            size="small"
+                                            color="success"
+                                            sx={{ p: 0.25 }}
+                                            disabled={!isSelected}
+                                          />
+                                        }
                                         label=""
                                         sx={{ m: 0 }}
                                       />
@@ -1081,7 +1259,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                     <span>
                                       <FormControlLabel
                                         value="absent"
-                                        control={<Radio size="small" color="error" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        control={
+                                          <Radio
+                                            size="small"
+                                            color="error"
+                                            sx={{ p: 0.25 }}
+                                            disabled={!isSelected}
+                                          />
+                                        }
                                         label=""
                                         sx={{ m: 0 }}
                                       />
@@ -1091,7 +1276,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                     <span>
                                       <FormControlLabel
                                         value="unknown"
-                                        control={<Radio size="small" color="default" sx={{ p: 0.25 }} disabled={!isSelected} />}
+                                        control={
+                                          <Radio
+                                            size="small"
+                                            color="default"
+                                            sx={{ p: 0.25 }}
+                                            disabled={!isSelected}
+                                          />
+                                        }
                                         label=""
                                         sx={{ m: 0 }}
                                       />
@@ -1136,7 +1328,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               flexDirection: 'column',
             }}
           >
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', mb: 1 }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.secondary"
+              sx={{ textTransform: 'uppercase', mb: 1 }}
+            >
               LEARNER ATTENDANCE
             </Typography>
 
@@ -1153,16 +1350,28 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             <Divider sx={{ my: 1.5 }} />
             <Stack spacing={1} sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">Learners</Typography>
-                <Typography variant="body2" fontWeight={600}>{totalLearners}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Learners
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {totalLearners}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">School Days</Typography>
-                <Typography variant="body2" fontWeight={600}>{days.length}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  School Days
+                </Typography>
+                <Typography variant="body2" fontWeight={600}>
+                  {days.length}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">Present</Typography>
-                <Typography variant="body2" fontWeight={600} color="success.main">{learnersPresent}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Present
+                </Typography>
+                <Typography variant="body2" fontWeight={600} color="success.main">
+                  {learnersPresent}
+                </Typography>
               </Box>
             </Stack>
 
@@ -1173,7 +1382,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               size="small"
               fullWidth
               startIcon={<EmailIcon />}
-              onClick={() => { setAlertType('attendance'); setAlertConfirmOpen(true); }}
+              onClick={() => {
+                setAlertType('attendance');
+                setAlertConfirmOpen(true);
+              }}
               disabled={sendingAlert || learners.length === 0}
               sx={{ mb: 1 }}
             >
@@ -1185,9 +1397,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 p: 1.5,
                 mb: 1.5,
                 borderRadius: 1,
-                bgcolor: isDark ? 'rgba(255,255,255,0.04)' : alpha(theme.palette.primary.main, 0.04),
+                bgcolor: isDark
+                  ? 'rgba(255,255,255,0.04)'
+                  : alpha(theme.palette.primary.main, 0.04),
                 border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.08)' : alpha(theme.palette.primary.main, 0.12),
+                borderColor: isDark
+                  ? 'rgba(255,255,255,0.08)'
+                  : alpha(theme.palette.primary.main, 0.12),
                 opacity: togglingReport ? 0.6 : 1,
                 transition: 'opacity 0.2s',
               }}
@@ -1236,7 +1452,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               size="small"
               fullWidth
               onClick={openConfirmDialog}
-              disabled={submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)}
+              disabled={
+                submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
+              }
               sx={{ mt: 'auto' }}
             >
               {submitting ? 'Submitting...' : 'Submit Attendance'}
@@ -1256,13 +1474,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               You are about to mark the attendance.
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {learners.length} learner(s) • {Object.values(selectedDays).filter(Boolean).length} day(s) • {periodLabel} periods will be submitted.
+              {learners.length} learner(s) • {Object.values(selectedDays).filter(Boolean).length}{' '}
+              day(s) • {periodLabel} periods will be submitted.
             </Typography>
           </Box>
         }
         actions={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" size="small" onClick={closeConfirmDialog}>Cancel</Button>
+            <Button variant="outlined" size="small" onClick={closeConfirmDialog}>
+              Cancel
+            </Button>
             <Button
               variant="contained"
               size="small"
@@ -1285,7 +1506,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         content={
           <Box sx={{ py: 2 }}>
             <Typography variant="body1" gutterBottom fontWeight={500}>
-              You are about to send an email alert to the guardian{learners.length > 1 ? 's of ' + learners.length + ' learners' : " of " + (learners[0]?.name || 'this learner')}.
+              You are about to send an email alert to the guardian
+              {learners.length > 1
+                ? 's of ' + learners.length + ' learners'
+                : ' of ' + (learners[0]?.name || 'this learner')}
+              .
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {alertType === 'risk'
@@ -1296,7 +1521,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         }
         actions={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" size="small" onClick={() => setAlertConfirmOpen(false)}>Cancel</Button>
+            <Button variant="outlined" size="small" onClick={() => setAlertConfirmOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant={alertType === 'risk' ? 'contained' : 'contained'}
               color={alertType === 'risk' ? 'error' : 'primary'}

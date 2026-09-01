@@ -125,7 +125,7 @@ const ViewWardsContent = ({ guardian, onClose }) => {
               paginated.map((ward, index) => {
                 const reg = ward.student_registrations?.[0];
                 const arm = reg?.class_arm;
-                const armNames = arm?.arm_names;
+                const armNames = arm?.class_arm_names;
                 const armLabel = Array.isArray(armNames)
                   ? armNames.filter(Boolean).join(', ')
                   : armNames || '';

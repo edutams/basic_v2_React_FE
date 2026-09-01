@@ -1,8 +1,9 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import api from '@/api/landlord/landlord_api';
 import { PermissionProvider } from './permissions';
 import axios from 'axios';
 import { CustomizerContext } from '../CustomizerContext';
+import { safeWindowOpen } from '@/utils/safeWindowOpen';
 
 export const AuthContext = createContext(undefined);
 
@@ -118,7 +119,7 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth:expired', handleAuthExpired);
   }, []);
 
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -152,9 +153,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setPrimaryColor]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
     try {
       await api.post('/v1/landlord/auth/logout');
@@ -170,9 +171,9 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     }
     return { success: true };
-  };
+  }, [setPrimaryColor]);
 
-  const register = async (credentials) => {
+  const register = useCallback(async (credentials) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -187,9 +188,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const updateAgentProfile = async (data, isMultipart = false) => {
+  const updateAgentProfile = useCallback(async (data, isMultipart = false) => {
     setError(null);
     try {
       const res = await api.post('/v1/landlord/update_agent_profile', data, {
@@ -203,16 +204,16 @@ export const AuthProvider = ({ children }) => {
       setError(msg);
       return { success: false, error: msg };
     }
-  };
+  }, []);
 
-  const changePassword = async (passwordData) => {
+  const changePassword = useCallback(async (passwordData) => {
     setError(null);
     const response = await api.put('/v1/landlord/change_password', passwordData);
 
     return response.data;
-  };
+  }, []);
 
-  const refreshToken = async () => {
+  const refreshToken = useCallback(async () => {
     try {
       const res = await api.post('/v1/landlord/auth/refresh_token');
       const { access_token, expires_in } = res.data;
@@ -226,9 +227,9 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       return false;
     }
-  };
+  }, []);
 
-  const impersonateAgent = async (id) => {
+  const impersonateAgent = useCallback(async (id) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -254,10 +255,7 @@ export const AuthProvider = ({ children }) => {
       const meRes = await api.get('/v1/landlord/auth/me');
       const freshPermissions = meRes.data?.permissions || [];
 
-      //  THE FIX: write the impersonated user into localStorage
-      // so restoreUser() picks it up correctly after a refresh
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('permissions', JSON.stringify([])); // or pull from res.data if API returns them
+      localStorage.setItem('permissions', JSON.stringify(freshPermissions));
 
       setUser(newUser);
       setPermissions(freshPermissions);
@@ -276,9 +274,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, setPrimaryColor]);
 
-  const impersonateTenant = async (id) => {
+  const impersonateTenant = useCallback(async (id) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -287,7 +285,9 @@ export const AuthProvider = ({ children }) => {
 
       // Check if there's a redirect URL (open in new tab approach)
       if (redirect_url) {
-        window.open(redirect_url, '_blank');
+        if (!safeWindowOpen(redirect_url)) {
+          return { success: false, error: 'Received an invalid redirect URL' };
+        }
         return { success: true, redirect_url };
       }
 
@@ -312,9 +312,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const stopImpersonation = async () => {
+  const stopImpersonation = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await api.post('/v1/landlord/impersonate/stop');
@@ -348,31 +348,53 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setPrimaryColor]);
 
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
   // ---------------- Context value ----------------
-  const contextValue = {
-    user,
-    originalUser,
-    isAuthenticated,
-    isLoading,
-    error,
-    login,
-    logout,
-    register,
-    updateAgentProfile,
-    changePassword,
-    refreshToken,
-    impersonateAgent,
-    impersonateTenant,
-    stopImpersonation,
-    impersonatorId,
-    isImpersonating,
-    clearError,
-    permissions,
-  };
+  const contextValue = useMemo(
+    () => ({
+      user,
+      originalUser,
+      isAuthenticated,
+      isLoading,
+      error,
+      login,
+      logout,
+      register,
+      updateAgentProfile,
+      changePassword,
+      refreshToken,
+      impersonateAgent,
+      impersonateTenant,
+      stopImpersonation,
+      impersonatorId,
+      isImpersonating,
+      clearError,
+      permissions,
+    }),
+    [
+      user,
+      originalUser,
+      isAuthenticated,
+      isLoading,
+      error,
+      login,
+      logout,
+      register,
+      updateAgentProfile,
+      changePassword,
+      refreshToken,
+      impersonateAgent,
+      impersonateTenant,
+      stopImpersonation,
+      impersonatorId,
+      isImpersonating,
+      clearError,
+      permissions,
+    ]
+  );
 
   return (
     <AuthContext.Provider value={contextValue}>

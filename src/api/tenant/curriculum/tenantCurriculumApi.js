@@ -49,9 +49,12 @@ export const saveClassAssignments = async (sessionId, termId, assignments) => {
   return response.data;
 };
 
-// Fetch sessions
+// Fetch sessions (this tenant's own onboarded sessions, for session pickers).
+// The landlord's session catalog (fetchLandlordSessions in sessionTermApi.js)
+// is only ever used to onboard a new session into this tenant — every other
+// picker/filter in the app reads the tenant's own sessions.
 export const fetchSessions = async () => {
-  const response = await api.get('/curriculum/sessions/list');
+  const response = await api.get('/sessions', { params: { per_page: 100 } });
   return response.data;
 };
 
@@ -67,10 +70,9 @@ export const fetchActiveSessionTerm = async () => {
   return response.data;
 };
 
-// Fetch terms
-export const fetchTerms = async (sessionId = null) => {
-  const params = sessionId ? { session_id: sessionId } : {};
-  const response = await api.get('/curriculum/terms/list', { params });
+// Fetch terms (this tenant's own terms — a term isn't session-scoped, so sessionId is unused)
+export const fetchTerms = async () => {
+  const response = await api.get('/terms');
   return response.data;
 };
 
@@ -217,16 +219,14 @@ export const importSelectedCurriculums = async (importData) => {
   return response.data;
 };
 
-// Fetch session terms
+// Fetch session terms (the full list across all sessions, for dropdowns)
 export const fetchSessionTerms = async () => {
-  const response = await api.get('/curriculum/get-subscribed-session-terms');
-  return response.data;
+  const response = await api.get('/session-terms', { params: { per_page: 100 } });
+  return { ...response.data, data: response.data.data ?? [] };
 };
 
 // Fetch session terms for a specific session ID
 export const fetchSessionTermsBySession = async (sessionId) => {
-  const response = await api.get(
-    `/curriculum/get-subscribed-session-terms-by-session/${sessionId}`,
-  );
-  return response.data;
+  const response = await api.get('/session-terms', { params: { session_id: sessionId, active_only: true, per_page: 100 } });
+  return { ...response.data, data: response.data.data ?? [] };
 };

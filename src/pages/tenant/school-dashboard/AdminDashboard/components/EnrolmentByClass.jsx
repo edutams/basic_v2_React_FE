@@ -82,7 +82,7 @@ const EnrolmentByClass = ({
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Header */}
-        <Box sx={{ mb: 0.5, flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, flexShrink: 0 }}>
           <Typography
             sx={{
               fontSize: '11px',
@@ -94,6 +94,14 @@ const EnrolmentByClass = ({
           >
             ENROLMENT BY CLASS
           </Typography>
+          <Button
+            size="small"
+            onClick={() => (onViewEnrolmentReport ? onViewEnrolmentReport() : navigate('/reports/general-report'))}
+            endIcon={<ArrowForward sx={{ fontSize: '14px !important' }} />}
+            sx={{ fontSize: '12px' }}
+          >
+            View Report
+          </Button>
         </Box>
 
         {/* Table */}
@@ -162,18 +170,6 @@ const EnrolmentByClass = ({
           </Table>
         </TableContainer>
         )}
-      </Box>
-
-      {/* Footer Link */}
-      <Box sx={{ pt: 0.75, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 0.75, flexShrink: 0 }}>
-        <Button
-          disableRipple
-          onClick={() => (onViewEnrolmentReport ? onViewEnrolmentReport() : navigate('/reports/general-report'))}
-          endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
-          sx={{ fontSize: '12px' }}
-        >
-          View Enrolment Report
-        </Button>
       </Box>
     </Paper>
   );

@@ -17,6 +17,8 @@ import {
   ButtonGroup,
   TablePagination,
   Avatar,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   IconSearch,
@@ -136,15 +138,29 @@ const NonTeachingStaffTab = ({
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Skeleton variant="circular" width={30} height={30} />
+                      <Skeleton variant="text" width={120} height={20} />
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={140} height={20} />
+                    <Skeleton variant="text" width={90} height={16} />
+                  </TableCell>
+                  <TableCell><Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                  <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                </TableRow>
+              ))
             ) : staff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                  <Typography color="textSecondary">No staff found</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <Alert severity="info" sx={{ justifyContent: 'center' }}>No staff found</Alert>
                 </TableCell>
               </TableRow>
             ) : (

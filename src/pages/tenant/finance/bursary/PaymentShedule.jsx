@@ -1318,7 +1318,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        // fullWidth
+      // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

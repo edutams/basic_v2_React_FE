@@ -240,12 +240,12 @@ function EnrolledStudentsModal({ open, onClose, cls }) {
                   const isFemale = genderVal.startsWith('f');
                   const isMale = genderVal.startsWith('m');
                   const genderLabel = isFemale ? 'Female' : isMale ? 'Male' : (std.gender || '—');
-                  
+
                   const genderStyle = isFemale
                     ? { bgcolor: isDark ? 'rgba(219, 39, 119, 0.15)' : '#fce7f3', color: isDark ? '#f472b6' : '#db2777' }
                     : isMale
-                    ? { bgcolor: isDark ? 'rgba(2, 132, 199, 0.15)' : '#e0f2fe', color: isDark ? '#38bdf8' : '#0284c7' }
-                    : { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b' };
+                      ? { bgcolor: isDark ? 'rgba(2, 132, 199, 0.15)' : '#e0f2fe', color: isDark ? '#38bdf8' : '#0284c7' }
+                      : { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b' };
 
                   return (
                     <TableRow key={std.student_registration_id || idx} hover>
@@ -630,7 +630,7 @@ export default function ClassesOverview() {
         sx={{
           bgcolor: (theme) => theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
-          borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#94a3b8',
+          borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#dee0e2ff',
           borderRadius: '14px',
           p: 2,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',

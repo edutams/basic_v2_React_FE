@@ -10,7 +10,7 @@ import {
   MenuItem,
   Card,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
@@ -419,7 +419,7 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
         }}
       >
         {chartLoading ? (
-          <CircularProgress size={40} />
+          <Skeleton variant="rounded" height={350} sx={{ borderRadius: 1, width: '100%' }} />
         ) : tabValue === '1' ? (
           <Box width="100%">
             <Chart

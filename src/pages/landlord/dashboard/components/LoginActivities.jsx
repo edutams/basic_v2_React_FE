@@ -384,6 +384,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
             onViewUserList();
           }}
         >
+          <IconUsers size={16} style={{ marginRight: 8 }} />
           View Users List
         </MenuItem>
       </Menu>

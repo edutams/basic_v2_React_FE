@@ -7,7 +7,7 @@ import {
   MenuItem,
   Stack,
   Alert,
-  CircularProgress,
+  Skeleton,
   Divider,
 } from '@mui/material';
 import PropTypes from 'prop-types';
@@ -149,7 +149,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
           <MenuItem value="">-- choose --</MenuItem>
           {gatewaysLoading ? (
             <MenuItem disabled>
-              <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+              <Skeleton variant="text" width={120} />
             </MenuItem>
           ) : (
             gateways.map((g) => (
@@ -229,11 +229,11 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
               disabled={banksLoading}
             >
               <MenuItem value="">-- Choose Bank --</MenuItem>
-              {banksLoading ? (
-                <MenuItem disabled>
-                  <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                </MenuItem>
-              ) : (
+          {banksLoading ? (
+            <MenuItem disabled>
+              <Skeleton variant="text" width={120} />
+            </MenuItem>
+          ) : (
                 banks.map((bank, i) => (
                   <MenuItem key={i} value={`${bank.bankCode}, ${bank.bankName}`}>
                     {bank.bankName}

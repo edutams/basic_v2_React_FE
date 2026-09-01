@@ -8,7 +8,7 @@ import {
   Button,
   Alert,
   Chip,
-  CircularProgress,
+  Skeleton,
   Tabs,
   Tab,
   Divider,
@@ -428,7 +428,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                     textTransform: 'none',
                   }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
+                  {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
                 </Button>
               </>
             ) : (
@@ -451,7 +451,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                  {loading ? <Skeleton variant="text" width={100} height={18} /> : 'Confirm Reject'}
                 </Button>
               </>
             )}
@@ -853,7 +853,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -952,7 +953,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1037,7 +1039,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                   px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1115,7 +1118,8 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: '14px',
+                  px: '3px',
+                  py: '3px',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1157,13 +1161,13 @@ const SchoolsTab = ({
                   </IconButton>
                 </Box>
                 <Box
-                  sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                  sx={{ height: 130, display: 'flex', alignItems: 'center', }}
                 >
                   <ReusablePieChart
                     series={planSeries}
                     colors={planColors}
                     labels={planLabels}
-                    height={170}
+                    height={130}
                     hideCard
                   />
                 </Box>

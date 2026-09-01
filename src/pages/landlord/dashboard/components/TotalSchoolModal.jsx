@@ -9,7 +9,7 @@ import {
   Select,
   MenuItem,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { IconSchool, IconUsers, IconLayoutDashboard } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -328,7 +328,7 @@ const SchoolsOverviewModal = ({ open, onClose, stats, organizationId }) => {
             }}
           >
             {chartLoading ? (
-              <CircularProgress size={40} />
+              <Skeleton variant="rounded" height={300} sx={{ borderRadius: 1, width: '100%' }} />
             ) : tab === 0 ? (
               <Box width="100%">
                 <Chart

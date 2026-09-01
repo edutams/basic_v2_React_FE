@@ -42,7 +42,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
-import ParentCard from '@/components/shared/ParentCard';
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
@@ -51,6 +50,8 @@ const schemeMap = [
   { bg: '#FEF3C7', color: '#D97706' },
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
+
+
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
@@ -335,7 +336,7 @@ const OverviewTab = ({ data }) => {
             <MenuItem value="2025">2025</MenuItem>
           </Select>
         </Box>
-        <Button variant="contained" size="small" sx={{ height: 40, px: 3, borderRadius: '6px', textTransform: 'none', fontWeight: 600, }}>
+        <Button variant="contained" size="small" >
           Filter
         </Button>
       </Stack>
@@ -345,7 +346,8 @@ const OverviewTab = ({ data }) => {
         <Grid size={{ xs: 12, md: 5 }}>
           <Card
             sx={{
-              p: '14px',
+              px: '3px',
+              py: '3px',
               borderRadius: '14px',
               bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
               border: '1px solid',
@@ -405,7 +407,8 @@ const OverviewTab = ({ data }) => {
             {/* Credit Facilities Card */}
             <Card
               sx={{
-                p: '14px',
+                px: '3px',
+                py: '3px',
                 borderRadius: '14px',
                 bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -427,8 +430,6 @@ const OverviewTab = ({ data }) => {
               {/* Header Section */}
               <Box
                 sx={{
-                  px: 2,
-                  pt: 2,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
@@ -460,7 +461,7 @@ const OverviewTab = ({ data }) => {
               </Box>
 
               {/* Content Section */}
-              <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{  display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     flex: 1.8,
@@ -531,7 +532,8 @@ const OverviewTab = ({ data }) => {
             {/* Plan Distribution Card */}
             <Card
               sx={{
-                p: '14px',
+                px: '3px',
+                py: '3px',
                 borderRadius: '14px',
                 bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -557,12 +559,12 @@ const OverviewTab = ({ data }) => {
               >
                 Plan Distribution
               </Typography>
-              <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+              <Box sx={{ height: 140, display: 'flex', alignItems: 'center' }}>
                 <ReusablePieChart
                   series={planSeries}
                   colors={planColors}
                   labels={planLabels}
-                  height={170}
+                  height={140}
                   hideCard
                 />
               </Box>
@@ -572,21 +574,24 @@ const OverviewTab = ({ data }) => {
 
         {/* Column 3: Recent Onboarding School */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <ParentCard
+          <Paper
+            elevation={0}
             sx={{
-              borderRadius: '12px',
-              height: '98%',
-              border: `1px solid ${theme.palette.divider}`,
-              bgcolor: theme.palette.background.paper,
-              boxShadow: 'none',
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              px: "3px",
+              py: "3px",
             }}
           >
-            <Box sx={{ p: 2 }}>
+            <Box >
               <Typography variant="subtitle2" fontWeight={800} color="textPrimary">
                 Recent Onboarding School
               </Typography>
             </Box>
-            <TableContainer sx={{ height: 'calc(100% - 60px)' }}>
+            <TableContainer >
               <Table size="small">
                 <TableHead
                   sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
@@ -642,7 +647,7 @@ const OverviewTab = ({ data }) => {
                           '& td': { borderBottom: `1px solid ${theme.palette.divider}` },
                         }}
                       >
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <Typography
                             variant="caption"
                             fontWeight={800}
@@ -651,7 +656,7 @@ const OverviewTab = ({ data }) => {
                             {row.school}
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <Box
                             display="flex"
                             justifyContent="space-between"
@@ -679,7 +684,7 @@ const OverviewTab = ({ data }) => {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <Chip
                             label={row.created_at}
                             size="small"
@@ -692,7 +697,7 @@ const OverviewTab = ({ data }) => {
                             }}
                           />
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                             <IconDotsVertical size={16} color={theme.palette.text.secondary} />
                           </IconButton>
@@ -714,13 +719,22 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
         </Grid>
 
         {/* Bottom Row: Top Agents */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard>
-            <Box sx={{ p: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Box sx={{ px: "2px" }}>
               <Typography variant="subtitle1" fontWeight={800} color="textPrimary">
                 TOP 10 AGENT BY REVENUE
               </Typography>
@@ -758,7 +772,7 @@ const OverviewTab = ({ data }) => {
                         sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                          <TableCell key={cell.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
@@ -778,15 +792,25 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
         </Grid>
 
         {/* Bottom Row: Top Schools */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
             <Box
               sx={{
-                p: 2,
+                px: "3px",
+                py: "3px",
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -812,7 +836,6 @@ const OverviewTab = ({ data }) => {
                             fontWeight: 700,
                             fontSize: '12px',
                             color: theme.palette.text.secondary,
-                            py: 1.2,
                           }}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
@@ -830,7 +853,7 @@ const OverviewTab = ({ data }) => {
                         sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                          <TableCell key={cell.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
@@ -850,7 +873,7 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
         </Grid>
       </Grid>
 

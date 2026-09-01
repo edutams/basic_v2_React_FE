@@ -19,16 +19,20 @@ import {
   Menu,
   MenuItem,
   InputAdornment,
-  Alert
+  Alert,
+  Skeleton
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { IconList } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
 
-const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction }) => {
+const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction, loading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -102,7 +106,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
         </Box>
 
         <Box>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
@@ -115,7 +119,17 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedSubjects.length > 0 ? (
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(4)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : j === 3 ? 40 : 100} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : paginatedSubjects.length > 0 ? (
                   paginatedSubjects.map((subject, index) => (
                     <TableRow key={subject.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
@@ -158,12 +172,15 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                               handleMenuClose();
                             }}
                           >
+                            <IconList size={16} style={{ marginRight: 8 }} />
                             Manage Topics
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('edit', subject)}>
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} />
                             Edit Subject
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('delete', subject)}>
+                          <MenuItem onClick={() => handleAction('delete', subject)} sx={{ color: 'error.main' }}>
+                            <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                             Delete Subject
                           </MenuItem>
                         </Menu>

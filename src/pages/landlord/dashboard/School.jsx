@@ -21,7 +21,7 @@ import {
   Snackbar,
   Alert,
   Chip,
-  CircularProgress,
+  Skeleton,
   Tabs,
   Tab,
   Dialog,
@@ -443,7 +443,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                  {loading ? <Skeleton variant="text" width={100} height={18} /> : 'Confirm Reject'}
                 </Button>
               </>
             )}
@@ -457,7 +457,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 '&:hover': { bgcolor: '#1b5e20' },
               }}
             >
-              {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
+              {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
             </Button>
           </>
         )}
@@ -1265,8 +1265,10 @@ const SchoolDashboard = () => {
           {/* ── Tab 0: All Applications ── */}
           {activeTab === 0 &&
             (prospectLoading ? (
-              <Box display="flex" justifyContent="center" py={8}>
-                <CircularProgress />
+              <Box sx={{ py: 2 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+                ))}
               </Box>
             ) : (
               <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
@@ -1390,8 +1392,10 @@ const SchoolDashboard = () => {
           {/* ── Tab 2: Approved Schools (from schoolList / fetchSchools) ── */}
           {activeTab === 2 &&
             (loading ? (
-              <Box display="flex" justifyContent="center" py={8}>
-                <CircularProgress />
+              <Box sx={{ py: 2 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+                ))}
               </Box>
             ) : (
               <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
@@ -1523,6 +1527,7 @@ const SchoolDashboard = () => {
                                   handleActionClose();
                                 }}
                               >
+                                <IconEye size={16} style={{ marginRight: 8 }} />
                                 View School Profile
                               </MenuItem>
                               {/* <MenuItem onClick={() => handleLoginAsAdmin(row)}>

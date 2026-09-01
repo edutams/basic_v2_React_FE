@@ -20,6 +20,7 @@ import {
   Button,
   TextField,
   InputAdornment,
+  Skeleton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Chart from 'react-apexcharts';
@@ -327,20 +328,21 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total School"
-              value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
+              value={String(analytics?.totalSchools ?? 0)}
               colorIndex={0}
+              loading={analyticsLoading}
               subStats={[
                 {
                   label: 'Approved',
-                  value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
+                  value: String(analytics?.activeSchools ?? 0),
                 },
                 {
                   label: 'Pending',
-                  value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
+                  value: String(analytics?.pendingSchools ?? 0),
                 },
                 {
                   label: 'Rejected',
-                  value: analyticsLoading ? '...' : String(analytics?.rejectedSchools ?? 0),
+                  value: String(analytics?.rejectedSchools ?? 0),
                 },
               ]}
               onIconClick={() => setIsSchoolModalOpen(true)}
@@ -351,16 +353,17 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Transaction Value"
-              value={analyticsLoading ? '...' : formatNaira(analytics?.transactionVolume)}
+              value={formatNaira(analytics?.transactionVolume)}
               colorIndex={1}
+              loading={analyticsLoading}
               subStats={[
                 {
                   label: 'Collected',
-                  value: analyticsLoading ? '...' : formatNaira(analytics?.transactionVolume),
+                  value: formatNaira(analytics?.transactionVolume),
                 },
                 {
                   label: 'Pending',
-                  value: analyticsLoading ? '...' : formatNaira(analytics?.transactionPending),
+                  value: formatNaira(analytics?.transactionPending),
                 },
               ]}
               onIconClick={() => setIsTransactionModalOpen(true)}
@@ -371,24 +374,25 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Organization"
-              value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
+              value={String(analytics?.totalSubAgents ?? 0)}
               colorIndex={2}
+              loading={analyticsLoading}
               subStats={[
                 {
                   label: 'Lv2',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv2 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv2 ?? 0),
                 },
                 {
                   label: 'Lv3',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv3 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv3 ?? 0),
                 },
                 {
                   label: 'Lv4',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv4 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv4 ?? 0),
                 },
                 {
                   label: 'Lv5',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv5 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv5 ?? 0),
                 },
               ]}
               onIconClick={() => setIsSubAgentModalOpen(true)}
@@ -549,10 +553,14 @@ export default function Dashboard() {
                 </Box>
 
                 <Stack spacing={2.5} sx={{ flex: 1 }}>
-                  {(loginActivitiesLoading
-                    ? [{ label: 'Loading...', value: '...' }]
-                    : loginActivities
-                  )?.map((activity, index) => (
+                  {loginActivitiesLoading
+                    ? [...Array(3)].map((_, i) => (
+                        <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
+                          <Skeleton variant="text" width={120} height={24} />
+                          <Skeleton variant="text" width={60} height={24} />
+                        </Stack>
+                      ))
+                    : loginActivities?.map((activity, index) => (
                     <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
                       <Typography
                         variant="h5"

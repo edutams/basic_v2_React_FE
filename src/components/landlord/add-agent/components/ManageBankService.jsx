@@ -7,7 +7,7 @@ import {
   MenuItem,
   Stack,
   Alert,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -104,7 +104,7 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
         >
           {servicesLoading ? (
             <MenuItem disabled>
-              <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+              <Skeleton variant="text" width={120} />
             </MenuItem>
           ) : bankServices.length === 0 ? (
             <MenuItem disabled>No bank services available</MenuItem>

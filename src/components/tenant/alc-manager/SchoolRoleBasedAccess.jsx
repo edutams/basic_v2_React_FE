@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   Avatar,
@@ -28,7 +28,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Skeleton,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -475,7 +474,7 @@ const SchoolRoleBasedAccess = () => {
                   }}
                 >
                   {statsLoading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}

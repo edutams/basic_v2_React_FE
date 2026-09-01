@@ -13,7 +13,7 @@ import {
   ListItemText,
   ListItem,
   ListItemButton,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import aclApi from '@/api/tenant/acl/aclApi';
@@ -109,8 +109,10 @@ const RoleAttachmentModal = ({ open, onClose, currentUser, onRoleSelection }) =>
 
         {/* 🔽 Scrollable List */}
         {loadingRoles ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={24} />
+          <Box sx={{ py: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
           </Box>
         ) : (
           <Box

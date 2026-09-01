@@ -27,7 +27,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
+  Skeleton,
   Alert,
 } from '@mui/material';
 import { IconUsers } from '@tabler/icons-react';
@@ -497,11 +497,15 @@ const TeamTab = ({
           </TableHead>
           <TableBody>
             {tableLoading ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
+              [...Array(4)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(10)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : data.length > 0 ? (
               data.map((agent) => {
                 const initials = (agent.organizationName || 'NA')

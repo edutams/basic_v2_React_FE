@@ -1,16 +1,23 @@
 import React from 'react';
 import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { getStatCardColor } from '@/utils/statCardColors';
 
 /**
  * Compact overview card — horizontal layout (Icon + Title on left, Value on right)
  * eliminates all empty/dead space in the card.
  */
-const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
+const OverviewCard = ({ icon: Icon, colorIndex = 0, title, value, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(colorName, 0, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Tooltip
@@ -22,25 +29,21 @@ const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
         elevation={0}
         onClick={onClick}
         sx={{
-          py: 1.5,
-          px: 1.75,
-          borderRadius: '12px',
+          p: '14px',
+          borderRadius: '14px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          cursor: onClick ? 'pointer' : 'default',
-          background: isDark ? theme.palette.background.paper : colors.cardBg,
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : (colors.borderColor || 'grey.200'),
-          boxShadow: isDark
-            ? '0 4px 14px rgba(0,0,0,0.25)'
-            : '0 2px 10px rgba(15, 23, 42, 0.04)',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+          cursor: 'pointer',
           '&:hover': {
-            transform: onClick ? 'translateY(-2px)' : 'none',
-            boxShadow: isDark
-              ? '0 6px 20px rgba(0,0,0,0.35)'
-              : '0 4px 16px rgba(15, 23, 42, 0.08)',
+            transform: 'translateY(-2px)',
+            borderColor: '#94a3b8',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
           },
         }}
       >
@@ -51,11 +54,8 @@ const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
               width: 38,
               height: 38,
               borderRadius: '10px',
-              background: `${colors.iconBg} !important`,
-              boxShadow: isDark
-                ? '0 2px 8px rgba(0,0,0,0.3)'
-                : `0 2px 10px ${colors.iconGlow}`,
-              color: colors.iconColor || '#fff',
+              background: scheme.bg,
+              color: scheme.color,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -86,7 +86,7 @@ const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
               fontSize: { xs: 20, sm: 22, md: 24 },
               fontWeight: 800,
               lineHeight: 1,
-              color: isDark ? '#FFF' : colors.accentColor,
+              color: isDark ? '#FFF' : scheme.color,
             }}
           >
             {value}
@@ -95,7 +95,7 @@ const OverviewCard = ({ icon: Icon, colorName, title, value, onClick }) => {
             <ArrowForwardIcon
               sx={{
                 fontSize: 14,
-                color: colors.accentColor,
+                color: scheme.color,
                 opacity: 0.5,
               }}
             />

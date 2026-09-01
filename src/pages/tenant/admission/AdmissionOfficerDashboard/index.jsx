@@ -147,17 +147,17 @@ const AdmissionOfficerDashboard = () => {
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 340px' },
-          gap: 1,
-          alignItems: 'stretch',
+          gap: 1.3,
+          alignItems: 'start',
         }}
       >
         {/* ── Left Column ─────────────────────────────────────────────── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3, minWidth: 0 }}>
           {/* Quick Actions Bar */}
           <QuickActions loading={overview.loading} />
 
           {/* Row 1 Charts: Application Trend & Admission Funnel */}
-          <Grid container spacing={1.3} mb={1.3}>
+          <Grid container spacing={1.3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <ApplicationTrend
                 trendData={trendData.trend_data}
@@ -173,23 +173,17 @@ const AdmissionOfficerDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Row 2 Analytics: Grade Level Breakdown & Application Sources */}
-          <Grid container spacing={1.3} sx={{ flex: 1 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <ApplicationsByGrade
-                gradeData={gradeData.grade_data}
-                loading={gradeLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TopApplicationSources />
-            </Grid>
-          </Grid>
+          {/* Full Width Grade Level Breakdown */}
+          <ApplicationsByGrade
+            gradeData={gradeData.grade_data}
+            loading={gradeLoading}
+          />
         </Box>
 
-        {/* ── Right Column: Recent Activity Log Sidebar ───────────────── */}
-        <Box sx={{ height: '100%' }}>
+        {/* ── Right Column Sidebar: Recent Activity + Top Application Sources ─ */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3, minWidth: 0 }}>
           <AdmissionActivityLog />
+          <TopApplicationSources />
         </Box>
       </Box>
 

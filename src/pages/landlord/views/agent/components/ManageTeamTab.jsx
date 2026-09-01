@@ -24,7 +24,7 @@ import {
   IconButton,
   Menu,
   Checkbox,
-  CircularProgress,
+  Skeleton,
   Alert,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
@@ -47,7 +47,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   );
 });
 
-const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
+const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = false }) => {
   const theme = useTheme();
   const isLevelOne = accessLevel === 1;
   const notify = useNotification();
@@ -279,38 +279,43 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
     }
   };
 
-  return (
-    <Box title="Manage Team">
-      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              bgcolor: '#2ca87f',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" fontWeight="bold">
-              T
-            </Typography>
-          </Box>
-          <Typography variant="h5">Manage Team</Typography>
-        </Stack>
-        {!(accessLevel === 1 && isViewingProfile) && (
-          <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
-            Add Team Member
-          </Button>
-        )}
+  const headerContent = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Box
+          sx={{
+            width: 24,
+            height: 24,
+            bgcolor: '#2ca87f',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+          }}
+        >
+          <Typography variant="body2" fontWeight="bold">
+            T
+          </Typography>
+        </Box>
+        <Typography variant="h5">Manage Team</Typography>
       </Stack>
+      {!(accessLevel === 1 && isViewingProfile) && (
+        <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+          Add Team Member
+        </Button>
+      )}
+    </Box>
+  );
+
+  const content = (
+    <>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={6}>
-          <CircularProgress size={32} />
+        <Box sx={{ py: 2 }}>
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={60} sx={{ mb: 1, borderRadius: 1 }} />
+          ))}
         </Box>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
@@ -671,7 +676,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Member'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Add Member'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -801,7 +806,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -852,7 +857,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -878,11 +883,28 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color='inherit' onClick={handleRemoveMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Remove'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Remove'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
+  );
+
+  if (hideCard) {
+    return (
+      <Box>
+        {headerContent}
+        <Box sx={{ mt: 2 }}>
+          {content}
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <ParentCard title={headerContent}>
+      {content}
+    </ParentCard>
   );
 };
 

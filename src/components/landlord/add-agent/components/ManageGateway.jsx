@@ -11,7 +11,7 @@ import {
   Grid,
   Paper,
   Alert,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
@@ -156,7 +156,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                 <MenuItem value="">-- Select Gateway --</MenuItem>
                 {gatewaysLoading ? (
                   <MenuItem disabled>
-                    <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                    <Skeleton variant="text" width={120} />
                   </MenuItem>
                 ) : (
                   gateways.map((gateway) => (
@@ -197,7 +197,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                 <MenuItem value="">-- Select Bank --</MenuItem>
                 {banksLoading ? (
                   <MenuItem disabled>
-                    <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                    <Skeleton variant="text" width={120} />
                   </MenuItem>
                 ) : (
                   banks.map((bank) => (

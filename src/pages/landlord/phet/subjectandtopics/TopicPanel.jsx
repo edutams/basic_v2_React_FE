@@ -18,6 +18,7 @@ import {
   Chip,
   Button,
   TextField,
+  Skeleton,
   InputAdornment,
   Alert
 } from '@mui/material';
@@ -25,6 +26,8 @@ import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
   Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../../../components/shared/ParentCard';
 
@@ -99,7 +102,11 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
           </Alert>
         </Box>
       ) : isLoading ? (
-        <Typography sx={{ p: 2 }}>Loading...</Typography>
+        <Box sx={{ p: 2 }}>
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+          ))}
+        </Box>
       ) : (
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -173,6 +180,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                             onClose={handleMenuClose}
                           >
                             <MenuItem onClick={() => handleActionClick('update')}>
+                              <EditIcon fontSize="small" sx={{ mr: 1 }} />
                               Edit Topic
                             </MenuItem>
                             {/* <MenuItem onClick={() =>
@@ -180,7 +188,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                             }>
                               {t.status === 'active' ? 'Deactivate' : 'Activate'}
                             </MenuItem> */}
-                            <MenuItem onClick={() => handleActionClick('delete')}>
+                            <MenuItem onClick={() => handleActionClick('delete')} sx={{ color: 'error.main' }}>
+                              <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                               Delete Topic
                             </MenuItem>
                           </Menu>

@@ -20,7 +20,7 @@ import {
   MenuItem,
   ListItemIcon,
   Alert,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Grid,
   FormControl,
@@ -462,51 +462,51 @@ const SchoolAssignmentManagement = () => {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
         <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={userStats.total}
-            label="Total Users"
-            subtitle="All registered users"
-            icon={IconUsers}
-            colorIndex={0}
-            loading={loading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={userStats.total}
+              label="Total Users"
+              subtitle="All registered users"
+              icon={IconUsers}
+              colorIndex={0}
+              loading={loading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={userStats.assigned}
-            label="Roles Assigned"
-            subtitle="Assigned Users"
-            icon={IconUserCheck}
-            colorIndex={1}
-            loading={loading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={userStats.assigned}
+              label="Roles Assigned"
+              subtitle="Assigned Users"
+              icon={IconUserCheck}
+              colorIndex={1}
+              loading={loading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={userStats.unassigned}
-            label="Unassigned Users"
-            subtitle="No role assigned"
-            icon={IconUserOff}
-            colorIndex={2}
-            loading={loading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={userStats.unassigned}
+              label="Unassigned Users"
+              subtitle="No role assigned"
+              icon={IconUserOff}
+              colorIndex={2}
+              loading={loading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard
-            count={userStats.multiRole}
-            label="Multi-role"
-            subtitle="Users with multiple roles"
-            icon={IconUsers}
-            colorIndex={3}
-            loading={loading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={userStats.multiRole}
+              label="Multi-role"
+              subtitle="Users with multiple roles"
+              icon={IconUsers}
+              colorIndex={3}
+              loading={loading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <Tooltip title="Click to view breakdown of recent changes" placement="top">
               <Box
                 onClick={() => setRecentChangesModalOpen(true)}
@@ -684,11 +684,15 @@ const SchoolAssignmentManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      <CircularProgress size={28} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(6)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');

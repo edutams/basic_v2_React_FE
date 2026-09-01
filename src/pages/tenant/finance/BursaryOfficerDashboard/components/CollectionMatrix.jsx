@@ -12,6 +12,7 @@ import {
   TableRow,
   useTheme,
   LinearProgress,
+  Alert
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
@@ -148,11 +149,11 @@ const CollectionMatrix = ({
                           borderRadius: 4,
                           bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                           '& .MuiLinearProgress-bar': {
-                            bgcolor: row.efficiency >= 80 
+                            bgcolor: row.efficiency >= 80
                               ? theme.palette.success.main
                               : row.efficiency >= 50
-                              ? theme.palette.warning.main
-                              : theme.palette.error.main,
+                                ? theme.palette.warning.main
+                                : theme.palette.error.main,
                             borderRadius: 4,
                           },
                         }}
@@ -164,9 +165,9 @@ const CollectionMatrix = ({
             ) : (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Alert severity="info" sx={{ justifyContent: 'center' }}>
                     No collection data available
-                  </Typography>
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}
@@ -216,8 +217,8 @@ const CollectionMatrix = ({
                         bgcolor: parseFloat(totalEfficiency || computedEfficiency) >= 80
                           ? theme.palette.success.main
                           : parseFloat(totalEfficiency || computedEfficiency) >= 50
-                          ? theme.palette.warning.main
-                          : theme.palette.error.main,
+                            ? theme.palette.warning.main
+                            : theme.palette.error.main,
                         borderRadius: 4,
                       },
                     }}

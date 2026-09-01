@@ -43,6 +43,13 @@ const aclApi = {
         return response.data;
     },
 
+    revokeSchoolRolePermissions: async (roleId, permissions) => {
+        const response = await tenantApi.post(`/censis/acl/roles/${roleId}/permissions/revoke`, {
+            permissions,
+        });
+        return response.data;
+    },
+
     getSchoolAllPermissions: async () => {
         const response = await tenantApi.get('/censis/acl/roles/permissions/all');
         return response.data;

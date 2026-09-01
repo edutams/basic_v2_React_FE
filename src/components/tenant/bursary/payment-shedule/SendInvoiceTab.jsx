@@ -488,7 +488,9 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               <CircularProgress size={24} />
             </Box>
           ) : groupedByStudent.length === 0 ? (
-            <Alert severity="info">No parents found</Alert>
+            <Alert severity="info" sx={{ justifyContent: 'center' }}>
+              No students found for the selected class.
+            </Alert>
           ) : (
             <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
               {groupedByStudent.map((group) => {

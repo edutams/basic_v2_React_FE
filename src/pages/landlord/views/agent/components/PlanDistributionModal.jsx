@@ -3,14 +3,12 @@ import { Grid, Box, Typography, Stack, Card, useTheme } from '@mui/material';
 import Chart from 'react-apexcharts';
 import StandardModal from '@/components/shared/StandardModal';
 import { IconBuildingBank } from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
-
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
   { bg: '#DCFCE7', color: '#16A34A' },
   { bg: '#F3E8FF', color: '#9333EA' },
   { bg: '#FEF3C7', color: '#D97706' },
-  { bg: '#FFE4E6', color: '#E11D48' },
+  { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
 const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
@@ -21,19 +19,12 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
   return (
     <Card
       sx={{
-        p: 2,
+        p: '14px',
         borderRadius: '14px',
-        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-        border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        bgcolor: '#ffffff',
+        border: '1px solid #E5E7EB',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         height: '100%',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-        },
       }}
     >
       <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
@@ -81,7 +72,7 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
 const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Stack
@@ -91,7 +82,7 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
       justifyContent="space-between"
       sx={{
         py: 1.2,
-        borderBottom: `1px solid ${colors.borderColor}`,
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB'}`,
         '&:last-child': { borderBottom: 'none' },
       }}
     >
@@ -101,17 +92,17 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
             width: 32,
             height: 32,
             borderRadius: '8px',
-            background: colors.iconBg,
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={16} color={colors.iconColor || '#fff'} />
+          <Icon size={16} color={isDark ? '#ffffff' : scheme.color} />
         </Box>
         <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: colors.accentColor }} />
+          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: scheme.color }} />
           <Typography
             variant="caption"
             fontWeight={700}
@@ -123,7 +114,7 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
       </Stack>
       <Box
         sx={{
-          bgcolor: colors.accentColor,
+          bgcolor: scheme.color,
           color: '#fff',
           px: 1.5,
           py: 0.3,

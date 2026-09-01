@@ -10,7 +10,7 @@ import {
   Chip,
   Divider,
   Avatar,
-  CircularProgress,
+  Skeleton,
   Paper,
   Tooltip,
   Stack,
@@ -1073,8 +1073,17 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
         }}
       >
         {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" p={5} flex={1}>
-            <CircularProgress />
+          <Box sx={{ py: 4, px: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Skeleton variant="circular" width={60} height={60} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={24} />
+                <Skeleton variant="text" width="40%" height={16} />
+              </Box>
+            </Box>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1 }} />
+            ))}
           </Box>
         ) : (
           <Box display="flex" flexDirection="column" height="100%">
@@ -1513,7 +1522,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             size="small"
             color="primary"
             disabled={submittingProfile}
-            startIcon={submittingProfile ? <CircularProgress size={16} color="inherit" /> : null}
+            startIcon={submittingProfile ? <Skeleton variant="text" width={16} height={16} /> : null}
           >
             Save Changes
           </Button>
@@ -1547,7 +1556,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             size="small"
             color="primary"
             disabled={!imagePreview || submittingPicture}
-            startIcon={submittingPicture ? <CircularProgress size={16} color="inherit" /> : null}
+            startIcon={submittingPicture ? <Skeleton variant="text" width={16} height={16} /> : null}
           >
             Update Picture
           </Button>
@@ -1632,7 +1641,7 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
             size="small"
             color="primary"
             disabled={submittingPassword}
-            startIcon={submittingPassword ? <CircularProgress size={16} color="inherit" /> : null}
+            startIcon={submittingPassword ? <Skeleton variant="text" width={16} height={16} /> : null}
           >
             Update Password
           </Button>
@@ -1703,8 +1712,10 @@ const UserProfileDrawer = ({ open, onClose, user, loading = false, onAction, isL
           </Box>
 
           {fetchingActivities ? (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress size={32} />
+            <Box sx={{ py: 2 }}>
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+              ))}
             </Box>
           ) : filteredUserActivities.length === 0 ? (
             <Paper

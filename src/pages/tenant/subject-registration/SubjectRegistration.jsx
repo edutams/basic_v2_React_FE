@@ -32,7 +32,6 @@ import {
   Stars as OptionalIcon,
   Build as TradeIcon,
 } from '@mui/icons-material';
-import { getStatCardColor } from '@/utils/statCardColors';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
   fetchSessions,
@@ -54,44 +53,48 @@ const BCrumb = [
   { title: 'Subject Registration' },
 ];
 
-// ── Theme-aware stat card component ─────────────────────────────
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
 const AnalyticsStatCard = ({
   icon: Icon,
   value,
   label,
-  colorName,
   colorIndex = 0,
   loading = false,
   onClick,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Paper
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 3,
-        borderRadius: '16px',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+        p: '14px',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         height: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: 2,
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        ...(onClick
-          ? {
-              '&:hover': {
-                transform: 'translateY(-3px)',
-                boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 6px 24px rgba(0,0,0,0.12)',
-              },
-            }
-          : {}),
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
       <Box
@@ -99,15 +102,15 @@ const AnalyticsStatCard = ({
           width: 48,
           height: 48,
           borderRadius: '12px',
-          background: colors.iconBg,
+          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+          color: isDark ? '#ffffff' : scheme.color,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: isDark ? '0 6px 16px rgba(0,0,0,.3)' : `0 8px 22px -2px ${colors.iconGlow}`,
         }}
       >
-        {Icon && <Icon sx={{ fontSize: 26, color: colors.iconColor }} />}
+        {Icon && <Icon sx={{ fontSize: 26, color: 'inherit' }} />}
       </Box>
       <Box sx={{ flexGrow: 1 }}>
         {loading ? (
@@ -116,7 +119,7 @@ const AnalyticsStatCard = ({
           <Typography
             variant="h4"
             fontWeight={700}
-            sx={{ color: isDark ? '#fff' : colors.accentColor }}
+            sx={{ color: isDark ? '#fff' : scheme.color }}
           >
             {value}
           </Typography>
@@ -448,7 +451,6 @@ const SubjectRegistration = () => {
             icon={SubjectIcon}
             value={stats.all.total_subjects}
             label={`All Subjects · ${stats.all.registered_learners} registered learners`}
-            colorName="success"
             colorIndex={1}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('all', 'All Subjects')}
@@ -459,7 +461,6 @@ const SubjectRegistration = () => {
             icon={CompulsoryIcon}
             value={stats.compulsory.total_subjects}
             label={`Compulsory Subjects · ${stats.compulsory.registered_learners} registered learners`}
-            colorName="info"
             colorIndex={0}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('compulsory', 'Compulsory Subjects')}
@@ -470,8 +471,7 @@ const SubjectRegistration = () => {
             icon={OptionalIcon}
             value={stats.optional.total_subjects}
             label={`Optional Subjects · ${stats.optional.registered_learners} registered learners`}
-            colorName="warning"
-            colorIndex={0}
+            colorIndex={2}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('optional', 'Optional Subjects')}
           />
@@ -481,8 +481,7 @@ const SubjectRegistration = () => {
             icon={TradeIcon}
             value={stats.trade.total_subjects}
             label={`Trade Subjects · ${stats.trade.registered_learners} registered learners`}
-            colorName="error"
-            colorIndex={0}
+            colorIndex={3}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('trade', 'Trade Subjects')}
           />

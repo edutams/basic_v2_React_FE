@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   IconButton,
@@ -534,51 +534,51 @@ const SchoolPermissionBased = () => {
     <Box>
       <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
         <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalP.toLocaleString()}
-            label="Total Permissions"
-            subtitle="Across all roles"
-            icon={IconLock}
-            colorIndex={0}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalP.toLocaleString()}
+              label="Total Permissions"
+              subtitle="Across all roles"
+              icon={IconLock}
+              colorIndex={0}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.assignedP.toLocaleString()}
-            label="Permissions Assigned"
-            subtitle="In use by roles"
-            icon={IconShieldCheck}
-            colorIndex={1}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.assignedP.toLocaleString()}
+              label="Permissions Assigned"
+              subtitle="In use by roles"
+              icon={IconShieldCheck}
+              colorIndex={1}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.unusedP}
-            label="Unused Permissions"
-            subtitle="Not assigned to any role"
-            icon={IconKey}
-            colorIndex={3}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.unusedP}
+              label="Unused Permissions"
+              subtitle="Not assigned to any role"
+              icon={IconKey}
+              colorIndex={3}
+              loading={statsLoading}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.affectedU.toLocaleString()}
-            label="Affected Users"
-            subtitle="Users impacted by permissions"
-            icon={IconUsers}
-            colorIndex={2}
-            loading={statsLoading}
-          />
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.affectedU.toLocaleString()}
+              label="Affected Users"
+              subtitle="Users impacted by permissions"
+              icon={IconUsers}
+              colorIndex={2}
+              loading={statsLoading}
+            />
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
@@ -605,7 +605,7 @@ const SchoolPermissionBased = () => {
                   }}
                 >
                   {statsLoading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}
@@ -854,11 +854,15 @@ const SchoolPermissionBased = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(9)].map((_, j) => (
+                            <TableCell key={j}>
+                              <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
                     ) : displayPermissions.length > 0 ? (
                       displayPermissions.map((row, index) => {
                         const permName = row.name || row.permission || '';
@@ -892,7 +896,7 @@ const SchoolPermissionBased = () => {
                           <TableRow key={row.id || index} hover>
                             <TableCell sx={{ py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
 
-                             {/* Permission Code + Action Badge */}
+                            {/* Permission Code + Action Badge */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Box>

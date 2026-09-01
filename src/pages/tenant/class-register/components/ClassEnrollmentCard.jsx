@@ -8,34 +8,46 @@ import {
   Tooltip,
   useTheme,
   CircularProgress,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
 } from '@mui/icons-material';
-import { getStatCardColor } from '@/utils/statCardColors';
 
-const colorNames = ['primary', 'success', 'info', 'warning', 'error', 'secondary'];
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
 
 const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor('primary', 0, isDark, theme);
 
   return (
-    <Paper
+    <Box
       elevation={0}
       sx={{
-        p: 2,
-        borderRadius: '16px',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+        p: '12px',
+        borderRadius: '14px',
+        bgcolor: 'white',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          // borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
         height: '100%',
         maxHeight: 250,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         width: '100%',
       }}
     >
@@ -72,22 +84,42 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
         }}
       >
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress size={30} />
-          </Box>
+          <Grid container spacing={1.5}>
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Grid size={{ xs: 6, sm: 2 }} key={idx}>
+                <Box
+                  sx={{
+                    p: '10px',
+                    borderRadius: '14px',
+                    bgcolor: '#ffffff',
+                    border: '1px solid #E5E7EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Skeleton variant="text" width={45} height={16} />
+                    <Skeleton variant="text" width={30} height={28} sx={{ mt: 0.5 }} />
+                  </Box>
+                  <Skeleton
+                    variant="rounded"
+                    width={36}
+                    height={36}
+                    sx={{ borderRadius: '10px', flexShrink: 0, ml: 1 }}
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
         ) : enrollmentData.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+          <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center', my: 2 }}>
             No enrollment data available. Please ensure class structure is set up.
-          </Typography>
+          </Alert>
         ) : (
           <Grid container spacing={1.5}>
             {enrollmentData.map((cls, index) => {
-              const itemColors = getStatCardColor(
-                colorNames[index % colorNames.length],
-                index,
-                isDark,
-                theme,
-              );
+              const scheme = schemeMap[index % schemeMap.length];
               const isSenior = cls.class_code?.toUpperCase().startsWith('SS');
               return (
                 <Grid size={{ xs: 6, sm: 2 }} key={cls.class_id || index}>
@@ -95,20 +127,21 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                     <Box
                       onClick={() => onClassClick(cls)}
                       sx={{
-                        p: 1,
-                        borderRadius: '12px',
-                        border: isDark
-                          ? '1px solid rgba(255,255,255,0.08)'
-                          : `1px solid ${itemColors.accentColor}`,
-                        background: isDark ? 'rgba(255,255,255,0.02)' : itemColors.cardBg,
-                        boxShadow: isDark
-                          ? '0 8px 20px rgba(0,0,0,0.35)'
-                          : '0 6px 16px rgba(0,0,0,0.12)',
+                        p: '10px',
+                        borderRadius: '14px',
+                        bgcolor: '#ffffff',
+                        border: '1px solid #94a3b8',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          // borderColor: '#94a3b8',
+                          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                        },
                       }}
                     >
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -116,7 +149,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                           variant="caption"
                           fontWeight={700}
                           sx={{
-                            color: isDark ? 'rgba(255,255,255,0.72)' : itemColors.accentColor,
+                            color: scheme.color,
                             letterSpacing: 0.5,
                             display: 'block',
                           }}
@@ -130,7 +163,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                                 ml: 0.5,
                                 fontSize: '0.65rem',
                                 fontWeight: 500,
-                                color: itemColors.accentColor,
+                                color: scheme.color,
                               }}
                             >
                               ({cls.programme_code})
@@ -152,17 +185,14 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
                           width: 36,
                           height: 36,
                           borderRadius: '10px',
-                          background: itemColors.iconBg,
-                          color: itemColors.iconColor,
+                          background: scheme.bg,
+                          color: scheme.color,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                           ml: 1,
                           mt: 3,
-                          boxShadow: isDark
-                            ? '0 4px 12px rgba(0,0,0,.3)'
-                            : `0 6px 18px -2px ${itemColors.iconGlow}`,
                         }}
                       >
                         <GroupsIcon sx={{ fontSize: 20 }} />
@@ -175,7 +205,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
           </Grid>
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

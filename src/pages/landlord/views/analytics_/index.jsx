@@ -4,7 +4,7 @@ import {
   Typography,
   Tab,
   Tabs,
-  CircularProgress,
+  Skeleton,
   Alert,
   Stack,
   Button,
@@ -111,8 +111,13 @@ const Analytics = () => {
       )}
 
       {loading && !overview ? (
-        <Box display="flex" justifyContent="center" py={10}>
-          <CircularProgress />
+        <Box sx={{ py: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={120} sx={{ borderRadius: 2 }} />
+            ))}
+          </Box>
+          <Skeleton variant="rounded" height={300} sx={{ borderRadius: 2 }} />
         </Box>
       ) : (
         <>

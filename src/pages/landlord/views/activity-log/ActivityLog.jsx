@@ -12,7 +12,7 @@ import {
   TextField,
   InputAdornment,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   TablePagination,
   Dialog,
@@ -567,8 +567,8 @@ const ActivityLog = () => {
                     const rawRoleName = typeof role === 'string' ? role : (role.name || role.title || role.id);
                     const displayLabel = rawRoleName
                       ? String(rawRoleName)
-                          .replace(/[_-]/g, ' ')
-                          .replace(/\b\w/g, (char) => char.toUpperCase())
+                        .replace(/[_-]/g, ' ')
+                        .replace(/\b\w/g, (char) => char.toUpperCase())
                       : '';
                     return (
                       <MenuItem key={role.id || rawRoleName} value={rawRoleName}>
@@ -657,8 +657,10 @@ const ActivityLog = () => {
 
           {/* Activity Logs Table */}
           {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress size={32} />
+            <Box sx={{ py: 2 }}>
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+              ))}
             </Box>
           ) : error ? (
             <Alert severity="error">{error}</Alert>
@@ -845,9 +847,11 @@ const ActivityLog = () => {
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => { handleOpenModal(menuLog); handleMenuClose(); }}>
+          <IconListCheck size={16} style={{ marginRight: 8 }} />
           View Activity Details
         </MenuItem>
         <MenuItem onClick={() => { handleDownloadPdf(); handleMenuClose(); }}>
+          <IconDownload size={16} style={{ marginRight: 8 }} />
           Download Report PDF
         </MenuItem>
       </Menu>

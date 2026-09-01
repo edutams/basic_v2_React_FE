@@ -1,8 +1,36 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Stack, Divider, useTheme } from '@mui/material';
+import { Card, CardContent, Typography, Box, Stack, Divider, Skeleton, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
-// import { getStatCardColor } from 'src/utils/statCardColors';
 import PropTypes from 'prop-types';
+
+const DashboardStatCardSkeleton = ({ isDark, theme }) => (
+  <Card
+    sx={{
+      p: '0px !important',
+      height: '100%',
+      borderRadius: '14px',
+      bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+      border: '1px solid',
+      borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    }}
+  >
+    <CardContent sx={{ p: '14px !important', '&:last-child': { pb: '14px !important' }, height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Skeleton variant="text" width="40%" height={18} />
+        <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+      </Box>
+      <Skeleton variant="rounded" width="35%" height={36} sx={{ borderRadius: '8px' }} />
+      <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
+        {[1, 2, 3].map((i) => (
+          <Box key={i} sx={{ flex: 1, px: i === 1 ? 0 : 2 }}>
+            <Skeleton variant="text" width="70%" height={12} />
+            <Skeleton variant="text" width="50%" height={18} />
+          </Box>
+        ))}
+      </Stack>
+    </CardContent>
+  </Card>
+);
 
 const DashboardStatCard = ({
   title,
@@ -10,6 +38,7 @@ const DashboardStatCard = ({
   valueColor,
   valueBg,
   colorIndex = 0,
+  loading = false,
   subStats = [],
   onIconClick,
   onClick,
@@ -27,6 +56,10 @@ const DashboardStatCard = ({
   ];
   const scheme = schemeMap[colorIndex % schemeMap.length];
 
+  if (loading) {
+    return <DashboardStatCardSkeleton isDark={isDark} theme={theme} />;
+  }
+
   return (
     <Card
       onClick={onClick}
@@ -40,13 +73,11 @@ const DashboardStatCard = ({
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick
-          ? {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            }
-          : {},
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
         ...sx,
       }}
     >
@@ -84,7 +115,6 @@ const DashboardStatCard = ({
           <Typography
             variant="h3"
             fontWeight="800"
-          // sx={{ color: resolvedValueColor, fontSize: '32px', lineHeight: 1 }}
           >
             {value}
           </Typography>
@@ -106,7 +136,7 @@ const DashboardStatCard = ({
           </Stack>
         )}
       </CardContent>
-    </Card >
+    </Card>
   );
 };
 
@@ -115,6 +145,8 @@ DashboardStatCard.propTypes = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   valueColor: PropTypes.string,
   valueBg: PropTypes.string,
+  colorIndex: PropTypes.number,
+  loading: PropTypes.bool,
   subStats: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,

@@ -8,7 +8,7 @@ import {
   Typography,
   Box,
   Chip,
-  CircularProgress,
+  Skeleton,
   TextField,
   InputAdornment,
 } from '@mui/material';
@@ -143,8 +143,10 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser, onPermissionSav
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={24} />
+          <Box sx={{ py: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
           </Box>
         ) : groupedPermissions.length === 0 ? (
           <Typography variant="body2" color="textSecondary" sx={{ p: 2 }}>

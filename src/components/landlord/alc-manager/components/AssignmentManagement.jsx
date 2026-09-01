@@ -19,7 +19,7 @@ import {
   Menu,
   MenuItem,
   Alert,
-  CircularProgress,
+  Skeleton,
   FormControl,
   InputLabel,
   Select,
@@ -727,11 +727,15 @@ const AssignmentManagement = () => {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'inactive' ? 'Inactive' : 'Active';

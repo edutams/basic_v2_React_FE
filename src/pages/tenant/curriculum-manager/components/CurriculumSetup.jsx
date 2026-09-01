@@ -27,6 +27,7 @@ import {
   CircularProgress,
   Checkbox,
   FormControlLabel,
+  Skeleton,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -640,11 +641,15 @@ const CurriculumSetup = () => {
                   </TableHead>
                   <TableBody>
                     {loadingCurriculums ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
                     ) : curriculums.length > 0 ? (
                       curriculums.map((item, i) => (
                         <TableRow key={item.id} hover>
@@ -825,11 +830,13 @@ const CurriculumSetup = () => {
                   </TableHead>
                   <TableBody>
                     {loadingAssignments ? (
-                      <TableRow>
-                        <TableCell colSpan={3} align="center">
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rectangular" width={140} height={32} sx={{ borderRadius: 1 }} /></TableCell>
+                        </TableRow>
+                      ))
                     ) : classData.length > 0 ? (
                       classData.map((item, i) => (
                         <TableRow key={item.id} hover>

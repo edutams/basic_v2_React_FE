@@ -14,7 +14,7 @@ const classRegisterApi = {
     tenantApi.get(`/class-arms/by-class/${classId}`, { params }),
 
   // ── Student Data ─────────────────────────────────────────
-  getStudents: (params = {}) => tenantApi.get('/students', { params }),
+  getStudents: (params = {}) => tenantApi.get('/students/by-class/all', { params }),
   getStudentDetail: (id) => tenantApi.get(`/students/${id}`),
   getStudentsByClassArm: (params = {}) =>
     tenantApi.get('/students/by-class-arm', { params }),

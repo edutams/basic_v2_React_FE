@@ -225,15 +225,18 @@ const SubscriptionHistoryList = () => {
                           {transaction.status === 'pending' ? (
                             <>
                               <MenuItem onClick={() => handleUpdateStatus(transaction)}>
+                                <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
                                 Update Status
                               </MenuItem>
                             </>
                           ) : (
                             <>
                               <MenuItem onClick={() => handleUpdateStatus(transaction)}>
+                                <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
                                 Update Status
                               </MenuItem>
                               <MenuItem onClick={() => handlePrintReceipt(transaction)}>
+                                <PrintIcon fontSize="small" sx={{ mr: 1 }} />
                                 Print Receipt
                               </MenuItem>
                             </>

@@ -33,8 +33,6 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import StatCard from '@/components/shared/StatCard';
-import { getStatCardColor } from '@/utils/statCardColors';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
@@ -57,10 +55,17 @@ const PaymentShedule = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   const [actionTab, setActionTab] = useState(0);
   const [scheduleTab, setScheduleTab] = useState(0);
@@ -441,30 +446,45 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor0.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor0.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Typography variant="body2" color="textSecondary" mb={3}>
-                {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
-              </Typography>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                    color: isDark ? '#fff' : s0.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
+                </Typography>
+              </Box>
 
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
                   sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     borderRadius: 1,
                     px: 3,
                     py: 2,
@@ -478,7 +498,7 @@ const PaymentShedule = () => {
                     <Typography
                       variant="h2"
                       fontWeight={700}
-                      sx={{ color: isDark ? '#ffffff' : statColor0.accentColor, lineHeight: 1 }}
+                      sx={{ color: isDark ? '#ffffff' : s0.color, lineHeight: 1 }}
                     >
                       {stats.schedule.total}
                     </Typography>
@@ -504,35 +524,35 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor1.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor1.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <Box
                   sx={{
-                    width: 25,
-                    height: 25,
-                    borderRadius: '50%',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                    color: isDark ? '#fff' : s1.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 14, color: statColor1.accentColor }} />
+                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Payment Name
@@ -552,7 +572,7 @@ const PaymentShedule = () => {
                       sx={{
                         lineHeight: 1,
                         mb: 0.5,
-                        color: isDark ? '#ffffff' : statColor1.accentColor,
+                        color: isDark ? '#ffffff' : s1.color,
                       }}
                     >
                       ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
@@ -575,7 +595,7 @@ const PaymentShedule = () => {
                       sx={{
                         lineHeight: 1,
                         mb: 0.5,
-                        color: isDark ? '#ffffff' : statColor1.accentColor,
+                        color: isDark ? '#ffffff' : s1.color,
                       }}
                     >
                       ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
@@ -593,35 +613,35 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor2.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor2.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <Box
                   sx={{
-                    width: 25,
-                    height: 25,
-                    borderRadius: '50%',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                    color: isDark ? '#fff' : s2.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 14, color: statColor2.accentColor }} />
+                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Student Category
@@ -641,7 +661,7 @@ const PaymentShedule = () => {
                       sx={{
                         lineHeight: 1,
                         mb: 0.5,
-                        color: isDark ? '#ffffff' : statColor2.accentColor,
+                        color: isDark ? '#ffffff' : s2.color,
                       }}
                     >
                       ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
@@ -664,7 +684,7 @@ const PaymentShedule = () => {
                       sx={{
                         lineHeight: 1,
                         mb: 0.5,
-                        color: isDark ? '#ffffff' : statColor2.accentColor,
+                        color: isDark ? '#ffffff' : s2.color,
                       }}
                     >
                       ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
@@ -687,29 +707,44 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 2,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor0.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor0.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                Invoice Generated
-              </Typography>
-              <Box display="flex" alignItems="center" gap={2} mt={5}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <Box
                   sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                    color: isDark ? '#fff' : s0.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  Invoice Generated
+                </Typography>
+              </Box>
+              <Box display="flex" alignItems="center" gap={2} mt={3}>
+                <Box
+                  sx={{
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     borderRadius: 1,
                     px: 3,
                     py: 1.5,
@@ -723,7 +758,7 @@ const PaymentShedule = () => {
                     <Typography
                       variant="h2"
                       fontWeight={700}
-                      sx={{ color: isDark ? '#ffffff' : statColor0.accentColor }}
+                      sx={{ color: isDark ? '#ffffff' : s0.color }}
                     >
                       {invoiceStats.invoiceGenerated}
                     </Typography>
@@ -749,35 +784,35 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 2,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor1.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor1.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <Box
                   sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '4px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                    color: isDark ? '#fff' : s1.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: statColor1.accentColor }} />
+                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Payment Name
@@ -818,35 +853,35 @@ const PaymentShedule = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 2,
-                borderRadius: '16px',
-                height: '100%',
-                background: isDark
-                  ? theme.palette.background.paper
-                  : `${statColor2.cardBg} !important`,
-                border: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor2.borderColor}`,
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                p: '14px',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <Box
                   sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '4px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                    color: isDark ? '#fff' : s2.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: statColor2.accentColor }} />
+                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Category Name
@@ -889,7 +924,51 @@ const PaymentShedule = () => {
         <Grid container spacing={3} mb={3}>
           {sendInvoiceStats.map((stat, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <StatCard count={stat.value} label={stat.label} icon={stat.icon} colorIndex={i} />
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : schemeMap[i].bg,
+                      color: isDark ? '#fff' : schemeMap[i].color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <stat.icon sx={{ fontSize: 18 }} color="currentColor" />
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    {stat.label}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="h3"
+                  fontWeight={700}
+                  sx={{ color: isDark ? '#ffffff' : schemeMap[i].color }}
+                >
+                  {stat.value}
+                </Typography>
+              </Paper>
             </Grid>
           ))}
         </Grid>
@@ -1239,7 +1318,7 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        // fullWidth
+      // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>

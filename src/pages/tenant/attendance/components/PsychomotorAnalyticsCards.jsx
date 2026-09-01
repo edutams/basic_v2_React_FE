@@ -22,7 +22,7 @@ import {
   TrendingDown as TrendingDownIcon,
   TrendingFlat as TrendingFlatIcon,
 } from '@mui/icons-material';
-import { getStatCardColor } from '@/utils/statCardColors';
+
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
@@ -30,29 +30,39 @@ import StatCardSkeleton from './StatCardSkeleton';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 // ── Theme-aware stat card ──────────────────────────────────────
-const StatCard = ({ children, colorName, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
+const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(colorName, colorIndex, isDark, theme);
+  const scheme = schemeMap[colorIndex] || schemeMap[0];
 
   return (
     <Paper
       elevation={0}
       onClick={onClick}
       sx={{
-        p: 2.5,
-        borderRadius: '16px',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+        p: '14px',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         height: '100%',
         cursor: clickable ? 'pointer' : 'default',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         ...(clickable
           ? {
               '&:hover': {
-                transform: 'translateY(-3px)',
-                boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 6px 24px rgba(0,0,0,0.12)',
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
               },
             }
           : {}),
@@ -523,10 +533,10 @@ const PsychomotorAnalyticsCards = ({
   );
 
   const colors = {
-    success: getStatCardColor('success', 1, isDark, theme),
-    primary: getStatCardColor('primary', 0, isDark, theme),
-    warning: getStatCardColor('warning', 3, isDark, theme),
-    info: getStatCardColor('info', 2, isDark, theme),
+    success: schemeMap[1],
+    primary: schemeMap[0],
+    warning: schemeMap[3],
+    info: schemeMap[2],
   };
 
   return (
@@ -545,7 +555,6 @@ const PsychomotorAnalyticsCards = ({
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Tooltip title="Click to view affective skills breakdown" arrow placement="top">
               <StatCard
-                colorName="success"
                 colorIndex={1}
                 clickable
                 onClick={() =>
@@ -564,7 +573,7 @@ const PsychomotorAnalyticsCards = ({
                   variant="caption"
                   fontWeight={700}
                   sx={{
-                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.accentColor,
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.success.color,
                     textTransform: 'uppercase',
                   }}
                 >
@@ -573,7 +582,7 @@ const PsychomotorAnalyticsCards = ({
                 <Typography
                   variant="h4"
                   fontWeight={700}
-                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.accentColor }}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.success.color }}
                 >
                   {metrics.avgAffective}/{metrics.maxRating}
                 </Typography>
@@ -589,7 +598,7 @@ const PsychomotorAnalyticsCards = ({
                     borderRadius: 2,
                     bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                     '& .MuiLinearProgress-bar': {
-                      bgcolor: colors.success.accentColor,
+                      bgcolor: colors.success.color,
                     },
                   }}
                 />
@@ -597,7 +606,7 @@ const PsychomotorAnalyticsCards = ({
                   <Typography
                     variant="caption"
                     fontWeight={600}
-                    sx={{ color: colors.success.accentColor }}
+                    sx={{ color: colors.success.color }}
                   >
                     {metrics.affectiveTrendText || 'No previous data'}
                   </Typography>
@@ -606,7 +615,7 @@ const PsychomotorAnalyticsCards = ({
                   ) : metrics.affectiveChange < 0 ? (
                     <TrendingDownIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
                   ) : (
-                    <TrendingFlatIcon sx={{ fontSize: 14, color: colors.success.accentColor }} />
+                    <TrendingFlatIcon sx={{ fontSize: 14, color: colors.success.color }} />
                   )}
                 </Stack>
               </StatCard>
@@ -617,7 +626,6 @@ const PsychomotorAnalyticsCards = ({
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Tooltip title="Click to view psychomotor skills breakdown" arrow placement="top">
               <StatCard
-                colorName="primary"
                 colorIndex={0}
                 clickable
                 onClick={() =>
@@ -636,7 +644,7 @@ const PsychomotorAnalyticsCards = ({
                   variant="caption"
                   fontWeight={700}
                   sx={{
-                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.primary.accentColor,
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.primary.color,
                     textTransform: 'uppercase',
                   }}
                 >
@@ -645,7 +653,7 @@ const PsychomotorAnalyticsCards = ({
                 <Typography
                   variant="h4"
                   fontWeight={700}
-                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.primary.accentColor }}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.primary.color }}
                 >
                   {metrics.avgPsychomotor}/{metrics.maxRating}
                 </Typography>
@@ -661,7 +669,7 @@ const PsychomotorAnalyticsCards = ({
                     borderRadius: 2,
                     bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
                     '& .MuiLinearProgress-bar': {
-                      bgcolor: colors.primary.accentColor,
+                      bgcolor: colors.primary.color,
                     },
                   }}
                 />
@@ -688,7 +696,6 @@ const PsychomotorAnalyticsCards = ({
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Tooltip title="Click to view learners needing support" arrow placement="top">
               <StatCard
-                colorName="warning"
                 colorIndex={3}
                 clickable
                 onClick={() =>
@@ -705,7 +712,7 @@ const PsychomotorAnalyticsCards = ({
                     variant="caption"
                     fontWeight={700}
                     sx={{
-                      color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.accentColor,
+                      color: isDark ? 'rgba(255,255,255,0.72)' : colors.warning.color,
                       textTransform: 'uppercase',
                     }}
                   >
@@ -721,7 +728,7 @@ const PsychomotorAnalyticsCards = ({
                 <Typography
                   variant="h4"
                   fontWeight={700}
-                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.accentColor }}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : colors.warning.color }}
                 >
                   {metrics.needingSupport}
                 </Typography>
@@ -749,7 +756,6 @@ const PsychomotorAnalyticsCards = ({
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Tooltip title="Click to view gender rating comparison" arrow placement="top">
               <StatCard
-                colorName="info"
                 colorIndex={2}
                 clickable
                 onClick={() =>
@@ -765,7 +771,7 @@ const PsychomotorAnalyticsCards = ({
                   variant="caption"
                   fontWeight={700}
                   sx={{
-                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.accentColor,
+                    color: isDark ? 'rgba(255,255,255,0.72)' : colors.info.color,
                     mb: 1,
                     display: 'block',
                     textTransform: 'uppercase',
@@ -786,7 +792,7 @@ const PsychomotorAnalyticsCards = ({
                       <Typography
                         variant="caption"
                         fontWeight={700}
-                        sx={{ color: isDark ? '#fff' : colors.primary.accentColor }}
+                        sx={{ color: isDark ? '#fff' : colors.primary.color }}
                       >
                         {metrics.maleRating}
                       </Typography>
@@ -801,7 +807,7 @@ const PsychomotorAnalyticsCards = ({
                         height: 4,
                         borderRadius: 2,
                         bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                        '& .MuiLinearProgress-bar': { bgcolor: colors.primary.accentColor },
+                        '& .MuiLinearProgress-bar': { bgcolor: colors.primary.color },
                       }}
                     />
                   </Box>
@@ -817,7 +823,7 @@ const PsychomotorAnalyticsCards = ({
                       <Typography
                         variant="caption"
                         fontWeight={700}
-                        sx={{ color: isDark ? '#fff' : colors.success.accentColor }}
+                        sx={{ color: isDark ? '#fff' : colors.success.color }}
                       >
                         {metrics.femaleRating}
                       </Typography>
@@ -832,7 +838,7 @@ const PsychomotorAnalyticsCards = ({
                         height: 4,
                         borderRadius: 2,
                         bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                        '& .MuiLinearProgress-bar': { bgcolor: colors.success.accentColor },
+                        '& .MuiLinearProgress-bar': { bgcolor: colors.success.color },
                       }}
                     />
                   </Box>

@@ -30,6 +30,7 @@ import {
   Alert,
   Grid,
   FormHelperText,
+  Skeleton,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -473,13 +474,13 @@ const ClassSubject = () => {
                     </Box>
                   ))
                 ) : program ? (
-                  <Typography color="textSecondary" align="center" py={2}>
+                  <Alert severity="info" sx={{ justifyContent: 'center', my: 1 }}>
                     No classes found for this programme
-                  </Typography>
+                  </Alert>
                 ) : (
-                  <Typography color="textSecondary" align="center" py={2}>
+                  <Alert severity="info" sx={{ justifyContent: 'center', my: 1 }}>
                     Select a programme to view classes
-                  </Typography>
+                  </Alert>
                 )}
               </RadioGroup>
             )}
@@ -518,11 +519,16 @@ const ClassSubject = () => {
                 </TableHead>
                 <TableBody>
                   {loadingClassSubjects ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={150} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                        <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                      </TableRow>
+                    ))
                   ) : classSubjects.length > 0 ? (
                     classSubjects.map((subject, i) => (
                       <TableRow key={subject.id} hover>
@@ -564,11 +570,11 @@ const ClassSubject = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center">
-                        <Typography color="textSecondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center', my: 1 }}>
                           {selectedClass
                             ? 'No subjects assigned to this class'
                             : 'Select a class to view subjects'}
-                        </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}

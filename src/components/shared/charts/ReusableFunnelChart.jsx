@@ -5,7 +5,7 @@ import {
   Typography,
   Stack,
   LinearProgress,
-  CircularProgress,
+  Skeleton,
   Chip,
   Button,
   Paper,
@@ -111,8 +111,8 @@ const ReusableFunnelChart = ({
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        <Skeleton variant="rounded" height={200} sx={{ borderRadius: 1 }} />
       </Box>
     );
   }

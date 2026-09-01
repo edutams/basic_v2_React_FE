@@ -46,8 +46,10 @@ const TransactionManager = () => {
 
   const [tab, setTab] = useState(0);
   const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const loadStats = async () => {
+    setStatsLoading(true);
     try {
       let res;
       if (tab === 0) {
@@ -61,6 +63,8 @@ const TransactionManager = () => {
     } catch (err) {
       console.error('Failed to load stats', err);
       setStats(null);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -83,6 +87,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.today_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={0}
+              loading={statsLoading}
             />
           </Grid>
 
@@ -92,6 +97,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={1}
+              loading={statsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
@@ -100,6 +106,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={2}
+              loading={statsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
@@ -108,6 +115,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={3}
+              loading={statsLoading}
             />
           </Grid>
         </Grid>

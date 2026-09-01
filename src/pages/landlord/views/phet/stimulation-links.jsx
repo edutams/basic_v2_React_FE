@@ -18,7 +18,8 @@ import {
   MenuItem,
   InputAdornment,
   Button,
-  Alert
+  Alert,
+  Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
@@ -214,11 +215,15 @@ const ManagePhETLinks = () => {
                 </TableHead>
                 <TableBody>
                   {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        <Typography variant="body2">Loading...</Typography>
-                      </TableCell>
-                    </TableRow>
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(7)].map((_, j) => (
+                          <TableCell key={j}>
+                            <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   ) : paginatedRows.length > 0 ? (
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>

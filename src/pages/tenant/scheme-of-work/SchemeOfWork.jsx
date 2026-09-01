@@ -33,6 +33,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Skeleton,
   Chip,
   useTheme,
   Alert,
@@ -794,7 +795,19 @@ const SchemeOfWork = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={40} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={120} height={20} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={140} height={20} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={180} height={20} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={20} height={20} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={20} height={20} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const isFirstInWeek = idx === 0 || row.week !== paginatedRows[idx - 1].week;
                   const isFirstInTopic =
@@ -958,13 +971,9 @@ const SchemeOfWork = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    {loading ? (
-                      <CircularProgress size={24} />
-                    ) : (
-                      <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                        No records found. Select filters to begin.
-                      </Alert>
-                    )}
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                      No records found. Select filters to begin.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

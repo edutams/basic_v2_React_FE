@@ -23,9 +23,9 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEdit, IconPackage, IconTrash } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -346,11 +346,15 @@ const Plan = () => {
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <CircularProgress size={40} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedPlans.length > 0 ? (
                   paginatedPlans.map((plan, index) => (
                     <TableRow key={plan.id} hover>
@@ -438,12 +442,17 @@ const Plan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', plan)}>Edit Plan</MenuItem>
+                          <MenuItem onClick={() => handleOpen('update', plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
+                            Edit Plan
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
+                            <IconPackage size={16} style={{ marginRight: 8 }} />
                             Manage Packages
                           </MenuItem>
 
-                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)} sx={{ color: 'error.main' }}>
+                            <IconTrash size={16} style={{ marginRight: 8 }} />
                             Delete Plan
                           </MenuItem>
                         </Menu>

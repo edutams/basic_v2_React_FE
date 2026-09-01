@@ -24,6 +24,7 @@ import {
   Alert,
   Tabs,
   Tab,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -270,7 +271,19 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paymentNames.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                      <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : paymentNames.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} align="center">
                       <Alert

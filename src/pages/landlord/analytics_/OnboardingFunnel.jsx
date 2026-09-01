@@ -1,7 +1,7 @@
 import {
   Box,
   Typography,
-  CircularProgress,
+  Skeleton,
   LinearProgress,
   Table,
   TableHead,
@@ -50,8 +50,8 @@ const funnelColors = ['#4A3AFF', '#2CA87F', '#F4A92B', '#2e7d32'];
 const OnboardingFunnel = ({ data, loading }) => {
   if (loading)
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        <Skeleton variant="rounded" height={200} sx={{ borderRadius: 1 }} />
       </Box>
     );
   if (!data) return null;

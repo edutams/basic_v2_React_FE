@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   Avatar,
@@ -438,7 +438,7 @@ const RoleBasedAcess = () => {
                   }}
                 >
                   {loading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}
@@ -639,11 +639,15 @@ const RoleBasedAcess = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(7)].map((_, j) => (
+                            <TableCell key={j}>
+                              <Skeleton variant="text" width={j === 0 ? 30 : j === 6 ? 40 : 80} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
                     ) : displayRoles.length > 0 ? (
                       displayRoles.map((row, index) => {
                         const roleNameStr = row.role || row.name || '';
@@ -839,6 +843,9 @@ const RoleBasedAcess = () => {
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
         roleId={selectedRole?.id}
+        roleName={selectedRole?.role || selectedRole?.name}
+        role={selectedRole}
+        onPermissionRemoved={fetchRoles}
       />
 
       {/* Role Organization Modal */}

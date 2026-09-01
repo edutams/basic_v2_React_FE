@@ -20,7 +20,7 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
-import { IconArrowLeft, IconDownload, IconDotsVertical } from '@tabler/icons-react';
+import { IconArrowLeft, IconDownload, IconDotsVertical, IconEye } from '@tabler/icons-react';
 import PageContainer from '../../../../components/container/PageContainer';
 import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 import MyCommissionStatCards from './components/MyCommissionStatCards';
@@ -248,6 +248,7 @@ const MyCommissionBySubscription = () => {
               }}
             >
               <MenuItem onClick={handleClose}>
+                <IconEye size={16} style={{ marginRight: 8 }} />
                 View Details
               </MenuItem>
             </Menu>

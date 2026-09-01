@@ -13,7 +13,7 @@ import {
   ListItemText,
   ListItem,
   ListItemButton,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import aclApi from '@/api/tenant/acl/aclApi';
@@ -94,8 +94,10 @@ const SchoolRoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelectio
         </Typography>
 
         {loadingRoles ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-            <CircularProgress size={24} />
+          <Box sx={{ py: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
           </Box>
         ) : (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>

@@ -52,6 +52,7 @@ import {
   InputLabel,
   FormHelperText,
   Grid,
+  InputAdornment,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon, Subject } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -91,6 +92,7 @@ const AgentCurriculumManager = () => {
   const [programmesList, setProgrammesList] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
   const [openDeleteSubjectDialog, setOpenDeleteSubjectDialog] = useState(false);
@@ -136,7 +138,11 @@ const AgentCurriculumManager = () => {
       setSubjectsList([]);
       setShowSubjectBank(false);
     }
-  }, [selectedCurriculum, subjectSearch]);
+  }, [selectedCurriculum]);
+
+  const handleSearch = () => {
+    setSubjectSearch(searchInput);
+  };
 
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
@@ -512,19 +518,19 @@ const AgentCurriculumManager = () => {
         </Box>
 
         {/* CONTENT */}
-        <ParentCard>
+        {/* <ParentCard > */}
           <TabPanel value={tab} index={0}>
             <Box
               sx={{
-                display: 'flex',
+                display: 'grid',
                 gap: 3,
-                flexDirection: { xs: 'column', md: 'row' },
+                gridTemplateColumns: { xs: '1fr', md: 'minmax(420px, 5fr) minmax(500px, 7fr)' },
                 width: '100%',
                 mb: 3,
               }}
             >
               {/* LEFT - Curriculum Table */}
-              <Box sx={{ flex: { md: 5 }, width: '100%', mb: 5 }}>
+              <Box sx={{ mb: 5 }}>
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -534,7 +540,8 @@ const AgentCurriculumManager = () => {
                       </Button>
                     </Box>
                   }
-                  sx={{ mb: 3 }}
+                    sx={{ mb: 2, '& .MuiCardContent-root': { px: "2px",py:"2px"} }}
+                  
                 >
                   <Box>
                     <TableContainer>
@@ -630,7 +637,7 @@ const AgentCurriculumManager = () => {
               </Box>
 
               {/* RIGHT - Side Panels */}
-              <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+              <Box>
                 {/* Subject Bank Panel */}
                 {showSubjectBank && (
                   <ParentCard
@@ -649,27 +656,60 @@ const AgentCurriculumManager = () => {
                         </Button>
                       </Box>
                     }
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 2, '& .MuiCardContent-root': { px: "2px",py:"2px"} }}
                   >
-                    <TableContainer sx={{ maxHeight: 600 }}>
+                    <Box sx={{ mb: 2 }}>
                       <TextField
                         size="small"
                         placeholder="Search subjects..."
-                        value={subjectSearch}
-                        onChange={(e) => setSubjectSearch(e.target.value)}
-                        sx={{ width: 200 }}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSearch();
+                        }}
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={handleSearch}
+                                  aria-label="search"
+                                  sx={{ minWidth: 'auto', px: 1.5 }}
+                                >
+                                  Search
+                                </Button>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                        sx={{ width: 300 }}
                       />
-                      <Table sx={{ tableLayout: 'fixed' }}>
+                    </Box>
+                    <TableContainer
+                      sx={{
+                        maxHeight: 600,
+                        overflowX: 'auto',
+                        overflowY: 'auto',
+                        width: '100%',
+                      }}
+                    >
+                      <Table
+                        sx={{
+                          tableLayout: 'auto',
+                        }}
+                      >
                         <TableHead>
                           <TableRow>
-                            <TableCell width="5%">S/N</TableCell>
-                            <TableCell width="10%">Subject</TableCell>
-                            <TableCell width="7%">Code</TableCell>
-                            <TableCell width="15%">Program</TableCell>
-                            <TableCell width="5%">Unit</TableCell>
-                            <TableCell width="5%">Pass Mark</TableCell>
-                            <TableCell width="12%">Status</TableCell>
-                            <TableCell width="5%">Action</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>S/N</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Subject</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Code</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Program</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Unit</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Pass Mark</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -787,20 +827,19 @@ const AgentCurriculumManager = () => {
                               </TableRow>
                             ))
                           ) : (
-                            <TableRow>
-                              <TableCell colSpan={7} sx={{ p: 0 }}>
-                                <Alert
-                                  severity="info"
-                                  sx={{
-                                    my: 2,
-                                    width: '100%',
-                                    justifyContent: 'center',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  No subjects found. Please add a subject.
-                                </Alert>
-                              </TableCell>
+                            <TableRow>                                <TableCell colSpan={7} sx={{ p: 0 }}>
+                              <Alert
+                                severity="info"
+                                sx={{
+                                  my: 2,
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                No subjects found. Please add a subject.
+                              </Alert>
+                            </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
@@ -815,7 +854,7 @@ const AgentCurriculumManager = () => {
           <TabPanel value={tab} index={1}>
             <AgentSchemeOfWork isTab={true} />
           </TabPanel>
-        </ParentCard>
+        {/* </ParentCard> */}
       </Box>
 
       {/* Action Menu */}

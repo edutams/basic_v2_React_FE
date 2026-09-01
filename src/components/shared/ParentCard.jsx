@@ -10,10 +10,9 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
     <Card
       elevation={0}
       sx={{
-        height: '100%',
+        height: 'fit-content',
         display: 'flex',
         flexDirection: 'column',
-        padding: 0,
         borderRadius: '16px',
         border: (theme) =>
           theme.palette.mode === 'dark'
@@ -24,11 +23,13 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
             ? '0 6px 24px rgba(0, 0, 0, 0.28)'
             : '0 4px 20px rgba(0, 0, 0, 0.07)',
         ...sx,
+        px:"3px",
+        py:"3px",
       }}
     >
-      <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />
+      <CardHeader title={title} action={codeModel} />
 
-      <CardContent sx={{ p: 2, pt: 1 }}>{children}</CardContent>
+      <CardContent>{children}</CardContent>
       {footer ? <Box p={3}>{footer}</Box> : ''}
     </Card>
   );

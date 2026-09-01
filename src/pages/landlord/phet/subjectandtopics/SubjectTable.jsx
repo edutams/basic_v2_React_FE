@@ -106,7 +106,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
         </Box>
 
         <Box>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>

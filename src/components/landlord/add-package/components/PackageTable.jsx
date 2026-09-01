@@ -165,7 +165,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
         />
 
         <Box>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>

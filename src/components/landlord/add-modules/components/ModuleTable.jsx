@@ -198,7 +198,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
         />
 
         <Box>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>

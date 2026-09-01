@@ -165,7 +165,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
       />
 
       <Box>
-        <TableContainer>
+        <TableContainer sx={{ overflowX: 'auto' }}>
           <Table>
             <TableHead>
               <TableRow>

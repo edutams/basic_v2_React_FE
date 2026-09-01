@@ -92,7 +92,7 @@ const StatCard = ({
         {subStats.length > 0 && (
           <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
             {subStats.map((stat, i) => (
-              <Box key={i} sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2 }}>
+              <Box key={i} sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2, textAlign: i === subStats.length - 1 ? 'right' : 'left' }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, display: 'block', mb: 0.3, fontSize: '12px' }}>
                   {stat.label}
                 </Typography>

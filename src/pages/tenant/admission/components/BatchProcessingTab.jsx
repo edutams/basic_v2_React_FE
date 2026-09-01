@@ -1109,17 +1109,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Typography variant="h6" color="text.secondary" fontWeight={500}>
-                        No record found
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
-                        {filter.appBatchId && filter.classId
-                          ? 'No applications for the selected batch and class.'
-                          : 'Select a batch and class to view applications.'}
-                      </Typography>
-                    </Stack>
+                  <TableCell colSpan={13} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      {filter.appBatchId && filter.classId
+                        ? 'No applications found for the selected batch and class.'
+                        : 'Select an admission batch to view applications.'}
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

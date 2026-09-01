@@ -23,7 +23,6 @@ const TeacherDashboard = Loadable(
 const SetupWelcome = Loadable(lazy(() => import('@/pages/tenant/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/InitialSetup')));
 const CompleteSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/CompleteSetup')));
-const SessionWeekManager = Loadable(lazy(() => import('@/pages/tenant/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('@/pages/tenant/scheme-of-work/SchemeOfWork')));
 const CurriculumManager = Loadable(
   lazy(() => import('@/pages/tenant/curriculum-manager/CurriculumManager')),
@@ -274,15 +273,6 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="manage.subscription.index">
             <SubscriptionIndex />
-          </TenantProtectedRoute>
-        ),
-      },
-
-      {
-        path: 'session-week-manager',
-        element: (
-          <TenantProtectedRoute permission="calendar.index">
-            <SessionWeekManager />
           </TenantProtectedRoute>
         ),
       },

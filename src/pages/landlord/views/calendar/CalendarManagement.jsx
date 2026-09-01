@@ -909,7 +909,10 @@ function TermsPanel({ isLevel1 }) {
                               Edit
                             </MenuItem>
                             {t.status?.toLowerCase() === 'inactive' ? (
-                              <MenuItem onClick={() => handleDeactivateClick(t)}>Activate</MenuItem>
+                              <MenuItem onClick={() => handleDeactivateClick(t)}>
+                                <IconCheck size={16} style={{ marginRight: 8 }} />
+                                Activate
+                              </MenuItem>
                             ) : (
                               <MenuItem
                                 onClick={() => handleDeactivateClick(t)}

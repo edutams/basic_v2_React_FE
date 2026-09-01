@@ -845,9 +845,11 @@ const ActivityLog = () => {
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => { handleOpenModal(menuLog); handleMenuClose(); }}>
+          <IconListCheck size={16} style={{ marginRight: 8 }} />
           View Activity Details
         </MenuItem>
         <MenuItem onClick={() => { handleDownloadPdf(); handleMenuClose(); }}>
+          <IconDownload size={16} style={{ marginRight: 8 }} />
           Download Report PDF
         </MenuItem>
       </Menu>

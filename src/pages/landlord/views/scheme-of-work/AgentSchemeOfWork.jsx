@@ -52,6 +52,9 @@ import {
   IconPlus,
   IconCheck,
   IconX,
+  IconEdit,
+  IconTrash,
+  IconEye,
 } from '@tabler/icons-react';
 import { landlordSchemeApi } from '@/api/landlord/scheme-of-work/schemeOfWorkApi';
 import {
@@ -1255,12 +1258,14 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       >
         {menuType === 'topic' && [
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Topic
           </MenuItem>,
           <MenuItem
             key="add-sub"
             onClick={() => handleAddSubtopic(selectedRow.topic_id, selectedRow)}
           >
+            <IconPlus size={16} style={{ marginRight: 8 }} />
             Add Subtopic
           </MenuItem>,
           <MenuItem
@@ -1268,14 +1273,17 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('topic', selectedRow.topic_id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Topic
           </MenuItem>,
         ]}
         {menuType === 'subtopic' && [
           <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow, selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Subtopic
           </MenuItem>,
           <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>
+            <IconPlus size={16} style={{ marginRight: 8 }} />
             Add Learning Objective
           </MenuItem>,
           <MenuItem
@@ -1283,11 +1291,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('subtopic', selectedRow.sub_topic_id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Subtopic
           </MenuItem>,
         ]}
         {menuType === 'objective' && [
           <MenuItem key="edit" onClick={() => handleEditObjective(selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Objective
           </MenuItem>,
           <MenuItem
@@ -1295,11 +1305,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('objective', selectedRow.id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Objective
           </MenuItem>,
         ]}
         {menuType === 'row' && [
           <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>
+            <IconEye size={16} style={{ marginRight: 8 }} />
             View Details
           </MenuItem>,
         ]}

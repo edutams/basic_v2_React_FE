@@ -25,7 +25,7 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEdit, IconPackage, IconTrash } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -438,12 +438,17 @@ const Plan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', plan)}>Edit Plan</MenuItem>
+                          <MenuItem onClick={() => handleOpen('update', plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
+                            Edit Plan
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
+                            <IconPackage size={16} style={{ marginRight: 8 }} />
                             Manage Packages
                           </MenuItem>
 
-                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)} sx={{ color: 'error.main' }}>
+                            <IconTrash size={16} style={{ marginRight: 8 }} />
                             Delete Plan
                           </MenuItem>
                         </Menu>

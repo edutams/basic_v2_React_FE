@@ -126,25 +126,45 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
     return message;
   };
 
-  const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
+  const fetchTeachers = async (search = '') => {
     setTeachersLoading(true);
     setError(null);
     try {
-      const response = await getAllStaff({ page: pageNum + 1, per_page: perPage, search });
-      const transformedTeachers = (response.data || []).map((teacher) => ({
-        id: teacher.id,
-        staff_id: teacher.staff_id || teacher.user?.user_id,
-        surname: teacher.user?.lname || '',
-        first_name: teacher.user?.fname || '',
-        phone: teacher.user?.phone || '',
-        gender: teacher.user?.sex || '',
-        email: teacher.user?.email || '',
-        arm: teacher.classArm?.arm_name || teacher.staff_type || 'General',
-        user_id: teacher.user_id,
-        class_arm_id: teacher.class_arm_id,
-        class_id: teacher.class_id || '',
-        staff_type: teacher.staff_type || 'teaching',
-      }));
+      const response = await getAllStaff({
+        search,
+        onboarding: true,
+      });
+      const transformedTeachers = (response.data || []).map((teacher) => {
+        // Class-teacher assignment isn't a flat field on the staff record —
+        // it only comes through the eager-loaded `classTeachers` relation
+        // (classTeachers[0].class_arm_id / .classArm.programmeClass.class_id).
+        // Reading teacher.class_id / teacher.class_arm_id directly (as this
+        // used to) always resolved to undefined, which silently made every
+        // class teacher look like a non-class teacher when editing.
+        const classAssignment = teacher.classTeachers?.[0] || null;
+        const classArm = classAssignment?.classArm || null;
+        const armLabel = classArm?.class_arm_names
+          ? typeof classArm.class_arm_names === 'string'
+            ? classArm.class_arm_names
+            : classArm.class_arm_names[0]
+          : null;
+
+        return {
+          id: teacher.id,
+          staff_id: teacher.user?.user_id || '',
+          surname: teacher.user?.lname || '',
+          first_name: teacher.user?.fname || '',
+          middle_name: teacher.user?.mname || '',
+          phone: teacher.user?.phone || '',
+          gender: teacher.user?.sex || '',
+          email: teacher.user?.email || '',
+          arm: armLabel || teacher.staff_type || 'General',
+          user_id: teacher.user_id,
+          class_arm_id: classAssignment?.class_arm_id || '',
+          class_id: classArm?.programmeClass?.class_id || classArm?.programmeClass?.class?.id || '',
+          staff_type: teacher.staff_type || 'teaching',
+        };
+      });
       setTeachers(transformedTeachers);
       onTeacherAdded?.();
     } catch (err) {
@@ -193,7 +213,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           : teacher.staff_type === 'teaching'
             ? 'Teaching'
             : teacher.staff_type,
-      middle_name: teacher.user?.mname || '',
+      middle_name: teacher.middle_name || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
     setModalMode('edit');
@@ -223,23 +243,6 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
       setIsLoading(false);
     }
   };
-
-  const filteredTeachers = useMemo(
-    () =>
-      teachers.filter(
-        (t) =>
-          t.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.staff_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.email?.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [teachers, searchTerm],
-  );
-
-  const paginatedTeachers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredTeachers.slice(start, start + rowsPerPage);
-  }, [filteredTeachers, page, rowsPerPage]);
 
   const handleSearch = (event) => {
     const value = event.target.value;
@@ -280,13 +283,28 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         />
 
         <Box sx={{ display: 'flex', gap: 1.5, position: 'relative' }}>
-          <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadTemplate}
+          >
             Download Template
           </Button>
-          <Button variant="contained" size="small" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={() => setUploadModalOpen(true)}
+          >
             Upload
           </Button>
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={handleAddNewTeacher}
+          >
             Add New Teacher
           </Button>
 
@@ -346,8 +364,8 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : paginatedTeachers.length > 0 ? (
-              paginatedTeachers.map((teacher, index) => (
+            ) : teachers.length > 0 ? (
+              teachers.map((teacher, index) => (
                 <TableRow key={teacher.id} hover>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>{teacher.staff_id}</TableCell>
@@ -355,7 +373,16 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
                   <TableCell>{teacher.first_name}</TableCell>
                   <TableCell>{teacher.phone}</TableCell>
                   <TableCell>{teacher.gender}</TableCell>
-                  <TableCell sx={{ color: 'primary.main' }}>{teacher.email}</TableCell>
+                  <TableCell
+                    title={teacher.email}
+                    sx={{
+                      color: 'primary.main',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {teacher.email}
+                  </TableCell>
                   <TableCell>{teacher.arm}</TableCell>
                   <TableCell align="center">
                     <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>
@@ -475,7 +502,9 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleConfirmClose}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleConfirmClose}>
+            Cancel
+          </Button>
           <Button size="small" color="error" onClick={handleDeleteTeacher}>
             Yes, Delete
           </Button>

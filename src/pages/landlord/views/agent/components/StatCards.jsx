@@ -38,13 +38,11 @@ const StatCard = ({
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick
-          ? {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            }
-          : {},
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
       <CardContent

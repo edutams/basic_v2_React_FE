@@ -47,7 +47,14 @@ import {
   fetchHolidayStatistics,
 } from '@/api/tenant/holidays/holidayApi';
 import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
-import { getStatCardColor } from '@/utils/statCardColors';
+
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
@@ -99,41 +106,20 @@ const holidayTourSteps = [
   },
 ];
 
-const heroAccent = (colorIndex, isDark, theme) =>
-  getStatCardColor(null, colorIndex, isDark, theme).accentColor;
+const heroAccent = (colorIndex) => schemeMap[colorIndex].color;
 
-const heroIconBadgeSx = (colorIndex, isDark, theme) => {
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  return {
-    width: 32,
-    height: 32,
-    borderRadius: '10px',
-    background: colors.iconBg,
-    color: colors.iconColor,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    boxShadow: isDark ? '0 4px 12px rgba(0,0,0,.3)' : `0 6px 18px -2px ${colors.iconGlow}`,
-  };
-};
-
-const heroCardSx = (colorIndex, isDark, theme) => {
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  return {
-    p: 2,
-    borderRadius: '16px',
-    height: '100%',
-    minHeight: 70,
-    width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-    background: isDark ? theme.palette.background.paper : colors.cardBg,
-    border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.accentColor}`,
-    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  };
-};
+const heroIconBadgeSx = (colorIndex) => ({
+  width: 32,
+  height: 32,
+  borderRadius: '10px',
+  background: schemeMap[colorIndex].bg,
+  color: schemeMap[colorIndex].color,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: `0 4px 12px rgba(0,0,0,0.08)`,
+});
 
 const HolidaySection = ({ refreshKey }) => (
   <AclTourProvider steps={holidayTourSteps}>
@@ -425,7 +411,19 @@ const HolidaySectionInner = ({ refreshKey }) => {
           <Grid container spacing={3}>
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
-              <Paper elevation={0} sx={heroCardSx(0, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <Stack
                     direction="row"
@@ -436,7 +434,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Total School Days
                     </Typography>
-                    <Box sx={heroIconBadgeSx(0, isDark, theme)}>
+                    <Box sx={heroIconBadgeSx(0)}>
                       <IconCalendar size={20} />
                     </Box>
                   </Stack>
@@ -456,7 +454,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       sx={{
                         lineHeight: 1,
                         fontSize: { xs: 26, md: 32 },
-                        color: isDark ? '#fff' : heroAccent(0, isDark, theme),
+                        color: heroAccent(0),
                       }}
                     >
                       {statistics.total_school_days}
@@ -468,7 +466,19 @@ const HolidaySectionInner = ({ refreshKey }) => {
 
             {/* Card 2: Holiday Utilization */}
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} data-tour="holiday-utilization">
-              <Paper elevation={0} sx={heroCardSx(1, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Box
                   sx={{
                     zIndex: 1,
@@ -482,7 +492,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Holiday Utilization
                     </Typography>
-                    <Box sx={heroIconBadgeSx(1, isDark, theme)}>
+                    <Box sx={heroIconBadgeSx(1)}>
                       <IconClock size={20} />
                     </Box>
                   </Stack>
@@ -530,12 +540,24 @@ const HolidaySectionInner = ({ refreshKey }) => {
 
             {/* Card 3: Holiday Summary */}
             <Grid size={{ xs: 12, lg: 5 }} data-tour="holiday-summary">
-              <Paper elevation={0} sx={heroCardSx(2, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
                   <Typography variant="h6" fontWeight={700} color="text.primary">
                     Holiday Summary
                   </Typography>
-                  <Box sx={heroIconBadgeSx(2, isDark, theme)}>
+                  <Box sx={heroIconBadgeSx(2)}>
                     <IconCalendarX size={20} />
                   </Box>
                 </Stack>
@@ -559,7 +581,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     <Typography
                       variant="h4"
                       fontWeight={800}
-                      sx={{ color: isDark ? '#fff' : heroAccent(2, isDark, theme) }}
+                      sx={{ color: heroAccent(2) }}
                     >
                       {statistics.holiday_count}
                     </Typography>

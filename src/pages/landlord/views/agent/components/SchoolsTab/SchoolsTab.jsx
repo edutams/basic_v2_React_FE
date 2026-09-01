@@ -65,7 +65,6 @@ import ApplicationReview from './ApplicationReview';
 import SetupApprovals from './SetupApprovals';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';
 import { usePermissions } from '@/context/AgentContext/permissions';
-import { getStatCardColor } from '@/utils/statCardColors';
 import PlanDistributionModal from '../PlanDistributionModal';
 import ManageSchoolGateway from '../ManageSchoolGateway';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
@@ -517,10 +516,17 @@ const SchoolsTab = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -847,15 +853,19 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark
-                    ? theme.palette.background.paper
-                    : `${statColor0.cardBg} !important`,
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor0.borderColor}`,
-                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -874,21 +884,21 @@ const SchoolsTab = ({
                       size="small"
                       onClick={() => setOpenTotalSchoolModal(true)}
                       sx={{
-                        background: `${statColor0.iconBg} !important`,
-                        boxShadow: isDark
-                          ? '0 4px 12px rgba(0,0,0,0.3)'
-                          : `0 4px 14px ${statColor0.iconGlow}`,
-                        borderRadius: 1,
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
+                        bgcolor: s0.bg,
+                        color: s0.color,
                         '&:hover': { opacity: 0.85 },
                       }}
                     >
-                      <IconChartBar size={18} color="#fff" />
+                      <IconChartBar size={18} color={s0.color} />
                     </IconButton>
                   </Tooltip>
                 </Box>
                 <Box
                   sx={{
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     borderRadius: 1,
                     px: 2,
                     py: 0.75,
@@ -900,7 +910,7 @@ const SchoolsTab = ({
                     sx={{
                       fontSize: 22,
                       fontWeight: 700,
-                      color: isDark ? '#ffffff' : statColor0.accentColor,
+                      color: isDark ? '#ffffff' : s0.color,
                     }}
                   >
                     {schoolSummary.total}
@@ -916,7 +926,7 @@ const SchoolsTab = ({
                   <Divider
                     orientation="vertical"
                     flexItem
-                    sx={{ borderColor: statColor0.borderColor }}
+                    sx={{ borderColor: '#E5E7EB' }}
                   />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -927,7 +937,7 @@ const SchoolsTab = ({
                   <Divider
                     orientation="vertical"
                     flexItem
-                    sx={{ borderColor: statColor0.borderColor }}
+                    sx={{ borderColor: '#E5E7EB' }}
                   />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -942,15 +952,19 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark
-                    ? theme.palette.background.paper
-                    : `${statColor1.cardBg} !important`,
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor1.borderColor}`,
-                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -967,20 +981,20 @@ const SchoolsTab = ({
                   <IconButton
                     size="small"
                     sx={{
-                      background: `${statColor1.iconBg} !important`,
-                      boxShadow: isDark
-                        ? '0 4px 12px rgba(0,0,0,0.3)'
-                        : `0 4px 14px ${statColor1.iconGlow}`,
-                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: s1.bg,
+                      color: s1.color,
                       '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={18} color="#fff" />
+                    <IconChartBar size={18} color={s1.color} />
                   </IconButton>
                 </Box>
                 <Box
                   sx={{
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
                     borderRadius: 1,
                     px: 2,
                     py: 0.75,
@@ -992,7 +1006,7 @@ const SchoolsTab = ({
                     sx={{
                       fontSize: 22,
                       fontWeight: 700,
-                      color: isDark ? '#ffffff' : statColor1.accentColor,
+                      color: isDark ? '#ffffff' : s1.color,
                     }}
                   >
                     {schoolSummary.subscriptions}
@@ -1008,7 +1022,7 @@ const SchoolsTab = ({
                   <Divider
                     orientation="vertical"
                     flexItem
-                    sx={{ borderColor: statColor1.borderColor }}
+                    sx={{ borderColor: '#E5E7EB' }}
                   />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
@@ -1023,15 +1037,19 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark
-                    ? theme.palette.background.paper
-                    : `${statColor2.cardBg} !important`,
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor2.borderColor}`,
-                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -1049,15 +1067,15 @@ const SchoolsTab = ({
                     size="small"
                     onClick={() => setOpenLoginModal(true)}
                     sx={{
-                      background: `${statColor2.iconBg} !important`,
-                      boxShadow: isDark
-                        ? '0 4px 12px rgba(0,0,0,0.3)'
-                        : `0 4px 14px ${statColor2.iconGlow}`,
-                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: s2.bg,
+                      color: s2.color,
                       '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={18} color="#fff" />
+                    <IconChartBar size={18} color={s2.color} />
                   </IconButton>
                 </Box>
                 <Box sx={{ pb: 0 }}>
@@ -1084,7 +1102,7 @@ const SchoolsTab = ({
                       <Typography
                         variant="body2"
                         fontWeight={600}
-                        sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                        sx={{ color: isDark ? '#ffffff' : s2.color }}
                       >
                         {activity.value}
                       </Typography>
@@ -1097,15 +1115,19 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark
-                    ? theme.palette.background.paper
-                    : `${statColor3.cardBg} !important`,
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : `1px solid ${statColor3.borderColor}`,
-                  boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -1123,15 +1145,15 @@ const SchoolsTab = ({
                     size="small"
                     onClick={() => setOpenPlanModal(true)}
                     sx={{
-                      background: `${statColor3.iconBg} !important`,
-                      boxShadow: isDark
-                        ? '0 4px 12px rgba(0,0,0,0.3)'
-                        : `0 4px 14px ${statColor3.iconGlow}`,
-                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: s3.bg,
+                      color: s3.color,
                       '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={18} color="#fff" />
+                    <IconChartBar size={18} color={s3.color} />
                   </IconButton>
                 </Box>
                 <Box

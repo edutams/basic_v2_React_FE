@@ -21,7 +21,7 @@ const FinancialMetrics = ({
     <Grid container spacing={2} mb={3}>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <FeeCard
-          colorName="info"
+          colorIndex={0}
           title="Pre-Application Fees"
           value={formatCurrency(financial_metrics.pre_application_fees)}
           sub={
@@ -35,7 +35,7 @@ const FinancialMetrics = ({
 
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <FeeCard
-          colorName="success"
+          colorIndex={1}
           title="Post-Application Fees"
           value={formatCurrency(financial_metrics.post_application_fees)}
           sub={
@@ -49,7 +49,7 @@ const FinancialMetrics = ({
 
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <FeeCard
-          colorName="secondary"
+          colorIndex={2}
           title="Total Fees Collected"
           value={formatCurrency(totalFees)}
           onClick={onCardClick ? () => onCardClick('total_fees') : undefined}

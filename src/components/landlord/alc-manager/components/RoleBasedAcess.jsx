@@ -845,6 +845,7 @@ const RoleBasedAcess = () => {
         roleId={selectedRole?.id}
         roleName={selectedRole?.role || selectedRole?.name}
         role={selectedRole}
+        onPermissionRemoved={fetchRoles}
       />
 
       {/* Role Organization Modal */}

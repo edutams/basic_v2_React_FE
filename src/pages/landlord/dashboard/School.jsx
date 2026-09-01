@@ -1527,6 +1527,7 @@ const SchoolDashboard = () => {
                                   handleActionClose();
                                 }}
                               >
+                                <IconEye size={16} style={{ marginRight: 8 }} />
                                 View School Profile
                               </MenuItem>
                               {/* <MenuItem onClick={() => handleLoginAsAdmin(row)}>

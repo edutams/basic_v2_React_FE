@@ -26,6 +26,8 @@ import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
   Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../../../components/shared/ParentCard';
 
@@ -178,6 +180,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                             onClose={handleMenuClose}
                           >
                             <MenuItem onClick={() => handleActionClick('update')}>
+                              <EditIcon fontSize="small" sx={{ mr: 1 }} />
                               Edit Topic
                             </MenuItem>
                             {/* <MenuItem onClick={() =>
@@ -185,7 +188,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                             }>
                               {t.status === 'active' ? 'Deactivate' : 'Activate'}
                             </MenuItem> */}
-                            <MenuItem onClick={() => handleActionClick('delete')}>
+                            <MenuItem onClick={() => handleActionClick('delete')} sx={{ color: 'error.main' }}>
+                              <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                               Delete Topic
                             </MenuItem>
                           </Menu>

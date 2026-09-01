@@ -19,18 +19,20 @@ import {
   TablePagination,
   Chip,
   IconButton,
-  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
   VpnKeyOutlined as PermissionIcon,
 } from '@mui/icons-material';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ReusableDialog from '@/components/shared/ReusableDialog';
 
-const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
+const SchoolRolePermissionsModal = ({ open, onClose, role, onPermissionRemoved }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,6 +44,8 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
   const [removing, setRemoving] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPerm, setSelectedPerm] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
   useEffect(() => {
     if (open && role) {
@@ -94,8 +98,19 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
     }
   };
 
+  const handleMenuOpen = (event, perm) => {
+    setAnchorEl(event.currentTarget);
+    setActiveMenuPerm(perm);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setActiveMenuPerm(null);
+  };
+
   const handleRemoveClick = (perm) => {
     setSelectedPerm(perm);
+    handleMenuClose();
     setConfirmOpen(true);
   };
 
@@ -104,13 +119,14 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
     setRemoving(selectedPerm.id);
     setConfirmOpen(false);
     try {
-      const currentPermNames = permissions
+      const currentPermIds = permissions
         .filter((p) => p.id !== selectedPerm.id)
-        .map((p) => p.name);
-      await aclApi.attachSchoolRolePermissions(role.id, currentPermNames);
+        .map((p) => p.id);
+      await aclApi.attachSchoolRolePermissions(role.id, currentPermIds);
       setPermissions((prev) => prev.filter((p) => p.id !== selectedPerm.id));
       setTotalRows((prev) => prev - 1);
       setSelectedPerm(null);
+      onPermissionRemoved?.();
     } catch (err) {
       console.error('Failed to remove permission:', err);
       setError('Failed to remove permission. Please try again.');
@@ -127,6 +143,8 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
     setError(null);
     setSelectedPerm(null);
     setConfirmOpen(false);
+    setAnchorEl(null);
+    setActiveMenuPerm(null);
     onClose();
   };
 
@@ -232,22 +250,12 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title="Remove permission">
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRemoveClick(perm)}
-                              disabled={removing === perm.id}
-                            >
-                              {removing === perm.id ? (
-                                <Skeleton variant="text" width={16} height={16} />
-                              ) : (
-                                <IconTrash size={16} />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleMenuOpen(e, perm)}
+                        >
+                          <IconDotsVertical size={18} color="#6B7280" />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   ))
@@ -293,6 +301,26 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Row Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem
+          onClick={() => handleRemoveClick(activeMenuPerm)}
+          disabled={removing === activeMenuPerm?.id}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon sx={{ color: 'error.main', minWidth: 32 }}>
+            <IconTrash size={16} />
+          </ListItemIcon>
+          Remove Permission
+        </MenuItem>
+      </Menu>
 
       <ReusableDialog
         open={confirmOpen}

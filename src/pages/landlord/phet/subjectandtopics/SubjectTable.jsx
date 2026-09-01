@@ -25,7 +25,10 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { IconList } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
 
 const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction }) => {
@@ -158,12 +161,15 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                               handleMenuClose();
                             }}
                           >
+                            <IconList size={16} style={{ marginRight: 8 }} />
                             Manage Topics
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('edit', subject)}>
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} />
                             Edit Subject
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('delete', subject)}>
+                          <MenuItem onClick={() => handleAction('delete', subject)} sx={{ color: 'error.main' }}>
+                            <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                             Delete Subject
                           </MenuItem>
                         </Menu>

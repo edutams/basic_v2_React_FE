@@ -16,23 +16,27 @@ import {
   Box,
   Chip,
   IconButton,
-  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   VpnKeyOutlined as PermissionIcon,
 } from '@mui/icons-material';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import aclApi from '@/api/landlord/acl/aclApi';
 import ReusableDialog from '@/components/shared/ReusableDialog';
 
-const RolePermissionsModal = ({ open, onClose, roleId, roleName, role }) => {
+const RolePermissionsModal = ({ open, onClose, roleId, roleName, role, onPermissionRemoved }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [removing, setRemoving] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPerm, setSelectedPerm] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
 const displayName = (roleName || role?.role || role?.name || '')
   .replace(/_/g, ' ')
@@ -58,8 +62,19 @@ const displayName = (roleName || role?.role || role?.name || '')
     }
   };
 
+  const handleMenuOpen = (event, perm) => {
+    setAnchorEl(event.currentTarget);
+    setActiveMenuPerm(perm);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setActiveMenuPerm(null);
+  };
+
   const handleRemoveClick = (perm) => {
     setSelectedPerm(perm);
+    handleMenuClose();
     setConfirmOpen(true);
   };
 
@@ -68,12 +83,13 @@ const displayName = (roleName || role?.role || role?.name || '')
     setRemoving(selectedPerm.id);
     setConfirmOpen(false);
     try {
-      const remainingNames = permissions
+      const remainingIds = permissions
         .filter((p) => p.id !== selectedPerm.id)
-        .map((p) => p.name);
-      await aclApi.attachPermissions(roleId, remainingNames);
+        .map((p) => p.id);
+      await aclApi.attachPermissions(roleId, remainingIds);
       setPermissions((prev) => prev.filter((p) => p.id !== selectedPerm.id));
       setSelectedPerm(null);
+      onPermissionRemoved?.();
     } catch (err) {
       console.error('Failed to remove permission:', err);
       setError('Failed to remove permission. Please try again.');
@@ -87,6 +103,8 @@ const displayName = (roleName || role?.role || role?.name || '')
     setError(null);
     setSelectedPerm(null);
     setConfirmOpen(false);
+    setAnchorEl(null);
+    setActiveMenuPerm(null);
     onClose();
   };
 
@@ -167,22 +185,12 @@ const displayName = (roleName || role?.role || role?.name || '')
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title="Remove permission">
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRemoveClick(perm)}
-                              disabled={removing === perm.id}
-                            >
-                              {removing === perm.id ? (
-                                <Skeleton variant="text" width={16} height={16} />
-                              ) : (
-                                <IconTrash size={16} />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleMenuOpen(e, perm)}
+                        >
+                          <IconDotsVertical size={18} color="#6B7280" />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   ))
@@ -204,6 +212,26 @@ const displayName = (roleName || role?.role || role?.name || '')
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Row Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem
+          onClick={() => handleRemoveClick(activeMenuPerm)}
+          disabled={removing === activeMenuPerm?.id}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon sx={{ color: 'error.main', minWidth: 32 }}>
+            <IconTrash size={16} />
+          </ListItemIcon>
+          Remove Permission
+        </MenuItem>
+      </Menu>
 
       <ReusableDialog
         open={confirmOpen}

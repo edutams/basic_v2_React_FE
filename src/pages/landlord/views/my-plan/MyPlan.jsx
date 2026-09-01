@@ -22,7 +22,7 @@ import {
   Skeleton,
 } from '@mui/material';
 import api from '@/api/landlord/landlord_api';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEye, IconEdit, IconPower } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -303,12 +303,15 @@ const MyPlan = () => {
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
                           <MenuItem onClick={() => handleViewPlan(plan)}>
+                            <IconEye size={16} style={{ marginRight: 8 }} />
                             View Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleEditPlan(plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
                             Edit Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                            <IconPower size={16} style={{ marginRight: 8 }} />
                             {plan.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                         </Menu>

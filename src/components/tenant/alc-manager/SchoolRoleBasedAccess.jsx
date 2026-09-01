@@ -948,6 +948,7 @@ const SchoolRoleBasedAccess = () => {
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
         role={selectedRole}
+        onPermissionRemoved={fetchRoles}
       />
 
       <SchoolRoleUsersModal

@@ -191,7 +191,7 @@ const EnrollmentBreakdownModal = ({ selectedClass, onClose }) => {
                 </TableRow>
               ) : (
                 students.map((st, i) => (
-                  <TableRow key={st.student_reg_id || i}>
+                  <TableRow key={st.student_registration_id || i}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>{st.admission_no}</TableCell>
                     <TableCell fontWeight={600}>{st.name}</TableCell>

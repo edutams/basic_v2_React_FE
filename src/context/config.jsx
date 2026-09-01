@@ -13,6 +13,7 @@ const config = {
     sidebarWidth: 270,
     miniSidebarWidth: 87,
     topbarHeight: 70,
+    impersonationBarHeight: 40,
 };
 
 

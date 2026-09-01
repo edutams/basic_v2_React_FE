@@ -439,7 +439,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               seeded[date] = content;
             }
           });
-          attMap[learner.student_reg_id] = seeded;
+          attMap[learner.student_registration_id] = seeded;
         });
         setAttendanceData(attMap);
       }
@@ -534,7 +534,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
           if (morningStatus !== null && morningStatus !== undefined) {
             records.push({
-              student_id: Number(learnerId),
+              student_registration_id: Number(learnerId),
               week_term_id: Number(attWeek),
               date: day,
               period: 'morning',
@@ -545,7 +545,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
           if (afternoonStatus !== null && afternoonStatus !== undefined) {
             records.push({
-              student_id: Number(learnerId),
+              student_registration_id: Number(learnerId),
               week_term_id: Number(attWeek),
               date: day,
               period: 'afternoon',
@@ -644,7 +644,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   const handleSendAlerts = async () => {
-    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    const ids = learners.map((l) => Number(l.student_registration_id)).filter(Boolean);
     if (ids.length === 0) {
       setAlertSnackbar({
         open: true,
@@ -671,7 +671,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   const handleSendRiskAlerts = async () => {
-    const ids = learners.map((l) => Number(l.student_reg_id)).filter(Boolean);
+    const ids = learners.map((l) => Number(l.student_registration_id)).filter(Boolean);
     if (ids.length === 0) {
       setAlertSnackbar({
         open: true,
@@ -1155,9 +1155,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   </TableRow>
                 ) : (
                   learners.map((learner, idx) => {
-                    const att = attendanceData[learner.student_reg_id] || {};
+                    const att = attendanceData[learner.student_registration_id] || {};
                     return (
-                      <TableRow key={learner.student_reg_id} hover>
+                      <TableRow key={learner.student_registration_id} hover>
                         <TableCell
                           sx={{
                             ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
@@ -1230,7 +1230,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                   value={status}
                                   onChange={(e) =>
                                     isSelected &&
-                                    setDayStatus(learner.student_reg_id, day, e.target.value)
+                                    setDayStatus(
+                                      learner.student_registration_id,
+                                      day,
+                                      e.target.value,
+                                    )
                                   }
                                   sx={{ justifyContent: 'center' }}
                                 >

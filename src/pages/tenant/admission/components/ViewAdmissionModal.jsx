@@ -71,7 +71,11 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
   if (!open) return null;
 
   const fullName = admission
-    ? [admission.surname || admission.lname, admission.first_name || admission.fname, admission.other_name || admission.mname]
+    ? [
+        admission.surname || admission.lname,
+        admission.first_name || admission.fname,
+        admission.other_name || admission.mname,
+      ]
         .filter(Boolean)
         .join(' ')
         .toUpperCase() || '—'
@@ -80,50 +84,58 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
   const StatusIcon = statusConfig[admission?.admission_status]?.icon || PendingIcon;
 
   // Build data for review components
-  const wardData = admission ? {
-    surname: admission.surname || admission.lname,
-    first_name: admission.first_name || admission.fname,
-    other_name: admission.other_name || admission.mname,
-    dob: admission.dob,
-    gender: admission.gender || admission.sex,
-    religion: admission.religion,
-    home_address: admission.home_address,
-    state_of_origin: admission.state_of_origin || admission.state_id,
-    lga_id: admission.lga_id,
-    lga: admission.lga,
-    passport_photo: admission.passport_photo || admission.image,
-  } : null;
+  const wardData = admission
+    ? {
+        surname: admission.surname || admission.lname,
+        first_name: admission.first_name || admission.fname,
+        other_name: admission.other_name || admission.mname,
+        dob: admission.dob,
+        gender: admission.gender || admission.sex,
+        religion: admission.religion,
+        home_address: admission.home_address,
+        state_of_origin: admission.state_of_origin || admission.state_id,
+        lga_id: admission.lga_id,
+        lga: admission.lga,
+        passport_photo: admission.passport_photo || admission.image,
+      }
+    : null;
 
-  const academicData = admission ? {
-    has_previous_school: admission.has_previous_school,
-    prev_school_name: admission.prev_school_name,
-    prev_school_address: admission.prev_school_address,
-    prev_school_state: admission.prev_school_state,
-    prev_school_lga: admission.prev_school_lga,
-    previous_class: admission.previous_class,
-    intending_programme: admission.intending_programme,
-    intending_class: admission.intending_class,
-    intending_class_id: admission.intending_class_id,
-    intending_programme_id: admission.intending_programme_id,
-    study_mode: admission.study_mode,
-  } : null;
+  const academicData = admission
+    ? {
+        has_previous_school: admission.has_previous_school,
+        prev_school_name: admission.prev_school_name,
+        prev_school_address: admission.prev_school_address,
+        prev_school_state: admission.prev_school_state,
+        prev_school_lga: admission.prev_school_lga,
+        previous_class: admission.previous_class,
+        intending_programme: admission.intending_programme,
+        intending_class: admission.intending_class,
+        intending_class_id: admission.intending_class_id,
+        intending_programme_id: admission.intending_programme_id,
+        study_mode: admission.study_mode,
+      }
+    : null;
 
-  const documentsData = admission ? {
-    birth_cert: admission.birth_cert,
-    prev_school_report: admission.prev_school_report,
-    passport_photo: admission.passport_photo,
-    medical_record: admission.medical_record,
-  } : null;
+  const documentsData = admission
+    ? {
+        birth_cert: admission.birth_cert,
+        prev_school_report: admission.prev_school_report,
+        passport_photo: admission.passport_photo,
+        medical_record: admission.medical_record,
+      }
+    : null;
 
-  const parentData = admission ? {
-    lname: admission.parent?.lname || '',
-    fname: admission.parent?.fname || '',
-    mname: admission.parent?.mname || '',
-    phone: admission.parent?.phone || '',
-    email: admission.parent?.email || '',
-    occupation: admission.parent?.occupation || '',
-    address: admission.parent?.address || '',
-  } : null;
+  const parentData = admission
+    ? {
+        lname: admission.parent?.lname || '',
+        fname: admission.parent?.fname || '',
+        mname: admission.parent?.mname || '',
+        phone: admission.parent?.phone || '',
+        email: admission.parent?.email || '',
+        occupation: admission.parent?.occupation || '',
+        address: admission.parent?.address || '',
+      }
+    : null;
 
   const parentFullName = parentData
     ? [parentData.lname, parentData.fname, parentData.mname].filter(Boolean).join(' ') || '—'
@@ -133,7 +145,15 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pb: 1,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Typography variant="h6" fontWeight={700}>
             Admission Details
@@ -157,7 +177,9 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
 
       <DialogContent sx={{ p: 3 }}>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}
+          >
             <CircularProgress size={36} />
           </Box>
         ) : !admission ? (
@@ -197,7 +219,9 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                 {wardData && (
                   <WardReview
                     wardData={wardData}
-                    intendingClass={admission.intending_class?.class_code || admission.intending_class?.class_name}
+                    intendingClass={
+                      admission.intending_class?.class_code || admission.intending_class?.class_name
+                    }
                     selectedBatch={selectedBatch}
                     academicData={academicData}
                   />
@@ -208,7 +232,9 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                 {academicData && (
                   <AcademicReview
                     academicData={academicData}
-                    intendingClass={admission.intending_class?.class_code || admission.intending_class?.class_name}
+                    intendingClass={
+                      admission.intending_class?.class_code || admission.intending_class?.class_name
+                    }
                     selectedBatch={selectedBatch}
                   />
                 )}
@@ -226,7 +252,14 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
 
             {/* ── Parent/Guardian Information ────────────────────────── */}
             <Box>
-              <Typography variant="subtitle1" fontWeight={700} display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={700}
+                display="flex"
+                alignItems="center"
+                gap={1}
+                sx={{ mb: 2 }}
+              >
                 <PersonIcon fontSize="small" />
                 Parent / Guardian Information
               </Typography>
@@ -361,10 +394,17 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                         <strong>Admitted by:</strong>{' '}
                         {admission.treated_by_name || admission.treated_by}
                         {admission.date_treated && (
-                          <> on {new Date(admission.date_treated).toLocaleDateString('en-GB', {
-                            day: 'numeric', month: 'short', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
-                          })}</>
+                          <>
+                            {' '}
+                            on{' '}
+                            {new Date(admission.date_treated).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </>
                         )}
                       </Typography>
                     </Box>
@@ -375,10 +415,15 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                       <CancelIcon fontSize="small" color="error" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          <strong>Declined by:</strong> {admission.rejected_by_name || admission.rejected_by}
+                          <strong>Declined by:</strong>{' '}
+                          {admission.rejected_by_name || admission.rejected_by}
                         </Typography>
                         {admission.rejection_reason && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5, fontStyle: 'italic' }}
+                          >
                             <strong>Reason:</strong> {admission.rejection_reason}
                           </Typography>
                         )}
@@ -391,10 +436,15 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                       <CancelIcon fontSize="small" color="warning" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          <strong>Revoked by:</strong> {admission.revoked_by_name || admission.revoked_by}
+                          <strong>Revoked by:</strong>{' '}
+                          {admission.revoked_by_name || admission.revoked_by}
                         </Typography>
                         {admission.revoked_reason && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5, fontStyle: 'italic' }}
+                          >
                             <strong>Reason:</strong> {admission.revoked_reason}
                           </Typography>
                         )}
@@ -404,8 +454,22 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
 
                   {/* ── Admitted Student Details ──────────────────────── */}
                   {admission.admission_status === 'admitted' && admission.student_info && (
-                    <Box sx={{ mt: 2, p: 2, bgcolor: 'success.lighter', borderRadius: 2, border: '1px solid', borderColor: 'success.light' }}>
-                      <Typography variant="subtitle2" fontWeight={700} color="success.dark" sx={{ mb: 1.5 }}>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 2,
+                        bgcolor: 'success.lighter',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'success.light',
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={700}
+                        color="success.dark"
+                        sx={{ mb: 1.5 }}
+                      >
                         Admitted Student Information
                       </Typography>
                       <Grid container spacing={2}>
@@ -413,7 +477,7 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                           <TextField
                             fullWidth
                             label="Student ID"
-                            value={admission.student_info.student_id || '—'}
+                            value={admission.student_info.student_registration_id || '—'}
                             slotProps={{ input: { readOnly: true } }}
                             size="small"
                           />
@@ -427,7 +491,7 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                             size="small"
                           />
                         </Grid> */}
-                         <Grid size={{ xs: 12, sm: 4 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <TextField
                             fullWidth
                             label="Admitted Class"
@@ -454,8 +518,6 @@ const ViewAdmissionModal = ({ open, onClose, formNumber }) => {
                             size="small"
                           />
                         </Grid>
-                       
-                        
                       </Grid>
                     </Box>
                   )}

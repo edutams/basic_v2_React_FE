@@ -144,7 +144,7 @@ const StatCardBreakdownModal = ({ open, stat, onClose }) => {
                       return (
                         <TableRow key={reg.id || i}>
                           <TableCell>{i + 1}</TableCell>
-                          <TableCell>{reg?.student_id}</TableCell>
+                          <TableCell>{reg?.student_registration_id}</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>
                             {reg?.fname} {reg?.lname} {reg?.mname}
                           </TableCell>

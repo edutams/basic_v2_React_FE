@@ -2,10 +2,12 @@ import { useContext } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
+import ImpersonationBar from './vertical/header/ImpersonationBar';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../landlord/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
+import { TenantAuthContext } from '../../context/TenantContext/auth';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
 import ScrollToTop from '../../components/shared/ScrollToTop';
@@ -32,6 +34,7 @@ const PageWrapper = styled('div')(() => ({
 const SchoolLayout = () => {
   // const { isCollapse } = useContext(CustomizerContext);
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
+  const { isImpersonated } = useContext(TenantAuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
 
@@ -47,13 +50,22 @@ const SchoolLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
+            ...(activeLayout === 'vertical' && {
+              paddingTop: `${config.topbarHeight + (isImpersonated ? config.impersonationBarHeight : 0)}px`,
+            }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
           }}
         >
-          {activeLayout === 'horizontal' ? <HorizontalHeader /> : <SchoolHeader />}
+          {activeLayout === 'horizontal' ? (
+            <HorizontalHeader />
+          ) : (
+            <>
+              <SchoolHeader />
+              <ImpersonationBar />
+            </>
+          )}
 
           {activeLayout === 'horizontal' ? <Navigation /> : ''}
 

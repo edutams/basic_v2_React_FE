@@ -270,7 +270,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         // Build assessments map
         const assMap = {};
         students.forEach((l) => {
-          assMap[l.student_reg_id] = {
+          assMap[l.student_registration_id] = {
             affective: l.affective || {},
             psychomotor: l.psychomotor || {},
           };
@@ -309,7 +309,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
     setSubmitting(true);
     try {
       const assessmentData = Object.entries(assessments).map(([studentId, data]) => ({
-        student_id: Number(studentId),
+        student_registration_id: Number(studentId),
         affective: Object.entries(data.affective || {}).map(([trait, rating]) => ({
           trait,
           rating,
@@ -590,12 +590,16 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
               </TableRow>
             ) : (
               learners.map((learner, idx) => {
-                const studentAssess = assessments[learner.student_reg_id] || {
+                const studentAssess = assessments[learner.student_registration_id] || {
                   affective: {},
                   psychomotor: {},
                 };
                 return (
-                  <TableRow key={learner.student_reg_id} hover sx={{ verticalAlign: 'top' }}>
+                  <TableRow
+                    key={learner.student_registration_id}
+                    hover
+                    sx={{ verticalAlign: 'top' }}
+                  >
                     <TableCell
                       sx={{
                         position: 'sticky',
@@ -677,7 +681,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                                 value={studentAssess.affective[trait] ?? ''}
                                 onChange={(e) =>
                                   setRating(
-                                    learner.student_reg_id,
+                                    learner.student_registration_id,
                                     'affective',
                                     trait,
                                     Number(e.target.value),
@@ -729,7 +733,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                                 value={studentAssess.psychomotor[trait] ?? ''}
                                 onChange={(e) =>
                                   setRating(
-                                    learner.student_reg_id,
+                                    learner.student_registration_id,
                                     'psychomotor',
                                     trait,
                                     Number(e.target.value),

@@ -198,9 +198,9 @@ const MultipleArmView = () => {
     if (students.length > 0) {
       const initial = {};
       students.forEach((s) => {
-        initial[s.student_reg_id] = {};
+        initial[s.student_registration_id] = {};
         arms.forEach((a) => {
-          initial[s.student_reg_id][a.id] = s.class_arm_id === a.id;
+          initial[s.student_registration_id][a.id] = s.class_arm_id === a.id;
         });
       });
       setArmSelections(initial);
@@ -245,7 +245,7 @@ const MultipleArmView = () => {
         const selectedArm = Object.entries(armsMap).find(([, selected]) => selected);
         if (selectedArm) {
           assignments.push({
-            student_reg_id: Number(studentRegId),
+            student_registration_id: Number(studentRegId),
             class_arm_id: Number(selectedArm[0]),
           });
         }
@@ -499,7 +499,7 @@ const MultipleArmView = () => {
               </TableRow>
             ) : (
               students.map((student, idx) => (
-                <TableRow key={student.student_reg_id || idx} hover>
+                <TableRow key={student.student_registration_id || idx} hover>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                       <Typography variant="body2" color="text.secondary" fontWeight={600}>
@@ -529,9 +529,9 @@ const MultipleArmView = () => {
                     <TableCell key={arm.id} align="center">
                       <IconButton
                         size="small"
-                        onClick={() => toggleArmEnrollment(student.student_reg_id, arm.id)}
+                        onClick={() => toggleArmEnrollment(student.student_registration_id, arm.id)}
                       >
-                        {armSelections[student.student_reg_id]?.[arm.id] ? (
+                        {armSelections[student.student_registration_id]?.[arm.id] ? (
                           <CheckCircleIcon color="success" fontSize="medium" />
                         ) : (
                           <CancelOutlinedIcon color="error" fontSize="medium" />

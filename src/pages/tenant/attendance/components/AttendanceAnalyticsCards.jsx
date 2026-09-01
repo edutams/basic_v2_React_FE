@@ -407,7 +407,7 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
                     0,
                   );
                   return (
-                    <TableRow key={learner.student_reg_id} hover>
+                    <TableRow key={learner.student_registration_id} hover>
                       <TableCell
                         sx={{
                           fontWeight: 600,
@@ -1156,7 +1156,7 @@ const AttendanceAnalyticsCards = ({
                     </TableHead>
                     <TableBody>
                       {learners.map((l, idx) => (
-                        <TableRow key={l.student_reg_id || idx} hover>
+                        <TableRow key={l.student_registration_id || idx} hover>
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell>
                             <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -1330,7 +1330,7 @@ const AttendanceAnalyticsCards = ({
         // Reset selected learners to all checked by default
         const initialSelected = {};
         learners.forEach((l) => {
-          initialSelected[l.student_reg_id] = true;
+          initialSelected[l.student_registration_id] = true;
         });
         setSelectedRiskLearners(initialSelected);
         setRiskModalData(learners);
@@ -1384,8 +1384,8 @@ const AttendanceAnalyticsCards = ({
   const handleSendRiskAlerts = async () => {
     // Only send alerts for selected learners
     const selectedIds = riskLearners
-      .filter((l) => selectedRiskLearners[l.student_reg_id])
-      .map((l) => Number(l.student_reg_id))
+      .filter((l) => selectedRiskLearners[l.student_registration_id])
+      .map((l) => Number(l.student_registration_id))
       .filter(Boolean);
     if (selectedIds.length === 0) {
       setAlertSnackbar({
@@ -1798,19 +1798,25 @@ const AttendanceAnalyticsCards = ({
                                 size="small"
                                 checked={
                                   learners.length > 0 &&
-                                  learners.every((l) => selectedRiskLearners[l.student_reg_id])
+                                  learners.every(
+                                    (l) => selectedRiskLearners[l.student_registration_id],
+                                  )
                                 }
                                 indeterminate={
-                                  learners.some((l) => selectedRiskLearners[l.student_reg_id]) &&
-                                  !learners.every((l) => selectedRiskLearners[l.student_reg_id])
+                                  learners.some(
+                                    (l) => selectedRiskLearners[l.student_registration_id],
+                                  ) &&
+                                  !learners.every(
+                                    (l) => selectedRiskLearners[l.student_registration_id],
+                                  )
                                 }
                                 onChange={() => {
                                   const allSelected = learners.every(
-                                    (l) => selectedRiskLearners[l.student_reg_id],
+                                    (l) => selectedRiskLearners[l.student_registration_id],
                                   );
                                   const updated = {};
                                   learners.forEach((l) => {
-                                    updated[l.student_reg_id] = !allSelected;
+                                    updated[l.student_registration_id] = !allSelected;
                                   });
                                   setSelectedRiskLearners(updated);
                                 }}
@@ -1825,9 +1831,9 @@ const AttendanceAnalyticsCards = ({
                         <TableBody>
                           {learners.map((l, idx) => (
                             <TableRow
-                              key={l.student_reg_id || idx}
+                              key={l.student_registration_id || idx}
                               hover
-                              selected={selectedRiskLearners[l.student_reg_id]}
+                              selected={selectedRiskLearners[l.student_registration_id]}
                               sx={{
                                 cursor: 'pointer',
                                 '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.04) },
@@ -1835,19 +1841,19 @@ const AttendanceAnalyticsCards = ({
                               onClick={() => {
                                 setSelectedRiskLearners((prev) => ({
                                   ...prev,
-                                  [l.student_reg_id]: !prev[l.student_reg_id],
+                                  [l.student_registration_id]: !prev[l.student_registration_id],
                                 }));
                               }}
                             >
                               <TableCell sx={{ width: 40 }}>
                                 <Checkbox
                                   size="small"
-                                  checked={!!selectedRiskLearners[l.student_reg_id]}
+                                  checked={!!selectedRiskLearners[l.student_registration_id]}
                                   onClick={(e) => e.stopPropagation()}
                                   onChange={() => {
                                     setSelectedRiskLearners((prev) => ({
                                       ...prev,
-                                      [l.student_reg_id]: !prev[l.student_reg_id],
+                                      [l.student_registration_id]: !prev[l.student_registration_id],
                                     }));
                                   }}
                                   sx={{ p: 0.25 }}

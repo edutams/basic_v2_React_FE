@@ -11,7 +11,7 @@ import {
   Tabs,
   Tab,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -92,7 +92,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           Total Student
         </Typography>
         {loading ? (
-          <CircularProgress size={20} sx={{ mt: 0.5 }} />
+          <Skeleton variant="text" width={60} height={40} sx={{ my: 0.5 }} />
         ) : (
           <Typography
             variant="h3"
@@ -128,7 +128,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? '...' : maleCount.toLocaleString()}
+              {loading ? <Skeleton variant="text" width={35} height={28} /> : maleCount.toLocaleString()}
             </Typography>
           </Box>
           <Box>
@@ -148,7 +148,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? '...' : femaleCount.toLocaleString()}
+              {loading ? <Skeleton variant="text" width={35} height={28} /> : femaleCount.toLocaleString()}
             </Typography>
           </Box>
         </Stack>

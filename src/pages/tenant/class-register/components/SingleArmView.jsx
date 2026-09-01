@@ -22,8 +22,8 @@ import {
   InputAdornment,
   Menu,
   TablePagination,
-  CircularProgress,
   Alert,
+  Skeleton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -510,21 +510,21 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                 }
               }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              // slotProps={{
-              //   input: {
-              //     startAdornment: (
-              //       <InputAdornment position="start">
-              //         <SearchIcon fontSize="small" />
-              //       </InputAdornment>
-              //     ),
-              //   },
-              // }}
+            // slotProps={{
+            //   input: {
+            //     startAdornment: (
+            //       <InputAdornment position="start">
+            //         <SearchIcon fontSize="small" />
+            //       </InputAdornment>
+            //     ),
+            //   },
+            // }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleSearch}
-              // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
+            // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
             </Button>
@@ -598,11 +598,25 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
           </TableHead>
           <TableBody>
             {loadingStudents ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={28} />
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Skeleton variant="circular" width={38} height={38} />
+                      <Box>
+                        <Skeleton variant="text" width={140} height={20} />
+                        <Skeleton variant="text" width={90} height={16} />
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={120} height={20} /></TableCell>
+                  <TableCell align="right"><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
+                </TableRow>
+              ))
             ) : students.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 4 }}>

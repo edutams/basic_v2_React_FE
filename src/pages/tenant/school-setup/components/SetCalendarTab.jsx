@@ -25,6 +25,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconTrash, IconPlus, IconRefresh, IconEdit } from '@tabler/icons-react';
@@ -542,16 +543,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                 <Tab label="Session/Term" value="session-term" />
               </Tabs>
 
-              {loading && tenantSessions.length === 0 && sessionTerms.length === 0 ? (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  sx={{ minHeight: 200 }}
-                >
-                  <CircularProgress />
-                </Box>
-              ) : activeTab === 'sessions' ? (
+              {activeTab === 'sessions' ? (
                 <>
                   <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
                     <Button
@@ -578,7 +570,16 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {tenantSessions.length > 0 ? (
+                        {loading ? (
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                              <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                            </TableRow>
+                          ))
+                        ) : tenantSessions.length > 0 ? (
                           tenantSessions.map((session, i) => (
                             <TableRow key={session.id} hover>
                               <TableCell>{sessionsPage * sessionsRowsPerPage + i + 1}</TableCell>
@@ -609,10 +610,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                              <Typography color="textSecondary">
-                                No sessions added yet. Click "Add New Session" to fetch one from
-                                the landlord.
-                              </Typography>
+                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                                No sessions added yet. Click "Add New Session" to fetch one from the landlord.
+                              </Alert>
                             </TableCell>
                           </TableRow>
                         )}
@@ -659,7 +659,16 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {tenantTerms.length > 0 ? (
+                        {loading ? (
+                          Array.from({ length: 3 }).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                              <TableCell><Skeleton variant="text" width={120} height={20} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                            </TableRow>
+                          ))
+                        ) : tenantTerms.length > 0 ? (
                           tenantTerms.map((term, i) => (
                             <TableRow key={term.id} hover>
                               <TableCell>{i + 1}</TableCell>
@@ -689,10 +698,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                              <Typography color="textSecondary">
-                                No terms synced yet. Click "Sync Terms" to pull them from the
-                                landlord.
-                              </Typography>
+                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                                No terms synced yet. Click "Sync Terms" to pull them from the landlord.
+                              </Alert>
                             </TableCell>
                           </TableRow>
                         )}
@@ -760,7 +768,15 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {sessionTerms.length > 0 ? (
+                        {loading ? (
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell><Skeleton variant="text" width={180} height={20} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                            </TableRow>
+                          ))
+                        ) : sessionTerms.length > 0 ? (
                           sessionTerms.map((item) => (
                             <TableRow key={item.id} hover>
                               <TableCell sx={{ fontWeight: 500 }}>
@@ -787,10 +803,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                         ) : (
                           <TableRow>
                             <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                              <Typography color="textSecondary">
-                                No session/term mappings yet. Click "Set Session/Term" to create
-                                one.
-                              </Typography>
+                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                                No session/term mappings yet. Click "Set Session/Term" to create one.
+                              </Alert>
                             </TableCell>
                           </TableRow>
                         )}

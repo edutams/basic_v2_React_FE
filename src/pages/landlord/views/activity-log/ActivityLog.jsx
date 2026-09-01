@@ -567,8 +567,8 @@ const ActivityLog = () => {
                     const rawRoleName = typeof role === 'string' ? role : (role.name || role.title || role.id);
                     const displayLabel = rawRoleName
                       ? String(rawRoleName)
-                          .replace(/[_-]/g, ' ')
-                          .replace(/\b\w/g, (char) => char.toUpperCase())
+                        .replace(/[_-]/g, ' ')
+                        .replace(/\b\w/g, (char) => char.toUpperCase())
                       : '';
                     return (
                       <MenuItem key={role.id || rawRoleName} value={rawRoleName}>

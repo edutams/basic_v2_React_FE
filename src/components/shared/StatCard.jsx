@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Box, Paper, Typography, CircularProgress, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, Skeleton, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import PropTypes from 'prop-types';
@@ -56,23 +56,32 @@ const StatCard = ({
       }}
     >
       {/* Icon Badge */}
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '12px',
-          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
-          color: isDark ? '#ffffff' : scheme.color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        {Icon && <Icon size={22} />}
-      </Box>
+      {loading ? (
+        <Skeleton
+          variant="rounded"
+          width={40}
+          height={40}
+          sx={{ borderRadius: '12px', flexShrink: 0 }}
+        />
+      ) : (
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '12px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+            color: isDark ? '#ffffff' : scheme.color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {Icon && <Icon size={22} />}
+        </Box>
+      )}
 
       {/* Content */}
       <Box
@@ -85,12 +94,11 @@ const StatCard = ({
         }}
       >
         {loading ? (
-          <CircularProgress
-            size={22}
-            sx={{
-              color: scheme.color,
-            }}
-          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
+            <Skeleton variant="text" width="40%" height={26} />
+            <Skeleton variant="text" width="70%" height={16} />
+            {subtitle && <Skeleton variant="text" width="55%" height={14} sx={{ mt: 0.25 }} />}
+          </Box>
         ) : (
           <>
             <Typography

@@ -26,6 +26,7 @@ import {
   FormControl,
   Select,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -684,11 +685,29 @@ const SchoolAssignmentManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      <CircularProgress size={28} />
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Skeleton variant="circular" width={36} height={36} />
+                          <Box sx={{ width: '100%' }}>
+                            <Skeleton variant="text" width={120} height={20} />
+                            <Skeleton variant="text" width={160} height={14} />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} />
+                          <Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} />
+                        </Box>
+                      </TableCell>
+                      <TableCell><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase()) : (user.is_active === false ? 'Inactive' : 'Active');

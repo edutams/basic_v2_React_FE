@@ -120,11 +120,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [openConfirmReject, setOpenConfirmReject] = useState(false);
+  const [openConfirmReapprove, setOpenConfirmReapprove] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setRejectReason('');
       setShowRejectInput(false);
+      setOpenConfirmReapprove(false);
     }
   }, [open]);
 
@@ -455,6 +457,21 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             )}
           </>
         )}
+        {prospect.status === 'rejected' && can('landlord.school.approval') && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<CheckCircleOutlineIcon />}
+            onClick={() => setOpenConfirmReapprove(true)}
+            disabled={loading}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            {loading ? <CircularProgress size={18} color="inherit" /> : 'Re-approve Application'}
+          </Button>
+        )}
       </DialogActions>
 
       <ConfirmationDialog
@@ -468,6 +485,19 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         message={`Are you sure you want to reject this School Application for "${prospect.tenant_name}"?`}
         confirmText="Yes, Reject"
         severity="error"
+      />
+
+      <ConfirmationDialog
+        open={openConfirmReapprove}
+        onClose={() => setOpenConfirmReapprove(false)}
+        onConfirm={() => {
+          setOpenConfirmReapprove(false);
+          onApprove(prospect.id);
+        }}
+        title="Confirm Re-approval"
+        message={`Are you sure you want to re-approve and provision this School Application for "${prospect.tenant_name}"? This will create the school database and send login credentials.`}
+        confirmText="Yes, Re-approve & Provision"
+        severity="warning"
       />
     </Dialog>
   );

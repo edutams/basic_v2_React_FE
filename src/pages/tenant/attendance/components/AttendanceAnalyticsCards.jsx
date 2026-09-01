@@ -85,11 +85,15 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         height: '100%',
         cursor: clickable ? 'pointer' : 'default',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-        },
+        ...(clickable
+          ? {
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }
+          : {}),
         ...sx,
       }}
     >

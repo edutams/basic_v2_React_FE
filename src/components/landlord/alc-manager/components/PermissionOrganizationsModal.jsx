@@ -13,7 +13,7 @@ import {
   TableFooter,
   TablePagination,
   TableContainer,
-  CircularProgress,
+  Skeleton,
   Alert,
   Typography,
   Box,
@@ -252,11 +252,15 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
 
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(6)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : users.length > 0 ? (
                 users.map((user, index) => (
                   <TableRow key={user.id} hover>

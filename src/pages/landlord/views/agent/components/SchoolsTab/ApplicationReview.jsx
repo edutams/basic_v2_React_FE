@@ -16,7 +16,7 @@ import {
   MenuItem,
   TableFooter,
   TablePagination,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Link,
   Alert,
@@ -88,9 +88,59 @@ const ApplicationReview = ({
 
   if (prospectLoading) {
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
-      </Box>
+      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead sx={{ bgcolor: '#fafafa' }}>
+            <TableRow>
+              <TableCell sx={thSx}>#</TableCell>
+              <TableCell sx={thSx}>School</TableCell>
+              <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
+              <TableCell sx={thSx}>Organisation</TableCell>
+              <TableCell sx={thSx}>Submitted</TableCell>
+              <TableCell sx={thSx}>Status</TableCell>
+              <TableCell sx={thSx} align="right">Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton variant="text" width={20} height={20} /></TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={140} height={18} />
+                      <Skeleton variant="text" width={100} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={110} height={14} />
+                      <Skeleton variant="text" width={130} height={14} />
+                      <Skeleton variant="text" width={90} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={120} height={14} />
+                      <Skeleton variant="text" width={100} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell><Skeleton variant="text" width={90} height={14} /></TableCell>
+                <TableCell><Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: '12px' }} /></TableCell>
+                <TableCell align="right"><Skeleton variant="circular" width={28} height={28} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
   }
 

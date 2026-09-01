@@ -16,7 +16,7 @@ import {
   Typography,
   ToggleButton,
   ToggleButtonGroup,
-  CircularProgress,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import PropTypes from 'prop-types';
@@ -160,8 +160,8 @@ const ReusableTrendChart = ({
       )}
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={8}>
-          <CircularProgress />
+        <Box sx={{ py: 2 }}>
+          <Skeleton variant="rounded" height={height || 280} sx={{ borderRadius: 1 }} />
         </Box>
       ) : (
         <>

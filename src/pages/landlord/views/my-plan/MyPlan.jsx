@@ -19,10 +19,10 @@ import {
   Alert,
   Button,
   TextField,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import api from '@/api/landlord/landlord_api';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEye, IconEdit, IconPower } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -230,11 +230,15 @@ const MyPlan = () => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 5 }}>
-                    <CircularProgress size={40} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(8)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : paginatedPlans.length > 0 ? (
                 paginatedPlans.map((plan, index) => {
                   const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};
@@ -299,12 +303,15 @@ const MyPlan = () => {
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
                           <MenuItem onClick={() => handleViewPlan(plan)}>
+                            <IconEye size={16} style={{ marginRight: 8 }} />
                             View Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleEditPlan(plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
                             Edit Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                            <IconPower size={16} style={{ marginRight: 8 }} />
                             {plan.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                         </Menu>

@@ -8,7 +8,7 @@ import Customizer from './shared/customizer/Customizer';
 import Navigation from './horizontal/navbar/Navigation';
 import HorizontalHeader from './horizontal/header/Header';
 import ScrollToTop from '@/components/shared/ScrollToTop';
-import LoadingBar from '@/LoadingBar';
+// import LoadingBar from '@/LoadingBar';
 import DashboardFooter from '@/components/shared/DashboardFooter';
 import { CustomizerContext } from '@/context/CustomizerContext';
 import { AuthContext } from '@/context/AgentContext/auth';
@@ -40,7 +40,7 @@ const FullLayout = () => {
 
   return (
     <>
-      <LoadingBar />
+      {/* <LoadingBar /> */}
 
       <MainWrapper>
         {/* ------------------------------------------- */}

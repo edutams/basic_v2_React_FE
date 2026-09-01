@@ -21,7 +21,7 @@ import {
   Snackbar,
   Alert,
   Chip,
-  CircularProgress,
+  Skeleton,
   Tabs,
   Tab,
   Dialog,
@@ -53,7 +53,6 @@ import LoginActivities from './components/LoginActivities';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
 
-import { getStatCardColor } from '@/utils/statCardColors';
 import { AuthContext } from '@/context/AgentContext/auth';
 import {
   getSchools,
@@ -444,7 +443,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                  {loading ? <Skeleton variant="text" width={100} height={18} /> : 'Confirm Reject'}
                 </Button>
               </>
             )}
@@ -458,7 +457,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 '&:hover': { bgcolor: '#1b5e20' },
               }}
             >
-              {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
+              {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
             </Button>
           </>
         )}
@@ -603,10 +602,17 @@ const SchoolDashboard = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState(0);
@@ -912,13 +918,19 @@ const SchoolDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -928,23 +940,27 @@ const SchoolDashboard = () => {
               Total School
             </Typography>
             <Tooltip title="View breakdown">
-              <IconButton
-                size="small"
-                onClick={() => setOpenTotalSchoolModal(true)}
+              <Box
                 sx={{
-                  background: `${statColor0.iconBg} !important`,
-                  boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
-                  borderRadius: 1,
-                  '&:hover': { opacity: 0.85 }
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                  color: isDark ? '#fff' : s0.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
                 }}
+                onClick={() => setOpenTotalSchoolModal(true)}
               >
-                <IconChartBar size={18} color="#fff" />
-              </IconButton>
+                <IconChartBar size={18} color="currentColor" />
+              </Box>
             </Tooltip>
           </Box>
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -952,7 +968,7 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}>
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -963,7 +979,7 @@ const SchoolDashboard = () => {
               </Typography>
               <Typography fontWeight={600}>{schoolSummary.active}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Inactive
@@ -977,13 +993,19 @@ const SchoolDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -992,21 +1014,24 @@ const SchoolDashboard = () => {
             <Typography variant="subtitle1" fontWeight={700}>
               Subscriptions
             </Typography>
-            <IconButton
-              size="small"
+            <Box
               sx={{
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
-                borderRadius: 1,
-                '&:hover': { opacity: 0.85 }
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <IconChartBar size={18} color="#fff" />
-            </IconButton>
+              <IconChartBar size={18} color="currentColor" />
+            </Box>
           </Box>
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -1014,7 +1039,7 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}>
               {schoolSummary.subscriptions}
             </Typography>
           </Box>
@@ -1025,7 +1050,7 @@ const SchoolDashboard = () => {
               </Typography>
               <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Secondary
@@ -1039,13 +1064,19 @@ const SchoolDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1054,18 +1085,22 @@ const SchoolDashboard = () => {
             <Typography variant="subtitle1" fontWeight={700}>
               Login Activities
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setOpenLoginModal(true)}
+            <Box
               sx={{
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
-                borderRadius: 1,
-                '&:hover': { opacity: 0.85 }
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                color: isDark ? '#fff' : s2.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenLoginModal(true)}
             >
-              <IconChartBar size={18} color="#fff" />
-            </IconButton>
+              <IconChartBar size={18} color="currentColor" />
+            </Box>
           </Box>
           <Box sx={{ pb: 0 }}>
             {[
@@ -1086,7 +1121,7 @@ const SchoolDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   {label}
                 </Typography>
-                <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
+                <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : s2.color }}>
                   {val}
                 </Typography>
               </Box>
@@ -1098,13 +1133,19 @@ const SchoolDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1113,18 +1154,22 @@ const SchoolDashboard = () => {
             <Typography variant="subtitle1" fontWeight={700}>
               Plan Distribution
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setOpenPlanModal(true)}
+            <Box
               sx={{
-                bgcolor: statColor3.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
-                borderRadius: 1,
-                '&:hover': { opacity: 0.85 }
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenPlanModal(true)}
             >
-              <IconChartBar size={18} color="#fff" />
-            </IconButton>
+              <IconChartBar size={18} color="currentColor" />
+            </Box>
           </Box>
           <Box sx={{ height: 130, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
             <ReusablePieChart
@@ -1220,8 +1265,10 @@ const SchoolDashboard = () => {
           {/* ── Tab 0: All Applications ── */}
           {activeTab === 0 &&
             (prospectLoading ? (
-              <Box display="flex" justifyContent="center" py={8}>
-                <CircularProgress />
+              <Box sx={{ py: 2 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+                ))}
               </Box>
             ) : (
               <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
@@ -1345,8 +1392,10 @@ const SchoolDashboard = () => {
           {/* ── Tab 2: Approved Schools (from schoolList / fetchSchools) ── */}
           {activeTab === 2 &&
             (loading ? (
-              <Box display="flex" justifyContent="center" py={8}>
-                <CircularProgress />
+              <Box sx={{ py: 2 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+                ))}
               </Box>
             ) : (
               <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
@@ -1478,6 +1527,7 @@ const SchoolDashboard = () => {
                                   handleActionClose();
                                 }}
                               >
+                                <IconEye size={16} style={{ marginRight: 8 }} />
                                 View School Profile
                               </MenuItem>
                               {/* <MenuItem onClick={() => handleLoginAsAdmin(row)}>

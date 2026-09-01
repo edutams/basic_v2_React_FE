@@ -32,7 +32,7 @@ import {
   UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
 
-import { IconDotsVertical } from '@tabler/icons-react';
+import { IconDotsVertical, IconChecklist } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import FeeChart from './FeeChart';
@@ -530,13 +530,17 @@ const SettlementReconcillation = () => {
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleViewSettlements(menuRow)}>Reconcile Settlements</MenuItem>
+        <MenuItem onClick={() => handleViewSettlements(menuRow)}>
+          <IconChecklist size={16} style={{ marginRight: 8 }} />
+          Reconcile Settlements
+        </MenuItem>
         <MenuItem
           onClick={() => {
             downloadReconciliation({ payment_name_ids: menuRow?.payment_name_ids });
             handleMenuClose();
           }}
         >
+          <DownloadIcon fontSize="small" sx={{ mr: 1 }} />
           Download Reconciliation
         </MenuItem>
       </Menu>

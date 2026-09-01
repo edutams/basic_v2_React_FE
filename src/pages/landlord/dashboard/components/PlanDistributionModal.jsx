@@ -14,7 +14,13 @@ import {
 import Chart from 'react-apexcharts';
 import ReusableModal from '@/components/shared/ReusableModal';
 import { IconBuildingBank } from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
 
 const PlanDistributionModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -27,12 +33,6 @@ const PlanDistributionModal = ({ open, onClose }) => {
   ];
 
   const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
-
-  // Get colors from stat utility for consistency
-  const planColors = plans.map(plan => {
-    const colors = getStatCardColor(null, plan.colorIndex, isDark, theme);
-    return colors.accentColor;
-  });
 
   const chartOptions = {
     chart: {
@@ -102,7 +102,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
       tickAmount: 10,
     },
     fill: { opacity: 1 },
-    colors: planColors,
+    colors: schemeMap.map((s) => s.color),
     legend: {
       position: 'top',
       horizontalAlign: 'center',
@@ -145,32 +145,19 @@ const PlanDistributionModal = ({ open, onClose }) => {
         {/* Top Plan Value Cards */}
         <Grid container spacing={2} mb={3}>
           {plans.map((plan, i) => {
-            const schemeMap = [
-              { bg: '#DBEAFE', color: '#2563EB' },
-              { bg: '#DCFCE7', color: '#16A34A' },
-              { bg: '#F3E8FF', color: '#9333EA' },
-              { bg: '#FEF3C7', color: '#D97706' },
-            ];
             const scheme = schemeMap[i % schemeMap.length];
             return (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
                 <Card
                   sx={{
-                    p: 2,
+                    p: '14px',
                     borderRadius: '14px',
-                    bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                    border: '1px solid',
-                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    bgcolor: '#ffffff',
+                    border: '1px solid #E5E7EB',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                    transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      borderColor: '#94a3b8',
-                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                    },
                   }}
                 >
                   <Box
@@ -305,65 +292,68 @@ const PlanDistributionModal = ({ open, onClose }) => {
                   <Divider sx={{ mb: 2 }} />
 
                   <Stack spacing={2} sx={{ flex: 1 }}>
-                    {plans.map((plan, i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          py: 1,
-                        }}
-                      >
-                        <Stack direction="row" alignItems="center" spacing={1.5}>
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: '8px',
-                              bgcolor: isDark ? '#2a2a2a' : plan.iconBg,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <IconBuildingBank size={18} color={plan.color} />
-                          </Box>
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                    {plans.map((plan, i) => {
+                      const scheme = schemeMap[i % schemeMap.length];
+                      return (
+                        <Box
+                          key={i}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            py: 1,
+                          }}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={1.5}>
                             <Box
-                              sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }}
-                            />
-                            <Typography
-                              variant="subtitle2"
-                              fontWeight="700"
-                              sx={{ color: isDark ? '#fff' : '#1a3353' }}
+                              sx={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: '8px',
+                                bgcolor: isDark ? '#2a2a2a' : scheme.bg,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
                             >
-                              {plan.label}
-                            </Typography>
+                              <IconBuildingBank size={18} color={scheme.color} />
+                            </Box>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                              <Box
+                                sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: scheme.color }}
+                              />
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight="700"
+                                sx={{ color: isDark ? '#fff' : '#1a3353' }}
+                              >
+                                {plan.label}
+                              </Typography>
+                            </Stack>
                           </Stack>
-                        </Stack>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#888' }}>
-                            School
-                          </Typography>
-                          <Box
-                            sx={{
-                              bgcolor: plan.color,
-                              color: '#fff',
-                              px: 1.5,
-                              py: 0.3,
-                              borderRadius: '4px',
-                              minWidth: 40,
-                              textAlign: 'center',
-                            }}
-                          >
-                            <Typography variant="caption" fontWeight="700">
-                              {plan.schoolCount}
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#888' }}>
+                              School
                             </Typography>
-                          </Box>
-                        </Stack>
-                      </Box>
-                    ))}
+                            <Box
+                              sx={{
+                                bgcolor: scheme.color,
+                                color: '#fff',
+                                px: 1.5,
+                                py: 0.3,
+                                borderRadius: '4px',
+                                minWidth: 40,
+                                textAlign: 'center',
+                              }}
+                            >
+                              <Typography variant="caption" fontWeight="700">
+                                {plan.schoolCount}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </Box>
+                      );
+                    })}
                   </Stack>
 
                   {/* Total */}

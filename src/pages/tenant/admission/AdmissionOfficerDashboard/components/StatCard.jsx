@@ -1,21 +1,18 @@
 import React from 'react';
 import { Box, Typography, Paper, Tooltip, useTheme } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import { getStatCardColor } from '@/utils/statCardColors';
 
-/**
- * Top metric card — matches the pasted reference: icon tile top-left, label top-right,
- * big value, gender split column on the right, growth / active-completed footer bottom-left.
- * Uses the project-standard getStatCardColor treatment (gradient cardBg + icon tile) like
- * the BursaryOfficerDashboard KpiCard.
- *
- * When `onClick` is provided the card is clickable and shows a tooltip signalling it
- * opens a breakdown modal (same interaction as the AdminDashboard OverviewCard).
- */
-const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, footer, onClick }) => {
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
+const StatCard = ({ icon: Icon, colorIndex = 0, title, value, right, footer, onClick }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor(colorName, 0, isDark, theme);
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Tooltip title={onClick ? 'Click to view breakdown' : ''} placement="top" arrow>
@@ -23,44 +20,39 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
         elevation={0}
         onClick={onClick}
         sx={{
-          p: 1,
-          borderRadius: '16px',
+          p: '14px',
+          borderRadius: '14px',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           cursor: onClick ? 'pointer' : 'default',
-          background: isDark ? theme.palette.background.paper : colors.cardBg,
-          border: '1px rgba(69, 67, 67, 1) solid',
-          boxShadow: isDark
-            ? '0 10px 30px rgba(0,0,0,0.35)'
-            : '0 4px 20px rgba(0,0,0,0.07)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
           '&:hover': {
-            transform: onClick ? 'translateY(-3px)' : 'none',
-            boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
+            transform: 'translateY(-2px)',
+            borderColor: '#94a3b8',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
           },
         }}
       >
-      {/* Icon left, label immediately after it */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
         <Box
           sx={{
             width: 44,
             height: 44,
             borderRadius: '10px',
-            background: `${colors.iconBg} !important`,
-            boxShadow: isDark
-              ? '0 4px 12px rgba(0,0,0,0.3)'
-              : `0 4px 14px ${colors.iconGlow}`,
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+            color: isDark ? '#ffffff' : scheme.color,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon sx={{ fontSize: 19, color: colors.iconColor || '#fff' }} />
+          <Icon sx={{ fontSize: 19, color: 'inherit' }} />
         </Box>
         <Typography
           sx={{
@@ -75,14 +67,12 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
         </Typography>
       </Box>
 
-      {/* Value + right gender split — anchored to the bottom so cards without a
-          footer don't leave a dead gap */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 'auto', pt: 1.5 }}>
         <Typography
           variant="h4"
           fontWeight={800}
           sx={{
-            color: isDark ? '#fff' : colors.accentColor,
+            color: isDark ? '#fff' : scheme.color,
             fontSize: { xs: 22, md: 26 },
             lineHeight: 1.1,
           }}
@@ -98,7 +88,7 @@ const StatCard = ({ icon: Icon, colorName = 'primary', title, value, right, foot
             mt: 1.25,
             pt: 1.25,
             borderTop: '1px dashed',
-            borderColor: isDark ? 'rgba(255,255,255,0.15)' : alpha(colors.accentColor, 0.3),
+            borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#E5E7EB',
           }}
         >
           {footer}

@@ -21,7 +21,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon, Undo as UndoIcon, Upgrade as UpgradeIcon, Receipt as ReceiptIcon, Description as DescriptionIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -348,30 +348,38 @@ const ManageSubscriptionList = () => {
                             {row.status === 'pending' ? (
                               <>
                                 <MenuItem onClick={() => handleRevertPlanClick(row)}>
+                                  <UndoIcon fontSize="small" sx={{ mr: 1 }} />
                                   Revert Plan
                                 </MenuItem>
                                 <MenuItem onClick={() => handleUpgradePlanClick(row)}>
+                                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
                                   Change Plan
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewTransactionClick(row)}>
+                                  <ReceiptIcon fontSize="small" sx={{ mr: 1 }} />
                                   View Transaction
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                                  <DescriptionIcon fontSize="small" sx={{ mr: 1 }} />
                                   View Invoice
                                 </MenuItem>
-                                <MenuItem onClick={() => handleDeleteClick(row)}>
+                                <MenuItem onClick={() => handleDeleteClick(row)} sx={{ color: 'error.main' }}>
+                                  <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
                                   Delete Subscription
                                 </MenuItem>
                               </>
                             ) : (
                               <>
                                 <MenuItem onClick={() => handleUpgradePlanClick(row)}>
+                                  <UpgradeIcon fontSize="small" sx={{ mr: 1 }} />
                                   Upgrade Plan
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewTransactionClick(row)}>
+                                  <ReceiptIcon fontSize="small" sx={{ mr: 1 }} />
                                   View Transaction
                                 </MenuItem>
                                 <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                                  <DescriptionIcon fontSize="small" sx={{ mr: 1 }} />
                                   View Invoice
                                 </MenuItem>
                               </>

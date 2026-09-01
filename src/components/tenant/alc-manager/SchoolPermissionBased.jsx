@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   IconButton,
@@ -605,7 +605,7 @@ const SchoolPermissionBased = () => {
                   }}
                 >
                   {statsLoading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}
@@ -854,11 +854,15 @@ const SchoolPermissionBased = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(9)].map((_, j) => (
+                            <TableCell key={j}>
+                              <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
                     ) : displayPermissions.length > 0 ? (
                       displayPermissions.map((row, index) => {
                         const permName = row.name || row.permission || '';

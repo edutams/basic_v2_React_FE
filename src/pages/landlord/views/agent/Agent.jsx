@@ -34,7 +34,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  CircularProgress,
+  Skeleton,
   Divider,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
@@ -45,7 +45,8 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
-import { getStatCardColor } from '@/utils/statCardColors';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
+
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -262,10 +263,17 @@ const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
   const notify = useNotification();
 
   const [tab, setTab] = useState(0);
@@ -344,6 +352,7 @@ const Agent = () => {
   const [loginActivities, setLoginActivities] = useState([]);
   const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
   const [selectedUserFilters, setSelectedUserFilters] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({
     totalAgents: 0,
     totalSubAgents: 0,
@@ -352,6 +361,7 @@ const Agent = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
       try {
         const response = await agentApi.getAnalytics();
         if (response.status === true && response.data) {
@@ -359,6 +369,8 @@ const Agent = () => {
         }
       } catch (error) {
         console.error('Failed to fetch analytics', error);
+      } finally {
+        setAnalyticsLoading(false);
       }
     };
     fetchAnalytics();
@@ -811,29 +823,54 @@ const Agent = () => {
 
   return (
     <PageContainer title="Organization Page" description="This is the Organization page">
-      <Box sx={{ mt: 1 }}>
-        <Breadcrumb title="Organization" items={BCrumb} />
-      </Box>
+      <Breadcrumb title="Organization" items={BCrumb} />
 
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
           gap: 2,
-          mb: 3,
+          // mb: 3,
         }}
       >
+        {analyticsLoading ? (
+          [...Array(4)].map((_, i) => (
+            <Paper key={i} elevation={0} sx={{ p: '14px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Skeleton variant="text" width={120} height={24} />
+                <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+              </Box>
+              <Skeleton variant="rounded" width={60} height={36} sx={{ borderRadius: 1, mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {[...Array(3)].map((_, j) => (
+                  <Box key={j} sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={14} />
+                    <Skeleton variant="text" width="40%" height={20} />
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          ))
+        ) : (
+        <>
         {/* Total School */}
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            px: '3px',
+            py: '3px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -850,41 +887,37 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor0.iconBg} !important`,
-                boxShadow: isDark
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor0.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                color: isDark ? '#fff' : s0.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsSchoolModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 5,
+              mb:5
             }}
           >
             <Typography
               sx={{
                 fontSize: 22,
                 fontWeight: 700,
-                color: isDark ? '#ffffff' : statColor0.accentColor,
+                color: isDark ? '#ffffff' : s0.color,
               }}
             >
               {analytics.totalSchools ?? 0}
@@ -901,7 +934,7 @@ const Agent = () => {
             <Divider
               orientation="vertical"
               flexItem
-              sx={{ borderColor: statColor0.borderColor, mx: 1.5 }}
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
             />
             <Box>
               <Typography variant="caption" color="text.secondary">
@@ -912,7 +945,7 @@ const Agent = () => {
             <Divider
               orientation="vertical"
               flexItem
-              sx={{ borderColor: statColor0.borderColor, mx: 1.5 }}
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
             />
             <Box>
               <Typography variant="caption" color="text.secondary">
@@ -927,13 +960,20 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+           px: '3px',
+            py: '3px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -950,28 +990,24 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDark
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor1.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -984,7 +1020,7 @@ const Agent = () => {
               sx={{
                 fontSize: 22,
                 fontWeight: 700,
-                color: isDark ? '#ffffff' : statColor1.accentColor,
+                color: isDark ? '#ffffff' : s1.color,
               }}
             >
               {schoolSummary.total}
@@ -1009,7 +1045,7 @@ const Agent = () => {
             <Divider
               orientation="vertical"
               flexItem
-              sx={{ borderColor: statColor1.borderColor, mx: 2 }}
+              sx={{ borderColor: '#E5E7EB', mx: 2 }}
             />
 
             <Box>
@@ -1025,13 +1061,20 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor2.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            px: '3px',
+            py: '3px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1048,29 +1091,27 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDark
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor2.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
+                color: isDark ? '#fff' : s2.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsLoggedInUsersModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box sx={{ pb: 0 }}>
             {loginActivitiesLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <CircularProgress size={24} />
+              <Box sx={{ py: 1 }}>
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} variant="text" height={30} sx={{ mb: 0.5 }} />
+                ))}
               </Box>
             ) : (
               (loginActivities.length > 0
@@ -1097,7 +1138,7 @@ const Agent = () => {
                   <Typography
                     variant="body2"
                     fontWeight={600}
-                    sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}
+                    sx={{ color: isDark ? '#ffffff' : s2.color }}
                   >
                     {item.value}
                   </Typography>
@@ -1111,13 +1152,20 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+           px: '3px',
+            py: '3px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1134,29 +1182,25 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor3.iconBg} !important`,
-                boxShadow: isDark
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor3.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box sx={{ width: '100%' }}>
             <Box
               sx={{
-                height: 160,
+                height: 150,
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
@@ -1168,16 +1212,18 @@ const Agent = () => {
                 series={planSeries}
                 colors={planColors}
                 labels={planLabels}
-                height={160}
+                height={150}
                 width="100%"
                 hideCard
               />
             </Box>
           </Box>
-        </Paper>
+        </Paper>  
+        </>
+        )}
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={tab}
@@ -1328,11 +1374,15 @@ const Agent = () => {
                 </TableHead>
                 <TableBody>
                   {tableLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
+                    [...Array(4)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(10)].map((_, j) => (
+                          <TableCell key={j}>
+                            <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   ) : !emptyState.isEmpty ? (
                     filteredData.map((agent) => {
                       const initials = (agent.organizationName || 'NA')

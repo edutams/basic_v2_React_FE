@@ -13,7 +13,7 @@ import {
   TableFooter,
   TablePagination,
   IconButton,
-  CircularProgress,
+  Skeleton,
   Alert,
   useTheme
 } from '@mui/material';
@@ -178,11 +178,15 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(4)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(5)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center">

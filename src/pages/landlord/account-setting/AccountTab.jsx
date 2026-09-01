@@ -7,7 +7,7 @@ import {
   Stack,
   Box,
   Avatar,
-  CircularProgress,
+  Skeleton,
   IconButton,
   InputAdornment,
   Paper,
@@ -290,7 +290,7 @@ const AccountTab = () => {
                           disabled={isProfileLoading}
                           startIcon={
                             isProfileLoading ? (
-                              <CircularProgress size={14} color="inherit" />
+                              <Skeleton variant="text" width={14} height={14} />
                             ) : (
                               <IconCheck size={16} />
                             )
@@ -402,7 +402,7 @@ const AccountTab = () => {
                   disabled={isProfileLoading}
                   startIcon={
                     isProfileLoading ? (
-                      <CircularProgress size={16} color="inherit" />
+                      <Skeleton variant="text" width={16} height={16} />
                     ) : (
                       <IconCheck size={18} />
                     )
@@ -557,7 +557,7 @@ const AccountTab = () => {
                   disabled={isPasswordLoading}
                   startIcon={
                     isPasswordLoading ? (
-                      <CircularProgress size={16} color="inherit" />
+                      <Skeleton variant="text" width={16} height={16} />
                     ) : (
                       <IconCheck size={18} />
                     )

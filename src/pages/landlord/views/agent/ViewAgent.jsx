@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
+import { Box, Tab, Grid, useTheme, Skeleton, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
@@ -223,22 +223,21 @@ const ViewAgent = () => {
       title="View Organization Profile"
       description="Detailed organization profile view"
     >
-      <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-        <Breadcrumb title="View Profile" items={BCrumb} />
+      <Breadcrumb title="View Profile" items={BCrumb} />
 
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress />
-          </Box>
-        ) : agentData ? (
-          <>
-            <Grid container spacing={3} alignItems="stretch" sx={{ mt: 1 }}>
+        <Grid container spacing={2} mb={3}>
               <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-                <ProfileHeader
-                  profile={agentData.profile}
-                  onManageSchools={() => setValue('3')}
-                  onManageAgent={() => setValue('2')}
-                />
+                {isLoading ? (
+                  <Skeleton variant="rounded" width={300} height={200} sx={{ borderRadius: 2 }} />
+                ) : agentData ? (
+                  <ProfileHeader
+                    profile={agentData.profile}
+                    onManageSchools={() => setValue('3')}
+                    onManageAgent={() => setValue('2')}
+                  />
+                ) : (
+                  <Skeleton variant="rounded" width={300} height={200} sx={{ borderRadius: 2 }} />
+                )}
               </Grid>
 
               <Grid size={{ xs: 12, md: 8, lg: 8 }}>
@@ -248,102 +247,105 @@ const ViewAgent = () => {
                   onSchoolClick={() => setIsSchoolModalOpen(true)}
                   onSubAgentClick={() => setIsSubAgentModalOpen(true)}
                   accessLevel={accessLevel}
+                  loadingTransaction={isLoading}
+                  loadingSubAgents={analyticsLoading}
+                  loadingSchools={analyticsLoading}
                 />
               </Grid>
             </Grid>
 
-            <Box mt={4}>
-              <ParentCard
-                sx={{
-                  bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
-                }}
-              >
-                <TabContext value={value}>
-                  <Box>
-                    <TabList
-                      onChange={(_, newValue) => setValue(newValue)}
-                      variant="scrollable"
-                      scrollButtons="auto"
-                      allowScrollButtonsMobile
-                    >
-                      <Tab
-                        icon={<IconLayoutDashboard size={18} />}
-                        iconPosition="start"
-                        label="Overview"
-                        value="1"
-                      />
+        {agentData ? (
+          <Box mt={3}>
+            <ParentCard
+              sx={{
+                bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+              }}
+            >
+              <TabContext value={value}>
+                <Box>
+                  <TabList
+                    onChange={(_, newValue) => setValue(newValue)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                  >
+                    <Tab
+                      icon={<IconLayoutDashboard size={18} />}
+                      iconPosition="start"
+                      label="Overview"
+                      value="1"
+                    />
 
-                      <Tab
-                        icon={<IconUsers size={18} />}
-                        iconPosition="start"
-                        label="Sub Organizations"
-                        value="2"
-                      />
+                    <Tab
+                      icon={<IconUsers size={18} />}
+                      iconPosition="start"
+                      label="Sub Organizations"
+                      value="2"
+                    />
 
-                      <Tab
-                        icon={<IconSchool size={18} />}
-                        iconPosition="start"
-                        label="Schools"
-                        value="3"
-                      />
+                    <Tab
+                      icon={<IconSchool size={18} />}
+                      iconPosition="start"
+                      label="Schools"
+                      value="3"
+                    />
 
-                      <Tab
-                        icon={<IconUsers size={18} />}
-                        iconPosition="start"
-                        label="Manage Team"
-                        value="4"
-                      />
-                    </TabList>
-                  </Box>
+                    <Tab
+                      icon={<IconUsers size={18} />}
+                      iconPosition="start"
+                      label="Manage Team"
+                      value="4"
+                    />
+                  </TabList>
+                </Box>
 
-                  <Box>
-                    <TabPanel value="1" sx={{ p: 0 }}>
-                      <OverviewTab data={agentData} />
-                    </TabPanel>
+                <Box>
+                  <TabPanel value="1" sx={{ p: 0 }}>
+                    <OverviewTab data={agentData} />
+                  </TabPanel>
 
-                    <TabPanel value="2" sx={{ p: 3 }}>
-                      <TeamTab
-                        team={agentData.team || []}
-                        onAddAgent={() => setIsAddAgentModalOpen(true)}
-                        isDashboard={isDashboard}
-                        accessLevel={accessLevel}
-                        isViewingProfile
-                        organizationId={id}
-                      />
-                    </TabPanel>
+                  <TabPanel value="2" sx={{ p: 3 }}>
+                    <TeamTab
+                      team={agentData.team || []}
+                      onAddAgent={() => setIsAddAgentModalOpen(true)}
+                      isDashboard={isDashboard}
+                      accessLevel={accessLevel}
+                      isViewingProfile
+                      organizationId={id}
+                    />
+                  </TabPanel>
 
-                    <TabPanel value="3" sx={{ p: 3 }}>
-                      <SchoolsTab
-                        schools={agentData.schools || []}
-                        onAddSchool={() => setIsAddSchoolModalOpen(true)}
-                        organizationId={id}
-                        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-                        refreshKey={refreshKey}
-                        isViewingProfile={true}
-                      />
-                    </TabPanel>
+                  <TabPanel value="3" sx={{ p: 3 }}>
+                    <SchoolsTab
+                      schools={agentData.schools || []}
+                      onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                      organizationId={id}
+                      handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+                      refreshKey={refreshKey}
+                      isViewingProfile={true}
+                    />
+                  </TabPanel>
 
-                    <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab
-                        organizationId={id}
-                        accessLevel={accessLevel}
-                        isViewingProfile
-                      />
-                    </TabPanel>
-                  </Box>
-                </TabContext>
-              </ParentCard>
-            </Box>
-          </>
-        ) : (
+                  <TabPanel value="4" sx={{ p: 3 }}>
+                    <ManageTeamTab
+                      organizationId={id}
+                      accessLevel={accessLevel}
+                      isViewingProfile
+                    />
+                  </TabPanel>
+                </Box>
+              </TabContext>
+            </ParentCard>
+          </Box>
+        ) : !isLoading ? (
           <Box p={3} textAlign="center">
             <Typography variant="h6">Failed to load organization data.</Typography>
           </Box>
-        )}
+        ) : null}
 
         <TotalSchoolModal
           open={isSchoolModalOpen}
@@ -407,7 +409,6 @@ const ViewAgent = () => {
             organizationId={id}
           />
         </ReusableModal>
-      </Box>
     </PageContainer>
   );
 };

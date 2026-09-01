@@ -1,9 +1,9 @@
 import { Outlet } from 'react-router-dom';
-import LoadingBar from '../../LoadingBar';
+// import LoadingBar from '../../LoadingBar';
 
 const BlankLayout = () => (
   <>
-    <LoadingBar />
+    {/* <LoadingBar /> */}
     <Outlet />
   </>
 );

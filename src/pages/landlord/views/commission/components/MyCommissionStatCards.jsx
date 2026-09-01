@@ -4,16 +4,23 @@ import {
   IconAdjustments,
   IconChartBar,
 } from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
+
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
 
 const MyCommissionStatCards = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  const statColor0 = getStatCardColor(null, 0, isDarkMode, theme); // Primary
-  const statColor1 = getStatCardColor(null, 1, isDarkMode, theme); // Success
-  const statColor2 = getStatCardColor(null, 2, isDarkMode, theme); // Info
-  const statColor3 = getStatCardColor(null, 3, isDarkMode, theme); // Warning
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -28,26 +35,27 @@ const MyCommissionStatCards = () => {
         {/* GUPSA Ogun State Card */}
         <Paper
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor0.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            border: '1px solid',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
-          {/* Header */}
           <Typography variant="h6" fontWeight={600} mb={2}>
             GUPSA Ogun State
           </Typography>
 
-          {/* Amount */}
           <Box
             sx={{
-              background: `${statColor0.valueBg} !important`,
+              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: '8px',
               px: 3,
               py: 1,
@@ -59,20 +67,19 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: statColor0.accentColor,
+                color: isDarkMode ? '#fff' : s0.color,
               }}
             >
               ₦7,000,234.00
             </Typography>
           </Box>
 
-          {/* Account Number */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <Box
               fontWeight="600"
               sx={{
-                background: isDarkMode ? 'rgba(255,255,255,0.1)' : statColor0.borderColor,
-                color: statColor0.accentColor,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#F3F4F6',
+                color: isDarkMode ? '#fff' : s0.color,
                 px: 2,
                 py: '4px',
                 borderRadius: '5px',
@@ -87,31 +94,24 @@ const MyCommissionStatCards = () => {
             </Typography>
           </Box>
 
-          {/* Bank */}
           <Typography fontWeight="500" sx={{ mb: 1 }}>
             Bank : Globus
           </Typography>
 
-          {/* Actions */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-            }}
-          >
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
               size="small"
               startIcon={<IconAdjustments size={16} />}
               sx={{
-                borderColor: statColor0.accentColor,
-                color: statColor0.accentColor,
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.3)' : s0.color,
+                color: isDarkMode ? '#fff' : s0.color,
                 textTransform: 'none',
                 fontWeight: 600,
                 borderRadius: '8px',
                 '&:hover': {
-                  borderColor: statColor0.accentColor,
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(109, 40, 217, 0.08)',
+                  borderColor: s0.color,
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : `${s0.bg}`,
                 },
               }}
             >
@@ -122,7 +122,7 @@ const MyCommissionStatCards = () => {
               variant="contained"
               size="small"
               sx={{
-                backgroundColor: `${statColor0.accentColor} !important`,
+                backgroundColor: `${s0.color} !important`,
                 color: '#ffffff',
                 textTransform: 'none',
                 fontWeight: 600,
@@ -140,15 +140,18 @@ const MyCommissionStatCards = () => {
         {/* Total Transaction Card */}
         <Paper
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor1.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            border: '1px solid',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -167,18 +170,16 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: 32,
                 height: 32,
-                borderRadius: '6px',
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor1.iconGlow}`,
+                borderRadius: '8px',
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDarkMode ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
             >
-              <IconChartBar size={18} color={statColor1.iconColor || '#FFFFFF'} />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
@@ -192,10 +193,10 @@ const MyCommissionStatCards = () => {
             }}
           >
             <Box>
-              <Typography variant="h6" sx={{ color: statColor1.accentColor }}>
+              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s1.color }}>
                 Inflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor1.accentColor }}>
+              <Typography sx={{ fontSize: 20, fontWeight: 500, color: isDarkMode ? '#fff' : s1.color }}>
                 0
               </Typography>
             </Box>
@@ -204,15 +205,15 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: statColor1.borderColor,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
               }}
             />
 
             <Box>
-              <Typography variant="h6" sx={{ color: statColor3.accentColor }}>
+              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s3.color }}>
                 Outflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor3.accentColor }}>
+              <Typography sx={{ fontSize: 20, fontWeight: 500, color: isDarkMode ? '#fff' : s3.color }}>
                 0
               </Typography>
             </Box>
@@ -222,15 +223,18 @@ const MyCommissionStatCards = () => {
         {/* Total Sub Orgs Card */}
         <Paper
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor2.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            border: '1px solid',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -249,24 +253,22 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: 32,
                 height: 32,
-                borderRadius: '6px',
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor2.iconGlow}`,
+                borderRadius: '8px',
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s2.bg,
+                color: isDarkMode ? '#fff' : s2.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
             >
-              <IconChartBar size={18} color={statColor2.iconColor || '#FFFFFF'} />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: `${statColor2.valueBg} !important`,
+              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s2.bg,
               borderRadius: '8px',
               px: 3,
               py: 1,
@@ -279,7 +281,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: statColor2.accentColor,
+                color: isDarkMode ? '#fff' : s2.color,
               }}
             >
               0
@@ -306,7 +308,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: statColor2.borderColor,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
               }}
             />
 
@@ -323,7 +325,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: statColor2.borderColor,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
               }}
             />
 
@@ -341,15 +343,18 @@ const MyCommissionStatCards = () => {
         {/* Total School Card */}
         <Paper
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor3.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            border: '1px solid',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -368,24 +373,22 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: 32,
                 height: 32,
-                borderRadius: '6px',
-                background: `${statColor3.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor3.iconGlow}`,
+                borderRadius: '8px',
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDarkMode ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
             >
-              <IconChartBar size={18} color={statColor3.iconColor || '#FFFFFF'} />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: `${statColor3.valueBg} !important`,
+              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
               borderRadius: '8px',
               px: 3,
               py: 1,
@@ -398,7 +401,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 fontSize: 20,
                 fontWeight: 700,
-                color: statColor3.accentColor,
+                color: isDarkMode ? '#fff' : s3.color,
               }}
             >
               0
@@ -425,7 +428,7 @@ const MyCommissionStatCards = () => {
               sx={{
                 width: '1px',
                 height: 40,
-                background: statColor3.borderColor,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
               }}
             />
 

@@ -20,12 +20,15 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
+  MoreVert as MoreVertIcon,
   VpnKeyOutlined as PermissionIcon,
-  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import aclApi from '@/api/tenant/acl/aclApi';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
@@ -53,8 +56,27 @@ const SchoolRolePermissionsModal = ({ open, onClose, role, onPermissionRemoved }
   const [selectedPermForRevoke, setSelectedPermForRevoke] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeMenuPerm, setActiveMenuPerm] = useState(null);
 
   const notify = useNotification();
+
+  const handleMenuOpen = (event, perm) => {
+    setAnchorEl(event.currentTarget);
+    setActiveMenuPerm(perm);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setActiveMenuPerm(null);
+  };
+
+  const handleRemoveClick = () => {
+    if (!activeMenuPerm) return;
+    setSelectedPermForRevoke(activeMenuPerm);
+    handleMenuClose();
+    setConfirmOpen(true);
+  };
 
   useEffect(() => {
     if (open && role) {
@@ -220,14 +242,13 @@ const SchoolRolePermissionsModal = ({ open, onClose, role, onPermissionRemoved }
                       <Tooltip title="Remove permission from role">
                         <IconButton
                           size="small"
-                          color="error"
                           onClick={() => {
                             setSelectedPermForRevoke(perm);
                             setConfirmOpen(true);
                           }}
                           disabled={removing}
                         >
-                          <DeleteIcon fontSize="small" />
+                          <MoreVertIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </TableCell>

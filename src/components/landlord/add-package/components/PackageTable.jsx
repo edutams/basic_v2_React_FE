@@ -16,10 +16,10 @@ import {
   MenuItem,
   Chip,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Add as AddIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon, Block as BlockIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { IconFilter } from '@tabler/icons-react';
 import ParentCard from '../../../shared/ParentCard';
 import FilterSideDrawer from '../../../shared/FilterSideDrawer';
@@ -180,11 +180,15 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} sx={{ textAlign: 'center', py: 10 }}>
-                      <CircularProgress size={40} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(5)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : packagesList.length > 0 ? (
                   packagesList.map((pkg, index) => (
                     <TableRow key={pkg.id || index} hover>
@@ -240,9 +244,11 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                             View Modules
                           </MenuItem> */}
                           <MenuItem onClick={() => handleAction('update', pkg)}>
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} />
                             Edit Package
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('manageModules', pkg)}>
+                            <AddIcon fontSize="small" sx={{ mr: 1 }} />
                             Manage Modules
                           </MenuItem>
                           <MenuItem
@@ -254,10 +260,13 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                                 pkg,
                               )
                             }
+                            sx={{ color: (pkg.package_status || pkg.pac_status) === 'active' ? 'error.main' : 'success.main' }}
                           >
-                            {(pkg.package_status || pkg.pac_status) === 'active'
-                              ? 'Deactivate Package'
-                              : 'Activate Package'}
+                            {(pkg.package_status || pkg.pac_status) === 'active' ? (
+                              <><BlockIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} /> Deactivate Package</>
+                            ) : (
+                              <><CheckCircleIcon fontSize="small" sx={{ mr: 1, color: 'success.main' }} /> Activate Package</>
+                            )}
                           </MenuItem>
                         </Menu>
                       </TableCell>

@@ -18,15 +18,16 @@ import {
   MenuItem,
   Chip,
   Button,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
-  // Edit as EditIcon,
-  // Delete as DeleteIcon,
-  // Block as BlockIcon,
-  // CheckCircle as CheckCircleIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../../shared/ParentCard';
 import ModuleModal from './ModuleModal';
@@ -189,7 +190,11 @@ const ModuleManagement = ({
         </Box>
 
         {isLoading ? (
-          <Typography>Loading...</Typography>
+          <Box sx={{ py: 2 }}>
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
+          </Box>
         ) : packageModules.length === 0 ? (
           renderEmptyState()
         ) : (
@@ -255,7 +260,7 @@ const ModuleManagement = ({
                             onClose={handleModuleMenuClose}
                           >
                             <MenuItem onClick={() => handleEditModule(mod)}>
-                              {/* <EditIcon sx={{ mr: 1, fontSize: 18 }} /> */}
+                              <EditIcon fontSize="small" sx={{ mr: 1 }} />
                               Edit Module
                             </MenuItem>
                             <MenuItem
@@ -263,14 +268,12 @@ const ModuleManagement = ({
                                 const newStatus = status === 'active' ? 'inactive' : 'active';
                                 handleStatusChange(mod, newStatus);
                               }}
+                              sx={{ color: status === 'active' ? 'error.main' : 'success.main' }}
                             >
                               {status === 'active' ? (
-                                <>
-                                  {/* <BlockIcon sx={{ mr: 1, fontSize: 18 }} /> */}
-                                  Deactivate
-                                </>
+                                <><BlockIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} /> Deactivate</>
                               ) : (
-                                <>Activate</>
+                                <><CheckCircleIcon fontSize="small" sx={{ mr: 1, color: 'success.main' }} /> Activate</>
                               )}
                             </MenuItem>
                             {/* <MenuItem

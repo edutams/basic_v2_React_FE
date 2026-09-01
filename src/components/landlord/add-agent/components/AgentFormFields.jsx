@@ -12,7 +12,7 @@ import {
   Typography,
   Paper,
   ClickAwayListener,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { HexColorPicker } from 'react-colorful';
 import { IMaskInput } from 'react-imask';
@@ -291,8 +291,10 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                   ))}
                 </Select>
                 {loadingLgas && (
-                  <CircularProgress
-                    size={16}
+                  <Skeleton
+                    variant="text"
+                    width={16}
+                    height={16}
                     sx={{
                       position: 'absolute',
                       right: 36,

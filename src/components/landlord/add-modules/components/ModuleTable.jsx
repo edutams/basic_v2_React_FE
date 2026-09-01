@@ -16,13 +16,16 @@ import {
   MenuItem,
   Chip,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
   FilterList as FilterListIcon,
+  Edit as EditIcon,
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { IconFilter } from '@tabler/icons-react';
 
@@ -212,11 +215,15 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <CircularProgress size={40} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : moduleList.length > 0 ? (
                   moduleList.map((module, index) => (
                     <TableRow hover key={module.id || index}>
@@ -268,6 +275,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleAction('update', module)}>
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} />
                             Edit Module
                           </MenuItem>
                           <MenuItem
@@ -279,10 +287,13 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                                 module,
                               )
                             }
+                            sx={{ color: (module.module_status || module.mod_status) === 'active' ? 'error.main' : 'success.main' }}
                           >
-                            {(module.module_status || module.mod_status) === 'active'
-                              ? 'Deactivate Module'
-                              : 'Activate Module'}
+                            {(module.module_status || module.mod_status) === 'active' ? (
+                              <><BlockIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} /> Deactivate Module</>
+                            ) : (
+                              <><CheckCircleIcon fontSize="small" sx={{ mr: 1, color: 'success.main' }} /> Activate Module</>
+                            )}
                           </MenuItem>
                           {/* <MenuItem onClick={() => handleAction('delete', module)}>
                             Delete Module

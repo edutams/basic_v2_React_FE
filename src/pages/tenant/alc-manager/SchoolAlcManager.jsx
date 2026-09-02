@@ -202,7 +202,7 @@ const SchoolAlcManager = () => {
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [activeTab, setActiveTab] = useState('Role Management');
@@ -649,7 +649,7 @@ const SchoolAlcManager = () => {
       {/* Top Header with Tabs & Primary Actions */}
       <Box
         sx={{
-          mb: 3,
+          mb: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -705,7 +705,7 @@ const SchoolAlcManager = () => {
 
       {activeTab === 'Role Management' && (
         <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 2 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <StatCard
@@ -1247,24 +1247,21 @@ const SchoolAlcManager = () => {
                       </TableRow>
                     )}
                   </TableBody>
-
-                  <TableFooter>
-                    <TableRow>
-                      <TablePagination
-                        rowsPerPageOptions={[]}
-                        count={hasFilters ? filteredRows.length : totalRoles}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={(_, newPage) => setPage(newPage)}
-                        onRowsPerPageChange={(e) => {
-                          setRowsPerPage(parseInt(e.target.value, 10));
-                          setPage(0);
-                        }}
-                      />
-                    </TableRow>
-                  </TableFooter>
                 </Table>
               </TableContainer>
+
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                component="div"
+                count={totalRoles}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+              />
             </Box>
           </ParentCard>
         </AclTourProvider>

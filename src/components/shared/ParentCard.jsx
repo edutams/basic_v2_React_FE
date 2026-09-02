@@ -27,7 +27,7 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
         py: "3px",
       }}
     >
-      <CardHeader title={title} action={codeModel} />
+      {Boolean(title || codeModel) && <CardHeader title={title} action={codeModel} />}
 
       <CardContent>{children}</CardContent>
       {footer ? <Box p={3}>{footer}</Box> : ''}

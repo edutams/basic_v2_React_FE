@@ -411,7 +411,7 @@ const OptionalPaymentTab = ({
         </Stack>
 
         <TableContainer variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
+          <Table sx={{ minWidth: 800 }} stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>

@@ -1183,24 +1183,75 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6 }}>
                       <CircularProgress size={28} />
                     </TableCell>
                   </TableRow>
                 ) : learners.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6, px: 2 }}>
                       {attArm && attWeek ? (
-                        <Typography variant="body1" color="text.secondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No learners found for the selected filters.
-                        </Typography>
+                        </Alert>
                       ) : (
-                        <Alert severity="info" sx={{ justifyContent: 'center', py: 2 }}>
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           <Typography variant="body2">
                             Select a <strong>Session</strong>, <strong>Term</strong>,{' '}
                             <strong>Week</strong>, <strong>Programme</strong>,{' '}
-                            <strong>Class</strong>, and <strong>Class/Arm</strong> from the
-                            dropdowns above, then click the <strong>Filter</strong> button to load
+                            <strong>Class</strong>, and <strong>Arm</strong> then click the <strong>Filter</strong> button to load
                             the attendance list.
                           </Typography>
                         </Alert>

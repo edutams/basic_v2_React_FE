@@ -45,6 +45,14 @@ const iconMapper = {
   UsersPay: IconUsers,
   Package: IconBox,
   Report: IconChartPie,
+  Subscription: IconCreditCard,
+  History: IconTimeline,
+  UsersCog: IconUserCircle,
+  Book: IconBook,
+  ListCheck: IconListCheck,
+  Circle: IconCircle,
+  AppWindow: IconAppWindow,
+  ClipboardList: IconClipboardList,
   // Add more mappings here when needed
 };
 

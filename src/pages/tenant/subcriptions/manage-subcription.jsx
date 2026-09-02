@@ -27,7 +27,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import useNotification from '@/hooks/useNotification';
-import tenantApi from '@/api/tenant/tenant_api';
+import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
 import InvoiceModal from '@/components/shared/subcription/InvoiceModal';
 import SubcriptionModal from '@/components/shared/subcription/SubcriptionModal';
 import TransactionModal from '@/components/shared/subcription/TransactionModal';
@@ -90,17 +90,15 @@ const ManageSubscriptionList = () => {
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
-      const res = await tenantApi.get('/subscription-status');
-      // For now, status endpoint returns current subscription.
-      // If we want history, we might need another endpoint, but let's adapt to what we have.
-      if (res.data.data) {
-        setRows([res.data.data]);
+      const res = await subscriptionApi.getSubscriptions();
+      if (res.data) {
+        setRows(Array.isArray(res.data) ? res.data : [res.data]);
       } else {
         setRows([]);
       }
     } catch (error) {
-      console.error('Error fetching subscription:', error);
-      notify.error('Failed to fetch subscription status');
+      console.error('Error fetching subscriptions:', error);
+      notify.error('Failed to fetch subscriptions');
     } finally {
       setLoading(false);
     }
@@ -198,15 +196,16 @@ const ManageSubscriptionList = () => {
           agent_plan_id: data.availableplan,
           session_id: data.session,
           term_id: data.term || null,
-          subscription_mode: 'online', // adapt as needed
+          subscription_mode: data.subscriptionMode || 'online',
         };
 
-        await tenantApi.post('/subscribe', payload);
+        await subscriptionApi.subscribe(payload);
         notify.success('Subscription plan successfully initiated', 'Success');
         fetchSubscriptions();
       } else if (modalType === 'update') {
-        // Handle update if implemented on backend
+        await subscriptionApi.updateSubscription(selectedRow.id, data);
         notify.success('Subscription plan updated successfully', 'Success');
+        fetchSubscriptions();
       }
       setModalOpen(false);
     } catch (error) {
@@ -221,11 +220,17 @@ const ManageSubscriptionList = () => {
     setUpgradeModalOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
-    setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
+  const handleDeleteConfirm = async () => {
+    try {
+      await subscriptionApi.deleteSubscription(rowToDelete.id);
+      setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
+      notify.success('Subscription plan deleted successfully', 'Success');
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+      notify.error('Failed to delete subscription');
+    }
     setConfirmOpen(false);
     setRowToDelete(null);
-    notify.success('Subcription plan deleted successfully', 'Success');
   };
 
   const handleSimulationUpdate = (data, action) => {
@@ -245,6 +250,8 @@ const ManageSubscriptionList = () => {
             justifyContent="space-between"
             flexWrap="wrap"
             gap={1}
+        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+
           >
             <Typography variant="h5">Manage Subcription</Typography>
             <Button
@@ -276,13 +283,11 @@ const ManageSubscriptionList = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 300 } }}
             />
           </Box>
 
-          <Paper>
             <TableContainer sx={{ overflowX: 'auto' }}>
-              <Table sx={{ tableLayout: 'fixed', minWidth: 900 }}>
+              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: '5%' }}>#</TableCell>
@@ -434,7 +439,6 @@ const ManageSubscriptionList = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
         </Box>
       </ParentCard>
       <SubcriptionModal

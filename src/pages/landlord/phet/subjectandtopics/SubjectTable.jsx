@@ -63,66 +63,46 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
     handleMenuClose();
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setPage(0);
+  const handleFetch = () => {
+    onFetch?.(searchTerm);
   };
-
-  const hasActiveFilters = searchTerm !== '';
 
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
           <Typography variant="h5"></Typography>
-          <Button variant="contained" size="small" onClick={onAddSubject}>Add New Subject</Button>
+          <Box display="flex" alignItems="center" gap={1} sx={{ ml: 'auto' }}>
+            <TextField
+              placeholder="Search subjects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            {onFetch && (
+              <Button variant="outlined" size="small" onClick={handleFetch} startIcon={<IconRefresh size={16} />}>
+                Fetch
+              </Button>
+            )}
+            <Button variant="contained" size="small" onClick={onAddSubject} sx={{ whiteSpace: 'nowrap' }}>
+              Add New Subject
+            </Button>
+          </Box>
         </Box>
       }
        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          {loading ? (
-            <>
-              <Skeleton variant="rounded" width={100} height={36} />
-              <Skeleton variant="rounded" width={220} height={36} />
-              <Skeleton variant="rounded" width={80} height={36} />
-            </>
-          ) : (
-            <>
-              {hasActiveFilters && (
-                <Button variant="outlined" size="small" onClick={clearFilters}>
-                  Clear Filters
-                </Button>
-              )}
-              <TextField
-                placeholder="Search subjects..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(0);
-                }}
-                size="small"
-                sx={{ minWidth: 220 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              {onFetch && (
-                <Button variant="outlined" size="small" onClick={onFetch} startIcon={<IconRefresh size={16} />}>
-                  Fetch
-                </Button>
-              )}
-            </>
-          )}
-        </Box>
-
           <TableContainer>
             <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>

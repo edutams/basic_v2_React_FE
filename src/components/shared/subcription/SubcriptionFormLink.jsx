@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { stimulationLinkValidationSchema } from './validation/subcriptionValidationSchema';
-import tenantApi from '@/api/tenant/tenant_api';
+import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
 
 const SubcriptionFormLink = ({
   initialValues = {},
@@ -44,7 +44,7 @@ const SubcriptionFormLink = ({
     const fetchOptions = async () => {
       try {
         setFetchingOptions(true);
-        const res = await tenantApi.get('/get-form-options');
+        const res = await subscriptionApi.getFormOptions();
         setOptions(res.data);
       } catch (error) {
         console.error('Error fetching options:', error);

@@ -389,7 +389,7 @@ const TeamTab = ({
       {/* Header */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Box
+          {/* <Box
             sx={{
               width: 24,
               height: 24,
@@ -405,7 +405,7 @@ const TeamTab = ({
           </Box>
           <Typography variant="h5">
             {isViewingProfile ? 'Sub Organizations' : 'List of Organization'}
-          </Typography>
+          </Typography> */}
         </Stack>
         {!isViewingProfile && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
@@ -463,7 +463,7 @@ const TeamTab = ({
 
       {/* Table */}
       <TableContainer>
-        <Table>
+        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
           <TableHead>
             <TableRow>
               <TableCell>

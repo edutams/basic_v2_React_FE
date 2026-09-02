@@ -30,7 +30,6 @@ import {
 import { IconFilter } from '@tabler/icons-react';
 
 import PropTypes from 'prop-types';
-import ParentCard from '@/components/shared/ParentCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import moduleApi from '@/api/landlord/modules/moduleApi';
 

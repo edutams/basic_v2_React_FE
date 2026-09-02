@@ -6,7 +6,6 @@ import {
   Box,
   Tabs,
   Tab,
-  CardContent,
   Divider,
 } from '@mui/material';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
@@ -309,7 +308,6 @@ const AttendancePsychomotor = () => {
                   textTransform: 'none',
                   fontWeight: 600,
                   fontSize: '15px',
-                  // py: 1.5,
                 },
               }}
             >
@@ -325,14 +323,22 @@ const AttendancePsychomotor = () => {
             <Divider />
           </Box>
         }
+        sx={{
+          '& .MuiCardHeader-root': {
+            p: 0,
+          },
+          '& .MuiCardContent-root': {
+            pt: 2,
+            px: { xs: 2, sm: 3 },
+            pb: 3,
+          },
+        }}
       >
-        <CardContent>
-          {availableTabs.map((tab, idx) => (
-            <TabPanel key={tab.id} value={activeTab} index={idx}>
-              {tab.component}
-            </TabPanel>
-          ))}
-        </CardContent>
+        {availableTabs.map((tab, idx) => (
+          <TabPanel key={tab.id} value={activeTab} index={idx}>
+            {tab.component}
+          </TabPanel>
+        ))}
       </ParentCard>
     </PageContainer>
   );

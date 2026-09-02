@@ -33,6 +33,8 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -63,6 +65,7 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
+import ParentCard from '@/components/shared/ParentCard';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -733,12 +736,85 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ sm: 'center' }}
-        mb={3}
+        mb={1.5}
         gap={1.5}
       >
-        <Typography variant="h6" fontWeight={700}>
-          Learner Attendance
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="h6" fontWeight={700}>
+            Learner Attendance
+          </Typography>
+
+          <ToggleButtonGroup
+            value={attendanceType}
+            exclusive
+            size="small"
+            onChange={(_, val) => val && setAttendanceType(val)}
+            sx={{
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
+              p: 0.5,
+              borderRadius: '10px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
+              '& .MuiToggleButton-root': {
+                border: 'none',
+                borderRadius: '8px',
+                px: 1.75,
+                py: 0.5,
+                fontWeight: 600,
+                fontSize: '13px',
+                textTransform: 'none',
+                gap: 0.75,
+                color: isDark ? '#94a3b8' : '#475569',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >
+            <ToggleButton
+              value="morning"
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: '#f97316 !important',
+                  color: '#ffffff !important',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
+                  '&:hover': {
+                    bgcolor: '#ea580c !important',
+                  },
+                },
+              }}
+            >
+              <MorningIcon
+                sx={{
+                  fontSize: 16,
+                  color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
+                }}
+              />{' '}
+              Morning (AM)
+            </ToggleButton>
+
+            <ToggleButton
+              value="afternoon"
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: '#0284c7 !important',
+                  color: '#ffffff !important',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+                  '&:hover': {
+                    bgcolor: '#0369a1 !important',
+                  },
+                },
+              }}
+            >
+              <AfternoonIcon
+                sx={{
+                  fontSize: 16,
+                  color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
+                }}
+              />{' '}
+              Afternoon (PM)
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {/* Export Dropdown */}
           <Button
@@ -893,60 +969,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
       </Grid>
 
-      {/* ── Morning/Afternoon Toggle ─────────────────────── */}
-      <Box
-        sx={{
-          mb: 2,
-          display: 'flex',
-          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-          alignItems: 'center',
-          gap: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.5,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1.5,
-            bgcolor:
-              attendanceType === 'morning'
-                ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
-                : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
-            border: `1px solid ${attendanceType === 'morning'
-              ? alpha(theme.palette.warning.main, 0.3)
-              : alpha(theme.palette.info.main, 0.3)
-              }`,
-          }}
-        >
-          <PeriodIcon fontSize="small" color={attendanceType === 'morning' ? 'warning' : 'info'} />
-          <Typography variant="caption" fontWeight={600}>
-            {periodLabel} Session
-          </Typography>
-        </Box>
-        <RadioGroup
-          row
-          value={attendanceType}
-          onChange={(e) => setAttendanceType(e.target.value)}
-          sx={{ ml: 0.5 }}
-        >
-          <FormControlLabel
-            value="morning"
-            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
-            label={<Typography variant="body2">AM</Typography>}
-            sx={{ m: 0, mr: 0.5 }}
-          />
-          <FormControlLabel
-            value="afternoon"
-            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
-            label={<Typography variant="body2">PM</Typography>}
-            sx={{ m: 0 }}
-          />
-        </RadioGroup>
-      </Box>
-
       {/* ── Info Banner: Reminder to Submit ────────────── */}
       {filterApplied && learners.length > 0 && (
         <Alert
@@ -989,20 +1011,45 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       {/* ── Attendance Table & Summary ──────────────────── */}
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: 9 }}>
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>
               {error}
             </Typography>
           )}
           <TableContainer
+            component={Paper}
             elevation={0}
-            variant="outlined"
             sx={{
-              borderRadius: 2,
+              borderRadius: '12px',
+              border: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '1.5px solid rgba(255, 255, 255, 0.15)'
+                  : '1.5px solid #cbd5e1',
+              boxShadow: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '0 4px 16px rgba(0, 0, 0, 0.35)'
+                  : '0 4px 16px rgba(15, 23, 42, 0.05)',
               overflowX: 'auto',
               overflowY: 'auto',
               maxHeight: 'calc(100vh - 320px)',
+              '& .MuiTableHead-root .MuiTableCell-root': {
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
+                fontWeight: 700,
+                color: (theme) =>
+                  theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
+                borderBottom: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.12)'
+                    : '2px solid #cbd5e1',
+              },
+              '& .MuiTableCell-root': {
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : '#e2e8f0',
+              },
             }}
           >
             <Table sx={{ minWidth: 650 }} stickyHeader>
@@ -1011,9 +1058,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   <TableCell
                     sx={{
                       width: 40,
+                      fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
+                      bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '1px solid rgba(255, 255, 255, 0.15)'
+                          : '1px solid #cbd5e1',
                     }}
                   >
                     S/N
@@ -1021,9 +1072,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   <TableCell
                     sx={{
                       minWidth: 200,
+                      fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
+                      bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '2px solid rgba(255, 255, 255, 0.2)'
+                          : '2px solid #cbd5e1',
                     }}
                   >
                     Learner's Name
@@ -1036,11 +1091,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         key={day}
                         align="center"
                         sx={{
-                          minWidth: 100,
+                          minWidth: 105,
                           bgcolor: isSelected
-                            ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04)
-                            : 'transparent',
-                          transition: 'background-color 0.3s ease',
+                            ? isDark
+                              ? 'rgba(16, 185, 129, 0.18)'
+                              : '#ecfdf5'
+                            : isDark
+                              ? '#1e293b'
+                              : '#f8fafc',
+                          borderTop: isSelected
+                            ? '3px solid #10b981'
+                            : '3px solid transparent',
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         <Box>
@@ -1121,7 +1183,15 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       </TableCell>
                     );
                   })}
-                  <TableCell align="center">Periods Present</TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: isDark ? '#1e293b' : '#f8fafc',
+                    }}
+                  >
+                    Periods Present
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1159,8 +1229,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         <TableCell
                           sx={{
                             ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                            bgcolor: isDark ? '#1e1e1e' : '#fff',
-                            borderRight: `1px solid ${theme.palette.divider}`,
+                            bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255, 255, 255, 0.12)'
+                                : '1px solid #cbd5e1',
                           }}
                         >
                           {idx + 1}
@@ -1168,8 +1241,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         <TableCell
                           sx={{
                             ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
-                            bgcolor: isDark ? '#1e1e1e' : '#fff',
-                            borderRight: `1px solid ${theme.palette.divider}`,
+                            bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '2px solid rgba(255, 255, 255, 0.18)'
+                                : '2px solid #cbd5e1',
                           }}
                         >
                           <Box
@@ -1312,16 +1388,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
 
         {/* ── Right Summary Card with Gauge & Submit Button ── */}
-        <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: -1, lg: 0 } }}>
-          <Paper
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <ParentCard
             elevation={0}
             sx={{
-              p: 3,
-              borderRadius: '12px',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : theme.palette.grey[200]}`,
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f9fafb',
-              height: '100%',
-              minHeight: { xs: 'auto', lg: '580px' },
+
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -1385,7 +1456,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 setAlertConfirmOpen(true);
               }}
               disabled={sendingAlert || learners.length === 0}
-              sx={{ mb: 1 }}
+              sx={{ mb: 1, fontSize: 13 }}
             >
               {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
             </Button>
@@ -1438,7 +1509,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   <Typography variant="caption" color="text.secondary">
                     {autoSendReport
                       ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
-                      : 'Enable to automatically send weekly attendance reports to parents/guardians via the scheduler.'}
+                      : 'Auto-send weekly attendance reports to guardians.'}
                   </Typography>
                 </Box>
               </Stack>
@@ -1457,7 +1528,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             >
               {submitting ? 'Submitting...' : 'Submit Attendance'}
             </Button>
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

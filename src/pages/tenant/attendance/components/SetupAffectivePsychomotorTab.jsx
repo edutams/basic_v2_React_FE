@@ -374,7 +374,7 @@ const SetupAffectivePsychomotorTab = () => {
   }
 
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box>
       {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>

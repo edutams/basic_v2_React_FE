@@ -25,9 +25,9 @@ const AgentSubscriptionIndex = () => {
   return (
     <PageContainer title="Tenant Subscriptions" description="Manage tenant subscription requests">
       <Breadcrumb title="Tenant Subscriptions" items={BCrumb} />
-      <ParentCard title="Manage Subscriptions">
+      <ParentCard  sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}>
         <Box sx={{ width: '100%' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2}}>
             <Tabs
               value={value}
               onChange={handleChange}

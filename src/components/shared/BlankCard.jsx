@@ -8,10 +8,13 @@ const BlankCard = ({ children, className }) => {
 
   return (
     <Card
-      sx={{ p: 0, position: 'relative' }}
+      sx={{ p: '0px !important',
+        height: 'fit-content',
+      }}
       className={className}
       elevation={isCardShadow ? 9 : 0}
       variant={!isCardShadow ? 'outlined' : undefined}
+      
     >
       {children}
     </Card>

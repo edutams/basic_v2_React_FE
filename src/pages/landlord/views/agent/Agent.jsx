@@ -36,6 +36,8 @@ import {
   Tab,
   Skeleton,
   Divider,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -51,6 +53,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import { IconEye, IconLogin, IconEdit, IconBuilding, IconCreditCard, IconBuildingBank } from '@tabler/icons-react';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoggedInUsersModal from './components/LoggedInUsersModal';
 import ViewUsersListModal from './components/ViewUsersListModal';
@@ -163,7 +166,7 @@ const ActionMenuCell = ({
         PaperProps={{
           style: {
             maxHeight: 48 * 4.5,
-            width: '20ch',
+            width: '24ch',
           },
         }}
       >
@@ -174,7 +177,10 @@ const ActionMenuCell = ({
           rel="noopener noreferrer"
           onClick={handleClose}
         >
-          View Agent Profile
+          <ListItemIcon>
+            <IconEye size={18} />
+          </ListItemIcon>
+          <ListItemText primary="View Agent Profile" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -182,7 +188,10 @@ const ActionMenuCell = ({
             handleImpersonate(agent);
           }}
         >
-          Login As Agent
+          <ListItemIcon>
+            <IconLogin size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Login As Agent" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -190,7 +199,10 @@ const ActionMenuCell = ({
             handleUpdateAgent(agent, 'update');
           }}
         >
-          Update Agent Info
+          <ListItemIcon>
+            <IconEdit size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Update Agent Info" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -198,7 +210,10 @@ const ActionMenuCell = ({
             handleViewSchools(agent, 'view');
           }}
         >
-          View School
+          <ListItemIcon>
+            <IconBuilding size={18} />
+          </ListItemIcon>
+          <ListItemText primary="View School" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -206,7 +221,10 @@ const ActionMenuCell = ({
             handleManageGateway(agent);
           }}
         >
-          Manage Payment Gateway
+          <ListItemIcon>
+            <IconCreditCard size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Manage Payment Gateway" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -214,7 +232,10 @@ const ActionMenuCell = ({
             handleManageBankService(agent);
           }}
         >
-          Manage Bank Service
+          <ListItemIcon>
+            <IconBuildingBank size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Manage Bank Service" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -223,8 +244,10 @@ const ActionMenuCell = ({
           }}
           sx={{ color: 'error.main' }}
         >
-          <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
-          Delete Organization
+          <ListItemIcon sx={{ color: 'error.main' }}>
+            <DeleteIcon sx={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText primary="Delete Organization" />
         </MenuItem>
         {/* <MenuItem
           onClick={() => {
@@ -835,7 +858,7 @@ const Agent = () => {
       >
         {analyticsLoading ? (
           [...Array(4)].map((_, i) => (
-            <Paper key={i} elevation={0} sx={{ p: '14px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+            <Paper key={i} elevation={0} sx={{ p: '10px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Skeleton variant="text" width={120} height={24} />
                 <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
@@ -857,8 +880,7 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            px: '3px',
-            py: '3px',
+            p: '10px !important',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -960,8 +982,7 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-           px: '3px',
-            py: '3px',
+                  p: '10px !important',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1061,8 +1082,7 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            px: '3px',
-            py: '3px',
+                   p: '10px !important',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1152,8 +1172,7 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-           px: '3px',
-            py: '3px',
+                  p: '10px !important',
             borderRadius: '14px',
             bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
             border: '1px solid',
@@ -1250,26 +1269,10 @@ const Agent = () => {
                 direction="row"
                 spacing={1}
                 alignItems="center"
-                justifyContent="space-between"
+                justifyContent="flex-end"
                 sx={{ width: '100%' }}
               >
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      bgcolor: '#2ca87f',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                    }}
-                  >
-                    <IconSchool size={16} />
-                  </Box>
-                  <Typography variant="h5">List of Organizations</Typography>
-                </Stack>
+               
                 <Button
                   variant="contained"
                   size="small"
@@ -1291,58 +1294,48 @@ const Agent = () => {
                 >
                   Add New Organization
                 </Button>
+                 <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconAdjustmentsHorizontal />}
+                  onClick={() => setFilterDrawerOpen(true)}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    px: 2.5,
+                    borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                    fontWeight: activeFilterCount > 0 ? 700 : 400,
+                  }}
+                >
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Box
+                      component="span"
+                      sx={{
+                        ml: 1,
+                        px: 0.8,
+                        py: 0.1,
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {activeFilterCount}
+                    </Box>
+                  )}
+                </Button>
               </Stack>
             }
-          >
-            {/* Filter Button */}
-            <Box
-              sx={{
-                mb: 2,
-                display: 'flex',
-                gap: 2,
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<IconAdjustmentsHorizontal />}
-                onClick={() => setFilterDrawerOpen(true)}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2.5,
-                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  fontWeight: activeFilterCount > 0 ? 700 : 400,
-                }}
-              >
-                Filters
-                {activeFilterCount > 0 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      px: 0.8,
-                      py: 0.1,
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {activeFilterCount}
-                  </Box>
-                )}
-              </Button>
-            </Box>
+              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
 
+            >
             <TableContainer>
-              <Table>
+              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                 <TableHead>
-                  <TableRow>
+                  <TableRow sx={{ bgcolor: '#f8f9fa' }}>
                     <TableCell>
                       <Typography variant="h6">S/N</Typography>
                     </TableCell>

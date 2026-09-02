@@ -29,10 +29,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { IconList } from '@tabler/icons-react';
+import { IconList, IconRefresh } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
 
-const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction, loading = false }) => {
+const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction, loading = false, onFetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -74,40 +74,57 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
     <ParentCard
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Manage Subjects</Typography>
+          <Typography variant="h5"></Typography>
           <Button variant="contained" size="small" onClick={onAddSubject}>Add New Subject</Button>
         </Box>
       }
+       sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="Search subjects..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          {hasActiveFilters && (
-            <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
-              Clear Filters
-            </Button>
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          {loading ? (
+            <>
+              <Skeleton variant="rounded" width={100} height={36} />
+              <Skeleton variant="rounded" width={220} height={36} />
+              <Skeleton variant="rounded" width={80} height={36} />
+            </>
+          ) : (
+            <>
+              {hasActiveFilters && (
+                <Button variant="outlined" size="small" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
+              )}
+              <TextField
+                placeholder="Search subjects..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(0);
+                }}
+                size="small"
+                sx={{ minWidth: 220 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {onFetch && (
+                <Button variant="outlined" size="small" onClick={onFetch} startIcon={<IconRefresh size={16} />}>
+                  Fetch
+                </Button>
+              )}
+            </>
           )}
         </Box>
 
-        <Box>
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+          <TableContainer>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -215,7 +232,6 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               </TableFooter>
             </Table>
           </TableContainer>
-        </Box>
       </Box>
     </ParentCard>
   );

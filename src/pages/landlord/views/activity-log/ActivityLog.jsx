@@ -523,7 +523,7 @@ const ActivityLog = () => {
             data-tour="activity-log-header"
           >
             <Typography variant="h5" fontWeight={700}>
-              System Activity Logs
+              {/* System Activity Logs */}
             </Typography>
             <ShowTourGuideButton />
           </Box>
@@ -636,7 +636,6 @@ const ActivityLog = () => {
                 color="primary"
                 size="small"
                 type="submit"
-                sx={{ px: 2.5, py: 0.8, textTransform: 'none', fontWeight: 600, height: 38 }}
               >
                 Search
               </Button>
@@ -667,7 +666,7 @@ const ActivityLog = () => {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1000 }}>
+                <Table stickyHeader sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>

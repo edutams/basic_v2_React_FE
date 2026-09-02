@@ -141,10 +141,11 @@ const AgentSubscriptionList = ({ status }) => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.5 }}>
         <TextField
           placeholder="Search by school, session, or plan..."
-          sx={{ width: { xs: '100%', sm: 350, md: 350 } }}
+          sx={{ width: { xs: '100%', sm: 300, md: 350 } }}
+          size="small"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -153,11 +154,14 @@ const AgentSubscriptionList = ({ status }) => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
           }}
         />
+        <Button variant="contained" size="small" onClick={fetchSubscriptions}>
+          Refresh
+        </Button>
       </Box>
 
       {loading ? (
@@ -169,7 +173,7 @@ const AgentSubscriptionList = ({ status }) => {
       ) : (
         <Box>
           <TableContainer>
-            <Table>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>

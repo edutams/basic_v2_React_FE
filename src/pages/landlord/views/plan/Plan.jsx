@@ -318,7 +318,7 @@ const Plan = () => {
       >
         <Box>
           <TableContainer>
-            <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
+            <Table aria-label="plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>

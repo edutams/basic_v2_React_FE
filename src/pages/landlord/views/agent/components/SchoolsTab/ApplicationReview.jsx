@@ -20,12 +20,14 @@ import {
   Avatar,
   Link,
   Alert,
+  Button,
 } from '@mui/material';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
+import { IconDotsVertical, IconEye, IconEdit, IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
+import { IconUserPlus } from '@tabler/icons-react';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
 import { usePermissions } from '@/context/AgentContext/permissions';
 
@@ -38,10 +40,14 @@ const ApplicationReview = ({
   setRowsPerPage,
   nameValue,
   activeFilters,
+  setFilterDrawerOpen,
+  activeFilterCount,
+  setOpenAddModal,
+  can,
   onReview,
   onEdit,
 }) => {
-  const { can } = usePermissions();
+  const { can: canPerm } = usePermissions();
 
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -147,7 +153,59 @@ const ApplicationReview = ({
   return (
     <>
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
-        <Table>
+        <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" sx={{ px: 2, py: 1.5 }}>
+          
+          {canPerm('landlord.school.create') && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconUserPlus />}
+              onClick={() => setOpenAddModal(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 3,
+              }}
+            >
+              Add New School
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconAdjustmentsHorizontal />}
+            onClick={() => setFilterDrawerOpen(true)}
+            sx={{
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 2.5,
+              borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+              fontWeight: activeFilterCount > 0 ? 700 : 400,
+              '&:hover': { borderColor: 'primary.main' },
+            }}
+          >
+            Filters
+            {activeFilterCount > 0 && (
+              <Box
+                component="span"
+                sx={{
+                  ml: 1,
+                  px: 0.8,
+                  py: 0.1,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  lineHeight: 1.6,
+                }}
+              >
+                {activeFilterCount}
+              </Box>
+            )}
+          </Button>
+        </Stack>
+        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
               <TableCell sx={thSx}>#</TableCell>

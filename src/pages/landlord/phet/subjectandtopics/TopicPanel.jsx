@@ -29,9 +29,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { IconRefresh } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
 
-const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false }) => {
+const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false, onFetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -74,8 +75,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">
+        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+          <Typography variant="h5" sx={{ minWidth: 0 }}>
             {selectedSubject ? (
               <>
                 Manage Topics in{' '}
@@ -88,12 +89,14 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
             )}
           </Typography>
           {selectedSubject && (
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')}>
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ ml: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
               Add New Topic
             </Button>
           )}
         </Box>
       }
+       sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+
     >
       {!selectedSubject ? (
         <Box>
@@ -102,14 +105,42 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
           </Alert>
         </Box>
       ) : isLoading ? (
-        <Box sx={{ p: 2 }}>
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
-          ))}
+        <Box sx={{ p: 0 }}>
+          <Box sx={{ mb: 3, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
+            <Skeleton variant="rounded" width={100} height={36} />
+            <Skeleton variant="rounded" width={220} height={36} />
+            <Skeleton variant="rounded" width={80} height={36} />
+          </Box>
+          <TableContainer>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+              <TableHead>
+                <TableRow>
+                  {['S/N', 'Topic', 'Status', 'Action'].map((h) => (
+                    <TableCell key={h} sx={{ fontWeight: 'bold' }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                    <TableCell><Skeleton variant="rounded" width={60} height={24} /></TableCell>
+                    <TableCell><Skeleton variant="circular" width={32} height={32} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       ) : (
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ mb: 3, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            {hasActiveFilters && (
+              <Button variant="outlined" size="small" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
             <TextField
               placeholder="Search topics..."
               value={searchTerm}
@@ -117,6 +148,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 setSearchTerm(e.target.value);
                 setPage(0);
               }}
+              size="small"
+              sx={{ minWidth: 220 }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -127,16 +160,15 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 },
               }}
             />
-            {hasActiveFilters && (
-              <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
-                Clear Filters
+            {onFetch && (
+              <Button variant="outlined" size="small" onClick={() => onFetch(selectedSubject?.id)} startIcon={<IconRefresh size={16} />}>
+                Fetch
               </Button>
             )}
           </Box>
 
-          <Paper>
-            <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+         <TableContainer>
+              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -226,7 +258,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
         </Box>
       )}
     </ParentCard>

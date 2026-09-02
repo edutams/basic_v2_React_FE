@@ -329,9 +329,12 @@ function SessionsPanel({ isLevel1 }) {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Academic Sessions</Typography>
+        <Typography variant="h5"></Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
+              New Session
+            </Button>
             <Button
               variant="contained"
               size="small"
@@ -354,9 +357,7 @@ function SessionsPanel({ isLevel1 }) {
                 />
               )}
             </Button>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Session
-            </Button>
+            
           </Box>
         )}
       </Box>
@@ -372,8 +373,8 @@ function SessionsPanel({ isLevel1 }) {
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer>
-          <Table size="small">
-            <TableHead>
+          <Table size="small" stickyHeader>
+            <TableHead sx={{ bgcolor: '#f8f9fa' }}>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
                 <TableCell>S/N</TableCell>
@@ -800,9 +801,12 @@ function TermsPanel({ isLevel1 }) {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Academic Terms</Typography>
+        <Typography variant="h5"></Typography>
         {isLevel1 && (
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
+              New Term
+            </Button>
             <Button
               variant="contained"
               size="small"
@@ -825,9 +829,7 @@ function TermsPanel({ isLevel1 }) {
                 />
               )}
             </Button>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Term
-            </Button>
+            
           </Box>
         )}
       </Box>
@@ -843,7 +845,7 @@ function TermsPanel({ isLevel1 }) {
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer>
-          <Table size="small">
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
@@ -1013,11 +1015,11 @@ const CalendarManagement = () => {
   return (
     <>
       <Breadcrumb title="Calendar Management" items={BCrumb} />
-      <ParentCard>
+      <ParentCard sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}>
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
-          sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}
+          sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 36, py: 0 }}
         >
           <Tab label="Sessions" />
           <Tab label="Terms" />

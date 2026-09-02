@@ -504,7 +504,7 @@ const ClassSubject = () => {
         >
           <Paper>
             <TableContainer sx={{ maxWidth: '100%', overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 700 }} size="small">
+              <Table sx={{ minWidth: 700 }} stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
@@ -719,7 +719,7 @@ const ClassSubject = () => {
                   >                    <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
                     <MenuItem value="trade">Trade</MenuItem>
-                </Select>
+                  </Select>
                   {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>
@@ -828,7 +828,7 @@ const ClassSubject = () => {
                   >                    <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
                     <MenuItem value="trade">Trade</MenuItem>
-                </Select>
+                  </Select>
                   {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>

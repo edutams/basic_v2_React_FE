@@ -217,7 +217,7 @@ const ClassRegister = () => {
     <PageContainer title="Class Register" description="Manage class register and student enrollments">
       <Breadcrumb title="Class Register" items={BCrumb} />
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, lg: 2 }}>
           <TotalStudentsCard
             totalStudentsCount={totalStudentsCount}

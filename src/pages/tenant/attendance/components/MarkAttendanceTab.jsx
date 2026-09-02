@@ -33,6 +33,8 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -63,6 +65,7 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
+import ParentCard from '@/components/shared/ParentCard';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -511,7 +514,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             // The toggle API will properly set it when user interacts with checkbox
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   };
 
@@ -728,23 +731,95 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   ];
 
   return (
-    <Box sx={{ pt: 1 }}>
-      {/* ── Action Buttons Row ──────────────────────────── */}
+    <Box>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ sm: 'center' }}
-        mb={3}
+        mb={1.5}
         gap={1.5}
       >
-        <Typography variant="h6" fontWeight={700}>
-          Learner Attendance
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="h6" fontWeight={700}>
+            Learner Attendance
+          </Typography>
+
+          <ToggleButtonGroup
+            value={attendanceType}
+            exclusive
+            size="small"
+            onChange={(_, val) => val && setAttendanceType(val)}
+            sx={{
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
+              p: 0.5,
+              borderRadius: '10px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
+              '& .MuiToggleButton-root': {
+                border: 'none',
+                borderRadius: '8px',
+                px: 1.75,
+                py: 0.5,
+                fontWeight: 600,
+                fontSize: '13px',
+                textTransform: 'none',
+                gap: 0.75,
+                color: isDark ? '#94a3b8' : '#475569',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >
+            <ToggleButton
+              value="morning"
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: '#f97316 !important',
+                  color: '#ffffff !important',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
+                  '&:hover': {
+                    bgcolor: '#ea580c !important',
+                  },
+                },
+              }}
+            >
+              <MorningIcon
+                sx={{
+                  fontSize: 16,
+                  color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
+                }}
+              />{' '}
+              Morning (AM)
+            </ToggleButton>
+
+            <ToggleButton
+              value="afternoon"
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: '#0284c7 !important',
+                  color: '#ffffff !important',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+                  '&:hover': {
+                    bgcolor: '#0369a1 !important',
+                  },
+                },
+              }}
+            >
+              <AfternoonIcon
+                sx={{
+                  fontSize: 16,
+                  color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
+                }}
+              />{' '}
+              Afternoon (PM)
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {/* Export Dropdown */}
           <Button
-            variant="contained"
-            color="success"
+            variant="outlined"
+            // color="primary"
             size="small"
             startIcon={<DownloadIcon />}
             endIcon={<ArrowDropDownIcon />}
@@ -894,138 +969,102 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
       </Grid>
 
-      {/* ── Morning/Afternoon Toggle ─────────────────────── */}
-      <Box
-        sx={{
-          mb: 2,
-          display: 'flex',
-          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-          alignItems: 'center',
-          gap: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.5,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1.5,
-            bgcolor:
-              attendanceType === 'morning'
-                ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
-                : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
-            border: `1px solid ${
-              attendanceType === 'morning'
-                ? alpha(theme.palette.warning.main, 0.3)
-                : alpha(theme.palette.info.main, 0.3)
-            }`,
-          }}
-        >
-          <PeriodIcon fontSize="small" color={attendanceType === 'morning' ? 'warning' : 'info'} />
-          <Typography variant="caption" fontWeight={600}>
-            {periodLabel} Session
-          </Typography>
-        </Box>
-        <RadioGroup
-          row
-          value={attendanceType}
-          onChange={(e) => setAttendanceType(e.target.value)}
-          sx={{ ml: 0.5 }}
-        >
-          <FormControlLabel
-            value="morning"
-            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
-            label={<Typography variant="body2">AM</Typography>}
-            sx={{ m: 0, mr: 0.5 }}
-          />
-          <FormControlLabel
-            value="afternoon"
-            control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }} />}
-            label={<Typography variant="body2">PM</Typography>}
-            sx={{ m: 0 }}
-          />
-        </RadioGroup>
-      </Box>
-
       {/* ── Info Banner: Reminder to Submit ────────────── */}
       {filterApplied && learners.length > 0 && (
-        <Alert
-          severity="info"
-          variant="outlined"
-          sx={{
-            mb: 2,
-            '& .MuiAlert-message': { width: '100%', overflow: 'hidden' },
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              flexWrap: 'wrap',
-              wordBreak: 'break-word',
-              lineHeight: 1.5,
-            }}
-          >
-            <Box component="span" sx={{ mr: 0.5 }} role="img" aria-label="info">
-              ℹ️
-            </Box>
-            {isMobile ? (
-              <>
-                Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
-                <strong>Submit Attendance</strong> to save them permanently.
-              </>
-            ) : (
-              <>
-                Your attendance marks are saved <strong>locally</strong>. Click the{' '}
-                <strong>Submit Attendance</strong> button on the right to permanently save them to
-                the system.
-              </>
-            )}
-          </Typography>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {isMobile ? (
+            <>
+              Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
+              <strong>Submit Attendance</strong> to save them permanently.
+            </>
+          ) : (
+            <>
+              Your attendance marks are saved <strong>locally</strong>. Click the{' '}
+              <strong>Submit Attendance</strong> button on the right to permanently save them to the
+              system.
+            </>
+          )}
         </Alert>
       )}
 
       {/* ── Attendance Table & Summary ──────────────────── */}
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 9 }}>
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>
               {error}
             </Typography>
           )}
           <TableContainer
+            component={Paper}
             elevation={0}
-            variant="outlined"
             sx={{
-              borderRadius: 2,
+              borderRadius: '12px',
+              border: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '1.5px solid rgba(255, 255, 255, 0.15)'
+                  : '1.5px solid #cbd5e1',
+              boxShadow: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '0 4px 16px rgba(0, 0, 0, 0.35)'
+                  : '0 4px 16px rgba(15, 23, 42, 0.05)',
               overflowX: 'auto',
               overflowY: 'auto',
-              maxHeight: 'calc(100vh - 320px)',
+              height: { xs: '450px', md: '520px' },
+              background: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(90deg, #1e293b 268px, rgba(255, 255, 255, 0.18) 268px, rgba(255, 255, 255, 0.18) 270px, #121827 270px)'
+                  : 'linear-gradient(90deg, #f1f5f9 268px, #cbd5e1 268px, #cbd5e1 270px, #ffffff 270px)',
+              '& .MuiTableHead-root .MuiTableCell-root': {
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
+                fontWeight: 700,
+                color: (theme) =>
+                  theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
+                borderBottom: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.12)'
+                    : '2px solid #cbd5e1',
+              },
+              '& .MuiTableCell-root': {
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : '#e2e8f0',
+              },
             }}
           >
-            <Table sx={{ minWidth: 650 }} stickyHeader>
+            <Table sx={{ minWidth: 650, tableLayout: 'fixed' }} stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell
                     sx={{
-                      width: 40,
+                      width: 50,
+                      minWidth: 50,
+                      maxWidth: 50,
+                      fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '1px solid rgba(255, 255, 255, 0.15)'
+                          : '1px solid #cbd5e1',
                     }}
                   >
                     S/N
                   </TableCell>
                   <TableCell
                     sx={{
-                      minWidth: 200,
-                      ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
+                      width: 220,
+                      minWidth: 220,
+                      maxWidth: 220,
+                      fontWeight: 700,
+                      ...(!isMobile && { position: 'sticky', left: 50, zIndex: 3 }),
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '2px solid rgba(255, 255, 255, 0.2)'
+                          : '2px solid #cbd5e1',
                     }}
                   >
                     Learner's Name
@@ -1038,11 +1077,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         key={day}
                         align="center"
                         sx={{
-                          minWidth: 100,
+                          minWidth: 105,
                           bgcolor: isSelected
-                            ? alpha(theme.palette.success.main, isDark ? 0.08 : 0.04)
-                            : 'transparent',
-                          transition: 'background-color 0.3s ease',
+                            ? isDark
+                              ? 'rgba(16, 185, 129, 0.18)'
+                              : '#ecfdf5'
+                            : isDark
+                              ? '#1e293b'
+                              : '#f8fafc',
+                          borderTop: isSelected
+                            ? '3px solid #10b981'
+                            : '3px solid transparent',
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         <Box>
@@ -1077,29 +1123,29 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </Typography>
                           )}
                         </Box>
-                        <Stack direction="row" spacing={0.25} justifyContent="center" mt={0.5}>
+                        <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" mt={0.5}>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'present')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <CheckCircleIcon color="success" fontSize="small" />
+                              <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'absent')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <CancelOutlinedIcon color="error" fontSize="small" />
+                              <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'unknown')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <RadioButtonUncheckedIcon color="action" fontSize="small" />
+                              <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                         </Stack>
@@ -1123,30 +1169,89 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       </TableCell>
                     );
                   })}
-                  <TableCell align="center">Periods Present</TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: isDark ? '#1e293b' : '#f8fafc',
+                    }}
+                  >
+                    Periods Present
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6 }}>
                       <CircularProgress size={28} />
                     </TableCell>
                   </TableRow>
                 ) : learners.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6 }}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    />
+                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6, px: 2 }}>
                       {attArm && attWeek ? (
-                        <Typography variant="body1" color="text.secondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No learners found for the selected filters.
-                        </Typography>
+                        </Alert>
                       ) : (
-                        <Alert severity="info" sx={{ justifyContent: 'center', py: 2 }}>
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           <Typography variant="body2">
                             Select a <strong>Session</strong>, <strong>Term</strong>,{' '}
                             <strong>Week</strong>, <strong>Programme</strong>,{' '}
-                            <strong>Class</strong>, and <strong>Class/Arm</strong> from the
-                            dropdowns above, then click the <strong>Filter</strong> button to load
+                            <strong>Class</strong>, and <strong>Arm</strong> then click the <strong>Filter</strong> button to load
                             the attendance list.
                           </Typography>
                         </Alert>
@@ -1160,18 +1265,30 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       <TableRow key={learner.student_registration_id} hover>
                         <TableCell
                           sx={{
+                            width: 50,
+                            minWidth: 50,
+                            maxWidth: 50,
                             ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                            bgcolor: isDark ? '#1e1e1e' : '#fff',
-                            borderRight: `1px solid ${theme.palette.divider}`,
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255, 255, 255, 0.12)'
+                                : '1px solid #cbd5e1',
                           }}
                         >
                           {idx + 1}
                         </TableCell>
                         <TableCell
                           sx={{
-                            ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
-                            bgcolor: isDark ? '#1e1e1e' : '#fff',
-                            borderRight: `1px solid ${theme.palette.divider}`,
+                            width: 220,
+                            minWidth: 220,
+                            maxWidth: 220,
+                            ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '2px solid rgba(255, 255, 255, 0.18)'
+                                : '2px solid #cbd5e1',
                           }}
                         >
                           <Box
@@ -1314,16 +1431,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
 
         {/* ── Right Summary Card with Gauge & Submit Button ── */}
-        <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: -1, lg: 0 } }}>
-          <Paper
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <ParentCard
             elevation={0}
             sx={{
-              p: 3,
-              borderRadius: '12px',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : theme.palette.grey[200]}`,
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f9fafb',
-              height: '100%',
-              minHeight: { xs: 'auto', lg: '580px' },
+
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -1387,7 +1499,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                 setAlertConfirmOpen(true);
               }}
               disabled={sendingAlert || learners.length === 0}
-              sx={{ mb: 1 }}
+              sx={{ mb: 1, fontSize: 13 }}
             >
               {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
             </Button>
@@ -1440,7 +1552,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   <Typography variant="caption" color="text.secondary">
                     {autoSendReport
                       ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
-                      : 'Enable to automatically send weekly attendance reports to parents/guardians via the scheduler.'}
+                      : 'Auto-send weekly attendance reports to guardians.'}
                   </Typography>
                 </Box>
               </Stack>
@@ -1459,7 +1571,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             >
               {submitting ? 'Submitting...' : 'Submit Attendance'}
             </Button>
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

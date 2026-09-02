@@ -521,120 +521,218 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   };
 
   return (
-    <Box display="flex" justifyContent="space-between" alignItems="center">
-      <ParentCard>
-        <Grid container spacing={3}>
-          {/* ── Manage Sessions & Session/Term ── */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <ParentCard
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h5">Manage Sessions &amp; Session/Term</Typography>
-                </Box>
-              }
+    <Box sx={{ width: '100%' }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <ParentCard
+            title={
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h5">Manage Sessions & Session/Term</Typography>
+              </Box>
+            }
+          >
+            <Tabs
+              value={activeTab}
+              onChange={(e, v) => setActiveTab(v)}
+              sx={{ mb: 2, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
             >
-              <Tabs
-                value={activeTab}
-                onChange={(e, v) => setActiveTab(v)}
-                sx={{ mb: 2, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
-              >
-                <Tab label="All Sessions" value="sessions" />
-                <Tab label="Terms" value="terms" />
-                <Tab label="Session/Term" value="session-term" />
-              </Tabs>
+              <Tab label="All Sessions" value="sessions" />
+              <Tab label="Terms" value="terms" />
+              <Tab label="Session/Term" value="session-term" />
+            </Tabs>
 
-              {activeTab === 'sessions' ? (
-                <>
-                  <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<IconPlus size={16} />}
-                      onClick={openAddSession}
-                    >
-                      Add New Session
-                    </Button>
-                  </Box>
-                  <TableContainer>
-                    <Table sx={{ whiteSpace: 'nowrap' }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Session Name</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Status
-                          </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Action
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {loading ? (
-                          Array.from({ length: 4 }).map((_, i) => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                              <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : tenantSessions.length > 0 ? (
-                          tenantSessions.map((session, i) => (
-                            <TableRow key={session.id} hover>
-                              <TableCell>{sessionsPage * sessionsRowsPerPage + i + 1}</TableCell>
-                              <TableCell sx={{ fontWeight: 500 }}>
-                                {session.session_name}
-                              </TableCell>
-                              <TableCell align="center">
-                                <Chip
-                                  label={session.status}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: session.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: session.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell align="center">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => handleSessionMenuOpen(e, session)}
-                                >
-                                  <MoreVertIcon size={18} />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                                No sessions added yet. Click "Add New Session" to fetch one from the landlord.
-                              </Alert>
+            {activeTab === 'sessions' ? (
+              <>
+                <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<IconPlus size={16} />}
+                    onClick={openAddSession}
+                  >
+                    Add New Session
+                  </Button>
+                </Box>
+                <TableContainer>
+                  <Table sx={{ whiteSpace: 'nowrap' }} stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Session Name</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Status
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {loading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : tenantSessions.length > 0 ? (
+                        tenantSessions.map((session, i) => (
+                          <TableRow key={session.id} hover>
+                            <TableCell>{sessionsPage * sessionsRowsPerPage + i + 1}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>
+                              {session.session_name}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={session.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: session.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                  color: session.status === 'active' ? '#166534' : '#92400e',
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleSessionMenuOpen(e, session)}
+                              >
+                                <MoreVertIcon size={18} />
+                              </IconButton>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    component="div"
-                    count={sessionsTotal}
-                    rowsPerPage={sessionsRowsPerPage}
-                    page={sessionsPage}
-                    onPageChange={(e, newPage) => setSessionsPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setSessionsRowsPerPage(parseInt(e.target.value, 10));
-                      setSessionsPage(0);
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                            <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                              No sessions added yet. Click "Add New Session" to fetch one from the landlord.
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  component="div"
+                  count={sessionsTotal}
+                  rowsPerPage={sessionsRowsPerPage}
+                  page={sessionsPage}
+                  onPageChange={(e, newPage) => setSessionsPage(newPage)}
+                  onRowsPerPageChange={(e) => {
+                    setSessionsRowsPerPage(parseInt(e.target.value, 10));
+                    setSessionsPage(0);
+                  }}
+                />
+              </>
+            ) : activeTab === 'terms' ? (
+              <>
+                <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<IconRefresh size={16} />}
+                    onClick={handleSyncTerms}
+                  >
+                    Sync Terms
+                  </Button>
+                </Box>
+                <TableContainer>
+                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Term Name</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Status
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {loading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={120} height={20} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : tenantTerms.length > 0 ? (
+                        tenantTerms.map((term, i) => (
+                          <TableRow key={term.id} hover>
+                            <TableCell>{i + 1}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{term.term_name}</TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={term.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: term.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                  color: term.status === 'active' ? '#166534' : '#92400e',
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={() => openEditTerm(term)}
+                                title="Rename term"
+                              >
+                                <IconEdit size={16} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                            <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                              No terms synced yet. Click "Sync Terms" to pull them from the landlord.
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            ) : (
+              <>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mb: 2, gap: 1, flexWrap: 'wrap' }}
+                >
+                  <TextField
+                    select
+                    size="small"
+                    label="Session Filter"
+                    value={sessionFilter}
+                    onChange={(e) => {
+                      setSessionFilter(e.target.value);
+                      setSessionTermsPage(0);
                     }}
-                  />
-                </>
-              ) : activeTab === 'terms' ? (
-                <>
-                  <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+                    sx={{ minWidth: 200 }}
+                  >
+                    <MenuItem value="">All Sessions</MenuItem>
+                    {sessionFilterOptions.map((session) => (
+                      <MenuItem key={session.id} value={session.id}>
+                        {session.session_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <Box display="flex" gap={1}>
                     <Button
                       variant="outlined"
                       size="small"
@@ -643,354 +741,251 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     >
                       Sync Terms
                     </Button>
-                  </Box>
-                  <TableContainer>
-                    <Table sx={{ whiteSpace: 'nowrap' }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Term Name</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Status
-                          </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Action
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {loading ? (
-                          Array.from({ length: 3 }).map((_, i) => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                              <TableCell><Skeleton variant="text" width={120} height={20} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : tenantTerms.length > 0 ? (
-                          tenantTerms.map((term, i) => (
-                            <TableRow key={term.id} hover>
-                              <TableCell>{i + 1}</TableCell>
-                              <TableCell sx={{ fontWeight: 500 }}>{term.term_name}</TableCell>
-                              <TableCell align="center">
-                                <Chip
-                                  label={term.status}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: term.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: term.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell align="center">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openEditTerm(term)}
-                                  title="Rename term"
-                                >
-                                  <IconEdit size={16} />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                                No terms synced yet. Click "Sync Terms" to pull them from the landlord.
-                              </Alert>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </>
-              ) : (
-                <>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ mb: 2, gap: 1, flexWrap: 'wrap' }}
-                  >
-                    <TextField
-                      select
-                      size="small"
-                      label="Session Filter"
-                      value={sessionFilter}
-                      onChange={(e) => {
-                        setSessionFilter(e.target.value);
-                        setSessionTermsPage(0);
-                      }}
-                      sx={{ minWidth: 200 }}
-                    >
-                      <MenuItem value="">All Sessions</MenuItem>
-                      {sessionFilterOptions.map((session) => (
-                        <MenuItem key={session.id} value={session.id}>
-                          {session.session_name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                    <Box display="flex" gap={1}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<IconRefresh size={16} />}
-                        onClick={handleSyncTerms}
-                      >
-                        Sync Terms
-                      </Button>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<IconPlus size={16} />}
-                        onClick={openSetSessionTerm}
-                      >
-                        Set Session/Term
-                      </Button>
-                    </Box>
-                  </Box>
-
-                  <TableContainer>
-                    <Table sx={{ whiteSpace: 'nowrap' }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Session/Term</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Status
-                          </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Action
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {loading ? (
-                          Array.from({ length: 4 }).map((_, i) => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton variant="text" width={180} height={20} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
-                              <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : sessionTerms.length > 0 ? (
-                          sessionTerms.map((item) => (
-                            <TableRow key={item.id} hover>
-                              <TableCell sx={{ fontWeight: 500 }}>
-                                {item.session?.session_name} - {item.term?.term_name}
-                              </TableCell>
-                              <TableCell align="center">
-                                <Chip
-                                  label={item.status}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: item.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell align="center">
-                                <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
-                                  <MoreVertIcon size={18} />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
-                              <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                                No session/term mappings yet. Click "Set Session/Term" to create one.
-                              </Alert>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    component="div"
-                    count={sessionTermsTotal}
-                    rowsPerPage={sessionTermsRowsPerPage}
-                    page={sessionTermsPage}
-                    onPageChange={(e, newPage) => setSessionTermsPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setSessionTermsRowsPerPage(parseInt(e.target.value, 10));
-                      setSessionTermsPage(0);
-                    }}
-                  />
-                </>
-              )}
-            </ParentCard>
-          </Grid>
-
-          {/* ── Generate Week ── */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <ParentCard
-              id="generate-week-section"
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h5">Generate Week</Typography>
-                  <Box
-                    sx={{
-                      ml: 'auto',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 3,
-                      border: '1px solid',
-                      borderColor: 'primary.main',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Typography variant="caption">
-                      {weeks.length} Weeks • {schoolDays} school days
-                    </Typography>
-                  </Box>
-                </Box>
-              }
-            >
-              {activeSessionTermId ? (
-                // paperRef anchors the hint position calculations
-                <Box ref={paperRef} sx={{ p: 2, position: 'relative' }}>
-                  <Box
-                    sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
-                  >
-                    <TextField
-                      label="No. of Weeks"
-                      type="number"
-                      size="small"
-                      sx={{ width: { xs: '100%', sm: 120 } }}
-                      value={autoGenerateConfig.numWeeks}
-                      onChange={(e) =>
-                        setAutoGenerateConfig({
-                          ...autoGenerateConfig,
-                          numWeeks: parseInt(e.target.value),
-                        })
-                      }
-                      inputProps={{
-                        min: 1,
-                        max: 15,
-                      }}
-                    />
-                    <TextField
-                      label="Start Date"
-                      type="date"
-                      size="small"
-                      sx={{ width: { xs: '100%', sm: 160 } }}
-                      value={autoGenerateConfig.startDate}
-                      onChange={(e) =>
-                        setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
-                      }
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                    {/* generateBtnRef targets this button exactly */}
                     <Button
                       variant="contained"
                       size="small"
-                      ref={generateBtnRef}
-                      onClick={handleAutoGenerate}
-                      disabled={loading || !activeSessionTermId}
-                      sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
+                      startIcon={<IconPlus size={16} />}
+                      onClick={openSetSessionTerm}
                     >
-                      Generate
+                      Set Session/Term
                     </Button>
                   </Box>
+                </Box>
 
-                  {/* ── Generate hint  ── */}
-                  {Boolean(activeSessionTermId) &&
-                    weeks.length === 0 &&
-                    hintStyle && (
-                      <ArrowHint
-                        show
-                        label="Set dates &amp; click Generate ☝️"
-                        direction="up-right"
-                        mode="persistent"
-                        delay="0.3s"
-                        position={{
-                          position: 'absolute',
-                          top: hintStyle.top,
-                          left: hintStyle.left,
-                          width: hintStyle.width,
-                          zIndex: 10,
-                        }}
-                      />
-                    )}
-
-                  <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                    <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', width: 48 }} />
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {weeks.length > 0 ? (
-                          weeks.map((item, i) => {
-                            const isLast = i === weeks.length - 1;
-                            return (
-                              <TableRow key={i} hover>
-                                <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
-                                <TableCell>{item.start_date || 'N/A'}</TableCell>
-                                <TableCell>{item.end_date || 'N/A'}</TableCell>
-                                <TableCell>
-                                  <Chip
-                                    label={item.status}
-                                    size="small"
-                                    onClick={() => handleToggleWeekStatus(item.wk_id)}
-                                    sx={{
-                                      cursor: 'pointer',
-                                      bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                      color: item.status === 'active' ? '#166534' : '#991b1b',
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell align="center">
-                                  {isLast && (
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() => setConfirmDeleteWeek(true)}
-                                      disabled={loading}
-                                      title="Remove last week"
-                                    >
-                                      <IconTrash size={15} />
-                                    </IconButton>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                              <Typography color="textSecondary">
-                                No weeks generated yet for this term.
-                              </Typography>
+                <TableContainer>
+                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Session/Term</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Status
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {loading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="text" width={180} height={20} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : sessionTerms.length > 0 ? (
+                        sessionTerms.map((item) => (
+                          <TableRow key={item.id} hover>
+                            <TableCell sx={{ fontWeight: 500 }}>
+                              {item.session?.session_name} - {item.term?.term_name}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={item.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                  color: item.status === 'active' ? '#166534' : '#92400e',
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                                <MoreVertIcon size={18} />
+                              </IconButton>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              ) : (
-                <Alert severity="info" sx={{ mt: 3 }}>
-                  No weeks generated yet. Set an active Session/Term first to generate weeks.
-                </Alert>
-              )}
-            </ParentCard>
-          </Grid>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                            <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                              No session/term mappings yet. Click "Set Session/Term" to create one.
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  component="div"
+                  count={sessionTermsTotal}
+                  rowsPerPage={sessionTermsRowsPerPage}
+                  page={sessionTermsPage}
+                  onPageChange={(e, newPage) => setSessionTermsPage(newPage)}
+                  onRowsPerPageChange={(e) => {
+                    setSessionTermsRowsPerPage(parseInt(e.target.value, 10));
+                    setSessionTermsPage(0);
+                  }}
+                />
+              </>
+            )}
+          </ParentCard>
         </Grid>
-      </ParentCard>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <ParentCard
+            id="generate-week-section"
+            title={
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h5">Generate Week</Typography>
+                <Box
+                  sx={{
+                    ml: 'auto',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                  }}
+                >
+                  <Typography variant="caption">
+                    {weeks.length} Weeks • {schoolDays} school days
+                  </Typography>
+                </Box>
+              </Box>
+            }
+          >
+            {activeSessionTermId ? (
+              <Box ref={paperRef} sx={{ p: 2, position: 'relative' }}>
+                <Box
+                  sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
+                >
+                  <TextField
+                    label="No. of Weeks"
+                    type="number"
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 120 } }}
+                    value={autoGenerateConfig.numWeeks}
+                    onChange={(e) =>
+                      setAutoGenerateConfig({
+                        ...autoGenerateConfig,
+                        numWeeks: parseInt(e.target.value),
+                      })
+                    }
+                    inputProps={{
+                      min: 1,
+                      max: 15,
+                    }}
+                  />
+                  <TextField
+                    label="Start Date"
+                    type="date"
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 160 } }}
+                    value={autoGenerateConfig.startDate}
+                    onChange={(e) =>
+                      setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
+                    }
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                  {/* generateBtnRef targets this button exactly */}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    ref={generateBtnRef}
+                    onClick={handleAutoGenerate}
+                    disabled={loading || !activeSessionTermId}
+                    sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
+                  >
+                    Generate
+                  </Button>
+                </Box>
+
+                {/* ── Generate hint  ── */}
+                {Boolean(activeSessionTermId) &&
+                  weeks.length === 0 &&
+                  hintStyle && (
+                    <ArrowHint
+                      show
+                      label="Set dates &amp; click Generate ☝️"
+                      direction="up-right"
+                      mode="persistent"
+                      delay="0.3s"
+                      position={{
+                        position: 'absolute',
+                        top: hintStyle.top,
+                        left: hintStyle.left,
+                        width: hintStyle.width,
+                        zIndex: 10,
+                      }}
+                    />
+                  )}
+
+                <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
+                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 48 }} />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {weeks.length > 0 ? (
+                        weeks.map((item, i) => {
+                          const isLast = i === weeks.length - 1;
+                          return (
+                            <TableRow key={i} hover>
+                              <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
+                              <TableCell>{item.start_date || 'N/A'}</TableCell>
+                              <TableCell>{item.end_date || 'N/A'}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={item.status}
+                                  size="small"
+                                  onClick={() => handleToggleWeekStatus(item.wk_id)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                    color: item.status === 'active' ? '#166534' : '#991b1b',
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {isLast && (
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => setConfirmDeleteWeek(true)}
+                                    disabled={loading}
+                                    title="Remove last week"
+                                  >
+                                    <IconTrash size={15} />
+                                  </IconButton>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                            <Typography color="textSecondary">
+                              No weeks generated yet for this term.
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            ) : (
+              <Alert severity="info" sx={{ mt: 3 }}>
+                No weeks generated yet. Set an active Session/Term first to generate weeks.
+              </Alert>
+            )}
+          </ParentCard>
+        </Grid>
+      </Grid>
 
       {/* ── Add Session Modal ── */}
       <Dialog open={addSessionOpen} onClose={() => setAddSessionOpen(false)} maxWidth="sm" fullWidth>

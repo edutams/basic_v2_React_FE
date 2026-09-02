@@ -306,7 +306,7 @@ const MultipleArmView = () => {
   };
 
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box>
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size="small">

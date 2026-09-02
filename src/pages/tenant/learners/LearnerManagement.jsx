@@ -15,7 +15,6 @@ import {
   TableBody,
   TableFooter,
   TablePagination,
-  Paper,
   IconButton,
   Menu,
   MenuItem,
@@ -78,6 +77,7 @@ const LearnerManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [programmeClassId, setProgrammeClassId] = useState('');
 
@@ -85,6 +85,11 @@ const LearnerManagement = () => {
 
   const [stats, setStats] = useState({ total: 0, active: 0, graduate: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+
+  const handleApplySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(0);
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -335,6 +340,7 @@ const LearnerManagement = () => {
   const hasFilters = search !== '' || programmeClassId !== '';
 
   const resetFilters = () => {
+    setSearchInput('');
     setSearch('');
     setProgrammeClassId('');
     setPage(0);
@@ -353,7 +359,7 @@ const LearnerManagement = () => {
       <Breadcrumb title="Learner Management" items={BCrumb} />
 
       {/* Stats */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.total}
@@ -437,15 +443,13 @@ const LearnerManagement = () => {
         }
       >
         {/* Filters */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search by name, learner ID or email"
-            value={search}
+            value={searchInput}
             size="small"
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
             slotProps={{
               input: {
                 startAdornment: (
@@ -483,12 +487,23 @@ const LearnerManagement = () => {
             </Select>
           </FormControl>
 
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleApplySearch}
+            sx={{ height: 40, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+          >
+            Search
+          </Button>
+
           {hasFilters && (
             <Button
-              variant="contained"
+              variant="outlined"
+              color="primary"
               size="small"
               onClick={resetFilters}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              sx={{ height: 40, width: { xs: '100%', sm: 'auto' } }}
             >
               Clear Filters
             </Button>
@@ -497,7 +512,7 @@ const LearnerManagement = () => {
 
         <Box>
           <TableContainer>
-            <Table>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>

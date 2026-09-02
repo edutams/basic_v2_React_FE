@@ -137,7 +137,7 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
           <CircularProgress size={32} />
         </Box>
       ) : subjects.length === 0 ? (
-        <Alert severity="info">No trade subjects have been created for this class.</Alert>
+        <Alert severity="info" sx={{ justifyContent: 'center' }}>No trade subjects have been created for this class.</Alert>
       ) : (
         <SubjectMatrixTable subjects={subjects} learners={learners} onToggle={toggleRegistration} />
       )}

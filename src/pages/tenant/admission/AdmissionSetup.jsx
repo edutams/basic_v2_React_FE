@@ -919,18 +919,15 @@ const AdmissionSetup = () => {
           ══════════════════════════════════════════════════════════════════════════ */}
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
-          {/* ── Info alert ──────────────────────────────────────────────────── */}
-          <Grid size={{ xs: 12 }}>
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Define the admission code format for your school. Type your school&apos;s short name,
-              insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
-              <strong>/</strong> is automatically added between segments.
-            </Alert>
-          </Grid>
-
           {/* ── Main content — full width, no batch selector ──────────────── */}
           <Grid size={{ xs: 12 }}>
             <ParentCard title="Admission Code Format">
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Define the admission code format for your school. Type your school&apos;s short name,
+                insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
+                <strong>/</strong> is automatically added between segments.
+              </Alert>
+
               {codeFormatLoading ? (
                 <Box display="flex" justifyContent="center" py={4}>
                   <CircularProgress size={28} />
@@ -1417,7 +1414,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                paymentViewBatch.pre_application_payments.length === 0 ? (
+                  paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -1478,7 +1475,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                paymentViewBatch.post_application_payments.length === 0 ? (
+                  paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

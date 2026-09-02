@@ -59,12 +59,12 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         cursor: clickable ? 'pointer' : 'default',
         ...(clickable
           ? {
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                borderColor: '#94a3b8',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-              },
-            }
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
+          }
           : {}),
         ...sx,
       }}
@@ -550,7 +550,7 @@ const PsychomotorAnalyticsCards = ({
           ))}
         </Grid>
       ) : (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
           {/* Card 1: AVG. AFFECTIVE RATING */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Tooltip title="Click to view affective skills breakdown" arrow placement="top">

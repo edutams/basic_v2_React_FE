@@ -137,7 +137,7 @@ const BursarySetup = () => {
       {/* Stats Cards - Dynamic based on active tab */}
       {currentTab === 0 ? (
         // Bursary Setup Stats
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={1}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               count={bursaryStats.totalCategories}
@@ -173,7 +173,7 @@ const BursarySetup = () => {
         </Grid>
       ) : (
         // Payment Name Stats
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={1}>
           {/* Total Payment Items Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper
@@ -439,7 +439,7 @@ const BursarySetup = () => {
       )}
 
       {/* Tab Navigation */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Tabs
           value={currentTab}
           onChange={handleTabChange}

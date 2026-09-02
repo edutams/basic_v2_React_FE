@@ -615,7 +615,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
       </Grid>
 
       <Grid size={{ xs: 12, md: 7 }}>
-        <Paper
+        <ParentCard
           variant="outlined"
           sx={{
             p: { xs: 2, md: 3 },
@@ -770,7 +770,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               Send Invoice to Parent
             </Button>
           </Box>
-        </Paper>
+        </ParentCard>
       </Grid>
     </Grid>
   );

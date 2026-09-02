@@ -568,7 +568,7 @@ const CompulsoryScheduleTab = ({
         </Box>
 
         <TableContainer variant="outlined">
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -603,160 +603,160 @@ const CompulsoryScheduleTab = ({
                 </TableRow>
               ) : (
                 paginatedSchedules.map((schedule, index) => (
-                <TableRow key={index} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {schedule.payment_name.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {schedule.missingCount > 0 && (
-                      <Typography variant="caption" color="error.main" display="block" mb={1}>
-                        You are yet to set payment for all classes
+                  <TableRow key={index} hover>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {schedule.payment_name.name}
                       </Typography>
-                    )}
-                    <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
-                      {schedule.classes && schedule.classes.length > 0 ? (
-                        schedule.classes.map((cls) => {
-                          // Skip null/invalid classes
-                          if (!cls || !cls.id || !cls.name) return null;
-
-                          const hasAmount = !!cls.amount && cls.amount > 0;
-                          return (
-                            <Chip
-                              key={cls.id}
-                              label={
-                                <Tooltip title="Click to set or edit payment amount">
-                                  <span>
-                                    {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
-                                  </span>
-                                </Tooltip>
-                              }
-                              size="small"
-                              onClick={(e) => {
-                                // Prevent bubbling if clicking on delete icon
-                                if (e.target.closest('.MuiChip-deleteIcon')) {
-                                  return;
-                                }
-
-                                if (cls.invoices_count > 0) {
-                                  showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
-                                  return;
-                                }
-
-                                // Open modal to set/edit amount for this class
-                                setPaymentModal({
-                                  open: true,
-                                  payment: {
-                                    className: cls.name,
-                                    classId: cls.id,
-                                    paymentName: schedule.payment_name.name,
-                                    bursaryPaymentNameId: schedule.payment_name.id,
-                                    scheduleId: cls.schedule_id,
-                                    amount: cls.amount || '',
-                                    bursary_installment_id: cls.bursary_installment_id || '',
-                                  },
-                                  isEdit: hasAmount,
-                                });
-                              }}
-                              onDelete={
-                                hasAmount
-                                  ? (e) => {
-                                    e.stopPropagation();
-                                    if (cls.invoices_count > 0) {
-                                      showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
-                                      return;
-                                    }
-                                    handleClassActionClick(schedule, cls, 'delete');
-                                  }
-                                  : undefined
-                              }
-                              deleteIcon={
-                                hasAmount ? (
-                                  <Box
-                                    onClick={(e) => e.stopPropagation()}
-                                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                                  >
-                                    <Tooltip
-                                      title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
-                                    >
-                                      <Switch
-                                        size="small"
-                                        checked={cls.status === 'active'}
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          handleClassActionClick(schedule, cls, 'toggle');
-                                        }}
-                                        sx={{
-                                          color: hasAmount
-                                            ? schedule.status === 'inactive'
-                                              ? 'white'
-                                              : '#5CB979'
-                                            : 'grey.300',
-                                        }}
-                                      />
-                                    </Tooltip>
-                                    <Tooltip title="Delete class schedule">
-                                      <DeleteIcon sx={{ fontSize: 14 }} />
-                                    </Tooltip>
-                                  </Box>
-                                ) : (
-                                  <Tooltip title="Add payment for this class">
-                                    <AddIcon sx={{ fontSize: 14 }} />
-                                  </Tooltip>
-                                )
-                              }
-                              sx={{
-                                bgcolor: hasAmount
-                                  ? cls.status === 'inactive'
-                                    ? 'error.main'
-                                    : '#5CB979'
-                                  : 'grey.300',
-
-                                color: hasAmount ? 'white' : 'text.secondary',
-                                fontWeight: 600,
-                                fontSize: 11,
-                                cursor: 'pointer',
-
-                                transition: 'all 0.2s ease',
-
-                                '&:hover': {
-                                  transform: 'scale(1.03)',
-                                  backgroundColor: hasAmount
-                                    ? cls.status === 'inactive'
-                                      ? 'error.dark'
-                                      : '#5CB979'
-                                    : 'grey.400',
-                                },
-
-                                '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {
-                                  color: 'inherit',
-                                },
-                              }}
-                            />
-                          );
-                        })
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          No classes assigned
-                        </Typography>
-                      )}
+                    </TableCell>
+                    <TableCell>
                       {schedule.missingCount > 0 && (
-                        <Typography variant="caption" color="text.secondary">
-                          {schedule.missingCount} missing
+                        <Typography variant="caption" color="error.main" display="block" mb={1}>
+                          You are yet to set payment for all classes
                         </Typography>
                       )}
-                    </Box>
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+                      <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
+                        {schedule.classes && schedule.classes.length > 0 ? (
+                          schedule.classes.map((cls) => {
+                            // Skip null/invalid classes
+                            if (!cls || !cls.id || !cls.name) return null;
+
+                            const hasAmount = !!cls.amount && cls.amount > 0;
+                            return (
+                              <Chip
+                                key={cls.id}
+                                label={
+                                  <Tooltip title="Click to set or edit payment amount">
+                                    <span>
+                                      {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
+                                    </span>
+                                  </Tooltip>
+                                }
+                                size="small"
+                                onClick={(e) => {
+                                  // Prevent bubbling if clicking on delete icon
+                                  if (e.target.closest('.MuiChip-deleteIcon')) {
+                                    return;
+                                  }
+
+                                  if (cls.invoices_count > 0) {
+                                    showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                    return;
+                                  }
+
+                                  // Open modal to set/edit amount for this class
+                                  setPaymentModal({
+                                    open: true,
+                                    payment: {
+                                      className: cls.name,
+                                      classId: cls.id,
+                                      paymentName: schedule.payment_name.name,
+                                      bursaryPaymentNameId: schedule.payment_name.id,
+                                      scheduleId: cls.schedule_id,
+                                      amount: cls.amount || '',
+                                      bursary_installment_id: cls.bursary_installment_id || '',
+                                    },
+                                    isEdit: hasAmount,
+                                  });
+                                }}
+                                onDelete={
+                                  hasAmount
+                                    ? (e) => {
+                                      e.stopPropagation();
+                                      if (cls.invoices_count > 0) {
+                                        showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                        return;
+                                      }
+                                      handleClassActionClick(schedule, cls, 'delete');
+                                    }
+                                    : undefined
+                                }
+                                deleteIcon={
+                                  hasAmount ? (
+                                    <Box
+                                      onClick={(e) => e.stopPropagation()}
+                                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                    >
+                                      <Tooltip
+                                        title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
+                                      >
+                                        <Switch
+                                          size="small"
+                                          checked={cls.status === 'active'}
+                                          onChange={(e) => {
+                                            e.stopPropagation();
+                                            handleClassActionClick(schedule, cls, 'toggle');
+                                          }}
+                                          sx={{
+                                            color: hasAmount
+                                              ? schedule.status === 'inactive'
+                                                ? 'white'
+                                                : '#5CB979'
+                                              : 'grey.300',
+                                          }}
+                                        />
+                                      </Tooltip>
+                                      <Tooltip title="Delete class schedule">
+                                        <DeleteIcon sx={{ fontSize: 14 }} />
+                                      </Tooltip>
+                                    </Box>
+                                  ) : (
+                                    <Tooltip title="Add payment for this class">
+                                      <AddIcon sx={{ fontSize: 14 }} />
+                                    </Tooltip>
+                                  )
+                                }
+                                sx={{
+                                  bgcolor: hasAmount
+                                    ? cls.status === 'inactive'
+                                      ? 'error.main'
+                                      : '#5CB979'
+                                    : 'grey.300',
+
+                                  color: hasAmount ? 'white' : 'text.secondary',
+                                  fontWeight: 600,
+                                  fontSize: 11,
+                                  cursor: 'pointer',
+
+                                  transition: 'all 0.2s ease',
+
+                                  '&:hover': {
+                                    transform: 'scale(1.03)',
+                                    backgroundColor: hasAmount
+                                      ? cls.status === 'inactive'
+                                        ? 'error.dark'
+                                        : '#5CB979'
+                                      : 'grey.400',
+                                  },
+
+                                  '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {
+                                    color: 'inherit',
+                                  },
+                                }}
+                              />
+                            );
+                          })
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No classes assigned
+                          </Typography>
+                        )}
+                        {schedule.missingCount > 0 && (
+                          <Typography variant="caption" color="text.secondary">
+                            {schedule.missingCount} missing
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
             <TableFooter>
               <TableRow>

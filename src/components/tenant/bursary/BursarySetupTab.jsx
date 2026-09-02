@@ -27,6 +27,7 @@ import {
   Alert,
   Divider,
   CircularProgress,
+  TablePagination,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
@@ -384,17 +385,26 @@ const BursarySetupTab = ({
 
   return (
     <>
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         <ParentCard>
-          {/* Session Term */}
-          <Box mb={3}>
-            <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Set Bursary Active Session Term
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={1.5}>
-              This determines which session term bursary fees are being collected for.
-            </Typography>
-            <Box display="flex" alignItems="center" gap={1}>
+          <Box
+            mb={3}
+            display="flex"
+            flexDirection={{ xs: 'column', md: 'row' }}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            gap={2}
+          >
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
+                Set Bursary Active Session Term
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This determines which session term bursary fees are being collected for.
+              </Typography>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
               <TextField
                 select
                 label="Select Session Term"
@@ -402,7 +412,7 @@ const BursarySetupTab = ({
                 onChange={(e) => setSelectedSessionTerm(e.target.value)}
                 size="small"
                 disabled={savingCode === 'active_ses_term'}
-                sx={{ minWidth: 280 }}
+                sx={{ minWidth: 280, width: { xs: '100%', sm: 280 } }}
               >
                 {sessionTerms.map((term) => (
                   <MenuItem key={term.id} value={term.id}>
@@ -456,13 +466,12 @@ const BursarySetupTab = ({
             </Box>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* Collection Method */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -513,8 +522,7 @@ const BursarySetupTab = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -565,8 +573,7 @@ const BursarySetupTab = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -615,9 +622,21 @@ const BursarySetupTab = ({
           </Grid>
         </ParentCard>
 
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
             <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardContent-root': {
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                },
+              }}
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Box display="flex" alignItems="center" gap={1.5}>
@@ -651,8 +670,8 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer variant="outlined">
-                <Table size="small">
+              <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -712,32 +731,40 @@ const BursarySetupTab = ({
                   </TableBody>
                 </Table>
               </TableContainer>
+
               {/* Categories Pagination */}
-              {categoryMeta && (
-                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
-                  <Typography variant="caption" color="text.secondary">
-                    {categoryMeta.total > 0
-                      ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
-                      : ''}
-                  </Typography>
-                  <Button variant="contained" size="small" disabled={!categoryMeta.prev_page_url} onClick={() => setCategoryPage((p) => p - 1)}
-                  >
-                    Prev
-                  </Button>
-                  <Button variant="contained" size="small" disabled={!categoryMeta.next_page_url} onClick={() => setCategoryPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </Box>
-              )}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={categoryMeta?.total || categories.length}
+                rowsPerPage={categoryMeta?.per_page || 10}
+                page={(categoryPage || 1) - 1}
+                onPageChange={(_, newPage) => {
+                  const nextPage = newPage + 1;
+                  setCategoryPage(nextPage);
+                  loadCategories(nextPage);
+                }}
+              />
             </ParentCard>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
             <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardContent-root': {
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                },
+              }}
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box display="flex" alignItems="center" gap={1}>
                     <Box
                       sx={{
                         width: 40,
@@ -768,8 +795,8 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer variant="outlined">
-                <Table size="small">
+              <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -827,24 +854,20 @@ const BursarySetupTab = ({
                   </TableBody>
                 </Table>
               </TableContainer>
+
               {/* Instalments Pagination */}
-              {instalmentMeta && (
-                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
-                  <Typography variant="caption" color="text.secondary">
-                    {instalmentMeta.total > 0
-                      ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
-                      : ''}
-                  </Typography>
-                  <Button variant="contained" size="small" disabled={!instalmentMeta.prev_page_url} onClick={() => setInstalmentPage((p) => p - 1)}
-                  >
-                    Prev
-                  </Button>
-                  <Button variant="contained" size="small" disabled={!instalmentMeta.next_page_url} onClick={() => setInstalmentPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </Box>
-              )}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={instalmentMeta?.total || instalments.length}
+                rowsPerPage={instalmentMeta?.per_page || 10}
+                page={(instalmentPage || 1) - 1}
+                onPageChange={(_, newPage) => {
+                  const nextPage = newPage + 1;
+                  setInstalmentPage(nextPage);
+                  loadInstalments(nextPage);
+                }}
+              />
             </ParentCard>
           </Grid>
         </Grid>

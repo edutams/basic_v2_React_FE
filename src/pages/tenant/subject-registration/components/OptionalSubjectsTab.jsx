@@ -140,7 +140,7 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
           <CircularProgress size={32} />
         </Box>
       ) : subjects.length === 0 ? (
-        <Alert severity="info">
+        <Alert severity="info" sx={{ justifyContent: 'center' }}>
           No subjects have been created for this class. Please go to the Curriculum step to create
           subjects before registering learners.
         </Alert>

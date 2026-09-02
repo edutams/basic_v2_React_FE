@@ -124,6 +124,10 @@ const StaffManager = () => {
     fetchStaff();
   }, [activeTab, page, rowsPerPage, searchQuery, statusFilter]);
 
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   const confirmImpersonateStaff = (staffMember) => {
     setStaffToImpersonate(staffMember);
     setImpersonateConfirmOpen(true);
@@ -153,42 +157,41 @@ const StaffManager = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: searchQuery,
+        staff_type: activeTab,
       };
+
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
 
       const response = await staffApi.getAll(params);
 
       if (response.status) {
-        const allStaff = response.data || [];
-
-        // Filter by tab and status
-        let filtered = allStaff.filter((s) => s.staff_type === activeTab);
-
-        // Apply status filter
-        if (statusFilter !== 'all') {
-          filtered = filtered.filter((s) => (s.status || 'active').toLowerCase() === statusFilter);
-        }
-
-        setStaff(filtered);
-
-        // Calculate stats
-        const teaching = allStaff.filter((s) => s.staff_type === 'teaching').length;
-        const nonTeaching = allStaff.filter((s) => s.staff_type === 'non-teaching').length;
-        const onLeave = allStaff.filter((s) => s.status === 'leave').length;
-
-        setStats({
-          total: allStaff.length,
-          teaching,
-          nonTeaching,
-          onLeave,
-        });
-
-        setTotal(response.total || filtered.length);
+        // Filtering (by staff_type, status) and pagination both happen
+        // server-side now — response.data is already exactly this tab's page.
+        setStaff(response.data || []);
+        setTotal(response.total_staff ?? 0);
       }
     } catch (error) {
       notify.error('Failed to fetch staff');
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // School-wide counts for the stat cards — independent of the current
+  // tab/page/filter, so "Teaching Staff" doesn't read 0 just because the
+  // Non-Teaching tab happens to be open.
+  const fetchStats = async () => {
+    try {
+      const response = await staffApi.getCounts();
+      if (response.status) {
+        const { total, teaching, non_teaching: nonTeaching, on_leave: onLeave } = response.data;
+        setStats({ total, teaching, nonTeaching, onLeave });
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -241,6 +244,7 @@ const StaffManager = () => {
     const res = await staffApi.uploadTemplate(file);
     const message = res?.message || 'Upload complete';
     fetchStaff();
+    fetchStats();
     return message;
   };
 
@@ -413,6 +417,7 @@ const StaffManager = () => {
         notify.success('Staff added successfully');
         setAddModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to add staff');
@@ -468,6 +473,7 @@ const StaffManager = () => {
         notify.success('Staff updated successfully');
         setEditModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to update staff');
@@ -483,6 +489,7 @@ const StaffManager = () => {
         notify.success('Staff deleted successfully');
         setDeleteModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to delete staff');
@@ -742,7 +749,7 @@ const StaffManager = () => {
                     Staff ID
                   </Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {selectedStaff.staff_id || 'N/A'}
+                    {selectedStaff.user?.user_id || 'N/A'}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
@@ -751,8 +758,8 @@ const StaffManager = () => {
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>
                     <Chip
-                      label={selectedStaff.status || 'Active'}
-                      color={getStatusColor(selectedStaff.status)}
+                      label={selectedStaff.staff_status || 'Active'}
+                      color={getStatusColor(selectedStaff.staff_status)}
                       size="small"
                     />
                   </Box>

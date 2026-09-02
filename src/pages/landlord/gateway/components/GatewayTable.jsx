@@ -119,40 +119,44 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5">Available Gateways</Typography>
-          <Button variant="contained" size="small" // startIcon={<AddIcon />}
-            onClick={() => onGatewayAction('create')}
-            sx={{
-              minWidth: 120,
-              fontSize: { xs: '0.95rem', md: '1rem' },
-            }}
-          >
-            Register Gateway
-          </Button>
+          <Typography variant="h5"></Typography>
+          <Box display="flex" gap={1} alignItems="center">
+            
+            <Button variant="contained" size="small"
+              onClick={() => onGatewayAction('create')}
+              sx={{
+                minWidth: 120,
+                fontSize: { xs: '0.95rem', md: '1rem' },
+              }}
+            >
+              Register Gateway
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<IconFilter />}
+              onClick={() => setFilterDrawerOpen(true)}
+            >
+              Filters
+              {activeFilterCount > 0 && (
+                <Chip
+                  label={activeFilterCount}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    ml: 1,
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
+            </Button>
+          </Box>
         </Box>
       }
+      sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
     >
-      <Box sx={{ p: 0, display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-        <Button variant="contained" size="small" startIcon={<IconFilter />}
-          onClick={() => setFilterDrawerOpen(true)}
-          sx={{ minWidth: 140 }}
-        >
-          Filters
-          {activeFilterCount > 0 && (
-            <Chip
-              label={activeFilterCount}
-              size="small"
-              color="primary"
-              sx={{
-                ml: 1,
-                height: 20,
-                minWidth: 20,
-                fontSize: '0.75rem',
-              }}
-            />
-          )}
-        </Button>
-      </Box>
 
       {/* Filter Side Drawer */}
       <FilterSideDrawer
@@ -166,7 +170,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
 
       <Box>
         <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table>
+          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
             <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>

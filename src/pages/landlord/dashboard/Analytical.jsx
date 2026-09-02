@@ -228,8 +228,6 @@ export default function Dashboard() {
               bgcolor: '#ede9fe',
               color: '#6d28d9',
               borderRadius: '20px',
-              px: 2,
-              py: 0.4,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -323,7 +321,6 @@ export default function Dashboard() {
 
   return (
     <PageContainer title="Analytical Dashboard" description="this is Dashboard">
-      <Box mt={1.5}>
         <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
@@ -714,10 +711,10 @@ export default function Dashboard() {
               title={
                 <Stack
                   direction="row"
-                  spacing={1}
+                  // spacing={1}
                   alignItems="center"
                   justifyContent="space-between"
-                  sx={{ width: '100%' }}
+                  sx={{ width: '100%',py:"0px",px:"0px" }}
                 >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
@@ -754,11 +751,10 @@ export default function Dashboard() {
                   </Button>
                 </Stack>
               }
+              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
             >
-              <Box
+              {/* <Box
                 sx={{
-                  mt: 1,
-                  p: 0.75,
                   borderRadius: '8px',
                   bgcolor: isDark ? theme.palette.background.default : '#f8fafc',
                 }}
@@ -816,12 +812,65 @@ export default function Dashboard() {
                     Filter
                   </Button>
                 </Stack>
-              </Box>
-              <TableContainer component={Paper} elevation={0}>
-                <Table>
-                  <TableHead>
+              </Box> */}
+               <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  flexWrap="wrap"
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Search by Name"
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconSearch size={16} color="#888" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ minWidth: 200, flex: 1 }}
+                  />
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <MenuItem value="">Agent Levels</MenuItem>
+                    <MenuItem value="1">Level 1</MenuItem>
+                    <MenuItem value="2">Level 2</MenuItem>
+                    <MenuItem value="3">Level 3</MenuItem>
+                  </Select>
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="">Status</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                  </Select>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleFilterClick}
+                    disabled={tableLoading}
+                    sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
+                  >
+                    Filter
+                  </Button>
+                </Stack>
+              <Box sx={{ overflowX: 'auto' }}>
+                <Table stickyHeader sx={{ minWidth: 700,mt:1 }}>
+                  <TableHead >
                     {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
+                      <TableRow sx={{ bgcolor: '#f8f9fa' }} key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
                           <TableCell key={header.id}>
                             <Typography variant="h6">
@@ -846,11 +895,10 @@ export default function Dashboard() {
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </Box>
             </ParentCard>
           </Grid>
         </Grid>
-      </Box>
 
       {/* Agent Modals */}
       <PlanDistributionModal

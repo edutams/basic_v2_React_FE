@@ -261,17 +261,17 @@ const TenantRoutes = [
       },
 
       {
-        path: 'manage-subscription',
+        path: 'subscriptions',
         element: (
-          <TenantProtectedRoute permission="manage.subscription.index">
+          <TenantProtectedRoute permission="subscriptions.index">
             <SubscriptionIndex />
           </TenantProtectedRoute>
         ),
       },
       {
-        path: 'subscription-history',
+        path: 'subscriptions-history',
         element: (
-          <TenantProtectedRoute permission="manage.subscription.index">
+          <TenantProtectedRoute permission="subscriptions.transaction_history">
             <SubscriptionIndex />
           </TenantProtectedRoute>
         ),
@@ -627,7 +627,7 @@ const TenantRoutes = [
       // ── Catch-all: route unmatched paths to Page Under Development ──
       {
         path: '*',
-        element: <PageUnderDevelopment />, 
+        element: <PageUnderDevelopment />,
       },
     ],
   },

@@ -197,9 +197,8 @@ const MyPlan = () => {
     <PageContainer title="My Plans" description="This is the My Plans page">
       {/* <Breadcrumb title="My Plans" items={BCrumb} /> */}
       {/* <ParentCard title={<Typography variant="h5">All My Plans</Typography>}> */}
-      <Paper>
         <TableContainer>
-          <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
+          <Table aria-label="my plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
             <TableHead>
               <TableRow>
                 <TableCell>
@@ -357,7 +356,6 @@ const MyPlan = () => {
             </TableFooter>
           </Table>
         </TableContainer>
-      </Paper>
 
       <ReusableModal
         open={openViewModal}

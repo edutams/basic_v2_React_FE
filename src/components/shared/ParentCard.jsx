@@ -36,7 +36,7 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
 };
 
 ParentCard.propTypes = {
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node,
   children: PropTypes.node,
   codeModel: PropTypes.node,
   footer: PropTypes.node,

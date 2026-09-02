@@ -530,7 +530,7 @@ const AgentCurriculumManager = () => {
               }}
             >
               {/* LEFT - Curriculum Table */}
-              <Box sx={{ mb: 5 }}>
+              <Box >
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -540,12 +540,12 @@ const AgentCurriculumManager = () => {
                       </Button>
                     </Box>
                   }
-                    sx={{ mb: 2, '& .MuiCardContent-root': { px: "2px",py:"2px"} }}
+                    sx={{ mb: 1, px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0 } }}
                   
                 >
                   <Box>
-                    <TableContainer>
-                      <Table sx={{ tableLayout: 'fixed' }}>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
@@ -656,7 +656,7 @@ const AgentCurriculumManager = () => {
                         </Button>
                       </Box>
                     }
-                    sx={{ mb: 2, '& .MuiCardContent-root': { px: "2px",py:"2px"} }}
+                    sx={{  px: 0, py: 0, '& .MuiCardContent-root': { py: 0,px:0 } }}
                   >
                     <Box sx={{ mb: 2 }}>
                       <TextField
@@ -696,8 +696,10 @@ const AgentCurriculumManager = () => {
                       }}
                     >
                       <Table
+                      stickyHeader
                         sx={{
                           tableLayout: 'auto',
+                          '& .MuiTableCell-root': { py: 0.5, px: 1 },
                         }}
                       >
                         <TableHead>

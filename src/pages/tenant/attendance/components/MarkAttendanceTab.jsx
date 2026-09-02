@@ -818,8 +818,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {/* Export Dropdown */}
           <Button
-            variant="contained"
-            color="success"
+            variant="outlined"
+            // color="primary"
             size="small"
             startIcon={<DownloadIcon />}
             endIcon={<ArrowDropDownIcon />}
@@ -988,7 +988,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       )}
 
       {/* ── Attendance Table & Summary ──────────────────── */}
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 9 }}>
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>
@@ -1010,7 +1010,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   : '0 4px 16px rgba(15, 23, 42, 0.05)',
               overflowX: 'auto',
               overflowY: 'auto',
-              maxHeight: 'calc(100vh - 320px)',
+              height: { xs: '450px', md: '520px' },
+              background: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(90deg, #1e293b 268px, rgba(255, 255, 255, 0.18) 268px, rgba(255, 255, 255, 0.18) 270px, #121827 270px)'
+                  : 'linear-gradient(90deg, #f1f5f9 268px, #cbd5e1 268px, #cbd5e1 270px, #ffffff 270px)',
               '& .MuiTableHead-root .MuiTableCell-root': {
                 bgcolor: (theme) =>
                   theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
@@ -1030,12 +1034,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               },
             }}
           >
-            <Table sx={{ minWidth: 650 }} stickyHeader>
+            <Table sx={{ minWidth: 650, tableLayout: 'fixed' }} stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell
                     sx={{
-                      width: 40,
+                      width: 50,
+                      minWidth: 50,
+                      maxWidth: 50,
                       fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
                       bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
@@ -1049,9 +1055,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   </TableCell>
                   <TableCell
                     sx={{
-                      minWidth: 200,
+                      width: 220,
+                      minWidth: 220,
+                      maxWidth: 220,
                       fontWeight: 700,
-                      ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
+                      ...(!isMobile && { position: 'sticky', left: 50, zIndex: 3 }),
                       bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                       borderRight: (theme) =>
                         theme.palette.mode === 'dark'
@@ -1115,29 +1123,29 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </Typography>
                           )}
                         </Box>
-                        <Stack direction="row" spacing={0.25} justifyContent="center" mt={0.5}>
+                        <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" mt={0.5}>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'present')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <CheckCircleIcon color="success" fontSize="small" />
+                              <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'absent')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <CancelOutlinedIcon color="error" fontSize="small" />
+                              <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
                             <IconButton
-                              size="small"
                               onClick={() => bulkSetDayStatus(day, 'unknown')}
+                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
                             >
-                              <RadioButtonUncheckedIcon color="action" fontSize="small" />
+                              <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Tooltip>
                         </Stack>
@@ -1206,6 +1214,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       <TableRow key={learner.student_registration_id} hover>
                         <TableCell
                           sx={{
+                            width: 50,
+                            minWidth: 50,
+                            maxWidth: 50,
                             ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
                             bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                             borderRight: (theme) =>
@@ -1218,7 +1229,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         </TableCell>
                         <TableCell
                           sx={{
-                            ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
+                            width: 220,
+                            minWidth: 220,
+                            maxWidth: 220,
+                            ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
                             bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                             borderRight: (theme) =>
                               theme.palette.mode === 'dark'

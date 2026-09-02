@@ -971,41 +971,19 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
       {/* ── Info Banner: Reminder to Submit ────────────── */}
       {filterApplied && learners.length > 0 && (
-        <Alert
-          severity="info"
-          variant="outlined"
-          sx={{
-            mb: 2,
-            '& .MuiAlert-message': { width: '100%', overflow: 'hidden' },
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              flexWrap: 'wrap',
-              wordBreak: 'break-word',
-              lineHeight: 1.5,
-            }}
-          >
-            <Box component="span" sx={{ mr: 0.5 }} role="img" aria-label="info">
-              ℹ️
-            </Box>
-            {isMobile ? (
-              <>
-                Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
-                <strong>Submit Attendance</strong> to save them permanently.
-              </>
-            ) : (
-              <>
-                Your attendance marks are saved <strong>locally</strong>. Click the{' '}
-                <strong>Submit Attendance</strong> button on the right to permanently save them to
-                the system.
-              </>
-            )}
-          </Typography>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {isMobile ? (
+            <>
+              Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
+              <strong>Submit Attendance</strong> to save them permanently.
+            </>
+          ) : (
+            <>
+              Your attendance marks are saved <strong>locally</strong>. Click the{' '}
+              <strong>Submit Attendance</strong> button on the right to permanently save them to the
+              system.
+            </>
+          )}
         </Alert>
       )}
 
@@ -1060,7 +1038,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       width: 40,
                       fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
-                      bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                       borderRight: (theme) =>
                         theme.palette.mode === 'dark'
                           ? '1px solid rgba(255, 255, 255, 0.15)'
@@ -1074,7 +1052,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       minWidth: 200,
                       fontWeight: 700,
                       ...(!isMobile && { position: 'sticky', left: 40, zIndex: 3 }),
-                      bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                       borderRight: (theme) =>
                         theme.palette.mode === 'dark'
                           ? '2px solid rgba(255, 255, 255, 0.2)'
@@ -1229,7 +1207,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         <TableCell
                           sx={{
                             ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                            bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                             borderRight: (theme) =>
                               theme.palette.mode === 'dark'
                                 ? '1px solid rgba(255, 255, 255, 0.12)'
@@ -1241,7 +1219,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         <TableCell
                           sx={{
                             ...(!isMobile && { position: 'sticky', left: 40, zIndex: 2 }),
-                            bgcolor: isDark ? '#1b2436' : '#f1f5f9',
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
                             borderRight: (theme) =>
                               theme.palette.mode === 'dark'
                                 ? '2px solid rgba(255, 255, 255, 0.18)'

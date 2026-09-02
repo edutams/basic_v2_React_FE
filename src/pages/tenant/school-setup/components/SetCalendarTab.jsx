@@ -51,9 +51,25 @@ import {
   toggleWeekStatus,
   deleteWeek,
 } from '@/api/tenant/term-weeks/weekApi';
+import { fetchCalendarOverview } from '@/api/tenant/calendar/calendarAnalyticsApi';
+import CalendarIntelligence from './CalendarIntelligence';
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
-  const { refreshTenantInfo } = useContext(TenantAuthContext);
+  const { refreshTenantInfo, refreshSubscriptionStatus } = useContext(TenantAuthContext);
+  const [overview, setOverview] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(false);
+
+  const loadOverview = async () => {
+    try {
+      setOverviewLoading(true);
+      const res = await fetchCalendarOverview();
+      if (res.status) setOverview(res.data);
+    } catch (error) {
+      // Non-critical — the rest of the tab still works without it.
+    } finally {
+      setOverviewLoading(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState('sessions');
   const [loading, setLoading] = useState(false);
@@ -120,6 +136,29 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     }
   }, [weeks]);
 
+  // Intelligent defaults for a brand-new term (no weeks generated yet): start
+  // from the same week count as the previous term, and a sensible next-Monday
+  // start date, rather than leaving the admin to guess both from scratch.
+  useEffect(() => {
+    if (weeks.length > 0 || !activeSessionTermId) return;
+
+    setAutoGenerateConfig((prev) => {
+      const next = { ...prev };
+      if (!prev.numWeeks && overview?.weeks?.previous) {
+        next.numWeeks = overview.weeks.previous;
+      }
+      if (!prev.startDate) {
+        // The coming Monday — or today, if today already is one.
+        const today = new Date();
+        const offsetToMonday = (8 - today.getDay()) % 7;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + offsetToMonday);
+        next.startDate = monday.toISOString().slice(0, 10);
+      }
+      return next;
+    });
+  }, [activeSessionTermId, weeks.length, overview]);
+
   useLayoutEffect(() => {
     const btn = generateBtnRef.current;
     const paper = paperRef.current;
@@ -143,7 +182,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   useEffect(() => {
     loadData();
+    loadOverview();
     refreshTenantInfo();
+    refreshSubscriptionStatus();
   }, []);
 
   // Sessions list re-fetches when its page/rowsPerPage change
@@ -392,7 +433,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         loadTenantSessions();
         loadSessionTerms();
         loadActiveSessionTerm();
+        loadOverview();
         await refreshTenantInfo();
+        await refreshSubscriptionStatus();
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(res.message || 'Failed to save session/term', 'error');
@@ -432,7 +475,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         );
         loadSessionTerms();
         loadActiveSessionTerm();
+        loadOverview();
         await refreshTenantInfo();
+        await refreshSubscriptionStatus();
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(res.message || 'Failed to update status', 'error');
@@ -474,7 +519,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
         showSnackbar('Weeks generated successfully', 'success');
         loadSessionTerms();
+        loadOverview();
         refreshTenantInfo();
+        refreshSubscriptionStatus();
       } else {
         showSnackbar(response.message || 'Failed to generate weeks', 'error');
       }
@@ -520,8 +567,21 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     }
   };
 
+  // Live preview of how the number of weeks being typed compares to the
+  // previous term — updates as the admin types, before they even hit Generate.
+  const weeksComparisonHint = (() => {
+    const previous = overview?.weeks?.previous;
+    if (weeks.length > 0 || !previous || !autoGenerateConfig.numWeeks) return null;
+    const delta = autoGenerateConfig.numWeeks - previous;
+    if (delta > 0) return `Last term: ${previous} weeks (+${delta})`;
+    if (delta < 0) return `Last term: ${previous} weeks (${delta})`;
+    return `Same as last term (${previous} weeks)`;
+  })();
+
   return (
     <Box sx={{ width: '100%' }}>
+      <CalendarIntelligence overview={overview} loading={overviewLoading} />
+
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
@@ -860,7 +920,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     label="No. of Weeks"
                     type="number"
                     size="small"
-                    sx={{ width: { xs: '100%', sm: 120 } }}
+                    sx={{ width: { xs: '100%', sm: 160 } }}
                     value={autoGenerateConfig.numWeeks}
                     onChange={(e) =>
                       setAutoGenerateConfig({
@@ -872,6 +932,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       min: 1,
                       max: 15,
                     }}
+                    helperText={weeksComparisonHint}
                   />
                   <TextField
                     label="Start Date"
@@ -1142,9 +1203,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             </Typography>
             {confirmSessionToggle.session?.status !== 'active' && (
               <Box mt={2}>
-                <Typography variant="body2" color="textSecondary">
-                  Activating this will automatically deactivate any other active session.
-                </Typography>
+                <Alert severity="info" sx={{ '& .MuiAlert-message': { fontSize: '0.8125rem' } }}>
+                  Activating this will automatically deactivate any other active session. The
+                  school keeps running on its current active term until you set an active term
+                  for this session — the "Session/Term" tab still shows what's actually live.
+                </Alert>
               </Box>
             )}
           </Box>

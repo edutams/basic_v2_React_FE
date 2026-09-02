@@ -511,7 +511,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             // The toggle API will properly set it when user interacts with checkbox
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   };
 
@@ -728,8 +728,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   ];
 
   return (
-    <Box sx={{ pt: 1 }}>
-      {/* ── Action Buttons Row ──────────────────────────── */}
+    <Box>
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
@@ -916,11 +915,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               attendanceType === 'morning'
                 ? alpha(theme.palette.warning.main, isDark ? 0.15 : 0.1)
                 : alpha(theme.palette.info.main, isDark ? 0.15 : 0.1),
-            border: `1px solid ${
-              attendanceType === 'morning'
-                ? alpha(theme.palette.warning.main, 0.3)
-                : alpha(theme.palette.info.main, 0.3)
-            }`,
+            border: `1px solid ${attendanceType === 'morning'
+              ? alpha(theme.palette.warning.main, 0.3)
+              : alpha(theme.palette.info.main, 0.3)
+              }`,
           }}
         >
           <PeriodIcon fontSize="small" color={attendanceType === 'morning' ? 'warning' : 'info'} />

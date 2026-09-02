@@ -309,7 +309,7 @@ const AttendancePsychomotor = () => {
                   textTransform: 'none',
                   fontWeight: 600,
                   fontSize: '15px',
-                  py: 1.5,
+                  // py: 1.5,
                 },
               }}
             >

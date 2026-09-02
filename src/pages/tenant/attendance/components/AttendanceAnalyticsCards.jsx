@@ -87,12 +87,12 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         ...(clickable
           ? {
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                borderColor: '#94a3b8',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-              },
-            }
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
+          }
           : {}),
         ...sx,
       }}
@@ -1428,7 +1428,7 @@ const AttendanceAnalyticsCards = ({
   return (
     <>
       {loading ? (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={`skeleton-${i}`}>
               <StatCardSkeleton />
@@ -1436,7 +1436,7 @@ const AttendanceAnalyticsCards = ({
           ))}
         </Grid>
       ) : (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
           {/* Card 1: DAYS SCHOOL OPEN */}
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard colorIndex={1}>
@@ -1493,20 +1493,17 @@ const AttendanceAnalyticsCards = ({
                   {schoolDaysMetrics?.scope === 'week' ? (
                     <>
                       {schoolDaysMetrics.weekDaysElapsed} used ·{' '}
-                      {schoolDaysMetrics.weekDaysRemaining} remaining of{' '}
-                      {schoolDaysMetrics.weekDaysOpen} (this week)
+                      {schoolDaysMetrics.weekDaysRemaining} days left{' '}
+                      {/* {schoolDaysMetrics.weekDaysOpen} (this week) */}
                     </>
                   ) : (
                     <>
                       {schoolDaysMetrics?.termDaysElapsed || 0} used ·{' '}
-                      {schoolDaysMetrics?.termDaysRemaining || 0} remaining of{' '}
-                      {schoolDaysMetrics?.termDaysOpen || 0} (school term)
+                      {schoolDaysMetrics?.termDaysRemaining || 0} days left{' '}
+                      {/* {schoolDaysMetrics?.termDaysOpen || 0} (school term) */}
                     </>
                   )}
                 </Typography>
-                <CalendarMonthIcon
-                  sx={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.35)' : '#9CA3AF' }}
-                />
               </Stack>
             </StatCard>
           </Grid>

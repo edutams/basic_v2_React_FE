@@ -421,7 +421,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   };
 
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box>
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <FormControl fullWidth size="small">
@@ -499,7 +499,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search loaded students by name, ID, gender, class..."
+              placeholder="Search students by name, ID, gender, class..."
               value={searchInput}
               onChange={(e) => {
                 const val = e.target.value;
@@ -510,21 +510,11 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                 }
               }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            // slotProps={{
-            //   input: {
-            //     startAdornment: (
-            //       <InputAdornment position="start">
-            //         <SearchIcon fontSize="small" />
-            //       </InputAdornment>
-            //     ),
-            //   },
-            // }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleSearch}
-            // sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
             </Button>
@@ -584,7 +574,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       </Grid>
 
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
+        <Table sx={{ minWidth: 800 }} stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell>S/N</TableCell>

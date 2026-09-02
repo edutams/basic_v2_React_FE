@@ -14,7 +14,10 @@ import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import { EmojiEventsOutlined, CalendarTodayOutlined } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
-import { fetchSessionTerms, fetchActiveSessionTermId } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessionTerms,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
 import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 
@@ -339,22 +342,24 @@ function DaysInTermChart() {
     const initializeTerms = async () => {
       try {
         setLoading(true);
-        const [termsResult, activeResult] = await Promise.allSettled([
-          fetchSessionTerms(),
-          fetchActiveSessionTermId(),
-        ]);
 
-        const termsRes = termsResult.status === 'fulfilled' ? termsResult.value : null;
+        // Scope the dropdown to the tenant's active session only — a plain
+        // fetchSessionTerms() with no filter returns every term across every
+        // session this tenant has ever mirrored, including future sessions
+        // (e.g. 2027/2028) the school hasn't started operating in yet.
+        const activeResult = await fetchActiveTenantSessionTerm().catch(() => null);
+        const activeSessionTerm = activeResult?.data ?? null;
+
+        const termsRes = await fetchSessionTerms(activeSessionTerm?.session_id ?? null).catch(
+          () => null,
+        );
         const termsList = termsRes?.data ?? (Array.isArray(termsRes) ? termsRes : []);
 
         if (isMounted && termsList.length > 0) {
           setSessionTerms(termsList);
         }
 
-        let activeTermId = null;
-        if (activeResult.status === 'fulfilled' && activeResult.value) {
-          activeTermId = String(activeResult.value);
-        }
+        let activeTermId = activeSessionTerm?.id ? String(activeSessionTerm.id) : null;
 
         if (!activeTermId && termsList.length > 0) {
           const activeTerm =

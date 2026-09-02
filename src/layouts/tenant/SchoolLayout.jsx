@@ -21,13 +21,13 @@ const MainWrapper = styled('div')(() => ({
   overflowX: 'auto',
 }));
 
-const PageWrapper = styled('div')(() => ({
+const PageWrapper = styled('div')(({ theme }) => ({
   display: 'flex',
   flexGrow: 1,
   flexDirection: 'column',
   zIndex: 1,
-  // backgroundColor: 'transparent',
-  backgroundColor: '#e4e4e4a9',
+  // backgroundColor: 'transparent',//
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#e4e4e4a9',
   overflowX: 'auto',
 }));
 

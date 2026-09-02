@@ -27,7 +27,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -532,7 +531,7 @@ const SchoolPermissionBased = () => {
 
   return (
     <Box>
-      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
@@ -542,6 +541,9 @@ const SchoolPermissionBased = () => {
               icon={IconLock}
               colorIndex={0}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -553,6 +555,9 @@ const SchoolPermissionBased = () => {
               icon={IconShieldCheck}
               colorIndex={1}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -564,6 +569,9 @@ const SchoolPermissionBased = () => {
               icon={IconKey}
               colorIndex={3}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -575,6 +583,9 @@ const SchoolPermissionBased = () => {
               icon={IconUsers}
               colorIndex={2}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
         </Grid>
@@ -618,8 +629,8 @@ const SchoolPermissionBased = () => {
                 </Box>
 
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.slice(0, 8).map((item, idx) => {
-                    const isLast = idx === Math.min(chartLegendData.length, 8) - 1;
+                  {chartLegendData.slice(0, 5).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 5) - 1;
                     return (
                       <Box
                         key={idx}
@@ -675,10 +686,9 @@ const SchoolPermissionBased = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
+          <ParentCard
             elevation={0}
             sx={{
-              p: 2.5,
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
@@ -1041,7 +1051,7 @@ const SchoolPermissionBased = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

@@ -46,6 +46,7 @@ const StatCard = ({
   onClick,
   tooltip,
   tooltipPlacement = 'top',
+  sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
@@ -80,6 +81,7 @@ const StatCard = ({
           borderColor: '#94a3b8',
           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
         },
+        ...sx,
       }}
     >
       {/* Icon Badge */}

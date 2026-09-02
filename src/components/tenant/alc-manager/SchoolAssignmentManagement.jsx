@@ -460,7 +460,7 @@ const SchoolAssignmentManagement = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+      <Box sx={{ py: 1, px: 0.5, mb: 1 }}>
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
@@ -532,7 +532,6 @@ const SchoolAssignmentManagement = () => {
         </Grid>
       </Box>
 
-      {/* ── Main ParentCard Table Section ─────────────────────────────────── */}
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
@@ -543,8 +542,7 @@ const SchoolAssignmentManagement = () => {
           </Box>
         }
       >
-        <Box sx={{ p: 0 }}>
-          {/* Controls Bar */}
+        <Box sx={{ p: 0, mt: -1.5 }}>
           <Box
             sx={{
               display: 'flex',
@@ -552,7 +550,7 @@ const SchoolAssignmentManagement = () => {
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               gap: 2,
-              mb: 2.5,
+              mb: 2,
             }}
           >
             <Box

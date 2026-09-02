@@ -8,7 +8,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Paper,
   TextField,
   InputAdornment,
   Button,
@@ -390,7 +389,7 @@ const SchoolRoleBasedAccess = () => {
 
   return (
     <Box>
-      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
@@ -400,6 +399,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconUserCheck}
               colorIndex={0}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -411,6 +413,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconLock}
               colorIndex={1}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -422,6 +427,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconUsers}
               colorIndex={2}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -433,6 +441,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconKey}
               colorIndex={3}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -444,6 +455,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconRefresh}
               colorIndex={4}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
         </Grid>
@@ -545,10 +559,9 @@ const SchoolRoleBasedAccess = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
+          <ParentCard
             elevation={0}
             sx={{
-              p: 2.5,
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
@@ -911,7 +924,7 @@ const SchoolRoleBasedAccess = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

@@ -656,8 +656,8 @@ const ActivityLog = () => {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1000 }}>
-                  <TableHead>
+                <Table sx={{ minWidth: 1000 }} stickyHeader>
+                  <TableHead >
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
                       <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>

@@ -396,7 +396,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   };
 
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box>
       {/* ── Filters Row ─────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>

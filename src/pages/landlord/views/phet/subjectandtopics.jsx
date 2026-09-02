@@ -202,8 +202,8 @@ const SubjectTopicView = () => {
       description="View, edit and manage Phet subjects and their topics"
     >
       <Breadcrumb title="Manage Phet Subjects And Topics" items={BCrumb} />
-      <ParentCard>
-        <Grid container spacing={3}>
+      {/* <ParentCard  sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}> */}
+        <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 7 }}>
             <SubjectTable
               subjects={subjects}
@@ -212,6 +212,7 @@ const SubjectTopicView = () => {
               onAddSubject={() => setAddModalOpen(true)}
               onSubjectAction={handleSubjectAction}
               loading={loading}
+              onFetch={fetchSubjects}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
@@ -220,10 +221,11 @@ const SubjectTopicView = () => {
               topics={filteredTopics}
               onAction={handleTopicAction}
               isLoading={topicsLoading}
+              onFetch={fetchTopicsBySubject}
             />
           </Grid>
         </Grid>
-      </ParentCard>
+      {/* </ParentCard> */}
 
       <AddSubjectModal
         open={addModalOpen}

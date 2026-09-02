@@ -171,6 +171,7 @@ const ManagePhETLinks = () => {
             </Button>
           </Box>
         }
+        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
       >
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -190,6 +191,7 @@ const ManagePhETLinks = () => {
                   ),
                 },
               }}
+              size='small'
             // sx={{ flexGrow: 1, minWidth: 200 }}
             />
             {hasActiveFilters && (
@@ -199,9 +201,8 @@ const ManagePhETLinks = () => {
             )}
           </Box>
 
-          <Box>
             <TableContainer>
-              <Table>
+              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
@@ -298,7 +299,6 @@ const ManagePhETLinks = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Box>
         </Box>
       </ParentCard>
       <StimulationLinkModal

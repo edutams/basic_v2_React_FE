@@ -73,7 +73,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
   return (
     <Box sx={{ width: '100%' }}>
       <TableContainer sx={{ borderRadius: 2 }}>
-        <Table>
+        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
           {/* HEADER */}
           <TableHead>
             <TableRow>

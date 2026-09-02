@@ -829,7 +829,7 @@ const SchoolsTab = ({
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
   const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
 
-  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, nameValue, activeFilters };
+  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, nameValue, activeFilters, setFilterDrawerOpen, activeFilterCount, setOpenAddModal, can };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -846,15 +846,13 @@ const SchoolsTab = ({
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
                 gap: 2,
-                mb: 3,
               }}
             >
               {/* Total Schools */}
               <Paper
                 elevation={0}
                 sx={{
-                   px: '3px',
-                  py: '3px',
+                   p:"10px !important",
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -953,8 +951,7 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                   px: '3px',
-                  py: '3px',
+                   p:"10px !important",
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1039,8 +1036,7 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                   px: '3px',
-                  py: '3px',
+                   p:"10px !important",
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1118,8 +1114,7 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  px: '3px',
-                  py: '3px',
+                  p:"10px !important",
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
@@ -1174,29 +1169,6 @@ const SchoolsTab = ({
               </Paper>
             </Box>
           )}
-        {/* ── List header ── */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Box
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: '#2ca87f',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-              }}
-            >
-              <IconGridDots size={16} />
-            </Box>
-            <Typography variant="h5" fontWeight={700}>
-              List Of Schools
-            </Typography>
-          </Box>
-        </Box>
-
         {/* ── Tabs ── */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
           <Tabs
@@ -1242,69 +1214,7 @@ const SchoolsTab = ({
           </Tabs>
         </Box>
 
-        <Box sx={{ pt: 3 }}>
-          {/* Toolbar */}
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ sm: 'center' }}
-            spacing={2}
-            mb={3}
-          >
-            <Box />
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
-              {activeTab === 0 && can('landlord.school.create') && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<IconUserPlus />}
-                  onClick={() => setOpenAddModal(true)}
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: 2,
-                    px: 3,
-                  }}
-                >
-                  Add New School
-                </Button>
-              )}
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<IconAdjustmentsHorizontal />}
-                onClick={() => setFilterDrawerOpen(true)}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2.5,
-                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  fontWeight: activeFilterCount > 0 ? 700 : 400,
-                  '&:hover': { borderColor: 'primary.main' },
-                }}
-              >
-                Filters
-                {activeFilterCount > 0 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      px: 0.8,
-                      py: 0.1,
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {activeFilterCount}
-                  </Box>
-                )}
-              </Button>
-            </Stack>
-          </Stack>
-
+        <Box sx={{ pt: 1 }}>
           {/* Tab panels */}
           {activeTab === 0 && (
             <ApplicationReview

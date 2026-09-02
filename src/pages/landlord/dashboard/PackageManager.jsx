@@ -149,7 +149,7 @@ const EduTier = () => {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' },
           gap: 2,
-          mb: 3,
+          mb: 2,
         }}
       >
         <Paper
@@ -565,7 +565,7 @@ const EduTier = () => {
         </Paper> */}
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={12}>
           <BlankCard>
             <Box sx={{ width: '100%', overflowX: 'auto' }}>

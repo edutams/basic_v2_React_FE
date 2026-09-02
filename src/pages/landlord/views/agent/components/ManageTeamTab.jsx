@@ -26,6 +26,7 @@ import {
   Checkbox,
   Skeleton,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
@@ -54,6 +55,8 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openPermissionModal, setOpenPermissionModal] = useState(false);
@@ -280,26 +283,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
   };
 
   const headerContent = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            bgcolor: '#2ca87f',
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-          }}
-        >
-          <Typography variant="body2" fontWeight="bold">
-            T
-          </Typography>
-        </Box>
-        <Typography variant="h5">Manage Team</Typography>
-      </Stack>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
       {!(accessLevel === 1 && isViewingProfile) && (
         <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
           Add Team Member
@@ -319,7 +303,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
         </Box>
       ) : (
         <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
-          <Table>
+          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
             <TableHead>
               <TableRow>
                 <TableCell
@@ -366,7 +350,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
                   </TableCell>
                 </TableRow>
               ) : (
-                members.map((row, index) => {
+                members.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
                   const initials = (row.full_name || 'NA')
                     .split(' ')
                     .slice(0, 2)
@@ -377,7 +361,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
                     <TableRow key={row.id} hover>
                       <TableCell sx={{ py: 1.5 }}>
                         <Typography color="textSecondary" variant="body2" fontWeight={400}>
-                          {index + 1}
+                          {page * rowsPerPage + index + 1}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ py: 1.5 }}>
@@ -547,6 +531,20 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
               )}
             </TableBody>
           </Table>
+          {members.length > 0 && (
+            <TablePagination
+              component="div"
+              count={members.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          )}
         </TableContainer>
       )}
 
@@ -902,7 +900,9 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
   }
 
   return (
-    <ParentCard title={headerContent}>
+    <ParentCard title={headerContent} 
+              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+    >
       {content}
     </ParentCard>
   );

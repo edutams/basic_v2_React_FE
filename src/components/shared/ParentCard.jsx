@@ -27,7 +27,7 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
         py:"3px",
       }}
     >
-      <CardHeader title={title} action={codeModel} />
+      {title && <CardHeader title={title} action={codeModel} />}
 
       <CardContent>{children}</CardContent>
       {footer ? <Box p={3}>{footer}</Box> : ''}
@@ -36,7 +36,7 @@ const ParentCard = ({ title, children, footer, codeModel, sx }) => {
 };
 
 ParentCard.propTypes = {
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node,
   children: PropTypes.node,
   codeModel: PropTypes.node,
   footer: PropTypes.node,

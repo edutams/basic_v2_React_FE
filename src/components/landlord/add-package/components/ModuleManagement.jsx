@@ -139,6 +139,7 @@ const ModuleManagement = ({
 
   return (
     <ParentCard
+     sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
           <Box display="flex" alignItems="center">
@@ -200,7 +201,7 @@ const ModuleManagement = ({
         ) : (
           <Box>
             <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 {/* <Table> */}
                 <TableHead>
                   <TableRow>

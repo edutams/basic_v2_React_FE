@@ -113,6 +113,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
 
   return (
     <ParentCard
+      sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
       title={
         <Box
           display="flex"
@@ -123,7 +124,17 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
         >
           <Typography variant="h5">All Packages</Typography>
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
+         
             <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => onPackageAction('create')}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Add New Package
+            </Button>
+               <Button
               variant="contained"
               size="small"
               startIcon={<IconFilter />}
@@ -139,15 +150,6 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                   sx={{ ml: 1, height: 20, minWidth: 20, fontSize: '0.75rem' }}
                 />
               )}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => onPackageAction('create')}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Add New Package
             </Button>
           </Box>
         </Box>
@@ -165,8 +167,8 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
         />
 
         <Box>
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+          <TableContainer >
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>

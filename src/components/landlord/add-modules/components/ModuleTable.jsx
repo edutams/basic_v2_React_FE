@@ -199,7 +199,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
 
         <Box>
           <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>

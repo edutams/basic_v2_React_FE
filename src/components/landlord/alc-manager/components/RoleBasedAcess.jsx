@@ -364,6 +364,9 @@ const RoleBasedAcess = () => {
               icon={IconUserCheck}
               colorIndex={0}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -375,6 +378,9 @@ const RoleBasedAcess = () => {
               icon={IconLock}
               colorIndex={1}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -386,6 +392,9 @@ const RoleBasedAcess = () => {
               icon={IconUsers}
               colorIndex={2}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -397,6 +406,9 @@ const RoleBasedAcess = () => {
               icon={IconKey}
               colorIndex={3}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -408,6 +420,9 @@ const RoleBasedAcess = () => {
               icon={IconRefresh}
               colorIndex={4}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
         </Grid>

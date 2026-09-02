@@ -430,6 +430,9 @@ const PermissionBased = () => {
               icon={IconKey}
               colorIndex={0}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -441,6 +444,9 @@ const PermissionBased = () => {
               icon={IconShieldCheck}
               colorIndex={1}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -452,6 +458,9 @@ const PermissionBased = () => {
               icon={IconUsers}
               colorIndex={2}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -463,6 +472,9 @@ const PermissionBased = () => {
               icon={IconRefresh}
               colorIndex={4}
               loading={loading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
         </Grid>

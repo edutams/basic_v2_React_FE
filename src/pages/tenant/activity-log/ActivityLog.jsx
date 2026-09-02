@@ -445,7 +445,7 @@ const ActivityLog = () => {
       <Breadcrumb title="Activity Log" items={BCrumb} />
       <AclTourProvider steps={tourSteps} autoPlay storageKey="activity_log_tour_seen">
 
-        <Grid container spacing={2} mb={3}>
+        <Grid container spacing={2} mb={2}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
               count={(stats.total_activities || total || 0).toLocaleString()}

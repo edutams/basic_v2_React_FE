@@ -212,11 +212,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
       try {
         const res = await fetchSessionTerms(selectedSessionId);
         if (res.status) {
-          const subscribed = res.data.filter((t) => t.is_subscribed === 'yes');
-          setSessionTerms(subscribed);
-          if (subscribed.length > 0) {
-            setSelectedTermId(subscribed[0].session_term_id);
-            setSelectedTermLabel(subscribed[0].display_name || subscribed[0].term_name);
+          const terms = res.data;
+          setSessionTerms(terms);
+          if (terms.length > 0) {
+            const defaultTerm = terms.find((t) => t.status === 'active') || terms[0];
+            setSelectedTermId(defaultTerm.session_term_id);
+            setSelectedTermLabel(defaultTerm.display_name || defaultTerm.term_name);
           } else {
             setSelectedTermId('');
             setSelectedTermLabel('');

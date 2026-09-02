@@ -15,11 +15,12 @@ export const fetchTerms = async () => {
 // Fetch this tenant's session-terms (pass sessionId to filter to one session, or
 // nothing for the full list across all sessions). Each row carries both the raw
 // shape (id, session_id, term_id, status, session:{session_name}, term:{term_name})
-// AND legacy aliases (session_term_id, term_name, display_name, is_subscribed,
-// app_term_id) so every existing consumer's field names keep working regardless
-// of which naming convention it was written against — display terms are gone,
-// so display_name is just an alias for term_name, and is_subscribed just mirrors
-// status (only one session-term is ever active tenant-wide).
+// AND legacy aliases (session_term_id, term_name, display_name) so every existing
+// consumer's field names keep working regardless of which naming convention it
+// was written against — display_name is just an alias for term_name (display
+// terms are gone). There is no `is_subscribed` concept anymore — every
+// session-term that exists is inherently part of the tenant's calendar; use
+// `status === 'active'` to find the one currently in use.
 export const fetchSessionTerms = async (sessionId = null) => {
   const params = { per_page: 100 };
   if (sessionId) params.session_id = sessionId;
@@ -31,7 +32,6 @@ export const fetchSessionTerms = async (sessionId = null) => {
     term_name: row.term?.term_name ?? null,
     display_term_id: row.term_id,
     display_name: row.term?.term_name ?? null,
-    is_subscribed: row.status === 'active' ? 'yes' : 'no',
     session_term_id: row.id,
     start_date: row.start_date ?? null,
   }));
@@ -44,22 +44,6 @@ export const updateDisplayName = async (appTermId, displayName) => {
   const response = await api.put(`/terms/${appTermId}`, {
     term_name: displayName,
   });
-  return response.data;
-};
-
-// Create/activate a session-term mapping
-export const subscribeSessionTerm = async (sessionId, appTermId) => {
-  const response = await api.post('/session-terms', {
-    session_id: sessionId,
-    term_id: appTermId,
-    status: 'active',
-  });
-  return response.data;
-};
-
-// Toggle session term status
-export const toggleSessionTermStatus = async (id) => {
-  const response = await api.put(`/session-terms/${id}/toggle-status`);
   return response.data;
 };
 

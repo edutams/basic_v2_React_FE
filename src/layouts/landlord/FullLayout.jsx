@@ -27,7 +27,8 @@ const PageWrapper = styled('div')(() => ({
   // paddingBottom: '60px',
   flexDirection: 'column',
   zIndex: 1,
-  backgroundColor: 'transparent',
+  // backgroundColor: 'transparent',
+  backgroundColor: '#e4e4e4a9',
   overflowX: 'auto',
 }));
 

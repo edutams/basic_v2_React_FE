@@ -583,6 +583,10 @@ const CurriculumSetup = () => {
           data-tour="curriculum-setup-panel"
         >
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1 },
+            }}
             title={
               <Box
                 display="flex"
@@ -754,6 +758,10 @@ const CurriculumSetup = () => {
         {/* RIGHT - Assign to Classes */}
         <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1 },
+            }}
             title={
               <Box
                 display="flex"

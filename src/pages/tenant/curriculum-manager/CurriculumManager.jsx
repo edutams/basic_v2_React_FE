@@ -20,7 +20,7 @@ const BCrumb = [
 ];
 
 const TabPanel = ({ children, value, index }) => {
-  return value === index && <Box mt={2}>{children}</Box>;
+  return value === index && <Box mt={1}>{children}</Box>;
 };
 
 // ── Tour Steps Configuration per Tab ──────────────────────────────────────────
@@ -130,6 +130,8 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
               startIcon={<IconCompass size={18} />}
               onClick={handleStartTour}
               sx={{
+                ml: 'auto',
+                flexShrink: 0,
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,

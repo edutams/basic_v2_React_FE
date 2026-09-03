@@ -522,9 +522,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Grid container spacing={3}>
+      <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1 },
+            }}
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">Manage Sessions & Session/Term</Typography>

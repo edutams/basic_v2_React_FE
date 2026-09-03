@@ -54,11 +54,13 @@ import {
   IconSparkles,
   IconWand,
   IconPlus,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
+import admissionImg from '@/assets/images/admission/graduation.png';
 import {
   fetchSessions,
   fetchSessionTermsBySession,
@@ -194,7 +196,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
     aria-labelledby={`admission-tab-${index}`}
     {...other}
   >
-    {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    {value === index && <Box sx={{ pt: 1.5 }}>{children}</Box>}
   </div>
 );
 
@@ -658,6 +660,10 @@ const AdmissionSetup = () => {
     // .replace(/\[:stdNum_6\]/g, '000001');
   };
 
+  // Dynamic session name for header chip
+  const currentSessionObj = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
+  const currentSessionName = currentSessionObj?.session_name || currentSessionObj?.name || '';
+
   return (
     <PageContainer title="Admission Setup" description="Manage admission batches">
       <Breadcrumb title="Admission Setup" items={BCrumb} />
@@ -945,74 +951,51 @@ const AdmissionSetup = () => {
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12 }}>
-            <ParentCard title="Admission Code Format Configurator">
-              {/* ── Modern Hero Header Callout Banner ───────────────────── */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  mb: 3,
-                  borderRadius: 3,
-                  background: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                      : 'linear-gradient(135deg, rgba(238, 242, 255, 0.9) 0%, rgba(224, 231, 255, 0.5) 100%)',
-                  border: '1px solid',
-                  borderColor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 2.5,
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-                    }}
-                  >
-                    <IconId size={28} />
+            <ParentCard
+              title="Admission Code Format Configurator"
+              sx={{
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+                '& .MuiCardContent-root': { pt: 1 },
+              }}
+            >
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                  spacing={1.5}
+                  sx={{ width: '100%' }}
+                >
+                  <Box>
+                    Define the admission code format for your school. Type your school&apos;s short name,
+                    insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
+                    <strong>/</strong> is automatically added between segments.
                   </Box>
-                  <Box flexGrow={1}>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                      <Typography variant="h6" fontWeight={700} color="text.primary">
-                        Student Admission Code Generator
-                      </Typography>
-                      <Chip
-                        icon={<IconSparkles size={13} />}
-                        label="Auto-Generated"
-                        size="small"
-                        color="primary"
-                        sx={{ fontSize: 11, fontWeight: 700, height: 22 }}
-                      />
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13.5, lineHeight: 1.5 }}>
-                      Define the structure used for student admission numbers. Combine your school short name,
-                      the admission year <strong>[:year]</strong>, and student sequence digit length. Segments are delimited by slashes <strong>/</strong>.
-                    </Typography>
-                  </Box>
+                  {currentSessionName && (
+                    <Chip
+                      icon={<IconSchool size={14} />}
+                      label={`Session: ${currentSessionName}`}
+                      size="small"
+                      color="info"
+                      sx={{ fontWeight: 600, flexShrink: 0 }}
+                    />
+                  )}
                 </Stack>
-              </Paper>
+              </Alert>
 
               {codeFormatLoading ? (
                 <Box display="flex" justifyContent="center" alignItems="center" py={8}>
                   <CircularProgress size={32} />
                 </Box>
               ) : (
-                <Grid container spacing={3}>
+                <Grid container spacing={2.5}>
                   {/* ── Left Column (xs=12, md=6) — Component Controls ── */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Card
                       variant="outlined"
                       sx={{
                         borderRadius: 3,
-                        borderColor: 'divider',
+                        border: '2px solid #c7c9cbff',
                         transition: 'all 0.2s ease',
                         boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
                         '&:hover': {
@@ -1021,17 +1004,9 @@ const AdmissionSetup = () => {
                         },
                       }}
                     >
-                      <CardContent sx={{ p: 3 }}>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                           <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 20,
-                                borderRadius: 4,
-                                bgcolor: 'primary.main',
-                              }}
-                            />
                             <Typography variant="subtitle1" fontWeight={700}>
                               Format Building Blocks
                             </Typography>
@@ -1041,10 +1016,10 @@ const AdmissionSetup = () => {
                           </Typography>
                         </Box>
 
-                        <Stack spacing={3}>
+                        <Stack spacing={2}>
                           {/* ── Component 1: School Short Name ── */}
                           <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
                               <Stack direction="row" spacing={1} alignItems="center">
                                 <IconSchool size={18} color="var(--mui-palette-primary-main)" />
                                 <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
@@ -1054,12 +1029,16 @@ const AdmissionSetup = () => {
                               <Chip
                                 label={codeFormatInput.includes('[:shortname]') ? 'Active' : 'Optional'}
                                 size="small"
-                                color={codeFormatInput.includes('[:shortname]') ? 'success' : 'default'}
-                                variant={codeFormatInput.includes('[:shortname]') ? 'filled' : 'outlined'}
-                                sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  bgcolor: codeFormatInput.includes('[:shortname]') ? 'success.light' : 'warning.light',
+                                  color: codeFormatInput.includes('[:shortname]') ? 'success.dark' : 'warning.dark',
+                                }}
                               />
                             </Stack>
-                            <Typography variant="caption" color="text.secondary" display="block" mb={1.2}>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                               Abbreviation used in admission numbers (e.g., STPAULS)
                             </Typography>
                             <TextField
@@ -1088,7 +1067,7 @@ const AdmissionSetup = () => {
 
                           {/* ── Component 2: Admission Year Token ── */}
                           <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
                               <Stack direction="row" spacing={1} alignItems="center">
                                 <IconCalendar size={18} color="var(--mui-palette-primary-main)" />
                                 <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
@@ -1098,12 +1077,16 @@ const AdmissionSetup = () => {
                               <Chip
                                 label={codeFormatInput.includes('[:year]') ? 'Inserted' : 'Available'}
                                 size="small"
-                                color={codeFormatInput.includes('[:year]') ? 'info' : 'default'}
-                                variant={codeFormatInput.includes('[:year]') ? 'filled' : 'outlined'}
-                                sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  bgcolor: codeFormatInput.includes('[:year]') ? 'primary.light' : 'info.light',
+                                  color: codeFormatInput.includes('[:year]') ? 'primary.main' : 'info.dark',
+                                }}
                               />
                             </Stack>
-                            <Typography variant="caption" color="text.secondary" display="block" mb={1.2}>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                               Click token button below to append dynamic year placeholder <strong>[:year]</strong>
                             </Typography>
                             <Button
@@ -1139,87 +1122,99 @@ const AdmissionSetup = () => {
                             </Button>
                           </Box>
 
-                          <Divider sx={{ borderStyle: 'dashed' }} />
+                          {/* ── Component 3: Student Number Digit Length (Visible only when [:year] is present) ── */}
+                          {codeFormatInput.includes('[:year]') && (
+                            <>
+                              <Divider sx={{ borderStyle: 'dashed' }} />
 
-                          {/* ── Component 3: Student Number Digit Length ── */}
-                          <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <IconHash size={18} color="var(--mui-palette-primary-main)" />
-                                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
-                                  Sequential Student Number
+                              <Box>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
+                                  <Stack direction="row" spacing={1} alignItems="center">
+                                    <IconHash size={18} color="var(--mui-palette-primary-main)" />
+                                    <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
+                                      Sequential Student Number
+                                    </Typography>
+                                  </Stack>
+                                  <Chip
+                                    label="Pick 1 Length"
+                                    size="small"
+                                    sx={{
+                                      height: 20,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      bgcolor: 'warning.light',
+                                      color: 'warning.dark',
+                                    }}
+                                  />
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary" display="block" mb={1.2}>
+                                  Select the padding length for sequential student registration numbers
                                 </Typography>
-                              </Stack>
-                              <Typography variant="caption" color="warning.main" fontWeight={700}>
-                                Pick 1 Length
-                              </Typography>
-                            </Stack>
-                            <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-                              Select the padding length for sequential student registration numbers
-                            </Typography>
 
-                            <RadioGroup value={selectedStdNum} onChange={handleStdNumChange}>
-                              <Grid container spacing={1.5}>
-                                {STD_NUM_OPTIONS.map((opt) => {
-                                  const isSelected = selectedStdNum === opt.key;
-                                  return (
-                                    <Grid size={{ xs: 6 }} key={opt.key}>
-                                      <Box
-                                        onClick={() => handleStdNumChange({ target: { value: opt.key } })}
-                                        sx={{
-                                          p: 1.5,
-                                          borderRadius: 2.5,
-                                          border: '1.5px solid',
-                                          borderColor: isSelected ? 'primary.main' : 'divider',
-                                          bgcolor: isSelected
-                                            ? (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(238, 242, 255, 0.8)')
-                                            : 'background.paper',
-                                          cursor: 'pointer',
-                                          transition: 'all 0.2s ease',
-                                          boxShadow: isSelected ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none',
-                                          '&:hover': {
-                                            borderColor: 'primary.main',
-                                            bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(238, 242, 255, 0.4)'),
-                                          },
-                                        }}
-                                      >
-                                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
-                                          <Typography variant="caption" fontWeight={700} color={isSelected ? 'primary.main' : 'text.primary'}>
-                                            {opt.label}
-                                          </Typography>
-                                          <Radio
-                                            checked={isSelected}
-                                            size="small"
-                                            sx={{ p: 0, '&.Mui-checked': { color: 'primary.main' } }}
-                                          />
-                                        </Stack>
-                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                          <Typography
-                                            variant="body2"
-                                            fontWeight={700}
-                                            sx={{ fontFamily: 'monospace', fontSize: 13, color: 'text.secondary' }}
-                                          >
-                                            {opt.key}
-                                          </Typography>
-                                          <Chip
-                                            label={opt.example}
-                                            size="small"
-                                            color={isSelected ? 'primary' : 'default'}
+                                <RadioGroup value={selectedStdNum} onChange={handleStdNumChange}>
+                                  <Grid container spacing={1.5}>
+                                    {STD_NUM_OPTIONS.map((opt) => {
+                                      const isSelected = selectedStdNum === opt.key;
+                                      return (
+                                        <Grid size={{ xs: 6 }} key={opt.key}>
+                                          <Box
+                                            onClick={() => handleStdNumChange({ target: { value: opt.key } })}
                                             sx={{
-                                              height: 18,
-                                              fontSize: 10,
-                                              fontFamily: 'monospace',
-                                              fontWeight: 700,
+                                              p: 1.2,
+                                              borderRadius: 2,
+                                              border: '1.5px solid',
+                                              borderColor: isSelected ? 'primary.main' : 'divider',
+                                              bgcolor: isSelected
+                                                ? (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(238, 242, 255, 0.8)')
+                                                : 'background.paper',
+                                              cursor: 'pointer',
+                                              transition: 'all 0.2s ease',
+                                              boxShadow: isSelected ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none',
+                                              '&:hover': {
+                                                borderColor: 'primary.main',
+                                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(238, 242, 255, 0.4)'),
+                                              },
                                             }}
-                                          />
-                                        </Stack>
-                                      </Box>
-                                    </Grid>
-                                  );
-                                })}
-                              </Grid>
-                            </RadioGroup>
-                          </Box>
+                                          >
+                                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
+                                              <Typography variant="caption" fontWeight={700} color={isSelected ? 'primary.main' : 'text.primary'}>
+                                                {opt.label}
+                                              </Typography>
+                                              <Radio
+                                                checked={isSelected}
+                                                size="small"
+                                                sx={{ p: 0, '&.Mui-checked': { color: 'primary.main' } }}
+                                              />
+                                            </Stack>
+                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                              <Typography
+                                                variant="body2"
+                                                fontWeight={700}
+                                                sx={{ fontFamily: 'monospace', fontSize: 13, color: 'text.secondary' }}
+                                              >
+                                                {opt.key}
+                                              </Typography>
+                                              <Chip
+                                                label={opt.example}
+                                                size="small"
+                                                color={isSelected ? 'primary' : 'default'}
+                                                sx={{
+                                                  height: 18,
+                                                  fontSize: 10,
+                                                  fontFamily: 'monospace',
+                                                  fontWeight: 700,
+                                                }}
+                                              />
+                                            </Stack>
+                                          </Box>
+                                        </Grid>
+                                      );
+                                    })}
+                                  </Grid>
+                                </RadioGroup>
+                              </Box>
+                            </>
+                          )}
 
                           <Divider sx={{ borderStyle: 'dashed' }} />
 
@@ -1237,16 +1232,18 @@ const AdmissionSetup = () => {
                                   clickable
                                   size="small"
                                   onClick={() => handleApplyPreset(preset)}
-                                  variant="outlined"
                                   sx={{
                                     borderRadius: 2,
                                     fontSize: 11,
-                                    fontWeight: 600,
+                                    fontWeight: 700,
+                                    bgcolor: 'primary.light',
+                                    color: 'primary.main',
+                                    border: '1px solid',
+                                    borderColor: 'primary.light',
                                     transition: 'all 0.2s ease',
                                     '&:hover': {
-                                      bgcolor: 'primary.light',
-                                      borderColor: 'primary.main',
-                                      color: 'primary.main',
+                                      bgcolor: 'primary.main',
+                                      color: 'white',
                                     },
                                   }}
                                 />
@@ -1258,31 +1255,22 @@ const AdmissionSetup = () => {
                     </Card>
                   </Grid>
 
-                  {/* ── Right Column (xs=12, md=6) — Live Canvas & Save ── */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Card
                       variant="outlined"
                       sx={{
                         borderRadius: 3,
                         height: '100%',
-                        borderColor: 'divider',
+                        border: '2px solid #c7c9cbff',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
                       }}
                     >
-                      <CardContent sx={{ p: 3, flexGrow: 1 }}>
+                      <CardContent sx={{ p: 2.5, flexGrow: 1 }}>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
                           <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 20,
-                                borderRadius: 4,
-                                bgcolor: 'success.main',
-                              }}
-                            />
                             <Typography variant="subtitle1" fontWeight={700}>
                               Format Canvas & Live Preview
                             </Typography>
@@ -1337,10 +1325,10 @@ const AdmissionSetup = () => {
                                           isShort
                                             ? `Shortname [${schoolShortName.trim() || 'STPAULS'}]`
                                             : isYear
-                                            ? 'Year [:year]'
-                                            : isStdNum
-                                            ? `Seq No [${token.replace('[:stdNum_', '').replace(']', '')} Digits]`
-                                            : token
+                                              ? 'Year [:year]'
+                                              : isStdNum
+                                                ? `Seq No [${token.replace('[:stdNum_', '').replace(']', '')} Digits]`
+                                                : token
                                         }
                                         color={isShort ? 'primary' : isYear ? 'info' : isStdNum ? 'success' : 'default'}
                                         sx={{
@@ -1441,7 +1429,7 @@ const AdmissionSetup = () => {
                             </Typography>
                           </Paper>
                         ) : (
-                          <Alert severity="warning" variant="outlined" sx={{ borderRadius: 2.5 }}>
+                          <Alert severity="info" sx={{ borderRadius: 2 }}>
                             Select or type components on the left to start building your admission code format.
                           </Alert>
                         )}

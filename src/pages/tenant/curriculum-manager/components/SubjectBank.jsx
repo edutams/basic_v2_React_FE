@@ -546,12 +546,18 @@ const SubjectBank = () => {
   }, [subjectSearch]);
   return (
     <>
-      <Alert severity="info" sx={{ textAlign: "center" }}>Select curriculum to upload subjects</Alert>
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box>
-              <ParentCard title={<Typography variant="h6" sx={{ fontWeight: 600 }}>Curriculum List</Typography>}>
+              <ParentCard
+                sx={{
+                  '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+                  '& .MuiCardContent-root': { pt: 1 },
+                }}
+                title={<Typography variant="h6" sx={{ fontWeight: 600 }}>Curriculum List</Typography>}
+              >
+                <Alert severity="info" sx={{ textAlign: "center", mb: 1 }}>Select curriculum to upload subjects</Alert>
                 <TableContainer
                   sx={{
                     height: { xs: 220, md: 230 },
@@ -636,6 +642,10 @@ const SubjectBank = () => {
             {/* 2. Subject Group Card Below Curriculum */}
             <Box>
               <ParentCard
+                sx={{
+                  '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+                  '& .MuiCardContent-root': { pt: 1 },
+                }}
                 title={
                   <Typography variant="h6" data-tour="subject-bank-groups-panel" sx={{ fontWeight: 600 }}>
                     Subject Groups
@@ -725,7 +735,7 @@ const SubjectBank = () => {
                   >
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ width: 50 }}>#</TableCell>
+                        <TableCell sx={{ width: 50 }}>S/N</TableCell>
                         <TableCell sx={{ minWidth: 140 }}>Group Name</TableCell>
                         <TableCell sx={{ minWidth: 200 }}>Subjects</TableCell>
                         <TableCell sx={{ width: 80 }}>Unit</TableCell>
@@ -823,6 +833,10 @@ const SubjectBank = () => {
         {/* RIGHT COLUMN - Subject Bank Panel */}
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1 },
+            }}
             title={
               <Typography variant="h6" data-tour="subject-bank-subjects-panel" sx={{ fontWeight: 600 }}>
                 Subject Bank

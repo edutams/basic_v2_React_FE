@@ -466,7 +466,7 @@ const CompulsoryScheduleTab = ({
         </Typography>
       </Alert>
 
-      <ParentCard>
+      <Paper sx={{ p: 2 }}>
         <Box
           display="flex"
           flexDirection={{ xs: 'column', md: 'row' }}
@@ -773,7 +773,7 @@ const CompulsoryScheduleTab = ({
             </TableFooter>
           </Table>
         </TableContainer>
-      </ParentCard>
+      </Paper>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>

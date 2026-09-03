@@ -21,14 +21,14 @@ const MainWrapper = styled('div')(() => ({
   overflowX: 'auto',
 }));
 
-const PageWrapper = styled('div')(() => ({
+const PageWrapper = styled('div')(({ theme }) => ({
   display: 'flex',
   flexGrow: 1,
   // paddingBottom: '60px',
   flexDirection: 'column',
   zIndex: 1,
   // backgroundColor: 'transparent',
-  backgroundColor: '#e4e4e4a9',
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#e4e4e4a9',
   overflowX: 'auto',
 }));
 
@@ -91,7 +91,7 @@ const FullLayout = () => {
             {/* ------------------------------------------- */}
             {/* PageContent */}
             {/* ------------------------------------------- */}
-            <Box sx={{ flex: 1, overflowX: 'auto', py: 1 }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', py: 3 }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

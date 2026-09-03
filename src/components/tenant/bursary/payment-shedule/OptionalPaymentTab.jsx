@@ -308,7 +308,7 @@ const OptionalPaymentTab = ({
         </Typography>
       </Alert>
 
-      <ParentCard>
+      <Paper sx={{ p: 2 }}>
         <Box
           mb={3}
           display="flex"
@@ -535,7 +535,7 @@ const OptionalPaymentTab = ({
             </TableFooter>
           </Table>
         </TableContainer>
-      </ParentCard>
+      </Paper>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>

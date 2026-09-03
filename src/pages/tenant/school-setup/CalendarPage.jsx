@@ -4,6 +4,8 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import SetCalendarTab from './components/SetCalendarTab';
 import HolidaySection from './components/HolidaySection';
 
+import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
+
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar' }];
 
 const CalendarPage = () => {
@@ -18,11 +20,23 @@ const CalendarPage = () => {
     <Box>
       <Breadcrumb title="Calendar" items={BCrumb} />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          mb: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justify: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
         <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
           <Tab label="Calendar Setup" />
           <Tab label="Holiday Setup" />
         </Tabs>
+        <ShowTourGuideButton data-tour="calendar-tour" />
       </Box>
 
       {activeTab === 0 && <SetCalendarTab onUpdate={handleCalendarUpdate} />}

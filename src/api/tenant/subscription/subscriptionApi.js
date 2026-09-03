@@ -107,7 +107,7 @@ const subscriptionApi = {
    * Get subscription status
    */
   getSubscriptionStatus: async () => {
-    const response = await tenantApi.get('/subscription-status');
+    const response = await tenantApi.get('/subscriptions/status');
     return response.data;
   },
 
@@ -130,3 +130,5 @@ const subscriptionApi = {
   };
 
 export default subscriptionApi;
+
+export const fetchSubscriptionStatus = subscriptionApi.getSubscriptionStatus;

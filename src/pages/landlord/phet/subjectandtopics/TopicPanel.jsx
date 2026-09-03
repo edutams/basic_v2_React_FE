@@ -56,16 +56,13 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
     handleMenuClose();
   };
 
+  const handleFetch = () => {
+    onFetch?.(selectedSubject?.id, searchTerm);
+  };
+
   const filteredTopics = topics.filter((topic) =>
     topic.topic.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setPage(0);
-  };
-
-  const hasActiveFilters = searchTerm !== '';
 
   const paginatedTopics = filteredTopics.slice(
     page * rowsPerPage,
@@ -89,9 +86,32 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
             )}
           </Typography>
           {selectedSubject && (
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ ml: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
-              Add New Topic
-            </Button>
+            <Box display="flex" alignItems="center" gap={1} sx={{ ml: 'auto' }}>
+              <TextField
+                placeholder="Search topics..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                sx={{ minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {onFetch && (
+                <Button variant="outlined" size="small" onClick={handleFetch} startIcon={<IconRefresh size={16} />}>
+                  Fetch
+                </Button>
+              )}
+              <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                Add New Topic
+              </Button>
+            </Box>
           )}
         </Box>
       }
@@ -106,11 +126,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
         </Box>
       ) : isLoading ? (
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
-            <Skeleton variant="rounded" width={100} height={36} />
-            <Skeleton variant="rounded" width={220} height={36} />
-            <Skeleton variant="rounded" width={80} height={36} />
-          </Box>
           <TableContainer>
             <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
@@ -135,38 +150,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
         </Box>
       ) : (
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3, display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            {hasActiveFilters && (
-              <Button variant="outlined" size="small" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            )}
-            <TextField
-              placeholder="Search topics..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(0);
-              }}
-              size="small"
-              sx={{ minWidth: 220 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            {onFetch && (
-              <Button variant="outlined" size="small" onClick={() => onFetch(selectedSubject?.id)} startIcon={<IconRefresh size={16} />}>
-                Fetch
-              </Button>
-            )}
-          </Box>
-
          <TableContainer>
               <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>

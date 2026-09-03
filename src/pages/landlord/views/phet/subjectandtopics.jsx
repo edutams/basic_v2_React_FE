@@ -52,10 +52,10 @@ const SubjectTopicView = () => {
     }
   }, [selectedSubject]);
 
-  const fetchSubjects = async () => {
+  const fetchSubjects = async (search = '') => {
     try {
       setLoading(true);
-      const response = await phetApi.getSubjects();
+      const response = await phetApi.getSubjects({ search });
       setSubjects(response || []);
     } catch (error) {
       // console.error('Error fetching subjects:', error);
@@ -65,10 +65,10 @@ const SubjectTopicView = () => {
     }
   };
 
-  const fetchTopicsBySubject = async (subjectId) => {
+  const fetchTopicsBySubject = async (subjectId, search = '') => {
     try {
       setTopicsLoading(true);
-      const response = await phetApi.getTopicsBySubject(subjectId);
+      const response = await phetApi.getTopicsBySubject(subjectId, { search });
       setTopics(response || []);
     } catch (error) {
       // console.error('Error fetching topics:', error);

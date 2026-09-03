@@ -605,6 +605,7 @@ const AlcManager = () => {
                   <ShowTourGuideButton />
                 </Box>
               }
+               sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
             >
               <Box sx={{ mb: 3 }} data-tour="acl-role-filter">
                 <Stack
@@ -652,7 +653,6 @@ const AlcManager = () => {
                       size="small"
                       color="primary"
                       onClick={handleApplySearch}
-                      sx={{ px: 2.5, height: 40 }}
                     >
                       Search
                     </Button>
@@ -664,7 +664,6 @@ const AlcManager = () => {
                         size="small"
                         startIcon={<IconX size={16} />}
                         onClick={handleClearFilters}
-                        sx={{ height: 40, px: 2, textTransform: 'none' }}
                       >
                         Clear Filter
                       </Button>
@@ -688,7 +687,6 @@ const AlcManager = () => {
                           setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
                           setNewRoleModalOpen(true);
                         }}
-                        sx={{ height: 40, px: 2.5, textTransform: 'none' }}
                       >
                         New Role
                       </Button>
@@ -701,7 +699,6 @@ const AlcManager = () => {
                       startIcon={<ExportIcon fontSize="small" />}
                       endIcon={<ArrowDropDownIcon />}
                       onClick={(e) => setExportAnchorEl(e.currentTarget)}
-                      sx={{ height: 40, px: 2, textTransform: 'none' }}
                     >
                       Export
                     </Button>
@@ -727,7 +724,7 @@ const AlcManager = () => {
 
               <Box data-tour="acl-role-table">
                 <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                  <Table>
+                  <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>

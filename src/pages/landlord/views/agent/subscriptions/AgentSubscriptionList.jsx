@@ -80,6 +80,7 @@ const AgentSubscriptionList = ({ status }) => {
 
   // Discount modal state
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountRow, setDiscountRow] = useState(null);
   const [discountValue, setDiscountValue] = useState(0);
   const [discountSaving, setDiscountSaving] = useState(false);
 
@@ -151,21 +152,22 @@ const AgentSubscriptionList = ({ status }) => {
 
   // ── Discount Modal ───────────────────────────────────────────────────────
   const handleOpenDiscount = (row) => {
-    setSelectedRow(row);
+    setDiscountRow(row);
     setDiscountValue(row.discount || 0);
     setDiscountModalOpen(true);
     handleMenuClose();
   };
 
   const handleSaveDiscount = async () => {
-    if (!selectedRow) return;
+    if (!discountRow) return;
     setDiscountSaving(true);
     try {
-      await axios.patch(`/v1/landlord/subscriptions/${selectedRow.id}/discount`, {
+      await axios.patch(`/v1/landlord/subscriptions/${discountRow.id}/discount`, {
         discount: parseInt(discountValue, 10),
       });
       notify.success('Discount updated successfully');
       setDiscountModalOpen(false);
+      setDiscountRow(null);
       fetchSubscriptions();
     } catch (error) {
       console.error('Error updating discount:', error);
@@ -456,7 +458,7 @@ const AgentSubscriptionList = ({ status }) => {
             variant="contained"
             size="small"
             color="inherit"
-            onClick={() => setDiscountModalOpen(false)}
+            onClick={() => { setDiscountModalOpen(false); setDiscountRow(null); }}
             disabled={discountSaving}
           >
             Cancel

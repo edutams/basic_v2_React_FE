@@ -594,6 +594,8 @@ const AssignmentManagement = () => {
             <ShowTourGuideButton />
           </Box>
         }
+               sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+
       >
 
         <Grid container spacing={1.5} mb={3} alignItems="center">
@@ -666,14 +668,14 @@ const AssignmentManagement = () => {
           )}
 
           <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40, px: 2 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} >
               Search
             </Button>
           </Grid>
 
           {hasFilters && (
             <Grid size="auto">
-              <Button variant="outlined" color="error" size="small" onClick={resetFilters} sx={{ height: 40, px: 2 }}>
+              <Button variant="outlined" color="error" size="small" onClick={resetFilters} >
                 Clear Filters
               </Button>
             </Grid>
@@ -687,7 +689,7 @@ const AssignmentManagement = () => {
               startIcon={<ExportIcon fontSize="small" />}
               endIcon={<ArrowDropDownIcon />}
               onClick={(e) => setExportAnchorEl(e.currentTarget)}
-              sx={{ height: 40, px: 2, textTransform: 'none', fontWeight: 600 }}
+              
             >
               Export
             </Button>
@@ -711,7 +713,7 @@ const AssignmentManagement = () => {
         <Box sx={{ p: 0 }}>
           {/* <Paper> */}
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 750 }}>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>

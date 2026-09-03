@@ -11,7 +11,7 @@ const getModalStyle = (size = 'medium', customStyle = {}, theme) => {
     transform: 'translate(-50%, -50%)',
     bgcolor: theme?.palette?.background?.paper || '#F1F4F6',
     boxShadow: 24,
-    p: 4,
+    p: 3,
     maxHeight: '90vh',
     overflowY: 'auto',
     borderRadius: 2,
@@ -89,11 +89,11 @@ const ReusableModal = ({
               </Typography>
             )}
             {title && (
-              <Typography variant="h6" mb={showDivider ? 2 : 3}>
+              <Typography variant="h6" mb={showDivider ? 1 : 2}>
                 {title}
               </Typography>
             )}
-            {showDivider && <Divider sx={{ mb: 2 }} />}
+            {showDivider && <Divider sx={{ mb: 1.5 }} />}
           </>
         )}
 

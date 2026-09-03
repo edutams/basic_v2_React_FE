@@ -53,8 +53,8 @@ const phetApi = {
   /**
    * @param {number|string} subjectId
    */
-  getTopicsBySubject: async (subjectId) => {
-    const response = await api.get(`v1/landlord/phet/subjects/${subjectId}/topics`);
+  getTopicsBySubject: async (subjectId, params = {}) => {
+    const response = await api.get(`v1/landlord/phet/subjects/${subjectId}/topics`, { params });
     return response.data.data;
   },
 

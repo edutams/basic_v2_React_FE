@@ -588,7 +588,7 @@ const EduTier = () => {
               </Tabs>
             </Box>
             <Divider />
-            <CardContent>
+            <CardContent sx={{ p: 0 }}>
               {availableTabs.map((tab, idx) => (
                 <TabPanel key={tab.id} value={value} index={idx}>
                   {tab.component}

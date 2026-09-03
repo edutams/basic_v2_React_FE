@@ -443,8 +443,20 @@ const AgentSubscriptionList = ({ status }) => {
             label="Discount"
             value={discountValue}
             onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              if (val >= 0 && val <= 100) setDiscountValue(val);
+              const raw = e.target.value;
+              if (raw === '' || raw === '-') {
+                setDiscountValue(raw);
+                return;
+              }
+              const val = parseInt(raw, 10);
+              if (!isNaN(val) && val >= 0 && val <= 100) {
+                setDiscountValue(val);
+              }
+            }}
+            onBlur={() => {
+              if (discountValue === '' || discountValue === '-' || isNaN(Number(discountValue))) {
+                setDiscountValue(0);
+              }
             }}
             inputProps={{ min: 0, max: 100, sx: { textAlign: 'center', fontWeight: 600 } }}
             InputProps={{

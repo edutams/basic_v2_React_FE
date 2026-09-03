@@ -3,6 +3,7 @@ import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import ImpersonationBar from './vertical/header/ImpersonationBar';
+import SubscriptionBanner from './vertical/header/SubscriptionBanner';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../landlord/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
@@ -34,9 +35,12 @@ const PageWrapper = styled('div')(({ theme }) => ({
 const SchoolLayout = () => {
   // const { isCollapse } = useContext(CustomizerContext);
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
-  const { isImpersonated } = useContext(TenantAuthContext);
+  const { isImpersonated, subscriptionStatus } = useContext(TenantAuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
+
+  const subscriptionTier = subscriptionStatus?.tier;
+  const showSubscriptionBanner = subscriptionTier && subscriptionTier !== 'active';
 
   return (
     <>
@@ -51,7 +55,11 @@ const SchoolLayout = () => {
             flexDirection: 'column',
             minHeight: '100vh',
             ...(activeLayout === 'vertical' && {
-              paddingTop: `${config.topbarHeight + (isImpersonated ? config.impersonationBarHeight : 0)}px`,
+              paddingTop: `${
+                config.topbarHeight +
+                (isImpersonated ? config.impersonationBarHeight : 0) +
+                (showSubscriptionBanner ? config.subscriptionBannerHeight : 0)
+              }px`,
             }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
@@ -64,6 +72,7 @@ const SchoolLayout = () => {
             <>
               <SchoolHeader />
               <ImpersonationBar />
+              <SubscriptionBanner />
             </>
           )}
 

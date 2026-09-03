@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -45,6 +45,7 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
 const MultipleArmView = () => {
   const notify = useNotification();
@@ -71,10 +72,21 @@ const MultipleArmView = () => {
   const [meta, setMeta] = useState(null);
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
+  // The tenant's actually-running session-term (getActiveSessionTerm() on
+  // the backend) — Session.status/is_current is a separate, independent
+  // flag that can point at a different session than what's really active
+  // (see SessionManagementController::toggleSessionStatus), so it must
+  // never be used to pick this filter's default.
+  const activeSessionTermRef = useRef(null);
+
   useEffect(() => {
     const load = async () => {
       try {
-        const [sessRes, progRes] = await Promise.all([fetchSessions(), fetchProgrammes()]);
+        const [sessRes, progRes, activeRes] = await Promise.all([
+          fetchSessions(),
+          fetchProgrammes(),
+          fetchActiveTenantSessionTerm(),
+        ]);
         const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
           ? sessRes.data?.data || sessRes.data
           : [];
@@ -85,11 +97,15 @@ const MultipleArmView = () => {
         setSessions(sessionsData);
         setProgrammes(programmesData);
 
-        const activeSess =
-          sessionsData.find((s) => s.status === 'active' || s.is_current || s.is_active) ||
+        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+        activeSessionTermRef.current = activeSessionTerm;
+
+        const defaultSession =
+          (activeSessionTerm &&
+            sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
           sessionsData[0];
-        if (activeSess) {
-          setSession(activeSess.id);
+        if (defaultSession) {
+          setSession(defaultSession.id);
         }
       } catch (error) {
         console.error('Failed to load filter data:', error);
@@ -106,9 +122,11 @@ const MultipleArmView = () => {
           ? res.data?.data || res.data
           : [];
         setTerms(termsData);
-        const activeTerm =
-          termsData.find((t) => t.status === 'active' || t.is_current || t.is_active) ||
-          termsData[0];
+
+        const activeSessionTerm = activeSessionTermRef.current;
+        const activeTermId =
+          activeSessionTerm?.session_id === session ? activeSessionTerm.term_id : null;
+        const activeTerm = (activeTermId && termsData.find((t) => t.id === activeTermId)) || termsData[0];
         if (activeTerm) {
           setTerm(activeTerm.id);
         }

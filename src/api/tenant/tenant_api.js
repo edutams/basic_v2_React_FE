@@ -87,6 +87,15 @@ tenantApi.interceptors.response.use(
       }
     }
 
+    // Subscription-locked tenant: surface it app-wide the same way an
+    // expired auth token is — dispatch an event and let context state (and
+    // the layout banner / route guard reading it) react.
+    if (error.response?.status === 402) {
+      window.dispatchEvent(
+        new CustomEvent('tenant_subscription:locked', { detail: error.response.data }),
+      );
+    }
+
     return Promise.reject(error);
   },
 );

@@ -65,6 +65,7 @@ import {
   fetchSessions,
   fetchSessionTermsBySession,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchAdmissionBatches,
   toggleAdmissionBatchStatus,
@@ -276,12 +277,19 @@ const AdmissionSetup = () => {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const res = await fetchSessions();
+      // getActiveSessionTerm() on the backend is the source of truth for
+      // "what's actually running" — Session order/position tells you
+      // nothing about that, so it must never drive this default.
+      const [res, activeRes] = await Promise.all([fetchSessions(), fetchActiveTenantSessionTerm()]);
       const list = extractList(res);
       setSessions(list);
       if (list.length > 0) {
-        setSelectedSessionId(list[0].id);
-        await loadSessionTerms(list[0].id);
+        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+        const defaultSession =
+          (activeSessionTerm && list.find((s) => s.id === activeSessionTerm.session_id)) ||
+          list[0];
+        setSelectedSessionId(defaultSession.id);
+        await loadSessionTerms(defaultSession.id, activeSessionTerm);
       }
     } catch (err) {
       console.error('Failed to load sessions', err);
@@ -291,12 +299,17 @@ const AdmissionSetup = () => {
     }
   };
 
-  const loadSessionTerms = async (sessionId) => {
+  const loadSessionTerms = async (sessionId, activeSessionTerm = null) => {
     try {
       const res = await fetchSessionTermsBySession(sessionId);
       const session_terms = extractList(res);
       setSessionTerms(session_terms);
-      const selected = session_terms[0] ?? null;
+      const selected =
+        (activeSessionTerm &&
+          activeSessionTerm.session_id === sessionId &&
+          session_terms.find((st) => st.id === activeSessionTerm.id)) ||
+        session_terms[0] ||
+        null;
       if (selected) {
         setSelectedSessionTermId(selected.id);
         setSelectedSessionTermLabel(

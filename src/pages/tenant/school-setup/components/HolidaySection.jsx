@@ -40,7 +40,11 @@ import {
 import ParentCard from '@/components/shared/ParentCard';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent, useAclTour } from '@/context/AclTourContext';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchTenantSessions,
+  fetchSessionTerms,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchHolidays,
   createHolidays,
@@ -48,6 +52,19 @@ import {
   fetchHolidayStatistics,
 } from '@/api/tenant/holidays/holidayApi';
 import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
+
+// Local-safe "YYYY-MM-DD" formatter — new Date('2026-08-31') parses as UTC
+// midnight, which can shift a day off in some timezones when re-formatted;
+// this reads the components directly instead.
+const formatIsoDate = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
@@ -133,6 +150,10 @@ const HolidaySectionInner = ({ refreshKey }) => {
   const isDark = theme.palette.mode === 'dark';
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
+  // The session-term actually running the school right now (getActiveSessionTerm()
+  // on the backend) — used only to pick sensible defaults below; the filters
+  // themselves can still browse to any session/term.
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedTermId, setSelectedTermId] = useState('');
   const [selectedTermLabel, setSelectedTermLabel] = useState('');
@@ -186,15 +207,26 @@ const HolidaySectionInner = ({ refreshKey }) => {
     return () => clearTimeout(timer);
   }, [statistics, startTour]);
 
-  // Load sessions on mount and when refreshKey changes
+  // Load every session (the filter can browse any of them) on mount and when
+  // refreshKey changes, and separately resolve which session-term is actually
+  // running the school right now — that's what decides the *default*
+  // selection, not which Session row happens to be flagged active (that flag
+  // is independent and can lag behind, see SessionManagementController).
   useEffect(() => {
     const loadSessions = async () => {
       try {
         setLoading(true);
-        const res = await fetchCurrentSession();
-        if (res.status && res.data.length > 0) {
-          setSessions(res.data);
-          setSelectedSessionId(res.data[0].id);
+        const [sessionsRes, activeRes] = await Promise.all([
+          fetchTenantSessions({ page: 1, per_page: 1000 }),
+          fetchActiveTenantSessionTerm(),
+        ]);
+
+        const activeTerm = activeRes.status ? activeRes.data : null;
+        setActiveSessionTermId(activeTerm?.id ?? null);
+
+        if (sessionsRes.status && sessionsRes.data.length > 0) {
+          setSessions(sessionsRes.data);
+          setSelectedSessionId(activeTerm?.session_id ?? sessionsRes.data[0].id);
         }
       } catch {
         showSnackbar('Failed to load sessions', 'error');
@@ -215,7 +247,8 @@ const HolidaySectionInner = ({ refreshKey }) => {
           const terms = res.data;
           setSessionTerms(terms);
           if (terms.length > 0) {
-            const defaultTerm = terms.find((t) => t.status === 'active') || terms[0];
+            const defaultTerm =
+              terms.find((t) => t.session_term_id === activeSessionTermId) || terms[0];
             setSelectedTermId(defaultTerm.session_term_id);
             setSelectedTermLabel(defaultTerm.display_name || defaultTerm.term_name);
           } else {
@@ -229,7 +262,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
       }
     };
     loadTerms();
-  }, [selectedSessionId, refreshKey]);
+  }, [selectedSessionId, activeSessionTermId, refreshKey]);
 
   // Load holidays when term changes
   useEffect(() => {
@@ -563,7 +596,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
                 <Box
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
                     gap: 2,
                   }}
                 >
@@ -637,6 +670,28 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     >
                       {statistics.holiday_days_used} of {statistics.holiday_days_allocated} days
                       used
+                    </Typography>
+                  </Box>
+                  {/* Upcoming holiday days still ahead in the term */}
+                  <Box data-tour="holiday-analytics">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
+                    >
+                      Upcoming
+                    </Typography>
+                    <Typography variant="h4" fontWeight={800} sx={{ color: heroAccent(2) }}>
+                      {statistics.upcoming_holiday_days ?? 0}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ mt: 0.5 }}
+                    >
+                      holiday days still ahead
                     </Typography>
                   </Box>
                 </Box>
@@ -798,8 +853,9 @@ const HolidaySectionInner = ({ refreshKey }) => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {termDateRange ? (
               <Alert severity="info" sx={{ py: 0.5 }}>
-                Dates must be within the term calendar: <strong>{termDateRange.start_date}</strong>{' '}
-                → <strong>{termDateRange.end_date}</strong>
+                Dates must be within the term calendar:{' '}
+                <strong>{formatIsoDate(termDateRange.start_date)}</strong>{' '}
+                → <strong>{formatIsoDate(termDateRange.end_date)}</strong>
               </Alert>
             ) : (
               <Alert severity="warning" sx={{ py: 0.5 }}>

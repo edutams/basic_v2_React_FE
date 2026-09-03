@@ -7,6 +7,7 @@ import {
   fetchGenerateInvoiceStats,
   fetchInvoiceStudentCounts,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import {
   Box,
   Typography,
@@ -87,11 +88,22 @@ const GenerateInvoiceTab = ({
     const loadSessions = async () => {
       try {
         setLoadingSessions(true);
-        const res = await fetchBursarySessionTerms();
+        // fetchBursarySessionTerms() is ordered newest-first — that's "most
+        // recently created", not "actually active". Default off
+        // getActiveSessionTerm() instead, same single source of truth every
+        // other picker in the app uses.
+        const [res, activeRes] = await Promise.all([
+          fetchBursarySessionTerms(),
+          fetchActiveTenantSessionTerm(),
+        ]);
         const list = Array.isArray(res?.data) ? res.data : [];
         setSessions(list);
         if (list.length > 0) {
-          setSelectedSessionTermId(list[0].id);
+          const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+          const defaultItem =
+            (activeSessionTerm && list.find((item) => item.id === activeSessionTerm.id)) ||
+            list[0];
+          setSelectedSessionTermId(defaultItem.id);
         }
       } catch (err) {
         console.error('Failed to load session terms', err);

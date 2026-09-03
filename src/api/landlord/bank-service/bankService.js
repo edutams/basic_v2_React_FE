@@ -10,7 +10,9 @@ export const saveBankService = async (data) => {
     return res.data;
 };
 
-export const fetchSkoolPayBanks = async () => {
-    const res = await api.get('/v1/landlord/bank_service/fetch_skoolpay_banks');
+export const fetchSkoolPayBanks = async (organizationId) => {
+    const res = await api.get('/v1/landlord/bank_service/fetch_skoolpay_banks', {
+        params: { organization_id: organizationId },
+    });
     return res.data;
 };

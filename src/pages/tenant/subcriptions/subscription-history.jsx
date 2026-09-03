@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -19,6 +19,7 @@ import {
   Menu,
   MenuItem,
   Alert,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -29,83 +30,50 @@ import {
 
 import ParentCard from '@/components/shared/ParentCard';
 import ReceiptModal from '@/components/shared/subcription/ReceiptModal';
-
-// Dummy transaction data
-const DUMMY_TRANSACTIONS = [
-  {
-    id: 1,
-    transactionId: 'TXN-2024-001',
-    paymentDescription: 'OBASIC++ Subscription - 2023/2024 First Term',
-    amount: '155,000',
-    gatewaycharges: '500',
-    amountdue: '155,500',
-    transactionDate: '2024-01-15',
-    status: 'approved',
-  },
-  {
-    id: 2,
-    transactionId: 'TXN-2024-002',
-    paymentDescription: 'Gateway Charges',
-    amount: '500',
-    gatewaycharges: '0',
-    amountdue: '500',
-    transactionDate: '2024-01-15',
-    status: 'approved',
-  },
-  {
-    id: 3,
-    transactionId: 'TXN-2024-003',
-    paymentDescription: 'OBASIC++ Subscription - 2023/2024 Second Term',
-    amount: '205,000',
-    gatewaycharges: '500',
-    amountdue: '205,500',
-    transactionDate: '2024-02-20',
-    status: 'pending',
-  },
-  {
-    id: 4,
-    transactionId: 'TXN-2024-004',
-    paymentDescription: 'Gateway Charges',
-    amount: '500',
-    gatewaycharges: '0',
-    amountdue: '500',
-    transactionDate: '2024-02-20',
-    status: 'pending',
-  },
-  {
-    id: 5,
-    transactionId: 'TXN-2024-005',
-    paymentDescription: 'OBASIC++ Subscription - 2023/2024 Third Term',
-    amount: '205,000',
-    gatewaycharges: '500',
-    amountdue: '205,500',
-    transactionDate: '2024-04-10',
-    status: 'approved',
-  },
-  {
-    id: 6,
-    transactionId: 'TXN-2024-006',
-    paymentDescription: 'Deployment/Training Fee',
-    amount: '50,000',
-    gatewaycharges: '0',
-    amountdue: '50,000',
-    transactionDate: '2024-04-10',
-    status: 'approved',
-  },
-];
+import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
 
 const SubscriptionHistory = () => {
   return <SubscriptionHistoryList />;
 };
 
 const SubscriptionHistoryList = () => {
-  const [transactions, setTransactions] = useState(DUMMY_TRANSACTIONS);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+
+  const fetchHistory = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await subscriptionApi.getHistory({
+        page: page + 1,
+        per_page: rowsPerPage,
+        search: searchTerm || undefined,
+      });
+      if (res.status) {
+        setTransactions(res.data);
+        setTotalRows(res.meta?.total || 0);
+      } else {
+        setError(res.message || 'Failed to fetch history');
+      }
+    } catch (err) {
+      console.error('Failed to fetch subscription history', err);
+      setError(err.response?.data?.message || 'Failed to fetch subscription history');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, rowsPerPage, searchTerm]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -118,11 +86,10 @@ const SubscriptionHistoryList = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter(
-    (transaction) =>
-      transaction.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.paymentDescription.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setPage(0);
+  };
 
   const handleMenuOpen = (event, transaction) => {
     setAnchorEl(event.currentTarget);
@@ -152,7 +119,7 @@ const SubscriptionHistoryList = () => {
             placeholder="Search by transaction ID or description..."
             value={searchTerm}
             size="small"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -185,19 +152,35 @@ const SubscriptionHistoryList = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction, index) => (
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(9)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width="80%" height={24} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={9} align="center">
+                      <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+                    </TableCell>
+                  </TableRow>
+                ) : transactions.length > 0 ? (
+                  transactions.map((transaction, index) => (
                     <TableRow key={transaction.id} hover>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{transaction.transactionId}</TableCell>
-                      <TableCell>{transaction.paymentDescription}</TableCell>
-                      <TableCell>{transaction.amount}</TableCell>
-                      <TableCell>{transaction.gatewaycharges}</TableCell>
-                      <TableCell>{transaction.amountdue}</TableCell>
-                      <TableCell>{transaction.transactionDate}</TableCell>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>{transaction.transaction_id}</TableCell>
+                      <TableCell>{transaction.payment_description}</TableCell>
+                      <TableCell>{parseFloat(transaction.amount || 0).toLocaleString()}</TableCell>
+                      <TableCell>{parseFloat(transaction.gateway_charges || 0).toLocaleString()}</TableCell>
+                      <TableCell>{parseFloat(transaction.amount_due || transaction.amount || 0).toLocaleString()}</TableCell>
+                      <TableCell>{transaction.transaction_date ? new Date(transaction.transaction_date).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <Chip
-                          label={transaction.status.toUpperCase()}
+                          label={(transaction.status || 'pending').toUpperCase()}
                           size="small"
                           color={getStatusColor(transaction.status)}
                           sx={{
@@ -222,24 +205,17 @@ const SubscriptionHistoryList = () => {
                           open={Boolean(anchorEl) && selectedTransaction?.id === transaction.id}
                           onClose={handleMenuClose}
                         >
-                          {transaction.status === 'pending' ? (
-                            <>
-                              <MenuItem onClick={() => handleUpdateStatus(transaction)}>
-                                <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
-                                Update Status
-                              </MenuItem>
-                            </>
-                          ) : (
-                            <>
-                              <MenuItem onClick={() => handleUpdateStatus(transaction)}>
-                                <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
-                                Update Status
-                              </MenuItem>
-                              <MenuItem onClick={() => handlePrintReceipt(transaction)}>
-                                <PrintIcon fontSize="small" sx={{ mr: 1 }} />
-                                Print Receipt
-                              </MenuItem>
-                            </>
+                          {transaction.status !== 'approved' && (
+                            <MenuItem onClick={() => handleUpdateStatus(transaction)}>
+                              <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
+                              Update Status
+                            </MenuItem>
+                          )}
+                          {transaction.status === 'approved' && (
+                            <MenuItem onClick={() => handlePrintReceipt(transaction)}>
+                              <PrintIcon fontSize="small" sx={{ mr: 1 }} />
+                              Print Receipt
+                            </MenuItem>
                           )}
                         </Menu>
                       </TableCell>
@@ -258,6 +234,18 @@ const SubscriptionHistoryList = () => {
             </Table>
           </TableContainer>
         </Paper>
+        <TablePagination
+          component="div"
+          count={totalRows}
+          page={page}
+          onPageChange={(event, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+        />
       </Box>
       <ReceiptModal
         open={receiptModalOpen}

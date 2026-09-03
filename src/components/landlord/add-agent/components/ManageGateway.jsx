@@ -42,8 +42,10 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
 
   useEffect(() => {
     loadGateways();
-    loadBanks();
-  }, []);
+    if (selectedAgent?.id) {
+      loadBanks(selectedAgent.id);
+    }
+  }, [selectedAgent?.id]);
 
   useEffect(() => {
     if (selectedAgent && gateways.length > 0) {
@@ -67,10 +69,10 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
     }
   };
 
-  const loadBanks = async () => {
+  const loadBanks = async (orgId) => {
     setBanksLoading(true);
     try {
-      const res = await fetchSkoolPayBanks();
+      const res = await fetchSkoolPayBanks(orgId);
       setBanks(res.data?.result || []);
     } catch {
       // fallback silently

@@ -145,6 +145,15 @@ const subscriptionApi = {
     return response.data;
   },
 
+  /**
+   * Get subscription transaction history
+   * @param {Object} params - { status, search, per_page, page }
+   */
+  getHistory: async (params = {}) => {
+    const response = await tenantApi.get('/subscriptions/history', { params });
+    return response.data;
+  },
+
   };
 
 export default subscriptionApi;

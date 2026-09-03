@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {
   Box,
   Table,
@@ -13,19 +13,13 @@ import {
   TextField,
   Stack,
   Chip,
+  Avatar,
 } from '@mui/material';
 import { Print as PrintIcon, Download as DownloadIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PropTypes from 'prop-types';
-import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.jpeg';
 import useNotification from '@/hooks/useNotification';
-
-const SCHOOL_INFO = {
-  name: 'Tai Solarin University of Education Secondary School',
-  address: 'Igbeba Road, Ijebu Ode',
-  phone: '2348140304580',
-  email: 'support@edutams.com',
-};
+import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -41,6 +35,12 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const [extendDate, setExtendDate] = useState('');
   const [extendLoading, setExtendLoading] = useState(false);
   const notify = useNotification();
+  const { tenantInfo } = useContext(TenantAuthContext);
+
+  const schoolName = tenantInfo?.tenant_name || tenantInfo?.school_name || tenantInfo?.name || '';
+  const schoolAddress = tenantInfo?.address || '';
+  const schoolPhone = tenantInfo?.phone || '';
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
 
   const planData = useMemo(() => {
     if (!selectedRow?.plans?.data) return {};
@@ -98,56 +98,34 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
         disableAutoFocus
       >
         <Box sx={{ p: 2 }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Box
-              component="img"
-              src={EduTAMSLogo}
-              alt="School Logo"
-              sx={{
-                width: 80,
-                height: 80,
-                objectFit: 'contain',
-                borderRadius: 1,
-                border: '1px solid #eee',
-                mb: 2,
-              }}
-            />
-
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a237e', mb: 0.5 }}>
-              {SCHOOL_INFO.name}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {SCHOOL_INFO.address}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Phone: {SCHOOL_INFO.phone}
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              mb: 3,
-              p: 2,
-              bgcolor: '#f8f9fa',
-              borderRadius: 1,
-            }}
-          >
-            <Box>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Invoice Date:</strong> {new Date().toLocaleDateString('en-GB')}
+          {/* Header */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            {schoolLogo && (
+              <Avatar
+                src={schoolLogo}
+                alt={schoolName}
+                variant="rounded"
+                sx={{ width: 56, height: 56, flexShrink: 0 }}
+              />
+            )}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                <strong>School Name:</strong> {schoolName || 'N/A'}
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Session/Term:</strong> {sessionTerm}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <strong>Plan:</strong> {planDescription}
-              </Typography>
+              {schoolAddress && (
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Address:</strong> {schoolAddress}
+                </Typography>
+              )}
+              {schoolPhone && (
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Phone:</strong> {schoolPhone}
+                </Typography>
+              )}
             </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                <strong>Status:</strong>{' '}
+            <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                <strong>Invoice Status:</strong>
               </Typography>
               <Chip
                 label={selectedRow?.status?.toUpperCase() || 'PENDING'}
@@ -158,8 +136,28 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
             </Box>
           </Box>
 
-          <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 2 }} />
 
+          {/* Invoice Info */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, gap: 2 }}>
+            <Box>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Invoice Date:</strong> {new Date().toLocaleDateString('en-GB')}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Session/Term:</strong> {sessionTerm}
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Plan:</strong> {planDescription}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Invoice Table */}
           <TableContainer>
             <Table sx={{ minWidth: 650 }} size="small">
               <TableHead>
@@ -202,20 +200,10 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
                 )}
 
                 <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                  <TableCell
-                    colSpan={4}
-                    sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem' }}
-                  >
+                  <TableCell colSpan={4} sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem' }}>
                     TOTAL AMOUNT (₦)
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: 'right',
-                      fontWeight: 'bold',
-                      fontSize: '1rem',
-                      color: '#1a237e',
-                    }}
-                  >
+                  <TableCell sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', color: '#1a237e' }}>
                     ₦{totalAmount.toLocaleString()}
                   </TableCell>
                 </TableRow>
@@ -223,9 +211,10 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
             </Table>
           </TableContainer>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 2 }} />
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
             <Button
               variant="outlined"
               size="small"
@@ -238,10 +227,7 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
             <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
               Download
             </Button>
-            <Button variant="contained" size="small" startIcon={<PrintIcon />}
-              onClick={handlePrint}
-              sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}
-            >
+            <Button variant="contained" size="small" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}>
               Print Invoice
             </Button>
           </Box>

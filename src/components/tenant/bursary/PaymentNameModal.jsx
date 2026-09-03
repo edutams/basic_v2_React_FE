@@ -20,7 +20,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
     name: '',
     pay_type: 'bursary',
     pay_option: 'compulsory',
-    application_stage: 'pre-application',
+    application_stage: null,
     bank: '',
     account_number: '',
     fee_bearer: 'school',
@@ -53,7 +53,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           name: '',
           pay_type: 'bursary',
           pay_option: 'compulsory',
-          application_stage: 'pre-application',
+          application_stage: null,
           bank: '',
           account_number: '',
           fee_bearer: 'client',
@@ -117,7 +117,14 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await onSave(formData);
+      // application_stage only ever means something for an admission-type
+      // payment name — the field is hidden for bursary, but formData still
+      // carries whatever it was last set to, so it must be cleared here
+      // regardless of how it got that way.
+      await onSave({
+        ...formData,
+        application_stage: formData.pay_type === 'admission' ? formData.application_stage : null,
+      });
     } finally {
       setLoading(false);
     }
@@ -156,9 +163,22 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               onChange={(e) => {
                 const newPayType = e.target.value;
                 handleChange('pay_type')(e);
-                // Auto-set pay_option to compulsory when admission is selected
                 if (newPayType === 'admission') {
-                  setFormData((prev) => ({ ...prev, pay_type: newPayType, pay_option: 'compulsory' }));
+                  // Auto-set pay_option to compulsory when admission is
+                  // selected, and give application_stage a real default —
+                  // it's a controlled <TextField select>, so it can't be
+                  // left null once its field becomes visible.
+                  setFormData((prev) => ({
+                    ...prev,
+                    pay_type: newPayType,
+                    pay_option: 'compulsory',
+                    application_stage: prev.application_stage || 'pre-application',
+                  }));
+                } else {
+                  // application_stage is only meaningful for admission — clear
+                  // it now rather than leaving a stale value sitting hidden
+                  // in state until submit time.
+                  setFormData((prev) => ({ ...prev, pay_type: newPayType, application_stage: null }));
                 }
               }}
               helperText={

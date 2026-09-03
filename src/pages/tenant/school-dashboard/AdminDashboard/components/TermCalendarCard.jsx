@@ -1,4 +1,12 @@
-import { Box, Typography, Paper, LinearProgress, Button, useTheme, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  LinearProgress,
+  Button,
+  useTheme,
+  CircularProgress,
+} from '@mui/material';
 import { CalendarMonth, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,7 +54,15 @@ const TermCalendarCard = ({
       ) : (
         <Box>
           {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              mb: 2,
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CalendarMonth sx={{ fontSize: 18, color: '#2563eb' }} />
               <Typography
@@ -62,7 +78,8 @@ const TermCalendarCard = ({
               </Typography>
             </Box>
             <Button
-              size='small'
+              size="small"
+              variant="contained"
               onClick={handleViewCalendar}
               endIcon={<ArrowForward sx={{ fontSize: '14px !important' }} />}
               sx={{ fontSize: '12px' }}
@@ -217,7 +234,14 @@ const TermCalendarCard = ({
 
           {/* Progress Bar */}
           <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 0.75,
+              }}
+            >
               <Typography
                 sx={{
                   fontSize: '12px',

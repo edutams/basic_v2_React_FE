@@ -21,16 +21,16 @@ const MainWrapper = styled('div')(() => ({
   overflowX: 'auto',
 }));
 
-const PageWrapper = styled('div')(() => ({
-  display: 'flex',
-  flexGrow: 1,
-  // paddingBottom: '60px',
-  flexDirection: 'column',
-  zIndex: 1,
-  // backgroundColor: 'transparent',
-  backgroundColor: '#e4e4e4a9',
-  overflowX: 'auto',
-}));
+// const PageWrapper = styled('div')(({ theme }) => ({
+//   display: 'flex',
+//   flexGrow: 1,
+//   // paddingBottom: '60px',
+//   flexDirection: 'column',
+//   zIndex: 1,
+//   // backgroundColor: 'transparent',
+//   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#e4e4e4a9',
+//   overflowX: 'auto',
+// }));
 
 const FullLayout = () => {
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);

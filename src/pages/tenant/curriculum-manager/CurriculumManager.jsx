@@ -144,7 +144,7 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
         </Box>
 
         {/* CONTENT */}
-        <ParentCard>
+        <Box>
           <TabPanel value={tab} index={0}>
             <CurriculumSetup />
           </TabPanel>
@@ -156,7 +156,7 @@ const CurriculumManagerContent = ({ tab, setTab }) => {
           <TabPanel value={tab} index={2}>
             <ClassSubject />
           </TabPanel>
-        </ParentCard>
+        </Box>
       </Box>
     </PageContainer>
   );

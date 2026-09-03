@@ -546,12 +546,12 @@ const SubjectBank = () => {
   }, [subjectSearch]);
   return (
     <>
-      <Alert severity="info" sx={{ textAlign: "center" }}>Select curriculum to upload subjects</Alert>
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box>
               <ParentCard title={<Typography variant="h6" sx={{ fontWeight: 600 }}>Curriculum List</Typography>}>
+                <Alert severity="info" sx={{ textAlign: "center" }}>Select curriculum to upload subjects</Alert>
                 <TableContainer
                   sx={{
                     height: { xs: 220, md: 230 },

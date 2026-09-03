@@ -33,8 +33,17 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
   }, [subjects, learners]);
 
   return (
-    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-      <Table sx={{ minWidth: 900 }}>
+    <TableContainer elevation={0} variant="outlined" sx={{
+      borderRadius: 2, overflowX: 'auto', border: (theme) =>
+        theme.palette.mode === 'dark'
+          ? '1.5px solid rgba(255, 255, 255, 0.15)'
+          : '1.5px solid #cbd5e1',
+      boxShadow: (theme) =>
+        theme.palette.mode === 'dark'
+          ? '0 4px 16px rgba(0, 0, 0, 0.35)'
+          : '0 4px 16px rgba(15, 23, 42, 0.05)',
+    }}>
+      <Table sx={{ minWidth: 900 }} stickyHeader>
         <TableHead>
           <TableRow>
             <TableCell
@@ -42,10 +51,19 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 minWidth: 240,
                 fontWeight: 700,
                 ...(!isMobile && { position: 'sticky', left: 0 }),
-                bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
+                // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 ...(!isMobile && { zIndex: 2 }),
+                borderBottom: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.12)'
+                    : '2px solid #e2e8f0',
+
                 borderRight: '1px solid',
-                borderColor: 'divider',
+                borderRight: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.2)'
+                    : '2px solid #cbd5e1',
+                // borderColor: 'divider',
               }}
             >
               Learner's Name
@@ -56,8 +74,14 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 minWidth: 100,
                 fontWeight: 700,
                 ...(!isMobile && { position: 'sticky', left: 240 }),
-                bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
+                // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
+                bgcolor: isDark ? '#1e293b' : '#f8fafc',
+
                 ...(!isMobile && { zIndex: 2 }),
+                borderBottom: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.12)'
+                    : '2px solid #e2e8f0',
                 borderRight: '1px solid',
                 borderColor: 'divider',
               }}
@@ -65,7 +89,18 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               Registered
             </TableCell>
             {subjects.map((subj) => (
-              <TableCell key={subj.id} align="center" sx={{ minWidth: 140, verticalAlign: 'top', pt: 2 }}>
+              <TableCell key={subj.id} align="center" sx={{
+                minWidth: 140, verticalAlign: 'top', pt: 2,
+                bgcolor: isDark ? '#1e293b' : '#f8fafc',
+                borderBottom: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.12)'
+                    : '2px solid #e2e8f0',
+                borderLeft: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '2px solid rgba(255, 255, 255, 0.2)'
+                    : '2px solid #cbd5e1',
+              }}>
                 <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
                   {subj.subject_name || subj.name}
                 </Typography>
@@ -94,10 +129,15 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               <TableCell
                 sx={{
                   ...(!isMobile && { position: 'sticky', left: 0 }),
-                  bgcolor: 'background.paper',
+                  // bgcolor: 'background.paper',
+                  bgcolor: `${isDark ? '#1e293b' : '#f1f4f6'} !important`,
                   ...(!isMobile && { zIndex: 1 }),
                   borderRight: '1px solid',
-                  borderColor: 'divider',
+                  borderRight: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '2px solid rgba(255, 255, 255, 0.2)'
+                      : '2px solid #cbd5e1',
+                  // borderColor: 'divider',
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -116,7 +156,11 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   bgcolor: 'background.paper',
                   ...(!isMobile && { zIndex: 1 }),
                   borderRight: '1px solid',
-                  borderColor: 'divider',
+                  borderRight: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '2px solid rgba(255, 255, 255, 0.2)'
+                      : '2px solid #cbd5e1',
+                  // borderColor: 'divider',
                 }}
               >
                 <Typography variant="body2" fontWeight={600}>

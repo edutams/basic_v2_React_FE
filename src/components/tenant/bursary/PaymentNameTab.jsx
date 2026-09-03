@@ -190,7 +190,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           }
         >
           {/* Tabs for Bursary and Admission */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: -1.5 }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
               <Tab
                 label="Bursary Payments"
@@ -205,7 +205,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             </Tabs>
           </Box>
 
-          <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+          <Box display="flex" gap={1.5} alignItems="center" mb={2} flexWrap="wrap">
             <TextField
               placeholder="Search Payment Items"
               size="small"

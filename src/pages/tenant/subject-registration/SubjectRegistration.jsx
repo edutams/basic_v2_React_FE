@@ -445,7 +445,7 @@ const SubjectRegistration = () => {
       <Breadcrumb title="Subject Registration" items={BCrumb} />
 
       {/* ── Analytics Header ──────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="stretch">
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <AnalyticsStatCard
             icon={SubjectIcon}
@@ -488,98 +488,98 @@ const SubjectRegistration = () => {
         </Grid>
       </Grid>
 
-      {/* ── Filter Row ────────────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Session</InputLabel>
-            <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
-              {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.session_name || s.name || s.id}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Term</InputLabel>
-            <Select
-              value={pTerm}
-              label="Term"
-              onChange={(e) => {
-                const val = e.target.value;
-                setPTerm(val);
-                const term = terms.find((t) => t.id === val);
-                if (term) setPTermId(term.id);
-              }}
-            >
-              {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.term_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Programme</InputLabel>
-            <Select
-              value={pProgramme}
-              label="Programme"
-              onChange={(e) => setPProgramme(e.target.value)}
-            >
-              {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.programme_name || p.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Class</InputLabel>
-            <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
-              {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.class_name || c.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Arm</InputLabel>
-            <Select value={pArm} label="Arm" onChange={(e) => setPArm(e.target.value)}>
-              {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.class_arm_names}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <Button
-            variant="contained"
-            size="small"
-            fullWidth
-            startIcon={<FilterIcon />}
-            onClick={fetchStats}
-            sx={{ height: 40 }}
-          >
-            Filter
-          </Button>
-        </Grid>
-      </Grid>
-
       {/* ── Main Section ───────────────────────────────────────── */}
       <ParentCard title="Learners Subject Registration">
-        <Box sx={{ pt: 1 }}>
+        <Box>
+          {/* ── Filter Row ────────────────────────────────────────── */}
+          <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Session</InputLabel>
+                <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
+                  {sessions.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.session_name || s.name || s.id}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select
+                  value={pTerm}
+                  label="Term"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPTerm(val);
+                    const term = terms.find((t) => t.id === val);
+                    if (term) setPTermId(term.id);
+                  }}
+                >
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Programme</InputLabel>
+                <Select
+                  value={pProgramme}
+                  label="Programme"
+                  onChange={(e) => setPProgramme(e.target.value)}
+                >
+                  {programmes.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.programme_name || p.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Class</InputLabel>
+                <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
+                  {classes.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.class_name || c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Arm</InputLabel>
+                <Select value={pArm} label="Arm" onChange={(e) => setPArm(e.target.value)}>
+                  {arms.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>
+                      {a.class_arm_names}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Button
+                variant="contained"
+                size="small"
+                fullWidth
+                startIcon={<FilterIcon />}
+                onClick={fetchStats}
+                sx={{ height: 40 }}
+              >
+                Filter
+              </Button>
+            </Grid>
+          </Grid>
+
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
             <Tabs
               value={activeTab}

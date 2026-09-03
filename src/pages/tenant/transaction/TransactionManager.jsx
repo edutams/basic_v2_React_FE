@@ -80,7 +80,7 @@ const TransactionManager = () => {
     <PageContainer title="Online Transaction" description="This is the Online transaction">
       <Box sx={{ mt: 1 }}>
         <Breadcrumb title="Online Transaction" items={BCrumb} />
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
               label="Today"
@@ -121,7 +121,7 @@ const TransactionManager = () => {
         </Grid>
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: 2 }}>
         <Box
           sx={{
             mb: 3,

@@ -86,6 +86,7 @@ const ParentManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [classId, setClassId] = useState('');
 
@@ -114,6 +115,11 @@ const ParentManagement = () => {
   // view wards modal (read-only)
   const [viewWardsModalOpen, setViewWardsModalOpen] = useState(false);
   const [viewWardsGuardian, setViewWardsGuardian] = useState(null);
+
+  const handleApplySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(0);
+  };
 
   const fetchParents = useCallback(async () => {
     try {
@@ -297,6 +303,7 @@ const ParentManagement = () => {
   const hasFilters = search !== '' || classId !== '';
 
   const resetFilters = () => {
+    setSearchInput('');
     setSearch('');
     setClassId('');
     setPage(0);
@@ -314,7 +321,7 @@ const ParentManagement = () => {
       <Breadcrumb title="Parent Management" items={BCrumb} />
 
       {/* ── Stat Cards ── */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.total}
@@ -382,15 +389,13 @@ const ParentManagement = () => {
         }
       >
         {/* ── filters ── */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search by name, email or phone"
-            value={search}
+            value={searchInput}
             size="small"
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
             slotProps={{
               input: {
                 startAdornment: (
@@ -407,11 +412,20 @@ const ParentManagement = () => {
                 md: 350,
               },
             }}
-
           />
 
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleApplySearch}
+            sx={{ height: 40, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+          >
+            Search
+          </Button>
+
           {hasFilters && (
-            <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button variant="outlined" color="primary" size="small" onClick={resetFilters} sx={{ height: 40, width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
@@ -419,7 +433,7 @@ const ParentManagement = () => {
 
         <Box>
           <TableContainer>
-            <Table>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>

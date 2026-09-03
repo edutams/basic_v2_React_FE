@@ -48,6 +48,7 @@ import {
   importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchSendInvoiceStats } from '@/api/tenant/bursary/sendInvoiceApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -153,16 +154,26 @@ const PaymentShedule = () => {
     const loadSessionTerms = async () => {
       try {
         setLoadingSessions(true);
-        const res = await fetchBursarySessionTerms();
+        // fetchBursarySessionTerms() is ordered newest-first — that's "most
+        // recently created", not "actually active". Default off
+        // getActiveSessionTerm() (via fetchActiveTenantSessionTerm) instead,
+        // same single source of truth every other picker in the app uses.
+        const [res, activeRes] = await Promise.all([
+          fetchBursarySessionTerms(),
+          fetchActiveTenantSessionTerm(),
+        ]);
 
         const list = Array.isArray(res?.data) ? res.data : [];
         setSessions(list);
 
         if (list.length > 0) {
-          const firstItem = list[0];
-          setSelectedSessionTerm(firstItem.id);
-          setSelectedSession(firstItem.session_id);
-          setSelectedTerm(firstItem.term_id);
+          const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+          const defaultItem =
+            (activeSessionTerm && list.find((item) => item.id === activeSessionTerm.id)) ||
+            list[0];
+          setSelectedSessionTerm(defaultItem.id);
+          setSelectedSession(defaultItem.session_id);
+          setSelectedTerm(defaultItem.term_id);
         }
       } catch (err) {
         showSnackbar('Failed to load session terms', 'error');
@@ -438,10 +449,9 @@ const PaymentShedule = () => {
         items={BCrumb}
       />
 
-      {/* Dynamic Stats Cards based on active tab */}
       {actionTab === 0 && (
         // Set Schedule Stats
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={1}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper
               elevation={0}
@@ -488,6 +498,7 @@ const PaymentShedule = () => {
                     borderRadius: 1,
                     px: 3,
                     py: 2,
+                    mt: 3,
                     minWidth: 100,
                     textAlign: 'center',
                   }}
@@ -702,7 +713,7 @@ const PaymentShedule = () => {
 
       {actionTab === 1 && (
         // Generate Invoice Stats
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={1}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper
               elevation={0}
@@ -748,6 +759,7 @@ const PaymentShedule = () => {
                     borderRadius: 1,
                     px: 3,
                     py: 1.5,
+                    mt: 3.5,
                     minWidth: 80,
                     textAlign: 'center',
                   }}
@@ -921,7 +933,7 @@ const PaymentShedule = () => {
       )}
 
       {actionTab === 2 && (
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={1}>
           {sendInvoiceStats.map((stat, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
               <Paper
@@ -974,7 +986,7 @@ const PaymentShedule = () => {
         </Grid>
       )}
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Tabs
           value={actionTab}
           onChange={handleActionTabChange}

@@ -311,14 +311,6 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'calendar',
-        element: (
-          <TenantProtectedRoute permission="calendar.index">
-            <CalendarPage />
-          </TenantProtectedRoute>
-        ),
-      },
-      {
         path: 'pages/account-settings',
         element: (
           <TenantProtectedRoute anyOf={['dashboard.profile.view', 'dashboard.profile.edit']}>

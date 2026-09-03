@@ -5,6 +5,7 @@ import { validateTenantDomain } from '../../api/tenant/set-up/tenant-setup';
 import { CustomizerContext } from '../CustomizerContext';
 import tenantApi from '@/api/tenant/tenant_api';
 import impersonationApi from '@/api/tenant/impersonation/impersonationApi';
+import { fetchSubscriptionStatus } from '@/api/tenant/subscription/subscriptionApi';
 
 export const TenantAuthContext = createContext(undefined);
 
@@ -17,6 +18,7 @@ const defaultAuthState = {
   isImpersonated: false,
   impersonatorId: null,
   tenantInfo: null,
+  subscriptionStatus: null,
 };
 
 export const TenantAuthProvider = ({ children }) => {
@@ -29,6 +31,7 @@ export const TenantAuthProvider = ({ children }) => {
   const [isImpersonated, setIsImpersonated] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
   const [tenantInfo, setTenantInfo] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   const { setPrimaryColor } = useContext(CustomizerContext);
 
@@ -165,6 +168,19 @@ export const TenantAuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Resolved grace/lock tier for the tenant's active session-term — see
+  // SubscriptionStatusService on the backend. Safe to call even when the
+  // request itself gets a 402 (that's handled by the tenant_subscription:locked
+  // listener below), so failures here are logged and swallowed.
+  const refreshSubscriptionStatus = useCallback(async () => {
+    try {
+      const res = await fetchSubscriptionStatus();
+      setSubscriptionStatus(res.tier || null);
+    } catch (err) {
+      console.error('Failed to refresh subscription status', err);
+    }
+  }, []);
+
   const fetchTenantOnboardingInfo = useCallback(async () => {
     try {
       const res = await tenantApi.get('/school_setup/get_current_tenant');
@@ -173,10 +189,11 @@ export const TenantAuthProvider = ({ children }) => {
         setTenantInfo((prev) => ({ ...prev, ...freshData }));
       }
       await refreshTenantInfo();
+      await refreshSubscriptionStatus();
     } catch (err) {
       console.error('Failed to fetch tenant onboarding info', err);
     }
-  }, [refreshTenantInfo]);
+  }, [refreshTenantInfo, refreshSubscriptionStatus]);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -240,12 +257,34 @@ export const TenantAuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setIsImpersonated(false);
       setImpersonatorId(null);
+      setSubscriptionStatus(null);
       // TenantProtectedRoute will catch isAuthenticated: false
       // and redirect to /login with state={{ from: location }}
     };
 
     window.addEventListener('tenant_auth:expired', handleAuthExpired);
     return () => window.removeEventListener('tenant_auth:expired', handleAuthExpired);
+  }, []);
+
+  useEffect(() => {
+    // A 402 just told us, definitively, that the tier is locked — reflect
+    // that immediately rather than waiting for the next poll, so the banner
+    // and route guard react on the very request that got blocked.
+    const handleSubscriptionLocked = (event) => {
+      const detail = event.detail || {};
+      setSubscriptionStatus((prev) => ({
+        ...prev,
+        tier: 'locked',
+        message: detail.message,
+        due_date: detail.due_date ?? prev?.due_date ?? null,
+        session_name: detail.session_name ?? prev?.session_name ?? null,
+        term_name: detail.term_name ?? prev?.term_name ?? null,
+        audience: detail.audience,
+      }));
+    };
+
+    window.addEventListener('tenant_subscription:locked', handleSubscriptionLocked);
+    return () => window.removeEventListener('tenant_subscription:locked', handleSubscriptionLocked);
   }, []);
 
   const login = useCallback(async (credentials) => {
@@ -304,6 +343,7 @@ export const TenantAuthProvider = ({ children }) => {
 
       setUser(null);
       setIsAuthenticated(false);
+      setSubscriptionStatus(null);
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Logout failed';
@@ -396,6 +436,8 @@ export const TenantAuthProvider = ({ children }) => {
     stopImpersonation,
     tenantInfo,
     refreshTenantInfo,
+    subscriptionStatus,
+    refreshSubscriptionStatus,
   }), [
     user,
     isAuthenticated,
@@ -416,6 +458,8 @@ export const TenantAuthProvider = ({ children }) => {
     stopImpersonation,
     tenantInfo,
     refreshTenantInfo,
+    subscriptionStatus,
+    refreshSubscriptionStatus,
   ]);
 
   return (

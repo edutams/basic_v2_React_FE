@@ -291,7 +291,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   return (
     <Box>
       {/* ── Status Tabs ──────────────────────────────────────────────── */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: -1 }}>
         <Tabs
           value={statusTab}
           onChange={handleStatusTabChange}

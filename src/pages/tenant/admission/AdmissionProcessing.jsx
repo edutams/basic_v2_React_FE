@@ -94,7 +94,7 @@ const AdmissionProcessing = () => {
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
 
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.applications}
@@ -157,7 +157,7 @@ const AdmissionProcessing = () => {
           </Box>
         }
       >
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: 0 }}>
           {activeTab === 0 && (
             <IndividualProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
           )}

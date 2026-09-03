@@ -27,6 +27,10 @@ vi.mock('@/api/tenant/impersonation/impersonationApi', () => ({
   },
 }));
 
+vi.mock('@/api/tenant/subscription/subscriptionApi', () => ({
+  fetchSubscriptionStatus: vi.fn(),
+}));
+
 describe('contextValue stability', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -71,5 +75,52 @@ describe('contextValue stability', () => {
 
     const after = capturedLogins[capturedLogins.length - 1];
     expect(after).toBe(before);
+  });
+});
+
+describe('tenant_subscription:locked event', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    validateTenantDomain.mockResolvedValue({ status: true, primary_color: null });
+    tenantApi.get.mockResolvedValue({ data: {} });
+  });
+
+  it('reflects a 402 response immediately as a locked tier', async () => {
+    let captured = null;
+
+    function Capture() {
+      captured = useContext(TenantAuthContext);
+      return null;
+    }
+
+    render(
+      <CustomizerContext.Provider value={{ setPrimaryColor: vi.fn() }}>
+        <TenantAuthProvider>
+          <Capture />
+        </TenantAuthProvider>
+      </CustomizerContext.Provider>,
+    );
+
+    await waitFor(() => expect(validateTenantDomain).toHaveBeenCalled());
+
+    expect(captured.subscriptionStatus).toBeNull();
+
+    fireEvent(
+      window,
+      new CustomEvent('tenant_subscription:locked', {
+        detail: {
+          message: "Your school's subscription has expired. Please renew to restore full access.",
+          due_date: '2026-01-30',
+          session_name: '2025/2026',
+          term_name: 'First Term',
+          audience: 'admin',
+        },
+      }),
+    );
+
+    await waitFor(() => expect(captured.subscriptionStatus?.tier).toBe('locked'));
+    expect(captured.subscriptionStatus.due_date).toBe('2026-01-30');
+    expect(captured.subscriptionStatus.message).toContain('expired');
   });
 });

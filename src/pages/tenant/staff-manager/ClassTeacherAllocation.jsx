@@ -25,7 +25,7 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
 const ClassTeacherAllocation = () => {

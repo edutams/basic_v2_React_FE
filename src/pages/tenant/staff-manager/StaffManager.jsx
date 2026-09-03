@@ -275,46 +275,46 @@ const StaffManager = () => {
           staffData.classAllocations ||
           (staffData.classTeachers && staffData.classTeachers.length > 0
             ? staffData.classTeachers.map((classTeacher) => {
-                return {
-                  session_term_id: classTeacher.session_term_id || '',
-                  programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: classTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: classTeacher.class_arm_id || '',
-                };
-              })
+              return {
+                session_term_id: classTeacher.session_term_id || '',
+                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: classTeacher.class_arm_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+              },
+            ]);
 
         // Transform subject teachers to subjectAllocations array
         const subjectAllocations =
           staffData.subjectAllocations ||
           (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
             ? staffData.subjectTeachers.map((subjectTeacher) => {
-                return {
-                  session_term_id: subjectTeacher.session_term_id || '',
-                  programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: subjectTeacher.class_arm_id || '',
-                  curriculum_id: subjectTeacher.subject?.curriculum_id || '',
-                  subject_id: subjectTeacher.subject_id || '',
-                };
-              })
+              return {
+                session_term_id: subjectTeacher.session_term_id || '',
+                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: subjectTeacher.class_arm_id || '',
+                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                subject_id: subjectTeacher.subject_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                  curriculum_id: '',
-                  subject_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+                curriculum_id: '',
+                subject_id: '',
+              },
+            ]);
 
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
@@ -550,7 +550,7 @@ const StaffManager = () => {
       <Breadcrumb title="Staff Manager" items={BCrumb} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 1 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard
@@ -565,7 +565,7 @@ const StaffManager = () => {
       </Grid>
 
       {/* Main Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => {

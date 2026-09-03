@@ -53,6 +53,7 @@ import {
   sendInvoiceEmail,
   generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
 const INVOICE_PLACEHOLDER_FIELDS = [
   { label: "Student's First Name", value: '{student_fname}' },
@@ -194,7 +195,14 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingFilters(true);
-      const res = await fetchSendInvoiceFilterOptions();
+      // fetchSendInvoiceFilterOptions() returns session_terms ordered
+      // newest-first — that's "most recently created", not "actually
+      // active". Default off getActiveSessionTerm() instead, same single
+      // source of truth every other picker in the app uses.
+      const [res, activeRes] = await Promise.all([
+        fetchSendInvoiceFilterOptions(),
+        fetchActiveTenantSessionTerm(),
+      ]);
       if (res?.success && res.data) {
         const { session_terms, programmes: progs, classes: cls } = res.data;
 
@@ -203,7 +211,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         setClasses(cls || []);
 
         if (session_terms?.length > 0 && !selectedSessionTermId) {
-          setSelectedSessionTermId(session_terms[0].id);
+          const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+          const defaultTerm =
+            (activeSessionTerm && session_terms.find((st) => st.id === activeSessionTerm.id)) ||
+            session_terms[0];
+          setSelectedSessionTermId(defaultTerm.id);
         }
         if (progs?.length > 0 && !selectedProgrammeId) {
           setSelectedProgrammeId(String(progs[0].id));
@@ -615,7 +627,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
       </Grid>
 
       <Grid size={{ xs: 12, md: 7 }}>
-        <Paper
+        <ParentCard
           variant="outlined"
           sx={{
             p: { xs: 2, md: 3 },
@@ -770,7 +782,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               Send Invoice to Parent
             </Button>
           </Box>
-        </Paper>
+        </ParentCard>
       </Grid>
     </Grid>
   );

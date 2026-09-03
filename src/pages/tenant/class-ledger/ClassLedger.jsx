@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Box,
   Avatar,
   Stack,
@@ -483,7 +482,7 @@ const ClassLedger = () => {
   return (
     <PageContainer title="Class Ledger">
       <Breadcrumb title="Class Ledger" items={BCrumb} />
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
             title="Total Invoice(Compulsory Bill)"
@@ -620,7 +619,7 @@ const ClassLedger = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
+        <Grid container spacing={3} sx={{ mb: 2, mt: 0 }} alignItems="center">
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               select
@@ -707,10 +706,10 @@ const ClassLedger = () => {
         </Grid>
 
         <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>#</TableCell>
+                <TableCell>S/N</TableCell>
                 <TableCell>Student Name</TableCell>
                 <TableCell>Total Compulsory Bill</TableCell>
                 <TableCell>Total Optional Bill</TableCell>

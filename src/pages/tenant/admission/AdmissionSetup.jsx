@@ -51,6 +51,7 @@ import {
   fetchSessions,
   fetchSessionTermsBySession,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchAdmissionBatches,
   toggleAdmissionBatchStatus,
@@ -256,12 +257,19 @@ const AdmissionSetup = () => {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const res = await fetchSessions();
+      // getActiveSessionTerm() on the backend is the source of truth for
+      // "what's actually running" — Session order/position tells you
+      // nothing about that, so it must never drive this default.
+      const [res, activeRes] = await Promise.all([fetchSessions(), fetchActiveTenantSessionTerm()]);
       const list = extractList(res);
       setSessions(list);
       if (list.length > 0) {
-        setSelectedSessionId(list[0].id);
-        await loadSessionTerms(list[0].id);
+        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+        const defaultSession =
+          (activeSessionTerm && list.find((s) => s.id === activeSessionTerm.session_id)) ||
+          list[0];
+        setSelectedSessionId(defaultSession.id);
+        await loadSessionTerms(defaultSession.id, activeSessionTerm);
       }
     } catch (err) {
       console.error('Failed to load sessions', err);
@@ -271,12 +279,17 @@ const AdmissionSetup = () => {
     }
   };
 
-  const loadSessionTerms = async (sessionId) => {
+  const loadSessionTerms = async (sessionId, activeSessionTerm = null) => {
     try {
       const res = await fetchSessionTermsBySession(sessionId);
       const session_terms = extractList(res);
       setSessionTerms(session_terms);
-      const selected = session_terms[0] ?? null;
+      const selected =
+        (activeSessionTerm &&
+          activeSessionTerm.session_id === sessionId &&
+          session_terms.find((st) => st.id === activeSessionTerm.id)) ||
+        session_terms[0] ||
+        null;
       if (selected) {
         setSelectedSessionTermId(selected.id);
         setSelectedSessionTermLabel(
@@ -919,18 +932,15 @@ const AdmissionSetup = () => {
           ══════════════════════════════════════════════════════════════════════════ */}
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
-          {/* ── Info alert ──────────────────────────────────────────────────── */}
-          <Grid size={{ xs: 12 }}>
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Define the admission code format for your school. Type your school&apos;s short name,
-              insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
-              <strong>/</strong> is automatically added between segments.
-            </Alert>
-          </Grid>
-
           {/* ── Main content — full width, no batch selector ──────────────── */}
           <Grid size={{ xs: 12 }}>
             <ParentCard title="Admission Code Format">
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Define the admission code format for your school. Type your school&apos;s short name,
+                insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
+                <strong>/</strong> is automatically added between segments.
+              </Alert>
+
               {codeFormatLoading ? (
                 <Box display="flex" justifyContent="center" py={4}>
                   <CircularProgress size={28} />
@@ -1417,7 +1427,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                paymentViewBatch.pre_application_payments.length === 0 ? (
+                  paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -1478,7 +1488,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                paymentViewBatch.post_application_payments.length === 0 ? (
+                  paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>

@@ -51,9 +51,41 @@ import {
   toggleWeekStatus,
   deleteWeek,
 } from '@/api/tenant/term-weeks/weekApi';
+import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
+import { fetchCalendarOverview } from '@/api/tenant/calendar/calendarAnalyticsApi';
+import CalendarIntelligence from './CalendarIntelligence';
+import TermCalendarCard from '@/pages/tenant/school-dashboard/AdminDashboard/components/TermCalendarCard';
+import { SchoolCalendarModal } from '@/pages/tenant/staff-manager/non-teaching-dashboard/components/School-calendar';
+
+// Local-safe "YYYY-MM-DD" formatter — new Date('2026-08-31') parses as UTC
+// midnight, which can shift a day off in some timezones when re-formatted;
+// this reads the components directly instead.
+const formatIsoDate = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
-  const { refreshTenantInfo } = useContext(TenantAuthContext);
+  const { refreshTenantInfo, refreshSubscriptionStatus } = useContext(TenantAuthContext);
+  const [overview, setOverview] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(false);
+
+  const loadOverview = async () => {
+    try {
+      setOverviewLoading(true);
+      const res = await fetchCalendarOverview();
+      if (res.status) setOverview(res.data);
+    } catch (error) {
+      // Non-critical — the rest of the tab still works without it.
+    } finally {
+      setOverviewLoading(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState('sessions');
   const [loading, setLoading] = useState(false);
@@ -99,11 +131,50 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   // Week Management states
   const [weeks, setWeeks] = useState([]);
   const [schoolDays, setSchoolDays] = useState(null);
+  const [weekStats, setWeekStats] = useState(null);
   const [autoGenerateConfig, setAutoGenerateConfig] = useState({
     startDate: '',
     numWeeks: 0,
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+
+  // Term Calendar card + "School Calendar Breakdown" modal — reused as-is
+  // from the school_admin dashboard (TermCalendarCard / SchoolCalendarModal)
+  // rather than re-building readable dates + a weeks/holidays breakdown here.
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarHolidays, setCalendarHolidays] = useState([]);
+
+  useEffect(() => {
+    if (!calendarModalOpen || !activeSessionTermId) return;
+    let mounted = true;
+    fetchHolidays(activeSessionTermId)
+      .then((res) => {
+        if (mounted) setCalendarHolidays(res?.data ?? []);
+      })
+      .catch(() => {
+        if (mounted) setCalendarHolidays([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [calendarModalOpen, activeSessionTermId]);
+
+  const termDateRange = (() => {
+    const starts = weeks.map((w) => w.start_date).filter(Boolean).sort();
+    const ends = weeks.map((w) => w.end_date).filter(Boolean).sort();
+    return {
+      start: starts.length ? formatIsoDate(starts[0]) : null,
+      end: ends.length ? formatIsoDate(ends[ends.length - 1]) : null,
+    };
+  })();
+
+  const termStatsForModal = {
+    totalSchoolDays: weekStats?.total_school_days ?? 0,
+    daysSpent: weekStats?.days_spent ?? 0,
+    daysRemaining: weekStats?.remaining_school_days ?? 0,
+    totalHolidays: weekStats?.holiday_days_allocated ?? 0,
+    pctCompleted: weekStats?.pct_completed ?? 0,
+  };
   const [confirmDeleteWeek, setConfirmDeleteWeek] = useState(false);
 
   // ── Hint positioning ─────────────────────────────────────────────────────
@@ -119,6 +190,29 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       }));
     }
   }, [weeks]);
+
+  // Intelligent defaults for a brand-new term (no weeks generated yet): start
+  // from the same week count as the previous term, and a sensible next-Monday
+  // start date, rather than leaving the admin to guess both from scratch.
+  useEffect(() => {
+    if (weeks.length > 0 || !activeSessionTermId) return;
+
+    setAutoGenerateConfig((prev) => {
+      const next = { ...prev };
+      if (!prev.numWeeks && overview?.weeks?.previous) {
+        next.numWeeks = overview.weeks.previous;
+      }
+      if (!prev.startDate) {
+        // The coming Monday — or today, if today already is one.
+        const today = new Date();
+        const offsetToMonday = (8 - today.getDay()) % 7;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + offsetToMonday);
+        next.startDate = monday.toISOString().slice(0, 10);
+      }
+      return next;
+    });
+  }, [activeSessionTermId, weeks.length, overview]);
 
   useLayoutEffect(() => {
     const btn = generateBtnRef.current;
@@ -143,7 +237,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   useEffect(() => {
     loadData();
+    loadOverview();
     refreshTenantInfo();
+    refreshSubscriptionStatus();
   }, []);
 
   // Sessions list re-fetches when its page/rowsPerPage change
@@ -238,6 +334,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(weeksRes.data);
         if (weeksRes.stats) {
           setSchoolDays(weeksRes.stats.total_school_days);
+          setWeekStats(weeksRes.stats);
         }
       }
     } catch (error) {
@@ -392,7 +489,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         loadTenantSessions();
         loadSessionTerms();
         loadActiveSessionTerm();
+        loadOverview();
         await refreshTenantInfo();
+        await refreshSubscriptionStatus();
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(res.message || 'Failed to save session/term', 'error');
@@ -432,7 +531,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         );
         loadSessionTerms();
         loadActiveSessionTerm();
+        loadOverview();
         await refreshTenantInfo();
+        await refreshSubscriptionStatus();
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(res.message || 'Failed to update status', 'error');
@@ -465,6 +566,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(response.data);
         if (response.stats) {
           setSchoolDays(response.stats.total_school_days);
+          setWeekStats(response.stats);
         }
 
         setAutoGenerateConfig((prev) => ({
@@ -474,7 +576,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
         showSnackbar('Weeks generated successfully', 'success');
         loadSessionTerms();
+        loadOverview();
         refreshTenantInfo();
+        refreshSubscriptionStatus();
       } else {
         showSnackbar(response.message || 'Failed to generate weeks', 'error');
       }
@@ -507,6 +611,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(response.data);
         if (response.stats) {
           setSchoolDays(response.stats.total_school_days);
+          setWeekStats(response.stats);
         }
         showSnackbar('Last week removed successfully', 'success');
       } else {
@@ -520,8 +625,44 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     }
   };
 
+  // Live preview of how the number of weeks being typed compares to the
+  // previous term — updates as the admin types, before they even hit Generate.
+  const weeksComparisonHint = (() => {
+    const previous = overview?.weeks?.previous;
+    if (weeks.length > 0 || !previous || !autoGenerateConfig.numWeeks) return null;
+    const delta = autoGenerateConfig.numWeeks - previous;
+    if (delta > 0) return `Last term: ${previous} weeks (+${delta})`;
+    if (delta < 0) return `Last term: ${previous} weeks (${delta})`;
+    return `Same as last term (${previous} weeks)`;
+  })();
+
   return (
     <Box sx={{ width: '100%' }}>
+      <Grid container spacing={1.5} sx={{ mb: 3, alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <TermCalendarCard
+            dayCurrent={weekStats?.days_spent ?? 0}
+            dayTotal={weekStats?.total_school_days ?? schoolDays ?? 0}
+            termStart={termDateRange.start || '—'}
+            expectedEnd={termDateRange.end || '—'}
+            progressPct={weekStats?.pct_completed ?? 0}
+            loading={overviewLoading && !weekStats}
+            onViewCalendar={() => setCalendarModalOpen(true)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <CalendarIntelligence overview={overview} loading={overviewLoading} />
+        </Grid>
+      </Grid>
+
+      <SchoolCalendarModal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        weeks={weeks}
+        holidays={calendarHolidays}
+        termStats={termStatsForModal}
+      />
+
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
@@ -860,7 +1001,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     label="No. of Weeks"
                     type="number"
                     size="small"
-                    sx={{ width: { xs: '100%', sm: 120 } }}
+                    sx={{ width: { xs: '100%', sm: 160 } }}
                     value={autoGenerateConfig.numWeeks}
                     onChange={(e) =>
                       setAutoGenerateConfig({
@@ -872,6 +1013,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       min: 1,
                       max: 15,
                     }}
+                    helperText={weeksComparisonHint}
                   />
                   <TextField
                     label="Start Date"
@@ -1142,9 +1284,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             </Typography>
             {confirmSessionToggle.session?.status !== 'active' && (
               <Box mt={2}>
-                <Typography variant="body2" color="textSecondary">
-                  Activating this will automatically deactivate any other active session.
-                </Typography>
+                <Alert severity="info" sx={{ '& .MuiAlert-message': { fontSize: '0.8125rem' } }}>
+                  Only one session can be active at a time. If a different session's term is
+                  still the one actually running the school, this will be refused — deactivate
+                  it on the "Session/Term" tab first, then activate this session.
+                </Alert>
               </Box>
             )}
           </Box>

@@ -112,7 +112,7 @@ const SubscriptionHistoryList = () => {
   };
 
   return (
-    <ParentCard title="Subscription History">
+    <ParentCard title="">
       <Box sx={{ p: 0 }}>
         <Box sx={{ mb: 3 }}>
           <TextField

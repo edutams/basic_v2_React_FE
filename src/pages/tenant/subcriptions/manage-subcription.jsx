@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,6 @@ import {
   TableCell,
   TableFooter,
   TablePagination,
-  Paper,
   Chip,
   IconButton,
   Menu,
@@ -19,12 +18,10 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
   Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon, Undo as UndoIcon, Upgrade as UpgradeIcon, Receipt as ReceiptIcon, Description as DescriptionIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import useNotification from '@/hooks/useNotification';
@@ -35,39 +32,7 @@ import SubcriptionModal from '@/components/shared/subcription/SubcriptionModal';
 import TransactionModal from '@/components/shared/subcription/TransactionModal';
 import UpgradePlanModal from '@/components/shared/subcription/UpgradePlanModal';
 import RevertPlanModal from '@/components/shared/subcription/RevertPlanModal';
-
-const DUMMY_ROWS = [
-  {
-    id: 1,
-    sessionterm: '2023/2024 - First Term',
-    plandetails: 'OBASIC++ (200 and above Students)',
-    amount: '155,000',
-    gatewaycharges: '500',
-    discount: '0',
-    amountdue: '155,500',
-    status: 'inactive',
-  },
-  {
-    id: 2,
-    sessionterm: '2023/2024 - First Term',
-    plandetails: 'OBASIC++ (200 and above Students)',
-    amount: '155,000',
-    gatewaycharges: '500',
-    discount: '0',
-    amountdue: '155,500',
-    status: 'active',
-  },
-  {
-    id: 3,
-    sessionterm: '2023/2024 - First Term',
-    plandetails: 'OBASIC++ (200 and above Students)',
-    amount: '155,000',
-    gatewaycharges: '500',
-    discount: '0',
-    amountdue: '155,500',
-    status: 'active',
-  },
-];
+import SubscriptionPaymentModal from '@/components/shared/subcription/SubscriptionPaymentModal';
 
 const ManageSubscriptions = () => {
   return <ManageSubscriptionList />;
@@ -76,6 +41,7 @@ const ManageSubscriptions = () => {
 const ManageSubscriptionList = () => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -85,6 +51,8 @@ const ManageSubscriptionList = () => {
   const [revertModalOpen, setRevertModalOpen] = useState(false);
   const [transactionModalOpen, setTransactionModalOpen] = useState(false);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [rowToPay, setRowToPay] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
@@ -93,10 +61,10 @@ const ManageSubscriptionList = () => {
   const [subscriptionCharges, setSubscriptionCharges] = useState('500');
   const notify = useNotification();
 
-  const fetchSubscriptions = async (search = '') => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await subscriptionApi.getSubscriptions({ search });
+      const res = await subscriptionApi.getSubscriptions({ search: searchTerm });
       if (res.data) {
         setRows(Array.isArray(res.data) ? res.data : [res.data]);
       } else {
@@ -108,11 +76,11 @@ const ManageSubscriptionList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchSubscriptions();
-  }, []);
+  }, [fetchSubscriptions]);
 
   useEffect(() => {
     const loadActiveSessionTerm = async () => {
@@ -247,7 +215,12 @@ const ManageSubscriptionList = () => {
   };
 
   const handlePayNow = (row) => {
-    notify.info('Payment functionality coming soon');
+    setRowToPay(row);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    fetchSubscriptions();
   };
 
   const handleDeleteConfirm = async () => {
@@ -261,13 +234,6 @@ const ManageSubscriptionList = () => {
     }
     setConfirmOpen(false);
     setRowToDelete(null);
-  };
-
-  const handleSimulationUpdate = (data, action) => {
-    if (action === 'create') {
-    } else if (action === 'update') {
-    } else if (action === 'delete') {
-    }
   };
 
   return (
@@ -286,17 +252,9 @@ const ManageSubscriptionList = () => {
             <Box display="flex" alignItems="center" gap={1}>
               <TextField
                 placeholder="Search by session term..."
-                value={searchTerm}
+                value={searchInput}
                 size="small"
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(0);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    fetchSubscriptions(searchTerm);
-                  }
-                }}
+                onChange={(e) => setSearchInput(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -335,15 +293,15 @@ const ManageSubscriptionList = () => {
               <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '5%' }}>#</TableCell>
-                    <TableCell sx={{ width: '16%' }}>Session/Term</TableCell>
-                    <TableCell sx={{ width: '18%' }}>Plan Details</TableCell>
-                    <TableCell sx={{ width: '10%' }}>Amount (₦)</TableCell>
-                    <TableCell sx={{ width: '9%' }}>Gateway charges(₦)</TableCell>
-                    <TableCell sx={{ width: '8%' }}>Discount (%)</TableCell>
-                    <TableCell sx={{ width: '10%' }}>Amount Due (₦)</TableCell>
-                    <TableCell sx={{ width: '8%' }}>Status</TableCell>
-                    <TableCell sx={{ width: '5%' }} align="center">
+                    <TableCell sx={{ width: '5%', fontWeight: 700 }}>#</TableCell>
+                    <TableCell sx={{ width: '16%', fontWeight: 700 }}>Session/Term</TableCell>
+                    <TableCell sx={{ width: '18%', fontWeight: 700 }}>Plan Details</TableCell>
+                    <TableCell sx={{ width: '10%', fontWeight: 700 }}>Amount (₦)</TableCell>
+                    <TableCell sx={{ width: '9%', fontWeight: 700 }}>Gateway charges(₦)</TableCell>
+                    <TableCell sx={{ width: '8%', fontWeight: 700 }}>Discount (%)</TableCell>
+                    <TableCell sx={{ width: '10%', fontWeight: 700 }}>Amount Due (₦)</TableCell>
+                    <TableCell sx={{ width: '8%', fontWeight: 700 }}>Status</TableCell>
+                    <TableCell sx={{ width: '5%', fontWeight: 700 }} align="center">
                       Action
                     </TableCell>
                   </TableRow>
@@ -408,24 +366,27 @@ const ManageSubscriptionList = () => {
                                 Pay Now
                               </Button>
                             )}
-                            {row.status === 'pending' &&
-                              amountAfterDiscount === 0 && (
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="success"
-                                onClick={() => handlePayNow(row)}
-                                sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
-                              >
-                                Proceed
-                              </Button>
-                            )}
                           </TableCell>
                           <TableCell>
                             <Chip
                               label={row.status}
-                              color={row.status === 'active' ? 'success' : row.status === 'pending' ? 'warning' : 'default'}
                               size="small"
+                              sx={{
+                                bgcolor:
+                                  row.status === 'active'
+                                    ? 'success.light'
+                                    : row.status === 'pending'
+                                    ? 'warning.light'
+                                    : 'error.light',
+                                color:
+                                  row.status === 'active'
+                                    ? 'success.dark'
+                                    : row.status === 'pending'
+                                    ? 'warning.dark'
+                                    : 'error.dark',
+                                fontWeight: 600,
+                                borderRadius: '8px',
+                              }}
                             />
                           </TableCell>
                           <TableCell align="center">
@@ -562,6 +523,16 @@ const ManageSubscriptionList = () => {
         onClose={() => setInvoiceModalOpen(false)}
         selectedRow={selectedRow}
         subscriptionCharges={subscriptionCharges}
+      />
+      <SubscriptionPaymentModal
+        open={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setRowToPay(null);
+        }}
+        selectedRow={rowToPay}
+        subscriptionCharges={subscriptionCharges}
+        onPaymentSuccess={handlePaymentSuccess}
       />
       <ConfirmationDialog
         open={confirmOpen}

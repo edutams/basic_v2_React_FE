@@ -127,6 +127,24 @@ const subscriptionApi = {
     return response.data;
   },
 
+  /**
+   * Get transaction data for a subscription (payment details)
+   * @param {number|string} id - subscription ID
+   */
+  getTransactionData: async (id) => {
+    const response = await tenantApi.get(`/subscriptions/${id}/transaction-data`);
+    return response.data;
+  },
+
+  /**
+   * Create a subscription transaction and return payment gateway data
+   * @param {Object} data - { subscription_id }
+   */
+  createTransaction: async (data) => {
+    const response = await tenantApi.post('/subscriptions/create-transaction', data);
+    return response.data;
+  },
+
   };
 
 export default subscriptionApi;

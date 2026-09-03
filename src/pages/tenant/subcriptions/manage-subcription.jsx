@@ -20,6 +20,7 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon, Undo as UndoIcon, Upgrade as UpgradeIcon, Receipt as ReceiptIcon, Description as DescriptionIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 
@@ -28,10 +29,12 @@ import ParentCard from '@/components/shared/ParentCard';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import useNotification from '@/hooks/useNotification';
 import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import InvoiceModal from '@/components/shared/subcription/InvoiceModal';
 import SubcriptionModal from '@/components/shared/subcription/SubcriptionModal';
 import TransactionModal from '@/components/shared/subcription/TransactionModal';
 import UpgradePlanModal from '@/components/shared/subcription/UpgradePlanModal';
+import RevertPlanModal from '@/components/shared/subcription/RevertPlanModal';
 
 const DUMMY_ROWS = [
   {
@@ -79,18 +82,21 @@ const ManageSubscriptionList = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState('create');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [revertModalOpen, setRevertModalOpen] = useState(false);
   const [transactionModalOpen, setTransactionModalOpen] = useState(false);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [activeSessionTerm, setActiveSessionTerm] = useState(null);
+  const [subscriptionCharges, setSubscriptionCharges] = useState('500');
   const notify = useNotification();
 
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = async (search = '') => {
     try {
       setLoading(true);
-      const res = await subscriptionApi.getSubscriptions();
+      const res = await subscriptionApi.getSubscriptions({ search });
       if (res.data) {
         setRows(Array.isArray(res.data) ? res.data : [res.data]);
       } else {
@@ -108,15 +114,31 @@ const ManageSubscriptionList = () => {
     fetchSubscriptions();
   }, []);
 
-  const filteredRows = rows.filter((row) => {
-    const sessionTermStr = row.sessionterm
-      ? row.sessionterm
-      : `${row.sessions?.session_name || ''} ${row.terms?.term_name || ''}`;
+  useEffect(() => {
+    const loadActiveSessionTerm = async () => {
+      try {
+        const res = await fetchActiveTenantSessionTerm();
+        setActiveSessionTerm(res?.data || null);
+      } catch (error) {
+        console.error('Failed to fetch active session term:', error);
+      }
+    };
+    loadActiveSessionTerm();
+  }, []);
 
-    return sessionTermStr.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  useEffect(() => {
+    const loadSubscriptionCharges = async () => {
+      try {
+        const res = await subscriptionApi.getSubscriptionCharges();
+        setSubscriptionCharges(res?.data?.subscription_charges || '500');
+      } catch (error) {
+        console.error('Failed to fetch subscription charges:', error);
+      }
+    };
+    loadSubscriptionCharges();
+  }, []);
 
-  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -135,23 +157,13 @@ const ManageSubscriptionList = () => {
   };
 
   const handleEditClick = (row) => {
-    const sessionTermParts = row.sessionterm ? row.sessionterm.split(' - ') : ['', ''];
-    const session = sessionTermParts[0] || '';
-    const term = sessionTermParts[1] || '';
-
-    const planDetails = row.plandetails || '';
-    const planMatch = planDetails.match(/^(OBASIC\+*)\s*\(([^)]+)\)/);
-    const availableplan = planMatch ? planMatch[1] : '';
-    const studentpopulation = planMatch ? planMatch[2] : '';
-
-    const subscriptionMode = term ? 'perTerm' : 'perSession';
+    const subscriptionMode = row.subscription_mode === 'per_session' ? 'perSession' : 'perTerm';
 
     const transformedRow = {
       ...row,
-      session,
-      term,
-      availableplan,
-      studentpopulation,
+      session: row.session_id?.toString() || '',
+      term: row.term_id?.toString() || '',
+      availableplan: row.agent_plan_id?.toString() || '',
       subscriptionMode,
     };
 
@@ -162,8 +174,8 @@ const ManageSubscriptionList = () => {
 
   const handleUpgradePlanClick = (row) => {
     setSelectedRow(row);
+    setAnchorEl(null);
     setUpgradeModalOpen(true);
-    handleMenuClose();
   };
 
   const handleViewTransactionClick = (row) => {
@@ -179,8 +191,9 @@ const ManageSubscriptionList = () => {
   };
 
   const handleRevertPlanClick = (row) => {
-    // Handle revert plan action
-    handleMenuClose();
+    setSelectedRow(row);
+    setAnchorEl(null);
+    setRevertModalOpen(true);
   };
 
   const handleDeleteClick = (row) => {
@@ -193,17 +206,24 @@ const ManageSubscriptionList = () => {
     try {
       if (modalType === 'create') {
         const payload = {
-          agent_plan_id: data.availableplan,
+          plan_id: data.availableplan,
           session_id: data.session,
           term_id: data.term || null,
-          subscription_mode: data.subscriptionMode || 'online',
+          subscription_mode: data.subscriptionMode,
         };
 
-        await subscriptionApi.subscribe(payload);
+        await subscriptionApi.createSubscription(payload);
         notify.success('Subscription plan successfully initiated', 'Success');
         fetchSubscriptions();
       } else if (modalType === 'update') {
-        await subscriptionApi.updateSubscription(selectedRow.id, data);
+        const payload = {
+          plan_id: data.availableplan,
+          session_id: data.session,
+          term_id: data.term || null,
+          subscription_mode: data.subscriptionMode,
+        };
+
+        await subscriptionApi.updateSubscription(selectedRow.id, payload);
         notify.success('Subscription plan updated successfully', 'Success');
         fetchSubscriptions();
       }
@@ -215,9 +235,19 @@ const ManageSubscriptionList = () => {
   };
 
   const handleUpgradeSubmit = (upgradedData) => {
-    setRows((prev) => prev.map((row) => (row.id === upgradedData.id ? upgradedData : row)));
+    fetchSubscriptions();
     notify.success('Plan upgraded successfully', 'Success');
     setUpgradeModalOpen(false);
+  };
+
+  const handleRevertSubmit = (revertedData) => {
+    fetchSubscriptions();
+    notify.success('Plan reverted successfully', 'Success');
+    setRevertModalOpen(false);
+  };
+
+  const handlePayNow = (row) => {
+    notify.info('Payment functionality coming soon');
   };
 
   const handleDeleteConfirm = async () => {
@@ -250,54 +280,69 @@ const ManageSubscriptionList = () => {
             justifyContent="space-between"
             flexWrap="wrap"
             gap={1}
-        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
 
-          >
-            <Typography variant="h5">Manage Subcription</Typography>
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              onClick={handleAddClick}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Add New Subcription
-            </Button>
+>
+            <Typography variant="h5"></Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                placeholder="Search by session term..."
+                value={searchTerm}
+                size="small"
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    fetchSubscriptions(searchTerm);
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ minWidth: 250 }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                onClick={() => fetchSubscriptions(searchTerm)}
+              >
+                Search
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddClick}
+                disabled={loading}
+              >
+                {loading ? <Skeleton width={140} height={20} animation="wave" /> : 'Add New Subscription'}
+              </Button>
+            </Box>
           </Box>
         }
+            sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3, py: 0 } }}
+
       >
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              placeholder="Search by session term..."
-              value={searchTerm}
-              size="small"
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(0);
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-
             <TableContainer sx={{ overflowX: 'auto' }}>
               <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: '5%' }}>#</TableCell>
-                    <TableCell sx={{ width: '18%' }}>Session/Term</TableCell>
-                    <TableCell sx={{ width: '20%' }}>Plan Details</TableCell>
-                    <TableCell sx={{ width: '12%' }}> Amount (₦)</TableCell>
-                    <TableCell sx={{ width: '11%' }}>Gateway charges(₦)</TableCell>
-                    <TableCell sx={{ width: '10%' }}>Discount (%)</TableCell>
+                    <TableCell sx={{ width: '16%' }}>Session/Term</TableCell>
+                    <TableCell sx={{ width: '18%' }}>Plan Details</TableCell>
+                    <TableCell sx={{ width: '10%' }}>Amount (₦)</TableCell>
+                    <TableCell sx={{ width: '9%' }}>Gateway charges(₦)</TableCell>
+                    <TableCell sx={{ width: '8%' }}>Discount (%)</TableCell>
                     <TableCell sx={{ width: '10%' }}>Amount Due (₦)</TableCell>
-                    <TableCell sx={{ width: '10%' }}>Status</TableCell>
+                    <TableCell sx={{ width: '8%' }}>Status</TableCell>
                     <TableCell sx={{ width: '5%' }} align="center">
                       Action
                     </TableCell>
@@ -305,46 +350,88 @@ const ManageSubscriptionList = () => {
                 </TableHead>
                 <TableBody>
                   {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
-                        <CircularProgress />
-                      </TableCell>
-                    </TableRow>
+                    [...Array(rowsPerPage)].map((_, i) => (
+                      <TableRow key={`skeleton-${i}`}>
+                        <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={140} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={180} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={60} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={50} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                        <TableCell><Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: '8px' }} /></TableCell>
+                        <TableCell align="center"><Skeleton variant="circular" width={32} height={32} /></TableCell>
+                      </TableRow>
+                    ))
                   ) : paginatedRows.length > 0 ? (
-                    paginatedRows.map((row, index) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>
-                          {row.sessions?.session_name} / {row.terms?.term_name}
-                        </TableCell>
-                        <TableCell>
-                          {row.my_plans?.display_name} ({row.plans?.description})
-                        </TableCell>
-                        <TableCell>{row.amount}</TableCell>
-                        <TableCell>0</TableCell>
-                        <TableCell>{row.discount}</TableCell>
-                        <TableCell>{row.amount}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={row.status.toUpperCase()}
-                            size="small"
-                            sx={{
-                              bgcolor:
-                                row.status === 'active'
-                                  ? (theme) => theme.palette.success.light
-                                  : (theme) => theme.palette.error.light,
-                              color:
-                                row.status === 'active'
-                                  ? (theme) => theme.palette.success.main
-                                  : (theme) => theme.palette.error.main,
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
+                    paginatedRows.map((row, index) => {
+                      const planData = row.plans?.data
+                        ? (typeof row.plans.data === 'string' ? JSON.parse(row.plans.data) : row.plans.data)
+                        : {};
+                      const studentsLimit = planData.students_limit || 'N/A';
+                      const amountNum = parseFloat(row.amount) || 0;
+                      const discountNum = parseFloat(row.discount) || 0;
+                      const chargesNum = parseFloat(subscriptionCharges) || 0;
+                      const amountAfterDiscount = amountNum - (amountNum * discountNum) / 100;
+                      const amountDue = amountAfterDiscount + chargesNum;
+                      const isActiveSessionTerm =
+                        activeSessionTerm &&
+                        row.session_id == activeSessionTerm.session_id &&
+                        row.term_id == activeSessionTerm.term_id;
+
+                      return (
+                        <TableRow key={row.id} hover>
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          <TableCell>
+                            {row.sessions?.session_name} / {row.terms?.term_name}
+                          </TableCell>
+                          <TableCell>
+                            {row.my_plans?.display_name} ({studentsLimit} Students)
+                          </TableCell>
+                          <TableCell>₦{amountNum.toLocaleString()}</TableCell>
+                          <TableCell>₦{chargesNum.toLocaleString()}</TableCell>
+                          <TableCell>{discountNum}%</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              ₦{amountDue.toLocaleString()}
+                            </Typography>
+                            {row.status === 'pending' &&
+                              amountAfterDiscount > 0 &&
+                              isActiveSessionTerm && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => handlePayNow(row)}
+                                sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
+                              >
+                                Pay Now
+                              </Button>
+                            )}
+                            {row.status === 'pending' &&
+                              amountAfterDiscount === 0 && (
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                onClick={() => handlePayNow(row)}
+                                sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
+                              >
+                                Proceed
+                              </Button>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.status}
+                              color={row.status === 'active' ? 'success' : row.status === 'pending' ? 'warning' : 'default'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                              <MoreVertIcon />
+                            </IconButton>
                           <Menu
                             anchorEl={anchorEl}
                             open={Boolean(anchorEl) && selectedRow?.id === row.id}
@@ -379,6 +466,10 @@ const ManageSubscriptionList = () => {
                                   <UpgradeIcon fontSize="small" sx={{ mr: 1 }} />
                                   Upgrade Plan
                                 </MenuItem>
+                                <MenuItem onClick={() => handleRevertPlanClick(row)}>
+                                  <UndoIcon fontSize="small" sx={{ mr: 1 }} />
+                                  Revert Plan
+                                </MenuItem>
                                 <MenuItem onClick={() => handleViewTransactionClick(row)}>
                                   <ReceiptIcon fontSize="small" sx={{ mr: 1 }} />
                                   View Transaction
@@ -392,7 +483,8 @@ const ManageSubscriptionList = () => {
                           </Menu>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={9} align="center">
@@ -421,7 +513,7 @@ const ManageSubscriptionList = () => {
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
                       colSpan={9}
-                      count={filteredRows.length}
+                      count={rows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}
@@ -454,6 +546,12 @@ const ManageSubscriptionList = () => {
         selectedRow={selectedRow}
         onUpgrade={handleUpgradeSubmit}
       />
+      <RevertPlanModal
+        open={revertModalOpen}
+        onClose={() => setRevertModalOpen(false)}
+        selectedRow={selectedRow}
+        onRevert={handleRevertSubmit}
+      />
       <TransactionModal
         open={transactionModalOpen}
         onClose={() => setTransactionModalOpen(false)}
@@ -463,13 +561,14 @@ const ManageSubscriptionList = () => {
         open={invoiceModalOpen}
         onClose={() => setInvoiceModalOpen(false)}
         selectedRow={selectedRow}
+        subscriptionCharges={subscriptionCharges}
       />
       <ConfirmationDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Subcription plan"
-        message={`Are you sure you want to delete "${rowToDelete?.sessionterm}"?`}
+        title="Delete Subscription"
+        message={`Are you sure you want to delete "${rowToDelete?.my_plans?.display_name || 'this subscription'}" plan?`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

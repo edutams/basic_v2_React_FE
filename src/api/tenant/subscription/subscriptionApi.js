@@ -2,12 +2,40 @@ import tenantApi from '../tenant_api';
 
 const subscriptionApi = {
   /**
-   * Get form options (sessions, terms, plans) for subscription form
+   * Get all sessions for the subscription form dropdown
    */
-  getFormOptions: async () => {
-    const response = await tenantApi.get('/get-form-options');
+  getSessions: async () => {
+    const response = await tenantApi.get('/subscriptions/sessions');
     return response.data;
   },
+
+  /**
+   * Get terms available for a session (excludes already subscribed)
+   * @param {number|string} sessionId
+   */
+  getTermsBySession: async (sessionId) => {
+    const response = await tenantApi.get(`/subscriptions/terms-by-session/${sessionId}`);
+    return response.data;
+  },
+
+  /**
+   * Get available plans for the subscription form dropdown
+   */
+  getPlans: async () => {
+    const response = await tenantApi.get('/subscriptions/plans');
+    return response.data;
+  },
+
+  /**
+   * Get available plans filtered by student population range
+   * @param {string} studentpopulation - e.g. "1-50", "51-100", etc.
+   */
+  getPlansByPopulation: async (studentpopulation) => {
+    const response = await tenantApi.post('/subscriptions/plans-by-population', { studentpopulation });
+    return response.data;
+  },
+
+ 
 
   /**
    * Get all subscriptions for the current tenant (table data)
@@ -56,10 +84,38 @@ const subscriptionApi = {
   },
 
   /**
+   * Upgrade a subscription to a new plan
+   * @param {number|string} id - subscription ID
+   * @param {Object} data - { my_plan_id }
+   */
+  upgradeSubscription: async (id, data) => {
+    const response = await tenantApi.put(`/subscriptions/${id}/upgrade`, data);
+    return response.data;
+  },
+
+  /**
+   * Revert a subscription to a previous plan
+   * @param {number|string} id - subscription ID
+   * @param {Object} data - { my_plan_id }
+   */
+  revertSubscription: async (id, data) => {
+    const response = await tenantApi.put(`/subscriptions/${id}/revert`, data);
+    return response.data;
+  },
+
+  /**
    * Get subscription status
    */
   getSubscriptionStatus: async () => {
     const response = await tenantApi.get('/subscription-status');
+    return response.data;
+  },
+
+  /**
+   * Get subscription charges from config
+   */
+  getSubscriptionCharges: async () => {
+    const response = await tenantApi.get('/subscriptions/subscription-charges');
     return response.data;
   },
 
@@ -71,23 +127,6 @@ const subscriptionApi = {
     return response.data;
   },
 
-  /**
-   * Subscribe to a plan
-   * @param {Object} data - { agent_plan_id, session_id, term_id? }
-   */
-  subscribe: async (data) => {
-    const response = await tenantApi.post('/subscribe', data);
-    return response.data;
-  },
-
-  /**
-   * Get transactions for a subscription
-   * @param {number|string} subscriptionId
-   */
-  getTransactions: async (subscriptionId) => {
-    const response = await tenantApi.get(`/subscriptions/${subscriptionId}/transactions`);
-    return response.data;
-  },
-};
+  };
 
 export default subscriptionApi;

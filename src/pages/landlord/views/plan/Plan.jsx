@@ -261,7 +261,7 @@ const Plan = () => {
   return (
     <PageContainer title="Plans" description="This is the Plans page">
       {/* <Breadcrumb title="Plans" items={BCrumb} /> */}
-      <Box
+      <ParentCard
         title={
           <Box sx={{ width: '100%' }}>
             <Box
@@ -274,7 +274,7 @@ const Plan = () => {
                 gap: 2,
               }}
             >
-              <Typography variant="h5">All Plans</Typography>
+              <Typography variant="h5"></Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {!isMobileOrTablet && (
                   <FormControlLabel
@@ -315,10 +315,10 @@ const Plan = () => {
             )}
           </Box>
         }
+        sx={{ px: 0, py: 0, backgroundColor: 'transparent', boxShadow: 'none', border: 'none', '& .MuiCardHeader-root': { p: 0 }, '& .MuiCardContent-root': { p: 0 } }}
       >
-        <Box>
           <TableContainer>
-            <Table aria-label="plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+            <Table aria-label="plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>
@@ -498,7 +498,6 @@ const Plan = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Box>
 
         <ReusableModal
           open={open}
@@ -578,7 +577,7 @@ const Plan = () => {
             onCancel={handleCloseManageModule}
           />
         </ReusableModal>
-      </Box>
+      </ParentCard>
     </PageContainer>
   );
 };

@@ -53,16 +53,13 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 ...(!isMobile && { position: 'sticky', left: 0 }),
                 // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 ...(!isMobile && { zIndex: 2 }),
-                borderBottom: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '2px solid rgba(255, 255, 255, 0.12)'
-                    : '2px solid #e2e8f0',
+                borderBottom: '2px solid',
+                borderRight: '2px solid',
 
-                borderRight: '1px solid',
-                borderRight: (theme) =>
+                borderColor: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(255, 255, 255, 0.2)'
-                    : '2px solid #cbd5e1',
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : '#e2e8f0',
                 // borderColor: 'divider',
               }}
             >
@@ -78,12 +75,15 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 bgcolor: isDark ? '#1e293b' : '#f8fafc',
 
                 ...(!isMobile && { zIndex: 2 }),
-                borderBottom: (theme) =>
+                bgcolor: isDark ? '#1e293b' : '#f8fafc',
+
+                borderBottom: '2px solid',
+                borderRight: '2px solid',
+
+                borderColor: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(255, 255, 255, 0.12)'
-                    : '2px solid #e2e8f0',
-                borderRight: '1px solid',
-                borderColor: 'divider',
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : '#e2e8f0',
               }}
             >
               Registered
@@ -92,14 +92,14 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               <TableCell key={subj.id} align="center" sx={{
                 minWidth: 140, verticalAlign: 'top', pt: 2,
                 bgcolor: isDark ? '#1e293b' : '#f8fafc',
-                borderBottom: (theme) =>
+
+                borderBottom: '2px solid',
+                borderLeft: '1px solid',
+
+                borderColor: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '2px solid rgba(255, 255, 255, 0.12)'
-                    : '2px solid #e2e8f0',
-                borderLeft: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '2px solid rgba(255, 255, 255, 0.2)'
-                    : '2px solid #cbd5e1',
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : '#e2e8f0',
               }}>
                 <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
                   {subj.subject_name || subj.name}
@@ -136,7 +136,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   borderRight: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '2px solid rgba(255, 255, 255, 0.2)'
-                      : '2px solid #cbd5e1',
+                      : '2px solid #e2e8f0',
                   // borderColor: 'divider',
                 }}
               >
@@ -159,7 +159,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   borderRight: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '2px solid rgba(255, 255, 255, 0.2)'
-                      : '2px solid #cbd5e1',
+                      : '2px solid #e2e8f0',
                   // borderColor: 'divider',
                 }}
               >

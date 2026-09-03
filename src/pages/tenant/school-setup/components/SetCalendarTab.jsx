@@ -1204,9 +1204,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             {confirmSessionToggle.session?.status !== 'active' && (
               <Box mt={2}>
                 <Alert severity="info" sx={{ '& .MuiAlert-message': { fontSize: '0.8125rem' } }}>
-                  Activating this will automatically deactivate any other active session. The
-                  school keeps running on its current active term until you set an active term
-                  for this session — the "Session/Term" tab still shows what's actually live.
+                  Only one session can be active at a time. If a different session's term is
+                  still the one actually running the school, this will be refused — deactivate
+                  it on the "Session/Term" tab first, then activate this session.
                 </Alert>
               </Box>
             )}

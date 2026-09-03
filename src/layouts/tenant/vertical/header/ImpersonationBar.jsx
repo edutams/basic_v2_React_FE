@@ -13,9 +13,7 @@ import { useTheme } from '@mui/material/styles';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-
-// user_type_id: 1 = Staff, 2 = Learner, 3 = Parent (see SchoolDashboard.jsx)
-const USER_TYPE_LABELS = { 1: 'Staff', 2: 'Learner', 3: 'Parent' };
+import { resolveUserLabel } from '@/utils/roleLabels';
 
 /**
  * Fixed strip docked directly beneath the school header, spanning the same
@@ -27,7 +25,8 @@ const ImpersonationBar = () => {
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
   const { isCollapse } = useContext(CustomizerContext);
-  const { isImpersonated, user, stopImpersonation, tenantInfo } = useContext(TenantAuthContext);
+  const { isImpersonated, user, roles, stopImpersonation, tenantInfo } =
+    useContext(TenantAuthContext);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -37,7 +36,16 @@ const ImpersonationBar = () => {
 
   const displayUser = user?.user || user;
   const displayName = displayUser?.full_name || 'this user';
-  const roleLabel = USER_TYPE_LABELS[displayUser?.user_type_id] || null;
+  // `roles` is the impersonated user's own roles (TenantAuthContext replaces
+  // it on impersonation) — every user shares a base "user" role, so a
+  // parent/learner falls back to their plain user type while staff resolve
+  // to what they actually do (Bursar, Class Teacher, School Admin, etc.),
+  // matching the same precedence SchoolDashboard.jsx uses to pick a dashboard.
+  const roleLabel = resolveUserLabel({
+    userTypeId: displayUser?.user_type_id,
+    roles,
+    staffType: displayUser?.staff?.staff_type,
+  });
 
   return (
     <>

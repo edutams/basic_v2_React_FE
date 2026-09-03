@@ -6,6 +6,13 @@ import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
+// Tenant-guard Spatie roles that can manage the school's subscription — same
+// list as config/subscription.php's admin_roles on the backend, and
+// TenantProtectedRoute.jsx's ADMIN_TIER_ROLES. Only they see this banner:
+// end users must never be told their school is behind on payment (see
+// SubscriptionLockedNotice for their generic, role-blind message instead).
+const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head'];
+
 /**
  * Fixed strip docked beneath the header (and beneath the impersonation bar,
  * if that's showing too) — same sidebar-aware positioning pattern as
@@ -17,11 +24,14 @@ const SubscriptionBanner = () => {
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
   const navigate = useNavigate();
   const { isCollapse } = useContext(CustomizerContext);
-  const { subscriptionStatus, isImpersonated } = useContext(TenantAuthContext);
+  const { subscriptionStatus, isImpersonated, roles } = useContext(TenantAuthContext);
 
   const tier = subscriptionStatus?.tier;
+  const isAdminTier =
+    Array.isArray(roles) &&
+    roles.some((r) => ADMIN_TIER_ROLES.includes(typeof r === 'string' ? r : r?.name));
 
-  if (!tier || tier === 'active') {
+  if (!tier || tier === 'active' || !isAdminTier) {
     return null;
   }
 

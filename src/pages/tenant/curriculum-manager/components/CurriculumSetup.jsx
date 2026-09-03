@@ -46,6 +46,7 @@ import {
   fetchCurriculumSubjects,
   importSelectedCurriculums,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
 const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
   return (
@@ -205,13 +206,23 @@ const CurriculumSetup = () => {
   const loadSessionsAndTerms = async () => {
     setLoadingSessions(true);
     try {
-      const sessionsRes = await fetchSessions();
+      // getActiveSessionTerm() on the backend, not Session.is_current — that
+      // flag is independent and can point at a different session than
+      // what's actually running (see
+      // SessionManagementController::toggleSessionStatus).
+      const [sessionsRes, activeRes] = await Promise.all([
+        fetchSessions(),
+        fetchActiveTenantSessionTerm(),
+      ]);
+      const activeSessionTerm = activeRes?.status ? activeRes.data : null;
 
       if (sessionsRes.status) {
         setSessions(sessionsRes.data);
         if (sessionsRes.data.length > 0) {
           const currentSession =
-            sessionsRes.data.find((s) => s.is_current === 'yes') || sessionsRes.data[0];
+            (activeSessionTerm &&
+              sessionsRes.data.find((s) => s.id === activeSessionTerm.session_id)) ||
+            sessionsRes.data[0];
           setSelectedSession(currentSession.id);
 
           // Load terms for the initial session
@@ -220,7 +231,12 @@ const CurriculumSetup = () => {
           if (termsRes.status) {
             setTerms(termsRes.data);
             if (termsRes.data.length > 0) {
-              setSelectedTerm(termsRes.data[0].id);
+              const defaultTerm =
+                (activeSessionTerm &&
+                  activeSessionTerm.session_id === currentSession.id &&
+                  termsRes.data.find((t) => t.id === activeSessionTerm.term_id)) ||
+                termsRes.data[0];
+              setSelectedTerm(defaultTerm.id);
             }
           }
           setLoadingTerms(false);

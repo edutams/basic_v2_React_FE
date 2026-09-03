@@ -604,7 +604,7 @@ const SchemeOfWork = () => {
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 1 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard

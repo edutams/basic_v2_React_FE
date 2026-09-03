@@ -42,11 +42,25 @@ import {
   ContentCopy as ContentCopyIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import { IconEye, IconPencil } from '@tabler/icons-react';
+import {
+  IconEye,
+  IconPencil,
+  IconSchool,
+  IconCalendar,
+  IconHash,
+  IconId,
+  IconCopy,
+  IconCheck,
+  IconSparkles,
+  IconWand,
+  IconPlus,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
+import admissionImg from '@/assets/images/admission/graduation.png';
 import {
   fetchSessions,
   fetchSessionTermsBySession,
@@ -183,7 +197,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
     aria-labelledby={`admission-tab-${index}`}
     {...other}
   >
-    {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    {value === index && <Box sx={{ pt: 1.5 }}>{children}</Box>}
   </div>
 );
 
@@ -193,7 +207,13 @@ const STD_NUM_OPTIONS = [
   { key: '[:stdNum_3]', label: '3 digits', example: '001' },
   { key: '[:stdNum_4]', label: '4 digits', example: '0001' },
   { key: '[:stdNum_5]', label: '5 digits', example: '00001' },
-  // { key: '[:stdNum_6]', label: '6 digits', example: '000001' },
+];
+
+const FORMAT_PRESETS = [
+  { label: 'Shortname / Year / Seq', value: '[:shortname]/[:year]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
+  { label: 'Year / Shortname / Seq', value: '[:year]/[:shortname]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
+  { label: 'Year / Seq (4 digits)', value: '[:year]/[:stdNum_4]', stdNum: '[:stdNum_4]' },
+  { label: 'Shortname / Seq (4 digits)', value: '[:shortname]/[:stdNum_4]', stdNum: '[:stdNum_4]' },
 ];
 
 const AdmissionSetup = () => {
@@ -466,6 +486,13 @@ const AdmissionSetup = () => {
 
   // ── Code Format handlers (school-level, no batch) ──────────────────────────
 
+  const handleApplyPreset = (preset) => {
+    setCodeFormatInput(preset.value);
+    setSelectedStdNum(preset.stdNum);
+    setCopiedPlaceholder(`Preset applied`);
+    setTimeout(() => setCopiedPlaceholder(null), 1500);
+  };
+
   // Helper: append a placeholder to codeFormatInput with auto-slash
   const appendToFormat = (placeholder) => {
     setCodeFormatInput((prev) => {
@@ -645,6 +672,10 @@ const AdmissionSetup = () => {
       .replace(/\[:stdNum_5\]/g, '00001');
     // .replace(/\[:stdNum_6\]/g, '000001');
   };
+
+  // Dynamic session name for header chip
+  const currentSessionObj = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
+  const currentSessionName = currentSessionObj?.session_name || currentSessionObj?.name || '';
 
   return (
     <PageContainer title="Admission Setup" description="Manage admission batches">
@@ -932,315 +963,522 @@ const AdmissionSetup = () => {
           ══════════════════════════════════════════════════════════════════════════ */}
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={3}>
-          {/* ── Main content — full width, no batch selector ──────────────── */}
           <Grid size={{ xs: 12 }}>
-            <ParentCard title="Admission Code Format">
-              <Alert severity="info" sx={{ mb: 3 }}>
-                Define the admission code format for your school. Type your school&apos;s short name,
-                insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
-                <strong>/</strong> is automatically added between segments.
+            <ParentCard
+              title="Admission Code Format Configurator"
+              sx={{
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+                '& .MuiCardContent-root': { pt: 1 },
+              }}
+            >
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                  spacing={1.5}
+                  sx={{ width: '100%' }}
+                >
+                  <Box>
+                    Define the admission code format for your school. Type your school&apos;s short name,
+                    insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
+                    <strong>/</strong> is automatically added between segments.
+                  </Box>
+                  {currentSessionName && (
+                    <Chip
+                      icon={<IconSchool size={14} />}
+                      label={`Session: ${currentSessionName}`}
+                      size="small"
+                      color="info"
+                      sx={{ fontWeight: 600, flexShrink: 0 }}
+                    />
+                  )}
+                </Stack>
               </Alert>
 
               {codeFormatLoading ? (
-                <Box display="flex" justifyContent="center" py={4}>
-                  <CircularProgress size={28} />
+                <Box display="flex" justifyContent="center" alignItems="center" py={8}>
+                  <CircularProgress size={32} />
                 </Box>
               ) : (
-                <Grid container spacing={3}>
-                  {/* ── Left grid (md=6) — Inputs & placeholders ──────────── */}
+                <Grid container spacing={2.5}>
+                  {/* ── Left Column (xs=12, md=6) — Component Controls ── */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={700}
-                          gutterBottom
-                          sx={{ mb: 2 }}
-                        >
-                          Format Components
-                        </Typography>
-
-                        <Stack spacing={2.5}>
-                          {/* ── School Short Name (text input) ───────────── */}
-                          <Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              gutterBottom
-                              sx={{ fontSize: 13 }}
-                            >
-                              School Short Name
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+                        border: '2px solid #c7c9cbff',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography variant="subtitle1" fontWeight={700}>
+                              Format Building Blocks
                             </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ mb: 1, display: 'block' }}
-                            >
-                              Type your school abbreviation (optional)
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Step 1 of 2
+                          </Typography>
+                        </Box>
+
+                        <Stack spacing={2}>
+                          {/* ── Component 1: School Short Name ── */}
+                          <Box>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <IconSchool size={18} color="var(--mui-palette-primary-main)" />
+                                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
+                                  School Short Name
+                                </Typography>
+                              </Stack>
+                              <Chip
+                                label={codeFormatInput.includes('[:shortname]') ? 'Active' : 'Optional'}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  bgcolor: codeFormatInput.includes('[:shortname]') ? 'success.light' : 'warning.light',
+                                  color: codeFormatInput.includes('[:shortname]') ? 'success.dark' : 'warning.dark',
+                                }}
+                              />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                              Abbreviation used in admission numbers (e.g., STPAULS)
                             </Typography>
                             <TextField
                               fullWidth
                               size="small"
-                              placeholder="e.g STPAULS"
+                              placeholder="e.g. STPAULS"
                               value={schoolShortName}
                               onChange={handleShortNameChange}
                               sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  bgcolor: 'background.paper',
+                                },
                                 '& .MuiOutlinedInput-input': {
                                   fontFamily: 'monospace',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   fontSize: 14,
+                                  letterSpacing: 0.5,
                                   textTransform: 'uppercase',
                                 },
                               }}
                             />
                           </Box>
 
-                          <Divider />
+                          <Divider sx={{ borderStyle: 'dashed' }} />
 
-                          {/* ── Admission Year (clickable) ──────────────── */}
+                          {/* ── Component 2: Admission Year Token ── */}
                           <Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              gutterBottom
-                              sx={{ fontSize: 13 }}
-                            >
-                              Admission Year
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ mb: 1, display: 'block' }}
-                            >
-                              Click to insert <strong>[:year]</strong> into the format
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <IconCalendar size={18} color="var(--mui-palette-primary-main)" />
+                                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
+                                  Admission Year Token
+                                </Typography>
+                              </Stack>
+                              <Chip
+                                label={codeFormatInput.includes('[:year]') ? 'Inserted' : 'Available'}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  bgcolor: codeFormatInput.includes('[:year]') ? 'primary.light' : 'info.light',
+                                  color: codeFormatInput.includes('[:year]') ? 'primary.main' : 'info.dark',
+                                }}
+                              />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                              Click token button below to append dynamic year placeholder <strong>[:year]</strong>
                             </Typography>
                             <Button
-                              variant="outlined"
-                              size="small"
+                              variant={codeFormatInput.includes('[:year]') ? 'soft' : 'outlined'}
+                              size="medium"
                               onClick={handleYearClick}
                               startIcon={
-                                <ContentCopyIcon
-                                  fontSize="small"
-                                  sx={{
-                                    color:
-                                      copiedPlaceholder === '[:year]' ? 'success.main' : 'inherit',
-                                  }}
-                                />
+                                copiedPlaceholder === '[:year]' ? (
+                                  <IconCheck size={16} />
+                                ) : (
+                                  <IconPlus size={16} />
+                                )
                               }
                               sx={{
+                                borderRadius: 2,
                                 fontFamily: 'monospace',
                                 fontWeight: 700,
-                                borderColor:
-                                  copiedPlaceholder === '[:year]' ? 'success.main' : 'primary.main',
-                                color:
-                                  copiedPlaceholder === '[:year]' ? 'success.main' : 'primary.main',
-                                bgcolor:
-                                  copiedPlaceholder === '[:year]' ? 'success.light' : 'transparent',
+                                px: 2,
+                                py: 0.8,
+                                textTransform: 'none',
+                                borderColor: codeFormatInput.includes('[:year]') ? 'primary.main' : 'divider',
+                                bgcolor: codeFormatInput.includes('[:year]') ? 'primary.light' : 'transparent',
+                                color: 'primary.main',
                                 transition: 'all 0.2s ease',
                                 '&:hover': {
-                                  bgcolor: 'primary.light',
+                                  bgcolor: 'primary.main',
+                                  color: 'white',
                                   borderColor: 'primary.main',
                                 },
                               }}
                             >
-                              {copiedPlaceholder === '[:year]' ? 'Inserted!' : '[:year]'}
+                              {copiedPlaceholder === '[:year]' ? 'Inserted [:year]!' : '[:year] (Admission Year)'}
                             </Button>
                           </Box>
 
-                          <Divider />
+                          {/* ── Component 3: Student Number Digit Length (Visible only when [:year] is present) ── */}
+                          {codeFormatInput.includes('[:year]') && (
+                            <>
+                              <Divider sx={{ borderStyle: 'dashed' }} />
 
-                          {/* ── Student Number (radio options) ──────────── */}
+                              <Box>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
+                                  <Stack direction="row" spacing={1} alignItems="center">
+                                    <IconHash size={18} color="var(--mui-palette-primary-main)" />
+                                    <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
+                                      Sequential Student Number
+                                    </Typography>
+                                  </Stack>
+                                  <Chip
+                                    label="Pick 1 Length"
+                                    size="small"
+                                    sx={{
+                                      height: 20,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      bgcolor: 'warning.light',
+                                      color: 'warning.dark',
+                                    }}
+                                  />
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary" display="block" mb={1.2}>
+                                  Select the padding length for sequential student registration numbers
+                                </Typography>
+
+                                <RadioGroup value={selectedStdNum} onChange={handleStdNumChange}>
+                                  <Grid container spacing={1.5}>
+                                    {STD_NUM_OPTIONS.map((opt) => {
+                                      const isSelected = selectedStdNum === opt.key;
+                                      return (
+                                        <Grid size={{ xs: 6 }} key={opt.key}>
+                                          <Box
+                                            onClick={() => handleStdNumChange({ target: { value: opt.key } })}
+                                            sx={{
+                                              p: 1.2,
+                                              borderRadius: 2,
+                                              border: '1.5px solid',
+                                              borderColor: isSelected ? 'primary.main' : 'divider',
+                                              bgcolor: isSelected
+                                                ? (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(238, 242, 255, 0.8)')
+                                                : 'background.paper',
+                                              cursor: 'pointer',
+                                              transition: 'all 0.2s ease',
+                                              boxShadow: isSelected ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none',
+                                              '&:hover': {
+                                                borderColor: 'primary.main',
+                                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(238, 242, 255, 0.4)'),
+                                              },
+                                            }}
+                                          >
+                                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
+                                              <Typography variant="caption" fontWeight={700} color={isSelected ? 'primary.main' : 'text.primary'}>
+                                                {opt.label}
+                                              </Typography>
+                                              <Radio
+                                                checked={isSelected}
+                                                size="small"
+                                                sx={{ p: 0, '&.Mui-checked': { color: 'primary.main' } }}
+                                              />
+                                            </Stack>
+                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                              <Typography
+                                                variant="body2"
+                                                fontWeight={700}
+                                                sx={{ fontFamily: 'monospace', fontSize: 13, color: 'text.secondary' }}
+                                              >
+                                                {opt.key}
+                                              </Typography>
+                                              <Chip
+                                                label={opt.example}
+                                                size="small"
+                                                color={isSelected ? 'primary' : 'default'}
+                                                sx={{
+                                                  height: 18,
+                                                  fontSize: 10,
+                                                  fontFamily: 'monospace',
+                                                  fontWeight: 700,
+                                                }}
+                                              />
+                                            </Stack>
+                                          </Box>
+                                        </Grid>
+                                      );
+                                    })}
+                                  </Grid>
+                                </RadioGroup>
+                              </Box>
+                            </>
+                          )}
+
+                          <Divider sx={{ borderStyle: 'dashed' }} />
+
+                          {/* ── Component 4: Quick Presets ── */}
                           <Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight={600}
-                              gutterBottom
-                              sx={{ fontSize: 13 }}
-                            >
-                              Student Number
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13, mb: 1 }}>
+                              Quick Format Presets
                             </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ mb: 0.5, display: 'block' }}
-                            >
-                              Choose the digit length{' '}
-                              <Typography
-                                component="span"
-                                variant="caption"
-                                sx={{ fontStyle: 'italic', color: 'warning.main' }}
-                              >
-                                (only one can be used)
-                              </Typography>
-                            </Typography>
-                            <RadioGroup
-                              value={selectedStdNum}
-                              onChange={handleStdNumChange}
-                              sx={{
-                                '& .MuiFormControlLabel-root': {
-                                  mr: 0,
-                                  borderRadius: 1,
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  bgcolor: 'background.paper',
-                                  px: 1.5,
-                                  py: 0.5,
-                                  mb: 0.5,
-                                  transition: 'all 0.15s ease',
-                                  '&:hover': {
+                            <Stack direction="row" flexWrap="wrap" gap={1}>
+                              {FORMAT_PRESETS.map((preset, idx) => (
+                                <Chip
+                                  key={idx}
+                                  icon={<IconWand size={12} />}
+                                  label={preset.label}
+                                  clickable
+                                  size="small"
+                                  onClick={() => handleApplyPreset(preset)}
+                                  sx={{
+                                    borderRadius: 2,
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    bgcolor: 'primary.light',
+                                    color: 'primary.main',
+                                    border: '1px solid',
                                     borderColor: 'primary.light',
-                                    bgcolor: 'primary.light',
-                                  },
-                                  '&.Mui-selected': {
-                                    borderColor: 'primary.main',
-                                    bgcolor: 'primary.light',
-                                  },
-                                },
-                              }}
-                            >
-                              {STD_NUM_OPTIONS.map((opt) => (
-                                <FormControlLabel
-                                  key={opt.key}
-                                  value={opt.key}
-                                  control={
-                                    <Radio
-                                      size="small"
-                                      sx={{
-                                        '&.Mui-checked': { color: 'primary.main' },
-                                      }}
-                                    />
-                                  }
-                                  label={
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <Typography
-                                        variant="body2"
-                                        fontWeight={700}
-                                        sx={{ fontFamily: 'monospace', fontSize: 13 }}
-                                      >
-                                        {opt.key}
-                                      </Typography>
-                                      <Typography variant="caption" color="text.secondary">
-                                        {opt.label}
-                                      </Typography>
-                                      <Chip
-                                        label={opt.example}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{
-                                          height: 20,
-                                          fontSize: 10,
-                                          fontFamily: 'monospace',
-                                          fontWeight: 600,
-                                        }}
-                                      />
-                                    </Box>
-                                  }
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                      bgcolor: 'primary.main',
+                                      color: 'white',
+                                    },
+                                  }}
                                 />
                               ))}
-                            </RadioGroup>
+                            </Stack>
                           </Box>
                         </Stack>
                       </CardContent>
                     </Card>
                   </Grid>
 
-                  {/* ── Right grid (md=6) — Format builder & save ───────── */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Card variant="outlined" sx={{ height: '100%' }}>
-                      <CardContent>
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={700}
-                          gutterBottom
-                          sx={{ mb: 2 }}
-                        >
-                          Code Format
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 3,
+                        height: '100%',
+                        border: '2px solid #c7c9cbff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2.5, flexGrow: 1 }}>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography variant="subtitle1" fontWeight={700}>
+                              Format Canvas & Live Preview
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Step 2 of 2
+                          </Typography>
+                        </Box>
+
+                        <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+                          Format tokens automatically construct your student code pattern. You can also fine-tune or trim components below.
                         </Typography>
 
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ mb: 1.5, display: 'block' }}
-                        >
-                          The format is built automatically from your selections above. You can also
-                          edit it manually.
-                        </Typography>
-
-                        {/* Format input */}
-                        <OutlinedInput
-                          fullWidth
-                          value={codeFormatInput}
-                          onChange={handleCodeFormatInputChange}
-                          placeholder="Add components from the left..."
-                          size="small"
-                          sx={{
-                            fontFamily: 'monospace',
-                            fontSize: 14,
-                            mb: 2,
-                            '& .MuiOutlinedInput-input': {
-                              py: 1.5,
-                            },
-                          }}
-                        />
-
-                        {/* Example output */}
+                        {/* ── Visual Token Pills Preview ── */}
                         {getFullCodeFormat() && (
-                          <Box
-                            sx={{
-                              p: 1.5,
-                              bgcolor: 'success.light',
-                              borderRadius: 1,
-                              mb: 2,
-                              border: '1px solid',
-                              borderColor: 'success.main',
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              fontWeight={700}
-                              color="success.dark"
-                              gutterBottom
-                              display="block"
-                            >
-                              Example output:
+                          <Box mb={2.5}>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+                              Active Format Token Pattern:
                             </Typography>
-                            <Typography
-                              variant="body1"
-                              fontWeight={700}
-                              color="success.dark"
-                              sx={{ fontFamily: 'monospace', fontSize: 18 }}
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                p: 1.5,
+                                borderRadius: 2.5,
+                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.9)'),
+                                border: '1px dashed',
+                                borderColor: 'divider',
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: 1,
+                              }}
                             >
-                              {getExampleOutput()}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="success.dark"
-                              sx={{ mt: 0.5, display: 'block' }}
-                            >
-                              Using shortname: &quot;{schoolShortName.trim() || 'STPAULS'}&quot; |
-                              Year: 2026 | Sequential number starting from 001
-                            </Typography>
+                              {getFullCodeFormat()
+                                .split('/')
+                                .filter(Boolean)
+                                .map((token, i) => {
+                                  let isShort = token === '[:shortname]';
+                                  let isYear = token === '[:year]';
+                                  let isStdNum = STD_NUM_OPTIONS.some((o) => o.key === token);
+
+                                  return (
+                                    <Stack key={i} direction="row" alignItems="center" spacing={1}>
+                                      {i > 0 && (
+                                        <Typography variant="body2" fontWeight={800} color="text.disabled" sx={{ fontFamily: 'monospace' }}>
+                                          /
+                                        </Typography>
+                                      )}
+                                      <Chip
+                                        size="medium"
+                                        label={
+                                          isShort
+                                            ? `Shortname [${schoolShortName.trim() || 'STPAULS'}]`
+                                            : isYear
+                                              ? 'Year [:year]'
+                                              : isStdNum
+                                                ? `Seq No [${token.replace('[:stdNum_', '').replace(']', '')} Digits]`
+                                                : token
+                                        }
+                                        color={isShort ? 'primary' : isYear ? 'info' : isStdNum ? 'success' : 'default'}
+                                        sx={{
+                                          fontFamily: 'monospace',
+                                          fontWeight: 700,
+                                          fontSize: 12,
+                                          borderRadius: 2,
+                                        }}
+                                      />
+                                    </Stack>
+                                  );
+                                })}
+                            </Paper>
                           </Box>
                         )}
 
+                        {/* ── Monospace Format Field ── */}
+                        <Box mb={3}>
+                          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={0.8}>
+                            Raw Format String (Editable)
+                          </Typography>
+                          <OutlinedInput
+                            fullWidth
+                            value={codeFormatInput}
+                            onChange={handleCodeFormatInputChange}
+                            placeholder="Construct components from the left panel..."
+                            size="small"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontWeight: 700,
+                              fontSize: 14,
+                              borderRadius: 2.5,
+                              '& .MuiOutlinedInput-input': {
+                                py: 1.5,
+                                px: 2,
+                              },
+                            }}
+                          />
+                        </Box>
+
+                        {/* ── Live Example Output Container ── */}
+                        {getFullCodeFormat() ? (
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 2.5,
+                              borderRadius: 3,
+                              bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(6, 78, 59, 0.25)' : 'rgba(236, 253, 245, 0.9)'),
+                              border: '1.5px solid',
+                              borderColor: 'success.main',
+                              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)',
+                              position: 'relative',
+                            }}
+                          >
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <IconSparkles size={18} color="var(--mui-palette-success-main)" />
+                                <Typography variant="caption" fontWeight={800} color="success.dark" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                  Live Generated Sample Output
+                                </Typography>
+                              </Stack>
+                              <Tooltip title="Copy example format">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(getExampleOutput());
+                                    showSnackbar('Copied example code to clipboard', 'info');
+                                  }}
+                                  sx={{ color: 'success.dark', bgcolor: 'rgba(16, 185, 129, 0.15)' }}
+                                >
+                                  <IconCopy size={15} />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+
+                            <Typography
+                              variant="h5"
+                              fontWeight={800}
+                              color="success.dark"
+                              sx={{
+                                fontFamily: 'monospace',
+                                letterSpacing: 1,
+                                py: 1,
+                                px: 2,
+                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)'),
+                                borderRadius: 2,
+                                display: 'inline-block',
+                                border: '1px solid',
+                                borderColor: 'rgba(16, 185, 129, 0.3)',
+                                mb: 1.5,
+                              }}
+                            >
+                              {getExampleOutput()}
+                            </Typography>
+
+                            <Typography variant="caption" color="success.dark" display="block" sx={{ opacity: 0.9, fontSize: 12.5, lineHeight: 1.5 }}>
+                              <strong>Breakdown:</strong> Prefix: &quot;{schoolShortName.trim() || 'STPAULS'}&quot; &bull; Admission Year: 2026 &bull; Sequential Number starting from {selectedStdNum ? STD_NUM_OPTIONS.find(o => o.key === selectedStdNum)?.example : '001'}
+                            </Typography>
+                          </Paper>
+                        ) : (
+                          <Alert severity="info" sx={{ borderRadius: 2 }}>
+                            Select or type components on the left to start building your admission code format.
+                          </Alert>
+                        )}
+                      </CardContent>
+
+                      {/* ── Save Action Footer ── */}
+                      <Box p={3} pt={0}>
+                        <Divider sx={{ mb: 2.5 }} />
                         <Button
                           variant="contained"
                           fullWidth
                           size="large"
                           startIcon={
                             codeFormatSaving ? (
-                              <CircularProgress size={18} color="inherit" />
+                              <CircularProgress size={20} color="inherit" />
                             ) : (
                               <SaveIcon />
                             )
                           }
                           onClick={handleSaveCodeFormat}
                           disabled={codeFormatSaving || !getFullCodeFormat().trim()}
-                          sx={{ fontWeight: 700, py: 1.2 }}
+                          sx={{
+                            fontWeight: 700,
+                            py: 1.4,
+                            borderRadius: 2.5,
+                            fontSize: 15,
+                            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              boxShadow: '0 6px 20px rgba(99, 102, 241, 0.45)',
+                            },
+                          }}
                         >
-                          {codeFormatSaving ? 'Saving...' : 'Update Code Format'}
+                          {codeFormatSaving ? 'Saving Code Format...' : 'Update Code Format'}
                         </Button>
-                      </CardContent>
+                      </Box>
                     </Card>
                   </Grid>
                 </Grid>
@@ -1602,7 +1840,7 @@ const AdmissionSetup = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </PageContainer>
+    </PageContainer >
   );
 };
 

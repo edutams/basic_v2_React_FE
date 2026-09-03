@@ -136,6 +136,10 @@ const AdmissionProcessing = () => {
 
       {/* ── Main Card with Tabs ──────────────────────────────────────────────────── */}
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0, pt: 1 },
+          '& .MuiCardContent-root': { pt: 1 },
+        }}
         title={
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
             <Tabs

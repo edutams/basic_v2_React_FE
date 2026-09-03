@@ -439,11 +439,8 @@ const HolidaySectionInner = ({ refreshKey }) => {
   return (
     <>
       {statistics && (
-        <Box sx={{ mb: 3 }}>
-          <Box display="flex" justifyContent="flex-end" alignItems="center" mb={1}>
-            <ShowTourGuideButton data-tour="holiday-analytics" />
-          </Box>
-          <Grid container spacing={3}>
+        <Box sx={{ mb: 1.5 }}>
+          <Grid container spacing={2}>
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
               <Paper
@@ -704,6 +701,10 @@ const HolidaySectionInner = ({ refreshKey }) => {
         </Box>
       )}
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+          '& .MuiCardContent-root': { pt: 1 },
+        }}
         title={
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h5">Holidays</Typography>

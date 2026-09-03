@@ -417,6 +417,10 @@ const ClassSubject = () => {
       {/* LEFT: Program and Classes */}
       <Box sx={{ flex: { md: 4 }, width: '100%' }}>
         <ParentCard
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+            '& .MuiCardContent-root': { pt: 1 },
+          }}
           title={
             <Select
               data-tour={CURRICULUM_TOUR_KEYS.PROGRAMME_SELECT}
@@ -438,7 +442,7 @@ const ClassSubject = () => {
             </Select>
           }
         >
-          <Box mt={2}>
+          <Box mt={1}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Classes
             </Typography>
@@ -491,6 +495,10 @@ const ClassSubject = () => {
       {/* RIGHT: Subjects */}
       <Box sx={{ flex: { md: 8 }, width: '100%' }}>
         <ParentCard
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+            '& .MuiCardContent-root': { pt: 1 },
+          }}
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h6" sx={{ fontWeight: 600 }}>

@@ -1,15 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CalendarIntelligence from './CalendarIntelligence';
-
-vi.mock('@/api/tenant/holidays/holidayApi', () => ({
-  fetchHolidays: vi.fn(() =>
-    Promise.resolve({
-      data: [{ id: 1, name: 'Mid-Term Break', start_date: '2026-01-12', end_date: '2026-01-16' }],
-    }),
-  ),
-}));
 
 const baseOverview = {
   subscribed_sessions_count: 2,
@@ -18,7 +10,6 @@ const baseOverview = {
     { session_id: 2, session_name: '2026/2027', terms_subscribed: 1, statuses: ['pending'] },
   ],
   weeks: { current: 15, previous: 13, delta: 2, delta_label: '+2 weeks vs last term' },
-  holidays_count: 3,
   subscription: {
     tier: 'active',
     message: null,
@@ -41,7 +32,7 @@ describe('CalendarIntelligence', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows the stat cards, including the Active Session card sourced from the subscription payload', () => {
+  it('shows the three stat cards, Active Session sourced from the subscription payload', () => {
     render(<CalendarIntelligence overview={baseOverview} loading={false} />);
 
     expect(screen.getByText('Sessions Subscribed')).toBeInTheDocument();
@@ -49,15 +40,60 @@ describe('CalendarIntelligence', () => {
     expect(screen.getByText('Active Session')).toBeInTheDocument();
     expect(screen.getByText('2026/2027')).toBeInTheDocument();
     expect(screen.getByText('First Term')).toBeInTheDocument();
-    expect(screen.getByText('15')).toBeInTheDocument();
-    expect(screen.getByText('+2 weeks vs last term')).toBeInTheDocument();
-    expect(screen.getByText('Holidays Set')).toBeInTheDocument();
     expect(screen.getByText('Subscription Active')).toBeInTheDocument();
   });
 
-  it('no longer shows the old "Active Sections" card', () => {
+  it('no longer shows the old Weeks Set / Holidays Set / Active Sections cards', () => {
     render(<CalendarIntelligence overview={baseOverview} loading={false} />);
+    expect(screen.queryByText('Weeks Set')).not.toBeInTheDocument();
+    expect(screen.queryByText('Holidays Set')).not.toBeInTheDocument();
     expect(screen.queryByText('Active Sections')).not.toBeInTheDocument();
+  });
+
+  it('fills the Sessions Subscribed card with an active/total breakdown', () => {
+    render(<CalendarIntelligence overview={baseOverview} loading={false} />);
+    expect(screen.getByText('1 of 2 currently active')).toBeInTheDocument();
+  });
+
+  it('fills the Active Session card with the current week out of the term total', () => {
+    render(<CalendarIntelligence overview={baseOverview} loading={false} />);
+    expect(screen.getByText('Week 4 of 15')).toBeInTheDocument();
+  });
+
+  it('shows a due-in-N-days chip on the Subscription card during grace', () => {
+    const future = new Date();
+    future.setDate(future.getDate() + 5);
+    const dueDate = future.toISOString().slice(0, 10);
+
+    render(
+      <CalendarIntelligence
+        overview={{
+          ...baseOverview,
+          subscription: { ...baseOverview.subscription, tier: 'grace', due_date: dueDate },
+        }}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText('Due in 5 days')).toBeInTheDocument();
+  });
+
+  it('shows an "expired" chip, not "overdue", once the subscription is locked', () => {
+    const past = new Date();
+    past.setDate(past.getDate() - 3);
+    const dueDate = past.toISOString().slice(0, 10);
+
+    render(
+      <CalendarIntelligence
+        overview={{
+          ...baseOverview,
+          subscription: { ...baseOverview.subscription, tier: 'locked', due_date: dueDate },
+        }}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText('Expired 3 days ago')).toBeInTheDocument();
   });
 
   it('opens the Sessions Subscribed modal with the full list, listing every subscribed session', async () => {
@@ -81,31 +117,10 @@ describe('CalendarIntelligence', () => {
     await user.click(screen.getByText('Active Session'));
 
     expect(await screen.findByRole('heading', { name: 'Active Session' })).toBeInTheDocument();
-    expect(screen.getByText('Week 4')).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText('Week 4')).toBeInTheDocument();
   });
 
-  it('opens the Weeks Set modal with current vs previous comparison', async () => {
-    const user = userEvent.setup();
-    render(<CalendarIntelligence overview={baseOverview} loading={false} />);
-
-    await user.click(screen.getByText('Weeks Set'));
-
-    expect(await screen.findByRole('heading', { name: 'Weeks Set' })).toBeInTheDocument();
-    expect(screen.getByText('This Term')).toBeInTheDocument();
-    expect(screen.getByText('Previous Term')).toBeInTheDocument();
-  });
-
-  it('opens the Holidays Set modal and lazy-loads the holiday list', async () => {
-    const user = userEvent.setup();
-    render(<CalendarIntelligence overview={baseOverview} loading={false} />);
-
-    await user.click(screen.getByText('Holidays Set'));
-
-    expect(await screen.findByRole('heading', { name: 'Holidays Set' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('Mid-Term Break')).toBeInTheDocument());
-  });
-
-  it('opens the Subscription modal with the status chip and message', async () => {
+  it('opens the Subscription modal with the status chip, message, and due date', async () => {
     const user = userEvent.setup();
     render(
       <CalendarIntelligence
@@ -134,13 +149,11 @@ describe('CalendarIntelligence', () => {
     const user = userEvent.setup();
     render(<CalendarIntelligence overview={baseOverview} loading={false} />);
 
-    await user.click(screen.getByText('Weeks Set'));
-    expect(await screen.findByRole('heading', { name: 'Weeks Set' })).toBeInTheDocument();
+    await user.click(screen.getByText('Active Session'));
+    expect(await screen.findByRole('heading', { name: 'Active Session' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
-    await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'Weeks Set' })).not.toBeInTheDocument(),
-    );
+    expect(screen.queryByRole('heading', { name: 'Active Session' })).not.toBeInTheDocument();
   });
 
   it('gives every card a tooltip explaining what it counts', () => {
@@ -148,7 +161,6 @@ describe('CalendarIntelligence', () => {
 
     expect(screen.getByLabelText(/subscribed to since joining the platform/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/actually running the school right now/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/weeks generated for the active term/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/holidays configured for the active term/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/subscription status for the active term/i)).toBeInTheDocument();
   });
 });

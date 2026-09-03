@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Grid,
@@ -14,31 +14,18 @@ import {
   IconButton,
   Chip,
   Divider,
-  CircularProgress,
 } from '@mui/material';
-import {
-  IconCalendarStats,
-  IconCalendarEvent,
-  IconStack2,
-  IconCalendarOff,
-  IconReceipt2,
-  IconX,
-} from '@tabler/icons-react';
-import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
+import { IconCalendarStats, IconCalendarEvent, IconReceipt2, IconX } from '@tabler/icons-react';
 
 // Same "hero stat card" visual language as HolidaySection.jsx, kept local to
 // this component since neither file exports a shared palette utility.
+// Weeks/Holidays used to live here too, but that's now the reused
+// TermCalendarCard + SchoolCalendarModal (see SetCalendarTab.jsx) — no
+// point showing the same numbers twice in two different-looking widgets.
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' }, // Sessions Subscribed
   { bg: '#F3E8FF', color: '#9333EA' }, // Active Session
-  { bg: '#DCFCE7', color: '#16A34A' }, // Weeks Set
-  { bg: '#FEE2E2', color: '#DC2626' }, // Holidays Set
 ];
-
-// Every card shares this height so the row never looks lopsided regardless
-// of how much text a given card's content needs — long text is clamped and
-// the rest lives in the modal instead.
-const CARD_HEIGHT = 92;
 
 const heroIconBadgeSx = (colorIndex) => ({
   width: 28,
@@ -62,19 +49,30 @@ const clampSx = (lines) => ({
   overflow: 'hidden',
 });
 
+// height: '100%' all the way down (ButtonBase -> Paper) is what lets these
+// cards stretch to match TermCalendarCard's taller natural height when
+// they're placed side by side (see SetCalendarTab.jsx) — a fixed pixel
+// height here would leave a gap under the shorter cards instead.
 const StatCard = ({ title, tooltip, icon, colorIndex, value, footer, onClick }) => (
   <Tooltip title={tooltip} arrow placement="top">
-    <ButtonBase onClick={onClick} sx={{ display: 'block', width: '100%', borderRadius: '12px' }}>
+    <ButtonBase
+      onClick={onClick}
+      sx={{ display: 'block', width: '100%', height: '100%', borderRadius: '12px' }}
+    >
       <Paper
         elevation={0}
         sx={{
-          p: '10px 12px',
+          p: '14px',
           borderRadius: '12px',
           bgcolor: 'background.paper',
           border: '1px solid',
           borderColor: 'divider',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          height: CARD_HEIGHT,
+          height: '100%',
+          minHeight: 92,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
           textAlign: 'left',
           width: '100%',
           cursor: 'pointer',
@@ -88,22 +86,27 @@ const StatCard = ({ title, tooltip, icon, colorIndex, value, footer, onClick }) 
           </Typography>
           <Box sx={heroIconBadgeSx(colorIndex)}>{icon}</Box>
         </Stack>
-        <Typography
-          variant="h2"
-          fontWeight={900}
-          sx={{ lineHeight: 1, fontSize: { xs: 22, md: 26 }, color: heroAccent(colorIndex) }}
-        >
-          {value}
-        </Typography>
-        {footer && (
+        <Box>
           <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 0.25, display: 'block', ...clampSx(1) }}
+            variant="h2"
+            fontWeight={900}
+            sx={{ lineHeight: 1, fontSize: { xs: 22, md: 26 }, color: heroAccent(colorIndex) }}
           >
-            {footer}
+            {value}
           </Typography>
-        )}
+          {footer &&
+            (typeof footer === 'string' ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block', ...clampSx(1) }}
+              >
+                {footer}
+              </Typography>
+            ) : (
+              <Box sx={{ mt: 0.5 }}>{footer}</Box>
+            ))}
+        </Box>
       </Paper>
     </ButtonBase>
   </Tooltip>
@@ -133,6 +136,49 @@ const tierChipColor = (tier) =>
 // — distinct from the grace/locked tier above — so it gets its own mapping.
 const subscriptionStatusChipColor = (status) =>
   ({ active: 'success', pending: 'warning', expired: 'error' })[status] || 'default';
+
+// "N active / M not" breakdown for the Sessions Subscribed card's footer —
+// derived from the same list the modal already shows, no extra fetch.
+const subscribedSessionsBreakdown = (sessions) => {
+  if (!sessions?.length) return null;
+  const activeCount = sessions.filter((s) => s.statuses.includes('active')).length;
+  if (activeCount === sessions.length) return `All ${activeCount} currently active`;
+  if (activeCount === 0) return `${sessions.length} session${sessions.length === 1 ? '' : 's'}, none active`;
+  return `${activeCount} of ${sessions.length} currently active`;
+};
+
+// Local-safe "YYYY-MM-DD" parsing — new Date('2026-01-30') parses as UTC
+// midnight, which can shift a day off in some timezones; read the
+// components directly instead, same as SetCalendarTab.jsx/HolidaySection.jsx.
+const parseIsoDate = (isoDate) => {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const formatIsoDateLong = (isoDate) =>
+  isoDate
+    ? parseIsoDate(isoDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null;
+
+// Signed day difference between today and an ISO date, for the due-date
+// countdown on the Subscription card.
+const daysUntil = (isoDate) => {
+  if (!isoDate) return null;
+  const due = parseIsoDate(isoDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((due - today) / 86400000);
+};
+
+const dueCountdownLabel = (tier, dueDate) => {
+  const days = daysUntil(dueDate);
+  if (days === null) return null;
+  if (days > 0) return `Due in ${days} day${days === 1 ? '' : 's'}`;
+  if (days === 0) return 'Due today';
+  // Locked subscriptions are already expired, not "overdue" — that reads
+  // as though paying now would still save the grace period, which it can't.
+  return tier === 'locked' ? `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago` : `Due ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`;
+};
 
 // ── Modal bodies — one per card, every stat's "click to see the data" ──────
 
@@ -196,125 +242,58 @@ const ActiveSessionModal = ({ subscription }) => (
   </Stack>
 );
 
-const WeeksModal = ({ weeks }) => (
-  <Stack spacing={1.5}>
-    <Stack direction="row" spacing={3}>
-      <Box>
-        <Typography variant="caption" color="text.secondary">This Term</Typography>
-        <Typography variant="h4" fontWeight={800}>{weeks?.current ?? 0}</Typography>
-      </Box>
-      <Box>
-        <Typography variant="caption" color="text.secondary">Previous Term</Typography>
-        <Typography variant="h4" fontWeight={800} color="text.secondary">
-          {weeks?.previous ?? '—'}
-        </Typography>
-      </Box>
-    </Stack>
-    <Typography color="text.secondary">{weeks?.delta_label}</Typography>
-  </Stack>
-);
-
-const HolidaysModal = ({ sessionTermId }) => {
-  const [holidays, setHolidays] = useState(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!sessionTermId) return;
-    let mounted = true;
-    fetchHolidays(sessionTermId)
-      .then((res) => {
-        if (mounted) setHolidays(res?.data ?? []);
-      })
-      .catch(() => {
-        if (mounted) setError(true);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [sessionTermId]);
-
-  if (!sessionTermId) {
-    return <Typography color="text.secondary">No active term to show holidays for.</Typography>;
-  }
-  if (error) {
-    return <Typography color="error">Failed to load holidays.</Typography>;
-  }
-  if (holidays === null) {
-    return (
-      <Box display="flex" justifyContent="center" py={3}>
-        <CircularProgress size={28} />
-      </Box>
-    );
-  }
-  if (holidays.length === 0) {
-    return <Typography color="text.secondary">No holidays set for the active term yet.</Typography>;
-  }
+const SubscriptionModal = ({ subscription }) => {
+  const dueLabel = dueCountdownLabel(subscription?.tier, subscription?.due_date);
 
   return (
-    <Stack spacing={1}>
-      {holidays.map((h) => (
-        <Paper key={h.id} variant="outlined" sx={{ p: 1.5, borderRadius: '10px' }}>
-          <Typography fontWeight={700}>{h.name}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            {h.start_date} → {h.end_date}
-          </Typography>
-        </Paper>
-      ))}
+    <Stack spacing={1.5}>
+      <Chip
+        label={subscriptionLabel(subscription?.tier)}
+        color={tierChipColor(subscription?.tier)}
+        sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+      />
+      <Typography>{subscription?.message || "You're all set for this term."}</Typography>
+      {subscription?.due_date && (
+        <Box>
+          <Typography variant="caption" color="text.secondary">Due Date</Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography fontWeight={700}>{formatIsoDateLong(subscription.due_date)}</Typography>
+            {dueLabel && <Chip size="small" label={dueLabel} color={tierChipColor(subscription?.tier)} variant="outlined" />}
+          </Stack>
+        </Box>
+      )}
     </Stack>
   );
 };
 
-const SubscriptionModal = ({ subscription }) => (
-  <Stack spacing={1.5}>
-    <Chip
-      label={subscriptionLabel(subscription?.tier)}
-      color={tierChipColor(subscription?.tier)}
-      sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
-    />
-    <Typography>{subscription?.message || "You're all set for this term."}</Typography>
-    {subscription?.due_date && (
-      <Box>
-        <Typography variant="caption" color="text.secondary">Due Date</Typography>
-        <Typography fontWeight={700}>
-          {new Date(subscription.due_date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Typography>
-      </Box>
-    )}
-  </Stack>
-);
-
 const MODALS = {
   sessions: { title: 'Sessions Subscribed', Body: SessionsSubscribedModal },
   session: { title: 'Active Session', Body: ActiveSessionModal },
-  weeks: { title: 'Weeks Set', Body: WeeksModal },
-  holidays: { title: 'Holidays Set', Body: HolidaysModal },
   subscription: { title: 'Subscription', Body: SubscriptionModal },
 };
 
 /**
  * "How intelligent is the calendar?" — a stat-card row atop SetCalendarTab
- * answering exactly what the CEO asked for: sessions subscribed to, the
- * session actually running the school, how this term's weeks compare to the
- * last one, holidays set, and a plain-language subscription readout.
+ * answering what the CEO asked for: sessions subscribed to, and the session
+ * actually running the school, plus a plain-language subscription readout.
+ * Weeks/holidays live in the (reused) TermCalendarCard next to this — see
+ * SetCalendarTab.jsx. Every level here is height: '100%' specifically so
+ * this whole block stretches to match TermCalendarCard's taller natural
+ * height when the two sit side by side, instead of leaving a gap.
  *
  * Every card opens a modal with the full data behind it — no navigation, no
- * scrolling, all five behave the same way (uniform, single source of truth:
- * every modal reads from the same `overview` response this component
- * already has, except Holidays which lazy-fetches on open).
+ * scrolling. Every modal reads from the same `overview` response this
+ * component already has — no extra round trips.
  */
 const CalendarIntelligence = ({ overview, loading }) => {
   const [activeModal, setActiveModal] = useState(null);
 
   if (loading && !overview) {
     return (
-      <Grid container spacing={1.5} sx={{ mb: 3 }}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Grid key={i} size={{ xs: 12, sm: 6, lg: 2.4 }}>
-            <Skeleton variant="rounded" height={CARD_HEIGHT} sx={{ borderRadius: '12px' }} />
+      <Grid container spacing={1.5} sx={{ height: '100%' }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Grid key={i} size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Skeleton variant="rounded" height={92} sx={{ borderRadius: '12px', height: '100%' }} />
           </Grid>
         ))}
       </Grid>
@@ -323,81 +302,73 @@ const CalendarIntelligence = ({ overview, loading }) => {
 
   if (!overview) return null;
 
-  const { subscribed_sessions_count, weeks, holidays_count, subscription } = overview;
+  const { subscribed_sessions_count, subscribed_sessions, weeks, subscription } = overview;
   const palette = subscriptionPalette(subscription?.tier);
-  const deltaColor =
-    weeks?.delta > 0 ? 'success.main' : weeks?.delta < 0 ? 'error.main' : 'text.secondary';
+  const sessionsBreakdown = subscribedSessionsBreakdown(subscribed_sessions);
+  const dueLabel = dueCountdownLabel(subscription?.tier, subscription?.due_date);
 
   const modal = activeModal ? MODALS[activeModal] : null;
   const ModalBody = modal?.Body;
 
   return (
-    <>
-      <Grid container spacing={1.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+    <Box sx={{ height: '100%' }}>
+      <Grid container spacing={1.5} sx={{ height: '100%' }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <StatCard
             title="Sessions Subscribed"
             tooltip="Every academic session your school has subscribed to since joining the platform. Click to see them."
             icon={<IconCalendarStats size={18} />}
             colorIndex={0}
             value={subscribed_sessions_count}
+            footer={sessionsBreakdown}
             onClick={() => setActiveModal('sessions')}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <StatCard
             title="Active Session"
             tooltip="The session and term actually running the school right now. Click for details."
             icon={<IconCalendarEvent size={18} />}
             colorIndex={1}
             value={subscription?.session_name || '—'}
-            footer={subscription?.term_name}
+            footer={
+              subscription?.term_name && (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {subscription.term_name}
+                  </Typography>
+                  {subscription?.week_number && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      Week {subscription.week_number}
+                      {weeks?.current ? ` of ${weeks.current}` : ''}
+                    </Typography>
+                  )}
+                </>
+              )
+            }
             onClick={() => setActiveModal('session')}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-          <StatCard
-            title="Weeks Set"
-            tooltip="Weeks generated for the active term, compared to the previous term. Click for details."
-            icon={<IconStack2 size={18} />}
-            colorIndex={2}
-            value={weeks?.current ?? 0}
-            onClick={() => setActiveModal('weeks')}
-            footer={
-              <Box component="span" sx={{ color: deltaColor, fontWeight: 600 }}>
-                {weeks?.delta_label}
-              </Box>
-            }
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-          <StatCard
-            title="Holidays Set"
-            tooltip="Holidays configured for the active term. Click to see them."
-            icon={<IconCalendarOff size={18} />}
-            colorIndex={3}
-            value={holidays_count}
-            onClick={() => setActiveModal('holidays')}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 12, lg: 4 }}>
           <Tooltip title="Your school's subscription status for the active term. Click for details." arrow placement="top">
             <ButtonBase
               onClick={() => setActiveModal('subscription')}
-              sx={{ display: 'block', width: '100%', borderRadius: '12px', textAlign: 'left' }}
+              sx={{ display: 'block', width: '100%', height: '100%', borderRadius: '12px', textAlign: 'left' }}
             >
               <Paper
                 elevation={0}
                 sx={{
-                  p: '10px 12px',
+                  p: '14px',
                   borderRadius: '12px',
                   bgcolor: palette.bg,
                   border: `1px solid ${palette.border}`,
-                  height: CARD_HEIGHT,
+                  height: '100%',
+                  minHeight: 92,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
                   cursor: 'pointer',
                   transition: 'box-shadow 0.15s ease, transform 0.15s ease',
                   '&:hover': { boxShadow: '0 4px 10px rgba(0,0,0,0.08)', transform: 'translateY(-1px)' },
@@ -411,13 +382,26 @@ const CalendarIntelligence = ({ overview, loading }) => {
                 </Stack>
                 <Typography
                   variant="caption"
-                  sx={{ color: palette.color, lineHeight: 1.35, display: 'block', ...clampSx(2) }}
+                  sx={{ color: palette.color, lineHeight: 1.35, display: 'block', ...clampSx(3) }}
                 >
                   {subscription?.message ||
                     (subscription?.tier === 'active'
                       ? "You're all set for this term."
                       : 'No subscription information available.')}
                 </Typography>
+                {dueLabel && (
+                  <Chip
+                    label={dueLabel}
+                    size="small"
+                    sx={{
+                      alignSelf: 'flex-start',
+                      mt: 0.75,
+                      fontWeight: 700,
+                      bgcolor: 'rgba(255,255,255,0.6)',
+                      color: palette.color,
+                    }}
+                  />
+                )}
               </Paper>
             </ButtonBase>
           </Tooltip>
@@ -432,17 +416,10 @@ const CalendarIntelligence = ({ overview, loading }) => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {ModalBody && (
-            <ModalBody
-              overview={overview}
-              subscription={subscription}
-              weeks={weeks}
-              sessionTermId={subscription?.session_term_id}
-            />
-          )}
+          {ModalBody && <ModalBody overview={overview} subscription={subscription} />}
         </DialogContent>
       </Dialog>
-    </>
+    </Box>
   );
 };
 

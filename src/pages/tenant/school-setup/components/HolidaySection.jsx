@@ -53,6 +53,19 @@ import {
 } from '@/api/tenant/holidays/holidayApi';
 import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
 
+// Local-safe "YYYY-MM-DD" formatter — new Date('2026-08-31') parses as UTC
+// midnight, which can shift a day off in some timezones when re-formatted;
+// this reads the components directly instead.
+const formatIsoDate = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
   { bg: '#DCFCE7', color: '#16A34A' },
@@ -839,8 +852,9 @@ const HolidaySectionInner = ({ refreshKey }) => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {termDateRange ? (
               <Alert severity="info" sx={{ py: 0.5 }}>
-                Dates must be within the term calendar: <strong>{termDateRange.start_date}</strong>{' '}
-                → <strong>{termDateRange.end_date}</strong>
+                Dates must be within the term calendar:{' '}
+                <strong>{formatIsoDate(termDateRange.start_date)}</strong>{' '}
+                → <strong>{formatIsoDate(termDateRange.end_date)}</strong>
               </Alert>
             ) : (
               <Alert severity="warning" sx={{ py: 0.5 }}>

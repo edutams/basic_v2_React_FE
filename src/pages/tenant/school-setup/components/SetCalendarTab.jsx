@@ -51,8 +51,24 @@ import {
   toggleWeekStatus,
   deleteWeek,
 } from '@/api/tenant/term-weeks/weekApi';
+import { fetchHolidays } from '@/api/tenant/holidays/holidayApi';
 import { fetchCalendarOverview } from '@/api/tenant/calendar/calendarAnalyticsApi';
 import CalendarIntelligence from './CalendarIntelligence';
+import TermCalendarCard from '@/pages/tenant/school-dashboard/AdminDashboard/components/TermCalendarCard';
+import { SchoolCalendarModal } from '@/pages/tenant/staff-manager/non-teaching-dashboard/components/School-calendar';
+
+// Local-safe "YYYY-MM-DD" formatter — new Date('2026-08-31') parses as UTC
+// midnight, which can shift a day off in some timezones when re-formatted;
+// this reads the components directly instead.
+const formatIsoDate = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo, refreshSubscriptionStatus } = useContext(TenantAuthContext);
@@ -115,11 +131,50 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   // Week Management states
   const [weeks, setWeeks] = useState([]);
   const [schoolDays, setSchoolDays] = useState(null);
+  const [weekStats, setWeekStats] = useState(null);
   const [autoGenerateConfig, setAutoGenerateConfig] = useState({
     startDate: '',
     numWeeks: 0,
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+
+  // Term Calendar card + "School Calendar Breakdown" modal — reused as-is
+  // from the school_admin dashboard (TermCalendarCard / SchoolCalendarModal)
+  // rather than re-building readable dates + a weeks/holidays breakdown here.
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarHolidays, setCalendarHolidays] = useState([]);
+
+  useEffect(() => {
+    if (!calendarModalOpen || !activeSessionTermId) return;
+    let mounted = true;
+    fetchHolidays(activeSessionTermId)
+      .then((res) => {
+        if (mounted) setCalendarHolidays(res?.data ?? []);
+      })
+      .catch(() => {
+        if (mounted) setCalendarHolidays([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [calendarModalOpen, activeSessionTermId]);
+
+  const termDateRange = (() => {
+    const starts = weeks.map((w) => w.start_date).filter(Boolean).sort();
+    const ends = weeks.map((w) => w.end_date).filter(Boolean).sort();
+    return {
+      start: starts.length ? formatIsoDate(starts[0]) : null,
+      end: ends.length ? formatIsoDate(ends[ends.length - 1]) : null,
+    };
+  })();
+
+  const termStatsForModal = {
+    totalSchoolDays: weekStats?.total_school_days ?? 0,
+    daysSpent: weekStats?.days_spent ?? 0,
+    daysRemaining: weekStats?.remaining_school_days ?? 0,
+    totalHolidays: weekStats?.holiday_days_allocated ?? 0,
+    pctCompleted: weekStats?.pct_completed ?? 0,
+  };
   const [confirmDeleteWeek, setConfirmDeleteWeek] = useState(false);
 
   // ── Hint positioning ─────────────────────────────────────────────────────
@@ -279,6 +334,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(weeksRes.data);
         if (weeksRes.stats) {
           setSchoolDays(weeksRes.stats.total_school_days);
+          setWeekStats(weeksRes.stats);
         }
       }
     } catch (error) {
@@ -510,6 +566,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(response.data);
         if (response.stats) {
           setSchoolDays(response.stats.total_school_days);
+          setWeekStats(response.stats);
         }
 
         setAutoGenerateConfig((prev) => ({
@@ -554,6 +611,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         setWeeks(response.data);
         if (response.stats) {
           setSchoolDays(response.stats.total_school_days);
+          setWeekStats(response.stats);
         }
         showSnackbar('Last week removed successfully', 'success');
       } else {
@@ -580,7 +638,30 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <CalendarIntelligence overview={overview} loading={overviewLoading} />
+      <Grid container spacing={1.5} sx={{ mb: 3, alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <TermCalendarCard
+            dayCurrent={weekStats?.days_spent ?? 0}
+            dayTotal={weekStats?.total_school_days ?? schoolDays ?? 0}
+            termStart={termDateRange.start || '—'}
+            expectedEnd={termDateRange.end || '—'}
+            progressPct={weekStats?.pct_completed ?? 0}
+            loading={overviewLoading && !weekStats}
+            onViewCalendar={() => setCalendarModalOpen(true)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <CalendarIntelligence overview={overview} loading={overviewLoading} />
+        </Grid>
+      </Grid>
+
+      <SchoolCalendarModal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        weeks={weeks}
+        holidays={calendarHolidays}
+        termStats={termStatsForModal}
+      />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>

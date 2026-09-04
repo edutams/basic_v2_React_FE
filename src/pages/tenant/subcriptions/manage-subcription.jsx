@@ -33,6 +33,7 @@ import TransactionModal from '@/components/shared/subcription/TransactionModal';
 import UpgradePlanModal from '@/components/shared/subcription/UpgradePlanModal';
 import RevertPlanModal from '@/components/shared/subcription/RevertPlanModal';
 import SubscriptionPaymentModal from '@/components/shared/subcription/SubscriptionPaymentModal';
+import SubscriptionBulkPaymentModal from '@/components/shared/subcription/SubscriptionBulkPaymentModal';
 
 const ManageSubscriptions = () => {
   return <ManageSubscriptionList />;
@@ -53,6 +54,8 @@ const ManageSubscriptionList = () => {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [rowToPay, setRowToPay] = useState(null);
+  const [bulkPaymentModalOpen, setBulkPaymentModalOpen] = useState(false);
+  const [sessionToPay, setSessionToPay] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
@@ -219,6 +222,11 @@ const ManageSubscriptionList = () => {
     setPaymentModalOpen(true);
   };
 
+  const handlePayFullSession = (row) => {
+    setSessionToPay({ id: row.session_id, name: row.sessions?.session_name });
+    setBulkPaymentModalOpen(true);
+  };
+
   const handlePaymentSuccess = () => {
     fetchSubscriptions();
   };
@@ -353,18 +361,30 @@ const ManageSubscriptionList = () => {
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               ₦{amountDue.toLocaleString()}
                             </Typography>
-                            {row.status === 'pending' &&
-                              amountAfterDiscount > 0 &&
-                              isActiveSessionTerm && (
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="primary"
-                                onClick={() => handlePayNow(row)}
-                                sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
-                              >
-                                Pay Now
-                              </Button>
+                            {row.status === 'pending' && amountAfterDiscount > 0 && (
+                              row.subscription_mode === 'per_session' ? (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  onClick={() => handlePayFullSession(row)}
+                                  sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
+                                >
+                                  Pay Full Session
+                                </Button>
+                              ) : (
+                                isActiveSessionTerm && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => handlePayNow(row)}
+                                    sx={{ mt: 0.5, fontSize: '0.7rem', textTransform: 'none', minWidth: 'auto', px: 1 }}
+                                  >
+                                    Pay Now
+                                  </Button>
+                                )
+                              )
                             )}
                           </TableCell>
                           <TableCell>
@@ -532,6 +552,16 @@ const ManageSubscriptionList = () => {
         }}
         selectedRow={rowToPay}
         subscriptionCharges={subscriptionCharges}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+      <SubscriptionBulkPaymentModal
+        open={bulkPaymentModalOpen}
+        onClose={() => {
+          setBulkPaymentModalOpen(false);
+          setSessionToPay(null);
+        }}
+        sessionId={sessionToPay?.id}
+        sessionName={sessionToPay?.name}
         onPaymentSuccess={handlePaymentSuccess}
       />
       <ConfirmationDialog

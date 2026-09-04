@@ -7,7 +7,7 @@ export const stimulationLinkValidationSchema = yup.object({
     .required('Subscription mode is required'),
   session: yup.string().required('Session is required'),
   term: yup.string().when('subscriptionMode', {
-    is: 'perTerm',
+    is: 'per_term',
     then: (schema) => schema.required('Term is required for Per Term mode'),
     otherwise: (schema) => schema.notRequired(),
   }),

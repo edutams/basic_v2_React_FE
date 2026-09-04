@@ -146,6 +146,26 @@ const subscriptionApi = {
   },
 
   /**
+   * Get the payment breakdown for a per_session subscription group
+   * (one row per term, plus the combined total due)
+   * @param {number|string} sessionId
+   */
+  getBulkTransactionData: async (sessionId) => {
+    const response = await tenantApi.get(`/subscriptions/session/${sessionId}/bulk-transaction-data`);
+    return response.data;
+  },
+
+  /**
+   * Pay for every pending term in a per_session subscription group with a
+   * single gateway transaction
+   * @param {Object} data - { session_id }
+   */
+  createBulkTransaction: async (data) => {
+    const response = await tenantApi.post('/subscriptions/create-bulk-transaction', data);
+    return response.data;
+  },
+
+  /**
    * Get subscription transaction history
    * @param {Object} params - { status, search, per_page, page }
    */

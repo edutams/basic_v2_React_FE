@@ -26,6 +26,7 @@ import {
   IconCreditCard,
   IconSchool,
   IconBox,
+  IconTool,
   // Add more icons as needed
 } from '@tabler/icons-react';
 
@@ -53,6 +54,7 @@ const iconMapper = {
   Circle: IconCircle,
   AppWindow: IconAppWindow,
   ClipboardList: IconClipboardList,
+  Tool: IconTool,
   // Add more mappings here when needed
 };
 

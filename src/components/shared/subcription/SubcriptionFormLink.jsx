@@ -190,7 +190,9 @@ const SubcriptionFormLink = ({
         {form.subscriptionMode === 'per_session' && (
           <Grid size={{ xs: 12 }}>
             <Alert severity="info" sx={{ py: 0, '& .MuiAlert-message': { py: 0.5, fontSize: '0.8rem' } }}>
-              Automatically creates all terms in the selected session with bulk payment.
+              This subscription mode allows for automatic creation of all terms (e.g First Term,
+              Second Term, Third Term) in the selected session with the bulk payment of the
+              subscription fees.
             </Alert>
           </Grid>
         )}

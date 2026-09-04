@@ -52,15 +52,16 @@ const LEARNING_ACTIVITIES = [
 const statBoxSx = {
   p: 1.25,
   borderRadius: '9px',
-  bgcolor: '#f8fafc',
-  border: '1px solid #e2e8f0',
+  bgcolor: '#ffffff',
+  border: '2px solid #94a3b8',
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: 1,
   cursor: 'pointer',
   transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
   '&:hover': {
-    borderColor: '#94a3b8',
+    borderColor: '#64748b',
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
   },
@@ -168,14 +169,14 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
 
       {/* Top 5 Stat Cards Row — on a white background wrapper */}
       <Box
-        sx={{
-          bgcolor: '#ffffff',
-          border: '1px solid #E5E7EB',
-          borderRadius: '14px',
-          p: 1.5,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          mb: 2,
-        }}
+      // sx={{
+      //   bgcolor: '#ffffff',
+      //   border: '1px solid #E5E7EB',
+      //   borderRadius: '14px',
+      //   p: 1.5,
+      //   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      //   mb: 2,
+      // }}
       >
         <Box
           sx={{
@@ -186,70 +187,71 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
               md: 'repeat(5, 1fr)',
             },
             gap: 1.25,
+            mb: 2,
           }}
         >
-        {/* Stat 1: Overall Average */}
-        <StatBox label="Overall Average" onClick={() => setDetailType('academic')}>
-          <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-            <CircularProgress variant="determinate" value={100} size={34} thickness={4.5} sx={{ color: '#e2e8f0' }} />
-            <CircularProgress variant="determinate" value={78} size={34} thickness={4.5} sx={{ color: '#16a34a', position: 'absolute', left: 0 }} />
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Overall Average</Typography>
-            <Stack direction="row" alignItems="center" spacing={0.5} mt={0.1}>
-              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>78%</Typography>
-              <Box sx={{ bgcolor: '#dcfce7', color: '#16a34a', px: 0.6, py: 0.1, borderRadius: '5px', fontSize: 9.5, fontWeight: 700 }}>Good</Box>
-            </Stack>
-          </Box>
-        </StatBox>
+          {/* Stat 1: Overall Average */}
+          <StatBox label="Overall Average" onClick={() => setDetailType('academic')}>
+            <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+              <CircularProgress variant="determinate" value={100} size={34} thickness={4.5} sx={{ color: '#e2e8f0' }} />
+              <CircularProgress variant="determinate" value={78} size={34} thickness={4.5} sx={{ color: '#16a34a', position: 'absolute', left: 0 }} />
+            </Box>
+            <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Overall Average</Typography>
+              <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5} mt={0.1}>
+                <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>78%</Typography>
+                <Box sx={{ bgcolor: '#dcfce7', color: '#16a34a', px: 0.6, py: 0.1, borderRadius: '5px', fontSize: 9.5, fontWeight: 700 }}>Good</Box>
+              </Stack>
+            </Box>
+          </StatBox>
 
-        {/* Stat 2: Class Rank */}
-        <StatBox label="Class Rank" onClick={() => setDetailType('performance')}>
-          <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <EmojiEventsOutlinedIcon sx={{ fontSize: 17 }} />
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Class Rank</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>5/35</Typography>
-            <Typography sx={{ fontSize: 9.5, color: '#16a34a', fontWeight: 700, whiteSpace: 'nowrap' }}>Top 14%</Typography>
-          </Box>
-        </StatBox>
+          {/* Stat 2: Class Rank */}
+          <StatBox label="Class Rank" onClick={() => setDetailType('performance')}>
+            <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <EmojiEventsOutlinedIcon sx={{ fontSize: 17 }} />
+            </Box>
+            <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Class Rank</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>5/35</Typography>
+              <Typography sx={{ fontSize: 9.5, color: '#16a34a', fontWeight: 700, whiteSpace: 'nowrap' }}>Top 14%</Typography>
+            </Box>
+          </StatBox>
 
-        {/* Stat 3: Total Subjects */}
-        <StatBox label="Total Subjects" onClick={() => setDetailType('academic')}>
-          <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <MenuBookOutlinedIcon sx={{ fontSize: 17 }} />
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Total Subjects</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>9</Typography>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>This Term</Typography>
-          </Box>
-        </StatBox>
+          {/* Stat 3: Total Subjects */}
+          <StatBox label="Total Subjects" onClick={() => setDetailType('academic')}>
+            <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <MenuBookOutlinedIcon sx={{ fontSize: 17 }} />
+            </Box>
+            <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Total Subjects</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>9</Typography>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>This Term</Typography>
+            </Box>
+          </StatBox>
 
-        {/* Stat 4: Pass Rate */}
-        <StatBox label="Pass Rate" onClick={() => setDetailType('academic')}>
-          <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 17 }} />
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Pass Rate</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>100%</Typography>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>All Subjects</Typography>
-          </Box>
-        </StatBox>
+          {/* Stat 4: Pass Rate */}
+          <StatBox label="Pass Rate" onClick={() => setDetailType('academic')}>
+            <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 17 }} />
+            </Box>
+            <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Pass Rate</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>100%</Typography>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>All Subjects</Typography>
+            </Box>
+          </StatBox>
 
-        {/* Stat 5: Assignments */}
-        <StatBox label="Assignments" onClick={() => setDetailType('engagement')}>
-          <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <AssignmentOutlinedIcon sx={{ fontSize: 17 }} />
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Assignments</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>16 / 20</Typography>
-            <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Submitted</Typography>
-          </Box>
-        </StatBox>
+          {/* Stat 5: Assignments */}
+          <StatBox label="Assignments" onClick={() => setDetailType('engagement')}>
+            <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <AssignmentOutlinedIcon sx={{ fontSize: 17 }} />
+            </Box>
+            <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Assignments</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>16 / 20</Typography>
+              <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Submitted</Typography>
+            </Box>
+          </StatBox>
         </Box>
       </Box>
 

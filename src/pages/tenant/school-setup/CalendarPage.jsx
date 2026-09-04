@@ -27,7 +27,7 @@ const CalendarPage = () => {
           mb: 1.5,
           display: 'flex',
           alignItems: 'center',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 1,
         }}
@@ -36,7 +36,9 @@ const CalendarPage = () => {
           <Tab label="Calendar Setup" />
           <Tab label="Holiday Setup" />
         </Tabs>
-        <ShowTourGuideButton data-tour="calendar-tour" />
+        <Box sx={{ ml: 'auto' }}>
+          <ShowTourGuideButton data-tour="calendar-tour" />
+        </Box>
       </Box>
 
       {activeTab === 0 && <SetCalendarTab onUpdate={handleCalendarUpdate} />}

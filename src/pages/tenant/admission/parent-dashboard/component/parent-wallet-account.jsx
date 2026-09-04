@@ -26,7 +26,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
       }}
     >
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Stack direction="row" alignItems="center" spacing={1}>
           <Box
             sx={{
@@ -52,7 +52,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
       </Stack>
 
       {/* Payable Amount Block */}
-      <Box sx={{ bgcolor: '#fff5f5', border: '1px solid #ffe4e6', borderRadius: '9px', p: 1.5, mb: 1.75 }}>
+      <Box sx={{ bgcolor: '#fff5f5', border: '1px solid #ffe4e6', borderRadius: '9px', p: 1.5, mb: 2 }}>
         <Typography sx={{ fontSize: 9.5, fontWeight: 800, color: '#e11d48', letterSpacing: 0.4 }}>
           TOTAL PAYABLE (ALL WARDS)
         </Typography>

@@ -6,8 +6,20 @@ import CalendarIntelligence from './CalendarIntelligence';
 const baseOverview = {
   subscribed_sessions_count: 2,
   subscribed_sessions: [
-    { session_id: 1, session_name: '2025/2026', terms_subscribed: 1, statuses: ['active'] },
-    { session_id: 2, session_name: '2026/2027', terms_subscribed: 1, statuses: ['pending'] },
+    {
+      session_id: 1,
+      session_name: '2025/2026',
+      terms_subscribed: 1,
+      statuses: ['active'],
+      terms: [{ term_name: 'First Term', status: 'active' }],
+    },
+    {
+      session_id: 2,
+      session_name: '2026/2027',
+      terms_subscribed: 1,
+      statuses: ['pending'],
+      terms: [{ term_name: 'First Term', status: 'pending' }],
+    },
   ],
   weeks: { current: 15, previous: 13, delta: 2, delta_label: '+2 weeks vs last term' },
   subscription: {
@@ -106,6 +118,10 @@ describe('CalendarIntelligence', () => {
     const dialog = within(screen.getByRole('dialog'));
     expect(dialog.getByText('2025/2026')).toBeInTheDocument();
     expect(dialog.getByText('2026/2027')).toBeInTheDocument();
+    // Each term gets its own name, not just a bare status — the whole
+    // point of the terms breakdown (see buildSubscribedSessions() on the
+    // backend, which is where `terms` comes from).
+    expect(dialog.getAllByText('First Term')).toHaveLength(2);
     expect(dialog.getByText('active')).toBeInTheDocument();
     expect(dialog.getByText('pending')).toBeInTheDocument();
   });

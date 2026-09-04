@@ -14,23 +14,36 @@ import {
   Stack,
   Chip,
   Avatar,
+  CircularProgress,
 } from '@mui/material';
-import { Print as PrintIcon, Download as DownloadIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
+import {
+  Print as PrintIcon,
+  Download as DownloadIcon,
+  CalendarMonth as CalendarIcon,
+} from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PropTypes from 'prop-types';
 import useNotification from '@/hooks/useNotification';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
+import { usePermissions } from '@/context/TenantContext/permissions';
+import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'active': return 'success';
-    case 'pending': return 'warning';
-    case 'expired': return 'error';
-    default: return 'default';
+    case 'active':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'expired':
+      return 'error';
+    default:
+      return 'default';
   }
 };
 
-const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
+const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges, onExtended }) => {
+  const { can } = usePermissions();
+
   const [extendModalOpen, setExtendModalOpen] = useState(false);
   const [extendDate, setExtendDate] = useState('');
   const [extendLoading, setExtendLoading] = useState(false);
@@ -61,8 +74,39 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const studentsLimit = planData.students_limit || 'N/A';
   const planDescription = `${planName} (${studentsLimit} Students)`;
 
-  const handlePrint = () => {
-    window.print();
+  // extended_due_date (set by a super_admin's manual extension) always wins
+  // over the auto-computed due_date when both are present.
+  const isExtendedDueDate = Boolean(selectedRow?.extended_due_date);
+  const dueDateRaw = selectedRow?.extended_due_date || selectedRow?.due_date;
+  const dueDateDisplay = dueDateRaw ? new Date(dueDateRaw).toLocaleDateString('en-GB') : null;
+
+  // Separate loading flags per button — sharing one made it look like both
+  // had been clicked together, since neither showed which action was
+  // actually the one in flight.
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
+  const pdfLoading = downloadLoading || printLoading;
+
+  const handleDownload = async () => {
+    setDownloadLoading(true);
+    try {
+      await subscriptionApi.downloadInvoicePdf(selectedRow.id);
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to download invoice');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    setPrintLoading(true);
+    try {
+      await subscriptionApi.printInvoicePdf(selectedRow.id);
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to open invoice');
+    } finally {
+      setPrintLoading(false);
+    }
   };
 
   const handleExtendDueDate = async () => {
@@ -72,14 +116,14 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
     }
     setExtendLoading(true);
     try {
-      // TODO: Replace with real API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      notify.success(`Due date extended to ${new Date(extendDate).toLocaleDateString('en-GB')}`);
+      await subscriptionApi.extendDueDate(selectedRow.id, extendDate);
+      notify.success(`Due date extended to ${new Date(extendDate).toLocaleDateString('en-GB')}`, 'Success');
       setExtendModalOpen(false);
       setExtendDate('');
+      onExtended?.();
       onClose();
-    } catch {
-      notify.error('Failed to extend due date');
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to extend due date');
     } finally {
       setExtendLoading(false);
     }
@@ -142,6 +186,9 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, gap: 2 }}>
             <Box>
               <Typography variant="body2" color="textSecondary">
+                <strong>Invoice No.:</strong> SUB-{selectedRow?.id}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
                 <strong>Invoice Date:</strong> {new Date().toLocaleDateString('en-GB')}
               </Typography>
               <Typography variant="body2" color="textSecondary">
@@ -152,6 +199,19 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
               <Typography variant="body2" color="textSecondary">
                 <strong>Plan:</strong> {planDescription}
               </Typography>
+              {dueDateDisplay && (
+                <Typography variant="body2" color="textSecondary">
+                  <strong>Due Date:</strong> {dueDateDisplay}
+                  {isExtendedDueDate && (
+                    <Chip
+                      label="Extended"
+                      size="small"
+                      color="info"
+                      sx={{ ml: 1, height: 18, fontSize: '0.65rem' }}
+                    />
+                  )}
+                </Typography>
+              )}
             </Box>
           </Box>
 
@@ -165,7 +225,9 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
                   <TableCell sx={{ fontWeight: 'bold', width: '50%' }}>DESCRIPTION</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>RATE (₦)</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>QTY</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Discount (₦)</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>
+                    Discount (₦)
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>AMOUNT (₦)</TableCell>
                 </TableRow>
               </TableHead>
@@ -181,8 +243,12 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
                   </TableCell>
                   <TableCell sx={{ textAlign: 'right' }}>₦{amount.toLocaleString()}</TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>1</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>{discount > 0 ? `₦${discountAmount.toLocaleString()}` : '0'}</TableCell>
-                  <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>₦{amountAfterDiscount.toLocaleString()}</TableCell>
+                  <TableCell sx={{ textAlign: 'right' }}>
+                    {discount > 0 ? `₦${discountAmount.toLocaleString()}` : '0'}
+                  </TableCell>
+                  <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>
+                    ₦{amountAfterDiscount.toLocaleString()}
+                  </TableCell>
                 </TableRow>
 
                 {charges > 0 && (
@@ -200,10 +266,20 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
                 )}
 
                 <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                  <TableCell colSpan={4} sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem' }}>
+                  <TableCell
+                    colSpan={4}
+                    sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem' }}
+                  >
                     TOTAL AMOUNT (₦)
                   </TableCell>
-                  <TableCell sx={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', color: '#1a237e' }}>
+                  <TableCell
+                    sx={{
+                      textAlign: 'right',
+                      fontWeight: 'bold',
+                      fontSize: '1rem',
+                      color: '#1a237e',
+                    }}
+                  >
                     ₦{totalAmount.toLocaleString()}
                   </TableCell>
                 </TableRow>
@@ -215,20 +291,36 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
 
           {/* Action Buttons */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+            {can('subscriptions.extend_due_date') && selectedRow?.status === 'pending' && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<CalendarIcon />}
+                onClick={() => setExtendModalOpen(true)}
+                sx={{ borderRadius: '8px' }}
+              >
+                Extend Due Date
+              </Button>
+            )}
             <Button
-              variant="outlined"
+              variant="contained"
               size="small"
-              startIcon={<CalendarIcon />}
-              onClick={() => setExtendModalOpen(true)}
+              startIcon={downloadLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />}
+              onClick={handleDownload}
+              disabled={pdfLoading}
               sx={{ borderRadius: '8px' }}
             >
-              Extend Due Date
+              {downloadLoading ? 'Downloading...' : 'Download'}
             </Button>
-            <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
-              Download
-            </Button>
-            <Button variant="contained" size="small" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}>
-              Print Invoice
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={printLoading ? <CircularProgress size={14} color="inherit" /> : <PrintIcon />}
+              onClick={handlePrint}
+              disabled={pdfLoading}
+              sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}
+            >
+              {printLoading ? 'Opening...' : 'Print Invoice'}
             </Button>
           </Box>
         </Box>
@@ -254,6 +346,8 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
             value={extendDate}
             onChange={(e) => setExtendDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date(Date.now() + 86400000).toISOString().slice(0, 10) }}
+            helperText="Must be a future date — matches the backend's own validation."
             size="small"
             sx={{ mb: 3 }}
           />
@@ -288,6 +382,7 @@ InvoiceModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   selectedRow: PropTypes.object,
   subscriptionCharges: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onExtended: PropTypes.func,
 };
 
 export default InvoiceModal;

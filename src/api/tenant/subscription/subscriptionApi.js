@@ -1,5 +1,56 @@
 import tenantApi from '../tenant_api';
 
+/**
+ * Fetch a PDF (auth headers included, via tenantApi) and return an object
+ * URL for it. Both invoice and receipt PDFs are now generated server-side
+ * (Dompdf), not via window.print(), so every consumer needs this same
+ * authenticated fetch — a plain <a href> or window.open(url) wouldn't carry
+ * the auth token.
+ */
+const fetchPdfBlobUrl = async (url) => {
+  let response;
+  try {
+    response = await tenantApi.get(url, { responseType: 'blob' });
+  } catch (err) {
+    // A non-2xx response (e.g. the receipt's "not approved yet" 422) still
+    // comes back as a Blob because responseType forced it — without this,
+    // callers' existing `err.response?.data?.message` pattern would find a
+    // Blob instead of the real message. Parse it out and re-throw in the
+    // same shape the rest of the app already expects.
+    if (err.response?.data instanceof Blob) {
+      try {
+        const text = await err.response.data.text();
+        err.response.data = JSON.parse(text);
+      } catch {
+        // Not JSON either — leave the original error as-is.
+      }
+    }
+    throw err;
+  }
+
+  return window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+};
+
+/** Fetch a PDF and trigger a browser save-as download for it. */
+const downloadBlob = async (url, filename) => {
+  const blobUrl = await fetchPdfBlobUrl(url);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+};
+
+/** Fetch a PDF and open it in a new tab — for "Print", so the browser's own PDF viewer (with its print button) handles it. */
+const openBlobInNewTab = async (url) => {
+  const blobUrl = await fetchPdfBlobUrl(url);
+  window.open(blobUrl, '_blank');
+  // Deliberately not revoking the object URL immediately — the new tab
+  // needs it to still resolve after this function returns.
+};
+
 const subscriptionApi = {
   /**
    * Get all sessions for the subscription form dropdown
@@ -82,6 +133,36 @@ const subscriptionApi = {
     const response = await tenantApi.delete(`/subscriptions/${id}`);
     return response.data;
   },
+
+  /**
+   * Manually extend a pending subscription's grace period — super_admin only
+   * @param {number|string} id
+   * @param {string} dueDate - 'YYYY-MM-DD'
+   */
+  extendDueDate: async (id, dueDate) => {
+    const response = await tenantApi.put(`/subscriptions/${id}/extend-due-date`, { due_date: dueDate });
+    return response.data;
+  },
+
+  /**
+   * Download a subscription's invoice as a server-generated PDF.
+   * @param {number|string} id
+   */
+  downloadInvoicePdf: (id) => downloadBlob(`/subscriptions/${id}/invoice/download`, `invoice_${id}.pdf`),
+
+  /** Open a subscription's invoice PDF in a new tab, for printing. */
+  printInvoicePdf: (id) => openBlobInNewTab(`/subscriptions/${id}/invoice/download`),
+
+  /**
+   * Download a transaction's receipt as a server-generated PDF — only
+   * available once the transaction is approved.
+   * @param {string} transId
+   */
+  downloadReceiptPdf: (transId) =>
+    downloadBlob(`/subscriptions/transactions/${transId}/receipt/download`, `receipt_${transId}.pdf`),
+
+  /** Open a transaction's receipt PDF in a new tab, for printing. */
+  printReceiptPdf: (transId) => openBlobInNewTab(`/subscriptions/transactions/${transId}/receipt/download`),
 
   /**
    * Upgrade a subscription to a new plan
@@ -171,6 +252,15 @@ const subscriptionApi = {
    */
   getHistory: async (params = {}) => {
     const response = await tenantApi.get('/subscriptions/history', { params });
+    return response.data;
+  },
+
+  /**
+   * Manually requery a transaction's status from the gateway ("Check Status")
+   * @param {string} bulkOrderId - the transaction's bulk_order_id (trans_bulk_id)
+   */
+  checkTransactionStatus: async (bulkOrderId) => {
+    const response = await tenantApi.post(`/subscriptions/transactions/${bulkOrderId}/check-status`);
     return response.data;
   },
 

@@ -178,6 +178,11 @@ const daysUntil = (isoDate) => {
 };
 
 const dueCountdownLabel = (tier, dueDate) => {
+  // due_date is always computed by the backend (the term's own week-4
+  // date), regardless of tier — only show it as a countdown while it's
+  // still actionable. Once tier is 'active', the school has already paid;
+  // a due-date countdown here would read as "active, but also overdue".
+  if (tier === 'active') return null;
   const days = daysUntil(dueDate);
   if (days === null) return null;
   if (days > 0) return `Due in ${days} day${days === 1 ? '' : 's'}`;
@@ -203,20 +208,17 @@ const SessionsSubscribedModal = ({ overview }) => {
   return (
     <Stack spacing={1.5}>
       {sessions.map((s) => (
-        <Paper
-          key={s.session_id}
-          variant="outlined"
-          sx={{ p: 1.5, borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}
-        >
-          <Box>
-            <Typography fontWeight={700}>{s.session_name}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {s.terms_subscribed} term{s.terms_subscribed === 1 ? '' : 's'} subscribed
-            </Typography>
-          </Box>
-          <Stack direction="row" spacing={0.5}>
-            {s.statuses.map((status) => (
-              <Chip key={status} size="small" label={status} color={subscriptionStatusChipColor(status)} />
+        <Paper key={s.session_id} variant="outlined" sx={{ p: 1.5, borderRadius: '10px' }}>
+          <Typography fontWeight={700}>{s.session_name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            {s.terms_subscribed} term{s.terms_subscribed === 1 ? '' : 's'} subscribed
+          </Typography>
+          <Stack spacing={0.75}>
+            {(s.terms ?? []).map((t, i) => (
+              <Stack key={`${t.term_name}-${i}`} direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="body2">{t.term_name || 'Unknown term'}</Typography>
+                <Chip size="small" label={t.status} color={subscriptionStatusChipColor(t.status)} />
+              </Stack>
             ))}
           </Stack>
         </Paper>
@@ -260,7 +262,12 @@ const SubscriptionModal = ({ subscription }) => {
         sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
       />
       <Typography>{subscription?.message || "You're all set for this term."}</Typography>
-      {subscription?.due_date && (
+      {/* due_date is always computed (it's the term's own week-4 date,
+          informational regardless of tier) — only show it as a countdown
+          when it's still actionable. Once tier is 'active', the school has
+          already paid; a due date here would read as "active, but also
+          overdue", which is exactly backwards. */}
+      {subscription?.tier !== 'active' && subscription?.due_date && (
         <Box>
           <Typography variant="caption" color="text.secondary">Due Date</Typography>
           <Stack direction="row" alignItems="center" spacing={1}>

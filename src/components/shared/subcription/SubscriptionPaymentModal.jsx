@@ -117,6 +117,7 @@ const SubscriptionPaymentModal = ({ open, onClose, selectedRow, subscriptionChar
 
         makePayment(data, hash);
         onClose();
+        onPaymentSuccess?.();
       }
     } catch (err) {
       console.error('Error creating transaction:', err);

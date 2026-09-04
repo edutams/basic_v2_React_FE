@@ -2,14 +2,13 @@ import { useContext } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import PageUnderDevelopment from '@/components/shared/PageUnderDevelopment';
-import ParentDashboard from '@/pages/tenant/admission/ParentDashboard';
 import AdmissionOfficerDashboard from '@/pages/tenant/admission/AdmissionOfficerDashboard';
 import BursaryOfficerDashboard from '@/pages/tenant/finance/BursaryOfficerDashboard';
 import AdminDashboard from '@/pages/tenant/school-dashboard/AdminDashboard';
-import ParentDashboard2 from '../admission/parent-dashboard/ParentDashboard2';
 import LearnerDashboard from '@/pages/tenant/learners/dashboard/LearnerDashboard';
 import TeacherDashboard from '../staff-manager/teacher-dashboard/TeacherDashboard';
 import NonTeacherDashboard from '../staff-manager/non-teaching-dashboard/NonTeachDashboard';
+import ParentDashboard from '../admission/parent-dashboard/ParentDashboard';
 
 export default function SchoolDashboard() {
   const { user } = useContext(TenantAuthContext);
@@ -83,7 +82,7 @@ export default function SchoolDashboard() {
   return (
     <PageContainer title={dashboardTitle} description={dashboardDescription}>
       {isParent ? (
-        <ParentDashboard2 />
+        <ParentDashboard />
       ) : isAdmin ? (
         <AdminDashboard />
       ) : isAdmissionOfficer ? (

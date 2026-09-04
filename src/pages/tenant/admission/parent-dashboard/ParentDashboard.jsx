@@ -59,8 +59,7 @@ const ParentDashboard2 = () => {
         setSessionTerms(
           (res.data || []).map((st) => ({
             id: st.id,
-            label:
-              `${st.session?.session_name || ''} ${st.term?.term_name || ''}`.trim(),
+            label: `${st.session?.session_name || ''} ${st.term?.term_name || ''}`.trim(),
           })),
         );
 

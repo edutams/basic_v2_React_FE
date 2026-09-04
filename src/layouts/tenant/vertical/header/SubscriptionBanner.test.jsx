@@ -42,6 +42,15 @@ describe('SubscriptionBanner', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders nothing when the tier is not_configured (no active session-term yet)', () => {
+    const { container } = renderBanner({
+      subscriptionStatus: { tier: 'not_configured', message: 'No active session/term is set up yet.' },
+      isImpersonated: false,
+      roles: ['school_admin'],
+    });
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('renders nothing when there is no subscription status yet', () => {
     const { container } = renderBanner({
       subscriptionStatus: null,

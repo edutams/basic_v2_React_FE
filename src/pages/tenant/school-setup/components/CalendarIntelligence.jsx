@@ -125,9 +125,16 @@ const subscriptionPalette = (tier) => {
   }
 };
 
+// 'not_configured' (no active session-term yet) deliberately does NOT say
+// "Active" or anything implying a confirmed, paid subscription — there's
+// genuinely nothing to check yet, and claiming otherwise is misleading.
 const subscriptionLabel = (tier) =>
-  ({ active: 'Subscription Active', grace: 'Free Trial — Subscription Due', locked: 'Subscription Expired' }[tier] ||
-  'Subscription Status');
+  ({
+    active: 'Subscription Active',
+    grace: 'Free Trial — Subscription Due',
+    locked: 'Subscription Expired',
+    not_configured: 'Not Yet Configured',
+  }[tier] || 'Subscription Status');
 
 const tierChipColor = (tier) =>
   ({ active: 'success', grace: 'warning', locked: 'error' })[tier] || 'default';

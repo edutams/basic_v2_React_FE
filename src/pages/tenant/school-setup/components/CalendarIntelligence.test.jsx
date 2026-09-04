@@ -163,4 +163,28 @@ describe('CalendarIntelligence', () => {
     expect(screen.getByLabelText(/actually running the school right now/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/subscription status for the active term/i)).toBeInTheDocument();
   });
+
+  it('never claims "Subscription Active" when no session-term is configured yet (not_configured tier)', () => {
+    render(
+      <CalendarIntelligence
+        overview={{
+          ...baseOverview,
+          subscription: {
+            tier: 'not_configured',
+            message: 'No active session/term is set up yet — subscription status will show here once your calendar is configured.',
+            session_name: null,
+            term_name: null,
+            week_number: null,
+            session_term_id: null,
+            due_date: null,
+          },
+        }}
+        loading={false}
+      />,
+    );
+
+    expect(screen.queryByText('Subscription Active')).not.toBeInTheDocument();
+    expect(screen.getByText('Not Yet Configured')).toBeInTheDocument();
+    expect(screen.getByText(/subscription status will show here/i)).toBeInTheDocument();
+  });
 });

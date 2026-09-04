@@ -294,7 +294,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   // Unpaginated, for the Session Filter dropdown
   const loadSessionFilterOptions = async () => {
     const res = await fetchTenantSessions({ page: 1, per_page: 1000 });
-    if (res.status) setSessionFilterOptions(res.data);
+    if (res.status) {
+      setSessionFilterOptions(res.data);
+      // Default to whichever session is actually active, not "show every
+      // session's terms at once" — only when nothing's been explicitly
+      // chosen yet, so this never fights a deliberate manual filter.
+      setSessionFilter((prev) => {
+        if (prev) return prev;
+        const active = res.data.find((s) => s.status === 'active');
+        return active ? active.id : prev;
+      });
+    }
   };
 
   const loadTenantTerms = async () => {
@@ -397,6 +407,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     if (!session) return;
     try {
       setLoading(true);
+      const wasActivating = session.status !== 'active';
       const res = await toggleTenantSessionStatus(session.id);
       if (res.status) {
         showSnackbar(
@@ -404,6 +415,15 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           'success',
         );
         loadTenantSessions();
+        loadSessionFilterOptions();
+        // The Session/Term tab's filter doesn't otherwise know a different
+        // session just became active — without this it silently kept
+        // showing whatever session (often now-inactive) it was last set to,
+        // e.g. still listing the old session's terms right after switching.
+        if (wasActivating) {
+          setSessionFilter(session.id);
+          setSessionTermsPage(0);
+        }
       } else {
         showSnackbar(res.message || 'Failed to update status', 'error');
       }

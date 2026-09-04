@@ -31,7 +31,10 @@ const SubscriptionBanner = () => {
     Array.isArray(roles) &&
     roles.some((r) => ADMIN_TIER_ROLES.includes(typeof r === 'string' ? r : r?.name));
 
-  if (!tier || tier === 'active' || !isAdminTier) {
+  // 'not_configured' (no active session-term yet — e.g. still onboarding)
+  // is deliberately silent here too: there's genuinely nothing to report on
+  // yet, and it must never be confused with 'active' ("confirmed paid").
+  if (!tier || tier === 'active' || tier === 'not_configured' || !isAdminTier) {
     return null;
   }
 

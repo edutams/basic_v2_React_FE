@@ -130,6 +130,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   // Week Management states
   const [weeks, setWeeks] = useState([]);
+  const [weeksLoading, setWeeksLoading] = useState(true);
   const [schoolDays, setSchoolDays] = useState(null);
   const [weekStats, setWeekStats] = useState(null);
   const [autoGenerateConfig, setAutoGenerateConfig] = useState({
@@ -329,15 +330,25 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     const res = await fetchActiveTenantSessionTerm();
     if (res.status && res.data) {
       setActiveSessionTermId(res.data.id);
+      // Deliberately not awaited here — loadData()'s Promise.all only waits
+      // for this function, not for the weeks fetch it kicks off. Without
+      // its own loading flag, the Weeks table briefly showed "No weeks
+      // generated yet" (a real, misleading claim) in the gap between the
+      // rest of the page finishing and this fetch actually resolving.
       loadWeeksData(res.data.id);
     } else {
       setActiveSessionTermId(null);
       setWeeks([]);
+      setWeeksLoading(false);
     }
   };
 
   const loadWeeksData = async (stId) => {
-    if (!stId) return;
+    if (!stId) {
+      setWeeksLoading(false);
+      return;
+    }
+    setWeeksLoading(true);
     try {
       const weeksRes = await fetchWeeks(stId);
       if (weeksRes.status) {
@@ -349,6 +360,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       }
     } catch (error) {
       showSnackbar('Failed to load weeks', 'error');
+    } finally {
+      setWeeksLoading(false);
     }
   };
 
@@ -1024,13 +1037,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   }}
                 >
                   <Typography variant="caption">
-                    {weeks.length} Weeks • {schoolDays} school days
+                    {weeksLoading ? (
+                      <Skeleton variant="text" width={110} sx={{ display: 'inline-block' }} />
+                    ) : (
+                      `${weeks.length} Weeks • ${schoolDays} school days`
+                    )}
                   </Typography>
                 </Box>
               </Box>
             }
           >
-            {activeSessionTermId ? (
+            {weeksLoading || activeSessionTermId ? (
               <Box ref={paperRef} sx={{ p: 2, position: 'relative' }}>
                 <Box
                   sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
@@ -1110,7 +1127,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {weeks.length > 0 ? (
+                      {weeksLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton variant="text" width={60} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={90} /></TableCell>
+                            <TableCell><Skeleton variant="text" width={90} /></TableCell>
+                            <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                            <TableCell />
+                          </TableRow>
+                        ))
+                      ) : weeks.length > 0 ? (
                         weeks.map((item, i) => {
                           const isLast = i === weeks.length - 1;
                           return (

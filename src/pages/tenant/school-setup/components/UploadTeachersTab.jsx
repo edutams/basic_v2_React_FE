@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -14,6 +15,7 @@ import {
   MenuItem,
   Typography,
   CircularProgress,
+  Skeleton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -29,10 +31,11 @@ import {
   Download as DownloadIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconUsers, IconChalkboard, IconBriefcase, IconUserCheck } from '@tabler/icons-react';
 import ArrowHint from '@/components/shared/ArrowHint';
 import AddTeacherModal from './AddTeacherModal';
 import UploadTeacherModal from '@/components/tenant/staff/UploadTeacherModal';
+import StatCard from '@/components/shared/StatCard';
 import {
   getAllStaff,
   createStaff,
@@ -58,6 +61,14 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [teachersLoading, setTeachersLoading] = useState(false);
+  // Distinct from teachersLoading, which also fires on every search
+  // keystroke — the stat cards shouldn't skeleton-flash while typing, only
+  // while the very first fetch is in flight.
+  const [initialLoading, setInitialLoading] = useState(true);
+  // Distinct from the shared `isLoading` below (also used by delete and the
+  // add/edit modal's save) so the Download button doesn't show
+  // "Downloading..." while some unrelated action is actually in flight.
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [error, setError] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -97,7 +108,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
 
   const handleDownloadTemplate = async () => {
     try {
-      setIsLoading(true);
+      setDownloadingTemplate(true);
       await downloadTeacherTemplate();
       setNotification({
         open: true,
@@ -111,7 +122,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         severity: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setDownloadingTemplate(false);
     }
   };
 
@@ -176,6 +187,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
       setError(err.message || 'Failed to fetch teachers');
     } finally {
       setTeachersLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -256,6 +268,15 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
     fetchTeachers(0, rowsPerPage, value);
   };
 
+  // Stat-card row — at-a-glance intelligence for this stage, same reusable
+  // StatCard used elsewhere (handles its own skeleton via `loading`).
+  const stats = useMemo(() => {
+    const teaching = teachers.filter((t) => t.staff_type === 'teaching').length;
+    const nonTeaching = teachers.filter((t) => t.staff_type === 'non-teaching').length;
+    const classTeachers = teachers.filter((t) => !!t.class_arm_id).length;
+    return { total: teachers.length, teaching, nonTeaching, classTeachers };
+  }, [teachers]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Box
@@ -291,10 +312,17 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           <Button
             variant="contained"
             size="small"
-            startIcon={<DownloadIcon />}
+            startIcon={
+              downloadingTemplate ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <DownloadIcon />
+              )
+            }
+            disabled={downloadingTemplate}
             onClick={handleDownloadTemplate}
           >
-            Download Template
+            {downloadingTemplate ? 'Downloading...' : 'Download Template'}
           </Button>
           <Button
             variant="contained"
@@ -341,6 +369,49 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         </Box>
       </Box>
 
+      <Grid container spacing={1.5} sx={{ px: 2, pb: 2, flexShrink: 0 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.total}
+            label="Total Staff"
+            icon={IconUsers}
+            colorIndex={0}
+            loading={initialLoading}
+            tooltip="Every staff member added so far."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.teaching}
+            label="Teaching Staff"
+            icon={IconChalkboard}
+            colorIndex={1}
+            loading={initialLoading}
+            tooltip="Staff marked as teaching."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.nonTeaching}
+            label="Non-Teaching Staff"
+            icon={IconBriefcase}
+            colorIndex={2}
+            loading={initialLoading}
+            tooltip="Staff marked as non-teaching."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.classTeachers}
+            label="Class Teachers Assigned"
+            icon={IconUserCheck}
+            colorIndex={3}
+            loading={initialLoading}
+            tooltip="Teachers already assigned as a class arm's class teacher."
+          />
+        </Grid>
+      </Grid>
+
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
           <TableHead>
@@ -366,11 +437,15 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           </TableHead>
           <TableBody>
             {teachersLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 9 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : teachers.length > 0 ? (
               teachers.map((teacher, index) => (
                 <TableRow key={teacher.id} hover>

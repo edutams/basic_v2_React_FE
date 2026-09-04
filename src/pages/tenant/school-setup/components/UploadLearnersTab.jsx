@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -14,9 +15,11 @@ import {
   Typography,
   Snackbar,
   Alert,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import { CloudUpload as UploadIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { IconSchool, IconUsers, IconUserCheck, IconUserExclamation } from '@tabler/icons-react';
 import ArrowHint from '@/components/shared/ArrowHint';
 import {
   getClassesWithDivisions,
@@ -27,6 +30,7 @@ import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
+import StatCard from '@/components/shared/StatCard';
 
 const HINTS = ['add', 'download', 'upload'];
 
@@ -42,6 +46,10 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  // Tracks which single row's template download is in flight, so only that
+  // row's button shows a spinner rather than every "Download Template"
+  // button on the page.
+  const [downloadingClassId, setDownloadingClassId] = useState(null);
   const [notification, setNotification] = useState({
     open: false,
     message: '',
@@ -184,6 +192,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
   };
 
   const handleDownloadTemplate = async (programmeClassId) => {
+    setDownloadingClassId(programmeClassId);
     try {
       const response = await api.get('school_setup/learner_template', {
         params: { programme_class_id: programmeClassId },
@@ -204,19 +213,118 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
       });
     } catch {
       setNotification({ open: true, message: 'Failed to download template', severity: 'error' });
+    } finally {
+      setDownloadingClassId(null);
     }
   };
 
+  // Stat-card row — at-a-glance intelligence for this stage, same reusable
+  // StatCard used elsewhere (handles its own skeleton via `loading`).
+  const stats = useMemo(() => {
+    // "Ready" mirrors the same hasArms check the table itself uses — a
+    // class without arms can't actually receive learners yet.
+    const readyClasses = classes.filter(
+      (c) => Array.isArray(c.class_arms) && c.class_arms.length > 0,
+    );
+    const counts = Object.values(studentCounts);
+    const totalLearners = counts.reduce((sum, c) => sum + (c || 0), 0);
+    const classesWithLearners = readyClasses.filter(
+      (c) => (studentCounts[c.programme_class_id] || 0) > 0,
+    ).length;
+    return {
+      totalClasses: readyClasses.length,
+      totalLearners,
+      classesWithLearners,
+      classesWithoutLearners: Math.max(0, readyClasses.length - classesWithLearners),
+    };
+  }, [classes, studentCounts]);
+
+  const statCards = (
+    <Grid container spacing={1.5} sx={{ mb: 2, flexShrink: 0 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <StatCard
+          count={stats.totalClasses}
+          label="Classes Ready"
+          icon={IconSchool}
+          colorIndex={0}
+          loading={loading}
+          tooltip="Classes with arms generated, ready to receive learners."
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <StatCard
+          count={stats.totalLearners}
+          label="Total Learners"
+          icon={IconUsers}
+          colorIndex={2}
+          loading={loading}
+          tooltip="Learners added across every class so far."
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <StatCard
+          count={stats.classesWithLearners}
+          label="Classes With Learners"
+          icon={IconUserCheck}
+          colorIndex={1}
+          loading={loading}
+          tooltip="Classes that already have at least one learner."
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <StatCard
+          count={stats.classesWithoutLearners}
+          label="Still Need Learners"
+          icon={IconUserExclamation}
+          colorIndex={4}
+          loading={loading}
+          tooltip="Classes with no learners added yet."
+        />
+      </Grid>
+    </Grid>
+  );
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+        {statCards}
+        <TableContainer sx={{ flex: 1 }}>
+          <Table sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: '25%' }}>Classes</TableCell>
+                <TableCell sx={{ width: '10%' }}>No. Uploaded</TableCell>
+                <TableCell sx={{ width: '20%' }}>Upload Using Forms</TableCell>
+                <TableCell sx={{ width: '45%' }}>Upload Using Excel File</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton variant="rounded" height={40} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rounded" height={40} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rounded" height={40} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rounded" height={40} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}>
+      {statCards}
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
           <TableHead
@@ -337,10 +445,19 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                         <Button
                           variant="contained"
                           size="small"
-                          startIcon={<DownloadIcon />}
+                          startIcon={
+                            downloadingClassId === item.programme_class_id ? (
+                              <CircularProgress size={14} color="inherit" />
+                            ) : (
+                              <DownloadIcon />
+                            )
+                          }
+                          disabled={downloadingClassId === item.programme_class_id}
                           onClick={() => handleDownloadTemplate(item.programme_class_id)}
                         >
-                          Download Template
+                          {downloadingClassId === item.programme_class_id
+                            ? 'Downloading...'
+                            : 'Download Template'}
                         </Button>
                         <Button
                           variant="contained"

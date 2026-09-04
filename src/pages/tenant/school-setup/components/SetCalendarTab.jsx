@@ -801,10 +801,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<IconRefresh size={16} />}
+                    startIcon={
+                      loading ? (
+                        <CircularProgress size={14} color="inherit" />
+                      ) : (
+                        <IconRefresh size={16} />
+                      )
+                    }
                     onClick={handleSyncTerms}
+                    disabled={loading}
                   >
-                    Sync Terms
+                    {loading ? 'Syncing...' : 'Sync Terms'}
                   </Button>
                 </Box>
                 <TableContainer>
@@ -901,10 +908,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={<IconRefresh size={16} />}
+                      startIcon={
+                        loading ? (
+                          <CircularProgress size={14} color="inherit" />
+                        ) : (
+                          <IconRefresh size={16} />
+                        )
+                      }
                       onClick={handleSyncTerms}
+                      disabled={loading}
                     >
-                      Sync Terms
+                      {loading ? 'Syncing...' : 'Sync Terms'}
                     </Button>
                     <Button
                       variant="contained"
@@ -1057,9 +1071,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     ref={generateBtnRef}
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
+                    startIcon={loading ? <CircularProgress size={14} color="inherit" /> : null}
                     sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
                   >
-                    Generate
+                    {loading ? 'Generating...' : 'Generate'}
                   </Button>
                 </Box>
 

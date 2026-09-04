@@ -60,7 +60,6 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
-import admissionImg from '@/assets/images/admission/graduation.png';
 import {
   fetchSessions,
   fetchSessionTermsBySession,

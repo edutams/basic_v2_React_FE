@@ -9,6 +9,7 @@ import {
 } from 'react';
 import {
   Box,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -17,14 +18,16 @@ import {
   TableRow,
   TextField,
   Button,
-  CircularProgress,
   Typography,
   Snackbar,
   Alert,
+  Skeleton,
   useTheme,
 } from '@mui/material';
+import { IconSchool, IconListCheck, IconLayoutGrid, IconBan } from '@tabler/icons-react';
 import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
 import ArrowHint from '@/components/shared/ArrowHint';
+import StatCard from '@/components/shared/StatCard';
 
 const SetUpClassesTab = forwardRef(
   ({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
@@ -243,16 +246,99 @@ const SetUpClassesTab = forwardRef(
 
     const showHint = !classes.some((c) => c.class_arm_names?.length > 0);
 
+    // Stat-card row — at-a-glance intelligence for this stage, same
+    // reusable StatCard used elsewhere in the app (handles its own
+    // skeleton via the `loading` prop).
+    const stats = useMemo(() => {
+      const totalClasses = classes.length;
+      const configuredClasses = classes.filter((c) => c.class_arm_names?.length > 0).length;
+      const totalArms = classes.reduce((sum, c) => sum + (c.class_arm_names?.length || 0), 0);
+      const inactiveClasses = classes.filter((c) => c.status === 'inactive').length;
+      return { totalClasses, configuredClasses, totalArms, inactiveClasses };
+    }, [classes]);
+
+    const statCards = (
+      <Grid container spacing={1.5} sx={{ mb: 2, flexShrink: 0 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.totalClasses}
+            label="Total Classes"
+            icon={IconSchool}
+            colorIndex={0}
+            loading={loading}
+            tooltip="Every class configured for this school."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.configuredClasses}
+            label="Arms Configured"
+            icon={IconListCheck}
+            colorIndex={1}
+            loading={loading}
+            tooltip="Classes that already have arm names generated."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.totalArms}
+            label="Total Arms"
+            icon={IconLayoutGrid}
+            colorIndex={2}
+            loading={loading}
+            tooltip="Total class arms (streams) generated across all classes."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.inactiveClasses}
+            label="Inactive Classes"
+            icon={IconBan}
+            colorIndex={4}
+            loading={loading}
+            tooltip="Classes deactivated because this school doesn't run them."
+          />
+        </Grid>
+      </Grid>
+    );
+
     if (loading) {
       return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+          {statCards}
+          <TableContainer sx={{ flex: 1 }}>
+            <Table sx={{ minWidth: 900, borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: '25%' }}>Classes</TableCell>
+                  <TableCell sx={{ width: '25%' }}>No. of Arms</TableCell>
+                  <TableCell sx={{ width: '50%' }}>Class Arm Names</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton variant="rounded" height={40} />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton variant="rounded" height={40} />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton variant="rounded" height={40} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       );
     }
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}>
+        {statCards}
         <TableContainer sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
           <Table
             stickyHeader

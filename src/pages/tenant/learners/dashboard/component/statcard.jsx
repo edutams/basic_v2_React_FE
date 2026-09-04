@@ -27,10 +27,11 @@ const leanCardBase = {
   borderRadius: '14px',
   boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
   border: '1px solid #E8ECF0',
-  p: '10px 14px',
+  p: '10px',
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: '16px',
   bgcolor: '#ffffff',
 };
@@ -61,7 +62,7 @@ const squareIcon = (bg, color) => ({
 const walletCardBase = {
   borderRadius: '16px',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-  p: '15px',
+  p: '12px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
@@ -72,7 +73,7 @@ const StatCardSkeleton = ({ lean = false }) =>
   lean ? (
     <Card elevation={0} sx={{ ...leanCardBase }}>
       <Skeleton variant="rectangular" width={54} height={54} sx={{ borderRadius: '12px', flexShrink: 0 }} />
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
         <Skeleton variant="text" width={100} height={16} />
         <Skeleton variant="text" width={80} height={36} sx={{ mt: 0.25 }} />
         <Skeleton variant="text" width={70} height={14} sx={{ mt: 0.25 }} />
@@ -96,7 +97,7 @@ const StatCardSkeleton = ({ lean = false }) =>
 const TrendRow = ({ growth, label }) => {
   const up = Number(growth) >= 0;
   return (
-    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.75 }}>
+    <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5} sx={{ mt: 0.75 }}>
       <Typography
         fontWeight="600"
         sx={{ fontSize: '0.8rem', color: up ? '#16A34A' : '#DC2626' }}
@@ -141,7 +142,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
           lg: '1fr 1fr 1fr 1.35fr',
         },
         gap: 2,
-        mb: 2.5,
+        mb: 2,
       }}
     >
       {/* ── Card 1: Average Score ─────────────────────────────────── */}
@@ -155,7 +156,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
             <SchoolOutlined sx={{ fontSize: 30 }} />
           </Box>
 
-          <Box>
+          <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
             <Typography fontWeight="600" sx={{ fontSize: '0.82rem', color: '#1E293B' }}>
               Average Score
             </Typography>
@@ -181,7 +182,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
             <CalendarTodayOutlined sx={{ fontSize: 30 }} />
           </Box>
 
-          <Box>
+          <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
             <Typography fontWeight="600" sx={{ fontSize: '0.82rem', color: '#1E293B' }}>
               Attendance
             </Typography>
@@ -207,7 +208,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
             <AccountBalanceWalletOutlined sx={{ fontSize: 30 }} />
           </Box>
 
-          <Box>
+          <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
             <Typography fontWeight="600" sx={{ fontSize: '0.82rem', color: '#1E293B' }}>
               Pending Payment
             </Typography>

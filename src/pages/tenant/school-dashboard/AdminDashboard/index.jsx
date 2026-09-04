@@ -188,7 +188,6 @@ const AdminDashboard = () => {
         loading={overview.loading}
       />
 
-      {/* ── Middle Section: Left (Search + Calendar + Financial + Charts) | Right (Enrolment + Announcements) ── */}
       <Box
         sx={{
           display: 'grid',
@@ -197,11 +196,9 @@ const AdminDashboard = () => {
           alignItems: 'start',
         }}
       >
-        {/* Left Column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
           <QuickActions loading={overview.loading} />
 
-          {/* Financial Overview Bar (4 Mini Fee Cards) */}
           <FinancialOverviewBar
             expectedIncome={financial.data?.total_expected_income != null ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}` : '₦ 0'}
             collectedIncome={financial.data?.total_collected_income != null ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}` : '₦ 0'}

@@ -1,109 +1,58 @@
 import React from 'react';
-import {
-  Box,
-  Card,
-  Typography,
-} from '@mui/material';
-import {
-  CalendarMonthOutlined,
-  CloudDownloadOutlined,
-  HelpOutlineOutlined,
-  LocalLibraryOutlined,
-  EmojiEventsOutlined,
-  ContactSupportOutlined,
-} from '@mui/icons-material';
-
-const cardSx = {
-  borderRadius: '12px',
-  border: '1px solid #cbd5e1',
-  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-  bgcolor: '#fff',
-  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-  '&:hover': {
-    borderColor: '#94a3b8',
-    transform: 'translateY(-3px)',
-    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
-  },
-};
+import { Box, Button } from '@mui/material';
 
 const actions = [
-  { icon: CalendarMonthOutlined, label: 'View Timetable', color: '#2563EB', bg: '#EFF6FF' },
-  { icon: CloudDownloadOutlined, label: 'Download Notes', color: '#059669', bg: '#ECFDF5' },
-  { icon: HelpOutlineOutlined, label: 'Ask Question', color: '#D97706', bg: '#FEF3C7' },
-  { icon: LocalLibraryOutlined, label: 'Library', color: '#7C3AED', bg: '#F5F3FF' },
-  { icon: EmojiEventsOutlined, label: 'My Achievements', color: '#E11D48', bg: '#FFF1F2' },
-  { icon: ContactSupportOutlined, label: 'Contact Teacher', color: '#0891B2', bg: '#ECFEFF' },
+  { id: 'timetable', label: 'View Timetable', color: '#2563EB', bg: '#EFF6FF' },
+  { id: 'notes', label: 'Download Notes', color: '#059669', bg: '#ECFDF5' },
+  { id: 'ask', label: 'Ask Question', color: '#D97706', bg: '#FEF3C7' },
+  { id: 'library', label: 'Library', color: '#7C3AED', bg: '#F5F3FF' },
+  { id: 'achievements', label: 'My Achievements', color: '#E11D48', bg: '#FFF1F2' },
+  { id: 'contact', label: 'Contact Teacher', color: '#0891B2', bg: '#ECFEFF' },
 ];
 
 const QuickActions = () => {
   return (
-    <Card elevation={0} sx={{ ...cardSx, p: '6px 10px', mt: 2 }}>
-      <Typography fontWeight="700" sx={{ fontSize: '0.88rem', color: '#111827', mb: 1 }}>
-        Quick Actions
-      </Typography>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            sm: 'repeat(3, 1fr)',
-            md: 'repeat(6, 1fr)',
-          },
-          gap: 1.25,
-        }}
-      >
-        {actions.map((item) => {
-          const IconComponent = item.icon;
-          return (
-            <Card
-              key={item.label}
-              elevation={0}
-              sx={{
-                p: '8px 10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                bgcolor: '#fff',
-                boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 24px rgba(15, 23, 42, 0.1)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                '&:hover': {
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 32px rgba(15, 23, 42, 0.12)',
-                  transform: 'translateY(-3px)',
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '6px',
-                  bgcolor: item.bg,
-                  color: item.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <IconComponent sx={{ fontSize: 15 }} />
-              </Box>
-              <Typography
-                noWrap
-                fontWeight="600"
-                sx={{ fontSize: '0.72rem', color: '#374151', flex: 1 }}
-              >
-                {item.label}
-              </Typography>
-            </Card>
-          );
-        })}
+    <Box
+      sx={{
+        bgcolor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '14px',
+        px: 1.5,
+        py: 1,
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+      }}
+    >
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        {actions.map((item) => (
+          <Button
+            key={item.id}
+            variant="contained"
+            disableElevation
+            sx={{
+              borderRadius: '8px',
+              px: 1.6,
+              py: 0.65,
+              fontSize: '10px',
+              fontWeight: 700,
+              textTransform: 'none',
+              bgcolor: item.bg,
+              color: item.color,
+              border: '1px solid transparent',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              transition: 'all 0.18s ease',
+              '&:hover': {
+                bgcolor: item.color,
+                color: '#ffffff',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
+              },
+            }}
+          >
+            {item.label}
+          </Button>
+        ))}
       </Box>
-    </Card>
+    </Box>
   );
 };
 

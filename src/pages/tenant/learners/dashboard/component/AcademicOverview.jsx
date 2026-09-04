@@ -52,6 +52,7 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value, onClick, su
         p: '10px 12px',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: 1.25,
       }}
     >
@@ -70,7 +71,7 @@ const MiniStatCard = ({ icon: Icon, iconBg, iconColor, label, value, onClick, su
       >
         <Icon sx={{ fontSize: 17 }} />
       </Box>
-      <Box>
+      <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
         <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 600, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: 0.4 }}>
           {label}
         </Typography>
@@ -94,17 +95,19 @@ const MetricCard = ({ label, value, subtext, color, onClick }) => (
       onClick={onClick}
       sx={{ ...cardSx, ...clickableSx, p: '10px 12px' }}
     >
-      <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', mb: 0.35 }}>
-        {label}
-      </Typography>
-      <Stack direction="row" alignItems="baseline" spacing={1}>
-        <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
-          {value}%
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+        <Typography fontWeight="700" sx={{ fontSize: '0.72rem', color: '#111827', mb: 0.35 }}>
+          {label}
         </Typography>
-        <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 500 }}>
-          {subtext}
-        </Typography>
-      </Stack>
+        <Stack direction="row" alignItems="baseline" justifyContent="flex-end" spacing={1}>
+          <Typography fontWeight="800" sx={{ fontSize: '1.2rem', color: '#111827', lineHeight: 1 }}>
+            {value}%
+          </Typography>
+          <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', fontWeight: 500 }}>
+            {subtext}
+          </Typography>
+        </Stack>
+      </Box>
       <Box sx={{ mt: 0.75 }}>
         <LinearProgress
           variant="determinate"
@@ -237,62 +240,62 @@ const AcademicOverview = ({ data = {}, onCardClick }) => {
             onClick={() => onCardClick('subject_strength')}
             sx={{ ...cardSx, ...clickableSx, flex: 1.2, p: '12px 14px' }}
           >
-          <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
-            Subject Strength
-          </Typography>
-          <Stack direction="row" spacing={2}>
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  bgcolor: '#dcfce7',
-                  color: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <EmojiEventsOutlined sx={{ fontSize: 18 }} />
+            <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', mb: 1 }}>
+              Subject Strength
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    bgcolor: '#dcfce7',
+                    color: '#16a34a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <EmojiEventsOutlined sx={{ fontSize: 18 }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600 }}>
+                    Strongest Subject
+                  </Typography>
+                  <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', lineHeight: 1.2 }}>
+                    {d.strongestSubject.name} ({d.strongestSubject.score}%)
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography sx={{ fontSize: '0.65rem', color: '#16a34a', fontWeight: 600 }}>
-                  Strongest Subject
-                </Typography>
-                <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', lineHeight: 1.2 }}>
-                  {d.strongestSubject.name} ({d.strongestSubject.score}%)
-                </Typography>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    bgcolor: '#ffedd5',
+                    color: '#ea580c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <EmojiEvents sx={{ fontSize: 18 }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '0.65rem', color: '#ea580c', fontWeight: 600 }}>
+                    Needs Improvement
+                  </Typography>
+                  <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', lineHeight: 1.2 }}>
+                    {d.needsImprovement.name} ({d.needsImprovement.score}%)
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  bgcolor: '#ffedd5',
-                  color: '#ea580c',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <EmojiEvents sx={{ fontSize: 18 }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: '0.65rem', color: '#ea580c', fontWeight: 600 }}>
-                  Needs Improvement
-                </Typography>
-                <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827', lineHeight: 1.2 }}>
-                  {d.needsImprovement.name} ({d.needsImprovement.score}%)
-                </Typography>
-              </Box>
-            </Box>
-          </Stack>
-        </Card>
+            </Stack>
+          </Card>
         </Tooltip>
 
         {/* Class Standing */}
@@ -302,45 +305,45 @@ const AcademicOverview = ({ data = {}, onCardClick }) => {
             onClick={() => onCardClick('class_standing')}
             sx={{ ...cardSx, ...clickableSx, flex: 0.8, p: '12px 14px' }}
           >
-          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-            <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827' }}>
-              Class Standing
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <EmojiEvents sx={{ fontSize: 14, color: '#9333ea' }} />
-              <Typography fontWeight="800" sx={{ fontSize: '0.82rem', color: '#9333ea' }}>
-                Top {d.classStanding.rank}%
+            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+              <Typography fontWeight="700" sx={{ fontSize: '0.78rem', color: '#111827' }}>
+                Class Standing
               </Typography>
-            </Box>
-          </Stack>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <EmojiEvents sx={{ fontSize: 14, color: '#9333ea' }} />
+                <Typography fontWeight="800" sx={{ fontSize: '0.82rem', color: '#9333ea' }}>
+                  Top {d.classStanding.rank}%
+                </Typography>
+              </Box>
+            </Stack>
 
-          <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', mb: 1 }}>
-            Out of {d.classStanding.total} students
-          </Typography>
+            <Typography sx={{ fontSize: '0.62rem', color: '#9CA3AF', mb: 1 }}>
+              Out of {d.classStanding.total} students
+            </Typography>
 
-          {/* Human avatars row — show rank position with colored avatars */}
-          <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
-            {Array.from({ length: 10 }).map((_, i) => {
-              const isTop = i < Math.ceil(d.classStanding.rank / 10);
-              const isMe = i === Math.floor(d.classStanding.rank / 10) - 1;
-              return (
-                <Avatar
-                  key={i}
-                  sx={{
-                    width: isMe ? 26 : 22,
-                    height: isMe ? 26 : 22,
-                    bgcolor: isMe ? '#9333ea' : isTop ? '#C4B5FD' : '#E5E7EB',
-                    color: isMe ? '#fff' : isTop ? '#7C3AED' : '#9CA3AF',
-                    border: isMe ? '2px solid #9333ea' : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <PersonOutlined sx={{ fontSize: isMe ? 15 : 12 }} />
-                </Avatar>
-              );
-            })}
-          </Stack>
-        </Card>
+            {/* Human avatars row — show rank position with colored avatars */}
+            <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
+              {Array.from({ length: 10 }).map((_, i) => {
+                const isTop = i < Math.ceil(d.classStanding.rank / 10);
+                const isMe = i === Math.floor(d.classStanding.rank / 10) - 1;
+                return (
+                  <Avatar
+                    key={i}
+                    sx={{
+                      width: isMe ? 26 : 22,
+                      height: isMe ? 26 : 22,
+                      bgcolor: isMe ? '#9333ea' : isTop ? '#C4B5FD' : '#E5E7EB',
+                      color: isMe ? '#fff' : isTop ? '#7C3AED' : '#9CA3AF',
+                      border: isMe ? '2px solid #9333ea' : 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <PersonOutlined sx={{ fontSize: isMe ? 15 : 12 }} />
+                  </Avatar>
+                );
+              })}
+            </Stack>
+          </Card>
         </Tooltip>
       </Stack>
     </Card>

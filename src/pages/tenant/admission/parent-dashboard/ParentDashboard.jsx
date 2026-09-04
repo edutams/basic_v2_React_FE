@@ -178,40 +178,58 @@ const ParentDashboard2 = () => {
     <PageContainer title="Parent Dashboard" description="Parent Portal Overview">
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 340px' },
-          gap: 1.25,
-          alignItems: 'stretch',
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: 1.5,
+          alignItems: 'flex-start',
           pt: 1,
         }}
       >
-        {/* ─── Row 1 ─── */}
-        <MyWards
-          wards={wards}
-          loading={loadingWards}
-          selectedWard={selectedWard}
-          onSelectWard={setSelectedWard}
-        />
+        {/* Left Main Column */}
+        <Box
+          sx={{
+            flex: '1 1 0',
+            minWidth: 0,
+            width: { xs: '100%', lg: 'auto' },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+          }}
+        >
+          <MyWards
+            wards={wards}
+            loading={loadingWards}
+            selectedWard={selectedWard}
+            onSelectWard={setSelectedWard}
+          />
 
-        <ParentWalletAccount totalPayable={finance?.outstanding} />
+          <QuickActions
+            onApplyAdmission={() => setAdmissionModalOpen(true)}
+            hasOpenBatches={batches?.has_open_batches}
+          />
 
-        {/* ─── Row 2 ─── */}
-        <QuickActions
-          onApplyAdmission={() => setAdmissionModalOpen(true)}
-          hasOpenBatches={batches?.has_open_batches}
-        />
+          <AcademicOverview
+            wards={wards}
+            selectedWard={selectedWard}
+            onSelectWard={setSelectedWard}
+            sessionTerms={sessionTerms}
+          />
+        </Box>
 
-        <TermCalendar {...termInfo} />
-
-        {/* ─── Row 3 ─── */}
-        <AcademicOverview
-          wards={wards}
-          selectedWard={selectedWard}
-          onSelectWard={setSelectedWard}
-          sessionTerms={sessionTerms}
-        />
-
-        <ActivityLogs />
+        {/* Right Sidebar Column */}
+        <Box
+          sx={{
+            width: { xs: '100%', lg: 340 },
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+          }}
+        >
+          <ParentWalletAccount totalPayable={finance?.outstanding} />
+          <TermCalendar {...termInfo} />
+          <ActivityLogs />
+        </Box>
       </Box>
 
       {/* Admission Application Modal */}

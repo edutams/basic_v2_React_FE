@@ -27,6 +27,7 @@ const tokenManager = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('isImpersonating');
     localStorage.removeItem('impersonator_id');
+    localStorage.removeItem('original_user');
     localStorage.removeItem('permissions');
     localStorage.removeItem('token_expires_in');
     localStorage.removeItem('user');
@@ -127,6 +128,13 @@ export const AuthProvider = ({ children }) => {
 
       const { access_token, expires_in, user, permissions, roles } = res.data;
 
+      // A normal login must never inherit a stale impersonation flag left
+      // behind by a previous session that wasn't ended cleanly (e.g. the
+      // tab was closed instead of clicking "Return to my account") —
+      // without this, restoreUser() would read that stale flag back on the
+      // next page load and show the impersonation banner for the real
+      // account owner.
+      tokenManager.clear();
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
       localStorage.setItem('user', JSON.stringify(user));

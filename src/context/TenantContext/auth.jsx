@@ -301,6 +301,16 @@ export const TenantAuthProvider = ({ children }) => {
         primary_color,
       } = res.data;
 
+      // A normal login must never inherit a stale impersonation flag left
+      // behind by a previous session that wasn't ended cleanly (e.g. the
+      // tab was closed instead of clicking "Return to my account") —
+      // without this, restoreUser() would read that stale flag back on the
+      // next page load and show the impersonation banner for the real
+      // account owner, under their own name.
+      localStorage.removeItem('isImpersonating');
+      localStorage.removeItem('impersonator_id');
+      localStorage.removeItem('tenant_original_access_token');
+
       localStorage.setItem('tenant_access_token', access_token);
       localStorage.setItem('tenant_token_expires_in', String(expires_in));
       localStorage.setItem('tenant_user', JSON.stringify(userData));
@@ -311,6 +321,8 @@ export const TenantAuthProvider = ({ children }) => {
       setPermissions(perms || []);
       setRoles(roles || []);
       setIsAuthenticated(true);
+      setIsImpersonated(false);
+      setImpersonatorId(null);
 
       // Set the agent's primary_color as the tenant's theme color
       if (primary_color) {
@@ -340,9 +352,16 @@ export const TenantAuthProvider = ({ children }) => {
       localStorage.removeItem('tenant_user');
       localStorage.removeItem('tenant_permissions');
       localStorage.removeItem('tenant_roles');
+      // Same reasoning as login() — don't leave a stale flag for whoever
+      // logs in next on this browser.
+      localStorage.removeItem('isImpersonating');
+      localStorage.removeItem('impersonator_id');
+      localStorage.removeItem('tenant_original_access_token');
 
       setUser(null);
       setIsAuthenticated(false);
+      setIsImpersonated(false);
+      setImpersonatorId(null);
       setSubscriptionStatus(null);
       return { success: true };
     } catch (err) {

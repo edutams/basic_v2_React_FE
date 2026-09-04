@@ -70,14 +70,23 @@ const TenantProfile = () => {
   const displayName = displayUser?.full_name || 'Guest User';
 
   const firstName = displayName.split(' ')[0];
-  const userEmail = displayUser?.email || 'user@example.com';
+  const userEmail = displayUser?.email || displayUser?.user_id;
   const userAvatar = displayUser?.image || user1;
 
   return (
     <Box display="flex" gap={1}>
       {lgUp ? <Divider orientation="vertical" variant="middle" /> : null}
 
-      <Button variant="contained" size="small" aria-label="menu" color="inherit" aria-controls="msgs-menu" aria-haspopup="true" sx={{ ...(typeof anchorEl2 === 'object' && { borderRadius: '9px', }), }} onClick={handleClick2}>
+      <Button
+        variant="contained"
+        size="small"
+        aria-label="menu"
+        color="inherit"
+        aria-controls="msgs-menu"
+        aria-haspopup="true"
+        sx={{ ...(typeof anchorEl2 === 'object' && { borderRadius: '9px' }) }}
+        onClick={handleClick2}
+      >
         <Avatar
           src={userAvatar}
           alt={'ProfileImg'}
@@ -202,7 +211,13 @@ const TenantProfile = () => {
         ))}
 
         <Box mt={2}>
-          <Button variant="contained" size="small" color="secondary" fullWidth onClick={handleLogout} startIcon={<IconLogout width="18" height="18" />}
+          <Button
+            variant="contained"
+            size="small"
+            color="secondary"
+            fullWidth
+            onClick={handleLogout}
+            startIcon={<IconLogout width="18" height="18" />}
           >
             Logout
           </Button>

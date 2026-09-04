@@ -337,7 +337,9 @@ const SetUpClassesTab = forwardRef(
     }
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}>
+      <Box
+        sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}
+      >
         {statCards}
         <TableContainer sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
           <Table

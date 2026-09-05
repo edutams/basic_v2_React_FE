@@ -22,7 +22,6 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
-  CircularProgress,
   useTheme,
   useMediaQuery,
   alpha,
@@ -35,6 +34,7 @@ import {
   ListItemText,
   ToggleButton,
   ToggleButtonGroup,
+  Skeleton,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
@@ -514,7 +514,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             // The toggle API will properly set it when user interacts with checkbox
           }
         })
-        .catch(() => { });
+        .catch(() => {});
     }
   };
 
@@ -569,6 +569,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             (autoSendReport ? ' Weekly report will be sent automatically by the scheduler.' : ''),
           severity: 'success',
         });
+
+        // Refresh the stat cards now that real data changed — was only
+        // ever triggered by the Filter button or a tab switch, so the
+        // cards kept showing stale numbers right after a submit.
+        if (onFilter) onFilter(attArm, attSession, attTermId, attWeek, attProgramme, attClass);
       } else {
         setAlertSnackbar({
           open: true,
@@ -944,7 +949,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             <InputLabel>Class/Arm</InputLabel>
             <Select
               value={attArm}
-              label="Class Arm"
+              label="Class/Arm"
               onChange={(e) => setAttArm(e.target.value)}
               disabled={isClassTeacher}
             >
@@ -1016,11 +1021,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   ? 'linear-gradient(90deg, #1e293b 268px, rgba(255, 255, 255, 0.18) 268px, rgba(255, 255, 255, 0.18) 270px, #121827 270px)'
                   : 'linear-gradient(90deg, #f1f5f9 268px, #cbd5e1 268px, #cbd5e1 270px, #ffffff 270px)',
               '& .MuiTableHead-root .MuiTableCell-root': {
-                bgcolor: (theme) =>
-                  theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
+                bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
                 fontWeight: 700,
-                color: (theme) =>
-                  theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
+                color: (theme) => (theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a'),
                 borderBottom: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '2px solid rgba(255, 255, 255, 0.12)'
@@ -1028,9 +1031,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               },
               '& .MuiTableCell-root': {
                 borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : '#e2e8f0',
+                  theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
               },
             }}
           >
@@ -1085,9 +1086,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             : isDark
                               ? '#1e293b'
                               : '#f8fafc',
-                          borderTop: isSelected
-                            ? '3px solid #10b981'
-                            : '3px solid transparent',
+                          borderTop: isSelected ? '3px solid #10b981' : '3px solid transparent',
                           transition: 'all 0.2s ease',
                         }}
                       >
@@ -1123,11 +1122,17 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             </Typography>
                           )}
                         </Box>
-                        <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center" mt={0.5}>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          justifyContent="center"
+                          alignItems="center"
+                          mt={0.5}
+                        >
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
                             <IconButton
                               onClick={() => bulkSetDayStatus(day, 'present')}
-                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
+                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                             >
                               <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -1135,7 +1140,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
                             <IconButton
                               onClick={() => bulkSetDayStatus(day, 'absent')}
-                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
+                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                             >
                               <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -1143,7 +1148,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
                             <IconButton
                               onClick={() => bulkSetDayStatus(day, 'unknown')}
-                              sx={{ p: 0, width: 22, height: 22, minWidth: 22 }}
+                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                             >
                               <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -1182,37 +1187,55 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        width: 50,
-                        minWidth: 50,
-                        maxWidth: 50,
-                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                        borderRight: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? '1px solid rgba(255, 255, 255, 0.12)'
-                            : '1px solid #cbd5e1',
-                      }}
-                    />
-                    <TableCell
-                      sx={{
-                        width: 220,
-                        minWidth: 220,
-                        maxWidth: 220,
-                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
-                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                        borderRight: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? '2px solid rgba(255, 255, 255, 0.18)'
-                            : '2px solid #cbd5e1',
-                      }}
-                    />
-                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6 }}>
-                      <CircularProgress size={28} />
-                    </TableCell>
-                  </TableRow>
+                  // Skeleton rows matching the real table's column layout —
+                  // S/N + Name + one block per day + a tally column — instead
+                  // of a generic centered spinner.
+                  Array.from({ length: 6 }).map((_, rowIdx) => (
+                    <TableRow key={`skeleton-row-${rowIdx}`}>
+                      <TableCell
+                        sx={{
+                          width: 50,
+                          minWidth: 50,
+                          maxWidth: 50,
+                          ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                          bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                          borderRight: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? '1px solid rgba(255, 255, 255, 0.12)'
+                              : '1px solid #cbd5e1',
+                        }}
+                      >
+                        <Skeleton variant="text" width={16} />
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          width: 220,
+                          minWidth: 220,
+                          maxWidth: 220,
+                          ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                          bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                          borderRight: (theme) =>
+                            theme.palette.mode === 'dark'
+                              ? '2px solid rgba(255, 255, 255, 0.18)'
+                              : '2px solid #cbd5e1',
+                        }}
+                      >
+                        <Skeleton variant="text" width="70%" />
+                      </TableCell>
+                      {days.map((day) => (
+                        <TableCell key={`skeleton-${rowIdx}-${day}`} align="center">
+                          <Skeleton
+                            variant="rounded"
+                            height={28}
+                            sx={{ mx: 'auto', maxWidth: 90 }}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell align="center">
+                        <Skeleton variant="text" width={30} sx={{ mx: 'auto' }} />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 ) : learners.length === 0 ? (
                   <TableRow>
                     <TableCell
@@ -1251,8 +1274,8 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           <Typography variant="body2">
                             Select a <strong>Session</strong>, <strong>Term</strong>,{' '}
                             <strong>Week</strong>, <strong>Programme</strong>,{' '}
-                            <strong>Class</strong>, and <strong>Arm</strong> then click the <strong>Filter</strong> button to load
-                            the attendance list.
+                            <strong>Class</strong>, and <strong>Arm</strong> then click the{' '}
+                            <strong>Filter</strong> button to load the attendance list.
                           </Typography>
                         </Alert>
                       )}
@@ -1320,6 +1343,13 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             ? 'holiday'
                             : getPeriodStatus(content?.[attendanceType]);
                           const isSelected = selectedDays[day] === true;
+                          // The radio group only ever offers present/late/
+                          // absent/unknown — 'excused' is a qualifier on an
+                          // absence (see the checkbox below), not a 5th
+                          // equally-weighted tap for every cell, so it
+                          // still shows as "Absent" selected here.
+                          const radioValue = status === 'excused' ? 'absent' : status;
+                          const isExcused = status === 'excused';
 
                           return (
                             <TableCell
@@ -1344,7 +1374,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                               ) : (
                                 <RadioGroup
                                   row
-                                  value={status}
+                                  value={radioValue}
                                   onChange={(e) =>
                                     isSelected &&
                                     setDayStatus(
@@ -1363,6 +1393,29 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                           <Radio
                                             size="small"
                                             color="success"
+                                            sx={{ p: 0.25 }}
+                                            disabled={!isSelected}
+                                          />
+                                        }
+                                        label=""
+                                        sx={{ m: 0 }}
+                                      />
+                                    </span>
+                                  </Tooltip>
+                                  <Tooltip
+                                    title={
+                                      isSelected
+                                        ? 'Late — arrival time is recorded automatically'
+                                        : 'Select this day first'
+                                    }
+                                  >
+                                    <span>
+                                      <FormControlLabel
+                                        value="late"
+                                        control={
+                                          <Radio
+                                            size="small"
+                                            color="warning"
                                             sx={{ p: 0.25 }}
                                             disabled={!isSelected}
                                           />
@@ -1408,6 +1461,41 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                   </Tooltip>
                                 </RadioGroup>
                               )}
+                              {!isHoliday && radioValue === 'absent' && (
+                                <Tooltip
+                                  title={
+                                    isSelected
+                                      ? 'Excused absence — does not count against the attendance rate'
+                                      : 'Select this day first'
+                                  }
+                                >
+                                  <span>
+                                    <FormControlLabel
+                                      sx={{ m: 0, display: 'flex', justifyContent: 'center' }}
+                                      control={
+                                        <Checkbox
+                                          size="small"
+                                          checked={isExcused}
+                                          disabled={!isSelected}
+                                          onChange={(e) =>
+                                            setDayStatus(
+                                              learner.student_registration_id,
+                                              day,
+                                              e.target.checked ? 'excused' : 'absent',
+                                            )
+                                          }
+                                          sx={{ p: 0.25 }}
+                                        />
+                                      }
+                                      label={
+                                        <Typography variant="caption" color="text.secondary">
+                                          Excused
+                                        </Typography>
+                                      }
+                                    />
+                                  </span>
+                                </Tooltip>
+                              )}
                             </TableCell>
                           );
                         })}
@@ -1415,8 +1503,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           <Typography variant="body2" fontWeight={700}>
                             {Object.values(att).reduce((count, content) => {
                               if (!content || content.__holiday) return count;
-                              if (content.morning?.is_present === 'present') count++;
-                              if (content.afternoon?.is_present === 'present') count++;
+                              // Late counts as present for this tally too —
+                              // same rule as the backend's attendance rate.
+                              const isPresent = (status) =>
+                                status === 'present' || status === 'late';
+                              if (isPresent(content.morning?.is_present)) count++;
+                              if (isPresent(content.afternoon?.is_present)) count++;
                               return count;
                             }, 0)}
                           </Typography>
@@ -1435,7 +1527,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           <ParentCard
             elevation={0}
             sx={{
-
               display: 'flex',
               flexDirection: 'column',
             }}

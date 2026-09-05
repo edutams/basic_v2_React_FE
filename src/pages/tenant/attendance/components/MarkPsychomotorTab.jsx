@@ -22,7 +22,7 @@ import {
   RadioGroup,
   FormControlLabel,
   TablePagination,
-  CircularProgress,
+  Skeleton,
   useTheme,
   useMediaQuery,
   Menu,
@@ -305,7 +305,13 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const handleApplyFilter = () => {
     fetchLearners();
     setFilterApplied(true);
-    if (onFilter) onFilter(pArm, pSession, pTermId, pWeek);
+    // A new filter can return a shorter list — reset to page 1 so the
+    // table never lands on a now-out-of-range page.
+    setPPage(0);
+    // Pass programme/class too — matches MarkAttendanceTab's onFilter shape,
+    // so the parent's selectedProgrammeId/selectedClassId (used as fallback
+    // preselects in the Psychomotor stat-card modal filters) stay in sync.
+    if (onFilter) onFilter(pArm, pSession, pTermId, pWeek, pProgramme, pClass);
   };
 
   const handleSubmitFinal = async () => {
@@ -339,6 +345,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
       // Clear localStorage after successful submission
       localStorage.removeItem(STORAGE_KEY);
+
+      // Refresh the stat cards now that real data changed — was only ever
+      // triggered by the Filter button or a tab switch.
+      if (onFilter) onFilter(pArm, pSession, pTermId, pWeek, pProgramme, pClass);
     } catch (e) {
       console.error('Failed to submit assessments:', e);
       setAlertSnackbar({
@@ -481,7 +491,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={pArm} label="Class Arm" onChange={(e) => setPArm(e.target.value)}>
+            <Select value={pArm} label="Class/Arm" onChange={(e) => setPArm(e.target.value)}>
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.class_arm_names}
@@ -667,37 +677,60 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      width: 50,
-                      minWidth: 50,
-                      maxWidth: 50,
-                      ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                      borderRight: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? '1px solid rgba(255, 255, 255, 0.12)'
-                          : '1px solid #cbd5e1',
-                    }}
-                  />
-                  <TableCell
-                    sx={{
-                      width: 220,
-                      minWidth: 220,
-                      maxWidth: 220,
-                      ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
-                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                      borderRight: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? '2px solid rgba(255, 255, 255, 0.18)'
-                          : '2px solid #cbd5e1',
-                    }}
-                  />
-                  <TableCell colSpan={2} align="center" sx={{ py: 6 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                // Skeleton rows matching the real table's column layout —
+                // S/N + Name + affective/psychomotor rating columns — instead
+                // of a generic centered spinner.
+                Array.from({ length: 6 }).map((_, rowIdx) => (
+                  <TableRow key={`skeleton-row-${rowIdx}`}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    >
+                      <Skeleton variant="text" width={16} />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Skeleton variant="circular" width={36} height={36} />
+                        <Skeleton variant="text" width="60%" />
+                      </Stack>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 280 }}>
+                      <Stack spacing={1}>
+                        {Array.from({ length: 3 }).map((__, i) => (
+                          <Skeleton key={i} variant="rounded" height={26} />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 280 }}>
+                      <Stack spacing={1}>
+                        {Array.from({ length: 3 }).map((__, i) => (
+                          <Skeleton key={i} variant="rounded" height={26} />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : learners.length === 0 ? (
                 <TableRow>
                   <TableCell
@@ -735,191 +768,194 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                learners.map((learner, idx) => {
-                  const studentAssess = assessments[learner.student_registration_id] || {
-                    affective: {},
-                    psychomotor: {},
-                  };
-                  return (
-                    <TableRow
-                      key={learner.student_registration_id}
-                      hover
-                      sx={{ verticalAlign: 'top' }}
-                    >
-                      <TableCell
-                        sx={{
-                          width: 50,
-                          minWidth: 50,
-                          maxWidth: 50,
-                          ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
-                          bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                          borderRight: (theme) =>
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(255, 255, 255, 0.12)'
-                              : '1px solid #cbd5e1',
-                        }}
+                learners
+                  .slice(pPage * pRowsPerPage, pPage * pRowsPerPage + pRowsPerPage)
+                  .map((learner, sliceIdx) => {
+                    const idx = pPage * pRowsPerPage + sliceIdx;
+                    const studentAssess = assessments[learner.student_registration_id] || {
+                      affective: {},
+                      psychomotor: {},
+                    };
+                    return (
+                      <TableRow
+                        key={learner.student_registration_id}
+                        hover
+                        sx={{ verticalAlign: 'top' }}
                       >
-                        {idx + 1}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          width: 220,
-                          minWidth: 220,
-                          maxWidth: 220,
-                          ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
-                          bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                          borderRight: (theme) =>
-                            theme.palette.mode === 'dark'
-                              ? '2px solid rgba(255, 255, 255, 0.18)'
-                              : '2px solid #cbd5e1',
-                        }}
-                      >
-                        <Stack direction="row" alignItems="center" spacing={1.5}>
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              fontSize: 13,
-                              fontWeight: 700,
-                              bgcolor: 'primary.main',
-                            }}
-                          >
-                            {(learner.name || '?').charAt(0)}
-                          </Avatar>
-                          <Box>
-                            <Stack
-                              direction={{ xs: 'column', sm: 'row' }}
-                              alignItems={{ sm: 'center' }}
-                              spacing={1}
+                        <TableCell
+                          sx={{
+                            width: 50,
+                            minWidth: 50,
+                            maxWidth: 50,
+                            ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255, 255, 255, 0.12)'
+                                : '1px solid #cbd5e1',
+                          }}
+                        >
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            width: 220,
+                            minWidth: 220,
+                            maxWidth: 220,
+                            ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '2px solid rgba(255, 255, 255, 0.18)'
+                                : '2px solid #cbd5e1',
+                          }}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={1.5}>
+                            <Avatar
+                              sx={{
+                                width: 36,
+                                height: 36,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                bgcolor: 'primary.main',
+                              }}
                             >
-                              <Typography variant="body2" fontWeight={600}>
-                                {learner.name}
+                              {(learner.name || '?').charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                alignItems={{ sm: 'center' }}
+                                spacing={1}
+                              >
+                                <Typography variant="body2" fontWeight={600}>
+                                  {learner.name}
+                                </Typography>
+                                <Chip
+                                  icon={
+                                    learner.gender === 'MALE' ? (
+                                      <MaleIcon fontSize="small" />
+                                    ) : (
+                                      <FemaleIcon fontSize="small" />
+                                    )
+                                  }
+                                  label={learner.gender}
+                                  size="small"
+                                  color={learner.gender === 'MALE' ? 'primary' : 'success'}
+                                  variant="soft"
+                                  sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
+                                />
+                              </Stack>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        {/* Affective domain */}
+                        <TableCell>
+                          <Stack spacing={1}>
+                            {affectiveTraits.length > 0 ? (
+                              affectiveTraits.map((trait) => (
+                                <Stack
+                                  key={trait}
+                                  direction={{ xs: 'column', sm: 'row' }}
+                                  alignItems={{ sm: 'center' }}
+                                  spacing={1}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ minWidth: 80, color: 'text.secondary', fontWeight: 500 }}
+                                  >
+                                    {trait}
+                                  </Typography>
+                                  <RadioGroup
+                                    row
+                                    value={studentAssess.affective[trait] ?? ''}
+                                    onChange={(e) =>
+                                      setRating(
+                                        learner.student_registration_id,
+                                        'affective',
+                                        trait,
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                  >
+                                    {[1, 2, 3, 4, 5].map((val) => (
+                                      <FormControlLabel
+                                        key={val}
+                                        value={val}
+                                        control={<Radio size="small" sx={{ p: 0.5 }} />}
+                                        label={val}
+                                        labelPlacement="bottom"
+                                        sx={{
+                                          mx: 0.25,
+                                          '& .MuiFormControlLabel-label': { fontSize: '10px' },
+                                        }}
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                </Stack>
+                              ))
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No affective domains configured.
                               </Typography>
-                              <Chip
-                                icon={
-                                  learner.gender === 'MALE' ? (
-                                    <MaleIcon fontSize="small" />
-                                  ) : (
-                                    <FemaleIcon fontSize="small" />
-                                  )
-                                }
-                                label={learner.gender}
-                                size="small"
-                                color={learner.gender === 'MALE' ? 'primary' : 'success'}
-                                variant="soft"
-                                sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
-                              />
-                            </Stack>
-                          </Box>
-                        </Stack>
-                      </TableCell>
-                      {/* Affective domain */}
-                      <TableCell>
-                        <Stack spacing={1}>
-                          {affectiveTraits.length > 0 ? (
-                            affectiveTraits.map((trait) => (
-                              <Stack
-                                key={trait}
-                                direction={{ xs: 'column', sm: 'row' }}
-                                alignItems={{ sm: 'center' }}
-                                spacing={1}
-                              >
-                                <Typography
-                                  variant="caption"
-                                  sx={{ minWidth: 80, color: 'text.secondary', fontWeight: 500 }}
+                            )}
+                          </Stack>
+                        </TableCell>
+                        {/* Psychomotor domain */}
+                        <TableCell>
+                          <Stack spacing={1}>
+                            {psychomotorTraits.length > 0 ? (
+                              psychomotorTraits.map((trait) => (
+                                <Stack
+                                  key={trait}
+                                  direction={{ xs: 'column', sm: 'row' }}
+                                  alignItems={{ sm: 'center' }}
+                                  spacing={1}
                                 >
-                                  {trait}
-                                </Typography>
-                                <RadioGroup
-                                  row
-                                  value={studentAssess.affective[trait] ?? ''}
-                                  onChange={(e) =>
-                                    setRating(
-                                      learner.student_registration_id,
-                                      'affective',
-                                      trait,
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                >
-                                  {[1, 2, 3, 4, 5].map((val) => (
-                                    <FormControlLabel
-                                      key={val}
-                                      value={val}
-                                      control={<Radio size="small" sx={{ p: 0.5 }} />}
-                                      label={val}
-                                      labelPlacement="bottom"
-                                      sx={{
-                                        mx: 0.25,
-                                        '& .MuiFormControlLabel-label': { fontSize: '10px' },
-                                      }}
-                                    />
-                                  ))}
-                                </RadioGroup>
-                              </Stack>
-                            ))
-                          ) : (
-                            <Typography variant="caption" color="text.secondary">
-                              No affective domains configured.
-                            </Typography>
-                          )}
-                        </Stack>
-                      </TableCell>
-                      {/* Psychomotor domain */}
-                      <TableCell>
-                        <Stack spacing={1}>
-                          {psychomotorTraits.length > 0 ? (
-                            psychomotorTraits.map((trait) => (
-                              <Stack
-                                key={trait}
-                                direction={{ xs: 'column', sm: 'row' }}
-                                alignItems={{ sm: 'center' }}
-                                spacing={1}
-                              >
-                                <Typography
-                                  variant="caption"
-                                  sx={{ minWidth: 110, color: 'text.secondary', fontWeight: 500 }}
-                                >
-                                  {trait}
-                                </Typography>
-                                <RadioGroup
-                                  row
-                                  value={studentAssess.psychomotor[trait] ?? ''}
-                                  onChange={(e) =>
-                                    setRating(
-                                      learner.student_registration_id,
-                                      'psychomotor',
-                                      trait,
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                >
-                                  {[1, 2, 3, 4, 5].map((val) => (
-                                    <FormControlLabel
-                                      key={val}
-                                      value={val}
-                                      control={<Radio size="small" sx={{ p: 0.5 }} />}
-                                      label={val}
-                                      labelPlacement="bottom"
-                                      sx={{
-                                        mx: 0.25,
-                                        '& .MuiFormControlLabel-label': { fontSize: '10px' },
-                                      }}
-                                    />
-                                  ))}
-                                </RadioGroup>
-                              </Stack>
-                            ))
-                          ) : (
-                            <Typography variant="caption" color="text.secondary">
-                              No psychomotor domains configured.
-                            </Typography>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ minWidth: 110, color: 'text.secondary', fontWeight: 500 }}
+                                  >
+                                    {trait}
+                                  </Typography>
+                                  <RadioGroup
+                                    row
+                                    value={studentAssess.psychomotor[trait] ?? ''}
+                                    onChange={(e) =>
+                                      setRating(
+                                        learner.student_registration_id,
+                                        'psychomotor',
+                                        trait,
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                  >
+                                    {[1, 2, 3, 4, 5].map((val) => (
+                                      <FormControlLabel
+                                        key={val}
+                                        value={val}
+                                        control={<Radio size="small" sx={{ p: 0.5 }} />}
+                                        label={val}
+                                        labelPlacement="bottom"
+                                        sx={{
+                                          mx: 0.25,
+                                          '& .MuiFormControlLabel-label': { fontSize: '10px' },
+                                        }}
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                </Stack>
+                              ))
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No psychomotor domains configured.
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
               )}
             </TableBody>
           </Table>

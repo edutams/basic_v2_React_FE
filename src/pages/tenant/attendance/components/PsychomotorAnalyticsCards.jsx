@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -26,8 +26,16 @@ import {
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import ModalFilterDropdowns from './ModalFilterDropdowns';
 import StatCardSkeleton from './StatCardSkeleton';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
+import {
+  fetchSessions,
+  fetchProgrammes,
+  fetchActiveSessionTerm,
+  fetchTerms,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 // ── Theme-aware stat card ──────────────────────────────────────
 const schemeMap = [
@@ -37,6 +45,19 @@ const schemeMap = [
   { bg: '#FEF3C7', color: '#D97706' },
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
+
+// Single status classification shared by every modal in this file — the
+// domain-breakdown table and the needing-support table both read the same
+// `average_domain` (0-5) scale, so both must use the same cutoffs and labels.
+// 2.5 matches the backend's default "needs support" threshold
+// (PsychomotorController::getLearnersNeedingSupport).
+const domainStatus = (avg) => {
+  if (avg == null) return { label: '—', color: 'default' };
+  if (avg < 1.5) return { label: 'Critical', color: 'error' };
+  if (avg < 2.5) return { label: 'Needs Support', color: 'warning' };
+  if (avg >= 4) return { label: 'Excellent', color: 'success' };
+  return { label: 'Good', color: 'info' };
+};
 
 const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {} }) => {
   const theme = useTheme();
@@ -59,12 +80,12 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         cursor: clickable ? 'pointer' : 'default',
         ...(clickable
           ? {
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }
           : {}),
         ...sx,
       }}
@@ -82,6 +103,8 @@ const PsychomotorAnalyticsCards = ({
   sessionId,
   termId,
   weekId,
+  programmeId,
+  classId,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -91,33 +114,143 @@ const PsychomotorAnalyticsCards = ({
     content: null,
     loading: false,
   });
+  // Ref counter forces ModalFilterDropdowns to remount fresh each time —
+  // mirrors AttendanceAnalyticsCards.jsx's pattern (avoids stale closures).
+  const filterKeyRef = useRef(0);
+
+  // Filter data arrays for the dropdowns inside modals — same Session → Term
+  // → Week → Programme → Class → Class/Arm set the main table uses.
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [weeks, setWeeks] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [arms, setArms] = useState([]);
+
+  // Active session / term / week IDs for pre-filling dropdowns
+  const [activeSessionId, setActiveSessionId] = useState('');
+  const [activeTermId, setActiveTermId] = useState('');
+  const [activeWeekId, setActiveWeekId] = useState(null);
+
+  // Load filter options
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [sessRes, progRes, activeStRes] = await Promise.all([
+          fetchSessions(),
+          fetchProgrammes(),
+          fetchActiveSessionTerm(),
+        ]);
+        const sessionsData = sessRes.data?.data || sessRes.data || [];
+        setSessions(sessionsData);
+        setProgrammes(progRes.data?.data || progRes.data || []);
+
+        const activeStData = activeStRes.data?.data || activeStRes.data;
+        const activeSessId = activeStData?.session_id;
+        const activeTerm = activeStData?.term_id;
+
+        if (activeSessId) {
+          const matchSession = sessionsData.find((s) => String(s.id) === String(activeSessId));
+          setActiveSessionId(matchSession ? matchSession.id : activeSessId);
+          if (activeTerm) setActiveTermId(activeTerm);
+
+          const termsRes = await fetchTerms(activeSessId);
+          const termsData = termsRes.data?.data || termsRes.data || [];
+          setTerms(termsData);
+
+          if (activeTerm && termsData.length > 0) {
+            const matchTerm = termsData.find((t) => String(t.id) === String(activeTerm));
+            setActiveTermId(matchTerm ? matchTerm.id : activeTerm);
+          }
+        } else if (sessionsData.length > 0) {
+          setActiveSessionId(sessionsData[0].id);
+          const termsRes = await fetchTerms(sessionsData[0].id);
+          const termsData = termsRes.data?.data || termsRes.data || [];
+          setTerms(termsData);
+        }
+
+        try {
+          const ackRes = await fetchAcademicInfo();
+          if (ackRes?.academic_week_id) {
+            setActiveWeekId(String(ackRes.academic_week_id));
+          }
+        } catch (e) {
+          /* best-effort */
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    load();
+  }, []);
 
   const openCardModal = (cardTitle, modalBody) => {
+    filterKeyRef.current += 1;
     setAnalyticsModal({ open: true, title: cardTitle, content: modalBody });
   };
 
+  // Shared preselect fallback chain for every modal's filter dropdowns —
+  // defaults to the currently-applied page filters, then the active term.
+  const baseInitialFilters = (localFilters) => ({
+    session: localFilters?.session || sessionId || activeSessionId,
+    term: localFilters?.term || termId || activeTermId,
+    week: localFilters?.week || weekId || '',
+    programme: localFilters?.programme || programmeId || '',
+    class: localFilters?.class || classId || '',
+    arm: localFilters?.arm || classArmId || '',
+  });
+
   // Shared: fetch learners + domain breakdown, show student table + bar chart
   const openDomainBreakdown = useCallback(
-    async (params, domainType) => {
+    async (params, domainType, localFilters) => {
       const isAffective = domainType === 'affective';
       const title = isAffective ? 'Affective Rating Breakdown' : 'Psychomotor Rating Breakdown';
       const accentColor = isAffective ? theme.palette.success.main : theme.palette.primary.main;
+
+      const filterDropdowns = (onApply) => (
+        <ModalFilterDropdowns
+          key={filterKeyRef.current}
+          sessions={sessions}
+          terms={terms}
+          weeks={weeks}
+          programmes={programmes}
+          classes={classes}
+          arms={arms}
+          activeWeekId={activeWeekId}
+          initialFilters={baseInitialFilters(localFilters)}
+          onApply={onApply}
+        />
+      );
+      const reapply = (lf) =>
+        openDomainBreakdown(
+          {
+            class_arm_id: lf.arm || undefined,
+            session_id: lf.session || undefined,
+            term_id: lf.term || undefined,
+            week_term_id: lf.week || undefined,
+          },
+          domainType,
+          lf,
+        );
 
       // No records until a filter (class/arm) has been applied
       if (!params?.class_arm_id) {
         openCardModal(
           title,
-          <Box sx={{ py: 3, textAlign: 'center' }}>
-            <Typography
-              variant="h5"
-              sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-            >
-              No Records
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-              Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>)
-              above and click the <strong>Filter Results</strong> button to load records.
-            </Typography>
+          <Box>
+            {filterDropdowns(reapply)}
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+              >
+                No Records
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+                Select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click{' '}
+                <strong>Apply Filter</strong> to load records.
+              </Typography>
+            </Box>
           </Box>,
         );
         return;
@@ -139,16 +272,23 @@ const PsychomotorAnalyticsCards = ({
         if (traits.length === 0 && students.length === 0) {
           openCardModal(
             title,
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-              >
-                No {domainType} data found
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-                No {domainType} assessments have been recorded for this class/week.
-              </Typography>
+            <Box>
+              {filterDropdowns(reapply)}
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  No {domainType} data found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 360, mx: 'auto' }}
+                >
+                  No {domainType} assessments have been recorded for this class/week.
+                </Typography>
+              </Box>
             </Box>,
           );
           return;
@@ -172,6 +312,7 @@ const PsychomotorAnalyticsCards = ({
         openCardModal(
           title,
           <Box sx={{ py: 1 }}>
+            {filterDropdowns(reapply)}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 5 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -218,54 +359,41 @@ const PsychomotorAnalyticsCards = ({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {enriched.map((s) => (
-                        <TableRow key={s.student_registration_id} hover>
-                          <TableCell sx={{ fontSize: '0.8rem' }}>{s.name}</TableCell>
-                          <TableCell sx={{ fontSize: '0.8rem' }}>{s.gender || '—'}</TableCell>
-                          {isAffective ? (
-                            <TableCell
-                              align="center"
-                              sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}
-                            >
-                              {s.affAvg}
+                      {enriched.map((s) => {
+                        const status = domainStatus(s.average_domain);
+                        return (
+                          <TableRow key={s.student_registration_id} hover>
+                            <TableCell sx={{ fontSize: '0.8rem' }}>{s.name}</TableCell>
+                            <TableCell sx={{ fontSize: '0.8rem' }}>{s.gender || '—'}</TableCell>
+                            {isAffective ? (
+                              <TableCell
+                                align="center"
+                                sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}
+                              >
+                                {s.affAvg}
+                              </TableCell>
+                            ) : (
+                              <TableCell
+                                align="center"
+                                sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}
+                              >
+                                {s.psyAvg}
+                              </TableCell>
+                            )}
+                            <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                              {s.average_domain ?? '—'}
                             </TableCell>
-                          ) : (
-                            <TableCell
-                              align="center"
-                              sx={{ fontSize: '0.8rem', fontWeight: 600, color: accentColor }}
-                            >
-                              {s.psyAvg}
+                            <TableCell align="center">
+                              <Chip
+                                label={status.label}
+                                size="small"
+                                color={status.color}
+                                sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                              />
                             </TableCell>
-                          )}
-                          <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
-                            {s.average_domain ?? '—'}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={
-                                s.average_domain < 1.5
-                                  ? 'Critical'
-                                  : s.average_domain < 2.5
-                                    ? 'Low'
-                                    : s.average_domain >= 4
-                                      ? 'Excellent'
-                                      : 'Good'
-                              }
-                              size="small"
-                              color={
-                                s.average_domain < 1.5
-                                  ? 'error'
-                                  : s.average_domain < 2.5
-                                    ? 'warning'
-                                    : s.average_domain >= 4
-                                      ? 'success'
-                                      : 'info'
-                              }
-                              sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -275,41 +403,89 @@ const PsychomotorAnalyticsCards = ({
         );
       } catch (e) {
         console.error(`Failed to fetch ${domainType} breakdown:`, e);
-        openCardModal(title, <Typography color="error">Failed to load data.</Typography>);
+        openCardModal(
+          title,
+          <Box>
+            {filterDropdowns(reapply)}
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
+        );
       }
     },
-    [theme, metrics.maxRating],
+    [
+      theme,
+      metrics.maxRating,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+      activeWeekId,
+      sessionId,
+      termId,
+      weekId,
+      programmeId,
+      classId,
+      activeSessionId,
+      activeTermId,
+      classArmId,
+    ],
   );
 
   // Fetch real needing support data from API
   const openNeedingSupport = useCallback(
-    async (params) => {
+    async (params, localFilters) => {
+      const title = 'Learners Needing Support';
+      const filterDropdowns = (onApply) => (
+        <ModalFilterDropdowns
+          key={filterKeyRef.current}
+          sessions={sessions}
+          terms={terms}
+          weeks={weeks}
+          programmes={programmes}
+          classes={classes}
+          arms={arms}
+          activeWeekId={activeWeekId}
+          initialFilters={baseInitialFilters(localFilters)}
+          onApply={onApply}
+        />
+      );
+      const reapply = (lf) =>
+        openNeedingSupport(
+          {
+            class_arm_id: lf.arm || undefined,
+            session_id: lf.session || undefined,
+            term_id: lf.term || undefined,
+            week_term_id: lf.week || undefined,
+          },
+          lf,
+        );
+
       // No records until a filter (class/arm) has been applied
       if (!params?.class_arm_id) {
         openCardModal(
-          'Learners Needing Support',
-          <Box sx={{ py: 3, textAlign: 'center' }}>
-            <Typography
-              variant="h5"
-              sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-            >
-              No Records
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-              Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>)
-              above and click the <strong>Filter Results</strong> button to load records.
-            </Typography>
+          title,
+          <Box>
+            {filterDropdowns(reapply)}
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+              >
+                No Records
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+                Select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click{' '}
+                <strong>Apply Filter</strong> to load records.
+              </Typography>
+            </Box>
           </Box>,
         );
         return;
       }
 
-      setAnalyticsModal({
-        open: true,
-        title: 'Learners Needing Support',
-        content: null,
-        loading: true,
-      });
+      setAnalyticsModal({ open: true, title, content: null, loading: true });
       try {
         const [statsRes, learnersRes] = await Promise.all([
           attendanceApi.getPsychomotorStats(params),
@@ -324,17 +500,24 @@ const PsychomotorAnalyticsCards = ({
         // Check if there's actual data
         if ((stats.total_assessed || 0) === 0 && learners.length === 0) {
           openCardModal(
-            'Learners Needing Support',
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-              >
-                📋 No support data found
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-                No learners need support yet. All assessed students are on track.
-              </Typography>
+            title,
+            <Box>
+              {filterDropdowns(reapply)}
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  📋 No support data found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 360, mx: 'auto' }}
+                >
+                  No learners need support yet. All assessed students are on track.
+                </Typography>
+              </Box>
             </Box>,
           );
           return;
@@ -343,8 +526,9 @@ const PsychomotorAnalyticsCards = ({
         const sortedLearners = [...learners].sort((a, b) => b.average_domain - a.average_domain);
 
         openCardModal(
-          'Learners Needing Support',
+          title,
           <Box sx={{ py: 1 }}>
+            {filterDropdowns(reapply)}
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {realNeedingSupport} out of {totalRated} assessed learners need targeted support (avg
               rating &lt; 2.5).
@@ -389,38 +573,29 @@ const PsychomotorAnalyticsCards = ({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {sortedLearners.map((l) => (
-                      <TableRow key={l.student_registration_id} hover>
-                        <TableCell sx={{ fontSize: '0.8rem' }}>{l.name}</TableCell>
-                        <TableCell sx={{ fontSize: '0.8rem' }}>{l.gender || '—'}</TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
-                          {l.affective_avg}
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
-                          {l.psychomotor_avg}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={
-                              l.average_domain < 1.5
-                                ? 'Critical'
-                                : l.average_domain < 2
-                                  ? 'Low'
-                                  : 'Needs Support'
-                            }
-                            size="small"
-                            color={
-                              l.average_domain < 1.5
-                                ? 'error'
-                                : l.average_domain < 2
-                                  ? 'warning'
-                                  : 'info'
-                            }
-                            sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {sortedLearners.map((l) => {
+                      const status = domainStatus(l.average_domain);
+                      return (
+                        <TableRow key={l.student_registration_id} hover>
+                          <TableCell sx={{ fontSize: '0.8rem' }}>{l.name}</TableCell>
+                          <TableCell sx={{ fontSize: '0.8rem' }}>{l.gender || '—'}</TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                            {l.affective_avg}
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                            {l.psychomotor_avg}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={status.label}
+                              size="small"
+                              color={status.color}
+                              sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -430,43 +605,87 @@ const PsychomotorAnalyticsCards = ({
       } catch (e) {
         console.error('Failed to fetch support data:', e);
         openCardModal(
-          'Learners Needing Support',
-          <Typography color="error">Failed to load data.</Typography>,
+          title,
+          <Box>
+            {filterDropdowns(reapply)}
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
         );
       }
     },
-    [theme],
+    [
+      theme,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+      activeWeekId,
+      sessionId,
+      termId,
+      weekId,
+      programmeId,
+      classId,
+      activeSessionId,
+      activeTermId,
+      classArmId,
+    ],
   );
 
   // Fetch gender rating breakdown from API
   const openGenderBreakdown = useCallback(
-    async (params) => {
+    async (params, localFilters) => {
+      const title = 'Gender Rating Comparison';
+      const filterDropdowns = (onApply) => (
+        <ModalFilterDropdowns
+          key={filterKeyRef.current}
+          sessions={sessions}
+          terms={terms}
+          weeks={weeks}
+          programmes={programmes}
+          classes={classes}
+          arms={arms}
+          activeWeekId={activeWeekId}
+          initialFilters={baseInitialFilters(localFilters)}
+          onApply={onApply}
+        />
+      );
+      const reapply = (lf) =>
+        openGenderBreakdown(
+          {
+            class_arm_id: lf.arm || undefined,
+            session_id: lf.session || undefined,
+            term_id: lf.term || undefined,
+            week_term_id: lf.week || undefined,
+          },
+          lf,
+        );
+
       // No records until a filter (class/arm) has been applied
       if (!params?.class_arm_id) {
         openCardModal(
-          'Gender Rating Comparison',
-          <Box sx={{ py: 3, textAlign: 'center' }}>
-            <Typography
-              variant="h5"
-              sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-            >
-              No Records
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-              Apply a filter first — select a <strong>Class/Arm</strong> (and <strong>Week</strong>)
-              above and click the <strong>Filter Results</strong> button to load records.
-            </Typography>
+          title,
+          <Box>
+            {filterDropdowns(reapply)}
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h5"
+                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+              >
+                No Records
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
+                Select a <strong>Class/Arm</strong> (and <strong>Week</strong>) above and click{' '}
+                <strong>Apply Filter</strong> to load records.
+              </Typography>
+            </Box>
           </Box>,
         );
         return;
       }
 
-      setAnalyticsModal({
-        open: true,
-        title: 'Gender Rating Comparison',
-        content: null,
-        loading: true,
-      });
+      setAnalyticsModal({ open: true, title, content: null, loading: true });
       try {
         const res = await attendanceApi.getRatingByGender(params);
         const genderData = res.data?.data || {};
@@ -478,26 +697,34 @@ const PsychomotorAnalyticsCards = ({
         // Check if there's actual assessment data
         if (maleCount === 0 && femaleCount === 0) {
           openCardModal(
-            'Gender Rating Comparison',
-            <Box sx={{ py: 3, textAlign: 'center' }}>
-              <Typography
-                variant="h5"
-                sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
-              >
-                👥 No gender data found
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mx: 'auto' }}>
-                No psychomotor/affective assessments have been recorded yet. Submit assessments
-                first to see the gender distribution.
-              </Typography>
+            title,
+            <Box>
+              {filterDropdowns(reapply)}
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 1, fontSize: '1.15rem', fontWeight: 600, color: 'text.secondary' }}
+                >
+                  👥 No gender data found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ maxWidth: 360, mx: 'auto' }}
+                >
+                  No psychomotor/affective assessments have been recorded yet. Submit assessments
+                  first to see the gender distribution.
+                </Typography>
+              </Box>
             </Box>,
           );
           return;
         }
 
         openCardModal(
-          'Gender Rating Comparison',
+          title,
           <Box sx={{ py: 1 }}>
+            {filterDropdowns(reapply)}
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Distribution of assessed learners by gender (left) and average domain rating (right).
             </Typography>
@@ -524,12 +751,32 @@ const PsychomotorAnalyticsCards = ({
       } catch (e) {
         console.error('Failed to fetch gender breakdown:', e);
         openCardModal(
-          'Gender Rating Comparison',
-          <Typography color="error">Failed to load data.</Typography>,
+          title,
+          <Box>
+            {filterDropdowns(reapply)}
+            <Typography color="error">Failed to load data.</Typography>
+          </Box>,
         );
       }
     },
-    [theme],
+    [
+      theme,
+      sessions,
+      terms,
+      weeks,
+      programmes,
+      classes,
+      arms,
+      activeWeekId,
+      sessionId,
+      termId,
+      weekId,
+      programmeId,
+      classId,
+      activeSessionId,
+      activeTermId,
+      classArmId,
+    ],
   );
 
   const colors = {

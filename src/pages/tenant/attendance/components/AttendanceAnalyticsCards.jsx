@@ -45,16 +45,15 @@ import {
 
 import ReusableBarChart from '@/components/shared/charts/ReusableBarChart';
 import AnalyticsModal from './AnalyticsModal';
+import ModalFilterDropdowns from './ModalFilterDropdowns';
 import StatCardSkeleton from './StatCardSkeleton';
 import ReusableDialog from '@/components/shared/ReusableDialog';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
   fetchSessions,
-  fetchTerms,
   fetchProgrammes,
-  fetchClassesByProgramme,
-  fetchClassArmsByClass,
   fetchActiveSessionTerm,
+  fetchTerms,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
@@ -87,12 +86,12 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         ...(clickable
           ? {
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }
           : {}),
         ...sx,
       }}
@@ -102,240 +101,28 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
   );
 };
 
-// ── Reusable filter dropdowns for modals (local state) ────────
-const ModalFilterDropdowns = ({
-  sessions,
-  terms,
-  weeks,
-  programmes,
-  classes,
-  arms,
-  initialFilters,
-  onApply,
-  applyLabel = 'Apply Filter',
-  activeWeekId,
-}) => {
-  const activeWeekIdRef = useRef(activeWeekId);
-  useEffect(() => {
-    activeWeekIdRef.current = activeWeekId;
-  }, [activeWeekId]);
-
-  const normalizedInitial = {
-    session: String(initialFilters?.session || ''),
-    term: String(initialFilters?.term || ''),
-    week: String(initialFilters?.week || ''),
-    programme: String(initialFilters?.programme || ''),
-    class: String(initialFilters?.class || ''),
-    arm: String(initialFilters?.arm || ''),
-  };
-
-  const [localFilters, setLocalFilters] = useState(normalizedInitial);
-
-  const [localTerms, setLocalTerms] = useState(terms);
-  const [localWeeks, setLocalWeeks] = useState(weeks);
-  const [localClasses, setLocalClasses] = useState(classes);
-  const [localArms, setLocalArms] = useState(arms);
-
-  // Sync localFilters when initialFilters change (key may not always trigger remount)
-  useEffect(() => {
-    setLocalFilters(normalizedInitial);
-  }, [
-    normalizedInitial.session,
-    normalizedInitial.term,
-    normalizedInitial.week,
-    normalizedInitial.programme,
-    normalizedInitial.class,
-    normalizedInitial.arm,
-  ]);
-
-  useEffect(() => {
-    if (!localFilters.session) return;
-    fetchTerms(localFilters.session)
-      .then((r) => {
-        const d = r.data?.data || r.data || [];
-        setLocalTerms(Array.isArray(d) ? d : []);
-      })
-      .catch(console.error);
-  }, [localFilters.session]);
-
-  useEffect(() => {
-    if (!localFilters.session || !localFilters.term) return;
-    let cancelled = false;
-    attendanceApi
-      .getWeeksBySessionTerm({ session_id: localFilters.session, term_id: localFilters.term })
-      .then((r) => {
-        if (cancelled) return;
-        const d = r.data?.data || [];
-        const weeks = Array.isArray(d) ? d : [];
-        setLocalWeeks(weeks);
-        const wkId = activeWeekIdRef.current;
-        if (weeks.length > 0 && !localFilters.week) {
-          const match = wkId ? weeks.find((w) => String(w.week_id) === wkId) : null;
-          const active =
-            match || weeks.find((w) => w.status === 'active') || weeks[weeks.length - 1];
-          if (active) {
-            setLocalFilters((prev) => {
-              if (prev.week) return prev;
-              return { ...prev, week: String(active.wk_id ?? active.week_id ?? active.id) };
-            });
-          }
-        }
-      })
-      .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, [localFilters.session, localFilters.term]);
-
-  useEffect(() => {
-    if (!localFilters.programme) return;
-    fetchClassesByProgramme(localFilters.programme)
-      .then((r) => {
-        const d = r.data?.data || r.data || [];
-        setLocalClasses(Array.isArray(d) ? d : []);
-      })
-      .catch(console.error);
-  }, [localFilters.programme]);
-
-  useEffect(() => {
-    if (!localFilters.class) return;
-    fetchClassArmsByClass(localFilters.class, { programme_id: localFilters.programme || undefined })
-      .then((r) => {
-        const d = r.data || [];
-        setLocalArms(Array.isArray(d) ? d : []);
-      })
-      .catch(console.error);
-  }, [localFilters.class, localFilters.programme]);
-
-  const handleChange = (key, value) => {
-    setLocalFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleApply = () => {
-    onApply(localFilters);
-  };
-
-  return (
-    <Grid container spacing={1} alignItems="center" sx={{ mb: 2 }}>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Session</InputLabel>
-          <Select
-            value={String(localFilters.session || '')}
-            label="Session"
-            onChange={(e) => handleChange('session', e.target.value)}
-          >
-            {sessions.map((s) => (
-              <MenuItem key={s.id} value={String(s.id)}>
-                {s.session_name || s.name || s.id}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Term</InputLabel>
-          <Select
-            value={String(localFilters.term || '')}
-            label="Term"
-            onChange={(e) => handleChange('term', e.target.value)}
-          >
-            {localTerms.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.term_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Week</InputLabel>
-          <Select
-            value={String(localFilters.week || '')}
-            label="Week"
-            onChange={(e) => handleChange('week', e.target.value)}
-          >
-            {localWeeks.map((w) => {
-              const weekId = String(w.wk_id ?? w.week_id ?? w.id);
-              return (
-                <MenuItem key={weekId} value={weekId}>
-                  {w.week_name || `Week ${weekId}`}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Programme</InputLabel>
-          <Select
-            value={String(localFilters.programme || '')}
-            label="Programme"
-            onChange={(e) => handleChange('programme', e.target.value)}
-          >
-            {programmes.map((p) => (
-              <MenuItem key={p.id} value={String(p.id)}>
-                {p.programme_name || p.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Class</InputLabel>
-          <Select
-            value={String(localFilters.class || '')}
-            label="Class"
-            onChange={(e) => handleChange('class', e.target.value)}
-          >
-            {localClasses.map((c) => (
-              <MenuItem key={c.id} value={String(c.id)}>
-                {c.class_name || c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 6, sm: 4, md: 1.7 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Class/Arm</InputLabel>
-          <Select
-            value={String(localFilters.arm || '')}
-            label="Class/Arm"
-            onChange={(e) => handleChange('arm', e.target.value)}
-          >
-            {localArms.map((a) => (
-              <MenuItem key={a.id} value={String(a.id)}>
-                {a.class_arm_names}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 4, md: 1.8 }}>
-        <Button variant="contained" size="small" fullWidth onClick={handleApply}>
-          {applyLabel}
-        </Button>
-      </Grid>
-    </Grid>
-  );
-};
-
 // ── Week Breakdown Content (Chart + Table side by side) ──────
 const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme }) => {
   const isDark = theme.palette.mode === 'dark';
+
+  // A late arrival still counts as present for the rate (matches
+  // AttendanceCalculationService::isPresentStatus() on the backend) — only
+  // 'absent' counts against it, and 'excused' is its own state, not a fail.
+  const isPresentStatus = (status) => status === 'present' || status === 'late';
 
   const getDayStatus = (attendance, date) => {
     const day = attendance?.[date];
     if (!day || day.__holiday) return { label: '—', color: 'text.secondary' };
     const morning = day.morning?.is_present;
     const afternoon = day.afternoon?.is_present;
-    if (morning === 'present' || afternoon === 'present')
-      return { label: 'Present', color: 'success.main' };
+    if (isPresentStatus(morning) || isPresentStatus(afternoon)) {
+      const wasLate = morning === 'late' || afternoon === 'late';
+      return wasLate
+        ? { label: 'Late', color: 'warning.main' }
+        : { label: 'Present', color: 'success.main' };
+    }
+    if (morning === 'excused' || afternoon === 'excused')
+      return { label: 'Excused', color: 'info.main' };
     if (morning || afternoon) return { label: 'Absent', color: 'error.main' };
     return { label: '—', color: 'text.secondary' };
   };
@@ -344,8 +131,8 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
     const day = attendance?.[date];
     if (!day || day.__holiday) return 0;
     let count = 0;
-    if (day.morning?.is_present === 'present') count++;
-    if (day.afternoon?.is_present === 'present') count++;
+    if (isPresentStatus(day.morning?.is_present)) count++;
+    if (isPresentStatus(day.afternoon?.is_present)) count++;
     return count;
   };
 
@@ -1390,6 +1177,95 @@ const AttendanceAnalyticsCards = ({
     ],
   );
 
+  // ── School Days Overview (Term vs Week breakdown) ────────────
+  // Purely a richer view of data the parent already fetches — no extra
+  // network call needed, so this stays instant/synchronous.
+  const openSchoolDaysModal = useCallback(() => {
+    const fmtPct = (v) => `${Math.min(Math.round(v || 0), 100)}%`;
+    const scopeBlock = (label, open, elapsed, remaining, pct, color) => (
+      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+          {label}
+        </Typography>
+        <Grid container spacing={2} sx={{ mb: 1.5 }}>
+          <Grid size={4}>
+            <Typography variant="caption" color="text.secondary">
+              Days Open
+            </Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {open}
+            </Typography>
+          </Grid>
+          <Grid size={4}>
+            <Typography variant="caption" color="text.secondary">
+              Elapsed
+            </Typography>
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
+              {elapsed}
+            </Typography>
+          </Grid>
+          <Grid size={4}>
+            <Typography variant="caption" color="text.secondary">
+              Remaining
+            </Typography>
+            <Typography variant="h6" fontWeight={700} sx={{ color: 'warning.main' }}>
+              {remaining}
+            </Typography>
+          </Grid>
+        </Grid>
+        <LinearProgress
+          variant="determinate"
+          value={Math.min(Math.round(pct || 0), 100)}
+          sx={{
+            height: 6,
+            borderRadius: 2,
+            bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+            '& .MuiLinearProgress-bar': { bgcolor: color },
+          }}
+        />
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 0.5, display: 'block', textAlign: 'right' }}
+        >
+          {fmtPct(pct)} elapsed
+        </Typography>
+      </Paper>
+    );
+
+    openCardModal(
+      'School Days Overview',
+      <Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          How much of the active week and term have already elapsed, based on the school calendar
+          (holidays excluded).
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            {scopeBlock(
+              'This Week',
+              schoolDaysMetrics?.weekDaysOpen || 0,
+              schoolDaysMetrics?.weekDaysElapsed || 0,
+              schoolDaysMetrics?.weekDaysRemaining || 0,
+              schoolDaysMetrics?.weekElapsedPercentage || 0,
+              theme.palette.info.main,
+            )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            {scopeBlock(
+              'This Term',
+              schoolDaysMetrics?.termDaysOpen || 0,
+              schoolDaysMetrics?.termDaysElapsed || 0,
+              schoolDaysMetrics?.termDaysRemaining || 0,
+              schoolDaysMetrics?.termElapsedPercentage || 0,
+              theme.palette.success.main,
+            )}
+          </Grid>
+        </Grid>
+      </Box>,
+    );
+  }, [schoolDaysMetrics, theme, isDark]);
+
   const handleSendRiskAlerts = async () => {
     // Only send alerts for selected learners
     const selectedIds = riskLearners
@@ -1439,73 +1315,79 @@ const AttendanceAnalyticsCards = ({
         <Grid container spacing={3} sx={{ mb: 2 }}>
           {/* Card 1: DAYS SCHOOL OPEN */}
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <StatCard colorIndex={1}>
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{
-                  color: isDark ? 'rgba(255,255,255,0.72)' : accentColors.success,
-                  textTransform: 'uppercase',
-                }}
-              >
-                DAYS SCHOOL OPEN
-              </Typography>
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                sx={{ my: 0.5, color: isDark ? '#fff' : accentColors.success }}
-              >
-                {Math.min(
-                  Math.round(
-                    schoolDaysMetrics?.scope === 'week'
-                      ? schoolDaysMetrics.weekElapsedPercentage
-                      : schoolDaysMetrics?.termElapsedPercentage || 0,
-                  ),
-                  100,
-                )}
-                %
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={Math.min(
-                  Math.round(
-                    schoolDaysMetrics?.scope === 'week'
-                      ? schoolDaysMetrics.weekElapsedPercentage
-                      : schoolDaysMetrics?.termElapsedPercentage || 0,
-                  ),
-                  100,
-                )}
-                sx={{
-                  my: 1,
-                  height: 5,
-                  borderRadius: 2,
-                  bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: accentColors.success,
-                  },
-                }}
-              />
-              <Stack direction="column" alignItems="flex-start" spacing={0.4}>
+            <Tooltip
+              title="Click to view the term/week school-days breakdown"
+              arrow
+              placement="top"
+            >
+              <StatCard colorIndex={1} clickable onClick={openSchoolDaysModal}>
                 <Typography
                   variant="caption"
-                  sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                  fontWeight={700}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.72)' : accentColors.success,
+                    textTransform: 'uppercase',
+                  }}
                 >
-                  {schoolDaysMetrics?.scope === 'week' ? (
-                    <>
-                      {schoolDaysMetrics.weekDaysElapsed} used ·{' '}
-                      {schoolDaysMetrics.weekDaysRemaining} days left{' '}
-                      {/* {schoolDaysMetrics.weekDaysOpen} (this week) */}
-                    </>
-                  ) : (
-                    <>
-                      {schoolDaysMetrics?.termDaysElapsed || 0} used ·{' '}
-                      {schoolDaysMetrics?.termDaysRemaining || 0} days left{' '}
-                      {/* {schoolDaysMetrics?.termDaysOpen || 0} (school term) */}
-                    </>
-                  )}
+                  DAYS SCHOOL OPEN
                 </Typography>
-              </Stack>
-            </StatCard>
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  sx={{ my: 0.5, color: isDark ? '#fff' : accentColors.success }}
+                >
+                  {Math.min(
+                    Math.round(
+                      schoolDaysMetrics?.scope === 'week'
+                        ? schoolDaysMetrics.weekElapsedPercentage
+                        : schoolDaysMetrics?.termElapsedPercentage || 0,
+                    ),
+                    100,
+                  )}
+                  %
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(
+                    Math.round(
+                      schoolDaysMetrics?.scope === 'week'
+                        ? schoolDaysMetrics.weekElapsedPercentage
+                        : schoolDaysMetrics?.termElapsedPercentage || 0,
+                    ),
+                    100,
+                  )}
+                  sx={{
+                    my: 1,
+                    height: 5,
+                    borderRadius: 2,
+                    bgcolor: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: accentColors.success,
+                    },
+                  }}
+                />
+                <Stack direction="column" alignItems="flex-start" spacing={0.4}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#6B7280' }}
+                  >
+                    {schoolDaysMetrics?.scope === 'week' ? (
+                      <>
+                        {schoolDaysMetrics.weekDaysElapsed} used ·{' '}
+                        {schoolDaysMetrics.weekDaysRemaining} days left{' '}
+                        {/* {schoolDaysMetrics.weekDaysOpen} (this week) */}
+                      </>
+                    ) : (
+                      <>
+                        {schoolDaysMetrics?.termDaysElapsed || 0} used ·{' '}
+                        {schoolDaysMetrics?.termDaysRemaining || 0} days left{' '}
+                        {/* {schoolDaysMetrics?.termDaysOpen || 0} (school term) */}
+                      </>
+                    )}
+                  </Typography>
+                </Stack>
+              </StatCard>
+            </Tooltip>
           </Grid>
 
           {/* Card 2: WEEK ATTENDANCE RATE */}
@@ -1570,11 +1452,7 @@ const AttendanceAnalyticsCards = ({
           {/* Card 3: TERM ATTENDANCE RATE */}
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <Tooltip title="Click to view term attendance trend" arrow placement="top">
-              <StatCard
-                colorIndex={2}
-                clickable
-                onClick={() => openTermTrend(classArmId)}
-              >
+              <StatCard colorIndex={2} clickable onClick={() => openTermTrend(classArmId)}>
                 <Typography
                   variant="caption"
                   fontWeight={700}
@@ -1606,11 +1484,7 @@ const AttendanceAnalyticsCards = ({
                   }}
                 />
                 <Stack direction="row" alignItems="center" spacing={0.4}>
-                  <Typography
-                    variant="caption"
-                    fontWeight={600}
-                    sx={{ color: accentColors.info }}
-                  >
+                  <Typography variant="caption" fontWeight={600} sx={{ color: accentColors.info }}>
                     {metrics.termTrendText || 'No previous data'}
                   </Typography>
                   {metrics.termRateChange > 0 ? (
@@ -1730,7 +1604,7 @@ const AttendanceAnalyticsCards = ({
                 />
                 <Stack direction="row" alignItems="center" spacing={0.4}>
                   <Typography variant="caption" sx={{ color: accentColors.error }}>
-                    1+ Week Absence
+                    Chronic Absence (Term)
                   </Typography>
                   <WarningIcon sx={{ fontSize: 13, color: accentColors.error }} />
                 </Stack>

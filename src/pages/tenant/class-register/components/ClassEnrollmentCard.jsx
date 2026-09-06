@@ -122,7 +122,7 @@ const ClassEnrollmentCard = ({ enrollmentData = [], onClassClick, loading = fals
               const scheme = schemeMap[index % schemeMap.length];
               const isSenior = cls.class_code?.toUpperCase().startsWith('SS');
               return (
-                <Grid size={{ xs: 6, sm: 2 }} key={cls.class_id || index}>
+                <Grid size={{ xs: 6, sm: 2 }} key={cls.programme_class_id ?? cls.class_id ?? index}>
                   <Tooltip title="Click to view learner breakdown by arm" arrow placement="top">
                     <Box
                       onClick={() => onClassClick(cls)}

@@ -403,14 +403,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           students = [],
           learners_present_count,
           total_learners,
-          attendance_percent,
           comparison_diff,
           comparison_text,
         } = res.data.data;
 
         if (learners_present_count !== undefined) setLearnersPresentCount(learners_present_count);
         if (total_learners !== undefined) setTotalLearnerCount(total_learners);
-        if (attendance_percent !== undefined) setAttendancePercent(attendance_percent);
         if (comparison_diff !== undefined) setComparisonDiff(comparison_diff);
         if (comparison_text !== undefined) setComparisonText(comparison_text);
 
@@ -421,7 +419,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         if (!students || students.length === 0) {
           setLearnersPresentCount(0);
           setTotalLearnerCount(0);
-          setAttendancePercent(0);
           setComparisonDiff(0);
           setComparisonText('');
         }
@@ -596,9 +593,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   };
 
   // ── Summary Stats ─────────────────────────────────────────
+  // learnersPresentCount/totalLearnerCount are last-fetch fallbacks used
+  // only before any learners are loaded — the live gauge/percent below is
+  // recomputed from the in-memory grid instead (see liveAttendanceStats).
   const [learnersPresentCount, setLearnersPresentCount] = useState(0);
   const [totalLearnerCount, setTotalLearnerCount] = useState(0);
-  const [attendancePercent, setAttendancePercent] = useState(0);
   const [comparisonDiff, setComparisonDiff] = useState(0);
   const [comparisonText, setComparisonText] = useState('');
 
@@ -705,9 +704,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     }
   };
 
-  const learnersPresent = learnersPresentCount;
-  const totalLearners = totalLearnerCount || learners.length;
-
   // ── Derive days ────────────────────────────────────────────
   const days = React.useMemo(() => {
     if (weekDates.length > 0) return weekDates;
@@ -722,6 +718,49 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     }
     return DAY_NAMES;
   }, [weekDates, learners, attendanceData]);
+
+  // ── Live summary-card stats ─────────────────────────────────
+  // Recomputed straight from the in-memory marking grid on every render, so
+  // the gauge/counts in the side card update instantly as a teacher taps
+  // radios — previously frozen at whatever the last fetch/submit returned.
+  // Formula mirrors the backend's computeLearnersPresentPercent() exactly:
+  // a student "counts present" for a day if morning OR afternoon is
+  // present/late; the percent is present-student-days over
+  // (learners × non-holiday school days).
+  const liveAttendanceStats = React.useMemo(() => {
+    const isPresentStatus = (status) => status === 'present' || status === 'late';
+    const schoolDays = days.filter((day) => !holidayDates?.[day]);
+
+    let presentStudentDayCount = 0;
+    let learnersPresentCount = 0;
+    learners.forEach((learner) => {
+      const att = attendanceData[learner.student_registration_id] || {};
+      let hasPresent = false;
+      schoolDays.forEach((day) => {
+        const content = att[day];
+        if (!content || content.__holiday) return;
+        const dayPresent =
+          isPresentStatus(content.morning?.is_present) ||
+          isPresentStatus(content.afternoon?.is_present);
+        if (dayPresent) {
+          presentStudentDayCount++;
+          hasPresent = true;
+        }
+      });
+      if (hasPresent) learnersPresentCount++;
+    });
+
+    const totalPossible = learners.length * schoolDays.length;
+    const percent =
+      totalPossible > 0 ? Math.round((presentStudentDayCount / totalPossible) * 100) : 0;
+
+    return { learnersPresentCount, percent, schoolDaysCount: schoolDays.length };
+  }, [learners, attendanceData, days, holidayDates]);
+
+  const learnersPresent =
+    learners.length > 0 ? liveAttendanceStats.learnersPresentCount : learnersPresentCount;
+  const totalLearners = totalLearnerCount || learners.length;
+  const attendancePercentLive = learners.length > 0 ? liveAttendanceStats.percent : 0;
 
   // ── Period icon/label helper ───────────────────────────────
   const periodLabel = attendanceType === 'morning' ? 'Morning' : 'Afternoon';
@@ -1540,10 +1579,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               LEARNER ATTENDANCE
             </Typography>
 
-            {/* Speedometer/Gauge Chart */}
+            {/* Speedometer/Gauge Chart — live: recomputed from the grid on
+                every mark, not frozen at the last fetch/submit response. */}
             <ReusableGaugeChart
-              key={`gauge-${attendancePercent}-${learnersPresent}`}
-              value={attendancePercent}
+              key={`gauge-${attendancePercentLive}-${learnersPresent}`}
+              value={attendancePercentLive}
               label="Attendance"
               subtitle={`${learnersPresent} present out of ${totalLearners} learners`}
               height={240}
@@ -1565,7 +1605,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   School Days
                 </Typography>
                 <Typography variant="body2" fontWeight={600}>
-                  {days.length}
+                  {liveAttendanceStats.schoolDaysCount}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

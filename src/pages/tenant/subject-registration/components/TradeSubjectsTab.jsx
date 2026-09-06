@@ -124,6 +124,46 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
     }
   };
 
+  const registerAll = (subjectId) => {
+    setLearners((prev) =>
+      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: true } })),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      learners.forEach((l) => {
+        const key = `${l.id}_${subjectId}`;
+        const origState = originalRegistered[l.id]?.[subjectId] ?? false;
+        if (!origState) {
+          next[key] = true;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
+  const unregisterAll = (subjectId) => {
+    setLearners((prev) =>
+      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: false } })),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      learners.forEach((l) => {
+        const key = `${l.id}_${subjectId}`;
+        const origState = originalRegistered[l.id]?.[subjectId] ?? false;
+        if (origState) {
+          next[key] = false;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
   return (
     <Box>
       {error && (
@@ -139,7 +179,13 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       ) : subjects.length === 0 ? (
         <Alert severity="info" sx={{ justifyContent: 'center' }}>No trade subjects have been created for this class.</Alert>
       ) : (
-        <SubjectMatrixTable subjects={subjects} learners={learners} onToggle={toggleRegistration} />
+        <SubjectMatrixTable
+          subjects={subjects}
+          learners={learners}
+          onToggle={toggleRegistration}
+          onRegisterAll={registerAll}
+          onUnregisterAll={unregisterAll}
+        />
       )}
 
       {pendingCount > 0 && (

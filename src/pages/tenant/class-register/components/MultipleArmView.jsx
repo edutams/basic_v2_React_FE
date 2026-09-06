@@ -47,7 +47,7 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
-const MultipleArmView = () => {
+const MultipleArmView = ({ onEnrollmentChange }) => {
   const notify = useNotification();
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -167,18 +167,25 @@ const MultipleArmView = () => {
       .catch(console.error);
   }, [classLevel, programme]);
 
-  const fetchStudents = useCallback(async () => {
+  // Accepts overrides so a click handler can force an immediate fetch with
+  // values that haven't landed in state yet (setState is async — reading
+  // maPage/search right after calling their setters would still see the
+  // stale, pre-click value).
+  const fetchStudents = useCallback(async (overrides = {}) => {
+    const effectivePage = overrides.page !== undefined ? overrides.page : maPage;
+    const effectiveSearch = overrides.search !== undefined ? overrides.search : search;
+
     if (!session || !term) return;
-    if (!classLevel && !search) return;
+    if (!classLevel && !programme && !effectiveSearch) return;
 
     setLoading(true);
     try {
       const res = await classRegisterApi.getStudentsByClass(classLevel || 'all', null, {
-        page: maPage + 1,
+        page: effectivePage + 1,
         per_page: maRowsPerPage,
         programme_id: programme || null,
         session_term_id: term,
-        search: search || null,
+        search: effectiveSearch || null,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
@@ -193,10 +200,11 @@ const MultipleArmView = () => {
   }, [classLevel, maPage, maRowsPerPage, programme, session, term, search]);
 
   // Enough to actually run a search: session+term are always required, and
-  // then either a class is selected OR there's free-text to search by —
-  // matches fetchStudents' own guard (and SingleArmView's equivalent), so
-  // Search/filter changes never silently do nothing.
-  const canFetchStudents = !!(session && term && (classLevel || search));
+  // then any one of Programme/Class or free-text search — matches
+  // fetchStudents' own guard (and SingleArmView's equivalent), so selecting
+  // just a Programme (with no Class yet) already filters the table instead
+  // of silently doing nothing.
+  const canFetchStudents = !!(session && term && (classLevel || programme || search));
 
   useEffect(() => {
     if (canFetchStudents) {
@@ -211,10 +219,27 @@ const MultipleArmView = () => {
     }
   }, [classLevel, programme]);
 
+  // Always runs, unconditionally, with whatever is in the dropdowns/input
+  // right now — doesn't rely on search/maPage state having changed (they
+  // may not have, e.g. clicking Search again with the same text, or with no
+  // text at all but dropdown filters set), so the button works every time
+  // it's clicked rather than only when React sees a state diff.
   const handleSearch = () => {
     setSearch(searchInput);
     setMaPage(0);
+    fetchStudents({ search: searchInput, page: 0 });
   };
+
+  // Live search: debounce so the table also filters as the user types,
+  // without waiting on a Search click. The button/Enter key still exist for
+  // an immediate, no-wait trigger.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSearch(searchInput);
+      setMaPage(0);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
 
   const handleClearFilters = () => {
     setProgramme('');
@@ -306,9 +331,13 @@ const MultipleArmView = () => {
 
       if (assignments.length > 0) {
         await classRegisterApi.bulkAssignArm({ assignments });
+        notify.success('Arm assignments saved successfully');
+        fetchStudents();
+        if (onEnrollmentChange) onEnrollmentChange();
       }
     } catch (error) {
       console.error('Failed to submit changes:', error);
+      notify.error('Failed to save arm assignments');
     } finally {
       setSaving(false);
     }
@@ -379,7 +408,7 @@ const MultipleArmView = () => {
             <Select value={term} label="Term" onChange={(e) => setTerm(e.target.value)}>
               {terms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>
-                  {t.term_name || t.display_name || t.name || t.id}
+                  {t.term_name}
                 </MenuItem>
               ))}
             </Select>
@@ -395,7 +424,7 @@ const MultipleArmView = () => {
             >
               {programmes.map((p) => (
                 <MenuItem key={p.id} value={p.id}>
-                  {p.programme_name || p.name}
+                  {p.programme_name}
                 </MenuItem>
               ))}
             </Select>
@@ -411,7 +440,7 @@ const MultipleArmView = () => {
             >
               {classes.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
-                  {c.class_name || c.name}
+                  {c.class_name}
                 </MenuItem>
               ))}
             </Select>
@@ -427,14 +456,7 @@ const MultipleArmView = () => {
               size="small"
               placeholder="Search by name, ID, gender..."
               value={searchInput}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchInput(val);
-                if (val === '') {
-                  setSearch('');
-                  setMaPage(0);
-                }
-              }}
+              onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               slotProps={{
                 input: {
@@ -561,7 +583,9 @@ const MultipleArmView = () => {
                       ? `No students match "${search}".`
                       : classLevel
                         ? 'No students found for the selected class.'
-                        : 'Select a class, or search by name/ID, to view students.'}
+                        : programme
+                          ? 'No students found for the selected programme.'
+                          : 'Select a class, or search by name/ID, to view students.'}
                   </Alert>
                 </TableCell>
               </TableRow>

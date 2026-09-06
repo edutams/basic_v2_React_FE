@@ -300,7 +300,14 @@ const ClassRegister = () => {
             }}
           />
         )}
-        {activeTab === 1 && <MultipleArmView />}
+        {activeTab === 1 && (
+          <MultipleArmView
+            onEnrollmentChange={() => {
+              fetchEnrollmentStats();
+              fetchEnrollmentBreakdown();
+            }}
+          />
+        )}
       </ParentCard>
 
       <EnrollmentBreakdownModal

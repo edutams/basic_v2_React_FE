@@ -230,18 +230,25 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       .catch(console.error);
   }, [saClass, saProgramme]);
 
-  const fetchStudents = useCallback(async () => {
+  // Accepts overrides so a click handler can force an immediate fetch with
+  // values that haven't landed in state yet (setState is async — reading
+  // saPage/tableSearch right after calling their setters would still see
+  // the stale, pre-click value).
+  const fetchStudents = useCallback(async (overrides = {}) => {
+    const effectivePage = overrides.page !== undefined ? overrides.page : saPage;
+    const effectiveSearch = overrides.search !== undefined ? overrides.search : tableSearch;
+
     if (!saSession || !saTerm) return;
-    if (!saClass && !tableSearch) return;
+    if (!saClass && !saProgramme && !saArm && !effectiveSearch) return;
 
     setLoadingStudents(true);
     try {
       const res = await classRegisterApi.getStudentsByClass(saClass || 'all', saArm || null, {
-        page: saPage + 1,
+        page: effectivePage + 1,
         per_page: saRowsPerPage,
         programme_id: saProgramme || null,
         session_term_id: saTerm,
-        search: tableSearch || null,
+        search: effectiveSearch || null,
       });
       if (res.data?.status && res.data?.data) {
         setStudents(res.data.data);
@@ -256,10 +263,14 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   }, [saClass, saSession, saTerm, saProgramme, saArm, saPage, saRowsPerPage, tableSearch]);
 
   // Enough to actually run a search: session+term are always required, and
-  // then either a class is selected OR there's free-text to search by —
-  // matches fetchStudents' own guard, so Search never silently does nothing
-  // just because Programme/Class haven't been picked yet.
-  const canFetchStudents = !!(saSession && saTerm && (saClass || tableSearch));
+  // then any one of Programme/Class/Arm or free-text search — matches
+  // fetchStudents' own guard, so selecting just a Programme (with no Class
+  // yet) already filters the table instead of silently doing nothing.
+  const canFetchStudents = !!(
+    saSession &&
+    saTerm &&
+    (saProgramme || saClass || saArm || tableSearch)
+  );
 
   useEffect(() => {
     if (canFetchStudents) {
@@ -356,10 +367,27 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     fetchStudents();
   };
 
+  // Always runs, unconditionally, with whatever is in the dropdowns/input
+  // right now — doesn't rely on tableSearch/saPage state having changed
+  // (they may not have, e.g. clicking Search again with the same text, or
+  // with no text at all but dropdown filters set), so the button works
+  // every time it's clicked rather than only when React sees a state diff.
   const handleSearch = () => {
     setTableSearch(searchInput);
     setSaPage(0);
+    fetchStudents({ search: searchInput, page: 0 });
   };
+
+  // Live search: debounce so the table also filters as the user types,
+  // without waiting on a Search click. The button/Enter key still exist for
+  // an immediate, no-wait trigger.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setTableSearch(searchInput);
+      setSaPage(0);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
 
   const handleClearFilters = () => {
     setSaProgramme('');
@@ -413,6 +441,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         ),
       );
       setStatusModalOpen(false);
+      if (onEnrollmentChange) onEnrollmentChange();
     } catch {
       notify.error('Failed to update student status');
     } finally {
@@ -565,14 +594,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
               size="small"
               placeholder="Search students by name, ID, gender, class..."
               value={searchInput}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchInput(val);
-                if (val === '') {
-                  setTableSearch('');
-                  setSaPage(0);
-                }
-              }}
+              onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
             <Button
@@ -723,7 +745,9 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                         ? 'No students found for the selected class/arm.'
                         : saClass
                           ? 'No students found for the selected class.'
-                          : 'Select a class, or search by name/ID, to view students.'}
+                          : saProgramme
+                            ? 'No students found for the selected programme.'
+                            : 'Select a class, or search by name/ID, to view students.'}
                   </Alert>
                 </TableCell>
               </TableRow>
@@ -995,7 +1019,10 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         open={changeClassModalOpen}
         onClose={() => setChangeClassModalOpen(false)}
         student={selectedRow}
-        onSuccess={fetchStudents}
+        onSuccess={() => {
+          fetchStudents();
+          if (onEnrollmentChange) onEnrollmentChange();
+        }}
       />
 
       <AddToClassModal

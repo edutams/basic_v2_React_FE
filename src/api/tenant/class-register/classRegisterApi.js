@@ -8,47 +8,44 @@ const classRegisterApi = {
 
   // ── Programmes / Classes / Arms ──────────────────────────
   getProgrammes: () => tenantApi.get('/programmes'),
-  getClassesByProgramme: (programmeId) =>
-    tenantApi.get(`/classes/by-programme/${programmeId}`),
+  getClassesByProgramme: (programmeId) => tenantApi.get(`/classes/by-programme/${programmeId}`),
   getArmsByClass: (classId, params = {}) =>
     tenantApi.get(`/class-arms/by-class/${classId}`, { params }),
 
   // ── Student Data ─────────────────────────────────────────
   getStudents: (params = {}) => tenantApi.get('/students/by-class/all', { params }),
   getStudentDetail: (id) => tenantApi.get(`/students/${id}`),
-  getStudentsByClassArm: (params = {}) =>
-    tenantApi.get('/students/by-class-arm', { params }),
+  getStudentsByClassArm: (params = {}) => tenantApi.get('/students/by-class-arm', { params }),
   getStudentsByClass: (classId, armId, params = {}) =>
     tenantApi.get(`/students/by-class/${classId}`, { params: { ...params, arm_id: armId } }),
   getStudentsByClassMultiArm: (classId, params = {}) =>
     tenantApi.get(`/students/by-class/${classId}`, { params }),
 
   // ── Enrollment / Stats ───────────────────────────────────
-  getEnrollmentStats: (params = {}) =>
-    tenantApi.get('/enrollment/stats', { params }),
+  getEnrollmentStats: (params = {}) => tenantApi.get('/enrollment/stats', { params }),
   getClassEnrollmentBreakdown: (params = {}) =>
     tenantApi.get('/enrollment/class-breakdown', { params }),
 
   // ── Registration / Arm Assignment ────────────────────────
-  assignArm: (studentId, data) =>
-    tenantApi.patch(`/students/${studentId}/assign-arm`, data),
+  assignArm: (studentId, data) => tenantApi.patch(`/students/${studentId}/assign-arm`, data),
   unassignArm: (studentId, armId) =>
     tenantApi.patch(`/students/${studentId}/unassign-arm`, { arm_id: armId }),
-  bulkAssignArm: (data) =>
-    tenantApi.post('/students/bulk-assign-arm', data),
+  bulkAssignArm: (data) => tenantApi.post('/students/bulk-assign-arm', data),
 
   changeStudentClass: (studentId, data) =>
     tenantApi.put(`/students/${studentId}/change-class`, data),
 
   updateStudentStatus: (studentId, status) =>
     tenantApi.patch(`/students/${studentId}/status`, { status }),
-  removeFromClass: (studentId) =>
-    tenantApi.patch(`/students/${studentId}/remove-from-class`),
+  removeFromClass: (studentId) => tenantApi.patch(`/students/${studentId}/remove-from-class`),
 
-  getUnassignedStudents: (params = {}) =>
-    tenantApi.get('/students/unassigned', { params }),
-  addStudentsToClass: (data) =>
-    tenantApi.post('/students/add-to-class', data),
+  getUnassignedStudents: (params = {}) => tenantApi.get('/students/unassigned', { params }),
+  addStudentsToClass: (data) => tenantApi.post('/students/add-to-class', data),
+
+  // Bulk-register students for a (new) session term. `data` may include
+  // `session_term_id` (defaults to the active term) and `class_arm_id`
+  // (omit to register school-wide).
+  bulkRegisterForTerm: (data = {}) => tenantApi.post('/students/register-for-term', data),
 
   exportStudentListPdf: (params = {}) =>
     tenantApi.get('/students/export-pdf', { params, responseType: 'blob' }),

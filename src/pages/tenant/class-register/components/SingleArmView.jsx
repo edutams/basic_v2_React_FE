@@ -146,8 +146,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       activeSessionTermRef.current = activeSessionTerm;
 
       const defaultSession =
-        (activeSessionTerm &&
-          sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+        (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
         sessionsData[0];
       if (defaultSession) setSaSession(defaultSession.id);
     } catch (error) {
@@ -256,8 +255,14 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     }
   }, [saClass, saSession, saTerm, saProgramme, saArm, saPage, saRowsPerPage, tableSearch]);
 
+  // Enough to actually run a search: session+term are always required, and
+  // then either a class is selected OR there's free-text to search by —
+  // matches fetchStudents' own guard, so Search never silently does nothing
+  // just because Programme/Class haven't been picked yet.
+  const canFetchStudents = !!(saSession && saTerm && (saClass || tableSearch));
+
   useEffect(() => {
-    if (saSession && saTerm && saProgramme && saClass) {
+    if (canFetchStudents) {
       if (saPage === 0) {
         fetchStudents();
       } else {
@@ -267,7 +272,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   }, [saSession, saTerm, saProgramme, saClass]);
 
   useEffect(() => {
-    if (saSession && saTerm && saProgramme && saClass) {
+    if (canFetchStudents) {
       if (saPage === 0) {
         fetchStudents();
       } else {
@@ -277,7 +282,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
   }, [saArm]);
 
   useEffect(() => {
-    if (saSession && saTerm && saProgramme && saClass) {
+    if (canFetchStudents) {
       fetchStudents();
     }
   }, [saPage, saRowsPerPage, tableSearch]);
@@ -355,6 +360,41 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
     setTableSearch(searchInput);
     setSaPage(0);
   };
+
+  const handleClearFilters = () => {
+    setSaProgramme('');
+    setSaClass('');
+    setSaArm('');
+    setSearchInput('');
+    setTableSearch('');
+    setSaPage(0);
+  };
+
+  const activeFilterChips = [
+    saProgramme && {
+      key: 'programme',
+      label: `Programme: ${programmes.find((p) => p.id === saProgramme)?.programme_name || saProgramme}`,
+      onDelete: () => setSaProgramme(''),
+    },
+    saClass && {
+      key: 'class',
+      label: `Class: ${classes.find((c) => c.id === saClass)?.class_name || saClass}`,
+      onDelete: () => setSaClass(''),
+    },
+    saArm && {
+      key: 'arm',
+      label: `Arm: ${arms.find((a) => a.id === saArm)?.class_arm_names || saArm}`,
+      onDelete: () => setSaArm(''),
+    },
+    tableSearch && {
+      key: 'search',
+      label: `Search: "${tableSearch}"`,
+      onDelete: () => {
+        setSearchInput('');
+        setTableSearch('');
+      },
+    },
+  ].filter(Boolean);
 
   const handleSaveStatus = async () => {
     if (!selectedRow || !selectedStatus) return;
@@ -539,9 +579,19 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
               variant="contained"
               size="small"
               onClick={handleSearch}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
             >
               Search
             </Button>
+            {activeFilterChips.length > 0 && (
+              <Button
+                size="small"
+                onClick={handleClearFilters}
+                sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </Stack>
         </Grid>
 
@@ -597,6 +647,14 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
         </Grid>
       </Grid>
 
+      {activeFilterChips.length > 0 && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }} useFlexGap>
+          {activeFilterChips.map((chip) => (
+            <Chip key={chip.key} label={chip.label} size="small" onDelete={chip.onDelete} />
+          ))}
+        </Stack>
+      )}
+
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 800 }} stickyHeader>
           <TableHead>
@@ -614,7 +672,9 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
             {loadingStudents ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={20} />
+                  </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Skeleton variant="circular" width={38} height={38} />
@@ -624,11 +684,26 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
-                  <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
-                  <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                  <TableCell><Skeleton variant="text" width={120} height={20} /></TableCell>
-                  <TableCell align="right"><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={100} height={20} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={60} height={20} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton
+                      variant="rounded"
+                      width={70}
+                      height={22}
+                      sx={{ borderRadius: '12px' }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={120} height={20} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} />
+                  </TableCell>
                 </TableRow>
               ))
             ) : students.length === 0 ? (
@@ -648,7 +723,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
                         ? 'No students found for the selected class/arm.'
                         : saClass
                           ? 'No students found for the selected class.'
-                          : 'Please select session, term, programme, and class.'}
+                          : 'Select a class, or search by name/ID, to view students.'}
                   </Alert>
                 </TableCell>
               </TableRow>

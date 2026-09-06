@@ -101,8 +101,7 @@ const MultipleArmView = () => {
         activeSessionTermRef.current = activeSessionTerm;
 
         const defaultSession =
-          (activeSessionTerm &&
-            sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
           sessionsData[0];
         if (defaultSession) {
           setSession(defaultSession.id);
@@ -126,7 +125,8 @@ const MultipleArmView = () => {
         const activeSessionTerm = activeSessionTermRef.current;
         const activeTermId =
           activeSessionTerm?.session_id === session ? activeSessionTerm.term_id : null;
-        const activeTerm = (activeTermId && termsData.find((t) => t.id === activeTermId)) || termsData[0];
+        const activeTerm =
+          (activeTermId && termsData.find((t) => t.id === activeTermId)) || termsData[0];
         if (activeTerm) {
           setTerm(activeTerm.id);
         }
@@ -192,23 +192,58 @@ const MultipleArmView = () => {
     }
   }, [classLevel, maPage, maRowsPerPage, programme, session, term, search]);
 
+  // Enough to actually run a search: session+term are always required, and
+  // then either a class is selected OR there's free-text to search by —
+  // matches fetchStudents' own guard (and SingleArmView's equivalent), so
+  // Search/filter changes never silently do nothing.
+  const canFetchStudents = !!(session && term && (classLevel || search));
+
   useEffect(() => {
-    if (classLevel || search) {
+    if (canFetchStudents) {
       fetchStudents();
     }
   }, [maPage, maRowsPerPage, search]);
 
   useEffect(() => {
-    if (classLevel && programme && session && term) {
+    if (canFetchStudents) {
       setMaPage(0);
       fetchStudents();
     }
-  }, [classLevel]);
+  }, [classLevel, programme]);
 
   const handleSearch = () => {
     setSearch(searchInput);
     setMaPage(0);
   };
+
+  const handleClearFilters = () => {
+    setProgramme('');
+    setClassLevel('');
+    setSearchInput('');
+    setSearch('');
+    setMaPage(0);
+  };
+
+  const activeFilterChips = [
+    programme && {
+      key: 'programme',
+      label: `Programme: ${programmes.find((p) => p.id === programme)?.programme_name || programme}`,
+      onDelete: () => setProgramme(''),
+    },
+    classLevel && {
+      key: 'class',
+      label: `Class: ${classes.find((c) => c.id === classLevel)?.class_name || classLevel}`,
+      onDelete: () => setClassLevel(''),
+    },
+    search && {
+      key: 'search',
+      label: `Search: "${search}"`,
+      onDelete: () => {
+        setSearchInput('');
+        setSearch('');
+      },
+    },
+  ].filter(Boolean);
 
   const [armSelections, setArmSelections] = useState({});
 
@@ -419,6 +454,11 @@ const MultipleArmView = () => {
             >
               Search
             </Button>
+            {activeFilterChips.length > 0 && (
+              <Button size="small" onClick={handleClearFilters} sx={{ whiteSpace: 'nowrap' }}>
+                Clear Filters
+              </Button>
+            )}
           </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -465,6 +505,14 @@ const MultipleArmView = () => {
         </Grid>
       </Grid>
 
+      {activeFilterChips.length > 0 && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }} useFlexGap>
+          {activeFilterChips.map((chip) => (
+            <Chip key={chip.key} label={chip.label} size="small" onDelete={chip.onDelete} />
+          ))}
+        </Stack>
+      )}
+
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table sx={{ minWidth: 600 }}>
           <TableHead>
@@ -509,9 +557,11 @@ const MultipleArmView = () => {
                       '& .MuiAlert-icon': { mr: 1.5 },
                     }}
                   >
-                    {classLevel
-                      ? 'No students found.'
-                      : 'Please select a class and click Filter Results.'}
+                    {search
+                      ? `No students match "${search}".`
+                      : classLevel
+                        ? 'No students found for the selected class.'
+                        : 'Select a class, or search by name/ID, to view students.'}
                   </Alert>
                 </TableCell>
               </TableRow>

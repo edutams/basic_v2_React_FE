@@ -10,18 +10,19 @@ import {
   Stack,
   Tabs,
   Tab,
+  Button,
   useTheme,
   Skeleton,
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-} from '@mui/icons-material';
+import { People as PeopleIcon, HowToReg as RegisterIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 import SingleArmView from './components/SingleArmView';
 import MultipleArmView from './components/MultipleArmView';
 import ClassEnrollmentCard from './components/ClassEnrollmentCard';
 import EnrollmentBreakdownModal from './components/EnrollmentBreakdownModal';
+import RegisterForTermModal from './components/RegisterForTermModal';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -128,7 +129,11 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? <Skeleton variant="text" width={35} height={28} /> : maleCount.toLocaleString()}
+              {loading ? (
+                <Skeleton variant="text" width={35} height={28} />
+              ) : (
+                maleCount.toLocaleString()
+              )}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'right' }}>
@@ -148,7 +153,11 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? <Skeleton variant="text" width={35} height={28} sx={{ ml: 'auto' }} /> : femaleCount.toLocaleString()}
+              {loading ? (
+                <Skeleton variant="text" width={35} height={28} sx={{ ml: 'auto' }} />
+              ) : (
+                femaleCount.toLocaleString()
+              )}
             </Typography>
           </Box>
         </Stack>
@@ -158,10 +167,12 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
 };
 
 const ClassRegister = () => {
+  const { can } = usePermissions();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [classFilterData, setClassFilterData] = useState(null);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
@@ -214,7 +225,10 @@ const ClassRegister = () => {
   }, [fetchEnrollmentStats, fetchEnrollmentBreakdown]);
 
   return (
-    <PageContainer title="Class Register" description="Manage class register and student enrollments">
+    <PageContainer
+      title="Class Register"
+      description="Manage class register and student enrollments"
+    >
       <Breadcrumb title="Class Register" items={BCrumb} />
 
       <Grid container spacing={3} sx={{ mb: 2 }}>
@@ -237,7 +251,16 @@ const ClassRegister = () => {
 
       <ParentCard
         title={
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: 1,
+              borderColor: 'divider',
+              width: '100%',
+            }}
+          >
             <Tabs
               value={activeTab}
               onChange={(_, v) => setActiveTab(v)}
@@ -255,6 +278,16 @@ const ClassRegister = () => {
               <Tab label="Single Arm View" />
               <Tab label="Multiple Arm View" />
             </Tabs>
+
+            {can('manage.class_manager.class_register.bulk_register') && (
+              <Button
+                variant="contained"
+                startIcon={<RegisterIcon />}
+                onClick={() => setRegisterModalOpen(true)}
+              >
+                Register for New Term
+              </Button>
+            )}
           </Box>
         }
       >
@@ -273,6 +306,15 @@ const ClassRegister = () => {
       <EnrollmentBreakdownModal
         selectedClass={selectedEnrollmentClass}
         onClose={() => setSelectedEnrollmentClass(null)}
+      />
+
+      <RegisterForTermModal
+        open={registerModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        onSuccess={() => {
+          fetchEnrollmentStats();
+          fetchEnrollmentBreakdown();
+        }}
       />
     </PageContainer>
   );

@@ -39,6 +39,15 @@ export const fetchClassAssignments = async (sessionId, termId) => {
   return response.data;
 };
 
+// Fetch curriculum-setup completeness stats (defaults to the active term
+// when session/term are omitted)
+export const fetchCurriculumSetupStats = async (sessionId = null, termId = null) => {
+  const response = await api.get('/curriculum/setup-stats', {
+    params: sessionId && termId ? { session_id: sessionId, term_id: termId } : {},
+  });
+  return response.data;
+};
+
 // Save class-curriculum assignments
 export const saveClassAssignments = async (sessionId, termId, assignments) => {
   const response = await api.post('/curriculum/class-assignments', {
@@ -126,9 +135,13 @@ export const fetchClassSubjects = async (classId) => {
   return response.data;
 };
 
-// Fetch available subjects to add to a class (from its assigned curriculum)
-export const fetchAvailableSubjectsForClass = async (classId) => {
-  const response = await api.get(`/curriculum/class-subjects/${classId}/available`);
+// Fetch available subjects to add to a class (from its assigned curriculum).
+// programmeId matters when the same class_id is shared across programmes —
+// each programme can carry its own separate curriculum assignment.
+export const fetchAvailableSubjectsForClass = async (classId, programmeId = null) => {
+  const response = await api.get(`/curriculum/class-subjects/${classId}/available`, {
+    params: programmeId ? { programme_id: programmeId } : {},
+  });
   return response.data;
 };
 

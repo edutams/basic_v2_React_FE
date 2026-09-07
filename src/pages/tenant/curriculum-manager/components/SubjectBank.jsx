@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -31,8 +31,16 @@ import {
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconListCheck,
+  IconAlertTriangle,
+  IconBooks,
+  IconFolders,
+} from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
 import {
   fetchSubjects,
   fetchProgrammes,
@@ -44,9 +52,32 @@ import {
   updateSubjectGroup,
   deleteSubjectGroup,
   fetchCurriculums,
+  fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const SubjectBank = () => {
+  // ── Completeness stats (this tab's own header cards) ─────────────────
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   // Internal state
   const [subjects, setSubjects] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -242,6 +273,7 @@ const SubjectBank = () => {
         showSnackbar('Subject created successfully', 'success');
         handleCloseAddSubjectModal();
         fetchSubjectsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -273,6 +305,7 @@ const SubjectBank = () => {
         showSnackbar('Subject updated successfully', 'success');
         handleCloseEditSubjectModal();
         fetchSubjectsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -301,6 +334,7 @@ const SubjectBank = () => {
         showSnackbar('Subject deleted successfully', 'success');
         handleCloseDeleteSubjectModal();
         fetchSubjectsData();
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to delete subject';
@@ -415,6 +449,7 @@ const SubjectBank = () => {
         showSnackbar('Subject group created successfully', 'success');
         handleCloseCreateSubjectGroupModal();
         fetchSubjectGroupsData();
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to create subject group';
@@ -483,6 +518,7 @@ const SubjectBank = () => {
         showSnackbar('Subject group deleted successfully', 'success');
         handleCloseDeleteSubjectGroupModal();
         fetchSubjectGroupsData();
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to delete subject group';
@@ -546,6 +582,55 @@ const SubjectBank = () => {
   }, [subjectSearch]);
   return (
     <>
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconListCheck}
+            count={stats?.total_subjects ?? 0}
+            label="Total Subjects"
+            colorIndex={0}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconBooks}
+            count={stats?.total_curricula ?? 0}
+            label="Active Curricula"
+            colorIndex={1}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconFolders}
+            count={stats?.total_subject_groups ?? 0}
+            label="Subject Groups"
+            colorIndex={2}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconAlertTriangle}
+            count={stats?.subjects_missing_programme_mapping ?? 0}
+            label="Subjects Missing Programme"
+            subtitle={
+              stats?.subjects_missing_programme_mapping > 0
+                ? 'Invisible in this list until fixed'
+                : 'Nothing to fix'
+            }
+            colorIndex={stats?.subjects_missing_programme_mapping > 0 ? 4 : 1}
+            loading={statsLoading}
+            tooltip="A subject with no programme mapping never shows up here — usually from a curriculum import where the matching programme wasn't set up yet."
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+      </Grid>
+
       <Grid container spacing={3} sx={{ mt: 1, mb: 2 }}>
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -553,7 +638,7 @@ const SubjectBank = () => {
               <ParentCard
                 sx={{
                   '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-                  '& .MuiCardContent-root': { pt: 1 },
+                  '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
                 }}
                 title={<Typography variant="h6" sx={{ fontWeight: 600 }}>Curriculum List</Typography>}
               >
@@ -566,7 +651,7 @@ const SubjectBank = () => {
                     width: '100%',
                   }}
                 >
-                  <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
+                  <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
@@ -591,6 +676,7 @@ const SubjectBank = () => {
                             <TableCell data-tour={i === 0 ? CURRICULUM_TOUR_KEYS.SELECT_CURRICULUM_RADIO : undefined}>
                               <Radio
                                 size="small"
+                                sx={{ p: 0.5 }}
                                 checked={selectedCurriculum === item.id}
                                 onChange={() => setSelectedCurriculum(item.id)}
                               />
@@ -598,8 +684,8 @@ const SubjectBank = () => {
                             <TableCell>
                               <Box
                                 sx={{
-                                  px: 2,
-                                  py: 0.5,
+                                  px: 1.5,
+                                  py: 0.25,
                                   bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f5f7fa',
                                   borderRadius: 2,
                                   display: 'inline-block',
@@ -644,7 +730,7 @@ const SubjectBank = () => {
               <ParentCard
                 sx={{
                   '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-                  '& .MuiCardContent-root': { pt: 1 },
+                  '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
                 }}
                 title={
                   <Typography variant="h6" data-tour="subject-bank-groups-panel" sx={{ fontWeight: 600 }}>
@@ -728,6 +814,7 @@ const SubjectBank = () => {
                 >
                   <Table
                     stickyHeader
+                    size="small"
                     sx={{
                       tableLayout: 'auto',
                       minWidth: 650,
@@ -835,7 +922,7 @@ const SubjectBank = () => {
           <ParentCard
             sx={{
               '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-              '& .MuiCardContent-root': { pt: 1 },
+              '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
             }}
             title={
               <Typography variant="h6" data-tour="subject-bank-subjects-panel" sx={{ fontWeight: 600 }}>
@@ -910,7 +997,7 @@ const SubjectBank = () => {
                 width: '100%',
               }}
             >
-              <Table stickyHeader sx={{ tableLayout: 'auto', minWidth: 700, width: '100%' }}>
+              <Table stickyHeader size="small" sx={{ tableLayout: 'auto', minWidth: 700, width: '100%' }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.100' }}>
                     <TableCell sx={{ fontWeight: 700, py: 1.5, width: 50 }}>S/N</TableCell>

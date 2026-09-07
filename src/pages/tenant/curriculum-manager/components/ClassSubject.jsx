@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -34,18 +34,48 @@ import {
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconListCheck,
+  IconSchool,
+  IconStack2,
+  IconChecklist,
+} from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchClassSubjects,
   addOrUpdateClassSubject,
-  fetchSubjects,
-  fetchSubjectsByProgramme,
+  fetchAvailableSubjectsForClass as fetchAvailableSubjectsForClassApi,
+  fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const ClassSubject = () => {
+  // ── Completeness stats (this tab's own header cards) ─────────────────
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   // Internal state
   const [programmesList, setProgrammesList] = useState([]);
   const [loadingProgrammes, setLoadingProgrammes] = useState(false);
@@ -142,18 +172,17 @@ const ClassSubject = () => {
     }
   };
 
+  // Subjects offered for "Add Subject to Class" — sourced from the class's
+  // own assigned curriculum and already excludes subjects already attached
+  // to it (backend: CurriculumController::getAvailableSubjectsForClass).
+  // Previously this fetched by programme (or, with no programme selected,
+  // ALL subjects school-wide) instead, which could offer subjects from the
+  // wrong curriculum and re-offer ones already on the class.
   const fetchAvailableSubjectsForClass = async () => {
+    if (!selectedClass) return;
     setLoadingAvailableSubjects(true);
     try {
-      let response;
-      if (program) {
-        // Fetch subjects by programme if program is selected
-        response = await fetchSubjectsByProgramme(program);
-      } else {
-        // Otherwise fetch all subjects (you might want to adjust this based on your needs)
-        response = await fetchSubjects('');
-      }
-
+      const response = await fetchAvailableSubjectsForClassApi(selectedClass, program);
       if (response.status) {
         setAvailableSubjectsForClass(response.data);
       }
@@ -237,6 +266,7 @@ const ClassSubject = () => {
         showSnackbar('Subject added to class successfully', 'success');
         handleCloseAddSubjectToClassModal();
         fetchClassSubjectsData(selectedClass);
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to add subject to class';
@@ -305,6 +335,7 @@ const ClassSubject = () => {
         showSnackbar('Class subject updated successfully', 'success');
         handleCloseEditClassSubjectModal();
         fetchClassSubjectsData(selectedClass);
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to update class subject';
@@ -406,20 +437,70 @@ const ClassSubject = () => {
     }
   }, [selectedClass]);
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 3,
-        flexDirection: { xs: 'column', md: 'row' },
-        width: '100%',
-      }}
-    >
-      {/* LEFT: Program and Classes */}
+    <>
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconStack2}
+            count={stats?.total_classes ?? 0}
+            label="Total Classes"
+            colorIndex={1}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconSchool}
+            count={`${stats?.classes_with_subjects ?? 0}/${stats?.total_classes ?? 0}`}
+            label="Classes With Subjects"
+            subtitle={
+              stats && stats.total_classes - stats.classes_with_subjects > 0
+                ? `${stats.total_classes - stats.classes_with_subjects} still need subjects`
+                : 'All classes covered'
+            }
+            colorIndex={2}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconChecklist}
+            count={stats?.class_subjects_compulsory ?? 0}
+            label="Compulsory Mappings"
+            colorIndex={0}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconListCheck}
+            count={(stats?.class_subjects_optional ?? 0) + (stats?.class_subjects_trade ?? 0)}
+            label="Elective Mappings"
+            subtitle="Optional + Trade"
+            colorIndex={3}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+      </Grid>
+
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 3,
+          flexDirection: { xs: 'column', md: 'row' },
+          width: '100%',
+        }}
+      >
+        {/* LEFT: Program and Classes */}
       <Box sx={{ flex: { md: 4 }, width: '100%' }}>
         <ParentCard
           sx={{
             '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-            '& .MuiCardContent-root': { pt: 1 },
+            '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
           }}
           title={
             <Select
@@ -464,15 +545,15 @@ const ClassSubject = () => {
                         display: 'flex',
                         alignItems: 'center',
                         px: 1,
-                        py: 0.8,
+                        py: 0.25,
                         borderRadius: 2,
                         bgcolor: selectedClass === cls.id ? '#eef2ff' : 'transparent',
                       }}
                     >
                       <FormControlLabel
                         value={cls.id}
-                        control={<Radio size="small" />}
-                        label={cls.class_name}
+                        control={<Radio size="small" sx={{ p: 0.5 }} />}
+                        label={cls.class_code || cls.class_name}
                         sx={{ width: '100%' }}
                       />
                     </Box>
@@ -497,7 +578,7 @@ const ClassSubject = () => {
         <ParentCard
           sx={{
             '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-            '& .MuiCardContent-root': { pt: 1 },
+            '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
           }}
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -512,7 +593,7 @@ const ClassSubject = () => {
         >
           <Paper>
             <TableContainer sx={{ maxWidth: '100%', overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 700 }} stickyHeader>
+              <Table sx={{ minWidth: 700 }} stickyHeader size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
@@ -869,7 +950,8 @@ const ClassSubject = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+      </Box>
+    </>
   );
 };
 

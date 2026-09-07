@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
+  Grid,
   Typography,
   Button,
   Table,
@@ -31,8 +32,16 @@ import {
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconBooks,
+  IconSchool,
+  IconStack2,
+  IconAlertCircle,
+} from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
 import {
   fetchCurriculums,
   createCurriculum,
@@ -45,16 +54,45 @@ import {
   fetchAgentCurriculums,
   fetchCurriculumSubjects,
   importSelectedCurriculums,
+  fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
-const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
+const SubjectBox = ({
+  curriculum,
+  subjects,
+  selectedSubjectIds = [],
+  onToggleSubject,
+  onToggleAll,
+  onViewSchemes,
+}) => {
+  const allSelected = subjects.length > 0 && selectedSubjectIds.length === subjects.length;
+  const someSelected = selectedSubjectIds.length > 0 && !allSelected;
+
   return (
     <Paper sx={{ mb: 2, p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="subtitle2" fontWeight="bold">
           {curriculum.curriculum_name}
         </Typography>
+        {subjects.length > 0 && (
+          <FormControlLabel
+            sx={{ mr: 0 }}
+            control={
+              <Checkbox
+                size="small"
+                checked={allSelected}
+                indeterminate={someSelected}
+                onChange={(e) => onToggleAll(curriculum.id, e.target.checked)}
+              />
+            }
+            label={
+              <Typography variant="caption" color="text.secondary">
+                {selectedSubjectIds.length}/{subjects.length} selected
+              </Typography>
+            }
+          />
+        )}
       </Box>
       <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
         {subjects.length === 0 ? (
@@ -84,11 +122,23 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                   borderRadius: 1,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {subject.subject_name}
-                </Typography>
+                <FormControlLabel
+                  sx={{ flex: 1, minWidth: 0, mr: 1 }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={selectedSubjectIds.includes(subject.id)}
+                      onChange={(e) => onToggleSubject(curriculum.id, subject.id, e.target.checked)}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                      {subject.subject_name}
+                    </Typography>
+                  }
+                />
 
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
                   <Chip
                     label={`${subject.schemes ? Object.keys(subject.schemes).length : 0} Schemes`}
                     size="small"
@@ -113,6 +163,28 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
 };
 
 const CurriculumSetup = () => {
+  // ── Completeness stats (this tab's own header cards) ─────────────────
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   // Internal state
   const [curriculums, setCurriculums] = useState([]);
   const [loadingCurriculums, setLoadingCurriculums] = useState(false);
@@ -139,10 +211,16 @@ const CurriculumSetup = () => {
   const [agentCurriculums, setAgentCurriculums] = useState([]);
   const [selectedCurriculums, setSelectedCurriculums] = useState([]);
   const [curriculumSubjects, setCurriculumSubjects] = useState({});
+  // Which subjects within each selected curriculum are actually staged for
+  // import — { [curriculumId]: number[] }. Defaults to "all" the moment a
+  // curriculum's subjects finish loading (the convenient default), while
+  // still letting the user narrow it down before confirming.
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState({});
   const [loadingAgentCurriculums, setLoadingAgentCurriculums] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [openImportConfirmModal, setOpenImportConfirmModal] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [selectedCurriculum, setSelectedCurriculum] = useState(null);
   const [viewSchemesSubject, setViewSchemesSubject] = useState(null);
   const [curriculumAnchorEl, setCurriculumAnchorEl] = useState(null);
@@ -283,6 +361,10 @@ const CurriculumSetup = () => {
     }
   };
 
+  // One row per class — a curriculum is shared by every programme a class
+  // belongs to (e.g. "Senior Secondary 1" under Science/Humanity/Business/
+  // Technology all follow the same curriculum), so matching by class_id
+  // alone is correct here.
   const handleClassCurriculumChange = (classId, curriculumId) => {
     const updated = classData.map((cls) =>
       cls.id === classId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
@@ -313,6 +395,7 @@ const CurriculumSetup = () => {
       const response = await saveClassAssignments(selectedSession, selectedTerm, assignments);
       if (response.status) {
         showSnackbar('Assignments saved successfully', 'success');
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to save assignments';
@@ -353,6 +436,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum created successfully', 'success');
         handleCloseCreateModal();
         fetchCurriculumsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -384,6 +468,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum updated successfully', 'success');
         handleCloseEditModal();
         fetchCurriculumsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -412,6 +497,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum deleted successfully', 'success');
         handleCloseDeleteModal();
         fetchCurriculumsData();
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to delete curriculum';
@@ -433,6 +519,10 @@ const CurriculumSetup = () => {
 
   const handleOpenImportModal = () => {
     setOpenImportModal(true);
+    setSelectedCurriculums([]);
+    setCurriculumSubjects({});
+    setSelectedSubjectIds({});
+    setImportResult(null);
     loadAgentCurriculums();
   };
 
@@ -477,10 +567,11 @@ const CurriculumSetup = () => {
           ...prev,
           [curriculumId]: response.data,
         }));
-        // Initialize selected subjects for this curriculum
-        setSelectedSubjects((prev) => ({
+        // Default to "all subjects selected" — the most convenient scope —
+        // while still letting the user uncheck individual ones below.
+        setSelectedSubjectIds((prev) => ({
           ...prev,
-          [curriculumId]: [],
+          [curriculumId]: response.data.map((s) => s.id),
         }));
       }
     } catch (error) {
@@ -488,6 +579,26 @@ const CurriculumSetup = () => {
     } finally {
       setLoadingSubjects(false);
     }
+  };
+
+  const handleToggleSubject = (curriculumId, subjectId, checked) => {
+    setSelectedSubjectIds((prev) => {
+      const current = prev[curriculumId] || [];
+      return {
+        ...prev,
+        [curriculumId]: checked
+          ? [...current, subjectId]
+          : current.filter((id) => id !== subjectId),
+      };
+    });
+  };
+
+  const handleToggleAllSubjects = (curriculumId, checked) => {
+    const allIds = (curriculumSubjects[curriculumId] || []).map((s) => s.id);
+    setSelectedSubjectIds((prev) => ({
+      ...prev,
+      [curriculumId]: checked ? allIds : [],
+    }));
   };
 
   const handleCurriculumSelect = (curriculumId, checked) => {
@@ -534,7 +645,7 @@ const CurriculumSetup = () => {
       return;
     }
 
-    // Show confirmation dialog
+    setImportResult(null);
     setOpenImportConfirmModal(true);
   };
 
@@ -542,18 +653,20 @@ const CurriculumSetup = () => {
     setLoadingImport(true);
     const importData = selectedCurriculums.map((curriculumId) => ({
       curriculum_id: curriculumId,
-      subject_ids: (curriculumSubjects[curriculumId] || []).map((s) => s.id),
+      subject_ids: selectedSubjectIds[curriculumId] || [],
     }));
 
     try {
       const response = await importSelectedCurriculums(importData);
       if (response.status) {
-        showSnackbar('Curriculums imported successfully', 'success');
-        setOpenImportConfirmModal(false);
-        handleCloseImportModal();
+        // Show the real breakdown instead of a generic toast — nothing is
+        // ever overwritten by this import (existing curriculum/subjects are
+        // left untouched), so "already present" isn't an error, just a
+        // no-op worth being honest about.
+        setImportResult(response.data);
         fetchCurriculumsData();
+        fetchStats();
       } else {
-        // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to import curriculums';
         showSnackbar(errorMessage, 'error');
       }
@@ -571,6 +684,11 @@ const CurriculumSetup = () => {
     }
   };
 
+  const handleDoneImport = () => {
+    setOpenImportConfirmModal(false);
+    handleCloseImportModal();
+  };
+
   // Effects
   useEffect(() => {
     fetchCurriculumsData();
@@ -585,6 +703,58 @@ const CurriculumSetup = () => {
   }, [selectedSession, selectedTerm]);
   return (
     <>
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconBooks}
+            count={stats?.total_curricula ?? 0}
+            label="Active Curricula"
+            colorIndex={1}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconStack2}
+            count={stats?.total_classes ?? 0}
+            label="Total Classes"
+            colorIndex={0}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconSchool}
+            count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
+            label="Classes With Curriculum"
+            subtitle={
+              stats?.classes_without_curriculum > 0
+                ? `${stats.classes_without_curriculum} still need one`
+                : 'All classes covered'
+            }
+            colorIndex={2}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconAlertCircle}
+            count={stats?.curricula_never_assigned ?? 0}
+            label="Curricula Never Assigned"
+            subtitle={
+              stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
+            }
+            colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
+            loading={statsLoading}
+            tooltip="A curriculum that has never been assigned to a single class in any term — likely worth reviewing or removing."
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+      </Grid>
+
       <Box
         sx={{
           display: 'flex',
@@ -601,7 +771,7 @@ const CurriculumSetup = () => {
           <ParentCard
             sx={{
               '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-              '& .MuiCardContent-root': { pt: 1 },
+              '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
             }}
             title={
               <Box
@@ -635,21 +805,15 @@ const CurriculumSetup = () => {
           >
             <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
-                <Table stickyHeader sx={{ tableLayout: 'fixed', minWidth: 400 }}>
+                <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
+                      <TableCell sx={{ fontWeight: 700, width: '10%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '37%', py: 1.5 }}>
-                        Curriculum Name
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
-                        Imported
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '37%' }}>Curriculum Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%' }}>Imported</TableCell>
                       <TableCell
                         data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER}
                         align="center"
@@ -663,11 +827,36 @@ const CurriculumSetup = () => {
                     {loadingCurriculums ? (
                       Array.from({ length: 4 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                          <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
-                          <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                          <TableCell><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={140} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rounded"
+                              width={60}
+                              height={22}
+                              sx={{ borderRadius: '12px' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rounded"
+                              width={50}
+                              height={22}
+                              sx={{ borderRadius: '12px' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Skeleton
+                              variant="circular"
+                              width={28}
+                              height={28}
+                              sx={{ mx: 'auto' }}
+                            />
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : curriculums.length > 0 ? (
@@ -776,7 +965,7 @@ const CurriculumSetup = () => {
           <ParentCard
             sx={{
               '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-              '& .MuiCardContent-root': { pt: 1 },
+              '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
             }}
             title={
               <Box
@@ -838,27 +1027,38 @@ const CurriculumSetup = () => {
           >
             <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
-                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
+                <Table
+                  stickyHeader
+                  size="small"
+                  sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}
+                >
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
+                      <TableCell sx={{ fontWeight: 700, width: '5%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '40%', py: 1.5 }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '50%', py: 1.5 }}>
-                        Curriculum Name
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '40%' }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '50%' }}>Curriculum Name</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {loadingAssignments ? (
                       Array.from({ length: 4 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                          <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
-                          <TableCell><Skeleton variant="rectangular" width={140} height={32} sx={{ borderRadius: 1 }} /></TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={100} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rectangular"
+                              width={140}
+                              height={32}
+                              sx={{ borderRadius: 1 }}
+                            />
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : classData.length > 0 ? (
@@ -868,8 +1068,8 @@ const CurriculumSetup = () => {
                           <TableCell>
                             <Box
                               sx={{
-                                px: 2,
-                                py: 0.5,
+                                px: 1.25,
+                                py: 0.25,
                                 bgcolor: (theme) =>
                                   theme.palette.mode === 'dark'
                                     ? 'rgba(255, 255, 255, 0.05)'
@@ -878,7 +1078,17 @@ const CurriculumSetup = () => {
                                 display: 'inline-block',
                               }}
                             >
-                              {item.class_name}
+                              {item.class_code || item.class_name}
+                              {item.programme_codes?.length > 0 && (
+                                <Typography
+                                  component="span"
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ ml: 0.5 }}
+                                >
+                                  ({item.programme_codes.join(', ')})
+                                </Typography>
+                              )}
                             </Box>
                           </TableCell>
                           <TableCell>
@@ -1079,6 +1289,12 @@ const CurriculumSetup = () => {
         <DialogTitle>Import Curriculum</DialogTitle>
 
         <DialogContent sx={{ p: { xs: 1, md: 2 } }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Copies a ready-made curriculum — its subjects, programme mapping, and scheme of work —
+            from the shared library into your school, so you don't have to build it from scratch.
+            Pick one or more curricula on the left, choose which subjects to bring in on the right,
+            then confirm.
+          </Alert>
           <Box
             sx={{
               display: 'grid',
@@ -1256,6 +1472,9 @@ const CurriculumSetup = () => {
                           key={curriculumId}
                           curriculum={curriculum}
                           subjects={subjects}
+                          selectedSubjectIds={selectedSubjectIds[curriculumId] || []}
+                          onToggleSubject={handleToggleSubject}
+                          onToggleAll={handleToggleAllSubjects}
                           onViewSchemes={handleViewSchemes}
                         />
                       );
@@ -1296,48 +1515,108 @@ const CurriculumSetup = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Confirm Import</DialogTitle>
+        <DialogTitle>{importResult ? 'Import Complete' : 'Confirm Import'}</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to import the selected curriculum(s) and subject(s)?
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              This action will import:
-            </Typography>
-            <Box sx={{ ml: 2 }}>
-              {selectedCurriculums.map((curriculumId) => {
-                const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
-                const subjectCount = (curriculumSubjects[curriculumId] || []).length;
-                return (
-                  <Box key={curriculumId} sx={{ mb: 1 }}>
-                    <Typography variant="body2" fontWeight="bold">
-                      • {curriculum?.curriculum_name}
+          {importResult ? (
+            <Box>
+              <Alert
+                severity={importResult.subjects_skipped_no_programme > 0 ? 'warning' : 'success'}
+                sx={{ mb: 2 }}
+              >
+                {importResult.curriculums_imported} curriculum(s) and{' '}
+                {importResult.subjects_imported} subject(s) imported.
+              </Alert>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Curricula already present
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {importResult.curriculums_already_present}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Subjects already present
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {importResult.subjects_already_present}
+                  </Typography>
+                </Box>
+                {importResult.subjects_skipped_no_programme > 0 && (
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography variant="caption" color="warning.main">
+                      {importResult.subjects_skipped_no_programme} subject(s) skipped — no matching
+                      programme found for them in this school yet.
                     </Typography>
-                    {subjectCount > 0 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                        {subjectCount} subject(s) included
-                      </Typography>
-                    )}
                   </Box>
-                );
-              })}
+                )}
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                Nothing already set up locally was changed — "already present" items were left
+                exactly as they are.
+              </Typography>
             </Box>
-          </Box>
+          ) : (
+            <>
+              <Typography>
+                Are you sure you want to import the selected curriculum(s) and subject(s)?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Safe to run again later: anything already imported (or customized since) is left
+                untouched — only what's genuinely missing gets created.
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  This action will import:
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  {selectedCurriculums.map((curriculumId) => {
+                    const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
+                    const subjectCount = (selectedSubjectIds[curriculumId] || []).length;
+                    return (
+                      <Box key={curriculumId} sx={{ mb: 1 }}>
+                        <Typography variant="body2" fontWeight="bold">
+                          • {curriculum?.curriculum_name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                          {subjectCount} subject(s) selected
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setOpenImportConfirmModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            size="small"
-            onClick={handleConfirmImport}
-            color="primary"
-            disabled={loadingImport}
-            startIcon={loadingImport ? <CircularProgress /> : null}
-          >
-            {loadingImport ? 'Importing...' : 'Confirm Import'}
-          </Button>
+          {importResult ? (
+            <Button variant="contained" size="small" onClick={handleDoneImport}>
+              Done
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => setOpenImportConfirmModal(false)}
+                disabled={loadingImport}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleConfirmImport}
+                color="primary"
+                disabled={loadingImport}
+                startIcon={loadingImport ? <CircularProgress size={16} color="inherit" /> : null}
+              >
+                {loadingImport ? 'Importing...' : 'Confirm Import'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 

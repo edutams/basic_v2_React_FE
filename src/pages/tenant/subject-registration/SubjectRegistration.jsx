@@ -31,6 +31,7 @@ import {
   CheckCircle as CompulsoryIcon,
   Stars as OptionalIcon,
   Build as TradeIcon,
+  LibraryAddCheck as CarryForwardIcon,
 } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
@@ -41,10 +42,12 @@ import {
   fetchClassArmsByClass,
   fetchActiveSessionTerm,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 import GeneralSubjectsTab from './components/GeneralSubjectsTab';
 import OptionalSubjectsTab from './components/OptionalSubjectsTab';
 import TradeSubjectsTab from './components/TradeSubjectsTab';
+import CarryForwardSubjectsModal from './components/CarryForwardSubjectsModal';
 import AnalyticsModal from '@/pages/tenant/attendance/components/AnalyticsModal';
 
 const BCrumb = [
@@ -143,8 +146,10 @@ const AnalyticsStatCard = ({
 // ── Main Page ───────────────────────────────────────────────────
 const SubjectRegistration = () => {
   const theme = useTheme();
+  const { can } = usePermissions();
 
   const [activeTab, setActiveTab] = useState(0);
+  const [carryForwardModalOpen, setCarryForwardModalOpen] = useState(false);
 
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -444,6 +449,18 @@ const SubjectRegistration = () => {
     <PageContainer title="Subject Registration" description="Manage learner subject registration">
       <Breadcrumb title="Subject Registration" items={BCrumb} />
 
+      {can('manage.class_manager.subject_registrar.bulk_register') && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<CarryForwardIcon />}
+            onClick={() => setCarryForwardModalOpen(true)}
+          >
+            Carry Forward to New Term
+          </Button>
+        </Box>
+      )}
+
       {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -639,6 +656,12 @@ const SubjectRegistration = () => {
         title={analyticsModal.title}
         content={analyticsModal.content}
         loading={analyticsModal.loading}
+      />
+
+      <CarryForwardSubjectsModal
+        open={carryForwardModalOpen}
+        onClose={() => setCarryForwardModalOpen(false)}
+        onSuccess={fetchStats}
       />
     </PageContainer>
   );

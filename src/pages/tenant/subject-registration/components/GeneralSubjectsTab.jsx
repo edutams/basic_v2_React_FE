@@ -29,6 +29,7 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
           programme_id: programme || undefined,
         }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
+          programme_id: programme || undefined,
           session_id: session || undefined,
           term_id: termId || undefined,
         }),
@@ -113,7 +114,7 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes);
+      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
       setPendingChanges({});
       // Update original snapshot to match current state after save
       const orig = {};

@@ -367,7 +367,7 @@ const CreateAdmissionBatch = () => {
       <Grid container spacing={3} alignItems="flex-start">
         {/* ── Left sidebar: settings ── */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ borderRadius: 2, p: 3 }}>
+          <Paper sx={{ borderRadius: 2, p: 1.5 }}>
             <Stack spacing={3}>
               {/* Batch Name */}
               <Box>

@@ -709,7 +709,13 @@ const AdmissionSetup = () => {
       <TabPanel value={tabValue} index={0}>
         <Grid container spacing={3} alignItems="flex-start">
           <Grid size={{ xs: 12, md: 4 }}>
-            <ParentCard title="Manage Admissions">
+            <ParentCard
+              title="Manage Admissions"
+              sx={{
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+                '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+              }}
+            >
               {loading ? (
                 <Box display="flex" justifyContent="center" py={4}>
                   <CircularProgress size={28} />
@@ -830,6 +836,10 @@ const AdmissionSetup = () => {
                   </Button>
                 </Box>
               }
+              sx={{
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+                '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+              }}
             >
               {!selectedSessionTermId ? (
                 <Alert severity="info">Select a session term on the left to manage batches.</Alert>
@@ -966,8 +976,8 @@ const AdmissionSetup = () => {
             <ParentCard
               title="Admission Code Format Configurator"
               sx={{
-                '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-                '& .MuiCardContent-root': { pt: 1 },
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+                '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
               }}
             >
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -1016,7 +1026,7 @@ const AdmissionSetup = () => {
                         },
                       }}
                     >
-                      <CardContent sx={{ p: 2.5 }}>
+                      <CardContent sx={{ p: 1.5 }}>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                           <Stack direction="row" spacing={1} alignItems="center">
                             <Typography variant="subtitle1" fontWeight={700}>
@@ -1280,7 +1290,7 @@ const AdmissionSetup = () => {
                         boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
                       }}
                     >
-                      <CardContent sx={{ p: 2.5, flexGrow: 1 }}>
+                      <CardContent sx={{ p: 1.5, flexGrow: 1 }}>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
                           <Stack direction="row" spacing={1} alignItems="center">
                             <Typography variant="subtitle1" fontWeight={700}>

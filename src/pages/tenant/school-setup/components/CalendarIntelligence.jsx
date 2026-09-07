@@ -15,7 +15,7 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import { IconCalendarStats, IconCalendarEvent, IconReceipt2, IconX } from '@tabler/icons-react';
+import { IconCalendarStats, IconCalendarEvent, IconCurrencyNaira, IconX } from '@tabler/icons-react';
 
 // Same "hero stat card" visual language as HolidaySection.jsx, kept local to
 // this component since neither file exports a shared palette utility.
@@ -144,14 +144,23 @@ const tierChipColor = (tier) =>
 const subscriptionStatusChipColor = (status) =>
   ({ active: 'success', pending: 'warning', expired: 'error' })[status] || 'default';
 
-// "N active / M not" breakdown for the Sessions Subscribed card's footer —
-// derived from the same list the modal already shows, no extra fetch.
-const subscribedSessionsBreakdown = (sessions) => {
-  if (!sessions?.length) return null;
-  const activeCount = sessions.filter((s) => s.statuses.includes('active')).length;
-  if (activeCount === sessions.length) return `All ${activeCount} currently active`;
-  if (activeCount === 0) return `${sessions.length} session${sessions.length === 1 ? '' : 's'}, none active`;
-  return `${activeCount} of ${sessions.length} currently active`;
+// "N of M active" breakdown for the Sessions Subscribed card's footer —
+// counted at the *term* level, not the session level. A session-level count
+// ("statuses.includes('active')") would call a session "active" the moment
+// any one of its terms is, which reads as "all set" even while another term
+// in that same session is still just pending payment — misleading. Derived
+// from the same list the modal already shows, no extra fetch.
+const subscribedTermsBreakdown = (sessions) => {
+  const allTerms = (sessions ?? []).flatMap((s) => s.terms ?? []);
+  if (allTerms.length === 0) return null;
+  const activeCount = allTerms.filter((t) => t.status === 'active').length;
+  if (activeCount === allTerms.length) {
+    return `All ${activeCount} term${activeCount === 1 ? '' : 's'} active`;
+  }
+  if (activeCount === 0) {
+    return `${allTerms.length} term${allTerms.length === 1 ? '' : 's'} subscribed, none active yet`;
+  }
+  return `${activeCount} of ${allTerms.length} terms active`;
 };
 
 // Local-safe "YYYY-MM-DD" parsing — new Date('2026-01-30') parses as UTC
@@ -207,22 +216,32 @@ const SessionsSubscribedModal = ({ overview }) => {
 
   return (
     <Stack spacing={1.5}>
-      {sessions.map((s) => (
-        <Paper key={s.session_id} variant="outlined" sx={{ p: 1.5, borderRadius: '10px' }}>
-          <Typography fontWeight={700}>{s.session_name}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            {s.terms_subscribed} term{s.terms_subscribed === 1 ? '' : 's'} subscribed
-          </Typography>
-          <Stack spacing={0.75}>
-            {(s.terms ?? []).map((t, i) => (
-              <Stack key={`${t.term_name}-${i}`} direction="row" alignItems="center" justifyContent="space-between">
-                <Typography variant="body2">{t.term_name || 'Unknown term'}</Typography>
-                <Chip size="small" label={t.status} color={subscriptionStatusChipColor(t.status)} />
-              </Stack>
-            ))}
-          </Stack>
-        </Paper>
-      ))}
+      {sessions.map((s) => {
+        const terms = s.terms ?? [];
+        const activeCount = terms.filter((t) => t.status === 'active').length;
+        const pendingCount = s.terms_subscribed - activeCount;
+
+        return (
+          <Paper key={s.session_id} variant="outlined" sx={{ p: 1.5, borderRadius: '10px' }}>
+            <Typography fontWeight={700}>{s.session_name}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              {s.terms_subscribed} term{s.terms_subscribed === 1 ? '' : 's'} subscribed
+              {/* "subscribed" here just means a subscription record exists —
+                  not that it's paid. Spell out the active/pending split so
+                  it never reads as "all set" when one is still pending. */}
+              {pendingCount > 0 ? ` — ${activeCount} active, ${pendingCount} pending` : ' — all active'}
+            </Typography>
+            <Stack spacing={0.75}>
+              {terms.map((t, i) => (
+                <Stack key={`${t.term_name}-${i}`} direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="body2">{t.term_name || 'Unknown term'}</Typography>
+                  <Chip size="small" label={t.status} color={subscriptionStatusChipColor(t.status)} />
+                </Stack>
+              ))}
+            </Stack>
+          </Paper>
+        );
+      })}
     </Stack>
   );
 };
@@ -253,6 +272,7 @@ const ActiveSessionModal = ({ subscription }) => (
 
 const SubscriptionModal = ({ subscription }) => {
   const dueLabel = dueCountdownLabel(subscription?.tier, subscription?.due_date);
+  const isActive = subscription?.tier === 'active';
 
   return (
     <Stack spacing={1.5}>
@@ -274,6 +294,25 @@ const SubscriptionModal = ({ subscription }) => {
             <Typography fontWeight={700}>{formatIsoDateLong(subscription.due_date)}</Typography>
             {dueLabel && <Chip size="small" label={dueLabel} color={tierChipColor(subscription?.tier)} variant="outlined" />}
           </Stack>
+        </Box>
+      )}
+      {isActive && subscription?.paid_at && (
+        <Box>
+          <Typography variant="caption" color="text.secondary">Paid On</Typography>
+          <Typography fontWeight={700}>{formatIsoDateLong(subscription.paid_at)}</Typography>
+        </Box>
+      )}
+      {isActive && subscription?.term_end_date && (
+        <Box>
+          <Typography variant="caption" color="text.secondary">Term Ends</Typography>
+          <Typography fontWeight={700}>{formatIsoDateLong(subscription.term_end_date)}</Typography>
+          {/* The subscription itself doesn't expire on this date — the
+              school can still switch back and reactivate this session-term
+              later. It's shown purely so they know where this term's own
+              calendar runs out. */}
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            For reference only — this term can still be reactivated later if needed.
+          </Typography>
         </Box>
       )}
     </Stack>
@@ -318,7 +357,7 @@ const CalendarIntelligence = ({ overview, loading }) => {
 
   const { subscribed_sessions_count, subscribed_sessions, weeks, subscription } = overview;
   const palette = subscriptionPalette(subscription?.tier);
-  const sessionsBreakdown = subscribedSessionsBreakdown(subscribed_sessions);
+  const sessionsBreakdown = subscribedTermsBreakdown(subscribed_sessions);
   const dueLabel = dueCountdownLabel(subscription?.tier, subscription?.due_date);
 
   const modal = activeModal ? MODALS[activeModal] : null;
@@ -392,7 +431,7 @@ const CalendarIntelligence = ({ overview, loading }) => {
                   <Typography variant="subtitle2" fontWeight={700} sx={{ color: palette.color }}>
                     {subscriptionLabel(subscription?.tier)}
                   </Typography>
-                  <IconReceipt2 size={18} color={palette.color} />
+                  <IconCurrencyNaira size={18} color={palette.color} />
                 </Stack>
                 <Typography
                   variant="caption"
@@ -416,6 +455,25 @@ const CalendarIntelligence = ({ overview, loading }) => {
                     }}
                   />
                 )}
+                {/* Fills what used to be empty space on an active card with
+                    the two dates a school actually wants to see: when they
+                    paid, and where this term's own calendar runs out
+                    (informational — it doesn't force a renewal). */}
+                {subscription?.tier === 'active' &&
+                  (subscription?.paid_at || subscription?.term_end_date) && (
+                    <Stack spacing={0.25} sx={{ mt: 0.75 }}>
+                      {subscription?.paid_at && (
+                        <Typography variant="caption" sx={{ color: palette.color }}>
+                          Paid on {formatIsoDateLong(subscription.paid_at)}
+                        </Typography>
+                      )}
+                      {subscription?.term_end_date && (
+                        <Typography variant="caption" sx={{ color: palette.color }}>
+                          Term runs through {formatIsoDateLong(subscription.term_end_date)}
+                        </Typography>
+                      )}
+                    </Stack>
+                  )}
               </Paper>
             </ButtonBase>
           </Tooltip>

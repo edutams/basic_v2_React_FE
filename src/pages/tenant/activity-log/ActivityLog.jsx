@@ -509,7 +509,7 @@ const ActivityLog = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 2.5,
+            p: 1.5,
             borderRadius: '16px',
             border: '1px solid',
             borderColor: 'divider',
@@ -656,16 +656,16 @@ const ActivityLog = () => {
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1000 }} stickyHeader>
+                <Table size="small" sx={{ minWidth: 1000 }} stickyHeader>
                   <TableHead >
                     <TableRow>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
-                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
-                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
-                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
-                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
-                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
-                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 0.75 }}>S/N</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 0.75 }}>Activity</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 0.75 }}>Module</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 0.75 }}>Action</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 0.75 }}>Date & Time</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 0.75 }}>Severity</TableCell>
+                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 0.75 }}>
                         Action
                       </TableCell>
                     </TableRow>
@@ -729,9 +729,9 @@ const ActivityLog = () => {
 
                         return (
                           <TableRow key={log.id || idx} hover>
-                            <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
+                            <TableCell sx={{ py: 0.75 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
-                            <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
+                            <TableCell sx={{ py: 0.75, minWidth: 260, maxWidth: 380 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   src={causerAvatar}
@@ -792,7 +792,7 @@ const ActivityLog = () => {
                               </Box>
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.75 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {getModuleIcon(moduleName)}
                                 <Typography variant="body2" fontWeight={600} color="text.primary">
@@ -801,11 +801,11 @@ const ActivityLog = () => {
                               </Box>
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.75 }}>
                               {getActionChip(actionName)}
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.75 }}>
                               <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
                                 {formattedDate}
                               </Typography>
@@ -814,11 +814,11 @@ const ActivityLog = () => {
                               </Typography>
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.75 }}>
                               {getSeverityChip(severityName)}
                             </TableCell>
 
-                            <TableCell align="center" sx={{ py: 1.8 }} data-tour="activity-log-action">
+                            <TableCell align="center" sx={{ py: 0.75 }} data-tour="activity-log-action">
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, log)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
                               </IconButton>

@@ -148,7 +148,7 @@ const DomainCard = ({ title, children, color, isEmpty, onSync, syncing, onAdd, a
 };
 
 // ── Main Component ───────────────────────────────────────────────
-const SetupAffectivePsychomotorTab = () => {
+const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -882,9 +882,7 @@ const SetupAffectivePsychomotorTab = () => {
           </Paper>
         )}
 
-        {/* Inner Tabs: Weekly Reports & Psychomotor Setup — always reachable, even before
-          domains are synced, so the unrelated Weekly Reports tab is never blocked by an
-          empty affective/psychomotor list. */}
+        {/* Inner Tabs: Weekly Reports (conditional) & Psychomotor Setup */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
           <Tabs
             value={innerTab}
@@ -901,25 +899,28 @@ const SetupAffectivePsychomotorTab = () => {
               },
             }}
           >
-            <Tab
-              icon={<NotificationsActiveIcon sx={{ fontSize: 18 }} />}
-              iconPosition="start"
-              label="Weekly Reports"
-              id="setup-inner-tab-0"
-              aria-controls="setup-inner-tabpanel-0"
-            />
+            {showWeeklyReports && (
+              <Tab
+                icon={<NotificationsActiveIcon sx={{ fontSize: 18 }} />}
+                iconPosition="start"
+                label="Weekly Reports"
+                id="setup-inner-tab-0"
+                aria-controls="setup-inner-tabpanel-0"
+              />
+            )}
             <Tab
               icon={<PsychologyIcon sx={{ fontSize: 18 }} />}
               iconPosition="start"
               label="Psychomotor Setup"
-              id="setup-inner-tab-1"
-              aria-controls="setup-inner-tabpanel-1"
+              id={`setup-inner-tab-${showWeeklyReports ? 1 : 0}`}
+              aria-controls={`setup-inner-tabpanel-${showWeeklyReports ? 1 : 0}`}
             />
           </Tabs>
         </Box>
 
         {/* ── Weekly Reports (auto-send configuration per class arm) ── */}
-        <InnerTabPanel value={innerTab} index={0}>
+        {showWeeklyReports && (
+          <InnerTabPanel value={innerTab} index={0}>
           <Paper
             elevation={0}
             sx={{
@@ -1073,9 +1074,10 @@ const SetupAffectivePsychomotorTab = () => {
             )}
           </Paper>
         </InnerTabPanel>
+        )}
 
         {/* ── Psychomotor Setup (Domain Keys) ───────────── */}
-        <InnerTabPanel value={innerTab} index={1}>
+        <InnerTabPanel value={innerTab} index={showWeeklyReports ? 1 : 0}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">
               Manage affective and psychomotor domain keys for the current session term.

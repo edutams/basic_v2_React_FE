@@ -27,7 +27,17 @@ import {
   IconSchool,
   IconBox,
   IconTool,
-  // Add more icons as needed
+  IconClipboardCheck,
+  IconCloudUpload,
+  IconArrowsShuffle,
+  IconEdit,
+  IconFileText,
+  IconTable,
+  IconChartBar,
+  IconFileAnalytics,
+  IconId,
+  IconMessageCircle,
+  IconMail,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -55,7 +65,16 @@ const iconMapper = {
   AppWindow: IconAppWindow,
   ClipboardList: IconClipboardList,
   Tool: IconTool,
-  // Add more mappings here when needed
+  ClipboardCheck: IconClipboardCheck,
+  CloudUpload: IconCloudUpload,
+  Shuffle: IconArrowsShuffle,
+  Edit: IconEdit,
+  FileText: IconFileText,
+  Table: IconTable,
+  FileAnalytics: IconFileAnalytics,
+  Id: IconId,
+  MessageCircle: IconMessageCircle,
+  Mail: IconMail,
 };
 
 const SchoolSidebarItems = () => {

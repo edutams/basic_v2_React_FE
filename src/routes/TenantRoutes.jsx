@@ -119,6 +119,17 @@ const PaySchoolFees = Loadable(
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
 );
+const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
+const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
+const ResultConsiderationPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')));
+const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
+const ScoreSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreSheetPage')));
+const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
+const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
+const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
+const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
+const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
+const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
 
 const TenantRoutes = [
   {
@@ -453,6 +464,95 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="chart_of_accounts.index">
             <ChartOfAccounts />
+          </TenantProtectedRoute>
+        ),
+      },
+      // ── Result Module routes (each maps to a sidebar link from the seeder) ──
+      {
+        path: 'result-setup',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ResultModule />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-upload',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <UploadScoresPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-consideration',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ResultConsiderationPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-edit',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ResultEditPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-scoresheet',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ScoreSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-broadsheet',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <BroadsheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-summary',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <SummarySheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-reportsheet',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ReportSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-reportcard',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ReportCardPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-comment-bank',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <CommentBankPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-messaging',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <MessagingPage />
           </TenantProtectedRoute>
         ),
       },

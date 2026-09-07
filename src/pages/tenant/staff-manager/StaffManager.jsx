@@ -605,7 +605,7 @@ const StaffManager = () => {
               ? '1px solid rgba(255, 255, 255, 0.08)'
               : '1px solid #eee',
           overflow: 'hidden',
-          p: 2,
+          p: 1.5,
         }}
       >
         {/* Content Area */}

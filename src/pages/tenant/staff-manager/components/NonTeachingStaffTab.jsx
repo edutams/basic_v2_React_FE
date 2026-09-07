@@ -52,7 +52,8 @@ const NonTeachingStaffTab = ({
       {/* Toolbar */}
       <Box
         sx={{
-          p: 2,
+          pb: 1.5,
+          mb: 1.5,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',
           justifyContent: 'space-between',
@@ -123,7 +124,7 @@ const NonTeachingStaffTab = ({
 
       {/* Table */}
       <TableContainer>
-        <Table stickyHeader>
+        <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>#</TableCell>

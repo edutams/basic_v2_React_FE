@@ -386,6 +386,10 @@ const LearnerManagement = () => {
       </Box>
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -512,7 +516,7 @@ const LearnerManagement = () => {
 
         <Box>
           <TableContainer>
-            <Table stickyHeader>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>

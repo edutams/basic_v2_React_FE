@@ -44,7 +44,7 @@ export const STAFF_STATUS_OPTIONS = [
   { value: 'dead', label: 'Deceased' },
 ];
 
-const statusLabel = (value) =>
+export const statusLabel = (value) =>
   STAFF_STATUS_OPTIONS.find((o) => o.value === value)?.label || value || '—';
 
 const formatDateTime = (value) => {

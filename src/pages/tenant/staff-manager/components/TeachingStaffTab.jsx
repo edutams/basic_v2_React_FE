@@ -31,6 +31,7 @@ import {
 } from '@tabler/icons-react';
 import ClassTeacherAllocation from '../ClassTeacherAllocation';
 import SubjectTeacherAllocation from '../SubjectTeacherAllocation';
+import { statusLabel } from './StaffStatusModal';
 
 const TeachingStaffTab = ({
   loading,
@@ -263,10 +264,9 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={staffMember.staff_status}
+                          label={statusLabel(staffMember.staff_status)}
                           color={getStatusColor(staffMember.staff_status)}
                           size="small"
-                          sx={{ textTransform: 'lowercase' }}
                         />
                       </TableCell>
                       <TableCell align="center">

@@ -27,6 +27,7 @@ import {
   IconChevronDown,
   IconUsers,
 } from '@tabler/icons-react';
+import { statusLabel } from './StaffStatusModal';
 
 const NonTeachingStaffTab = ({
   loading,
@@ -209,7 +210,7 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={staffMember.staff_status}
+                      label={statusLabel(staffMember.staff_status)}
                       color={getStatusColor(staffMember.staff_status)}
                       size="small"
                     />

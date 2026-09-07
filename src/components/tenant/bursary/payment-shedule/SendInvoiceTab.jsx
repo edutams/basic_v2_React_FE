@@ -471,7 +471,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const renderSmsMailContent = () => (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="subtitle1" fontWeight={700}>
@@ -630,12 +634,12 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         <ParentCard
           variant="outlined"
           sx={{
-            p: { xs: 2, md: 3 },
             borderRadius: 3,
             borderColor: 'grey.200',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
           }}
         >
           <Typography variant="h6" fontWeight={700} mb={3}>
@@ -939,7 +943,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         variant="outlined"
         sx={{ borderRadius: 2, borderColor: 'grey.200' }}
       >
-        <Table size="medium">
+        <Table size="small">
           <TableHead>
             <TableRow>
               {/* <TableCell padding="checkbox">

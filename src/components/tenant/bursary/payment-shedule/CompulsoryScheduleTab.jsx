@@ -466,7 +466,7 @@ const CompulsoryScheduleTab = ({
         </Typography>
       </Alert>
 
-      <Paper sx={{ p: 2 }}>
+      <Paper sx={{ p: 1.5 }}>
         <Box
           display="flex"
           flexDirection={{ xs: 'column', md: 'row' }}
@@ -568,7 +568,7 @@ const CompulsoryScheduleTab = ({
         </Box>
 
         <TableContainer variant="outlined">
-          <Table stickyHeader>
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>

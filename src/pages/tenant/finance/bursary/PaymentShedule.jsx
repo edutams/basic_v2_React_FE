@@ -1009,8 +1009,8 @@ const PaymentShedule = () => {
           <>
             <Box
               sx={{
-                px: 3,
-                pt: 2,
+                px: 1.5,
+                pt: 1.5,
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
                 justifyContent: 'space-between',
@@ -1277,7 +1277,7 @@ const PaymentShedule = () => {
         )}
 
         {/* Tab Content */}
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 1.5 }}>
           {actionTab === 0 && (
             <>
               {scheduleTab === 0 && (

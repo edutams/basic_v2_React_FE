@@ -552,7 +552,7 @@ const GenerateInvoiceTab = ({
 
         {hasSchedules && (
           <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 800 }}>
+            <Table size="small" sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>

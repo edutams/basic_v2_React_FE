@@ -167,6 +167,10 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     <>
       <Stack spacing={3}>
         <ParentCard
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Box>
@@ -252,7 +256,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           </Box>
 
           <TableContainer variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>

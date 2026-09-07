@@ -761,7 +761,11 @@ const SchoolAlcManager = () => {
             </Grid>
           </Box>
 
-          <ParentCard>
+          <ParentCard
+            sx={{
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
             <Box
               sx={{
                 mb: 2.5,
@@ -932,7 +936,7 @@ const SchoolAlcManager = () => {
             {/* Table Container */}
             <Box data-tour="acl-role-table">
               <TableContainer>
-                <Table stickyHeader>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>

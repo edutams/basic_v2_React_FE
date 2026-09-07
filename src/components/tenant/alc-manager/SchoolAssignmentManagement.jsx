@@ -533,6 +533,10 @@ const SchoolAssignmentManagement = () => {
       </Box>
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
             <Typography variant="h5" data-tour="acl-assign-heading" fontWeight={700}>
@@ -666,7 +670,7 @@ const SchoolAssignmentManagement = () => {
 
           {/* Table Container */}
           <TableContainer>
-            <Table stickyHeader>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>

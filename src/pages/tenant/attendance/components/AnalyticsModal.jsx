@@ -13,11 +13,20 @@ import { AnalyticsOutlined as AnalyticsIcon } from '@mui/icons-material';
 const AnalyticsModal = ({ open, onClose, title, content, loading = false }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          py: 1.5,
+          px: 2,
+        }}
+      >
         <AnalyticsIcon color="primary" />
         {title}
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 1.5 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
             <CircularProgress size={32} />
@@ -26,7 +35,7 @@ const AnalyticsModal = ({ open, onClose, title, content, loading = false }) => {
           content
         )}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ p: 1.5 }}>
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

@@ -296,7 +296,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
   return (
     <Box>
       {/* ── Term Summary ── */}
-      <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+      <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" color="text.secondary">
@@ -1206,7 +1206,7 @@ const AttendanceAnalyticsCards = ({
   const openSchoolDaysModal = useCallback(() => {
     const fmtPct = (v) => `${Math.min(Math.round(v || 0), 100)}%`;
     const scopeBlock = (label, open, elapsed, remaining, pct, color) => (
-      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+      <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, height: '100%' }}>
         <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
           {label}
         </Typography>

@@ -357,9 +357,8 @@ const AttendancePsychomotor = () => {
             p: 0,
           },
           '& .MuiCardContent-root': {
-            pt: 2,
-            px: { xs: 2, sm: 3 },
-            pb: 3,
+            p: 1.5,
+            '&:last-child': { pb: 1.5 },
           },
         }}
       >

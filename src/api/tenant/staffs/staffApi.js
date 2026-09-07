@@ -33,6 +33,18 @@ const staffApi = {
     return response.data;
   },
 
+  // Dedicated status-change endpoint — separate from the generic `update`
+  // edit form, so every status change gets its own clean history entry.
+  updateStatus: async (id, data) => {
+    const response = await tenantApi.post(`/school_setup/staff/${id}/status`, data);
+    return response.data;
+  },
+
+  getStatusHistory: async (id) => {
+    const response = await tenantApi.get(`/school_setup/staff/${id}/status-history`);
+    return response.data;
+  },
+
   downloadTemplate: async (staffType = 'teaching') => {
     const response = await tenantApi.get('/school_setup/staff_template', {
       params: { staff_type: staffType },

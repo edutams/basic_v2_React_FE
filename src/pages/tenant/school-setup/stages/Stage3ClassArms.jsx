@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Grid, Typography } from '@mui/material';
+import { IconSchool, IconListCheck, IconLayoutGrid, IconBan } from '@tabler/icons-react';
+import StatCard from '@/components/shared/StatCard';
 import SetupShell from './SetupShell';
 import SetUpClassesTab from '../components/SetUpClassesTab';
 
@@ -7,6 +9,16 @@ const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
   const tabRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [canContinue, setCanContinue] = useState(false);
+
+  // Reported up by SetUpClassesTab, rendered here above its bordered card
+  // instead of inside it (see ClassStructureManager for the same pattern).
+  const [stats, setStats] = useState({
+    totalClasses: 0,
+    configuredClasses: 0,
+    totalArms: 0,
+    inactiveClasses: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const handleSaveAndContinue = async () => {
     if (tabRef.current?.save) {
@@ -69,6 +81,49 @@ const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
           Setup your class arm and deactivate any class you currently do not have in your school
         </Typography>
 
+        <Grid container spacing={1.5} sx={{ mb: 1.5, flexShrink: 0 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalClasses}
+              label="Total Classes"
+              icon={IconSchool}
+              colorIndex={0}
+              loading={statsLoading}
+              tooltip="Every class configured for this school."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.configuredClasses}
+              label="Arms Configured"
+              icon={IconListCheck}
+              colorIndex={1}
+              loading={statsLoading}
+              tooltip="Classes that already have arm names generated."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalArms}
+              label="Total Arms"
+              icon={IconLayoutGrid}
+              colorIndex={2}
+              loading={statsLoading}
+              tooltip="Total class arms (streams) generated across all classes."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.inactiveClasses}
+              label="Inactive Classes"
+              icon={IconBan}
+              colorIndex={4}
+              loading={statsLoading}
+              tooltip="Classes deactivated because this school doesn't run them."
+            />
+          </Grid>
+        </Grid>
+
         <Box
           sx={{
             flex: 1,
@@ -82,7 +137,15 @@ const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <SetUpClassesTab ref={tabRef} onSaveAndContinue={onNext} onReadyChange={setCanContinue} />
+          <SetUpClassesTab
+            ref={tabRef}
+            onSaveAndContinue={onNext}
+            onReadyChange={setCanContinue}
+            onStatsChange={(s, loading) => {
+              setStats(s);
+              setStatsLoading(loading);
+            }}
+          />
         </Box>
       </Box>
     </SetupShell>

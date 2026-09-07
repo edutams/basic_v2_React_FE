@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
-import { Save as SaveIcon } from '@mui/icons-material';
+import { Box, Grid, Button, CircularProgress, Alert } from '@mui/material';
+import { IconSchool, IconListCheck, IconLayoutGrid, IconBan } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
+import StatCard from '@/components/shared/StatCard';
 import SetUpClassesTab from '@/pages/tenant/school-setup/components/SetUpClassesTab';
 
 const BCrumb = [
@@ -14,6 +15,17 @@ const BCrumb = [
 const ClassStructureManager = () => {
   const tabRef = useRef(null);
   const [saving, setSaving] = useState(false);
+
+  // Reported up by SetUpClassesTab (which owns the underlying class data) so
+  // the stat-card row can live here, above its bordered card, instead of
+  // rendered inside that same card alongside the table.
+  const [stats, setStats] = useState({
+    totalClasses: 0,
+    configuredClasses: 0,
+    totalArms: 0,
+    inactiveClasses: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const handleSave = async () => {
     if (!tabRef.current?.save) return;
@@ -30,8 +42,52 @@ const ClassStructureManager = () => {
       <Breadcrumb title="Class Structure" items={BCrumb} />
 
       <Alert severity="info" sx={{ mb: 2 }}>
-        Set class arms, generate, then edit names if needed.
+        1. Set how many arms each class needs → 2. Click <strong>Generate</strong> to create
+        A, B, C... names → 3. Edit any arm's name if you'd rather use something else, then Save.
       </Alert>
+
+      <Grid container spacing={1.5} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.totalClasses}
+            label="Total Classes"
+            icon={IconSchool}
+            colorIndex={0}
+            loading={statsLoading}
+            tooltip="Every class configured for this school."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.configuredClasses}
+            label="Arms Configured"
+            icon={IconListCheck}
+            colorIndex={1}
+            loading={statsLoading}
+            tooltip="Classes that already have arm names generated."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.totalArms}
+            label="Total Arms"
+            icon={IconLayoutGrid}
+            colorIndex={2}
+            loading={statsLoading}
+            tooltip="Total class arms (streams) generated across all classes."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.inactiveClasses}
+            label="Inactive Classes"
+            icon={IconBan}
+            colorIndex={4}
+            loading={statsLoading}
+            tooltip="Classes deactivated because this school doesn't run them."
+          />
+        </Grid>
+      </Grid>
 
       <Box sx={{ display: 'flex', flexDirection: 'column' }}>
         <Box
@@ -43,7 +99,13 @@ const ClassStructureManager = () => {
             overflow: 'auto',
           }}
         >
-          <SetUpClassesTab ref={tabRef} />
+          <SetUpClassesTab
+            ref={tabRef}
+            onStatsChange={(s, loading) => {
+              setStats(s);
+              setStatsLoading(loading);
+            }}
+          />
         </Box>
 
         {/* Save button — full width on xs, right-aligned on sm+ */}

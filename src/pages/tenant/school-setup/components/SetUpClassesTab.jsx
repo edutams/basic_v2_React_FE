@@ -9,7 +9,6 @@ import {
 } from 'react';
 import {
   Box,
-  Grid,
   Table,
   TableBody,
   TableCell,
@@ -24,13 +23,11 @@ import {
   Skeleton,
   useTheme,
 } from '@mui/material';
-import { IconSchool, IconListCheck, IconLayoutGrid, IconBan } from '@tabler/icons-react';
 import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
 import ArrowHint from '@/components/shared/ArrowHint';
-import StatCard from '@/components/shared/StatCard';
 
 const SetUpClassesTab = forwardRef(
-  ({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
+  ({ onSaveAndContinue, onClassArmsAdded, onReadyChange, onStatsChange }, ref) => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
 
@@ -246,9 +243,9 @@ const SetUpClassesTab = forwardRef(
 
     const showHint = !classes.some((c) => c.class_arm_names?.length > 0);
 
-    // Stat-card row — at-a-glance intelligence for this stage, same
-    // reusable StatCard used elsewhere in the app (handles its own
-    // skeleton via the `loading` prop).
+    // Reported up to the parent, which renders the stat-card row above this
+    // component's own bordered card (see ClassStructureManager) — kept here
+    // since this is where the underlying `classes` data actually lives.
     const stats = useMemo(() => {
       const totalClasses = classes.length;
       const configuredClasses = classes.filter((c) => c.class_arm_names?.length > 0).length;
@@ -257,55 +254,13 @@ const SetUpClassesTab = forwardRef(
       return { totalClasses, configuredClasses, totalArms, inactiveClasses };
     }, [classes]);
 
-    const statCards = (
-      <Grid container spacing={1.5} sx={{ mb: 2, flexShrink: 0 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalClasses}
-            label="Total Classes"
-            icon={IconSchool}
-            colorIndex={0}
-            loading={loading}
-            tooltip="Every class configured for this school."
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.configuredClasses}
-            label="Arms Configured"
-            icon={IconListCheck}
-            colorIndex={1}
-            loading={loading}
-            tooltip="Classes that already have arm names generated."
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalArms}
-            label="Total Arms"
-            icon={IconLayoutGrid}
-            colorIndex={2}
-            loading={loading}
-            tooltip="Total class arms (streams) generated across all classes."
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.inactiveClasses}
-            label="Inactive Classes"
-            icon={IconBan}
-            colorIndex={4}
-            loading={loading}
-            tooltip="Classes deactivated because this school doesn't run them."
-          />
-        </Grid>
-      </Grid>
-    );
+    useEffect(() => {
+      onStatsChange?.(stats, loading);
+    }, [stats, loading, onStatsChange]);
 
     if (loading) {
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
-          {statCards}
           <TableContainer sx={{ flex: 1 }}>
             <Table sx={{ minWidth: 900, borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
               <TableHead>
@@ -340,7 +295,6 @@ const SetUpClassesTab = forwardRef(
       <Box
         sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}
       >
-        {statCards}
         <TableContainer sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
           <Table
             stickyHeader

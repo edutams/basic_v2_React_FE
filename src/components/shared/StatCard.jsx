@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Box, Paper, Typography, Skeleton, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, Skeleton, Tooltip, LinearProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import PropTypes from 'prop-types';
@@ -46,6 +46,7 @@ const StatCard = ({
   onClick,
   tooltip,
   tooltipPlacement = 'top',
+  progress,
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -70,8 +71,8 @@ const StatCard = ({
         borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        gap: progress !== undefined ? '10px' : 0,
         position: 'relative',
         overflow: 'hidden',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
@@ -84,87 +85,107 @@ const StatCard = ({
         ...sx,
       }}
     >
-      {/* Icon Badge */}
-      {loading ? (
-        <Skeleton
-          variant="rounded"
-          width={40}
-          height={40}
-          sx={{ borderRadius: '12px', flexShrink: 0 }}
-        />
-      ) : (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Icon Badge */}
+        {loading ? (
+          <Skeleton
+            variant="rounded"
+            width={40}
+            height={40}
+            sx={{ borderRadius: '12px', flexShrink: 0 }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '12px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+              color: isDark ? '#ffffff' : scheme.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            {Icon && <Icon size={22} />}
+          </Box>
+        )}
+
+        {/* Content */}
         <Box
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '12px',
-            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
-            color: isDark ? '#ffffff' : scheme.color,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
+            flexGrow: 1,
+            pl: 1,
+            textAlign: 'right',
             position: 'relative',
             zIndex: 1,
           }}
         >
-          {Icon && <Icon size={22} />}
-        </Box>
-      )}
-
-      {/* Content */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          pl: 1,
-          textAlign: 'right',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: 22,
-            fontWeight: 800,
-            lineHeight: 1,
-            letterSpacing: '-0.02em',
-            color: isDark ? '#fff' : scheme.color,
-          }}
-        >
-          {count}
-        </Typography>
-
-        <Typography
-          sx={{
-            mt: 0.5,
-            fontSize: 13,
-            fontWeight: 600,
-            color: isDark ? '#ffffff' : '#4B5563',
-          }}
-        >
-          {label}
-        </Typography>
-
-        {subtitle && (
           <Typography
             sx={{
-              mt: 0.25,
-              fontSize: 11,
-              fontWeight: 500,
-              color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+              fontSize: 22,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              color: isDark ? '#fff' : scheme.color,
             }}
           >
-            {subtitle}
+            {count}
           </Typography>
-        )}
+
+          <Typography
+            sx={{
+              mt: 0.5,
+              fontSize: 13,
+              fontWeight: 600,
+              color: isDark ? '#ffffff' : '#4B5563',
+            }}
+          >
+            {label}
+          </Typography>
+
+          {subtitle && (
+            <Typography
+              sx={{
+                mt: 0.25,
+                fontSize: 11,
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
       </Box>
+
+      {progress !== undefined && (
+        <LinearProgress
+          variant="determinate"
+          value={Math.min(100, Math.max(0, progress))}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            position: 'relative',
+            zIndex: 1,
+            bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            '& .MuiLinearProgress-bar': {
+              borderRadius: 3,
+              bgcolor: isDark ? '#fff' : scheme.color,
+            },
+          }}
+        />
+      )}
     </Paper>
   );
 
   if (tooltip) {
     return (
       <Tooltip title={tooltip} placement={tooltipPlacement} arrow>
-        <Box sx={{ width: '100%', display: 'flex' }}>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>
           {cardContent}
         </Box>
       </Tooltip>

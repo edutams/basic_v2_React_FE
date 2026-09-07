@@ -1,89 +1,179 @@
-import {
-  useState,
-  useMemo,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-} from 'react';
+import { useState, useMemo, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Grid,
+  Paper,
+  Chip,
   TextField,
+  IconButton,
   Button,
   Typography,
+  Tooltip,
+  Collapse,
+  Skeleton,
   Snackbar,
   Alert,
-  Skeleton,
-  useTheme,
+  CircularProgress,
 } from '@mui/material';
+import {
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  Lock as LockIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
+import { IconSchool, IconListCheck, IconLayoutGrid, IconTrendingUp } from '@tabler/icons-react';
+import StatCard from '@/components/shared/StatCard';
 import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
-import ArrowHint from '@/components/shared/ArrowHint';
+
+// Cool-toned palette (blue/cyan/indigo/teal family only, no warm amber/red)
+// cycled per section so each division/programme group's header is visually
+// distinct, not just a repeated grey bar.
+const SECTION_COLORS = [
+  { bg: '#DBEAFE', color: '#2563EB' }, // blue
+  { bg: '#E0F2FE', color: '#0284C7' }, // sky
+  { bg: '#CCFBF1', color: '#0D9488' }, // teal
+  { bg: '#E0E7FF', color: '#4F46E5' }, // indigo
+  { bg: '#CFFAFE', color: '#0891B2' }, // cyan
+];
+
+const generateDefaultArmNames = (count) => {
+  const letters = [];
+  for (let i = 0; i < count; i++) {
+    let letter = '';
+    let num = i;
+    while (num >= 0) {
+      letter = String.fromCharCode(65 + (num % 26)) + letter;
+      num = Math.floor(num / 26) - 1;
+    }
+    letters.push(letter);
+  }
+  return letters;
+};
+
+// Short 2-letter badge for a class's programme — programme_code/programme_name
+// aren't consistently short (e.g. "SSTechnology"), so map known programme
+// names to a proper abbreviation instead of overflowing the badge.
+const PROGRAMME_ABBREVIATIONS = {
+  science: 'SC',
+  humanity: 'HU',
+  humanities: 'HU',
+  business: 'BU',
+  technology: 'TC',
+  commercial: 'CM',
+  arts: 'AR',
+};
+
+const abbreviateProgramme = (cls) => {
+  const source = (cls.programme_name || cls.programme_code || '').toLowerCase();
+  for (const [key, code] of Object.entries(PROGRAMME_ABBREVIATIONS)) {
+    if (source.includes(key)) return code;
+  }
+  const division = (cls.division_name || '').toLowerCase();
+  const stripped = source.startsWith(division) ? source.slice(division.length).trim() : source;
+  const words = stripped.split(/\s+/).filter(Boolean);
+  const lastWord = words[words.length - 1];
+  if (lastWord) return lastWord.slice(0, 2).toUpperCase();
+  return (cls.programme_code || '??').slice(0, 2).toUpperCase();
+};
+
+// One editable arm-name chip — click the label to rename it inline, click
+// the x to remove it outright (shrinking that class's arm count by one).
+// An arm with learners already enrolled can still be renamed, but its x is
+// replaced with a lock — removing it would either fail against the
+// restrict-on-delete FK or, worse, silently shift a later arm's students
+// under this one's name (arms are matched by position, not id).
+const ArmChip = ({ value, studentCount = 0, onRename, onRemove, disabled }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) onRename(trimmed);
+    else setDraft(value);
+  };
+
+  if (editing) {
+    return (
+      <TextField
+        inputRef={inputRef}
+        size="small"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
+          if (e.key === 'Escape') {
+            setDraft(value);
+            setEditing(false);
+          }
+        }}
+        sx={{ width: 90, '& .MuiInputBase-input': { py: 0.5, px: 1 } }}
+      />
+    );
+  }
+
+  const locked = studentCount > 0;
+  const chip = (
+    <Chip
+      label={value}
+      size="small"
+      disabled={disabled}
+      // A pencil icon is the obvious, standard "click to edit" signal —
+      // without it, renaming here is undiscoverable.
+      icon={disabled ? undefined : <EditIcon fontSize="small" />}
+      onClick={() => !disabled && setEditing(true)}
+      onDelete={disabled ? undefined : locked ? () => {} : onRemove}
+      deleteIcon={locked ? <LockIcon fontSize="small" /> : undefined}
+      sx={{ cursor: disabled ? 'default' : 'pointer', minWidth: 56 }}
+    />
+  );
+
+  return locked ? (
+    <Tooltip
+      title={`${studentCount} learner(s) enrolled — cannot be removed. You can still rename it.`}
+    >
+      {chip}
+    </Tooltip>
+  ) : (
+    chip
+  );
+};
+
+const classPayload = (cls) => ({
+  class_id: cls.id,
+  programme_id: cls.programme_id,
+  program_class_id: cls.programme_class_id,
+  class_name: cls.class_name,
+  status: cls.status,
+  no_of_arms: cls.no_of_arms || 0,
+  class_arm_names: (cls.class_arm_names || []).map((a) => a.name),
+});
 
 const SetUpClassesTab = forwardRef(
-  ({ onSaveAndContinue, onClassArmsAdded, onReadyChange, onStatsChange }, ref) => {
-    const theme = useTheme();
-    const isDark = theme.palette.mode === 'dark';
-
-    const [hasChanges, setHasChanges] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+  ({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [savingAll, setSavingAll] = useState(false);
+    const [savingGroupKey, setSavingGroupKey] = useState(null);
     const [classes, setClasses] = useState([]);
+    const [originalClasses, setOriginalClasses] = useState([]);
     const [notification, setNotification] = useState({
       open: false,
       message: '',
       severity: 'success',
     });
 
-    // ── Hint positioning
-    const generateBtnRef = useRef(null);
-    const cellRef = useRef(null);
-    const [hintStyle, setHintStyle] = useState(null);
-    const [showEditHint, setShowEditHint] = useState(false);
-    const editHintTimerRef = useRef(null);
-
-    useLayoutEffect(() => {
-      const btn = generateBtnRef.current;
-      const cell = cellRef.current;
-      if (!btn || !cell) return;
-
-      const calc = () => {
-        const btnRect = btn.getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        setHintStyle({
-          // Sit just below the button; anchor to button's left edge so the
-          // arrowhead (which exits top-right of the SVG) lands on the button
-          top: btnRect.bottom - cellRect.top + 4,
-          left: btnRect.left - cellRect.left - 2,
-        });
-      };
-
-      calc();
-      const ro = new ResizeObserver(calc);
-      ro.observe(cell);
-      return () => ro.disconnect();
-    }, [classes.length, loading]);
-
-    const generateDefaultArmNames = (count) => {
-      const letters = [];
-      for (let i = 0; i < count; i++) {
-        let letter = '';
-        let num = i;
-        while (num >= 0) {
-          letter = String.fromCharCode(65 + (num % 26)) + letter;
-          num = Math.floor(num / 26) - 1;
-        }
-        letters.push(letter);
-      }
-      return letters;
-    };
+    // Which group headers are collapsed — collapsed by default: none (all
+    // expanded), matching the reference design.
+    const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+    const [applyAllValues, setApplyAllValues] = useState({});
 
     const fetchClasses = async () => {
       try {
@@ -97,10 +187,18 @@ const SetUpClassesTab = forwardRef(
                 unique_key: `${programme.id}_${cls.id}`,
                 programme_id: programme.id,
                 programme_code: programme.programme_code,
+                programme_name: programme.programme_name,
                 division_name: division.division_name,
                 programme_class_id: cls.pivot?.id ?? null,
                 no_of_arms: cls.class_arms?.length || 0,
-                class_arm_names: cls.class_arms?.map((a) => a.class_arm_names) || [],
+                // { name, studentCount } instead of a plain string, so we
+                // know which arms already have learners and must not be
+                // removed.
+                class_arm_names:
+                  cls.class_arms?.map((a) => ({
+                    name: a.class_arm_names,
+                    studentCount: a.student_registrations_count || 0,
+                  })) || [],
                 arms: cls.arms || [],
                 status: cls.status || 'active',
               });
@@ -108,6 +206,7 @@ const SetUpClassesTab = forwardRef(
           });
         });
         setClasses(flatClasses);
+        setOriginalClasses(flatClasses);
       } catch (error) {
         console.error('Failed to fetch classes:', error);
       }
@@ -124,22 +223,15 @@ const SetUpClassesTab = forwardRef(
       onReadyChange?.(isReady);
     }, [classes, onReadyChange]);
 
-    const handleSaveAndContinue = async () => {
-      setSaving(true);
+    // Save everything at once — exposed via ref for the onboarding wizard's
+    // own "Save & Continue" footer button. The standalone page instead uses
+    // the per-group Save buttons below, so nobody has to scroll to a single
+    // save action at the bottom of a long list.
+    const saveAllClasses = async () => {
+      setSavingAll(true);
       try {
-        const classesData = classes.map((cls) => ({
-          class_id: cls.id,
-          programme_id: cls.programme_id,
-          program_class_id: cls.programme_class_id,
-          class_name: cls.class_name,
-          status: cls.status,
-          no_of_arms: cls.no_of_arms || 0,
-          class_arm_names: cls.class_arm_names || [],
-        }));
-
-        await saveClasses(classesData);
+        await saveClasses(classes.map(classPayload));
         await fetchClasses();
-        setHasChanges(false);
         onClassArmsAdded?.();
         setNotification({
           open: true,
@@ -149,377 +241,605 @@ const SetUpClassesTab = forwardRef(
         if (onSaveAndContinue) onSaveAndContinue();
       } catch (error) {
         console.error('Failed to save classes:', error);
-        alert('Failed to save classes. Please try again.');
+        setNotification({
+          open: true,
+          message: 'Failed to save classes. Please try again.',
+          severity: 'error',
+        });
       } finally {
-        setSaving(false);
+        setSavingAll(false);
       }
     };
 
     useImperativeHandle(ref, () => ({
-      save: handleSaveAndContinue,
+      save: saveAllClasses,
     }));
 
-    const handleChange = () => setHasChanges(true);
-
-    const handleToggleClassStatus = (uniqueKey) => {
-      setClasses((prev) =>
-        prev.map((cls) => {
-          if (cls.unique_key === uniqueKey) {
-            const newStatus = cls.status === 'active' ? 'inactive' : 'active';
-            return { ...cls, status: newStatus };
-          }
-          return cls;
-        }),
-      );
-      setHasChanges(true);
+    // Adjust one class's arm count by ±1 — extends/truncates its arm-name
+    // list to match rather than requiring a separate "Generate" step.
+    const blockRemoval = (arm) => {
+      setNotification({
+        open: true,
+        message: `Cannot remove "${arm.name}" — ${arm.studentCount} learner(s) already enrolled in it. Move or remove them first.`,
+        severity: 'error',
+      });
     };
 
-    const handleNoOfArmsChange = (uniqueKey, value) => {
-      const numArms = parseInt(value) || 0;
+    const adjustArmCount = (uniqueKey, delta) => {
+      const cls = classes.find((c) => c.unique_key === uniqueKey);
+      if (!cls) return;
+      const currentNames = cls.class_arm_names || [];
+      const newCount = Math.max(0, (cls.no_of_arms || 0) + delta);
+
+      if (newCount < currentNames.length) {
+        // Shrinking always drops from the end (arms are matched by
+        // position on save) — refuse if any arm about to be cut has
+        // learners in it.
+        const toDrop = currentNames.slice(newCount);
+        const occupied = toDrop.find((a) => a.studentCount > 0);
+        if (occupied) {
+          blockRemoval(occupied);
+          return;
+        }
+      }
+
       setClasses((prev) =>
-        prev.map((cls) => {
-          if (cls.unique_key === uniqueKey) {
-            return { ...cls, no_of_arms: numArms };
+        prev.map((c) => {
+          if (c.unique_key !== uniqueKey) return c;
+          let names = [...(c.class_arm_names || [])];
+          if (newCount > names.length) {
+            const newLetters = generateDefaultArmNames(newCount).slice(names.length);
+            names = [...names, ...newLetters.map((name) => ({ name, studentCount: 0 }))];
+          } else if (newCount < names.length) {
+            names = names.slice(0, newCount);
           }
-          return cls;
+          return { ...c, no_of_arms: newCount, class_arm_names: names };
         }),
       );
-      setHasChanges(true);
     };
 
-    const handleGenerateArms = (uniqueKey) => {
-      const target = classes.find((cls) => cls.unique_key === uniqueKey);
-      if (!target || !target.no_of_arms || target.no_of_arms < 1) {
-        setNotification({
-          open: true,
-          message: 'At least one arm must be set before generating.',
-          severity: 'warning',
-        });
+    const removeArm = (uniqueKey, index) => {
+      const cls = classes.find((c) => c.unique_key === uniqueKey);
+      const arm = cls?.class_arm_names?.[index];
+      if (arm?.studentCount > 0) {
+        blockRemoval(arm);
         return;
       }
 
       setClasses((prev) =>
-        prev.map((cls) => {
-          if (cls.unique_key === uniqueKey) {
-            const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
-            return { ...cls, class_arm_names: defaultArms };
-          }
-          return cls;
+        prev.map((c) => {
+          if (c.unique_key !== uniqueKey) return c;
+          const names = [...c.class_arm_names];
+          names.splice(index, 1);
+          return { ...c, no_of_arms: names.length, class_arm_names: names };
         }),
       );
-      setHasChanges(true);
-      setNotification({
-        open: true,
-        message: 'Class arm names generated successfully!',
-        severity: 'success',
-      });
-
-      // Show edit hint for 3 seconds then auto-hide
-      setShowEditHint(true);
-      if (editHintTimerRef.current) clearTimeout(editHintTimerRef.current);
-      editHintTimerRef.current = setTimeout(() => setShowEditHint(false), 3000);
     };
 
-    const handleArmNameChange = (uniqueKey, armIndex, value) => {
+    const renameArm = (uniqueKey, index, value) => {
       setClasses((prev) =>
         prev.map((cls) => {
-          if (cls.unique_key === uniqueKey) {
-            const newArmNames = [...cls.class_arm_names];
-            newArmNames[armIndex] = value;
-            return { ...cls, class_arm_names: newArmNames };
-          }
-          return cls;
+          if (cls.unique_key !== uniqueKey) return cls;
+          const names = [...cls.class_arm_names];
+          names[index] = { ...names[index], name: value };
+          return { ...cls, class_arm_names: names };
         }),
       );
-      setHasChanges(true);
     };
 
-    const filteredClasses = useMemo(() => {
-      return classes.filter((classItem) => {
-        const className = classItem.class_name || '';
-        return className.toLowerCase().includes(searchTerm.toLowerCase());
+    // ── Group by division, splitting a division into one group per
+    // programme only when it actually has more than one (e.g. Senior
+    // Secondary — Science / — Humanity / ...); a division with a single
+    // programme (Junior Secondary) stays as one plain group.
+    const divisionProgrammeIds = useMemo(() => {
+      const map = {};
+      classes.forEach((c) => {
+        if (!map[c.division_name]) map[c.division_name] = new Set();
+        map[c.division_name].add(c.programme_id);
       });
-    }, [classes, searchTerm]);
+      return map;
+    }, [classes]);
 
-    const showHint = !classes.some((c) => c.class_arm_names?.length > 0);
+    const groupKeyFor = (cls) => {
+      const multi = (divisionProgrammeIds[cls.division_name]?.size || 0) > 1;
+      return multi ? `${cls.division_name}—${cls.programme_id}` : cls.division_name;
+    };
+    const groupLabelFor = (cls) => {
+      const multi = (divisionProgrammeIds[cls.division_name]?.size || 0) > 1;
+      if (!multi) return cls.division_name;
+      // Programme names often already embed the division name (e.g.
+      // "Senior Secondary Science") — strip that prefix so the label reads
+      // "Senior Secondary — Science" instead of repeating it.
+      const fullName = cls.programme_name || cls.programme_code || '';
+      const suffix = fullName.toLowerCase().startsWith(cls.division_name.toLowerCase())
+        ? fullName.slice(cls.division_name.length).trim()
+        : fullName;
+      return `${cls.division_name} — ${suffix || fullName}`;
+    };
 
-    // Reported up to the parent, which renders the stat-card row above this
-    // component's own bordered card (see ClassStructureManager) — kept here
-    // since this is where the underlying `classes` data actually lives.
+    const groups = useMemo(() => {
+      const order = [];
+      const byKey = {};
+      classes.forEach((cls) => {
+        const key = groupKeyFor(cls);
+        if (!byKey[key]) {
+          byKey[key] = { key, label: groupLabelFor(cls), items: [] };
+          order.push(key);
+        }
+        byKey[key].items.push(cls);
+      });
+      return order.map((key) => byKey[key]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [classes, divisionProgrammeIds]);
+
+    const toggleGroup = (key) => {
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+    };
+
+    const collapseAll = () => setCollapsedGroups(new Set(groups.map((g) => g.key)));
+    const expandAll = () => setCollapsedGroups(new Set());
+
+    const handleApplyToAll = (group) => {
+      const n = parseInt(applyAllValues[group.key], 10);
+      if (!n || n < 1) return;
+
+      const keys = new Set(group.items.map((c) => c.unique_key));
+      const skipped = [];
+
+      setClasses((prev) =>
+        prev.map((cls) => {
+          if (!keys.has(cls.unique_key)) return cls;
+
+          const currentNames = cls.class_arm_names || [];
+          const occupiedBeyond = currentNames.slice(n).find((a) => a.studentCount > 0);
+          if (occupiedBeyond) {
+            skipped.push(cls.class_name);
+            return cls;
+          }
+
+          // Rename to defaults but keep each position's studentCount (the
+          // arm itself — and its learners — is unchanged, only its label
+          // resets to the default letter).
+          const letters = generateDefaultArmNames(n);
+          const names = letters.map((name, i) => ({
+            name,
+            studentCount: currentNames[i]?.studentCount || 0,
+          }));
+          return { ...cls, no_of_arms: n, class_arm_names: names };
+        }),
+      );
+
+      if (skipped.length > 0) {
+        setNotification({
+          open: true,
+          message: `Set ${n} arm(s) for ${group.items.length - skipped.length} class(es). Skipped ${skipped.join(', ')} — reducing to ${n} would remove an arm that already has learners in it.`,
+          severity: 'warning',
+        });
+      } else {
+        setNotification({
+          open: true,
+          message: `Set ${n} arm(s) for all ${group.items.length} class(es) in ${group.label}.`,
+          severity: 'success',
+        });
+      }
+    };
+
+    // A class is "dirty" if it differs from the last-saved snapshot — drives
+    // each group's own Save button so a section only saves (and reports
+    // itself as saved) when it actually has something to save.
+    const isClassDirty = (cls) => {
+      const orig = originalClasses.find((o) => o.unique_key === cls.unique_key);
+      if (!orig) return false;
+      const names = (cls.class_arm_names || []).map((a) => a.name);
+      const origNames = (orig.class_arm_names || []).map((a) => a.name);
+      return (
+        orig.no_of_arms !== cls.no_of_arms ||
+        orig.status !== cls.status ||
+        JSON.stringify(origNames) !== JSON.stringify(names)
+      );
+    };
+
+    const groupHasChanges = (group) => group.items.some(isClassDirty);
+
+    const handleSaveGroup = async (group) => {
+      setSavingGroupKey(group.key);
+      try {
+        await saveClasses(group.items.map(classPayload));
+        setOriginalClasses((prev) =>
+          prev.map((o) => group.items.find((g) => g.unique_key === o.unique_key) || o),
+        );
+        onClassArmsAdded?.();
+        setNotification({
+          open: true,
+          message: `${group.label} saved successfully!`,
+          severity: 'success',
+        });
+      } catch (error) {
+        console.error('Failed to save group:', error);
+        setNotification({
+          open: true,
+          message: `Failed to save ${group.label}. Please try again.`,
+          severity: 'error',
+        });
+      } finally {
+        setSavingGroupKey(null);
+      }
+    };
+
+    // ── Completeness stats
     const stats = useMemo(() => {
       const totalClasses = classes.length;
       const configuredClasses = classes.filter((c) => c.class_arm_names?.length > 0).length;
       const totalArms = classes.reduce((sum, c) => sum + (c.class_arm_names?.length || 0), 0);
-      const inactiveClasses = classes.filter((c) => c.status === 'inactive').length;
-      return { totalClasses, configuredClasses, totalArms, inactiveClasses };
+      const setupProgress =
+        totalClasses > 0 ? Math.round((configuredClasses / totalClasses) * 100) : 0;
+      const classesWithNoArms = totalClasses - configuredClasses;
+      return { totalClasses, configuredClasses, totalArms, setupProgress, classesWithNoArms };
     }, [classes]);
-
-    useEffect(() => {
-      onStatsChange?.(stats, loading);
-    }, [stats, loading, onStatsChange]);
 
     if (loading) {
       return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
-          <TableContainer sx={{ flex: 1 }}>
-            <Table sx={{ minWidth: 900, borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ width: '25%' }}>Classes</TableCell>
-                  <TableCell sx={{ width: '25%' }}>No. of Arms</TableCell>
-                  <TableCell sx={{ width: '50%' }}>Class Arm Names</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton variant="rounded" height={40} />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton variant="rounded" height={40} />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton variant="rounded" height={40} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Grid container spacing={1.5}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+                <Skeleton variant="rounded" height={90} />
+              </Grid>
+            ))}
+          </Grid>
+          <Skeleton variant="rounded" height={260} />
+          <Skeleton variant="rounded" height={260} />
         </Box>
       );
     }
 
     return (
-      <Box
-        sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', p: 2 }}
-      >
-        <TableContainer sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
-          <Table
-            stickyHeader
-            sx={{
-              minWidth: 900,
-              borderCollapse: 'separate',
-              borderSpacing: '12px 10px',
-            }}
-          >
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    width: '25%',
-                    bgcolor: isDark ? 'background.paper' : '#fff',
-                  }}
-                >
-                  Classes
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    width: '25%',
-                    bgcolor: isDark ? 'background.paper' : '#fff',
-                  }}
-                >
-                  No. of Arms
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    width: '50%',
-                    bgcolor: isDark ? 'background.paper' : '#fff',
-                  }}
-                >
-                  Class Arm Names
-                </TableCell>
-              </TableRow>
-            </TableHead>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* ── Completeness stats — one card each, same style used elsewhere ── */}
+        <Grid container spacing={1.5} alignItems="stretch">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalClasses}
+              label="Total Classes"
+              icon={IconSchool}
+              colorIndex={0}
+              tooltip="Every class configured for this school."
+              sx={{ height: '100%' }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={`${stats.configuredClasses}/${stats.totalClasses}`}
+              label="Arms Configured"
+              icon={IconListCheck}
+              colorIndex={1}
+              tooltip="Classes that already have arm names generated."
+              sx={{ height: '100%' }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalArms}
+              label="Total Arms"
+              icon={IconLayoutGrid}
+              colorIndex={2}
+              tooltip="Total class arms (streams) generated across all classes."
+              sx={{ height: '100%' }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={`${stats.setupProgress}%`}
+              label="Setup Progress"
+              icon={IconTrendingUp}
+              colorIndex={stats.classesWithNoArms > 0 ? 3 : 1}
+              progress={stats.setupProgress}
+              subtitle={
+                stats.classesWithNoArms > 0
+                  ? `${stats.classesWithNoArms} class(es) still need arms`
+                  : 'All classes covered'
+              }
+              sx={{ height: '100%' }}
+            />
+          </Grid>
+        </Grid>
 
-            <TableBody>
-              {filteredClasses.map((classItem, index) => {
-                const isInactive = classItem.status === 'inactive';
-                const cellBg = isInactive
-                  ? isDark
-                    ? 'action.disabledBackground'
-                    : '#e0e0e0'
-                  : isDark
-                    ? 'action.hover'
-                    : '#f6f7f9';
-
-                return (
-                  <TableRow key={classItem.unique_key || index}>
-                    {/* ── Class name cell ── */}
-                    <TableCell
-                      sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top' }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          disabled
-                          defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
-                          onChange={handleChange}
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: isInactive
-                                ? isDark
-                                  ? 'action.disabledBackground'
-                                  : '#e0e0e0'
-                                : 'background.paper',
-                              borderRadius: '8px',
-                              '& fieldset': { borderColor: 'divider' },
-                              '&:hover fieldset': { borderColor: 'text.disabled' },
-                              '&.Mui-focused fieldset': {
-                                borderColor: 'primary.main',
-                                borderWidth: '2px',
-                              },
-                            },
-                          }}
-                        />
-                      </Box>
-                    </TableCell>
-
-                    <TableCell
-                      sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top' }}
-                    >
-                      <Box
-                        ref={index === 0 ? cellRef : null}
-                        display="flex"
-                        gap={1}
-                        justifyContent="center"
-                        alignItems="center"
-                        width="100%"
-                        sx={{ position: 'relative' }}
-                      >
-                        <TextField
-                          size="small"
-                          type="number"
-                          disabled={isInactive}
-                          value={classItem.no_of_arms || 0}
-                          onChange={(e) =>
-                            handleNoOfArmsChange(classItem.unique_key, e.target.value)
-                          }
-                          slotProps={{ htmlInput: { min: 0 } }}
-                          sx={{
-                            width: 70,
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: 'background.paper',
-                              borderRadius: '8px',
-                              '& fieldset': { borderColor: 'divider' },
-                              '&:hover fieldset': { borderColor: 'text.disabled' },
-                              '&.Mui-focused fieldset': {
-                                borderColor: 'primary.main',
-                                borderWidth: '2px',
-                              },
-                            },
-                          }}
-                        />
-
-                        <Button
-                          variant="contained"
-                          size="small"
-                          ref={index === 0 ? generateBtnRef : null}
-                          disabled={isInactive}
-                          onClick={() => handleGenerateArms(classItem.unique_key)}
-                        >
-                          Generate
-                        </Button>
-
-                        {index === 0 && showHint && hintStyle && (
-                          <ArrowHint
-                            show
-                            label="Set no. of arms &amp; click Generate"
-                            direction="up-right"
-                            mode="persistent"
-                            delay="0.6s"
-                            position={{
-                              position: 'absolute',
-                              top: hintStyle.top,
-                              left: hintStyle.left,
-                              zIndex: 10,
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        bgcolor: cellBg,
-                        borderRadius: 2,
-                        p: 1,
-                        verticalAlign: 'top',
-                        position: 'relative',
-                      }}
-                    >
-                      {index === 0 && showEditHint && (
-                        <ArrowHint
-                          show
-                          label="✏️ You can edit the arm names if you wish"
-                          direction="down-left"
-                          mode="persistent"
-                          delay="0s"
-                          position={{
-                            position: 'absolute',
-                            top: -70,
-                            left: '40%',
-                            transform: 'translateX(-50%)',
-                            zIndex: 20,
-                          }}
-                        />
-                      )}
-
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {classItem.class_arm_names && classItem.class_arm_names.length > 0 ? (
-                          classItem.class_arm_names.map((armName, i) => (
-                            <TextField
-                              key={i}
-                              size="small"
-                              disabled={isInactive}
-                              value={armName}
-                              onChange={(e) =>
-                                handleArmNameChange(classItem.unique_key, i, e.target.value)
-                              }
-                              sx={{
-                                width: 90,
-                                '& .MuiOutlinedInput-root': {
-                                  backgroundColor: 'background.paper',
-                                  borderRadius: '8px',
-                                  '& fieldset': { borderColor: 'divider' },
-                                  '&:hover fieldset': { borderColor: 'text.disabled' },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: 'primary.main',
-                                    borderWidth: '2px',
-                                  },
-                                },
-                              }}
-                            />
-                          ))
-                        ) : (
-                          <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                            Set class arms, generate, then edit names if needed.
-                          </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Box mt={2} sx={{ display: 'none' }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSaveAndContinue}
-            disabled={!hasChanges || saving}
-          >
-            {saving ? 'Saving...' : 'Save & Continue'}
+        {/* ── Header actions ── */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Button size="small" onClick={collapseAll}>
+            Collapse all
+          </Button>
+          <Button size="small" variant="outlined" onClick={expandAll}>
+            Expand all
           </Button>
         </Box>
+
+        {/* ── Grouped class list ── */}
+        {groups.map((group, groupIndex) => {
+          const scheme = SECTION_COLORS[groupIndex % SECTION_COLORS.length];
+          const collapsed = collapsedGroups.has(group.key);
+          const armsInGroup = group.items.reduce(
+            (sum, c) => sum + (c.class_arm_names?.length || 0),
+            0,
+          );
+          const dirty = groupHasChanges(group);
+          const groupSaving = savingGroupKey === group.key;
+
+          return (
+            <Paper
+              key={group.key}
+              variant="outlined"
+              sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: 'background.paper' }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  gap: 2,
+                  flexWrap: 'wrap',
+                  cursor: 'pointer',
+                  bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'action.hover' : scheme.bg),
+                }}
+                onClick={() => toggleGroup(group.key)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <IconButton size="small">
+                    {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                  </IconButton>
+                  <Box>
+                    <Typography fontWeight={700}>{group.label}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {group.items.length} class{group.items.length !== 1 ? 'es' : ''} ·{' '}
+                      {armsInGroup} arms
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    Apply to all
+                  </Typography>
+                  {/* Same +/- stepper as each row below, for consistency */}
+                  <IconButton
+                    size="small"
+                    onClick={() =>
+                      setApplyAllValues((prev) => ({
+                        ...prev,
+                        [group.key]: Math.max(0, (parseInt(prev[group.key], 10) || 0) - 1),
+                      }))
+                    }
+                    sx={{ bgcolor: 'background.paper' }}
+                  >
+                    <RemoveIcon fontSize="small" />
+                  </IconButton>
+                  <Typography sx={{ width: 24, textAlign: 'center' }}>
+                    {parseInt(applyAllValues[group.key], 10) || 0}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() =>
+                      setApplyAllValues((prev) => ({
+                        ...prev,
+                        [group.key]: (parseInt(prev[group.key], 10) || 0) + 1,
+                      }))
+                    }
+                    sx={{ bgcolor: 'background.paper' }}
+                  >
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                  <Button size="small" variant="contained" onClick={() => handleApplyToAll(group)}>
+                    Apply
+                  </Button>
+
+                  {/* This section's own Save — no need to scroll to a
+                      page-level save button. */}
+                  <Button
+                    size="small"
+                    variant={dirty ? 'contained' : 'outlined'}
+                    color={dirty ? 'primary' : 'inherit'}
+                    disabled={!dirty || groupSaving}
+                    onClick={() => handleSaveGroup(group)}
+                    startIcon={groupSaving ? <CircularProgress size={14} color="inherit" /> : null}
+                  >
+                    {groupSaving ? 'Saving...' : dirty ? 'Save changes' : 'Saved'}
+                  </Button>
+                </Box>
+              </Box>
+
+              <Collapse in={!collapsed}>
+                <Box sx={{ p: 2 }}>
+                  <Grid
+                    container
+                    sx={{
+                      px: 1.5,
+                      py: 1,
+                      mb: 1,
+                      borderRadius: 2,
+                      bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'action.hover' : '#e8eaed'),
+                    }}
+                  >
+                    <Grid size={4}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={700}
+                        sx={{ textTransform: 'uppercase' }}
+                      >
+                        Class
+                      </Typography>
+                    </Grid>
+                    <Grid size={3}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={700}
+                        sx={{ textTransform: 'uppercase' }}
+                      >
+                        Arms
+                      </Typography>
+                    </Grid>
+                    <Grid size={5}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={700}
+                        sx={{ textTransform: 'uppercase' }}
+                      >
+                        Arm Names
+                      </Typography>
+                    </Grid>
+                  </Grid>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {group.items.map((cls) => {
+                      const isInactive = cls.status === 'inactive';
+                      return (
+                        <Box
+                          key={cls.unique_key}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            py: 1,
+                            px: 1.5,
+                            borderRadius: 2,
+                            bgcolor: (theme) =>
+                              isInactive
+                                ? theme.palette.mode === 'dark'
+                                  ? 'action.disabledBackground'
+                                  : '#e0e3e6'
+                                : theme.palette.mode === 'dark'
+                                  ? 'action.hover'
+                                  : '#eef0f2',
+                            opacity: isInactive ? 0.6 : 1,
+                          }}
+                        >
+                          <Grid container alignItems="center" sx={{ flex: 1 }}>
+                            <Grid size={4}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Box
+                                  sx={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: '10px',
+                                    bgcolor: 'primary.light',
+                                    color: 'primary.main',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {abbreviateProgramme(cls)}
+                                </Box>
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography fontWeight={600} noWrap>
+                                    {cls.class_name}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" noWrap>
+                                    {cls.programme_code} – {cls.class_code}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Grid>
+
+                            <Grid size={3}>
+                              {(() => {
+                                const lastArm =
+                                  cls.class_arm_names?.[cls.class_arm_names.length - 1];
+                                const removalBlocked = !isInactive && lastArm?.studentCount > 0;
+                                const decrementBtn = (
+                                  <IconButton
+                                    size="small"
+                                    disabled={isInactive || !cls.no_of_arms || removalBlocked}
+                                    onClick={() => adjustArmCount(cls.unique_key, -1)}
+                                    sx={{ bgcolor: 'background.paper' }}
+                                  >
+                                    <RemoveIcon fontSize="small" />
+                                  </IconButton>
+                                );
+                                return (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    {removalBlocked ? (
+                                      <Tooltip
+                                        title={`"${lastArm.name}" has ${lastArm.studentCount} learner(s) enrolled — remove or move them first.`}
+                                      >
+                                        <span>{decrementBtn}</span>
+                                      </Tooltip>
+                                    ) : (
+                                      decrementBtn
+                                    )}
+                                    <Typography sx={{ width: 24, textAlign: 'center' }}>
+                                      {cls.no_of_arms || 0}
+                                    </Typography>
+                                    <IconButton
+                                      size="small"
+                                      disabled={isInactive}
+                                      onClick={() => adjustArmCount(cls.unique_key, 1)}
+                                      sx={{ bgcolor: 'background.paper' }}
+                                    >
+                                      <AddIcon fontSize="small" />
+                                    </IconButton>
+                                  </Box>
+                                );
+                              })()}
+                            </Grid>
+
+                            <Grid size={5}>
+                              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                                {cls.class_arm_names?.length > 0 ? (
+                                  cls.class_arm_names.map((arm, i) => (
+                                    <ArmChip
+                                      key={i}
+                                      value={arm.name}
+                                      studentCount={arm.studentCount}
+                                      disabled={isInactive}
+                                      onRename={(v) => renameArm(cls.unique_key, i, v)}
+                                      onRemove={() => removeArm(cls.unique_key, i)}
+                                    />
+                                  ))
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    No arms yet
+                                  </Typography>
+                                )}
+                                {!isInactive && (
+                                  <Chip
+                                    label="+ Add"
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={() => adjustArmCount(cls.unique_key, 1)}
+                                    sx={{
+                                      borderStyle: 'dashed',
+                                      cursor: 'pointer',
+                                      bgcolor: 'background.paper',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Collapse>
+            </Paper>
+          );
+        })}
 
         <Snackbar
           open={notification.open}

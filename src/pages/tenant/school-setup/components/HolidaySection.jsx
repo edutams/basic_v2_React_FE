@@ -433,7 +433,7 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
   return (
     <>
       {statistics && (
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 2 }}>
           <Grid container spacing={2}>
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">

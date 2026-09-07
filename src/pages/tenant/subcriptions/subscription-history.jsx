@@ -148,7 +148,7 @@ const SubscriptionHistoryList = () => {
   // the visible rows would be misleading (e.g. "Total Paid: ₦500" because
   // only 10 of 200 transactions are on this page).
   const statCards = (
-    <Grid container spacing={1.5} sx={{ mb: 3 }}>
+    <Grid container spacing={1.5} sx={{ mb: 2 }}>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StatCard
           count={stats?.total ?? 0}
@@ -195,7 +195,12 @@ const SubscriptionHistoryList = () => {
   return (
     <>
       {statCards}
-      <ParentCard title="">
+      <ParentCard
+        title=""
+        sx={{
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
+      >
       <Box sx={{ p: 0 }}>
         <Box sx={{ mb: 3 }}>
           <TextField
@@ -216,7 +221,7 @@ const SubscriptionHistoryList = () => {
 
         <Paper>
           <TableContainer>
-            <Table sx={{ minWidth: 900 }}>
+            <Table size="small" sx={{ minWidth: 900 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                   <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>#</TableCell>

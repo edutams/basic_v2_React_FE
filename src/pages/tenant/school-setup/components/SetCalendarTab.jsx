@@ -671,7 +671,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Grid container spacing={1.5} sx={{ mb: 3, alignItems: 'stretch' }}>
+      <Grid container spacing={1.5} sx={{ mb: 2, alignItems: 'stretch' }}>
         <Grid size={{ xs: 12, lg: 5 }}>
           <TermCalendarCard
             dayCurrent={weekStats?.days_spent ?? 0}

@@ -7,6 +7,23 @@ import {
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
+/**
+ * Whether a "YYYY-MM-DD" date string is strictly after today — same rule
+ * used on the main marking tab's own Week dropdown: a week that hasn't
+ * started yet has nothing to show/mark, so it's disabled here too. Parsed
+ * as a local midnight Date, not `new Date(str)` directly (which reads
+ * "YYYY-MM-DD" as UTC and can shift a day off depending on timezone).
+ */
+const isFutureDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return false;
+  const datePart = dateStr.slice(0, 10);
+  if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+  const date = new Date(datePart + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() > today.getTime();
+};
+
 // ── Reusable filter dropdowns for analytics modals (local state) ──
 // Shared by AttendanceAnalyticsCards.jsx and PsychomotorAnalyticsCards.jsx so
 // every stat-card modal in the module offers the exact same Session → Term →
@@ -168,9 +185,11 @@ const ModalFilterDropdowns = ({
           >
             {localWeeks.map((w) => {
               const weekId = String(w.wk_id ?? w.week_id ?? w.id);
+              const notReachedYet = isFutureDate(w.start_date);
               return (
-                <MenuItem key={weekId} value={weekId}>
+                <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
                   {w.week_name || `Week ${weekId}`}
+                  {notReachedYet ? ' (upcoming)' : ''}
                 </MenuItem>
               );
             })}

@@ -678,7 +678,7 @@ const SingleArmView = ({ onEnrollmentChange, classFilterData }) => {
       )}
 
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }} stickyHeader>
+        <Table size="small" sx={{ minWidth: 800 }} stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell>S/N</TableCell>

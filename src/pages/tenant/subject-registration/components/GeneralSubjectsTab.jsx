@@ -48,6 +48,7 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
           name: l.name,
           admissionNo: l.admission_no,
           avatar: l.avatar,
+          gender: l.gender,
           registered: {},
         }));
         learnerData.forEach((l) => {

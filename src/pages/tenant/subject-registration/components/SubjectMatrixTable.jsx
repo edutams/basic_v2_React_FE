@@ -14,11 +14,16 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
+  alpha,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   CancelOutlined as CancelOutlinedIcon,
 } from '@mui/icons-material';
+
+// API sends gender lowercase ('male'/'female') — case-insensitive check so
+// this doesn't silently mis-render if that ever changes casing.
+const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
 
 const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnregisterAll }) => {
   const theme = useTheme();
@@ -57,7 +62,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               sx={{
                 minWidth: 240,
                 fontWeight: 700,
-                py: 0.75,
+                py: 0.5,
                 ...(!isMobile && { position: 'sticky', left: 0 }),
                 // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 ...(!isMobile && { zIndex: 2 }),
@@ -76,7 +81,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               sx={{
                 minWidth: 100,
                 fontWeight: 700,
-                py: 0.75,
+                py: 0.5,
                 ...(!isMobile && { position: 'sticky', left: 240 }),
                 // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 bgcolor: isDark ? '#1e293b' : '#f8fafc',
@@ -100,7 +105,8 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 sx={{
                   minWidth: 140,
                   verticalAlign: 'top',
-                  pt: 2,
+                  pt: 1.25,
+                  pb: 0.5,
                   bgcolor: isDark ? '#1e293b' : '#f8fafc',
 
                   borderBottom: '2px solid',
@@ -181,6 +187,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
             <TableRow key={learner.id} hover>
               <TableCell
                 sx={{
+                  py: 0.5,
                   ...(!isMobile && { position: 'sticky', left: 0 }),
                   // bgcolor: 'background.paper',
                   bgcolor: `${isDark ? '#1e293b' : '#f1f4f6'} !important`,
@@ -215,9 +222,38 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                     {(learner.name || '?').charAt(0)}
                   </Avatar>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={600} noWrap>
-                      {learner.name}
-                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={0.75}>
+                      <Typography variant="body2" fontWeight={600} noWrap>
+                        {learner.name}
+                      </Typography>
+                      {learner.gender && (
+                        <Box
+                          title={learner.gender}
+                          sx={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: '5px',
+                            flexShrink: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            bgcolor: alpha(
+                              isMaleGender(learner.gender)
+                                ? theme.palette.primary.main
+                                : theme.palette.success.main,
+                              isDark ? 0.28 : 0.14,
+                            ),
+                            color: isMaleGender(learner.gender)
+                              ? theme.palette.primary.main
+                              : theme.palette.success.main,
+                          }}
+                        >
+                          {isMaleGender(learner.gender) ? 'M' : 'F'}
+                        </Box>
+                      )}
+                    </Stack>
                     {learner.admissionNo && (
                       <Typography variant="caption" color="text.secondary" display="block">
                         {learner.admissionNo}
@@ -229,6 +265,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               <TableCell
                 align="center"
                 sx={{
+                  py: 0.5,
                   ...(!isMobile && { position: 'sticky', left: 240 }),
                   bgcolor: 'background.paper',
                   ...(!isMobile && { zIndex: 1 }),
@@ -245,7 +282,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 </Typography>
               </TableCell>
               {subjects.map((subj) => (
-                <TableCell key={subj.id} align="center">
+                <TableCell key={subj.id} align="center" sx={{ py: 0.25 }}>
                   <IconButton size="small" onClick={() => onToggle(learner.id, subj.id)}>
                     {learner.registered[subj.id] ? (
                       <CheckCircleIcon color="success" fontSize="medium" />

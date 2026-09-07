@@ -47,6 +47,7 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
           name: l.name,
           admissionNo: l.admission_no,
           avatar: l.avatar,
+          gender: l.gender,
           registered: {},
         }));
         learnerData.forEach((l) => {

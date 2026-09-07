@@ -176,7 +176,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     const effectiveSearch = overrides.search !== undefined ? overrides.search : search;
 
     if (!session || !term) return;
-    if (!classLevel && !programme && !effectiveSearch) return;
+    // Unlike Single Arm View, a Class here isn't just one more filter — the
+    // arm columns themselves (and their check-all/uncheck-all controls) are
+    // populated from classLevel alone (see the fetchClassArmsByClass effect
+    // below). Fetching students without a class picked would render a table
+    // with rows but zero arm columns to assign them to, which is useless —
+    // so Class is mandatory, and Programme/search only narrow within it.
+    if (!classLevel) return;
 
     setLoading(true);
     try {
@@ -199,12 +205,10 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     }
   }, [classLevel, maPage, maRowsPerPage, programme, session, term, search]);
 
-  // Enough to actually run a search: session+term are always required, and
-  // then any one of Programme/Class or free-text search — matches
-  // fetchStudents' own guard (and SingleArmView's equivalent), so selecting
-  // just a Programme (with no Class yet) already filters the table instead
-  // of silently doing nothing.
-  const canFetchStudents = !!(session && term && (classLevel || programme || search));
+  // Session+Term+Class are all mandatory here — see the note in
+  // fetchStudents() above on why Class specifically can't be optional in
+  // this view. Programme and search are additional narrowing on top of it.
+  const canFetchStudents = !!(session && term && classLevel);
 
   useEffect(() => {
     if (canFetchStudents) {
@@ -454,8 +458,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search by name, ID, gender..."
+              placeholder={
+                classLevel ? 'Search by name, ID, gender...' : 'Select a class first to search'
+              }
               value={searchInput}
+              disabled={!classLevel}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               slotProps={{
@@ -472,6 +479,7 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
               variant="contained"
               size="small"
               onClick={handleSearch}
+              disabled={!classLevel}
               sx={{ minWidth: 100, whiteSpace: 'nowrap' }}
             >
               Search
@@ -536,10 +544,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
       )}
 
       <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 600 }}>
+        <Table size="small" sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ minWidth: 280 }}>Student Basic Info</TableCell>
+              <TableCell>Gender</TableCell>
               {arms.map((arm) => (
                 <TableCell key={arm.id} align="center" sx={{ minWidth: 120 }}>
                   <Typography variant="subtitle2" fontWeight={700}>
@@ -564,13 +573,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={arms.length + 1} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={arms.length + 2} align="center" sx={{ py: 6 }}>
                   <CircularProgress size={28} />
                 </TableCell>
               </TableRow>
             ) : students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={arms.length + 1} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={arms.length + 2} align="center" sx={{ py: 4 }}>
                   <Alert
                     severity="info"
                     sx={{
@@ -579,13 +588,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                       '& .MuiAlert-icon': { mr: 1.5 },
                     }}
                   >
-                    {search
-                      ? `No students match "${search}".`
-                      : classLevel
-                        ? 'No students found for the selected class.'
-                        : programme
-                          ? 'No students found for the selected programme.'
-                          : 'Select a class, or search by name/ID, to view students.'}
+                    {!classLevel
+                      ? 'Select a class first — its arms need to load before you can view or assign students.'
+                      : search
+                        ? `No students match "${search}".`
+                        : 'No students found for the selected class.'}
                   </Alert>
                 </TableCell>
               </TableRow>
@@ -597,25 +604,50 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                       <Typography variant="body2" color="text.secondary" fontWeight={600}>
                         {(meta?.current_page - 1) * meta?.per_page + idx + 1}
                       </Typography>
-                      <Avatar sx={{ width: 36, height: 36, fontSize: 12 }}>
+                      <Avatar
+                        src={student.avatar}
+                        sx={{
+                          width: 38,
+                          height: 38,
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 700,
+                        }}
+                      >
                         {(student.name || '?').charAt(0)}
                       </Avatar>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
                           {student.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {student.gender || ''}
-                        </Typography>
                         <Chip
                           label={student.admission_no}
                           size="small"
-                          color="error"
-                          variant="outlined"
-                          sx={{ height: 18, fontSize: '10px', mt: 0.25 }}
+                          sx={{
+                            height: 20,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            mt: 0.25,
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
                         />
                       </Box>
                     </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={student.gender}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        px: 0.5,
+                        bgcolor:
+                          student.gender?.toUpperCase() === 'MALE' ? 'info.light' : 'success.light',
+                        color:
+                          student.gender?.toUpperCase() === 'MALE' ? 'info.main' : 'success.main',
+                      }}
+                    />
                   </TableCell>
                   {arms.map((arm) => (
                     <TableCell key={arm.id} align="center">

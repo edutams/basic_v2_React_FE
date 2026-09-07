@@ -474,7 +474,25 @@ const SetUpClassesTab = forwardRef(
       const setupProgress =
         totalClasses > 0 ? Math.round((configuredClasses / totalClasses) * 100) : 0;
       const classesWithNoArms = totalClasses - configuredClasses;
-      return { totalClasses, configuredClasses, totalArms, setupProgress, classesWithNoArms };
+      const multiArmClasses = classes.filter((c) => (c.class_arm_names?.length || 0) > 1).length;
+      const multiArmPercent =
+        totalClasses > 0 ? Math.round((multiArmClasses / totalClasses) * 100) : 0;
+      const occupiedArms = classes.reduce(
+        (sum, c) => sum + (c.class_arm_names?.filter((a) => a.studentCount > 0).length || 0),
+        0,
+      );
+      const occupiedArmsPercent = totalArms > 0 ? Math.round((occupiedArms / totalArms) * 100) : 0;
+      return {
+        totalClasses,
+        configuredClasses,
+        totalArms,
+        setupProgress,
+        classesWithNoArms,
+        multiArmClasses,
+        multiArmPercent,
+        occupiedArms,
+        occupiedArmsPercent,
+      };
     }, [classes]);
 
     if (loading) {
@@ -504,6 +522,8 @@ const SetUpClassesTab = forwardRef(
               icon={IconSchool}
               colorIndex={0}
               tooltip="Every class configured for this school."
+              progress={stats.multiArmPercent}
+              subtitle={`${stats.multiArmClasses} with multiple arms`}
               sx={{ height: '100%' }}
             />
           </Grid>
@@ -514,6 +534,12 @@ const SetUpClassesTab = forwardRef(
               icon={IconListCheck}
               colorIndex={1}
               tooltip="Classes that already have arm names generated."
+              progress={stats.setupProgress}
+              subtitle={
+                stats.classesWithNoArms > 0
+                  ? `${stats.classesWithNoArms} class(es) pending`
+                  : 'All classes covered'
+              }
               sx={{ height: '100%' }}
             />
           </Grid>
@@ -524,6 +550,8 @@ const SetUpClassesTab = forwardRef(
               icon={IconLayoutGrid}
               colorIndex={2}
               tooltip="Total class arms (streams) generated across all classes."
+              progress={stats.occupiedArmsPercent}
+              subtitle={`${stats.occupiedArms} of ${stats.totalArms} have learners`}
               sx={{ height: '100%' }}
             />
           </Grid>

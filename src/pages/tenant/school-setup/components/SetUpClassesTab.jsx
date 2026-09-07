@@ -27,16 +27,11 @@ import { IconSchool, IconListCheck, IconLayoutGrid, IconTrendingUp } from '@tabl
 import StatCard from '@/components/shared/StatCard';
 import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
 
-// Cool-toned palette (blue/cyan/indigo/teal family only, no warm amber/red)
-// cycled per section so each division/programme group's header is visually
-// distinct, not just a repeated grey bar.
-const SECTION_COLORS = [
-  { bg: '#DBEAFE', color: '#2563EB' }, // blue
-  { bg: '#E0F2FE', color: '#0284C7' }, // sky
-  { bg: '#CCFBF1', color: '#0D9488' }, // teal
-  { bg: '#E0E7FF', color: '#4F46E5' }, // indigo
-  { bg: '#CFFAFE', color: '#0891B2' }, // cyan
-];
+// One neutral, readable gray for every section header — no color cycling,
+// so the page stays calm and consistent regardless of how many groups render.
+// Dark enough to read as a clearly distinct band against the white card
+// body at a glance, not a near-invisible off-white tint.
+const SECTION_HEADER_BG = '#cdd2d8';
 
 const generateDefaultArmNames = (count) => {
   const letters = [];
@@ -560,8 +555,7 @@ const SetUpClassesTab = forwardRef(
         </Box>
 
         {/* ── Grouped class list ── */}
-        {groups.map((group, groupIndex) => {
-          const scheme = SECTION_COLORS[groupIndex % SECTION_COLORS.length];
+        {groups.map((group) => {
           const collapsed = collapsedGroups.has(group.key);
           const armsInGroup = group.items.reduce(
             (sum, c) => sum + (c.class_arm_names?.length || 0),
@@ -585,7 +579,11 @@ const SetUpClassesTab = forwardRef(
                   gap: 2,
                   flexWrap: 'wrap',
                   cursor: 'pointer',
-                  bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'action.hover' : scheme.bg),
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'action.hover' : SECTION_HEADER_BG,
+                  borderBottom: '1px solid',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'divider' : '#aab1b9',
                 }}
                 onClick={() => toggleGroup(group.key)}
               >
@@ -665,7 +663,8 @@ const SetUpClassesTab = forwardRef(
                       py: 1,
                       mb: 1,
                       borderRadius: 2,
-                      bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'action.hover' : '#e8eaed'),
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark' ? 'action.hover' : SECTION_HEADER_BG,
                     }}
                   >
                     <Grid size={4}>

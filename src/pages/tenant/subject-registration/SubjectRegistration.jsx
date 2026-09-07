@@ -119,11 +119,7 @@ const AnalyticsStatCard = ({
         {loading ? (
           <CircularProgress size={24} />
         ) : (
-          <Typography
-            variant="h4"
-            fontWeight={700}
-            sx={{ color: isDark ? '#fff' : scheme.color }}
-          >
+          <Typography variant="h4" fontWeight={700} sx={{ color: isDark ? '#fff' : scheme.color }}>
             {value}
           </Typography>
         )}
@@ -449,18 +445,6 @@ const SubjectRegistration = () => {
     <PageContainer title="Subject Registration" description="Manage learner subject registration">
       <Breadcrumb title="Subject Registration" items={BCrumb} />
 
-      {can('manage.class_manager.subject_registrar.bulk_register') && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<CarryForwardIcon />}
-            onClick={() => setCarryForwardModalOpen(true)}
-          >
-            Carry Forward to New Term
-          </Button>
-        </Box>
-      )}
-
       {/* ── Analytics Header ──────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -506,14 +490,36 @@ const SubjectRegistration = () => {
       </Grid>
 
       {/* ── Main Section ───────────────────────────────────────── */}
-      <ParentCard title="Learners Subject Registration">
+      <ParentCard
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6" fontWeight={600}>
+              Learners Subject Registration
+            </Typography>
+            {can('manage.class_manager.subject_registrar.bulk_register') && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<CarryForwardIcon />}
+                onClick={() => setCarryForwardModalOpen(true)}
+              >
+                Carry Forward to New Term
+              </Button>
+            )}
+          </Box>
+        }
+      >
         <Box>
           {/* ── Filter Row ────────────────────────────────────────── */}
           <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Session</InputLabel>
-                <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
+                <Select
+                  value={pSession}
+                  label="Session"
+                  onChange={(e) => setPSession(e.target.value)}
+                >
                   {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
                       {s.session_name || s.name || s.id}
@@ -553,7 +559,7 @@ const SubjectRegistration = () => {
                 >
                   {programmes.map((p) => (
                     <MenuItem key={p.id} value={p.id}>
-                      {p.programme_name || p.name}
+                      {p.programme_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -565,7 +571,7 @@ const SubjectRegistration = () => {
                 <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
                   {classes.map((c) => (
                     <MenuItem key={c.id} value={c.id}>
-                      {c.class_name || c.name}
+                      {c.class_name}
                     </MenuItem>
                   ))}
                 </Select>

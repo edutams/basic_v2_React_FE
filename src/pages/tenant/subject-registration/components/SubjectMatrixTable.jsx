@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Box,
   TableContainer,
   Table,
   TableHead,
@@ -33,23 +34,30 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
   }, [subjects, learners]);
 
   return (
-    <TableContainer elevation={0} variant="outlined" sx={{
-      borderRadius: 2, overflowX: 'auto', border: (theme) =>
-        theme.palette.mode === 'dark'
-          ? '1.5px solid rgba(255, 255, 255, 0.15)'
-          : '1.5px solid #cbd5e1',
-      boxShadow: (theme) =>
-        theme.palette.mode === 'dark'
-          ? '0 4px 16px rgba(0, 0, 0, 0.35)'
-          : '0 4px 16px rgba(15, 23, 42, 0.05)',
-    }}>
-      <Table sx={{ minWidth: 900 }} stickyHeader>
+    <TableContainer
+      elevation={0}
+      variant="outlined"
+      sx={{
+        borderRadius: 2,
+        overflowX: 'auto',
+        border: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '1.5px solid rgba(255, 255, 255, 0.15)'
+            : '1.5px solid #cbd5e1',
+        boxShadow: (theme) =>
+          theme.palette.mode === 'dark'
+            ? '0 4px 16px rgba(0, 0, 0, 0.35)'
+            : '0 4px 16px rgba(15, 23, 42, 0.05)',
+      }}
+    >
+      <Table sx={{ minWidth: 900 }} stickyHeader size="small">
         <TableHead>
           <TableRow>
             <TableCell
               sx={{
                 minWidth: 240,
                 fontWeight: 700,
+                py: 0.75,
                 ...(!isMobile && { position: 'sticky', left: 0 }),
                 // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 ...(!isMobile && { zIndex: 2 }),
@@ -57,9 +65,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 borderRight: '2px solid',
 
                 borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.12)'
-                    : '#e2e8f0',
+                  theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
                 // borderColor: 'divider',
               }}
             >
@@ -70,6 +76,7 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
               sx={{
                 minWidth: 100,
                 fontWeight: 700,
+                py: 0.75,
                 ...(!isMobile && { position: 'sticky', left: 240 }),
                 // bgcolor: isDark ? '#1e2a3a' : '#f8f9fa',
                 bgcolor: isDark ? '#1e293b' : '#f8fafc',
@@ -81,42 +88,88 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 borderRight: '2px solid',
 
                 borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.12)'
-                    : '#e2e8f0',
+                  theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
               }}
             >
               Registered
             </TableCell>
             {subjects.map((subj) => (
-              <TableCell key={subj.id} align="center" sx={{
-                minWidth: 140, verticalAlign: 'top', pt: 2,
-                bgcolor: isDark ? '#1e293b' : '#f8fafc',
+              <TableCell
+                key={subj.id}
+                align="center"
+                sx={{
+                  minWidth: 140,
+                  verticalAlign: 'top',
+                  pt: 2,
+                  bgcolor: isDark ? '#1e293b' : '#f8fafc',
 
-                borderBottom: '2px solid',
-                borderLeft: '1px solid',
+                  borderBottom: '2px solid',
+                  borderLeft: '1px solid',
 
-                borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.12)'
-                    : '#e2e8f0',
-              }}>
-                <Typography variant="caption" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase' }}>
-                  {subj.subject_name || subj.name}
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{ display: 'block', textTransform: 'uppercase' }}
+                >
+                  {subj.subject_name}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
                   {registeredCount[subj.id]} learner{registeredCount[subj.id] !== 1 ? 's' : ''}
                 </Typography>
-                <Stack direction="row" spacing={0.5} justifyContent="center">
-                  <Tooltip title={`Register all for ${subj.name}`}>
-                    <IconButton size="small" onClick={() => onRegisterAll?.(subj.id)}>
-                      <CheckCircleIcon color="success" fontSize="small" />
-                    </IconButton>
+                <Stack direction="row" spacing={1} justifyContent="center">
+                  <Tooltip title={`Register all learners for ${subj.subject_name}`}>
+                    <Stack
+                      alignItems="center"
+                      spacing={0}
+                      onClick={() => onRegisterAll?.(subj.id)}
+                      sx={{
+                        cursor: 'pointer',
+                        px: 0.5,
+                        borderRadius: 1,
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <IconButton size="small" sx={{ p: 0.25 }}>
+                        <CheckCircleIcon color="success" fontSize="small" />
+                      </IconButton>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: '0.6rem', lineHeight: 1, color: 'success.main' }}
+                      >
+                        All
+                      </Typography>
+                    </Stack>
                   </Tooltip>
-                  <Tooltip title={`Unregister all for ${subj.name}`}>
-                    <IconButton size="small" onClick={() => onUnregisterAll?.(subj.id)}>
-                      <CancelOutlinedIcon color="error" fontSize="small" />
-                    </IconButton>
+                  <Tooltip title={`Unregister all learners from ${subj.subject_name}`}>
+                    <Stack
+                      alignItems="center"
+                      spacing={0}
+                      onClick={() => onUnregisterAll?.(subj.id)}
+                      sx={{
+                        cursor: 'pointer',
+                        px: 0.5,
+                        borderRadius: 1,
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                      <IconButton size="small" sx={{ p: 0.25 }}>
+                        <CancelOutlinedIcon color="error" fontSize="small" />
+                      </IconButton>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: '0.6rem', lineHeight: 1, color: 'error.main' }}
+                      >
+                        None
+                      </Typography>
+                    </Stack>
                   </Tooltip>
                 </Stack>
               </TableCell>
@@ -140,13 +193,37 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   // borderColor: 'divider',
                 }}
               >
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Avatar sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main' }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ width: 18, flexShrink: 0, textAlign: 'right' }}
+                  >
                     {idx + 1}
-                  </Avatar>
-                  <Typography variant="body2" fontWeight={600}>
-                    {learner.name}
                   </Typography>
+                  <Avatar
+                    src={learner.avatar || undefined}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      bgcolor: 'primary.main',
+                    }}
+                  >
+                    {(learner.name || '?').charAt(0)}
+                  </Avatar>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {learner.name}
+                    </Typography>
+                    {learner.admissionNo && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {learner.admissionNo}
+                      </Typography>
+                    )}
+                  </Box>
                 </Stack>
               </TableCell>
               <TableCell

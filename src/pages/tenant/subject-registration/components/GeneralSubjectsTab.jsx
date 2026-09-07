@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Stack, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
 const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+  const navigate = useNavigate();
   // ── Data States ───────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
   const [learners, setLearners] = useState([]);
@@ -44,6 +46,8 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
         const transformed = learnerData.map((l) => ({
           id: l.student_registration_id,
           name: l.name,
+          admissionNo: l.admission_no,
+          avatar: l.avatar,
           registered: {},
         }));
         learnerData.forEach((l) => {
@@ -184,7 +188,20 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
           <CircularProgress size={32} />
         </Box>
       ) : subjects.length === 0 ? (
-        <Alert severity="info" sx={{ justifyContent: 'center' }}>
+        <Alert
+          severity="info"
+          sx={{ alignItems: 'center' }}
+          action={
+            <Button
+              variant="contained"
+              color="info"
+              size="small"
+              onClick={() => navigate('/curriculum-setup')}
+            >
+              Go to Curriculum
+            </Button>
+          }
+        >
           No subjects have been created for this class. Please go to the Curriculum step to create
           subjects before registering learners.
         </Alert>

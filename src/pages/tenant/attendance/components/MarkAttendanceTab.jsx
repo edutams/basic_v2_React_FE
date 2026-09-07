@@ -831,40 +831,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   return (
     <Box>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" mb={1.5}>
-        {/* Export Dropdown */}
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<DownloadIcon />}
-          endIcon={<ArrowDropDownIcon />}
-          onClick={(e) => setExportAnchorEl(e.currentTarget)}
-          disabled={!filterApplied || exportingPdf}
-        >
-          {exportingPdf ? 'Exporting...' : 'Export'}
-        </Button>
-        <Menu
-          anchorEl={exportAnchorEl}
-          open={Boolean(exportAnchorEl)}
-          onClose={() => setExportAnchorEl(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <MenuItem onClick={handleExportExcel}>
-            <ListItemIcon>
-              <ExcelIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Report by Excel</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleExportPdf}>
-            <ListItemIcon>
-              <PdfIcon fontSize="small" color="error" />
-            </ListItemIcon>
-            <ListItemText>Report by PDF</ListItemText>
-          </MenuItem>
-        </Menu>
-      </Stack>
-
       {/* ── Filters ─────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
@@ -1097,17 +1063,53 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           </ToggleButtonGroup>
         </Box>
 
-        {/* Same action as the button at the bottom of the summary card —
-            duplicated here so marking a whole week doesn't require
-            scrolling all the way down just to submit it. */}
-        <Button
-          variant="contained"
-          size="small"
-          onClick={openConfirmDialog}
-          disabled={submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)}
-        >
-          {submitting ? 'Submitting...' : 'Submit Attendance'}
-        </Button>
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* Same action as the button at the bottom of the summary card —
+              duplicated here so marking a whole week doesn't require
+              scrolling all the way down just to submit it. */}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={openConfirmDialog}
+            disabled={
+              submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
+            }
+          >
+            {submitting ? 'Submitting...' : 'Submit Attendance'}
+          </Button>
+
+          {/* Export Dropdown */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+            disabled={!filterApplied || exportingPdf}
+          >
+            {exportingPdf ? 'Exporting...' : 'Export'}
+          </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={Boolean(exportAnchorEl)}
+            onClose={() => setExportAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleExportExcel}>
+              <ListItemIcon>
+                <ExcelIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Report by Excel</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleExportPdf}>
+              <ListItemIcon>
+                <PdfIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Report by PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Stack>
       </Box>
 
       {/* ── Attendance Table & Summary ──────────────────── */}

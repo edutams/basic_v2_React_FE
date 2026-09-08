@@ -4,24 +4,21 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Box,
   Avatar,
   Button,
   TextField,
   FormControl,
+  InputLabel,
   Select,
   MenuItem,
   useTheme,
   Alert,
   CircularProgress,
   Checkbox,
+  Stack,
+  Chip,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
@@ -104,6 +101,11 @@ const CashPost = () => {
   };
 
   /* ── CUSTOM AMOUNT CHANGE HANDLER (same logic as PayInvoice) ── */
+  /* Typing a post amount is a clear signal of intent to post that fee, so  */
+  /* it auto-checks the row — otherwise the header's "Selected to Post"    */
+  /* total (and the actual post payload, which only includes checked rows) */
+  /* would silently ignore whatever the clerk just typed until they also   */
+  /* remembered to tick the checkbox separately.                          */
   const handleCustomAmountChange = (type, feeId, rawVal) => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
     setter((prev) =>
@@ -114,7 +116,7 @@ const CashPost = () => {
         const discount = Number(f.discount_amount || 0);
         const penalty = Number(f.penalty_amount || 0);
         const payable = Math.max(0, custom - discount + penalty);
-        return { ...f, custom_amount: custom, payable };
+        return { ...f, custom_amount: custom, payable, checked: custom > 0 ? true : f.checked };
       }),
     );
   };
@@ -309,33 +311,33 @@ const CashPost = () => {
     fetchData();
   }, []);
 
-  /* SECTION HEADER BLOCK */
+  /* SECTION HEADER BLOCK — flush title strip, no border/radius/margin of its
+     own. It sits directly on top of a content Box inside one outer Paper
+     (see renderFeeSection below), so the bar and its fees read as one
+     attached panel instead of two floating boxes with a gap between. */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
     return (
-      <Paper
-        elevation={0}
+      <Box
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'stretch', sm: 'center' },
           justifyContent: 'space-between',
-          p: 2,
-          mb: 2,
-          gap: { xs: 2, sm: 0 },
+          p: 1.5,
+          gap: { xs: 1.5, sm: 0 },
           bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
           borderLeft: `5px solid ${borderLeftColor}`,
-          borderRadius: '8px',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
               borderRadius: '8px',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
               bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
@@ -349,33 +351,38 @@ const CashPost = () => {
           </Typography>
         </Box>
         <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>{action}</Box>
-      </Paper>
+      </Box>
     );
   };
 
-  /* RENDER TABLE — read-only discount/penalty from API, interactive installment (like PayInvoice) */
-  const renderTable = (type, data) => {
+  /* RENDER FEE SECTION — header bar + fee cards share one outer Paper (no  */
+  /* gap between them), each fee is a self-contained card instead of a      */
+  /* wide table row, so nothing needs a horizontal scrollbar to read an     */
+  /* amount and the row wraps responsively on mobile.                      */
+  const renderFeeSection = ({ title, borderLeftColor, type, data, emptyLabel }) => {
+    const subtotal = data.reduce((sum, f) => sum + getPayable(f), 0);
+
     return (
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, mb: 3 }}>
-        <Table>
-          <TableHead sx={{ bgcolor: isDark ? '#222' : '#fafafa' }}>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Amount (₦)</TableCell>
-              <TableCell align="right">Paid (₦)</TableCell>
-              <TableCell align="right">Balance (₦)</TableCell>
-              <TableCell align="center">Discount (₦)</TableCell>
-              <TableCell align="center">Penalty (₦)</TableCell>
-              {/* <TableCell align="center">
-                {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
-              </TableCell> */}
-              <TableCell align="center">Amount to Post (₦)</TableCell>
-              <TableCell align="right">Payable (₦)</TableCell>
-              <TableCell align="right">
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}
-                >
+      <Paper
+        variant="outlined"
+        sx={{
+          borderRadius: '10px',
+          overflow: 'hidden',
+          mb: 3,
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+        }}
+      >
+        {renderHeaderBlock({
+          title,
+          borderLeftColor,
+          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+          action:
+            data.length > 0 ? (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  Subtotal ₦{format(subtotal)}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography
                     variant="body2"
                     fontWeight={600}
@@ -391,139 +398,155 @@ const CashPost = () => {
                     sx={{ p: 0.5 }}
                   />
                 </Box>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((fee, i) => {
-              const payable = getPayable(fee);
+              </Box>
+            ) : null,
+        })}
 
-              return (
-                <TableRow
-                  key={fee.id}
-                  hover
-                  sx={{
-                    bgcolor: fee.has_cashpost
-                      ? isDark
-                        ? 'rgba(16, 185, 129, 0.08)'
-                        : '#f0fdf4'
-                      : 'inherit',
-                  }}
-                >
-                  <TableCell>{String(i + 1).padStart(2, '0')}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {fee.description}
-                    </Typography>
-                    {fee.has_cashpost && (
-                      <Typography variant="caption" color="success.main" fontWeight={600}>
-                        ✓ Cash Posted
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    {format(fee.amount)}
-                  </TableCell>
+        <Box sx={{ p: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc' }}>
+          {data.length === 0 ? (
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ textAlign: 'center', py: 2.5 }}
+            >
+              {emptyLabel}
+            </Typography>
+          ) : (
+            <Stack spacing={1.5}>
+              {data.map((fee, i) => {
+                const payable = getPayable(fee);
 
-                  {/* PAID — read-only */}
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={600} color="success.main">
-                      {format(fee.paid_amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* BALANCE — read-only */}
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={(fee.balance || fee.amount) > 0 ? 'error.main' : 'text.secondary'}
+                return (
+                  <Paper
+                    key={fee.id}
+                    variant="outlined"
+                    onClick={() =>
+                      !fee.has_cashpost && handleCheckChange(type, fee.id, !fee.checked)
+                    }
+                    sx={{
+                      p: 0.75,
+                      borderRadius: 2,
+                      cursor: fee.has_cashpost ? 'default' : 'pointer',
+                      borderColor: fee.has_cashpost
+                        ? 'success.main'
+                        : isDark
+                          ? 'rgba(255,255,255,0.1)'
+                          : '#e2e8f0',
+                      bgcolor: fee.has_cashpost
+                        ? isDark
+                          ? 'rgba(16,185,129,0.12)'
+                          : '#ecfdf5'
+                        : isDark
+                          ? 'rgba(255,255,255,0.03)'
+                          : '#ffffff',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1.5,
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                      }}
                     >
-                      {format(fee.balance || fee.amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* DISCOUNT — read-only from API */}
-                  <TableCell align="center">
-                    <Typography variant="body2" fontWeight={600}>
-                      {format(fee.discount_amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* PENALTY — read-only from API */}
-                  <TableCell align="center">
-                    <Typography variant="body2" fontWeight={600}>
-                      {format(fee.penalty_amount)}
-                    </Typography>
-                  </TableCell>
-
-                  {/* INSTALLMENT / CUSTOM AMOUNT — interactive (same logic as PayInvoice) */}
-                  {/* <TableCell align="center">
-                    {installmentalSetting === 'percentage' ? (
-                      <FormControl size="small" sx={{ minWidth: 130 }}>
-                        <Select
-                          value={fee.installment_id || ''}
-                          onChange={(e) => handleInstallmentChange(type, fee.id, e.target.value)}
-                          displayEmpty
+                      {/* LEFT — checkbox + description + amount breakdown, own width only */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                        <Checkbox
+                          size="small"
+                          checked={fee.checked}
+                          onChange={(e) => handleCheckChange(type, fee.id, e.target.checked)}
+                          onClick={(e) => e.stopPropagation()}
                           disabled={fee.has_cashpost}
+                          sx={{ p: 0.5, flexShrink: 0 }}
+                        />
+                        <Typography
+                          variant="body2"
+                          fontWeight={700}
+                          color="text.primary"
+                          noWrap
+                          sx={{ flexShrink: 0, maxWidth: { xs: 130, sm: 170 } }}
                         >
-                          <MenuItem value="">
-                            <em>Select</em>
-                          </MenuItem>
-                          {(fee.installments || []).map((inst) => (
-                            <MenuItem key={inst.id} value={inst.id}>
-                              {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    ) : (
-                      <TextField
-                        size="small"
-                        type="number"
-                        sx={{ width: 110 }}
-                        disabled={fee.has_cashpost}
-                        value={fee.custom_amount}
-                        onChange={(e) => handleCustomAmountChange(type, fee.id, e.target.value)}
-                        inputProps={{ min: 0, max: fee.balance || fee.amount }}
-                      />
-                    )}
-                  </TableCell> */}
+                          {i + 1}. {fee.description}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color="text.secondary"
+                          noWrap
+                          sx={{ fontSize: '0.9375rem', maxWidth: { xs: 150, sm: 260 } }}
+                        >
+                          ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                          {format(fee.balance || fee.amount)}
+                          {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
+                          {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                        </Typography>
+                        {fee.has_cashpost && (
+                          <Chip
+                            label="Cash Posted"
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            sx={{ flexShrink: 0, fontWeight: 600 }}
+                          />
+                        )}
+                      </Box>
 
-                  <TableCell align="center">
-                    <TextField
-                      size="small"
-                      type="number"
-                      sx={{ width: 120 }}
-                      disabled={fee.has_cashpost}
-                      value={fee.custom_amount}
-                      onChange={(e) => handleCustomAmountChange(type, fee.id, e.target.value)}
-                      inputProps={{ min: 0, max: fee.balance || fee.amount }}
-                      placeholder="0"
-                      helperText={`Max: ₦${format(fee.balance)}`}
-                    />
-                  </TableCell>
+                      {/* MIDDLE — Amount to Post, centered in the remaining space */}
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                          Post
+                        </Typography>
+                        <TextField
+                          size="small"
+                          type="number"
+                          sx={{
+                            width: 100,
+                            bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
+                            // Hide the native spinner — this is a plain type-in amount, not a stepper
+                            '& input[type=number]': { MozAppearance: 'textfield' },
+                            '& input[type=number]::-webkit-outer-spin-button': {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                            '& input[type=number]::-webkit-inner-spin-button': {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          }}
+                          disabled={fee.has_cashpost}
+                          value={fee.custom_amount}
+                          onChange={(e) => handleCustomAmountChange(type, fee.id, e.target.value)}
+                          inputProps={{ min: 0, max: fee.balance || fee.amount }}
+                          placeholder="0"
+                        />
+                      </Box>
 
-                  {/* PAYABLE — recalculated on installment/amount change */}
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={700}>
-                      {format(payable)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Checkbox
-                      size="small"
-                      checked={fee.checked}
-                      onChange={(e) => handleCheckChange(type, fee.id, e.target.checked)}
-                      disabled={fee.has_cashpost}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      {/* RIGHT — Payable, pinned to the far edge */}
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={800}
+                        color="primary.main"
+                        sx={{
+                          flexShrink: 0,
+                          minWidth: 80,
+                          textAlign: 'right',
+                          fontSize: '1.1rem',
+                        }}
+                      >
+                        ₦{format(payable)}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                );
+              })}
+            </Stack>
+          )}
+        </Box>
+      </Paper>
     );
   };
 
@@ -561,6 +584,20 @@ const CashPost = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
+  const studentGender = studentInfo?.gender || '';
+  const studentArm = studentInfo?.class_arm || '';
+
+  /* ── Header summary — this student's outstanding balance, and a live   */
+  /* running total of what's currently checked to post, so the clerk can */
+  /* see it without scrolling down to the button.                        */
+  const allFees = [...compFees, ...optFees];
+  const totalOutstanding = allFees.reduce(
+    (sum, f) => sum + (Number(f.balance || f.amount) || 0),
+    0,
+  );
+  const selectedFees = allFees.filter((f) => f.checked);
+  const selectedToPostTotal = selectedFees.reduce((sum, f) => sum + getPayable(f), 0);
+
   const BCrumbLive = [
     { to: '/', title: 'Home' },
     { title: 'Bursary' },
@@ -571,7 +608,7 @@ const CashPost = () => {
   return (
     <PageContainer title="Cash Posting">
       <Breadcrumb title="Cash Posting" items={BCrumbLive} />
-      <Box>
+      <Box sx={{ pb: 4 }}>
         {/* HEADER - Student Info & Filters */}
         <Box
           sx={{
@@ -579,10 +616,10 @@ const CashPost = () => {
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'stretch', sm: 'center' },
             justifyContent: 'space-between',
-            gap: 2,
-            mb: 3,
-            mt: 2,
-            p: 2.5,
+            gap: 1.5,
+            mb: 2,
+            mt: 1.5,
+            p: 2,
             bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
             borderRadius: '12px',
@@ -594,51 +631,83 @@ const CashPost = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 2,
+              minWidth: 0,
             }}
           >
             <Avatar
               sx={{
                 width: 56,
                 height: 56,
+                flexShrink: 0,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
               }}
             >
               <PersonOutlineIcon sx={{ fontSize: 36 }} />
             </Avatar>
-            <Box>
-              <Typography variant="h5" fontWeight={800} color="text.primary">
-                {studentName}
+            <Box sx={{ minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                <Typography variant="h5" fontWeight={800} color="text.primary" noWrap>
+                  {studentName}
+                </Typography>
+                {studentGender && (
+                  <Chip
+                    label={
+                      studentGender.toLowerCase() === 'male'
+                        ? 'Male'
+                        : studentGender.toLowerCase() === 'female'
+                          ? 'Female'
+                          : studentGender
+                    }
+                    size="small"
+                    color={
+                      studentGender.toLowerCase() === 'male'
+                        ? 'info'
+                        : studentGender.toLowerCase() === 'female'
+                          ? 'secondary'
+                          : 'default'
+                    }
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+              </Stack>
+              <Typography variant="body2" fontWeight={600} color="text.secondary" noWrap>
+                {studentLearnerId} • {studentClassName} {studentArm}
               </Typography>
-              <Typography variant="body2" fontWeight={600} color="text.secondary">
-                {studentLearnerId} • {studentClassName}
-              </Typography>
-              <Typography variant="body2" fontWeight={600} color="text.secondary">
-                {activeSessionInfo.session} {activeSessionInfo.term}
+              <Typography variant="body2" fontWeight={600} color="text.secondary" noWrap>
+                {activeSessionInfo?.session} {activeSessionInfo?.term}
               </Typography>
             </Box>
           </Box>
 
-          {/* RIGHT - Refresh */}
-          {/* <Box
+          {/* RIGHT - Quick summary: this student's outstanding balance, and */}
+          {/* a live total of whatever's currently checked to post — saves  */}
+          {/* the clerk a scroll down to the button to see the running sum. */}
+          <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              flexWrap: 'wrap',
-              justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+              flexDirection: 'column',
+              gap: 0.5,
+              alignItems: { xs: 'flex-start', sm: 'flex-end' },
             }}
           >
-            <Button variant="contained" size="small" onClick={() => {
-                if (selectedSessionId && selectedTermId) {
-                  fetchData(selectedSessionId, selectedTermId, '');
-                }
-              }}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Refresh
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Outstanding Balance
+              </Typography>
+              <Typography variant="subtitle2" fontWeight={800} color="error.main">
+                ₦{format(totalOutstanding)}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Selected to Post
+              </Typography>
+              <Typography variant="subtitle2" fontWeight={800} color="primary.main">
+                ₦{format(selectedToPostTotal)}
+              </Typography>
+            </Box>
           </Box>
-          */}
         </Box>
 
         {/* OWING WARNING BANNER */}
@@ -661,59 +730,68 @@ const CashPost = () => {
         )}
 
         {/* COMPULSORY PAYMENT — no discount/penalty toggles, values come from API */}
-        {renderHeaderBlock({
+        {renderFeeSection({
           title: 'Compulsory Payment',
           borderLeftColor: '#10b981',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: null,
+          type: 'comp',
+          data: compFees,
+          emptyLabel: 'No outstanding compulsory payments for this student.',
         })}
-
-        {compFees.length > 0 ? (
-          renderTable('comp', compFees)
-        ) : (
-          <Alert severity="info" sx={{ mb: 4 }}>
-            No outstanding compulsory payments for this student.
-          </Alert>
-        )}
 
         {/* OPTIONAL PAYMENT — no discount/penalty toggles, values come from API */}
-        {renderHeaderBlock({
+        {renderFeeSection({
           title: 'Optional Payment',
           borderLeftColor: '#3b82f6',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: null,
+          type: 'opt',
+          data: optFees,
+          emptyLabel: 'No outstanding optional payments for this student.',
         })}
 
-        {optFees.length > 0 ? (
-          renderTable('opt', optFees)
-        ) : (
-          <Alert severity="info" sx={{ mb: 4 }}>
-            No outstanding optional payments for this student.
-          </Alert>
-        )}
+        {/* PAYMENT METHOD + POST — one action bar, method on the left, the */}
+        {/* button (with the running selected total) anchored on the right */}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            borderRadius: '10px',
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2,
+            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+          }}
+        >
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 220 } }}>
+            <InputLabel id="cashpost-payment-method-label">Payment Method</InputLabel>
+            <Select
+              labelId="cashpost-payment-method-label"
+              label="Payment Method"
+              value={paymentType}
+              onChange={(e) => setPaymentType(e.target.value)}
+            >
+              <MenuItem value="CASH">Cash</MenuItem>
+              <MenuItem value="BANK_TELLER">Bank Teller</MenuItem>
+            </Select>
+          </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 180, mb: 2 }}>
-          <Select value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
-            <MenuItem value="CASH">Cash</MenuItem>
-            <MenuItem value="BANK_TELLER">Bank Teller</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* POST CASH BUTTON */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
-          <Button variant="contained" size="small" onClick={handlePostCash} disabled={posting || [...compFees, ...optFees].filter((f) => f.checked).length === 0}
-            sx={{ px: 6, py: 1.5, fontSize: '1rem', fontWeight: 700 }}
+          <Button
+            variant="contained"
+            onClick={handlePostCash}
+            disabled={posting || selectedFees.length === 0}
+            sx={{
+              px: 5,
+              py: 1.2,
+              fontSize: '1rem',
+              fontWeight: 700,
+              width: { xs: '100%', sm: 'auto' },
+            }}
           >
             {posting ? <CircularProgress size={22} sx={{ mr: 1 }} /> : null}
-            {posting
-              ? 'Posting...'
-              : `Post All Cash — ₦${format(
-                  [...compFees, ...optFees]
-                    .filter((f) => f.checked)
-                    .reduce((sum, f) => sum + getPayable(f), 0),
-                )}`}
+            {posting ? 'Posting...' : `Post All Cash — ₦${format(selectedToPostTotal)}`}
           </Button>
-        </Box>
+        </Paper>
       </Box>
     </PageContainer>
   );

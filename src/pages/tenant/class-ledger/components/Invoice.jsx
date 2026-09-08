@@ -544,8 +544,8 @@ const Invoice = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
-  const termLabel = sessionInfo?.term || '';
-  const sessionLabel = sessionInfo?.session || '';
+  const studentGender = studentInfo?.gender || '';
+  const studentArm = studentInfo?.class_arm || '';
   const invoiceNumber = invoiceInfo?.invoice_number || '';
 
   const breadcrumbTitle = `Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
@@ -603,13 +603,42 @@ const Invoice = () => {
             <Box sx={{ minWidth: 0 }}>
               <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   fontWeight={800}
                   color="text.primary"
                   sx={{ lineHeight: 1.3 }}
                 >
                   {studentName}
                 </Typography>
+                {studentGender && (
+                  <Chip
+                    label={
+                      studentGender.toLowerCase() === 'male'
+                        ? 'Male'
+                        : studentGender.toLowerCase() === 'female'
+                          ? 'Female'
+                          : studentGender
+                    }
+                    size="small"
+                    color={
+                      studentGender.toLowerCase() === 'male'
+                        ? 'info'
+                        : studentGender.toLowerCase() === 'female'
+                          ? 'secondary'
+                          : 'default'
+                    }
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+                {studentArm && (
+                  <Chip
+                    label={`Arm ${studentArm}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
                 {invoiceNumber && (
                   <Chip
                     label={`Invoice #${invoiceNumber}`}
@@ -621,37 +650,51 @@ const Invoice = () => {
                 )}
               </Stack>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                <strong>Learner ID:</strong> {studentLearnerId}
-                <Box component="span" sx={{ mx: 0.75 }}>
-                  ·
-                </Box>
-                <strong>Class:</strong> {studentClassName}
+              <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mt: 0.25 }}>
+                {studentLearnerId} &nbsp;·&nbsp; {studentClassName}
               </Typography>
 
-              <Typography variant="body2" color="text.secondary">
-                {/* <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel} */}
-                <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
-                {activeSessionInfo.term}
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                {activeSessionInfo.session} {activeSessionInfo.term}
               </Typography>
             </Box>
           </Box>
 
-          {/* BACK BUTTON */}
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<ArrowBackIcon fontSize="small" />}
-            onClick={() => navigate(isParentView ? '/dashboard' : '/class-ledger')}
+          {/* RIGHT — live total reflecting the discount/penalty edits below, */}
+          {/* plus the way back. Previously computed but never shown.        */}
+          <Box
             sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              alignSelf: { xs: 'flex-start', md: 'center' },
-              flexShrink: 0,
+              display: 'flex',
+              flexDirection: { xs: 'row', md: 'column' },
+              alignItems: { xs: 'center', md: 'flex-end' },
+              justifyContent: { xs: 'space-between', md: 'flex-start' },
+              gap: { xs: 2, md: 1 },
+              width: { xs: '100%', md: 'auto' },
             }}
           >
-            Go To Class Ledger
-          </Button>
+            <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Total Payable
+              </Typography>
+              <Typography variant="h6" fontWeight={800} color="primary.main">
+                ₦{format(grandTotal)}
+              </Typography>
+            </Box>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ArrowBackIcon fontSize="small" />}
+              onClick={() => navigate(isParentView ? '/dashboard' : '/class-ledger')}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                flexShrink: 0,
+              }}
+            >
+              Go To Class Ledger
+            </Button>
+          </Box>
         </Box>
 
         {/* ERROR ALERT */}
@@ -678,229 +721,256 @@ const Invoice = () => {
             borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
           }}
         >
-        {renderHeaderBlock({
-          title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-          borderLeftColor: '#10b981',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              <Typography variant="caption" fontWeight={700} color="text.secondary">
-                Subtotal ₦{format(compTotal)}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Discount
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={compDiscountGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'comp', field: 'discount' });
-                      setGlobalModalValue('');
-                    } else {
-                      setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                      );
-                      setCompDiscountGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Penalty
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={compPenaltyGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
-                      setGlobalModalValue('');
-                    } else {
-                      setCompFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                      );
-                      setCompPenaltyGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-          ),
-        })}
-
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-          }}
-        >
-        {compFees.length === 0 ? (
-          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2.5 }}>
-            No compulsory fees found for this invoice.
-          </Typography>
-        ) : (
-        <Stack spacing={1}>
-        {compFees.map((fee, idx) => {
-          const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-          const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-          const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-          const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-          const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
-
-          return (
-            <Paper
-              key={fee.id}
-              variant="outlined"
-              sx={{
-                p: 0.75,
-                borderRadius: 2,
-                overflowX: 'auto',
-                borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-                bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-              }}
-            >
+          {renderHeaderBlock({
+            title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
+            borderLeftColor: '#10b981',
+            icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+            action: (
               <Box
                 sx={{
                   display: 'flex',
+                  flexWrap: 'wrap',
                   alignItems: 'center',
-                  gap: 1,
-                  flexWrap: 'nowrap',
+                  gap: { xs: 1.5, sm: 3 },
+                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                 }}
               >
-                {/* Description + amount breakdown — one truncating line */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    gap: 0.75,
-                    minWidth: 0,
-                    flex: '1 1 160px',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    fontWeight={700}
-                    color="text.primary"
-                    noWrap
-                    sx={{ flexShrink: 0, maxWidth: '50%' }}
-                  >
-                    {idx + 1}. {fee.description}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color="text.secondary"
-                    noWrap
-                    sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
-                  >
-                    ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
-                  </Typography>
-                </Box>
-
-                {/* Discount / Penalty controls — between description and payable */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  Subtotal ₦{format(compTotal)}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
                     Discount
                   </Typography>
                   <Switch
                     size="small"
-                    checked={discountRowEnabled}
-                    disabled={compDiscountGlobal}
-                    onChange={(e) =>
-                      handleDiscountSwitchChange('comp', fee.id, e.target.checked)
-                    }
+                    checked={compDiscountGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'comp', field: 'discount' });
+                        setGlobalModalValue('');
+                      } else {
+                        setCompFees((prev) =>
+                          prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
+                        );
+                        setCompDiscountGlobal(false);
+                      }
+                    }}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
                         color: '#8338ec',
-                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
                       },
                     }}
                   />
-                  <TextField
-                    size="small"
-                    type="number"
-                    sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                    disabled={!discountFieldEnabled}
-                    value={fee.discount}
-                    onChange={(e) => handleDiscountValueChange('comp', fee.id, e.target.value)}
-                    inputProps={{ min: 0 }}
-                  />
                 </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
                     Penalty
                   </Typography>
                   <Switch
                     size="small"
-                    checked={penaltyRowEnabled}
-                    disabled={compPenaltyGlobal}
-                    onChange={(e) =>
-                      handlePenaltySwitchChange('comp', fee.id, e.target.checked)
-                    }
+                    checked={compPenaltyGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
+                        setGlobalModalValue('');
+                      } else {
+                        setCompFees((prev) =>
+                          prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
+                        );
+                        setCompPenaltyGlobal(false);
+                      }
+                    }}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
                         color: '#8338ec',
-                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
                       },
                     }}
                   />
-                  <TextField
-                    size="small"
-                    type="number"
-                    sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                    disabled={!penaltyFieldEnabled}
-                    value={fee.penalty}
-                    onChange={(e) => handlePenaltyValueChange('comp', fee.id, e.target.value)}
-                    inputProps={{ min: 0 }}
-                  />
                 </Box>
-
-                {/* Payable — final, right-most: the result after discount/penalty.   */}
-                {/* ml pushes it a bit further from the penalty field, not flush against it. */}
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={800}
-                  color="primary.main"
-                  sx={{ flexShrink: 0, minWidth: 68, textAlign: 'right', fontSize: '1.1rem', ml: 1.5 }}
-                >
-                  ₦{format(payable)}
-                </Typography>
               </Box>
-            </Paper>
-          );
-        })}
-        </Stack>
-        )}
-        </Box>
+            ),
+          })}
+
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+            }}
+          >
+            {compFees.length === 0 ? (
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 2.5 }}
+              >
+                No compulsory fees found for this invoice.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {compFees.map((fee, idx) => {
+                  const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
+                  const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
+                  const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
+                  const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
+                  const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
+
+                  return (
+                    <Paper
+                      key={fee.id}
+                      variant="outlined"
+                      sx={{
+                        p: 0.75,
+                        borderRadius: 2,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        }}
+                      >
+                        {/* Description + amount breakdown — one truncating line */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: 0.75,
+                            minWidth: 0,
+                            flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                            maxWidth: { sm: '38%' },
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight={700}
+                            color="text.primary"
+                            noWrap
+                            sx={{ flexShrink: 0, maxWidth: '55%' }}
+                          >
+                            {idx + 1}. {fee.description}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.secondary"
+                            noWrap
+                            sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                          >
+                            ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
+                          </Typography>
+                        </Box>
+
+                        {/* Discount / Penalty controls — centered in the space between description and payable */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 2,
+                            flex: { xs: '1 1 100%', sm: 1 },
+                          }}
+                        >
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}
+                          >
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                              Discount
+                            </Typography>
+                            <Switch
+                              size="small"
+                              checked={discountRowEnabled}
+                              disabled={compDiscountGlobal}
+                              onChange={(e) =>
+                                handleDiscountSwitchChange('comp', fee.id, e.target.checked)
+                              }
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#8338ec',
+                                  '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                                },
+                              }}
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              disabled={!discountFieldEnabled}
+                              value={fee.discount}
+                              onChange={(e) =>
+                                handleDiscountValueChange('comp', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </Box>
+
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}
+                          >
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                              Penalty
+                            </Typography>
+                            <Switch
+                              size="small"
+                              checked={penaltyRowEnabled}
+                              disabled={compPenaltyGlobal}
+                              onChange={(e) =>
+                                handlePenaltySwitchChange('comp', fee.id, e.target.checked)
+                              }
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#8338ec',
+                                  '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                                },
+                              }}
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              disabled={!penaltyFieldEnabled}
+                              value={fee.penalty}
+                              onChange={(e) =>
+                                handlePenaltyValueChange('comp', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* Payable — final, right-most: the result after discount/penalty */}
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={800}
+                          color="primary.main"
+                          sx={{
+                            flexShrink: 0,
+                            minWidth: 68,
+                            textAlign: { xs: 'left', sm: 'right' },
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          ₦{format(payable)}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            )}
+          </Box>
         </Paper>
 
         {/* ══════════════════════════════════════════════ */}
@@ -916,248 +986,272 @@ const Invoice = () => {
             borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
           }}
         >
-        {renderHeaderBlock({
-          title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-          borderLeftColor: '#3b82f6',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 3 },
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              {optionalEnabled && optFees.length > 0 && (
-                <Typography variant="caption" fontWeight={700} color="text.secondary">
-                  Subtotal ₦{format(optTotal)}
-                </Typography>
-              )}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Discount
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={optDiscountGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'opt', field: 'discount' });
-                      setGlobalModalValue('');
-                    } else {
-                      setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
-                      );
-                      setOptDiscountGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  Penalty
-                </Typography>
-
-                <Switch
-                  size="small"
-                  checked={optPenaltyGlobal}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
-                      setGlobalModalValue('');
-                    } else {
-                      setOptFees((prev) =>
-                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
-                      );
-                      setOptPenaltyGlobal(false);
-                    }
-                  }}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': {
-                        backgroundColor: '#8338ec',
-                      },
-                    },
-                  }}
-                />
-              </Box>
-              <Switch
-                checked={optionalEnabled}
-                onChange={(e) => setOptionalEnabled(e.target.checked)}
+          {renderHeaderBlock({
+            title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
+            borderLeftColor: '#3b82f6',
+            icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+            action: (
+              <Box
                 sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#8338ec',
-                    '& + .MuiSwitch-track': {
-                      backgroundColor: '#8338ec',
-                    },
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={handleOpenOptionalModal}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: { xs: 1.5, sm: 3 },
+                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                 }}
               >
-                Add Optional Pay.
-              </Button>
-            </Box>
-          ),
-        })}
+                {optionalEnabled && optFees.length > 0 && (
+                  <Typography variant="caption" fontWeight={700} color="text.secondary">
+                    Subtotal ₦{format(optTotal)}
+                  </Typography>
+                )}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                    Discount
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={optDiscountGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'opt', field: 'discount' });
+                        setGlobalModalValue('');
+                      } else {
+                        setOptFees((prev) =>
+                          prev.map((f) => ({ ...f, discount: 0, discountEnabled: false })),
+                        );
+                        setOptDiscountGlobal(false);
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                    Penalty
+                  </Typography>
 
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-          }}
-        >
-        {optionalEnabled && optFees.length > 0 ? (
-          <Stack spacing={1}>
-            {optFees.map((fee, idx) => {
-              const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-              const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-              const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-              const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-              const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
-
-              return (
-                <Paper
-                  key={fee.id}
-                  variant="outlined"
+                  <Switch
+                    size="small"
+                    checked={optPenaltyGlobal}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
+                        setGlobalModalValue('');
+                      } else {
+                        setOptFees((prev) =>
+                          prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false })),
+                        );
+                        setOptPenaltyGlobal(false);
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': {
+                          backgroundColor: '#8338ec',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+                <Switch
+                  checked={optionalEnabled}
+                  onChange={(e) => setOptionalEnabled(e.target.checked)}
                   sx={{
-                    p: 0.75,
-                    borderRadius: 2,
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#8338ec',
+                      '& + .MuiSwitch-track': {
+                        backgroundColor: '#8338ec',
+                      },
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenOptionalModal}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      flexWrap: 'nowrap',
-                    }}
-                  >
-                    {/* Description + amount breakdown — one truncating line */}
-                    <Box
+                  Add Optional Pay.
+                </Button>
+              </Box>
+            ),
+          })}
+
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+            }}
+          >
+            {optionalEnabled && optFees.length > 0 ? (
+              <Stack spacing={1}>
+                {optFees.map((fee, idx) => {
+                  const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
+                  const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
+                  const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
+                  const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
+                  const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
+
+                  return (
+                    <Paper
+                      key={fee.id}
+                      variant="outlined"
                       sx={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: 0.75,
-                        minWidth: 0,
-                        flex: '1 1 160px',
+                        p: 0.75,
+                        borderRadius: 2,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        fontWeight={700}
-                        color="text.primary"
-                        noWrap
-                        sx={{ flexShrink: 0, maxWidth: '50%' }}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        }}
                       >
-                        {idx + 1}. {fee.description}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color="text.secondary"
-                        noWrap
-                        sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
-                      >
-                        ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
-                      </Typography>
-                    </Box>
+                        {/* Description + amount breakdown — one truncating line */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: 0.75,
+                            minWidth: 0,
+                            flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                            maxWidth: { sm: '38%' },
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight={700}
+                            color="text.primary"
+                            noWrap
+                            sx={{ flexShrink: 0, maxWidth: '55%' }}
+                          >
+                            {idx + 1}. {fee.description}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.secondary"
+                            noWrap
+                            sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                          >
+                            ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
+                          </Typography>
+                        </Box>
 
-                    {/* Discount / Penalty controls — between description and payable */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Discount
-                      </Typography>
-                      <Switch
-                        size="small"
-                        checked={discountRowEnabled}
-                        disabled={optDiscountGlobal}
-                        onChange={(e) =>
-                          handleDiscountSwitchChange('opt', fee.id, e.target.checked)
-                        }
-                      />
-                      <TextField
-                        size="small"
-                        type="number"
-                        sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                        disabled={!discountFieldEnabled}
-                        value={fee.discount}
-                        onChange={(e) =>
-                          handleDiscountValueChange('opt', fee.id, e.target.value)
-                        }
-                        inputProps={{ min: 0 }}
-                      />
-                    </Box>
+                        {/* Discount / Penalty controls — centered in the space between description and payable */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 2,
+                            flex: { xs: '1 1 100%', sm: 1 },
+                          }}
+                        >
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}
+                          >
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                              Discount
+                            </Typography>
+                            <Switch
+                              size="small"
+                              checked={discountRowEnabled}
+                              disabled={optDiscountGlobal}
+                              onChange={(e) =>
+                                handleDiscountSwitchChange('opt', fee.id, e.target.checked)
+                              }
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              disabled={!discountFieldEnabled}
+                              value={fee.discount}
+                              onChange={(e) =>
+                                handleDiscountValueChange('opt', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </Box>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                        Penalty
-                      </Typography>
-                      <Switch
-                        size="small"
-                        checked={penaltyRowEnabled}
-                        disabled={optPenaltyGlobal}
-                        onChange={(e) =>
-                          handlePenaltySwitchChange('opt', fee.id, e.target.checked)
-                        }
-                      />
-                      <TextField
-                        size="small"
-                        type="number"
-                        sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                        disabled={!penaltyFieldEnabled}
-                        value={fee.penalty}
-                        onChange={(e) =>
-                          handlePenaltyValueChange('opt', fee.id, e.target.value)
-                        }
-                        inputProps={{ min: 0 }}
-                      />
-                    </Box>
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}
+                          >
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                              Penalty
+                            </Typography>
+                            <Switch
+                              size="small"
+                              checked={penaltyRowEnabled}
+                              disabled={optPenaltyGlobal}
+                              onChange={(e) =>
+                                handlePenaltySwitchChange('opt', fee.id, e.target.checked)
+                              }
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              disabled={!penaltyFieldEnabled}
+                              value={fee.penalty}
+                              onChange={(e) =>
+                                handlePenaltyValueChange('opt', fee.id, e.target.value)
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </Box>
+                        </Box>
 
-                    {/* Payable — final, right-most: the result after discount/penalty.   */}
-                    {/* ml pushes it a bit further from the penalty field, not flush against it. */}
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={800}
-                      color="primary.main"
-                      sx={{ flexShrink: 0, minWidth: 68, textAlign: 'right', fontSize: '1.1rem', ml: 1.5 }}
-                    >
-                      ₦{format(payable)}
-                    </Typography>
-                  </Box>
-                </Paper>
-              );
-            })}
-          </Stack>
-        ) : optionalEnabled ? (
-          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2.5 }}>
-            No optional payment set for this student.
-          </Typography>
-        ) : null}
-        </Box>
+                        {/* Payable — final, right-most: the result after discount/penalty */}
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={800}
+                          color="primary.main"
+                          sx={{
+                            flexShrink: 0,
+                            minWidth: 68,
+                            textAlign: { xs: 'left', sm: 'right' },
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          ₦{format(payable)}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            ) : optionalEnabled ? (
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 2.5 }}
+              >
+                No optional payment set for this student.
+              </Typography>
+            ) : null}
+          </Box>
         </Paper>
 
         {/* UPDATE INVOICE BUTTON */}
@@ -1232,10 +1326,10 @@ const Invoice = () => {
               }
             >
               No optional payments available for this class/category. This opens Bursary Setup →
-              Payment Name in a new tab, with "Add New" already open and Optional preselected —
-              so you don't lose your place here. After saving it there, go to Payment Schedule →
-              Set Schedule → Optional tab to set the schedule for the relevant classes — it won't
-              show up here until that's done.
+              Payment Name in a new tab, with "Add New" already open and Optional preselected — so
+              you don't lose your place here. After saving it there, go to Payment Schedule → Set
+              Schedule → Optional tab to set the schedule for the relevant classes — it won't show
+              up here until that's done.
             </Alert>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>

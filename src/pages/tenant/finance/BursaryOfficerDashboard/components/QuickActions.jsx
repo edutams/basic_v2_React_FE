@@ -57,7 +57,7 @@ const QuickActions = ({ onAction }) => {
           return (
             <Button
               key={item.action}
-              variant="contained"
+              variant="outlined"
               disableElevation
               onClick={() => onAction && onAction(item.action)}
               startIcon={<Icon sx={{ fontSize: 16 }} />}
@@ -68,17 +68,15 @@ const QuickActions = ({ onAction }) => {
                 fontSize: '11px',
                 fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.bg,
+                bgcolor: 'transparent',
                 color: item.color,
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                borderColor: item.color,
                 transition: 'all 0.18s ease',
                 '&:hover': {
-                  bgcolor: item.color,
-                  color: '#ffffff',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : `${item.color}0D`,
+                  borderColor: item.color,
+                  color: item.color,
                   transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                 },
               }}
             >

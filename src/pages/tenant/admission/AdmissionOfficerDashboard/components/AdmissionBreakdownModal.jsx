@@ -278,19 +278,20 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
                           <Chip
                             label={formatValue(row, col)}
                             size="small"
-                            color={
-                              String(row[col.key]).toLowerCase() === 'active' ||
-                              String(row[col.key]).toLowerCase() === 'admitted' ||
-                              String(row[col.key]).toLowerCase() === 'accepted' ||
-                              String(row[col.key]).toLowerCase() === 'open' ||
-                              String(row[col.key]).toLowerCase() === 'graded'
-                                ? 'success'
-                                : String(row[col.key]).toLowerCase() === 'pending' ||
-                                    String(row[col.key]).toLowerCase() === 'scheduled'
-                                  ? 'warning'
-                                  : 'default'
-                            }
-                            sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                            sx={{
+                              fontSize: 10,
+                              height: 20,
+                              fontWeight: 700,
+                              // Solid hex tokens instead of MUI's color="warning" —
+                              // this theme's warning.main is a pale gold that,
+                              // combined with the white contrastText a filled
+                              // Chip uses, renders as near-illegible white-on-gold.
+                              ...(['active', 'admitted', 'accepted', 'open', 'graded'].includes(String(row[col.key]).toLowerCase())
+                                ? { bgcolor: '#dcfce7', color: '#16a34a' }
+                                : ['pending', 'scheduled'].includes(String(row[col.key]).toLowerCase())
+                                  ? { bgcolor: '#fef3c7', color: '#d97706' }
+                                  : { bgcolor: '#f1f5f9', color: '#64748b' }),
+                            }}
                           />
                         ) : (
                           formatValue(row, col)

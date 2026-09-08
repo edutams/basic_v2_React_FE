@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Snackbar, Alert, useTheme } from '@mui/material';
 
 const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
+
+  const comingSoon = (title) => () => setSnackbar({ open: true, message: `${title} — Page under development` });
 
   const actions = [
     {
@@ -25,14 +30,18 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
       iconColor: '#2563eb',
       iconBg: '#dbeafe',
       title: 'Message Teacher',
-      onClick: () => navigate('/school-calendar'),
+      // No messaging feature exists yet — this used to navigate to
+      // /school-calendar, an unrelated page.
+      onClick: comingSoon('Message Teacher'),
     },
     {
       id: 'download_reports',
       iconColor: '#ea580c',
       iconBg: '#ffedd5',
       title: 'Download Reports',
-      onClick: () => navigate('/dashboard'),
+      // Used to navigate to /dashboard (itself) — a no-op that downloaded
+      // nothing. No parent-facing reports page exists yet.
+      onClick: comingSoon('Download Reports'),
     },
     {
       id: 'payment_history',
@@ -46,7 +55,8 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
       iconColor: '#e11d48',
       iconBg: '#ffe4e6',
       title: 'Attendance Overview',
-      onClick: () => navigate('/dashboard'),
+      // Used to navigate to /dashboard (itself) — same no-op issue.
+      onClick: comingSoon('Attendance Overview'),
     },
   ];
 
@@ -58,8 +68,9 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
     <Box>
       <Box
         sx={{
-          bgcolor: '#ffffff',
-          border: '1px solid #e2e8f0',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
           borderRadius: '14px',
           px: 1.25,
           py: 0.75,
@@ -70,7 +81,7 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
           {visibleActions.map((item) => (
             <Button
               key={item.id}
-              variant="contained"
+              variant="outlined"
               disableElevation
               onClick={item.onClick}
               sx={{
@@ -80,16 +91,15 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
                 fontSize: '10px',
                 fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: item.iconBg,
+                bgcolor: 'transparent',
                 color: item.iconColor,
-                border: '1px solid transparent',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                borderColor: item.iconColor,
                 transition: 'all 0.18s ease',
                 '&:hover': {
-                  bgcolor: item.iconColor,
-                  color: '#ffffff',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : `${item.iconColor}0D`,
+                  borderColor: item.iconColor,
+                  color: item.iconColor,
                   transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                 },
               }}
             >
@@ -98,6 +108,22 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
           ))}
         </Box>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

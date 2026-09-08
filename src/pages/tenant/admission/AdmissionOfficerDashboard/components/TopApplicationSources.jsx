@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, Stack, Button, useTheme, Skeleton } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { useNavigate } from 'react-router-dom';
+import { useNotification } from 'src/hooks/useNotification';
 
 const defaultSourcesData = [
   { name: 'School Website', value: 1286, pct: 33.5, color: '#1d4ed8' },
@@ -17,7 +17,7 @@ const defaultSourcesData = [
  * Top Application Sources Donut Chart Component
  */
 const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants = 3842, onViewSourceReport, loading = false }) => {
-  const navigate = useNavigate();
+  const notify = useNotification();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -163,7 +163,9 @@ const TopApplicationSources = ({ sources = defaultSourcesData, totalApplicants =
       <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
         <Button
           disableRipple
-          onClick={() => (onViewSourceReport ? onViewSourceReport() : navigate('/application-tracker'))}
+          onClick={() =>
+            onViewSourceReport ? onViewSourceReport() : notify.info('Source Report — page under development')
+          }
           endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
           sx={{ fontSize: '12px' }}
         >

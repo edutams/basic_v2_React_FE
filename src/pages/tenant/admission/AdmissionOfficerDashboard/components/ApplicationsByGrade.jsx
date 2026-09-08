@@ -16,7 +16,7 @@ import {
   Alert,
 } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNotification } from 'src/hooks/useNotification';
 
 /**
  * Applications by Grade Level Table Component
@@ -26,7 +26,7 @@ const ApplicationsByGrade = ({
   onViewFullReport,
   loading = false,
 }) => {
-  const navigate = useNavigate();
+  const notify = useNotification();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -149,7 +149,12 @@ const ApplicationsByGrade = ({
       <Box sx={{ pt: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', mt: 1.5 }}>
         <Button
           disableRipple
-          onClick={() => (onViewFullReport ? onViewFullReport() : navigate('/application-tracker'))}
+          onClick={() =>
+            // /application-tracker needs a specific applicant id/state and is
+            // an individual's timeline, not a report — no dedicated grade
+            // report page exists yet, so surface that instead of a broken nav.
+            onViewFullReport ? onViewFullReport() : notify.info('Full Grade Level Report — page under development')
+          }
              endIcon={<ArrowForward sx={{ fontSize: '15px !important' }} />}
             sx={{ fontSize: '12px' }}
         >

@@ -556,6 +556,15 @@ const NewApplication = () => {
   // Enforce step validation - redirect if user tries to access a step beyond their allowed step
   // But allow temporary exceeding during legitimate progression (will be validated on next render)
   useEffect(() => {
+    // maxAllowedStep defaults to 0 the instant this page mounts, before the
+    // batch (and, when resuming, the admission itself) have actually loaded.
+    // Enforcing against that transient default kicks a resuming user back to
+    // step 1 before their real progress is known; once the real data lands a
+    // moment later, the resume-sync effect below pushes activeStep forward
+    // again — so without this guard the step visibly bounces on every load.
+    if (!batchLoaded) return undefined;
+    if (resumeApplication && !admissionId) return undefined;
+
     // Don't enforce if we're in a transition (activeStep was just updated by handleNext)
     // This prevents blocking legitimate progression
     const timer = setTimeout(() => {
@@ -573,7 +582,7 @@ const NewApplication = () => {
     }, 100); // Small delay to allow state updates to complete
 
     return () => clearTimeout(timer);
-  }, [activeStep, maxAllowedStep, navigate, location.state, notify]);
+  }, [activeStep, maxAllowedStep, navigate, location.state, notify, batchLoaded, resumeApplication, admissionId]);
 
   // Update activeStep when currentStage changes (for resuming applications)
   useEffect(() => {

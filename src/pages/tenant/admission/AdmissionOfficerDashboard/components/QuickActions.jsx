@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip, Skeleton } from '@mui/material';
+import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip, Skeleton, Snackbar, Alert } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import {
   AddBoxOutlined,
@@ -33,6 +33,7 @@ const QuickActions = ({ loading = false }) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   const handleAction = (action) => {
     switch (action) {
@@ -52,7 +53,10 @@ const QuickActions = ({ loading = false }) => {
         navigate('/process-applications', { state: { tab: 'individual' } });
         break;
       case 'admission_report':
-        navigate('/application-tracker');
+        // /application-tracker needs a specific applicant id/state and is
+        // an individual's timeline, not a report — there's no admissions
+        // report page yet, so surface that instead of a broken navigation.
+        setSnackbar({ open: true, message: 'Admission Report — Page under development' });
         break;
       default:
         break;
@@ -145,7 +149,7 @@ const QuickActions = ({ loading = false }) => {
             return (
               <Button
                 key={item.action}
-                variant="contained"
+                variant="outlined"
                 disableElevation
                 startIcon={<Icon sx={{ fontSize: 16 }} />}
                 onClick={() => handleAction(item.action)}
@@ -156,17 +160,15 @@ const QuickActions = ({ loading = false }) => {
                   fontSize: '11px',
                   fontWeight: 700,
                   textTransform: 'none',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.bg,
+                  bgcolor: 'transparent',
                   color: item.color,
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  borderColor: item.color,
                   transition: 'all 0.18s ease',
                   '&:hover': {
-                    bgcolor: item.color,
-                    color: '#ffffff',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.06)' : `${item.color}0D`,
+                    borderColor: item.color,
+                    color: item.color,
                     transform: 'translateY(-1px)',
-                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                   },
                 }}
               >
@@ -351,6 +353,22 @@ const QuickActions = ({ loading = false }) => {
           </Box>
         )}
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

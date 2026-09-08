@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, Grid, CircularProgress, useTheme, Skeleton, Alert } from '@mui/material';
-import { ArrowUpward } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import {
   ResponsiveContainer,
   LineChart,
@@ -27,6 +27,7 @@ const ApplicationTrend = ({
   const newThisMonth = (metrics.new_this_month ?? 0).toLocaleString();
   const avgPerMonth = (metrics.avg_per_month ?? 0).toLocaleString();
   const vsLastSession = metrics.vs_last_session ?? '0%';
+  const vsLastSessionIsDown = String(vsLastSession).trim().startsWith('-');
 
   return (
     <Paper
@@ -187,9 +188,13 @@ const ApplicationTrend = ({
             <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
               vs Last Session
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: '#16a34a' }}>
-              <ArrowUpward sx={{ fontSize: 14 }} />
-              <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: '#16a34a' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: vsLastSessionIsDown ? '#dc2626' : '#16a34a' }}>
+              {vsLastSessionIsDown ? <ArrowDownward sx={{ fontSize: 14 }} /> : <ArrowUpward sx={{ fontSize: 14 }} />}
+              <Typography
+                variant="subtitle1"
+                fontWeight={800}
+                sx={{ fontSize: '13.5px', color: vsLastSessionIsDown ? '#dc2626' : '#16a34a' }}
+              >
                 {vsLastSession}
               </Typography>
             </Box>

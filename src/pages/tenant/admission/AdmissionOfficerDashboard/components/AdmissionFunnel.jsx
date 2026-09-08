@@ -1,10 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Box, Paper, Skeleton, useTheme } from '@mui/material';
 import ReusableFunnelChart from '@/components/shared/charts/ReusableFunnelChart';
+import { useNotification } from 'src/hooks/useNotification';
 
 const AdmissionFunnel = ({ funnel = [], onViewFullReport, loading = false }) => {
-  const navigate = useNavigate();
+  const notify = useNotification();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -42,7 +42,11 @@ const AdmissionFunnel = ({ funnel = [], onViewFullReport, loading = false }) => 
       title="ADMISSION FUNNEL"
       layout="apex"
       footerLabel="View Full Funnel Report"
-      onFooterClick={() => (onViewFullReport ? onViewFullReport() : navigate('/admission/tracker'))}
+      onFooterClick={() =>
+        // No dedicated funnel-report page exists yet — the previous target
+        // (/admission/tracker) doesn't match any route and just 404'd.
+        onViewFullReport ? onViewFullReport() : notify.info('Full Funnel Report — page under development')
+      }
     />
   );
 };

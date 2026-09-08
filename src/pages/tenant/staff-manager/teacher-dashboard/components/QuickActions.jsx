@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, Snackbar, Alert, useTheme } from "@mui/material";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -22,7 +22,9 @@ const actions = [
     icon: AssignmentOutlinedIcon,
     color: "#7c3aed",
     bg: "#ede9fe",
-    path: "/",
+    // No assignment-creation page exists yet — this used to point at "/",
+    // which just reloaded the teacher's own dashboard.
+    path: null,
   },
   {
     id: "quiz",
@@ -30,7 +32,7 @@ const actions = [
     icon: HelpOutlineOutlinedIcon,
     color: "#ea580c",
     bg: "#ffedd5",
-    path: "/",
+    path: null,
   },
   {
     id: "upload",
@@ -38,7 +40,7 @@ const actions = [
     icon: CloudUploadOutlinedIcon,
     color: "#2563eb",
     bg: "#dbeafe",
-    path: "/",
+    path: null,
   },
   {
     id: "timetable",
@@ -46,7 +48,7 @@ const actions = [
     icon: CalendarMonthOutlinedIcon,
     color: "#334155",
     bg: "#e2e8f0",
-    path: "/",
+    path: null,
   },
 ];
 
@@ -54,10 +56,13 @@ export default function QuickActions() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const navigate = useNavigate();
+  const [snackbar, setSnackbar] = useState({ open: false, message: "" });
 
-  const handleActionClick = (path) => {
-    if (path) {
-      navigate(path);
+  const handleActionClick = (item) => {
+    if (item.path) {
+      navigate(item.path);
+    } else {
+      setSnackbar({ open: true, message: `${item.label} — Page under development` });
     }
   };
 
@@ -89,9 +94,9 @@ export default function QuickActions() {
           return (
             <Button
               key={item.id}
-              variant="contained"
+              variant="outlined"
               disableElevation
-              onClick={() => handleActionClick(item.path)}
+              onClick={() => handleActionClick(item)}
               startIcon={<Icon sx={{ fontSize: 16 }} />}
               sx={{
                 borderRadius: "8px",
@@ -100,17 +105,15 @@ export default function QuickActions() {
                 fontSize: "11px",
                 fontWeight: 700,
                 textTransform: "none",
-                bgcolor: isDark ? "rgba(255,255,255,0.08)" : item.bg,
+                bgcolor: "transparent",
                 color: item.color,
-                border: "1px solid",
-                borderColor: isDark ? "rgba(255,255,255,0.12)" : "transparent",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                borderColor: item.color,
                 transition: "all 0.18s ease",
                 "&:hover": {
-                  bgcolor: item.color,
-                  color: "#ffffff",
+                  bgcolor: isDark ? "rgba(255,255,255,0.06)" : `${item.color}0D`,
+                  borderColor: item.color,
+                  color: item.color,
                   transform: "translateY(-1px)",
-                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
                 },
               }}
             >
@@ -119,6 +122,22 @@ export default function QuickActions() {
           );
         })}
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: "" })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: "" })}
+          severity="info"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

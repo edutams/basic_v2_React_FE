@@ -46,7 +46,7 @@ import {
 } from '@/api/tenant/bursary/paymentNameApi';
 import ReusableModal from '@/components/shared/ReusableModal';
 
-const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
+const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayOption }) => {
   const [paymentNames, setPaymentNames] = useState([]);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(0);
@@ -154,6 +154,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     setEditingPayment(null);
     setModalOpen(true);
   };
+
+  // Lets a link from elsewhere (e.g. "no optional payments set up yet")
+  // land here with the Add modal already open and the right type preselected,
+  // instead of the admin having to find "Add New" and the dropdown themselves.
+  useEffect(() => {
+    if (autoOpenAdd) {
+      handleAddPayment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenAdd]);
 
   const handleEditPayment = (payment) => {
     setEditingPayment(payment);
@@ -521,6 +531,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
         onClose={() => setModalOpen(false)}
         onSave={handleSavePayment}
         paymentName={editingPayment}
+        defaultPayOption={!editingPayment ? defaultPayOption : undefined}
       />
     </>
   );

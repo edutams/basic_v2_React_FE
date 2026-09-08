@@ -133,7 +133,7 @@ const ArmChip = ({ value, studentCount = 0, onRename, onRemove, disabled }) => {
 
   return locked ? (
     <Tooltip
-      title={`${studentCount} learner(s) enrolled — cannot be removed. You can still rename it.`}
+      title={`${studentCount} learner(s) enrolled — cannot be removed. You can still rename it by clicking the label.`}
     >
       {chip}
     </Tooltip>
@@ -610,8 +610,7 @@ const SetUpClassesTab = forwardRef(
                   bgcolor: (theme) =>
                     theme.palette.mode === 'dark' ? 'action.hover' : SECTION_HEADER_BG,
                   borderBottom: '1px solid',
-                  borderColor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'divider' : '#aab1b9',
+                  borderColor: (theme) => (theme.palette.mode === 'dark' ? 'divider' : '#aab1b9'),
                 }}
                 onClick={() => toggleGroup(group.key)}
               >

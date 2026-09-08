@@ -4,12 +4,6 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Box,
   Avatar,
@@ -28,15 +22,13 @@ import {
   Divider,
   Stack,
   IconButton,
-  FormControl,
-  Select,
-  MenuItem,
   FormControlLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { getStudentSchedule, updateStudentInvoice } from '@/api/tenant/bursary/classLedger';
 import {
@@ -132,23 +124,6 @@ const Invoice = () => {
     setGlobalModal({ ...globalModal, open: false });
   };
 
-  /* ACTIONS */
-  const handleCompCheckChange = (id, checked) => {
-    setCompFees((prev) => prev.map((f) => (f.id === id ? { ...f, checked } : f)));
-  };
-
-  const handleOptCheckChange = (id, checked) => {
-    setOptFees((prev) => prev.map((f) => (f.id === id ? { ...f, checked } : f)));
-  };
-
-  const handleAllCompCheckChange = (checked) => {
-    setCompFees((prev) => prev.map((f) => ({ ...f, checked })));
-  };
-
-  const handleAllOptCheckChange = (checked) => {
-    setOptFees((prev) => prev.map((f) => ({ ...f, checked })));
-  };
-
   /* DISCOUNT / PENALTY UPDATE ACTIONS */
   const handleDiscountValueChange = (type, id, val) => {
     const setter = type === 'comp' ? setCompFees : setOptFees;
@@ -188,14 +163,15 @@ const Invoice = () => {
     return Math.max(0, baseAmount - discount + penalty);
   };
 
-  /* COMPUTATIONS */
+  /* COMPUTATIONS — this page updates discount/penalty on the whole invoice
+     (no per-fee selection to pay), so totals sum every listed fee. */
   const compTotal = compFees.reduce((acc, f) => {
-    return f.checked ? acc + getPayable(f, compDiscountGlobal, compPenaltyGlobal) : acc;
+    return acc + getPayable(f, compDiscountGlobal, compPenaltyGlobal);
   }, 0);
 
   const optTotal = optionalEnabled
     ? optFees.reduce((acc, f) => {
-        return f.checked ? acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal) : acc;
+        return acc + getPayable(f, optDiscountGlobal, optPenaltyGlobal);
       }, 0)
     : 0;
 
@@ -370,7 +346,6 @@ const Invoice = () => {
         discountEnabled: Number(item.discount_amount || item.discount || 0) > 0,
         penalty: Number(item.penalty_amount || item.penalty || 0),
         penaltyEnabled: Number(item.penalty_amount || item.penalty || 0) > 0,
-        checked: false,
         installment_id: item.installment_id || null,
         installment_inst1:
           item.installment_inst1 !== undefined ? String(item.installment_inst1) : '',
@@ -398,10 +373,8 @@ const Invoice = () => {
         paid_amount: item.paid_amount,
         balance: item.balance,
         payable: item.payable,
-        checked: false,
       }));
       setOptFees(mappedOpt);
-      console.log(mappedOpt, 222);
 
       setDataLoaded(true);
     } catch (err) {
@@ -483,23 +456,23 @@ const Invoice = () => {
     }
   };
 
-  /* SECTION HEADER BLOCK */
+  /* SECTION HEADER BLOCK — flush title strip, no border/radius/margin of its
+     own. It sits directly on top of a content Box inside one outer Paper
+     (see the two section wrappers below), so the bar and its fees read as
+     one attached panel instead of two floating boxes with a gap between. */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
     return (
-      <Paper
-        elevation={0}
+      <Box
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'stretch', sm: 'center' },
           justifyContent: 'space-between',
-          p: 2,
-          mb: 2,
-          gap: { xs: 2, sm: 0 },
+          p: 1.5,
+          gap: { xs: 1.5, sm: 0 },
           bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
           borderLeft: `5px solid ${borderLeftColor}`,
-          borderRadius: '8px',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -523,7 +496,7 @@ const Invoice = () => {
           </Typography>
         </Box>
         <Box>{action}</Box>
-      </Paper>
+      </Box>
     );
   };
 
@@ -601,75 +574,83 @@ const Invoice = () => {
         {/* HEADER - Student Info & Filters */}
         <Box
           sx={{
-            position: 'relative',
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: { xs: 'stretch', md: 'center' },
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             gap: 2,
-            mb: 3,
-            mt: 2,
-            p: 2.5,
+            mb: 2,
+            mt: 1.5,
+            p: 2,
             bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
             borderRadius: '12px',
           }}
         >
-          {/* Student details */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              width: '100%',
-              py: 1,
-            }}
-          >
+          {/* Student details — avatar + info side by side, not stacked/centered */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
             <Avatar
               sx={{
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
+                flexShrink: 0,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                mb: 1.5,
               }}
             >
-              <PersonOutlineIcon sx={{ fontSize: 40 }} />
+              <PersonOutlineIcon sx={{ fontSize: 34 }} />
             </Avatar>
 
-            <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
-              {studentName}
-            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                <Typography
+                  variant="h6"
+                  fontWeight={800}
+                  color="text.primary"
+                  sx={{ lineHeight: 1.3 }}
+                >
+                  {studentName}
+                </Typography>
+                {invoiceNumber && (
+                  <Chip
+                    label={`Invoice #${invoiceNumber}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+              </Stack>
 
-            <Typography variant="body1" fontWeight={600} color="text.secondary" sx={{ mt: 0.5 }}>
-              <strong>Learner ID:</strong> {studentLearnerId}
-            </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                <strong>Learner ID:</strong> {studentLearnerId}
+                <Box component="span" sx={{ mx: 0.75 }}>
+                  ·
+                </Box>
+                <strong>Class:</strong> {studentClassName}
+              </Typography>
 
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              <strong>Class:</strong> {studentClassName}
-            </Typography>
-
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              {/* <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel} */}
-              <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
-              {activeSessionInfo.term}
-            </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {/* <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel} */}
+                <strong>Bursary Session/Term:</strong> {activeSessionInfo.session}{' '}
+                {activeSessionInfo.term}
+              </Typography>
+            </Box>
           </Box>
 
           {/* BACK BUTTON */}
           <Button
-            variant="contained"
+            variant="outlined"
             size="small"
+            startIcon={<ArrowBackIcon fontSize="small" />}
             onClick={() => navigate(isParentView ? '/dashboard' : '/class-ledger')}
             sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
               textTransform: 'none',
               fontWeight: 600,
+              alignSelf: { xs: 'flex-start', md: 'center' },
+              flexShrink: 0,
             }}
           >
-            ← Go To Class Ledger
+            Go To Class Ledger
           </Button>
         </Box>
 
@@ -680,7 +661,23 @@ const Invoice = () => {
           </Alert>
         )}
 
-        {/* COMPULSORY PAYMENT */}
+        {/* ══════════════════════════════════════════════ */}
+        {/* COMPULSORY PAYMENT                           */}
+        {/* No table here on purpose — a wide money table forced a         */}
+        {/* horizontal scroll. Each fee is a self-contained card instead,  */}
+        {/* so it wraps and never needs a scrollbar to read an amount. The */}
+        {/* header bar and the fee list share one outer Paper — no gap —   */}
+        {/* so they read as a single attached panel.                       */}
+        {/* ══════════════════════════════════════════════ */}
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: '10px',
+            overflow: 'hidden',
+            mb: 3,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+          }}
+        >
         {renderHeaderBlock({
           title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
           borderLeftColor: '#10b981',
@@ -696,6 +693,9 @@ const Invoice = () => {
                 justifyContent: { xs: 'flex-start', sm: 'flex-end' },
               }}
             >
+              <Typography variant="caption" fontWeight={700} color="text.secondary">
+                Subtotal ₦{format(compTotal)}
+              </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2" color="text.secondary" fontWeight={500}>
                   Discount
@@ -756,357 +756,166 @@ const Invoice = () => {
           ),
         })}
 
-        <TableContainer
-          component={Paper}
+        <Box
+          sx={{
+            p: 1.5,
+            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+          }}
+        >
+        {compFees.length === 0 ? (
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2.5 }}>
+            No compulsory fees found for this invoice.
+          </Typography>
+        ) : (
+        <Stack spacing={1}>
+        {compFees.map((fee, idx) => {
+          const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
+          const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
+          const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
+          const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
+          const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
+
+          return (
+            <Paper
+              key={fee.id}
+              variant="outlined"
+              sx={{
+                p: 0.75,
+                borderRadius: 2,
+                overflowX: 'auto',
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+                bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  flexWrap: 'nowrap',
+                }}
+              >
+                {/* Description + amount breakdown — one truncating line */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 0.75,
+                    minWidth: 0,
+                    flex: '1 1 160px',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                    color="text.primary"
+                    noWrap
+                    sx={{ flexShrink: 0, maxWidth: '50%' }}
+                  >
+                    {idx + 1}. {fee.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    color="text.secondary"
+                    noWrap
+                    sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                  >
+                    ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
+                  </Typography>
+                </Box>
+
+                {/* Discount / Penalty controls — between description and payable */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Discount
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={discountRowEnabled}
+                    disabled={compDiscountGlobal}
+                    onChange={(e) =>
+                      handleDiscountSwitchChange('comp', fee.id, e.target.checked)
+                    }
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                      },
+                    }}
+                  />
+                  <TextField
+                    size="small"
+                    type="number"
+                    sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                    disabled={!discountFieldEnabled}
+                    value={fee.discount}
+                    onChange={(e) => handleDiscountValueChange('comp', fee.id, e.target.value)}
+                    inputProps={{ min: 0 }}
+                  />
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Penalty
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={penaltyRowEnabled}
+                    disabled={compPenaltyGlobal}
+                    onChange={(e) =>
+                      handlePenaltySwitchChange('comp', fee.id, e.target.checked)
+                    }
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#8338ec',
+                        '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                      },
+                    }}
+                  />
+                  <TextField
+                    size="small"
+                    type="number"
+                    sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                    disabled={!penaltyFieldEnabled}
+                    value={fee.penalty}
+                    onChange={(e) => handlePenaltyValueChange('comp', fee.id, e.target.value)}
+                    inputProps={{ min: 0 }}
+                  />
+                </Box>
+
+                {/* Payable — final, right-most: the result after discount/penalty.   */}
+                {/* ml pushes it a bit further from the penalty field, not flush against it. */}
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={800}
+                  color="primary.main"
+                  sx={{ flexShrink: 0, minWidth: 68, textAlign: 'right', fontSize: '1.1rem', ml: 1.5 }}
+                >
+                  ₦{format(payable)}
+                </Typography>
+              </Box>
+            </Paper>
+          );
+        })}
+        </Stack>
+        )}
+        </Box>
+        </Paper>
+
+        {/* ══════════════════════════════════════════════ */}
+        {/* OPTIONAL PAYMENT — card list, same reasoning as Compulsory */}
+        {/* Header bar + content share one outer Paper — no gap.        */}
+        {/* ══════════════════════════════════════════════ */}
+        <Paper
           variant="outlined"
           sx={{
-            borderRadius: 3,
-            mb: 4,
-            overflowX: 'auto',
+            borderRadius: '10px',
+            overflow: 'hidden',
+            mb: 3,
             borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
           }}
         >
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-              <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  #
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Pay Description
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Original Amount (₦)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Balance (₦)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Discount(₦)
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Penalty(₦)
-                </TableCell>
-                {/* <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  —
-                </TableCell> */}
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  Payable(₦)
-                </TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    color: isDark ? '#94a3b8' : '#475569',
-                    py: 1.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={isDark ? '#94a3b8' : '#475569'}
-                    >
-                      Select All
-                    </Typography>
-                    <Checkbox
-                      size="small"
-                      checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                      indeterminate={
-                        compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)
-                      }
-                      onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-                      sx={{ p: 0.5 }}
-                    />
-                  </Box>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {compFees.map((fee, idx) => {
-                const discountRowEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                const penaltyRowEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                const discountFieldEnabled = compDiscountGlobal ? true : !!fee.discountEnabled;
-                const penaltyFieldEnabled = compPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                const payable = getPayable(fee, compDiscountGlobal, compPenaltyGlobal);
-
-                return (
-                  <TableRow
-                    key={fee.id}
-                    hover
-                    sx={{
-                      '&:last-child td, &:last-child th': { border: 0 },
-                    }}
-                  >
-                    <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                    <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>
-                      {fee.description}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        py: 1.5,
-                        fontWeight: 700,
-                        color: 'text.primary',
-                        fontSize: '1rem',
-                      }}
-                    >
-                      ₦{format(fee.amount)}
-                    </TableCell>
-
-                    {/* BALANCE */}
-                    <TableCell
-                      align="center"
-                      sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}
-                    >
-                      ₦{format(fee.balance)}
-                    </TableCell>
-
-                    {/* DISCOUNT */}
-
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <>
-                          <Switch
-                            size="small"
-                            checked={discountRowEnabled}
-                            disabled={compDiscountGlobal}
-                            onChange={(e) =>
-                              handleDiscountSwitchChange('comp', fee.id, e.target.checked)
-                            }
-                            sx={{
-                              '& .MuiSwitch-switchBase.Mui-checked': {
-                                color: '#8338ec',
-                                '& + .MuiSwitch-track': {
-                                  backgroundColor: '#8338ec',
-                                },
-                              },
-                            }}
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{
-                              width: 80,
-                              bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                            }}
-                            disabled={!discountFieldEnabled}
-                            value={fee.discount}
-                            onChange={(e) =>
-                              handleDiscountValueChange('comp', fee.id, e.target.value)
-                            }
-                            inputProps={{ min: 0 }}
-                          />
-                        </>
-                      </Box>
-                    </TableCell>
-
-                    {/* PENALTY */}
-                    <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <>
-                          <Switch
-                            size="small"
-                            checked={penaltyRowEnabled}
-                            disabled={compPenaltyGlobal}
-                            onChange={(e) =>
-                              handlePenaltySwitchChange('comp', fee.id, e.target.checked)
-                            }
-                            sx={{
-                              '& .MuiSwitch-switchBase.Mui-checked': {
-                                color: '#8338ec',
-                                '& + .MuiSwitch-track': {
-                                  backgroundColor: '#8338ec',
-                                },
-                              },
-                            }}
-                          />
-                          <TextField
-                            size="small"
-                            type="number"
-                            sx={{
-                              width: 80,
-                              bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                            }}
-                            disabled={!penaltyFieldEnabled}
-                            value={fee.penalty}
-                            onChange={(e) =>
-                              handlePenaltyValueChange('comp', fee.id, e.target.value)
-                            }
-                            inputProps={{ min: 0 }}
-                          />
-                        </>
-                      </Box>
-                    </TableCell>
-
-                    {/* INSTALLMENT / CUSTOM AMOUNT - commented out, no longer needed */}
-                    {/* <TableCell align="center" sx={{ py: 1.5 }}>
-                      {installmentalSetting === 'percentage' ? (
-                        <FormControl size="small" sx={{ minWidth: 130 }}>
-                          <Select
-                            value={fee.installment_id || ''}
-                            onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
-                            displayEmpty
-                            sx={{
-                              borderRadius: 2,
-                              '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
-                            }}
-                          >
-                            <MenuItem value="">
-                              <em>Select</em>
-                            </MenuItem>
-                            {(fee.installments || []).map((inst) => (
-                              <MenuItem key={inst.id} value={inst.id}>
-                                {inst.inst1}
-                                {inst.inst2 ? `:${inst.inst2}` : ''}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        <TextField
-                          size="small"
-                          type="number"
-                          sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                          value={fee.custom_amount}
-                          onChange={(e) => {
-                            const val = Math.min(Number(e.target.value) || 0, fee.amount);
-                            setCompFees((prev) =>
-                              prev.map((f) => (f.id === fee.id ? { ...f, custom_amount: val } : f)),
-                            );
-                          }}
-                          inputProps={{ min: 0, max: fee.amount }}
-                        />
-                      )}
-                    </TableCell> */}
-                    {/* <TableCell align="center" sx={{ py: 1.5 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        —
-                      </Typography>
-                    </TableCell> */}
-
-                    <TableCell
-                      sx={{
-                        py: 1.5,
-                        fontWeight: 700,
-                        color: 'text.primary',
-                        fontSize: '1rem',
-                      }}
-                    >
-                      ₦{format(payable)}
-                    </TableCell>
-
-                    <TableCell align="right" sx={{ py: 1.5 }}>
-                      <Checkbox
-                        size="small"
-                        checked={fee.checked}
-                        onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-
-              {/* COMPULSORY TABLE FOOTER ROW */}
-              <TableRow
-                sx={{
-                  bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe',
-                }}
-              >
-                <TableCell colSpan={7} sx={{ py: 1.5 }}>
-                  <Typography variant="body2" fontWeight={700} color="text.secondary">
-                    Total Compulsory
-                  </Typography>
-                </TableCell>
-                <TableCell
-                  sx={{
-                    py: 1.5,
-                    fontWeight: 800,
-                    color: isDark ? '#60a5fa' : '#1e40af',
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  ₦{format(compTotal)}
-                </TableCell>
-                <TableCell sx={{ py: 1.5 }} />
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* OPTIONAL PAYMENT */}
         {renderHeaderBlock({
           title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
           borderLeftColor: '#3b82f6',
@@ -1122,6 +931,11 @@ const Invoice = () => {
                 justifyContent: { xs: 'flex-start', sm: 'flex-end' },
               }}
             >
+              {optionalEnabled && optFees.length > 0 && (
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  Subtotal ₦{format(optTotal)}
+                </Typography>
+              )}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2" color="text.secondary" fontWeight={500}>
                   Discount
@@ -1208,338 +1022,146 @@ const Invoice = () => {
           ),
         })}
 
+        <Box
+          sx={{
+            p: 1.5,
+            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+          }}
+        >
         {optionalEnabled && optFees.length > 0 ? (
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              mb: 4,
-              overflowX: 'auto',
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-            }}
-          >
-            <Table sx={{ minWidth: 800 }}>
-              <TableHead
-                sx={{
-                  bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-                }}
-              >
-                <TableRow>
-                  <TableCell
+          <Stack spacing={1}>
+            {optFees.map((fee, idx) => {
+              const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
+              const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
+              const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
+              const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
+              const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
+
+              return (
+                <Paper
+                  key={fee.id}
+                  variant="outlined"
+                  sx={{
+                    p: 0.75,
+                    borderRadius: 2,
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+                  }}
+                >
+                  <Box
                     sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      flexWrap: 'nowrap',
                     }}
                   >
-                    #
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Item
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Original Amount(₦)
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Balance (₦)
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Discount(₦)
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Penalty(₦)
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
-                    Payable(₦)
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      fontWeight: 600,
-                      color: isDark ? '#94a3b8' : '#475569',
-                      py: 1.5,
-                    }}
-                  >
+                    {/* Description + amount breakdown — one truncating line */}
                     <Box
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 1,
+                        alignItems: 'baseline',
+                        gap: 0.75,
+                        minWidth: 0,
+                        flex: '1 1 160px',
                       }}
                     >
                       <Typography
                         variant="body2"
-                        fontWeight={600}
-                        color={isDark ? '#94a3b8' : '#475569'}
+                        fontWeight={700}
+                        color="text.primary"
+                        noWrap
+                        sx={{ flexShrink: 0, maxWidth: '50%' }}
                       >
-                        Select All
+                        {idx + 1}. {fee.description}
                       </Typography>
-                      <Checkbox
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color="text.secondary"
+                        noWrap
+                        sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                      >
+                        ₦{format(fee.amount)} · Bal ₦{format(fee.balance)}
+                      </Typography>
+                    </Box>
+
+                    {/* Discount / Penalty controls — between description and payable */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Discount
+                      </Typography>
+                      <Switch
                         size="small"
-                        checked={optFees.length > 0 && optFees.every((f) => f.checked)}
-                        indeterminate={
-                          optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
+                        checked={discountRowEnabled}
+                        disabled={optDiscountGlobal}
+                        onChange={(e) =>
+                          handleDiscountSwitchChange('opt', fee.id, e.target.checked)
                         }
-                        onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-                        sx={{ p: 0.5 }}
+                      />
+                      <TextField
+                        size="small"
+                        type="number"
+                        sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                        disabled={!discountFieldEnabled}
+                        value={fee.discount}
+                        onChange={(e) =>
+                          handleDiscountValueChange('opt', fee.id, e.target.value)
+                        }
+                        inputProps={{ min: 0 }}
                       />
                     </Box>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {optFees.map((fee, idx) => {
-                  const discountRowEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                  const penaltyRowEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                  const discountFieldEnabled = optDiscountGlobal ? true : !!fee.discountEnabled;
-                  const penaltyFieldEnabled = optPenaltyGlobal ? true : !!fee.penaltyEnabled;
-                  const payable = getPayable(fee, optDiscountGlobal, optPenaltyGlobal);
 
-                  return (
-                    <TableRow
-                      key={fee.id}
-                      hover
-                      sx={{
-                        bgcolor: isDark ? 'rgba(16, 185, 129, 0.08)' : '#f0fdf4',
-                        '&:last-child td, &:last-child th': {
-                          border: 0,
-                        },
-                      }}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Penalty
+                      </Typography>
+                      <Switch
+                        size="small"
+                        checked={penaltyRowEnabled}
+                        disabled={optPenaltyGlobal}
+                        onChange={(e) =>
+                          handlePenaltySwitchChange('opt', fee.id, e.target.checked)
+                        }
+                      />
+                      <TextField
+                        size="small"
+                        type="number"
+                        sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                        disabled={!penaltyFieldEnabled}
+                        value={fee.penalty}
+                        onChange={(e) =>
+                          handlePenaltyValueChange('opt', fee.id, e.target.value)
+                        }
+                        inputProps={{ min: 0 }}
+                      />
+                    </Box>
+
+                    {/* Payable — final, right-most: the result after discount/penalty.   */}
+                    {/* ml pushes it a bit further from the penalty field, not flush against it. */}
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={800}
+                      color="primary.main"
+                      sx={{ flexShrink: 0, minWidth: 68, textAlign: 'right', fontSize: '1.1rem', ml: 1.5 }}
                     >
-                      <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="text.primary"
-                          sx={{ mb: 0.5 }}
-                        >
-                          {fee.description}
-                        </Typography>
-                        {/* <Box
-                          sx={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                          }}
-                        >
-                          {(fee.selectedOptions || []).map((opt, oi) => (
-                            <Chip
-                              key={opt.option_id || oi}
-                              label={`${opt.option_name}: ₦${format(opt.amount)}`}
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: '0.75rem',
-                              }}
-                            />
-                          ))}
-                        </Box> */}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          py: 1.5,
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ₦{format(fee.amount)}
-                      </TableCell>
-
-                      {/* BALANCE */}
-                      <TableCell
-                        align="center"
-                        sx={{ py: 1.5, fontWeight: 600, color: 'text.primary' }}
-                      >
-                        ₦{format(fee.balance)}
-                      </TableCell>
-
-                      {/* DISCOUNT */}
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <>
-                            <Switch
-                              size="small"
-                              checked={discountRowEnabled}
-                              disabled={optDiscountGlobal}
-                              onChange={(e) =>
-                                handleDiscountSwitchChange('opt', fee.id, e.target.checked)
-                              }
-                            />
-                            <TextField
-                              size="small"
-                              type="number"
-                              sx={{
-                                width: 80,
-                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                              }}
-                              disabled={!discountFieldEnabled}
-                              value={fee.discount}
-                              onChange={(e) =>
-                                handleDiscountValueChange('opt', fee.id, e.target.value)
-                              }
-                              inputProps={{ min: 0 }}
-                            />
-                          </>
-                        </Box>
-                      </TableCell>
-
-                      {/* PENALTY */}
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <>
-                            <Switch
-                              size="small"
-                              checked={penaltyRowEnabled}
-                              disabled={optPenaltyGlobal}
-                              onChange={(e) =>
-                                handlePenaltySwitchChange('opt', fee.id, e.target.checked)
-                              }
-                            />
-                            <TextField
-                              size="small"
-                              type="number"
-                              sx={{
-                                width: 80,
-                                bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white',
-                              }}
-                              disabled={!penaltyFieldEnabled}
-                              value={fee.penalty}
-                              onChange={(e) =>
-                                handlePenaltyValueChange('opt', fee.id, e.target.value)
-                              }
-                              inputProps={{ min: 0 }}
-                            />
-                          </>
-                        </Box>
-                      </TableCell>
-
-                      <TableCell
-                        sx={{
-                          py: 1.5,
-                          fontWeight: 700,
-                          color: 'text.primary',
-                          fontSize: '1rem',
-                        }}
-                      >
-                        ₦{format(payable)}
-                      </TableCell>
-
-                      <TableCell align="right" sx={{ py: 1.5 }}>
-                        <Checkbox
-                          size="small"
-                          checked={fee.checked}
-                          onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-
-                {/* OPTIONAL TABLE FOOTER ROW */}
-                <TableRow
-                  sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
-                  }}
-                >
-                  <TableCell colSpan={6} sx={{ py: 1.5 }}>
-                    <Typography variant="body2" fontWeight={700} color="text.secondary">
-                      Total Optional
+                      ₦{format(payable)}
                     </Typography>
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      py: 1.5,
-                      fontWeight: 800,
-                      color: isDark ? '#94a3b8' : '#64748b',
-                      fontSize: '1.25rem',
-                    }}
-                  >
-                    ₦{format(optTotal)}
-                  </TableCell>
-                  <TableCell sx={{ py: 1.5 }} />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  </Box>
+                </Paper>
+              );
+            })}
+          </Stack>
         ) : optionalEnabled ? (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              textAlign: 'center',
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-              borderRadius: 3,
-            }}
-          >
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              No optional payment set for this student.
-            </Typography>
-          </Paper>
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2.5 }}>
+            No optional payment set for this student.
+          </Typography>
         ) : null}
+        </Box>
+        </Paper>
 
         {/* UPDATE INVOICE BUTTON */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Button
             variant="contained"
             size="small"
@@ -1593,8 +1215,27 @@ const Invoice = () => {
               <CircularProgress />
             </Box>
           ) : optionalPaymentList.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No optional payments available for this class/category.
+            <Alert
+              severity="info"
+              sx={{ mt: 2 }}
+              action={
+                <Button
+                  component="a"
+                  href="/bursary-setup?tab=payment-name&new=optional"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
+                >
+                  Set Up Now
+                </Button>
+              }
+            >
+              No optional payments available for this class/category. This opens Bursary Setup →
+              Payment Name in a new tab, with "Add New" already open and Optional preselected —
+              so you don't lose your place here. After saving it there, go to Payment Schedule →
+              Set Schedule → Optional tab to set the schedule for the relevant classes — it won't
+              show up here until that's done.
             </Alert>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>

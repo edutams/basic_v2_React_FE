@@ -1058,32 +1058,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             pb: 2,
           }}
         >
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid',
-                borderColor: 'grey.200',
-              }}
-            >
-              <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700}>
-                Send invoice to parent
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Review the parent's contact, write a message, and choose how to deliver.
-              </Typography>
-            </Box>
-          </Box>
-
           <Tabs value={deliveryTab} onChange={handleDeliveryTabChange} variant="scrollable">
             <Tab
               label={

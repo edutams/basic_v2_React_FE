@@ -532,6 +532,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
         onSave={handleSavePayment}
         paymentName={editingPayment}
         defaultPayOption={!editingPayment ? defaultPayOption : undefined}
+        defaultPayType={!editingPayment ? currentTab : undefined}
       />
     </>
   );

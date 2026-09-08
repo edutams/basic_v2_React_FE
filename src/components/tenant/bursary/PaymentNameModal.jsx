@@ -15,7 +15,7 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import { fetchSkoolPayBanks } from '@/api/tenant/bursary/paymentNameApi';
 import { fetchGatewayChargeBearer } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentNameModal = ({ open, onClose, onSave, paymentName, defaultPayOption }) => {
+const PaymentNameModal = ({ open, onClose, onSave, paymentName, defaultPayOption, defaultPayType }) => {
   const [formData, setFormData] = useState({
     name: '',
     pay_type: 'bursary',
@@ -49,11 +49,15 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName, defaultPayOption
           status: paymentName.status || 'active',
         });
       } else {
+        // Preselect whatever payment type the caller is already looking at
+        // (e.g. the Admission Payments tab), so the admin doesn't have to
+        // re-pick it every time they hit "Add New" from within that tab.
+        const initialPayType = defaultPayType || 'bursary';
         setFormData({
           name: '',
-          pay_type: 'bursary',
+          pay_type: initialPayType,
           pay_option: defaultPayOption || 'compulsory',
-          application_stage: null,
+          application_stage: initialPayType === 'admission' ? 'pre-application' : null,
           bank: '',
           account_number: '',
           fee_bearer: 'client',
@@ -337,6 +341,7 @@ PaymentNameModal.propTypes = {
   onSave: PropTypes.func.isRequired,
   paymentName: PropTypes.object,
   defaultPayOption: PropTypes.string,
+  defaultPayType: PropTypes.string,
 };
 
 export default PaymentNameModal;

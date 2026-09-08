@@ -479,6 +479,15 @@ const ClassLedger = () => {
     },
   });
 
+  /* Shared compact cell styles — same pattern used across the invoice pages */
+  const thCell = {
+    fontWeight: 600,
+    color: isDark ? '#94a3b8' : '#475569',
+    py: 0.75,
+    px: 1.5,
+  };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <PageContainer title="Class Ledger">
       <Breadcrumb title="Class Ledger" items={BCrumb} />
@@ -576,6 +585,10 @@ const ClassLedger = () => {
         </Grid>
       </Grid>
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -706,40 +719,40 @@ const ClassLedger = () => {
         </Grid>
 
         <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table stickyHeader>
+          <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell>S/N</TableCell>
-                <TableCell>Student Name</TableCell>
-                <TableCell>Total Compulsory Bill</TableCell>
-                <TableCell>Total Optional Bill</TableCell>
-                <TableCell>Total Payable</TableCell>
-                <TableCell>Total Paid</TableCell>
-                <TableCell>Penalty</TableCell>
-                <TableCell>Discount</TableCell>
-                <TableCell>Balance</TableCell>
-                <TableCell>Action</TableCell>
+                <TableCell sx={thCell}>S/N</TableCell>
+                <TableCell sx={thCell}>Student Name</TableCell>
+                <TableCell sx={thCell}>Total Compulsory Bill</TableCell>
+                <TableCell sx={thCell}>Total Optional Bill</TableCell>
+                <TableCell sx={thCell}>Total Payable</TableCell>
+                <TableCell sx={thCell}>Total Paid</TableCell>
+                <TableCell sx={thCell}>Penalty</TableCell>
+                <TableCell sx={thCell}>Discount</TableCell>
+                <TableCell sx={thCell}>Balance</TableCell>
+                <TableCell sx={thCell}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loadingTable ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                    <TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell sx={tdCell}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Skeleton variant="circular" width={36} height={36} />
                         <Skeleton variant="text" width={140} height={20} />
                       </Box>
                     </TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={60} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={60} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell align="center" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
                   </TableRow>
                 ))
               ) : ledgerData.length > 0 ? (
@@ -747,8 +760,8 @@ const ClassLedger = () => {
                   return (
                     <TableRow key={student.user_id || index} hover>
                       {/* <TableCell>{index + 1}</TableCell> */}
-                      <TableCell>{(meta?.from || 0) + index}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{(meta?.from || 0) + index}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar src={student.avatar} sx={{ width: 36, height: 36 }}>
                             <PersonOutlineIcon sx={{ fontSize: 20 }} />
@@ -763,7 +776,7 @@ const ClassLedger = () => {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         ₦
                         {(
                           student.total_compulsory ||
@@ -771,20 +784,21 @@ const ClassLedger = () => {
                           0
                         ).toLocaleString()}
                       </TableCell>
-                      <TableCell>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
-                      <TableCell>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
-                      <TableCell>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
-                      <TableCell>₦{(student.total_penalty || 0).toLocaleString()}</TableCell>{' '}
-                      <TableCell>₦{(student.total_discount || 0).toLocaleString()}</TableCell>{' '}
+                      <TableCell sx={tdCell}>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
+                      <TableCell sx={tdCell}>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
+                      <TableCell sx={tdCell}>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
+                      <TableCell sx={tdCell}>₦{(student.total_penalty || 0).toLocaleString()}</TableCell>{' '}
+                      <TableCell sx={tdCell}>₦{(student.total_discount || 0).toLocaleString()}</TableCell>{' '}
                       <TableCell
                         sx={{
+                          ...tdCell,
                           color: (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
                           fontWeight: 600,
                         }}
                       >
                         ₦{(student.total_balance || 0).toLocaleString()}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={tdCell}>
                         <IconButton
                           size="small"
                           onClick={(e) => {

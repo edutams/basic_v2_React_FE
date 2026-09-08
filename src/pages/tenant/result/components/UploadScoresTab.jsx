@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle,
-  DialogContent, DialogActions, Snackbar, Alert, IconButton, Menu, ListItemIcon, ListItemText,
-  TextField, Divider, useTheme, CircularProgress, TablePagination,
+  Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Snackbar, Alert,
+  IconButton, Menu, ListItemIcon, ListItemText, useTheme, TablePagination, Tooltip, ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
   IconCloudUpload, IconDownload, IconEye, IconCheck, IconFileSpreadsheet,
-  IconUpload, IconEdit, IconTrash, IconSend,
+  IconUpload, IconEdit, IconTrash, IconSend, IconLayoutGrid, IconList,
+  IconFilter,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconChevronDown } from '@tabler/icons-react';
+
+import DownloadSampleDialog from './DownloadSampleDialog';
+import DownloadCombinedDialog from './DownloadCombinedDialog';
+import UploadResultDialog from './UploadResultDialog';
+import UploadCombinedDialog from './UploadCombinedDialog';
+import UploadCaExamDialog from './UploadCaExamDialog';
+import InputScoreDialog from './InputScoreDialog';
+import ScoreUploadAnalytics from './ScoreUploadAnalytics';
+import ScoreUploadCard from './ScoreUploadCard';
+import ActionSelectionDialog from './ActionSelectionDialog';
 
 const dummySessions = [
   { id: 1, label: '2025/2026 - First Term' },
@@ -43,142 +52,225 @@ const dummySubjects = [
   { id: 6, name: 'Civic Education' },
 ];
 
-const initialUploads = [
-  { id: 1, programme: 'Junior Secondary', class: 'JSS 1A', subject: 'Mathematics', session_term: '2025/2026 - First Term', uploaded_by: 'Mr. Ade', uploaded_at: '2026-06-15', status: 'approved', count: 42, ca_type: 'CA1 & CA2', submission: true },
-  { id: 2, programme: 'Junior Secondary', class: 'JSS 1A', subject: 'English Language', session_term: '2025/2026 - First Term', uploaded_by: 'Mrs. Bola', uploaded_at: '2026-06-15', status: 'approved', count: 42, ca_type: 'CA1 & CA2', submission: true },
-  { id: 3, programme: 'Junior Secondary', class: 'JSS 2A', subject: 'Physics', session_term: '2025/2026 - First Term', uploaded_by: 'Mr. Chidi', uploaded_at: '2026-06-16', status: 'approved', count: 38, ca_type: 'CA1 & CA2', submission: false },
-  { id: 4, programme: 'Junior Secondary', class: 'JSS 2A', subject: 'Chemistry', session_term: '2025/2026 - First Term', uploaded_by: 'Mrs. Funke', uploaded_at: '2026-06-16', status: 'pending', count: 38, ca_type: 'CA1 & CA2', submission: false },
-  { id: 5, programme: 'Senior Secondary', class: 'SS 1A', subject: 'Biology', session_term: '2025/2026 - First Term', uploaded_by: 'Mr. Emeka', uploaded_at: '2026-06-17', status: 'approved', count: 35, ca_type: 'CA1 & CA2', submission: true },
-  { id: 6, programme: 'Senior Secondary', class: 'SS 1A', subject: 'Civic Education', session_term: '2025/2026 - First Term', uploaded_by: 'Mrs. Aisha', uploaded_at: '2026-06-17', status: 'pending', count: 35, ca_type: 'CA1 & CA2', submission: false },
-  { id: 7, programme: 'Senior Secondary', class: 'SS 2A', subject: 'Mathematics', session_term: '2025/2026 - First Term', uploaded_by: 'Mr. Tunde', uploaded_at: '2026-06-18', status: 'approved', count: 30, ca_type: 'CA1 & CA2', submission: true },
-];
-
-const dummyUploadedScores = [
-  { name: 'Adebayo Tunde', reg_id: 'STD/2025/001', ca1: 18, ca2: 17, exam: 55, total: 90 },
-  { name: 'Chidinma Obi', reg_id: 'STD/2025/002', ca1: 15, ca2: 14, exam: 48, total: 77 },
-  { name: 'Emeka Uche', reg_id: 'STD/2025/003', ca1: 12, ca2: 13, exam: 42, total: 67 },
-  { name: 'Aisha Mohammed', reg_id: 'STD/2025/004', ca1: 16, ca2: 15, exam: 50, total: 81 },
-  { name: 'Fatima Abubakar', reg_id: 'STD/2025/005', ca1: 10, ca2: 11, exam: 38, total: 59 },
-  { name: 'Ibrahim Musa', reg_id: 'STD/2025/006', ca1: 14, ca2: 13, exam: 45, total: 72 },
-];
-
-const dummyInputStudents = [
-  { name: 'Adebayo Tunde', reg_id: 'STD/2025/001', ca1: '', ca2: '', exam: '' },
-  { name: 'Chidinma Obi', reg_id: 'STD/2025/002', ca1: '', ca2: '', exam: '' },
-  { name: 'Emeka Uche', reg_id: 'STD/2025/003', ca1: '', ca2: '', exam: '' },
-  { name: 'Aisha Mohammed', reg_id: 'STD/2025/004', ca1: '', ca2: '', exam: '' },
-  { name: 'Fatima Abubakar', reg_id: 'STD/2025/005', ca1: '', ca2: '', exam: '' },
-  { name: 'Ibrahim Musa', reg_id: 'STD/2025/006', ca1: '', ca2: '', exam: '' },
+const dummyAllocations = [
+  { id: 1, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 1A', subject_name: 'Mathematics', total_reg: 42, ca1_count: 42, ca2_count: 40, exam_upload_count: 38, teacher_submit: 'yes', spa_approval: null },
+  { id: 2, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 1A', subject_name: 'English Language', total_reg: 42, ca1_count: 42, ca2_count: 42, exam_upload_count: 42, teacher_submit: 'yes', spa_approval: { spa_publish: 'no' } },
+  { id: 3, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 2A', subject_name: 'Physics', total_reg: 38, ca1_count: 35, ca2_count: 30, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
+  { id: 4, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 2A', subject_name: 'Chemistry', total_reg: 38, ca1_count: 38, ca2_count: 0, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
+  { id: 5, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 1A', subject_name: 'Biology', total_reg: 35, ca1_count: 35, ca2_count: 35, exam_upload_count: 35, teacher_submit: 'yes', spa_approval: null },
+  { id: 6, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 1A', subject_name: 'Civic Education', total_reg: 35, ca1_count: 30, ca2_count: 0, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
+  { id: 7, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 2A', subject_name: 'Mathematics', total_reg: 30, ca1_count: 30, ca2_count: 30, exam_upload_count: 30, teacher_submit: 'yes', spa_approval: { spa_publish: 'yes' } },
 ];
 
 const UploadScoresTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [uploads] = useState(initialUploads);
+  const [allocations, setAllocations] = useState(dummyAllocations);
   const [filter, setFilter] = useState({ session_term: '', programme: '', class_id: '', subject_id: '' });
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [viewDialog, setViewDialog] = useState({ open: false, data: null });
-  const [uploadDialog, setUploadDialog] = useState(false);
-  const [uploadCaExamDialog, setUploadCaExamDialog] = useState(false);
-  const [downloadDialog, setDownloadDialog] = useState(false);
-  const [downloadCaExamDialog, setDownloadCaExamDialog] = useState(false);
-  const [inputScoresDialog, setInputScoresDialog] = useState({ open: false, data: null });
-  const [inputStudents, setInputStudents] = useState([]);
-  const [inputSaving, setInputSaving] = useState({});
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
-  const [topMenuAnchor, setTopMenuAnchor] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Dialog States
+  const [actionSelectionDialog, setActionSelectionDialog] = useState({ open: false, allocation: null });
+  const [downloadSampleDialog, setDownloadSampleDialog] = useState({ open: false, allocation: null });
+  const [downloadCombinedDialog, setDownloadCombinedDialog] = useState(false);
+  const [uploadResultDialog, setUploadResultDialog] = useState({ open: false, allocation: null });
+  const [uploadCombinedDialog, setUploadCombinedDialog] = useState(false);
+  const [uploadCaExamDialog, setUploadCaExamDialog] = useState({ open: false, allocation: null });
+  const [inputScoreDialog, setInputScoreDialog] = useState({ open: false, allocation: null });
+
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
   const filteredClasses = filter.programme
     ? dummyClasses.filter(c => c.programme_id === filter.programme)
     : dummyClasses;
 
-  const filteredUploads = uploads.filter(u => {
-    if (filter.session_term && u.session_term !== dummySessions.find(s => s.id === filter.session_term)?.label) return false;
-    if (filter.programme && u.programme !== dummyProgrammes.find(p => p.id === filter.programme)?.name) return false;
-    if (filter.class_id && u.class !== dummyClasses.find(c => c.id === filter.class_id)?.name) return false;
-    if (filter.subject_id && u.subject !== dummySubjects.find(s => s.id === filter.subject_id)?.name) return false;
+  const filteredAllocations = allocations.filter(a => {
+    if (filter.session_term && a.session_term !== dummySessions.find(s => s.id === filter.session_term)?.label) return false;
+    if (filter.programme && a.programme !== dummyProgrammes.find(p => p.id === filter.programme)?.name) return false;
+    if (filter.class_id && a.className !== dummyClasses.find(c => c.id === filter.class_id)?.name) return false;
+    if (filter.subject_id && a.subject_name !== dummySubjects.find(s => s.id === filter.subject_id)?.name) return false;
     return true;
   });
 
-  const openInputScores = (row) => {
-    setInputStudents(dummyInputStudents.map(s => ({ ...s, ca1: '', ca2: '', exam: '' })));
-    setInputScoresDialog({ open: true, data: row });
+  const selectedClassName = useMemo(() => {
+    if (!filter.class_id) return '';
+    return dummyClasses.find(c => c.id === filter.class_id)?.name || '';
+  }, [filter.class_id]);
+
+  const canShowBulkActions = filter.session_term && filter.programme && filter.class_id;
+  const canShowSubmitAll = filter.session_term && filter.programme && filter.class_id;
+
+  // Calculate analytics for Analytics Component
+  const analyticsData = useMemo(() => {
+    const list = filteredAllocations.length > 0 ? filteredAllocations : allocations;
+    let caUploaded = 0;
+    let caTotal = 0;
+    let examUploaded = 0;
+    let examTotal = 0;
+    let submittedSubjects = 0;
+
+    list.forEach(item => {
+      const reg = item.total_reg || 0;
+      caUploaded += (item.ca1_count || 0);
+      caTotal += reg;
+      examUploaded += (item.exam_upload_count || 0);
+      examTotal += reg;
+      if (item.teacher_submit === 'yes' || item.isSubmitted || item.submissionStatus === 'Submitted') {
+        submittedSubjects += 1;
+      }
+    });
+
+    return {
+      ca_scores: {
+        uploaded: caUploaded,
+        total: caTotal,
+        percentage: caTotal > 0 ? Math.round((caUploaded / caTotal) * 100) : 0,
+      },
+      exam_scores: {
+        uploaded: examUploaded,
+        total: examTotal,
+        percentage: examTotal > 0 ? Math.round((examUploaded / examTotal) * 100) : 0,
+      },
+      score_submission: {
+        submitted: submittedSubjects,
+        total: list.length,
+        percentage: list.length > 0 ? Math.round((submittedSubjects / list.length) * 100) : 0,
+      },
+    };
+  }, [filteredAllocations, allocations]);
+
+  const openActionMenu = (e, row) => {
+    setActionMenuAnchor(e.currentTarget);
+    setActionMenuRow(row);
   };
 
-  const handleInputScoreChange = (index, field, value) => {
-    const numeric = value.replace(/[^0-9.]/g, '');
-    const updated = [...inputStudents];
-    updated[index] = { ...updated[index], [field]: numeric };
-    setInputStudents(updated);
+  const closeActionMenu = () => {
+    setActionMenuAnchor(null);
+    setActionMenuRow(null);
   };
 
-  const handleInputScoreBlur = (index, field, max) => {
-    const val = Number(inputStudents[index][field]);
-    if (val > max) {
-      const updated = [...inputStudents];
-      updated[index] = { ...updated[index], [field]: '' };
-      setInputStudents(updated);
-      showSnackbar(`Score cannot exceed ${max}`, 'warning');
+  const handleUploaded = () => {
+    showSnackbar('Operation completed successfully!');
+  };
+
+  const handleProceedActionSelection = (action, allocation) => {
+    setActionSelectionDialog({ open: false, allocation: null });
+    if (action === 'download') {
+      setDownloadSampleDialog({ open: true, allocation });
+    } else if (action === 'upload') {
+      setUploadCaExamDialog({ open: true, allocation });
+    } else if (action === 'direct') {
+      setInputScoreDialog({ open: true, allocation });
     }
   };
 
-  const handleSaveStudentScore = (index) => {
-    setInputSaving({ ...inputSaving, [index]: true });
-    setTimeout(() => {
-      setInputSaving({ ...inputSaving, [index]: false });
-      showSnackbar(`Score saved for ${inputStudents[index].name}`);
-    }, 800);
+  const handleSubmitScore = (allocation) => {
+    setAllocations(prev =>
+      prev.map(a => (a.id === allocation.id ? { ...a, teacher_submit: 'yes' } : a))
+    );
+    showSnackbar(`Scores for ${allocation.subject_name} (${allocation.className}) submitted successfully!`);
+  };
+
+  const handleSubmitAllScores = () => {
+    setAllocations(prev =>
+      prev.map(a => {
+        if (
+          (!filter.session_term || a.session_term === dummySessions.find(s => s.id === filter.session_term)?.label) &&
+          (!filter.programme || a.programme === dummyProgrammes.find(p => p.id === filter.programme)?.name) &&
+          (!filter.class_id || a.className === dummyClasses.find(c => c.id === filter.class_id)?.name)
+        ) {
+          return { ...a, teacher_submit: 'yes' };
+        }
+        return a;
+      })
+    );
+    showSnackbar('All subject scores submitted! Waiting for approval.');
   };
 
   return (
     <Box>
-      {/* ── Main Card ──────────────────────────────────────── */}
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-        {/* ── Card Header with Actions ──────────────────────── */}
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" fontWeight={600}>Result Upload</Typography>
-          <Button variant="contained" size="small" endIcon={<IconChevronDown size={16} />} onClick={(e) => setTopMenuAnchor(e.currentTarget)}>
-            Actions
-          </Button>
-          <Menu anchorEl={topMenuAnchor} open={Boolean(topMenuAnchor)} onClose={() => setTopMenuAnchor(null)}>
-            <MenuItem onClick={() => { setTopMenuAnchor(null); setDownloadDialog(true); }}>
-              <ListItemIcon><IconDownload size={18} /></ListItemIcon>
-              <ListItemText>Download Template</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={() => { setTopMenuAnchor(null); setDownloadCaExamDialog(true); }}>
-              <ListItemIcon><IconFileSpreadsheet size={18} /></ListItemIcon>
-              <ListItemText>Download CA/Exam Scoresheet</ListItemText>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={() => { setTopMenuAnchor(null); setUploadDialog(true); }}>
-              <ListItemIcon><IconCloudUpload size={18} /></ListItemIcon>
-              <ListItemText>Upload Scores</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={() => { setTopMenuAnchor(null); setUploadCaExamDialog(true); }}>
-              <ListItemIcon><IconUpload size={18} /></ListItemIcon>
-              <ListItemText>Upload CA & Exam Scores</ListItemText>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={() => { setTopMenuAnchor(null); showSnackbar('All subject scores submitted!'); }}>
-              <ListItemIcon><IconSend size={18} /></ListItemIcon>
-              <ListItemText>Submit All Scores</ListItemText>
-            </MenuItem>
-          </Menu>
+      {/* ── Top Analytics Summary Header ────────────────────── */}
+      <ScoreUploadAnalytics analyticsData={analyticsData} />
+
+      <Paper elevation={0} sx={{ borderRadius: '12px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+        {/* ── Card Header with Bulk Actions & View Toggle ──────── */}
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+          <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
+            Result Score Upload
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            {canShowBulkActions && (
+              <>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="info"
+                  startIcon={<IconDownload size={16} />}
+                  onClick={() => setDownloadCombinedDialog(true)}
+                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                >
+                  Download {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="success"
+                  startIcon={<IconCloudUpload size={16} />}
+                  onClick={() => setUploadCombinedDialog(true)}
+                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                >
+                  Upload {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                </Button>
+              </>
+            )}
+
+            {canShowSubmitAll && (
+              <Button
+                variant="contained"
+                size="small"
+                color="warning"
+                startIcon={<IconSend size={16} />}
+                onClick={handleSubmitAllScores}
+                sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+              >
+                Submit All Scores
+              </Button>
+            )}
+
+            {/* View Mode Toggle */}
+            <ToggleButtonGroup
+              size="small"
+              value={viewMode}
+              exclusive
+              onChange={(_, newMode) => newMode && setViewMode(newMode)}
+              aria-label="view mode"
+              sx={{ ml: 0.5 }}
+            >
+              <ToggleButton value="cards" aria-label="card view" sx={{ p: 0.75 }}>
+                <Tooltip title="Card Grid View"><IconLayoutGrid size={16} /></Tooltip>
+              </ToggleButton>
+              <ToggleButton value="table" aria-label="table view" sx={{ p: 0.75 }}>
+                <Tooltip title="Table View"><IconList size={16} /></Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
         </Box>
 
-        {/* ── Filters inside Card ───────────────────────────── */}
-        <Box sx={{ p: 2 }}>
+        {/* ── Filters Section ───────────────────────────────── */}
+        <Box sx={{ p: 2, borderBottom: viewMode === 'cards' ? 'none' : '1px solid divider' }}>
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session/Term</InputLabel>
-                <Select value={filter.session_term} label="Session/Term" onChange={e => setFilter({ ...filter, session_term: e.target.value })}>
-                  <MenuItem value="">All</MenuItem>
+                <InputLabel>Session-Term</InputLabel>
+                <Select value={filter.session_term} label="Session-Term" onChange={e => setFilter({ ...filter, session_term: e.target.value })}>
+                  <MenuItem value="">-- Choose --</MenuItem>
                   {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
                 </Select>
               </FormControl>
@@ -187,440 +279,259 @@ const UploadScoresTab = () => {
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
                 <Select value={filter.programme} label="Programme" onChange={e => setFilter({ ...filter, programme: e.target.value, class_id: '' })}>
-                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="">-- Choose --</MenuItem>
                   {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class</InputLabel>
                 <Select value={filter.class_id} label="Class" onChange={e => setFilter({ ...filter, class_id: e.target.value })}>
-                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="">-- Choose --</MenuItem>
                   {filteredClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Subject</InputLabel>
                 <Select value={filter.subject_id} label="Subject" onChange={e => setFilter({ ...filter, subject_id: e.target.value })}>
-                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="">-- Select Subject --</MenuItem>
                   {dummySubjects.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 1.5 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={() => setPage(0)}
+                sx={{ fontWeight: 600, height: '40px' }}
+              >
+                Fetch
+              </Button>
             </Grid>
           </Grid>
         </Box>
 
-        {/* ── Uploads Table ─────────────────────────────────── */}
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '4%' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '14%' }}>Session-Term</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Programme</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '12%' }}>Subject</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Registered</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>CA Uploaded</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Exam Uploaded</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Submission</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '8%' }}>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUploads.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((u, i) => (
-                <TableRow key={u.id} hover>
-                  <TableCell>{page * rowsPerPage + i + 1}</TableCell>
-                  <TableCell>{u.session_term}</TableCell>
-                  <TableCell>{u.programme}</TableCell>
-                  <TableCell>{u.class}</TableCell>
-                  <TableCell>{u.subject}</TableCell>
-                  <TableCell>{u.count}</TableCell>
-                  <TableCell>
-                    <Chip label={u.status === 'approved' ? u.count : 0} size="small" color={u.status === 'approved' ? 'success' : 'default'} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={u.status === 'approved' ? u.count : 0} size="small" color={u.status === 'approved' ? 'success' : 'default'} />
-                  </TableCell>
-                  <TableCell>
-                    {u.submission ? (
-                      <Chip icon={<IconCheck size={14} />} label="Submitted" size="small" color="success" />
-                    ) : (
-                      <Chip label="Pending" size="small" color="warning" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={(e) => { setActionMenuAnchor(e.currentTarget); setActionMenuRow(u); }}>
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                    <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor) && actionMenuRow?.id === u.id} onClose={() => { setActionMenuAnchor(null); setActionMenuRow(null); }}>
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); setDownloadDialog(true); }}>
-                        <ListItemIcon><IconDownload size={18} /></ListItemIcon>
-                        <ListItemText>Download Score Sheet</ListItemText>
-                      </MenuItem>
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); setDownloadCaExamDialog(true); }}>
-                        <ListItemIcon><IconFileSpreadsheet size={18} /></ListItemIcon>
-                        <ListItemText>CA/Exam Scoresheet</ListItemText>
-                      </MenuItem>
-                      <Divider />
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); setUploadDialog(true); }}>
-                        <ListItemIcon><IconCloudUpload size={18} /></ListItemIcon>
-                        <ListItemText>Upload Scores</ListItemText>
-                      </MenuItem>
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); setUploadCaExamDialog(true); }}>
-                        <ListItemIcon><IconUpload size={18} /></ListItemIcon>
-                        <ListItemText>Upload CA & Exam Scores</ListItemText>
-                      </MenuItem>
-                      <Divider />
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); openInputScores(u); }}>
-                        <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-                        <ListItemText>Input Scores</ListItemText>
-                      </MenuItem>
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); setViewDialog({ open: true, data: u }); }}>
-                        <ListItemIcon><IconEye size={18} /></ListItemIcon>
-                        <ListItemText>View Score Sheet</ListItemText>
-                      </MenuItem>
-                      <Divider />
-                      <MenuItem onClick={() => { setActionMenuAnchor(null); showSnackbar('Scores purged successfully!'); }} sx={{ color: 'error.main' }}>
-                        <ListItemIcon><IconTrash size={18} color="error" /></ListItemIcon>
-                        <ListItemText>Purge Scores</ListItemText>
-                      </MenuItem>
-                    </Menu>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredUploads.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    <Typography variant="body2" color="text.secondary" py={3}>No upload records found for the selected filters.</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={filteredUploads.length}
-          page={page}
-          onPageChange={(_, p) => setPage(p)}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          rowsPerPageOptions={[5, 10, 25]}
-        />
+        {/* ── Prompt when filter not selected ─────────────────── */}
+        {!filter.programme && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Alert severity="info" sx={{ borderRadius: '8px', display: 'inline-flex', py: 0.5, px: 2 }}>
+              Select a Programme and Class filter above to view subject score upload status.
+            </Alert>
+          </Box>
+        )}
+
+        {/* ── CARD GRID VIEW (Primary Layout matching essential_v2) ──────── */}
+        {filter.programme && viewMode === 'cards' && (
+          <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
+            {filteredAllocations.length > 0 ? (
+              <Grid container spacing={2}>
+                {filteredAllocations.map((alloc) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={alloc.id}>
+                    <ScoreUploadCard
+                      allocation={alloc}
+                      onUploadScore={(a) => setActionSelectionDialog({ open: true, allocation: a })}
+                      onViewScoreSheet={(a) => setInputScoreDialog({ open: true, allocation: a })}
+                      onSubmitScore={(a) => handleSubmitScore(a)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                  No subject allocations found for the selected filters.
+                </Alert>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* ── TABLE VIEW (Fallback Option) ────────────────────── */}
+        {filter.programme && viewMode === 'table' && (
+          <Box>
+            {filteredAllocations.length > 0 ? (
+              <Box sx={{ p: 2 }}>
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                  <Table stickyHeader sx={{ border: '1px solid', borderColor: 'divider', '& .MuiTableCell-root': { py: 1, px: 1.5, borderRight: '1px solid', borderColor: 'divider' }, whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, width: '3%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Session-Term</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Programme</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Class</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Subject</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Total Registered</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Total CA1</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Total CA2</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Total Exam</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '8%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Submission</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '5%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredAllocations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((a, i) => (
+                        <TableRow key={a.id} hover>
+                          <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                          <TableCell>{a.session_term}</TableCell>
+                          <TableCell>{a.programme}</TableCell>
+                          <TableCell>{a.className}</TableCell>
+                          <TableCell>{a.subject_name}</TableCell>
+                          <TableCell>{a.total_reg}</TableCell>
+                          <TableCell>{a.ca1_count}</TableCell>
+                          <TableCell>{a.ca2_count}</TableCell>
+                          <TableCell>{a.exam_upload_count}</TableCell>
+                          <TableCell>
+                            {a.teacher_submit === 'yes' ? (
+                              <Chip icon={<IconCheck size={14} />} label="Submitted" size="small" color="success" />
+                            ) : (
+                              <Chip label="Pending" size="small" color="warning" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <IconButton size="small" onClick={(e) => openActionMenu(e, a)}>
+                              <MoreVertIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={filteredAllocations.length}
+                  page={page}
+                  onPageChange={(_, p) => setPage(p)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                  rowsPerPageOptions={[5, 10, 25]}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                  No subject allocations found for the selected filters.
+                </Alert>
+              </Box>
+            )}
+          </Box>
+        )}
       </Paper>
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW UPLOADED SCORES DIALOG
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={viewDialog.open} onClose={() => setViewDialog({ open: false, data: null })} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Uploaded Scores — {viewDialog.data?.class} • {viewDialog.data?.subject}
-        </DialogTitle>
-        <DialogContent>
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Reg ID</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">CA1</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">CA2</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">Exam</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">Total</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {dummyUploadedScores.map((s, i) => (
-                  <TableRow key={i} hover>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{s.name}</TableCell>
-                    <TableCell>{s.reg_id}</TableCell>
-                    <TableCell align="center">{s.ca1}</TableCell>
-                    <TableCell align="center">{s.ca2}</TableCell>
-                    <TableCell align="center">{s.exam}</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700 }}>{s.total}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewDialog({ open: false, data: null })}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {/* ── Table Row Action Menu ────────────────────────────── */}
+      <Menu
+        anchorEl={actionMenuAnchor}
+        open={Boolean(actionMenuAnchor)}
+        onClose={closeActionMenu}
+      >
+        <MenuItem onClick={() => {
+          closeActionMenu();
+          setDownloadSampleDialog({ open: true, allocation: actionMenuRow });
+        }}>
+          <ListItemIcon><IconDownload size={18} /></ListItemIcon>
+          <ListItemText>Download Score Sheet</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          closeActionMenu();
+          showSnackbar('CA/Exam scoresheet downloaded!');
+        }}>
+          <ListItemIcon><IconFileSpreadsheet size={18} /></ListItemIcon>
+          <ListItemText>CA/Exam Scoresheet</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          closeActionMenu();
+          setUploadResultDialog({ open: true, allocation: actionMenuRow });
+        }}>
+          <ListItemIcon><IconCloudUpload size={18} /></ListItemIcon>
+          <ListItemText>Upload Scores</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          closeActionMenu();
+          setUploadCaExamDialog({ open: true, allocation: actionMenuRow });
+        }}>
+          <ListItemIcon><IconUpload size={18} /></ListItemIcon>
+          <ListItemText>Upload CA & Exam Scores</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          closeActionMenu();
+          setInputScoreDialog({ open: true, allocation: actionMenuRow });
+        }}>
+          <ListItemIcon><IconEdit size={18} /></ListItemIcon>
+          <ListItemText>Input Scores</ListItemText>
+        </MenuItem>
+        {actionMenuRow?.ca1_count > 0 && (
+          <MenuItem onClick={() => {
+            closeActionMenu();
+            setInputScoreDialog({ open: true, allocation: actionMenuRow });
+          }}>
+            <ListItemIcon><IconEye size={18} /></ListItemIcon>
+            <ListItemText>View Score Sheet</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
 
-      {/* ════════════════════════════════════════════════════════
-          UPLOAD SCORES DIALOG (Single Subject)
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={uploadDialog} onClose={() => setUploadDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Upload Scores</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Session/Term</InputLabel>
-                <Select label="Session/Term">
-                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Programme</InputLabel>
-                <Select label="Programme">
-                  {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Class</InputLabel>
-                <Select label="Class">
-                  {dummyClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Subject</InputLabel>
-                <Select label="Subject">
-                  {dummySubjects.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
-                <Select label="Category">
-                  <MenuItem value="ca">CA</MenuItem>
-                  <MenuItem value="exam">Exam</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Button variant="outlined" component="label" fullWidth sx={{ py: 2, borderStyle: 'dashed' }}>
-                Select Excel File (.xlsx)
-                <input type="file" hidden accept=".xlsx,.xls" />
-              </Button>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => { setUploadDialog(false); showSnackbar('Scores uploaded successfully!'); }}>
-            <IconCheck size={16} style={{ marginRight: 4 }} /> Upload
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* ── Dialogs & Modals ───────────────────────────────── */}
+      <ActionSelectionDialog
+        open={actionSelectionDialog.open}
+        allocation={actionSelectionDialog.allocation}
+        onClose={() => setActionSelectionDialog({ open: false, allocation: null })}
+        onProceed={handleProceedActionSelection}
+      />
 
-      {/* ════════════════════════════════════════════════════════
-          UPLOAD CA & EXAM DIALOG (Combined)
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={uploadCaExamDialog} onClose={() => setUploadCaExamDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Upload CA & Exam Scores</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
-            Upload a single Excel file containing both CA and Exam scores for all students.
-          </Alert>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <Button variant="outlined" component="label" fullWidth sx={{ py: 3, borderStyle: 'dashed' }}>
-                Select Excel File (.xlsx)
-                <input type="file" hidden accept=".xlsx" />
-              </Button>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadCaExamDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => { setUploadCaExamDialog(false); showSnackbar('CA & Exam scores uploaded successfully!'); }}>
-            <IconCheck size={16} style={{ marginRight: 4 }} /> Upload
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DownloadSampleDialog
+        open={downloadSampleDialog.open}
+        onClose={() => setDownloadSampleDialog({ open: false, allocation: null })}
+        allocation={downloadSampleDialog.allocation}
+      />
 
-      {/* ════════════════════════════════════════════════════════
-          DOWNLOAD TEMPLATE DIALOG (Single Subject)
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={downloadDialog} onClose={() => setDownloadDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Download Score Template</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Session/Term</InputLabel>
-                <Select label="Session/Term">
-                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Programme</InputLabel>
-                <Select label="Programme">
-                  {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Class</InputLabel>
-                <Select label="Class">
-                  {dummyClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Subject</InputLabel>
-                <Select label="Subject">
-                  {dummySubjects.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
-                <Select label="Category">
-                  <MenuItem value="ca">CA</MenuItem>
-                  <MenuItem value="exam">Exam</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDownloadDialog(false)}>Cancel</Button>
-          <Button variant="contained" startIcon={<IconDownload size={16} />} onClick={() => { setDownloadDialog(false); showSnackbar('Template downloaded successfully!'); }}>
-            Download
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DownloadCombinedDialog
+        open={downloadCombinedDialog}
+        onClose={() => setDownloadCombinedDialog(false)}
+        allocations={filteredAllocations}
+      />
 
-      {/* ════════════════════════════════════════════════════════
-          DOWNLOAD CA/EXAM SCORESHEET DIALOG
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={downloadCaExamDialog} onClose={() => setDownloadCaExamDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Download CA/Exam Scoresheet</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
-            Download a combined Excel template for both CA and Exam scores.
-          </Alert>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Session/Term</InputLabel>
-                <Select label="Session/Term">
-                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Programme</InputLabel>
-                <Select label="Programme">
-                  {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Class</InputLabel>
-                <Select label="Class">
-                  {dummyClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Subject</InputLabel>
-                <Select label="Subject">
-                  {dummySubjects.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDownloadCaExamDialog(false)}>Cancel</Button>
-          <Button variant="contained" startIcon={<IconDownload size={16} />} onClick={() => { setDownloadCaExamDialog(false); showSnackbar('CA/Exam scoresheet downloaded!'); }}>
-            Download
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <UploadResultDialog
+        open={uploadResultDialog.open}
+        onClose={() => setUploadResultDialog({ open: false, allocation: null })}
+        allocation={uploadResultDialog.allocation}
+        onUploaded={handleUploaded}
+      />
 
-      {/* ════════════════════════════════════════════════════════
-          INPUT SCORES DIALOG (Manual Entry)
-          ════════════════════════════════════════════════════════ */}
-      <Dialog open={inputScoresDialog.open} onClose={() => setInputScoresDialog({ open: false, data: null })} maxWidth="lg" fullWidth>
-        <DialogTitle>
-          Input Scores — {inputScoresDialog.data?.class} • {inputScoresDialog.data?.subject}
-        </DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Enter scores manually for each student. Max scores: CA1 = 20, CA2 = 20, Exam = 60.
-          </Alert>
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Reg ID</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">CA1 (20)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">CA2 (20)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">Exam (60)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inputStudents.map((s, i) => (
-                  <TableRow key={i} hover>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{s.name}</TableCell>
-                    <TableCell>{s.reg_id}</TableCell>
-                    <TableCell align="center">
-                      <TextField size="small" type="number" placeholder="0" sx={{ width: 70 }}
-                        value={s.ca1}
-                        onChange={e => handleInputScoreChange(i, 'ca1', e.target.value)}
-                        onBlur={() => handleInputScoreBlur(i, 'ca1', 20)} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <TextField size="small" type="number" placeholder="0" sx={{ width: 70 }}
-                        value={s.ca2}
-                        onChange={e => handleInputScoreChange(i, 'ca2', e.target.value)}
-                        onBlur={() => handleInputScoreBlur(i, 'ca2', 20)} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <TextField size="small" type="number" placeholder="0" sx={{ width: 70 }}
-                        value={s.exam}
-                        onChange={e => handleInputScoreChange(i, 'exam', e.target.value)}
-                        onBlur={() => handleInputScoreBlur(i, 'exam', 60)} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Button size="small" variant="contained" disabled={inputSaving[i]} onClick={() => handleSaveStudentScore(i)}>
-                        {inputSaving[i] ? <CircularProgress size={16} color="inherit" /> : 'Save'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setInputScoresDialog({ open: false, data: null })}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      <UploadCombinedDialog
+        open={uploadCombinedDialog}
+        onClose={() => setUploadCombinedDialog(false)}
+        allocations={filteredAllocations}
+        onUploaded={handleUploaded}
+      />
 
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity}>{snackbar.message}</Alert>
+      <UploadCaExamDialog
+        open={uploadCaExamDialog.open}
+        onClose={() => setUploadCaExamDialog({ open: false, allocation: null })}
+        allocation={uploadCaExamDialog.allocation}
+        onUploaded={handleUploaded}
+      />
+
+      <InputScoreDialog
+        open={inputScoreDialog.open}
+        onClose={() => setInputScoreDialog({ open: false, allocation: null })}
+        allocation={inputScoreDialog.allocation}
+        filter={filter}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </Box>
   );

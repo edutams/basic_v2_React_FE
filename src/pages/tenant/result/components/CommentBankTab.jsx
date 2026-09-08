@@ -1,153 +1,150 @@
 import { useState } from 'react';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Grid, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem, Snackbar, Alert, IconButton, useTheme,
-  Card, CardHeader, CardContent, TablePagination,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
+  useTheme, TextField, Button, CircularProgress, Tooltip, Chip,
 } from '@mui/material';
-import { IconPlus, IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconHelp } from '@tabler/icons-react';
 
-const initialComments = [
-  { id: 1, comment: 'An excellent performance. Keep it up!', type: 'positive', created_by: 'Admin' },
-  { id: 2, comment: 'Good effort but needs more practice in problem-solving.', type: 'positive', created_by: 'Admin' },
-  { id: 3, comment: 'Below expectations. Needs serious attention and parental support.', type: 'negative', created_by: 'Admin' },
-  { id: 4, comment: 'Very consistent in class. A role model to other students.', type: 'positive', created_by: 'Admin' },
-  { id: 5, comment: 'Frequent absenteeism is affecting academic performance.', type: 'negative', created_by: 'Admin' },
-  { id: 6, comment: 'Shows great improvement from last term. Well done!', type: 'positive', created_by: 'Admin' },
-  { id: 7, comment: 'Needs to participate more actively in class discussions.', type: 'negative', created_by: 'Admin' },
-  { id: 8, comment: 'A disciplined and hardworking student.', type: 'positive', created_by: 'Admin' },
-  { id: 9, comment: 'Late submission of assignments is affecting grades.', type: 'negative', created_by: 'Admin' },
-  { id: 10, comment: 'Excellent conduct and academic performance.', type: 'positive', created_by: 'Admin' },
+const initialBankComments = [
+  { id: 1, grade_score: '90-100', comment1: 'An excellent performance. Keep it up!', comment2: 'A brilliant student with outstanding results.', comment3: 'Exceptional performance across all areas.' },
+  { id: 2, grade_score: '80-89', comment1: 'Very good effort. Sustained this standard.', comment2: 'Good performance with room for improvement.', comment3: 'A hardworking student.' },
+  { id: 3, grade_score: '70-79', comment1: 'Good performance. Keep pushing higher.', comment2: 'Above average, can do better.', comment3: 'Consistent effort shown.' },
+  { id: 4, grade_score: '60-69', comment2: 'Fair performance. More effort needed.', comment3: 'Needs to improve on weak areas.' },
+  { id: 5, grade_score: '50-59', comment1: 'Average performance. Needs more dedication.', comment2: 'Below average. Requires parental support.', comment3: 'Needs serious attention.' },
+  { id: 6, grade_score: '40-49', comment1: 'Below expectations. Needs serious attention.', comment2: 'Poor performance. More effort required.', comment3: 'Needs to attend tutorials.' },
+  { id: 7, grade_score: '30-39', comment1: 'Poor performance. Urgent improvement needed.', comment2: 'Very poor. Requires immediate intervention.', comment3: 'Not meeting basic standards.' },
+  { id: 8, grade_score: '0-29', comment1: 'Very poor performance. Needs urgent help.', comment2: 'Highly unsatisfactory. Seek help immediately.', comment3: 'Requires special attention.' },
 ];
 
 const CommentBankTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [comments, setComments] = useState(initialComments);
-  const [filterType, setFilterType] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [dialog, setDialog] = useState({ open: false, editing: null });
-  const [form, setForm] = useState({ comment: '', type: 'positive' });
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
-  const filtered = filterType ? comments.filter(c => c.type === filterType) : comments;
+  const [bankComments, setBankComments] = useState(initialBankComments);
+  const [editingCell, setEditingCell] = useState({ rowIdx: null, field: null });
+  const [editValue, setEditValue] = useState('');
+  const [originalValue, setOriginalValue] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    if (dialog.editing) {
-      setComments(comments.map(c => c.id === dialog.editing.id ? { ...c, ...form } : c));
-      showSnackbar('Comment updated');
-    } else {
-      setComments([...comments, { id: Date.now(), ...form, created_by: 'Admin' }]);
-      showSnackbar('Comment added');
-    }
-    setDialog({ open: false, editing: null });
-    setForm({ comment: '', type: 'positive' });
+  const handleDoubleClick = (rowIdx, field, currentValue) => {
+    setEditingCell({ rowIdx, field });
+    setOriginalValue(currentValue || '');
+    setEditValue(currentValue || '');
   };
 
-  const handleDelete = (id) => {
-    setComments(comments.filter(c => c.id !== id));
-    showSnackbar('Comment deleted');
+  const handleSave = (rowIdx) => {
+    setSaving(true);
+    setTimeout(() => {
+      setBankComments(prev => prev.map((row, i) => {
+        if (i !== rowIdx) return row;
+        return { ...row, [editingCell.field]: editValue.trim() || null };
+      }));
+      setEditingCell({ rowIdx: null, field: null });
+      setSaving(false);
+    }, 500);
+  };
+
+  const handleClear = (rowIdx) => {
+    setBankComments(prev => prev.map((row, i) => {
+      if (i !== rowIdx) return row;
+      return { ...row, [editingCell.field]: originalValue || null };
+    }));
+    setEditingCell({ rowIdx: null, field: null });
+  };
+
+  const renderEditableCell = (rowIdx, field, value) => {
+    const isEditing = editingCell.rowIdx === rowIdx && editingCell.field === field;
+
+    if (isEditing) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+          <TextField
+            size="small" multiline minRows={2} maxRows={5} fullWidth
+            value={editValue}
+            onChange={e => setEditValue(e.target.value)}
+            sx={{ '& .MuiOutlinedInput-root': { fontSize: 13 }, '& .MuiOutlinedInput-notchedOutline': { border: '2px solid #000' } }}
+            autoFocus
+          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flexShrink: 0 }}>
+            <Button variant="contained" size="small" onClick={() => handleSave(rowIdx)} disabled={saving}
+              sx={{ fontSize: 10, minWidth: 0, px: 1 }}>
+              {saving ? <CircularProgress size={12} /> : 'Save'}
+            </Button>
+            <Button variant="outlined" size="small" color="error" onClick={() => handleClear(rowIdx)}
+              sx={{ fontSize: 10, minWidth: 0, px: 1 }}>
+              Clear
+            </Button>
+          </Box>
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        onDoubleClick={() => handleDoubleClick(rowIdx, field, value)}
+        sx={{
+          width: 250, minHeight: 24, cursor: 'pointer', wordWrap: 'break-word', overflowWrap: 'break-word',
+          color: value ? 'text.primary' : 'text.secondary',
+          fontStyle: value ? 'normal' : 'italic',
+          '&:hover': { bgcolor: 'action.hover', borderRadius: 1, px: 0.5 },
+        }}
+      >
+        {value || 'Double click to start editing'}
+      </Box>
+    );
   };
 
   return (
-    <Box>
-      <Alert severity="info" sx={{ mb: 2 }}>
-        Manage predefined teacher and admin comments for report cards.
-      </Alert>
+    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
+      {/* ── Header ──────────────────────────────────────────── */}
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${borderColor}` }}>
+        <Typography variant="h6" fontWeight={700}>Comment Bank</Typography>
+        <Tooltip title="Add and edit result comments here." arrow>
+          <Chip icon={<IconHelp size={14} />} label="?" size="small" color="info"
+            sx={{ height: 22, fontSize: 11, cursor: 'help', '& .MuiChip-icon': { ml: 0.3 } }} />
+        </Tooltip>
+      </Box>
 
-      <Card elevation={2}>
-        <CardHeader
-          title="Comment Bank"
-          action={
-            <Button variant="contained" size="small" startIcon={<IconPlus size={16} />} onClick={() => { setDialog({ open: true, editing: null }); setForm({ comment: '', type: 'positive' }); }}>
-              Add Comment
-            </Button>
-          }
-        />
-        <CardContent>
-          {/* ── Filter ────────────────────────────────────────── */}
-          <Box sx={{ mb: 2 }}>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Filter by Type</InputLabel>
-              <Select value={filterType} label="Filter by Type" onChange={e => setFilterType(e.target.value)}>
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="positive">Positive</MenuItem>
-                <MenuItem value="negative">Negative</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* ── Comments Table ────────────────────────────────── */}
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: '5%' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '45%' }}>Comment</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '12%' }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '15%' }}>Created By</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '12%' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((c, i) => (
-                  <TableRow key={c.id} hover>
-                    <TableCell>{page * rowsPerPage + i + 1}</TableCell>
-                    <TableCell>{c.comment}</TableCell>
-                    <TableCell>
-                      <Chip label={c.type} size="small" color={c.type === 'positive' ? 'success' : 'error'} />
-                    </TableCell>
-                    <TableCell>{c.created_by}</TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => { setDialog({ open: true, editing: c }); setForm({ comment: c.comment, type: c.type }); }}>
-                        <IconEdit size={16} />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(c.id)}>
-                        <IconTrash size={16} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            component="div"
-            count={filtered.length}
-            page={page}
-            onPageChange={(_, p) => setPage(p)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </CardContent>
-      </Card>
-
-      {/* ── Dialog ──────────────────────────────────────────── */}
-      <Dialog open={dialog.open} onClose={() => setDialog({ open: false, editing: null })} maxWidth="sm" fullWidth>
-        <DialogTitle>{dialog.editing ? 'Edit Comment' : 'Add Comment'}</DialogTitle>
-        <DialogContent>
-          <TextField label="Comment" fullWidth multiline rows={3} sx={{ mt: 2, mb: 2 }} value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })} />
-          <FormControl fullWidth size="small">
-            <InputLabel>Type</InputLabel>
-            <Select value={form.type} label="Type" onChange={e => setForm({ ...form, type: e.target.value })}>
-              <MenuItem value="positive">Positive</MenuItem>
-              <MenuItem value="negative">Negative</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialog({ open: false, editing: null })}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave}>Save</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
-    </Box>
+      {/* ── Table ───────────────────────────────────────────── */}
+      <Box sx={{ p: 2, overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 900, '& .MuiTableCell-root': { py: 1.5, px: 1.5, borderRight: `1px solid ${borderColor}` } }}>
+          <TableHead>
+            <TableRow>
+              <TableCell rowSpan={2} sx={{ fontWeight: 700, width: '15%', textAlign: 'center', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>
+                Score Range
+              </TableCell>
+              <TableCell colSpan={3} sx={{ fontWeight: 700, textAlign: 'center', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>
+                Attendance Affectives and Psychomotor Domain average
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, textAlign: 'center', width: '25%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>0-2</TableCell>
+              <TableCell sx={{ fontWeight: 700, textAlign: 'center', width: '25%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>3-4</TableCell>
+              <TableCell sx={{ fontWeight: 700, textAlign: 'center', width: '25%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>5</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {bankComments.map((row, i) => (
+              <TableRow key={row.id || i}>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
+                  {row.grade_score}
+                </TableCell>
+                <TableCell>
+                  {renderEditableCell(i, 'comment1', row.comment1)}
+                </TableCell>
+                <TableCell>
+                  {renderEditableCell(i, 'comment2', row.comment2)}
+                </TableCell>
+                <TableCell>
+                  {renderEditableCell(i, 'comment3', row.comment3)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Box>
+    </Paper>
   );
 };
 

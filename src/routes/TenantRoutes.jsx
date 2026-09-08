@@ -124,6 +124,9 @@ const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/Uploa
 const ResultConsiderationPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')));
 const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
 const ScoreSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreSheetPage')));
+const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBreakdownPage')));
+const PerformanceAnalyticsPage = Loadable(lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')));
+const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
 const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
@@ -505,6 +508,30 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="dashboard.index">
             <ScoreSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-cabreakdown',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <CaBreakdownPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-analytics',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <PerformanceAnalyticsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-sheet',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ResultSheetPage />
           </TenantProtectedRoute>
         ),
       },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '@mui/material/styles';
-import { Box, Grid, Typography, Paper, Button, Chip, Stack, Divider } from '@mui/material';
+import { Box, Grid, Typography, Paper, Button, Chip, Stack, Divider, CircularProgress } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Groups as GroupsIcon,
@@ -33,93 +33,158 @@ const STEPS = [
 
 const StepperBar = ({ activeStep, steps }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const getIconColor = (active, done) =>
     active ? '#fff' : done ? theme.palette.primary.main : theme.palette.grey[500];
 
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, overflowX: 'auto', pb: 1 }}>
-      {steps.map((step, i) => {
-        const done = i < activeStep;
-        const active = i === activeStep;
-        const Icon = step.icon;
+  const CurrentIcon = steps[activeStep]?.icon;
+  const progressPct = steps.length > 1 ? (activeStep / (steps.length - 1)) * 100 : 100;
 
-        return (
-          <React.Fragment key={step.label}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 0.75,
-                minWidth: 90,
-                flexShrink: 0,
-              }}
-            >
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: '8px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+        p: { xs: 1.5, sm: 1.5 },
+        mb: 2,
+      }}
+    >
+      {/* Mobile: compact "step X of Y" + progress bar — the full multi-node
+          layout below doesn't fit a phone screen without forcing a
+          horizontal scroll just to see which step you're on. */}
+      <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
+              bgcolor: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {CurrentIcon && <CurrentIcon sx={{ fontSize: 17, color: '#fff' }} />}
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }} display="block">
+              STEP {activeStep + 1} OF {steps.length}
+            </Typography>
+            <Typography variant="body2" fontWeight={700} noWrap>
+              {steps[activeStep]?.label}
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ height: 4, borderRadius: 4, bgcolor: 'grey.200', overflow: 'hidden' }}>
+          <Box
+            sx={{
+              height: '100%',
+              width: `${progressPct}%`,
+              bgcolor: 'primary.main',
+              borderRadius: 4,
+              transition: 'width 0.25s ease',
+            }}
+          />
+        </Box>
+      </Box>
+
+      {/* Tablet/desktop: full multi-node stepper */}
+      <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', overflowX: 'auto' }}>
+        {steps.map((step, i) => {
+          const done = i < activeStep;
+          const active = i === activeStep;
+          const Icon = step.icon;
+
+          return (
+            <React.Fragment key={step.label}>
               <Box
                 sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: '2px solid',
-                  borderColor: active || done ? 'primary.main' : 'grey.300',
-                  bgcolor: active ? 'primary.main' : 'transparent',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s',
+                  gap: 0.5,
+                  minWidth: 84,
+                  flexShrink: 0,
                 }}
               >
-                <Icon sx={{ fontSize: 20, color: getIconColor(active, done) }} />
-              </Box>
-
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="caption" color="text.secondary" display="block" lineHeight={1}>
-                  STEP {i + 1}
-                </Typography>
-
-                <Typography
-                  variant="caption"
-                  fontWeight={active || done ? 700 : 400}
-                  color={active || done ? 'text.primary' : 'text.secondary'}
-                  display="block"
-                  lineHeight={1.3}
-                  mt={0.3}
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    border: '2px solid',
+                    borderColor: active || done ? 'primary.main' : 'grey.300',
+                    bgcolor: active ? 'primary.main' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}
                 >
-                  {step.label}
-                </Typography>
-              </Box>
-            </Box>
+                  <Icon sx={{ fontSize: 18, color: getIconColor(active, done) }} />
+                </Box>
 
-            {i < steps.length - 1 && (
-              <Box
-                sx={{
-                  flex: 1,
-                  height: 2,
-                  bgcolor: done ? 'primary.main' : 'grey.200',
-                  mb: 3.5,
-                  minWidth: 20,
-                }}
-              />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" display="block" lineHeight={1} sx={{ fontSize: '0.65rem' }}>
+                    STEP {i + 1}
+                  </Typography>
+
+                  <Typography
+                    variant="caption"
+                    fontWeight={active || done ? 700 : 400}
+                    color={active || done ? 'text.primary' : 'text.secondary'}
+                    display="block"
+                    lineHeight={1.3}
+                    mt={0.2}
+                  >
+                    {step.label}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {i < steps.length - 1 && (
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: 2,
+                    bgcolor: done ? 'primary.main' : 'grey.200',
+                    mb: 3,
+                    minWidth: 16,
+                  }}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </Box>
+    </Paper>
   );
 };
 
 const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, intendingClassId }) => {
+  const cardSx = {
+    borderRadius: '8px',
+    border: '1px solid',
+    borderColor: '#e2e8f0',
+    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+  };
+
   if (!batch) {
     return (
-      <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
+      <Paper elevation={0} sx={{ ...cardSx, p: 1.75, position: { xs: 'static', lg: 'sticky' }, top: 24 }}>
         <Typography variant="body2" color="text.secondary" mb={2}>
           {batchLoaded
             ? 'No admission batch selected. Please select a batch to continue.'
             : 'Loading batch details...'}
         </Typography>
         {batchLoaded && (
-          <Button variant="contained" size="small" fullWidth onClick={onChangeBatch}>
+          <Button variant="contained" size="small" fullWidth onClick={onChangeBatch} sx={{ textTransform: 'none' }}>
             Select Admission Batch
           </Button>
         )}
@@ -139,17 +204,17 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, inten
   const feeHasRange = feeSummary.some((f) => f.isRange);
 
   return (
-    <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
+    <Paper elevation={0} sx={{ ...cardSx, p: 1.75, position: { xs: 'static', lg: 'sticky' }, top: 24 }}>
       <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
         Selected Admission Batch Detail
       </Typography>
-      <Typography variant="h5" fontWeight={800} mb={2}>
+      <Typography variant="subtitle1" fontWeight={800} mb={2} lineHeight={1.35}>
         Session: {batch?.session_term?.session?.session_name}{' '}
         {batch?.session_term?.term?.term_name}
         {' • '}
         Admission Batch: {batch?.batch_name ?? '2'}
       </Typography>
-      <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
+      <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2}>
         {(batch?.classes || []).map((cls) => (
           <Chip
             key={cls.id}
@@ -167,9 +232,9 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, inten
             justifyContent: 'space-between',
             alignItems: 'center',
             bgcolor: 'error.light',
-            borderRadius: 2,
-            px: 2,
-            py: 1.25,
+            borderRadius: '8px',
+            px: 1.5,
+            py: 1,
             mb: 1.5,
           }}
         >
@@ -183,20 +248,20 @@ const BatchSummaryCard = ({ batch, batchLoaded, onChangeBatch, activeStep, inten
       )}
       {activeStep !== 3 && (
         <>
-          <Divider sx={{ mb: 2 }} />
+          <Divider sx={{ mb: 1.5 }} />
           <Button
-            variant="contained"
+            variant="outlined"
             size="small"
             fullWidth
             startIcon={<VisibilityIcon />}
             onClick={onChangeBatch}
             sx={{
-              borderRadius: 2,
+              borderRadius: '8px',
               fontWeight: 600,
               textTransform: 'none',
               borderColor: 'grey.300',
               color: 'text.primary',
-              '&:hover': { borderColor: 'primary.main', color: '#FFFF' },
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.light', color: 'text.primary' },
             }}
           >
             Change your Admission Batch
@@ -433,9 +498,13 @@ const NewApplication = () => {
   const [activeStep, setActiveStep] = useState(resumeStep);
   const [maxAllowedStep, setMaxAllowedStep] = useState(0); // Track the maximum step user can access
 
-  // Hide batch summary on submit step (step 4 for payment batches, step 3 for no-payment batches)
-  const submitStepIndex = selectedBatch?.require_payment ? 4 : 3;
-  const hideBatchSummary = activeStep === submitStepIndex;
+  // Hide batch summary on submit step (step 4 for payment batches, step 3 for no-payment batches).
+  // Stays null until the batch has actually finished loading — otherwise
+  // `selectedBatch?.require_payment` reads as falsy for an instant while the
+  // batch is still in flight, guessing the "no payment" step count and
+  // briefly hiding/showing the sidebar for the wrong reason.
+  const submitStepIndex = batchLoaded && selectedBatch ? (selectedBatch.require_payment ? 4 : 3) : null;
+  const hideBatchSummary = submitStepIndex !== null && activeStep === submitStepIndex;
 
   // Calculate max allowed step based on admission stage and payment status
   useEffect(() => {
@@ -702,6 +771,20 @@ const NewApplication = () => {
     // Map activeStep to actual step considering dynamic payment step
     let actualStep = activeStep;
 
+    // Steps 2+ render a different component depending on whether this batch
+    // requires payment — which isn't known until the batch has actually
+    // finished loading. Rendering before then guesses the "no payment"
+    // branch and briefly shows the wrong step (e.g. Submit instead of
+    // Documents) right before it snaps to the correct one. Wait it out
+    // instead of flashing the wrong content.
+    if (actualStep >= 2 && (!batchLoaded || !selectedBatch)) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
     switch (actualStep) {
       case 0:
         return (
@@ -803,39 +886,51 @@ const NewApplication = () => {
 
   return (
     <PageContainer title="New Application" description="Apply for admission">
-      <Box sx={hideBatchSummary ? { overflow: 'hidden', height: '100vh' } : {}}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: 'primary.main', borderRightWidth: 2 }}
+      <Box sx={hideBatchSummary ? { overflow: { xs: 'visible', sm: 'hidden' }, height: { xs: 'auto', sm: '100vh' } } : {}}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 1.25,
+            mb: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0, width: { xs: '100%', sm: 'auto' } }}>
+            <Box
+              sx={{
+                width: 4,
+                height: 32,
+                borderRadius: 4,
+                bgcolor: 'primary.main',
+                flexShrink: 0,
+              }}
             />
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
+                width: 38,
+                height: 38,
+                borderRadius: '8px',
                 bgcolor: 'primary.light',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              <GroupsIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+              <GroupsIcon sx={{ color: 'primary.main', fontSize: 20 }} />
             </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2} noWrap>
                 Application Form
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', wordBreak: 'break-word' }}>
                 Session: {selectedBatch?.session_term?.session?.session_name}{' '}
                 {selectedBatch?.session_term?.term?.term_name}
-                &nbsp;·&nbsp;
                 {selectedBatch?.require_payment && selectedBatch?.application_fee !== '0.00' && (
                   <>
-                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()} Application
-                    Fee
+                    {' · '}₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()} Application Fee
                   </>
                 )}
               </Typography>
@@ -843,11 +938,18 @@ const NewApplication = () => {
           </Box>
 
           <Button
-            variant="contained"
             size="small"
-            startIcon={<ArrowBackIcon />}
+            startIcon={<ArrowBackIcon sx={{ fontSize: '16px !important' }} />}
             onClick={() => navigate('/dashboard')}
-            sx={{ color: 'text.secondary', fontWeight: 500 }}
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              textTransform: 'none',
+              flexShrink: 0,
+              alignSelf: { xs: 'flex-end', sm: 'center' },
+              '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
+            }}
           >
             Back to dashboard
           </Button>
@@ -856,15 +958,23 @@ const NewApplication = () => {
         <StepperBar activeStep={activeStep} steps={STEPS} />
 
         {/* ── Content + Sidebar ── */}
-        <Grid container spacing={3} alignItems="flex-start">
+        <Grid container spacing={2} alignItems="flex-start">
           <Grid size={{ xs: 12, lg: hideBatchSummary ? 12 : 8 }}>
             <Paper
+              elevation={0}
               sx={{
-                borderRadius: 3,
-                p: { xs: 2.5, sm: 3.5 },
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: '#e2e8f0',
+                boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                p: { xs: 1.5, sm: 1.75 },
                 ...(hideBatchSummary && {
-                  height: 'calc(100vh - 260px)',
-                  overflowY: 'auto',
+                  // Locking to a fixed height + internal scroll only makes sense
+                  // once there's room for it — on mobile it fights the browser's
+                  // own collapsing address bar and can clip content, so let the
+                  // page scroll naturally there instead.
+                  height: { xs: 'auto', sm: 'calc(100vh - 260px)' },
+                  overflowY: { xs: 'visible', sm: 'auto' },
                 }),
               }}
             >

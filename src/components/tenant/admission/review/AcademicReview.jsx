@@ -1,4 +1,4 @@
-import { Grid, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import ReviewSection from './ReviewSection';
@@ -85,63 +85,37 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
   return (
     <ReviewSection number={2} title="Academic Information" id="section-academic-info">
       {hasPreviousSchool && (
-        <Box mb={3}>
-          <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
+        <Box mb={2.5}>
+          <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1.25}>
             Previous school information
           </Typography>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField
-                label="Previous school name"
-                value={academicData?.prev_school_name || 'N/A'}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField
-                label="Previous school address"
-                value={academicData?.prev_school_address || 'N/A'}
-                multiline
-                rows={2}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField label="State" value={prevStateName || 'N/A'} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField label="LGA" value={prevLgaName || 'N/A'} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <ReadField label="Last Class" value={academicData?.previous_class || 'N/A'} />
-            </Grid>
-          </Grid>
+          {/* CSS grid, not MUI's 12-col Grid split into uneven spans (3/3/2/2/2) —
+              every column here is the same width, so rows actually line up. */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 1.5 }}>
+            <ReadField label="Previous school name" value={academicData?.prev_school_name || 'N/A'} />
+            <ReadField label="Previous school address" value={academicData?.prev_school_address || 'N/A'} />
+            <ReadField label="State" value={prevStateName || 'N/A'} />
+            <ReadField label="LGA" value={prevLgaName || 'N/A'} />
+            <ReadField label="Last Class" value={academicData?.previous_class || 'N/A'} />
+          </Box>
         </Box>
       )}
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <ReadField label="Intending Class" value={displayIntendingClass} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <ReadField label="Programme Class Choice" value={programmeClassChoice} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <ReadField label="Study Mode" value={boardingLabel} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <ReadField label="Admission Batch" value={selectedBatch?.batch_name || 'N/A'} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <ReadField
-            label="Session/Term"
-            value={
-              selectedBatch?.session_term
-                ? `${selectedBatch.session_term.session?.session_name || ''} ${selectedBatch.session_term.term?.term_name || ''}`.trim() ||
-                  'N/A'
-                : 'N/A'
-            }
-          />
-        </Grid>
-      </Grid>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 1.5 }}>
+        <ReadField label="Intending Class" value={displayIntendingClass} />
+        <ReadField label="Programme Class Choice" value={programmeClassChoice} />
+        <ReadField label="Study Mode" value={boardingLabel} />
+        <ReadField label="Admission Batch" value={selectedBatch?.batch_name || 'N/A'} />
+        <ReadField
+          label="Session/Term"
+          value={
+            selectedBatch?.session_term
+              ? `${selectedBatch.session_term.session?.session_name || ''} ${selectedBatch.session_term.term?.term_name || ''}`.trim() ||
+                'N/A'
+              : 'N/A'
+          }
+        />
+      </Box>
     </ReviewSection>
   );
 };

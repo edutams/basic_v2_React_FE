@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Stack, Link, Button, Paper } from '@mui/material';
+import { Box, Grid, Typography, Link, Button, Paper, useTheme } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
@@ -11,10 +11,13 @@ import FinalReview from './review/FinalReview';
 const handleJump = (e, id) => {
   e.preventDefault();
   const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 const QuickJump = ({ viewMode = false, requirePayment = false }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   // Build links dynamically based on payment requirement
   const baseLinks = ['Ward Detail', 'Academic Info'];
   if (requirePayment) {
@@ -28,28 +31,57 @@ const QuickJump = ({ viewMode = false, requirePayment = false }) => {
   const links = baseLinks;
 
   return (
-    <Paper sx={{ borderRadius: 2, p: 2.5, mb: 2, position: 'sticky', top: 24 }}>
-      <Typography variant="h6" fontWeight={700} color="text.secondary" display="block" mb={1}>
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: '8px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+        p: 1.75,
+        mb: 2,
+        position: 'sticky',
+        top: 24,
+      }}
+    >
+      <Typography
+        variant="caption"
+        fontWeight={700}
+        color="text.secondary"
+        display="block"
+        mb={1}
+        sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+      >
         Quick jump
       </Typography>
-      <Stack spacing={0.5}>
+      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
         {links.map((s) => {
           const id = `section-${s.toLowerCase().replace(' ', '-')}`;
           return (
             <Link
               key={s}
               href={`#${id}`}
-              underline="hover"
-              variant="h6"
-              color="primary.main"
-              sx={{ fontWeight: 500 }}
+              underline="none"
               onClick={(e) => handleJump(e, id)}
+              sx={{
+                py: 0.75,
+                px: 1,
+                borderRadius: '6px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: 'text.secondary',
+                transition: 'all 0.15s',
+                '&:hover': {
+                  color: 'primary.main',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                },
+              }}
             >
-              · {s}
+              {s}
             </Link>
           );
         })}
-      </Stack>
+      </Box>
     </Paper>
   );
 };
@@ -91,7 +123,7 @@ const SubmitStep = ({
     : '₦0';
 
   return (
-    <Grid container spacing={3} alignItems="flex-start">
+    <Grid container spacing={2} alignItems="flex-start">
       <Grid size={{ xs: 12, md: 9 }}>
         <WardReview
           wardData={wardData}
@@ -121,14 +153,15 @@ const SubmitStep = ({
           />
         )}
 
-        <Box display="flex" sx={{ mt: 1, mb: 2 }}>
+        <Box display="flex" sx={{ mt: 0.5, mb: 1 }}>
           <Button
-            variant="contained"
+            variant="outlined"
             size="small"
             color="inherit"
             startIcon={<ArrowBackIcon />}
             onClick={onBack}
             disabled={isLoading}
+            sx={{ textTransform: 'none' }}
           >
             Back
           </Button>

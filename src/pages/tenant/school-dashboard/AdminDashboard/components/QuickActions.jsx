@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
+import {
+  PersonAddAlt1,
+  Groups,
+  Badge,
+  UploadFile,
+  EventAvailable,
+  Campaign,
+  Assessment,
+} from '@mui/icons-material';
 
 const QuickActions = ({ loading = false }) => {
   const theme = useTheme();
@@ -8,55 +17,59 @@ const QuickActions = ({ loading = false }) => {
   const navigate = useNavigate();
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
+  const comingSoon = (title) => () => setSnackbar({ open: true, message: `${title} — Page under development` });
+
+  // Same page a student is added from, so "Add Student" and "Manage
+  // Students" are two entry points into one feature rather than two pages.
   const actions = [
     {
       id: 'add_student',
-      iconColor: '#2563eb',
-      iconBg: '#dbeafe',
+      icon: PersonAddAlt1,
+      color: '#2563eb',
       title: 'Add Student',
-      onClick: () => setSnackbar({ open: true, message: 'Add Student — Page under development' }),
+      onClick: () => navigate('/learner-management'),
     },
     {
       id: 'manage_students',
-      iconColor: '#16a34a',
-      iconBg: '#dcfce7',
+      icon: Groups,
+      color: '#16a34a',
       title: 'Manage Students',
-      onClick: () => setSnackbar({ open: true, message: 'Manage Students — Page under development' }),
+      onClick: () => navigate('/learner-management'),
     },
     {
       id: 'manage_staff',
-      iconColor: '#7c3aed',
-      iconBg: '#f3e8ff',
+      icon: Badge,
+      color: '#7c3aed',
       title: 'Manage Staff',
-      onClick: () => setSnackbar({ open: true, message: 'Manage Staff — Page under development' }),
+      onClick: () => navigate('/staff-setup'),
     },
     {
       id: 'upload_results',
-      iconColor: '#d97706',
-      iconBg: '#fef3c7',
+      icon: UploadFile,
+      color: '#d97706',
       title: 'Upload Results',
-      onClick: () => setSnackbar({ open: true, message: 'Upload Results — Page under development' }),
+      onClick: comingSoon('Upload Results'),
     },
     {
       id: 'view_attendance',
-      iconColor: '#0284c7',
-      iconBg: '#e0f2fe',
+      icon: EventAvailable,
+      color: '#0284c7',
       title: 'View Attendance',
-      onClick: () => setSnackbar({ open: true, message: 'View Attendance — Page under development' }),
+      onClick: () => navigate('/attendance-psychomotor'),
     },
     {
       id: 'create_announcement',
-      iconColor: '#16a34a',
-      iconBg: '#dcfce7',
+      icon: Campaign,
+      color: '#16a34a',
       title: 'Create Announcement',
-      onClick: () => setSnackbar({ open: true, message: 'Create Announcement — Page under development' }),
+      onClick: comingSoon('Create Announcement'),
     },
     {
       id: 'generate_report',
-      iconColor: '#2563eb',
-      iconBg: '#dbeafe',
+      icon: Assessment,
+      color: '#2563eb',
       title: 'Generate Report',
-      onClick: () => setSnackbar({ open: true, message: 'Generate Report — Page under development' }),
+      onClick: comingSoon('Generate Report'),
     },
   ];
 
@@ -92,27 +105,26 @@ const QuickActions = ({ loading = false }) => {
             {actions.map((item) => (
               <Button
                 key={item.id}
-                variant="contained"
-                disableElevation
+                variant="outlined"
+                size="small"
+                startIcon={<item.icon sx={{ fontSize: '15px !important' }} />}
                 onClick={item.onClick}
                 sx={{
                   borderRadius: '8px',
-                  px: 1.60,
+                  px: 1.6,
                   py: 0.65,
                   fontSize: '10px',
                   fontWeight: 700,
                   textTransform: 'none',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : item.iconBg,
-                  color: item.iconColor,
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  bgcolor: 'transparent',
+                  color: item.color,
+                  borderColor: item.color,
                   transition: 'all 0.18s ease',
                   '&:hover': {
-                    bgcolor: item.iconColor,
-                    color: '#ffffff',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.06)' : `${item.color}0D`,
+                    borderColor: item.color,
+                    color: item.color,
                     transform: 'translateY(-1px)',
-                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                   },
                 }}
               >

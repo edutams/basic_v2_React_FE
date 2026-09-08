@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
-  Grid,
   Typography,
   Paper,
   Button,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Description as DescriptionIcon } from '@mui/icons-material';
+import {
+  ArrowBackIosNew as ArrowBackIosNewIcon,
+  Description as DescriptionIcon,
+  Add as AddIcon,
+  Assignment as AssignmentIcon,
+  TaskAlt as TaskAltIcon,
+  HowToReg as HowToRegIcon,
+  HourglassTop as HourglassTopIcon,
+} from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
@@ -20,10 +27,64 @@ import { getAllMyAdmissionApplication } from '@/api/tenant/admission/admissionAp
 import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { useNotification } from 'src/hooks/useNotification';
 
+/**
+ * Small summary pill used in the stats strip — mirrors the icon-chip
+ * language used across the admin dashboard cards for visual consistency.
+ * Colors are solid hex tokens rather than theme.palette names: the theme's
+ * "warning" is a pale gold (#fdc90f) that reads as washed-out for text/icons.
+ */
+const SummaryPill = ({ icon: Icon, label, value, color, bg }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.25,
+        px: 1.75,
+        py: 1.25,
+        borderRadius: '12px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        flex: 1,
+        minWidth: 150,
+      }}
+    >
+      <Box
+        sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '10px',
+          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : bg,
+          color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 19 }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontSize: '11px', fontWeight: 600, color: 'text.secondary', lineHeight: 1.2 }}>
+          {label}
+        </Typography>
+        <Typography sx={{ fontSize: '18px', fontWeight: 800, lineHeight: 1.25 }}>{value}</Typography>
+      </Box>
+    </Paper>
+  );
+};
+
 const MyApplication = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [applications, setApplications] = useState([]);
@@ -111,9 +172,16 @@ const MyApplication = () => {
     navigate('/admission/new-application', { state: { batch } });
   };
 
-  const handleSessionTermChange = (event) => {
-    setSelectedSessionTerm(event.target.value);
-  };
+  const summary = useMemo(() => {
+    const submitted = applications.filter((a) => a.form_submit_status === 'yes').length;
+    const admitted = applications.filter((a) => (a.admission_status || '').toLowerCase() === 'admitted').length;
+    const pending = applications.filter((a) => {
+      const status = (a.admission_status || 'pending').toLowerCase();
+      return status !== 'admitted' && status !== 'declined';
+    }).length;
+
+    return { total: applications.length, submitted, admitted, pending };
+  }, [applications]);
 
   return (
     <PageContainer title="My Applications" description="View all admission applications">
@@ -123,7 +191,7 @@ const MyApplication = () => {
         alignItems={{ xs: 'flex-start', sm: 'center' }}
         flexDirection={{ xs: 'column', sm: 'row' }}
         gap={1.5}
-        mb={3}
+        mb={2.5}
       >
         <Box>
           <Typography variant="h4" fontWeight={800}>
@@ -141,6 +209,7 @@ const MyApplication = () => {
             <Select
               value={selectedSessionTerm}
               onChange={(e) => setSelectedSessionTerm(e.target.value)}
+              sx={{ borderRadius: '10px' }}
             >
               {sessionTerms.map((st) => (
                 <MenuItem key={st.id} value={st.id}>
@@ -153,29 +222,44 @@ const MyApplication = () => {
           <Button
             variant="contained"
             size="small"
+            startIcon={<AddIcon />}
             onClick={() => setBatchModalOpen(true)}
-            sx={{ whiteSpace: 'nowrap' }}
+            sx={{ whiteSpace: 'nowrap', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}
           >
             New Application
+          </Button>
+
+          {/* Set apart from the primary actions with a divider, but still
+              anchored at the extreme right edge of the same row. */}
+          <Box sx={{ width: '1px', height: 22, bgcolor: 'divider', display: { xs: 'none', sm: 'block' } }} />
+
+          <Button
+            size="small"
+            onClick={() => navigate('/dashboard')}
+            startIcon={<ArrowBackIosNewIcon sx={{ fontSize: '12px !important' }} />}
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              textTransform: 'none',
+              whiteSpace: 'nowrap',
+              '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
+            }}
+          >
+            Back to dashboard
           </Button>
         </Box>
       </Box>
 
-      <Box mb={3}>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
-          sx={{
-            color: '#262292',
-            fontWeight: 500,
-            flexShrink: 0,
-          }}
-        >
-          Back to dashboard
-        </Button>
-      </Box>
+      {/* Summary strip */}
+      {!loading && applications.length > 0 && (
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 3 }}>
+          <SummaryPill icon={AssignmentIcon} label="Total" value={summary.total} color="#2563eb" bg="#dbeafe" />
+          <SummaryPill icon={TaskAltIcon} label="Submitted" value={summary.submitted} color="#0284c7" bg="#e0f2fe" />
+          <SummaryPill icon={HowToRegIcon} label="Admitted" value={summary.admitted} color="#16a34a" bg="#dcfce7" />
+          <SummaryPill icon={HourglassTopIcon} label="Pending" value={summary.pending} color="#d97706" bg="#fef3c7" />
+        </Box>
+      )}
 
       {/* Application cards */}
       {loading ? (
@@ -194,6 +278,7 @@ const MyApplication = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: 2,
+            maxWidth: 480,
           }}
         >
           <Box
@@ -223,13 +308,20 @@ const MyApplication = () => {
           </Button>
         </Paper>
       ) : (
-        <Grid container spacing={3} alignItems="flex-start">
+        // Cards size themselves (auto-fit + minmax) instead of splitting the
+        // page into fixed percentage columns — a single application renders
+        // as one generously-sized card instead of a sliver lost in a huge row.
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 420px))',
+            gap: 3,
+          }}
+        >
           {applications.map((app) => (
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={app.id}>
-              <ApplicationCard app={app} />
-            </Grid>
+            <ApplicationCard key={app.id} app={app} />
           ))}
-        </Grid>
+        </Box>
       )}
 
       <AdmissionBatchModal

@@ -184,7 +184,12 @@ const ApplicationTracker = () => {
           <Typography variant="h6" gutterBottom>
             Admission not found
           </Typography>
-          <Button variant="contained" size="small" onClick={() => navigate('/my-applications')} sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate('/admission_manager/my_applications')}
+            sx={{ mt: 2 }}
+          >
             Back to Applications
           </Button>
         </Paper>
@@ -228,9 +233,17 @@ const ApplicationTracker = () => {
         <Typography variant="h5" fontWeight={800}>
           Application Tracker
         </Typography>
-        <Button variant="contained" size="small" startIcon={<ArrowBackIcon />}
+        <Button
+          size="small"
+          startIcon={<ArrowBackIcon sx={{ fontSize: '16px !important' }} />}
           onClick={() => navigate('/admission_manager/my_applications')}
-          sx={{ color: 'text.secondary', fontWeight: 500 }}
+          sx={{
+            color: 'text.secondary',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+            textTransform: 'none',
+            '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
+          }}
         >
           Back to applications
         </Button>
@@ -247,39 +260,37 @@ const ApplicationTracker = () => {
         admission={admission}
       />
 
-      <Paper sx={{ p: 3, bgcolor: '#e5e8f86a' }}>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <TrackerMain
-              submittedDate={submittedDate}
-              onViewDetails={handleViewDetails}
-              onEditForm={isBatchOpen ? handleEditForm : undefined}
-              stageTitle={hasEntranceExam ? 'Entrance Exam' : 'Application Overview'}
-              stageDescription={
-                hasEntranceExam
-                  ? 'Your child is required to take the online aptitude test as part of the admission process.'
-                  : 'No entrance exam is required for this application. You can view details or edit the form if the batch is still open.'
-              }
-              requirementStatus={hasEntranceExam ? 'Ready to Begin' : ''}
-              timeLimit={hasEntranceExam ? '45 Minutes' : ''}
-              onStart={() => {}}
-              onPractice={() => {}}
-              showCurrentStageActions={hasEntranceExam}
-              showRequirementStatus={hasEntranceExam}
-              showNextStepCard={hasEntranceExam}
-              nextTitle="Admission Decision"
-              nextDescription="Requires completion of Entrance Exam."
-              nextActionLabel="Pay Acceptance Fee"
-              nextActionDisabled={hasEntranceExam || editLoading}
-              onNextAction={() => {}}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TrackerSidebar admission={admission} />
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <TrackerMain
+            submittedDate={submittedDate}
+            onViewDetails={handleViewDetails}
+            onEditForm={isBatchOpen ? handleEditForm : undefined}
+            stageTitle={hasEntranceExam ? 'Entrance Exam' : 'Application Overview'}
+            stageDescription={
+              hasEntranceExam
+                ? 'Your child is required to take the online aptitude test as part of the admission process.'
+                : 'No entrance exam is required for this application. You can view details or edit the form if the batch is still open.'
+            }
+            requirementStatus={hasEntranceExam ? 'Ready to Begin' : ''}
+            timeLimit={hasEntranceExam ? '45 Minutes' : ''}
+            onStart={() => {}}
+            onPractice={() => {}}
+            showCurrentStageActions={hasEntranceExam}
+            showRequirementStatus={hasEntranceExam}
+            showNextStepCard={hasEntranceExam}
+            nextTitle="Admission Decision"
+            nextDescription="Requires completion of Entrance Exam."
+            nextActionLabel="Pay Acceptance Fee"
+            nextActionDisabled={hasEntranceExam || editLoading}
+            onNextAction={() => {}}
+          />
         </Grid>
-      </Paper>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TrackerSidebar admission={admission} />
+        </Grid>
+      </Grid>
 
       <Dialog
         open={confirmOpen}
@@ -293,11 +304,28 @@ const ApplicationTracker = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)} disabled={editLoading}>
-            No
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setConfirmOpen(false)}
+            disabled={editLoading}
+            sx={{ textTransform: 'none' }}
+          >
+            No, keep it as is
           </Button>
-          <Button variant="contained" size="small" onClick={confirmEditForm} disabled={editLoading}>
-            Yes
+          <Button
+            variant="contained"
+            size="small"
+            onClick={confirmEditForm}
+            disabled={editLoading}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              bgcolor: '#d97706',
+              '&:hover': { bgcolor: '#b45309' },
+            }}
+          >
+            Yes, reopen for editing
           </Button>
         </DialogActions>
       </Dialog>

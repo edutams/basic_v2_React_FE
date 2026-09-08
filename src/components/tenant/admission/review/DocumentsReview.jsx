@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import {
   InsertDriveFile as FileIcon,
@@ -23,6 +24,10 @@ const DOC_DEFS = [
   { key: 'passport_photo', label: 'Passport photo', required: true },
   { key: 'medical_record', label: 'Medical record', required: false },
 ];
+
+// Solid hex tokens instead of theme.palette.success/error — matches the
+// darker, legible set used across the rest of the reworked admission UI.
+const COLOR = { done: '#16a34a', doneBg: '#dcfce7', error: '#dc2626', errorBg: '#fee2e2' };
 
 const PreviewDialog = ({ file, onClose }) => {
   const [objectUrl, setObjectUrl] = useState(null);
@@ -53,7 +58,7 @@ const PreviewDialog = ({ file, onClose }) => {
       : file.type?.startsWith('image/');
 
   return (
-    <Dialog open onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '8px' } }}>
       <DialogTitle
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
       >
@@ -76,7 +81,7 @@ const PreviewDialog = ({ file, onClose }) => {
             component="img"
             src={objectUrl}
             alt={typeof file === 'string' ? 'Document' : file.name}
-            sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 2, objectFit: 'contain' }}
+            sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px', objectFit: 'contain' }}
           />
         ) : objectUrl ? (
           <Box sx={{ height: '70vh' }}>
@@ -95,6 +100,8 @@ const PreviewDialog = ({ file, onClose }) => {
 };
 
 const DocRow = ({ label, file, required, onView }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const uploaded = Boolean(file);
 
   // Get file name - handle both File objects and URL strings
@@ -104,47 +111,45 @@ const DocRow = ({ label, file, required, onView }) => {
   return (
     <Box
       display="flex"
-      alignItems="center"
+      flexDirection={{ xs: 'column', sm: 'row' }}
+      alignItems={{ xs: 'stretch', sm: 'center' }}
       justifyContent="space-between"
+      gap={1}
       sx={{
-        py: 1.5,
-        px: 1.5,
+        py: 1,
+        px: 1.25,
         mb: 1,
-        borderRadius: 2,
-        bgcolor: (theme) =>
-          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'grey.50',
+        borderRadius: '8px',
+        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'grey.50',
         border: '1px solid',
-        borderColor: 'divider',
-        gap: 1,
-        transition: 'all 0.2s ease',
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+        transition: 'all 0.15s ease',
         '&:hover': {
-          bgcolor: (theme) =>
-            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.100',
-          borderColor: 'primary.light',
+          borderColor: uploaded ? COLOR.done : 'primary.light',
         },
+        '&:last-of-type': { mb: 0 },
       }}
     >
-      <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
+      <Box display="flex" alignItems="center" gap={1.25} sx={{ minWidth: 0, flex: 1 }}>
         <Box
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: uploaded ? 'success.light' : 'grey.200',
+            width: 36,
+            height: 36,
+            borderRadius: '8px',
+            bgcolor: uploaded ? COLOR.doneBg : 'grey.200',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            transition: 'all 0.2s ease',
           }}
         >
-          <FileIcon sx={{ color: uploaded ? 'success.dark' : 'text.disabled', fontSize: 20 }} />
+          <FileIcon sx={{ color: uploaded ? COLOR.done : 'text.disabled', fontSize: 18 }} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body2" fontWeight={600} noWrap>
+          <Typography variant="body2" fontWeight={700} noWrap>
             {label}
             {required && (
-              <Typography component="span" color="error.main" ml={0.5}>
+              <Typography component="span" sx={{ color: COLOR.error, ml: 0.5 }}>
                 *
               </Typography>
             )}
@@ -157,31 +162,20 @@ const DocRow = ({ label, file, required, onView }) => {
         </Box>
       </Box>
 
-      <Box display="flex" alignItems="center" gap={1} sx={{ flexShrink: 0 }}>
+      <Box display="flex" alignItems="center" justifyContent={{ xs: 'flex-end', sm: 'flex-start' }} gap={1} sx={{ flexShrink: 0 }}>
         {uploaded ? (
           <>
             <Chip
               label="Uploaded"
               size="small"
-              sx={{
-                bgcolor: 'success.light',
-                color: 'success.dark',
-                fontWeight: 600,
-                fontSize: 11,
-              }}
+              sx={{ bgcolor: COLOR.doneBg, color: COLOR.done, fontWeight: 700, fontSize: 11 }}
             />
             <Button
-              variant="contained"
+              variant="outlined"
               size="small"
-              startIcon={<VisibilityIcon />}
+              startIcon={<VisibilityIcon sx={{ fontSize: '15px !important' }} />}
               onClick={onView}
-              sx={{
-                fontSize: 11,
-                whiteSpace: 'nowrap',
-                borderRadius: 1.5,
-                boxShadow: 'none',
-                '&:hover': { boxShadow: '0 2px 8px rgba(99,102,241,0.3)' },
-              }}
+              sx={{ fontSize: 11, whiteSpace: 'nowrap', borderRadius: '8px', textTransform: 'none' }}
             >
               View
             </Button>
@@ -190,12 +184,7 @@ const DocRow = ({ label, file, required, onView }) => {
           <Chip
             label="Not uploaded"
             size="small"
-            sx={{
-              bgcolor: 'error.light',
-              color: 'error.dark',
-              fontWeight: 600,
-              fontSize: 11,
-            }}
+            sx={{ bgcolor: COLOR.errorBg, color: COLOR.error, fontWeight: 700, fontSize: 11 }}
           />
         )}
       </Box>

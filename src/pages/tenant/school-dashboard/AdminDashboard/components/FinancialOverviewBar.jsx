@@ -160,18 +160,47 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
 };
 
 /**
+ * Turns a raw growth number (e.g. -3.2) into the trend text + arrow direction
+ * a MiniFeeCard needs. `invertPositivity` flips which sign counts as "good" —
+ * an outstanding balance going up is bad news even though the number is positive.
+ */
+const renderTrend = (growth, invertPositivity = false) => {
+  if (growth == null) {
+    return { text: '—', isPositive: true };
+  }
+  const val = Number(growth);
+  const isUp = val >= 0;
+
+  return {
+    text: `${Math.abs(val).toFixed(1)}%`,
+    isPositive: invertPositivity ? !isUp : isUp,
+  };
+};
+
+/**
  * Financial Overview Bar Component matching design mockup exactly
  */
+
 const FinancialOverviewBar = ({
   expectedIncome = '₦ 98,450,000',
   collectedIncome = '₦ 62,340,0',
   outstandingBalance = '₦ 36,110,000',
   efficiency = '63.3%',
+  expectedTrend,
+  collectedTrend,
+  outstandingTrend,
+  efficiencyTrend,
   onCardClick,
   loading = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  const expectedTrendInfo = renderTrend(expectedTrend);
+  const collectedTrendInfo = renderTrend(collectedTrend);
+  // Rising outstanding balance is a bad trend, not a good one.
+  const outstandingTrendInfo = renderTrend(outstandingTrend, true);
+  const efficiencyTrendInfo = renderTrend(efficiencyTrend);
 
   return (
     <Paper
@@ -201,8 +230,8 @@ const FinancialOverviewBar = ({
           <MiniFeeCard
             label="Total Expected Income"
             value={expectedIncome}
-            trend="12.5%"
-            isPositive={true}
+            trend={expectedTrendInfo.text}
+            isPositive={expectedTrendInfo.isPositive}
             icon={WalletIcon}
             onClick={() => onCardClick && onCardClick('expected_income')}
             loading={loading}
@@ -213,8 +242,8 @@ const FinancialOverviewBar = ({
           <MiniFeeCard
             label="Total Collected Income"
             value={collectedIncome}
-            trend="9.8%"
-            isPositive={true}
+            trend={collectedTrendInfo.text}
+            isPositive={collectedTrendInfo.isPositive}
             icon={StackedCoinsIcon}
             onClick={() => onCardClick && onCardClick('collected_income')}
             loading={loading}
@@ -225,8 +254,8 @@ const FinancialOverviewBar = ({
           <MiniFeeCard
             label="Total Outstanding"
             value={outstandingBalance}
-            trend="3.2%"
-            isPositive={false}
+            trend={outstandingTrendInfo.text}
+            isPositive={outstandingTrendInfo.isPositive}
             icon={ClockIcon}
             onClick={() => onCardClick && onCardClick('outstanding_balance')}
             loading={loading}
@@ -237,8 +266,8 @@ const FinancialOverviewBar = ({
           <MiniFeeCard
             label="Collection Efficiency"
             value={efficiency}
-            trend="4.6%"
-            isPositive={true}
+            trend={efficiencyTrendInfo.text}
+            isPositive={efficiencyTrendInfo.isPositive}
             icon={PercentIcon}
             onClick={() => onCardClick && onCardClick('collection_efficiency')}
             loading={loading}

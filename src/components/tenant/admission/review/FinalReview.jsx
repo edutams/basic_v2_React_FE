@@ -16,10 +16,16 @@ import ReviewSection from './ReviewSection';
 
 const SummaryField = ({ label, value }) => (
   <Box>
-    <Typography variant="caption" color="text.secondary" display="block">
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      fontWeight={600}
+      sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontSize: '0.68rem' }}
+      display="block"
+    >
       {label}
     </Typography>
-    <Typography variant="body2" fontWeight={600}>
+    <Typography variant="body2" fontWeight={700} sx={{ mt: 0.25 }}>
       {value}
     </Typography>
   </Box>
@@ -43,6 +49,7 @@ const FinalReview = ({
       ).length
     : 0;
   const totalDocuments = 4; // birth_cert, prev_school_report, passport_photo, medical_record
+  const hasPayment = Boolean(totalPaid) && totalPaid !== '₦0';
 
   const handleSubmitClick = () => {
     setConfirmOpen(true);
@@ -56,35 +63,52 @@ const FinalReview = ({
   return (
     <>
       <ReviewSection number={5} title="Review and submit" id="section-submit">
-        <Grid container spacing={2} sx={{ mb: 2.5 }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid container rowSpacing={2} columnSpacing={2} sx={{ mb: 2.5 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <SummaryField label="Applicant" value={applicantName || 'N/A'} />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <SummaryField label="Intending Class" value={intendingClass || 'N/A'} />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <SummaryField label="Admission Batch" value={admissionBatch || 'N/A'} />
           </Grid>
-          {/* <Grid size={{ xs: 12, sm: 6 }}>
-            <SummaryField label="Total Paid" value={totalPaid || '₦0'} />
-          </Grid> */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <SummaryField
-              label="Documents"
-              value={`${uploadedCount} of ${totalDocuments} uploaded`}
-            />
+          {hasPayment && (
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <SummaryField label="Total Paid" value={totalPaid} />
+            </Grid>
+          )}
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <SummaryField label="Documents" value={`${uploadedCount} of ${totalDocuments} uploaded`} />
           </Grid>
         </Grid>
 
-        <Box display="flex" flexDirection="column" alignItems="center" gap={1} sx={{ py: 2 }}>
-          <CheckCircleIcon sx={{ color: 'success.dark', fontSize: 32 }} />
-          <Typography variant="body2" color="text.secondary">
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          gap={0.75}
+          sx={{
+            py: 2,
+            mb: 2,
+            borderRadius: '8px',
+            bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#dcfce755'),
+          }}
+        >
+          <CheckCircleIcon sx={{ color: '#16a34a', fontSize: 30 }} />
+          <Typography variant="body2" color="text.secondary" textAlign="center">
             All sections completed. Review your information before submitting.
           </Typography>
         </Box>
 
-        <Button variant="contained" size="small" fullWidth onClick={handleSubmitClick} disabled={isLoading} sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, fontSize: '0.95rem' }}>
+        <Button
+          variant="contained"
+          size="small"
+          fullWidth
+          onClick={handleSubmitClick}
+          disabled={isLoading}
+          sx={{ fontWeight: 700, py: 1.1, borderRadius: '8px', fontSize: '0.95rem', textTransform: 'none' }}
+        >
           {isLoading ? 'Submitting...' : 'Submit Application'}
         </Button>
       </ReviewSection>
@@ -93,17 +117,30 @@ const FinalReview = ({
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         aria-labelledby="confirm-submit-application-dialog"
+        PaperProps={{ sx: { borderRadius: '8px' } }}
       >
         <DialogTitle id="confirm-submit-application-dialog">Confirm Submission</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to submit this application?</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)} disabled={isLoading}>
-            No
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setConfirmOpen(false)}
+            disabled={isLoading}
+            sx={{ textTransform: 'none' }}
+          >
+            No, review again
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmSubmit} disabled={isLoading}>
-            Yes
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmSubmit}
+            disabled={isLoading}
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
+            Yes, submit
           </Button>
         </DialogActions>
       </Dialog>

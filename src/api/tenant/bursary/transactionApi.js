@@ -79,6 +79,16 @@ export const fetchBursarySettlementValues = async (filters = {}) => {
     return res.data;
 }
 
+export const fetchSettlementReconciliationValues = async (filters = {}) => {
+    const res = await api.get('/bursary/transactions/settlement_reconciliation/get_settlement_reconciliation_values', {
+        params: {
+            from: filters.from || null,
+            to: filters.to || null,
+        }
+    });
+    return res.data;
+}
+
 export const fetchSettlementReconciliationData = async (payload) => {
     const res = await api.post('/bursary/transactions/settlement_reconciliation/fetch_settlement_reconciliation_data', payload);
     return res.data;

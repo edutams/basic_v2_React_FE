@@ -70,6 +70,10 @@ const Revenue = () => {
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const buildFilters = useCallback(
     (extra = {}) => ({
       from: fromDate || null,
@@ -234,6 +238,10 @@ const Revenue = () => {
       />
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -257,7 +265,7 @@ const Revenue = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
+        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField
               fullWidth
@@ -352,32 +360,32 @@ const Revenue = () => {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            <Table>
+            <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Revenue Code</TableCell>
-                  <TableCell>Revenue name</TableCell>
-                  <TableCell>No of Transaction</TableCell>
-                  <TableCell>Amount (₦)</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Action</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Revenue Code</TableCell>
+                  <TableCell sx={thCell}>Revenue name</TableCell>
+                  <TableCell sx={thCell}>No of Transaction</TableCell>
+                  <TableCell sx={thCell}>Amount (₦)</TableCell>
+                  <TableCell sx={thCell}>Category</TableCell>
+                  <TableCell sx={thCell}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {tableData?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
                       No revenue records found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   tableData?.map((row, index) => (
                     <TableRow key={row.bursary_payment_id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.revenue_code}</TableCell>
-                      <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_code}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Link
                           component="button"
                           underline="hover"
@@ -389,15 +397,15 @@ const Revenue = () => {
                           {row.no_of_trns}
                         </Link>
                       </TableCell>{' '}
-                      <TableCell>{format(row.amount)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Chip
                           label={row.category}
                           size="small"
                           color={row.category === 'compulsory' ? 'success' : 'warning'}
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={tdCell}>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -416,7 +424,7 @@ const Revenue = () => {
           </TableContainer>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Showing {tableData?.length} of {totalCount} revenue lines
           </Typography>

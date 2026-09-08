@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useTheme,
 } from '@mui/material';
 import { useNotification } from '@/hooks/useNotification';
 import { settlementRevenueTransactions } from '@/api/tenant/bursary/transactionApi';
@@ -27,6 +28,8 @@ const SettlementRevenueModal = ({
   bankLabel, // e.g., "GTBANK PLC - 0116062047"
 }) => {
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,42 +68,46 @@ const SettlementRevenueModal = ({
 
   const formatAmount = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>View Revenue for {bankLabel}</DialogTitle>
+      <DialogTitle sx={{ py: 1.5, px: 2.5 }}>View Revenue for {bankLabel}</DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 2 }}>
         {loading ? (
           <Box display="flex" justifyContent="center" py={6}>
             <CircularProgress />
           </Box>
         ) : (
           <TableContainer component={Paper} variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Revenue Code</TableCell>
-                  <TableCell>Revenue Name</TableCell>
-                  <TableCell align="right">Total Amount ₦</TableCell>
-                  <TableCell align="right">No. of Transactions</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Revenue Code</TableCell>
+                  <TableCell sx={thCell}>Revenue Name</TableCell>
+                  <TableCell sx={thCell} align="right">Total Amount ₦</TableCell>
+                  <TableCell sx={thCell} align="right">No. of Transactions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={5} align="center" sx={{ ...tdCell, py: 4 }}>
                       No revenue found for this settlement.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.revenue_id || index}>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.revenue_code}</TableCell>
-                      <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell align="right">{formatAmount(row.transactions_sum)}</TableCell>
-                      <TableCell align="right">{row.transactions_count}</TableCell>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_code}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
+                      <TableCell sx={tdCell} align="right">{formatAmount(row.transactions_sum)}</TableCell>
+                      <TableCell sx={tdCell} align="right">{row.transactions_count}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -110,7 +117,7 @@ const SettlementRevenueModal = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ justifyContent: 'space-between', px: 3, py: 2 }}>
+      <DialogActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
           Showing {data.length} of {total} records
         </Typography>

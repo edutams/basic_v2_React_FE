@@ -306,6 +306,10 @@ const SettlementReconcillation = () => {
     },
   });
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const downloadReconciliation = async (extraFilters = {}) => {
     try {
       const res = await exportSettlementReconciliationCsv(
@@ -355,6 +359,10 @@ const SettlementReconcillation = () => {
       )}
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h5">Settlement Reconciliation</Typography>
@@ -388,7 +396,7 @@ const SettlementReconcillation = () => {
         </Alert>
 
         {/* Filters */}
-        <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
@@ -441,28 +449,28 @@ const SettlementReconcillation = () => {
 
         {/* Table */}
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Bank Name</TableCell>
-                <TableCell>Account Number</TableCell>
-                <TableCell>No. of Transactions</TableCell>
-                <TableCell>No. of Revenue</TableCell>
-                <TableCell>No. of Settlements</TableCell>
-                <TableCell>Total Settelements (₦)</TableCell>
-                <TableCell>Total Reconciliations (₦)</TableCell>
-                <TableCell>Total Balance (₦)</TableCell>
-                <TableCell align="center">Action</TableCell>
+                <TableCell sx={thCell}>#</TableCell>
+                <TableCell sx={thCell}>Bank Name</TableCell>
+                <TableCell sx={thCell}>Account Number</TableCell>
+                <TableCell sx={thCell}>No. of Transactions</TableCell>
+                <TableCell sx={thCell}>No. of Revenue</TableCell>
+                <TableCell sx={thCell}>No. of Settlements</TableCell>
+                <TableCell sx={thCell}>Total Settelements (₦)</TableCell>
+                <TableCell sx={thCell}>Total Reconciliations (₦)</TableCell>
+                <TableCell sx={thCell}>Total Balance (₦)</TableCell>
+                <TableCell sx={thCell} align="center">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row, index) => (
                 <TableRow key={`${row.bank_name}-${row.account_number}-${index}`} hover>
-                  <TableCell>{page * perPage + index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{row.bank_name}</TableCell>
-                  <TableCell>{row.account_number}</TableCell>
-                  <TableCell>
+                  <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                  <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
+                  <TableCell sx={tdCell}>{row.account_number}</TableCell>
+                  <TableCell sx={tdCell}>
                     <Link
                       component="button"
                       variant="body2"
@@ -472,7 +480,7 @@ const SettlementReconcillation = () => {
                       {row.no_of_transactions}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={tdCell}>
                     <Link
                       component="button"
                       variant="body2"
@@ -482,7 +490,7 @@ const SettlementReconcillation = () => {
                       {row.no_of_revenue}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={tdCell}>
                     <Link
                       component="button"
                       variant="body2"
@@ -492,15 +500,15 @@ const SettlementReconcillation = () => {
                       {row.no_of_settlements}
                     </Link>
                   </TableCell>
-                  <TableCell>{fmtNaira(row.expected_amount)}</TableCell>
-                  <TableCell>{fmtNaira(row.reconciled_amount)}</TableCell>
+                  <TableCell sx={tdCell}>{fmtNaira(row.expected_amount)}</TableCell>
+                  <TableCell sx={tdCell}>{fmtNaira(row.reconciled_amount)}</TableCell>
                   <TableCell
-                    sx={{ color: row.balance > 0 ? '#ef4444' : '#10B981', fontWeight: 600 }}
+                    sx={{ ...tdCell, color: row.balance > 0 ? '#ef4444' : '#10B981', fontWeight: 600 }}
                   >
                     {fmtNaira(row.balance)}
                   </TableCell>
-                  <TableCell align="center">
-                    <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                  <TableCell align="center" sx={tdCell}>
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                       <IconDotsVertical size={18} />
                     </IconButton>
                   </TableCell>
@@ -509,7 +517,7 @@ const SettlementReconcillation = () => {
 
               {!tableLoading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={10} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
                     No reconciliation records found for the selected filters.
                   </TableCell>
                 </TableRow>

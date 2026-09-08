@@ -244,6 +244,10 @@ const Overview = () => {
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const buildChartOptions = (categories) => ({
     chart: {
       type: chartType,
@@ -306,6 +310,10 @@ const Overview = () => {
         onPeriodValueChange={(v) => setPeriodValue(v)}
       />
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -329,7 +337,7 @@ const Overview = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
+        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField
               fullWidth
@@ -415,7 +423,7 @@ const Overview = () => {
 
         <Box
           sx={{
-            mb: 3,
+            mb: 2,
             borderBottom: 1,
             borderColor: 'divider',
             overflowX: 'auto',
@@ -440,27 +448,27 @@ const Overview = () => {
           variant="outlined"
           sx={{ borderRadius: 2 }}
         >
-          <Table>
+          <Table size="small">
             <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
               <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell width={20}>Transaction ID</TableCell>
-                <TableCell>Paid For</TableCell>
-                <TableCell>Wallet Account</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Action</TableCell>
+                <TableCell sx={thCell}>#</TableCell>
+                <TableCell sx={thCell} width={20}>Transaction ID</TableCell>
+                <TableCell sx={thCell}>Paid For</TableCell>
+                <TableCell sx={thCell}>Wallet Account</TableCell>
+                <TableCell sx={thCell}>Description</TableCell>
+                <TableCell sx={thCell}>Amount</TableCell>
+                <TableCell sx={thCell}>Date</TableCell>
+                <TableCell sx={thCell}>Status</TableCell>
+                <TableCell sx={thCell} align="right">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Skeleton variant="circular" width={36} height={36} />
                         <Box>
@@ -469,12 +477,12 @@ const Overview = () => {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={130} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                    <TableCell align="right"><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={130} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={80} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                    <TableCell align="right" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
                   </TableRow>
                 ))
               ) : tableData.length === 0 ? (
@@ -486,9 +494,9 @@ const Overview = () => {
               ) : (
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.order_id}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.order_id}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar
                             sx={{ width: 36, height: 36 }}
@@ -507,7 +515,7 @@ const Overview = () => {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         <Link
                           component="button"
                           underline="hover"
@@ -519,10 +527,10 @@ const Overview = () => {
                           {row.wallet_account_no ?? 'N/A'}
                         </Link>
                       </TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell>{format(row.amount)}</TableCell>
-                      <TableCell>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{row.description}</TableCell>
+                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                      <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Chip
                           size="small"
                           label={
@@ -541,7 +549,7 @@ const Overview = () => {
                           }
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={tdCell}>
                         <IconButton
                           size="small"
                           disabled={checkingStatusId === row.id}
@@ -564,7 +572,7 @@ const Overview = () => {
             </Table>
           </TableContainer>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Showing {tableData.length} of {totalCount} transactions
           </Typography>

@@ -137,14 +137,14 @@ const FeeChart = ({
   };
 
   return (
-    <Grid container spacing={2} mt={3} mb={3}>
+    <Grid container spacing={2} mt={1.5} mb={2}>
       <Grid size={{ xs: 12, md: 7 }}>
         <Box
           sx={{
             border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
             borderRadius: '10px',
             bgcolor: isDark ? '#1e1e1e' : 'white',
-            p: 2,
+            p: 1.5,
           }}
         >
           <Box
@@ -152,7 +152,7 @@ const FeeChart = ({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 1.5,
               flexWrap: 'wrap',
               gap: 1,
             }}
@@ -182,7 +182,7 @@ const FeeChart = ({
             border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
             borderRadius: '10px',
             bgcolor: isDark ? theme.palette.background.paper : '#fff',
-            p: 2,
+            p: 1.5,
             height: '100%',
           }}
         >

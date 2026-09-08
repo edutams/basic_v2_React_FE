@@ -38,6 +38,10 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const buildFilters = useCallback(
     () => ({ from: fromDate || null, to: toDate || null, page, per_page: 15 }),
     [fromDate, toDate, page],
@@ -106,8 +110,8 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
           {revenueName ? `Transactions — ${revenueName}` : 'Transactions'}
         </Typography>
       </Box> */}
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               fullWidth
@@ -156,34 +160,34 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            <Table>
+            <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Transaction ID</TableCell>
-                  <TableCell>Paid By</TableCell>
-                  <TableCell>Wallet Account</TableCell>
-                  <TableCell>Payment Type</TableCell>
-                  <TableCell>Payment Description</TableCell>
-                  <TableCell>Amount ₦</TableCell>
-                  <TableCell>Transaction Date</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Transaction ID</TableCell>
+                  <TableCell sx={thCell}>Paid By</TableCell>
+                  <TableCell sx={thCell}>Wallet Account</TableCell>
+                  <TableCell sx={thCell}>Payment Type</TableCell>
+                  <TableCell sx={thCell}>Payment Description</TableCell>
+                  <TableCell sx={thCell}>Amount ₦</TableCell>
+                  <TableCell sx={thCell}>Transaction Date</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
                       No transactions found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 220 }}>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={{ ...tdCell, wordBreak: 'break-all', maxWidth: 220 }}>
                         {row.transaction_id}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         <Typography variant="body2" fontWeight={600}>
                           {row.paid_by}
                         </Typography>
@@ -191,7 +195,7 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                           {row.class}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         <Link
                           component="button"
                           underline="hover"
@@ -203,10 +207,10 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                           {row.wallet_account_no ?? 'N/A'}
                         </Link>
                       </TableCell>
-                      <TableCell>{row.payment_type}</TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell>{format(row.amount_paid)}</TableCell>
-                      <TableCell>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                      <TableCell sx={tdCell}>{row.payment_type}</TableCell>
+                      <TableCell sx={tdCell}>{row.description}</TableCell>
+                      <TableCell sx={tdCell}>{format(row.amount_paid)}</TableCell>
+                      <TableCell sx={tdCell}>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -215,7 +219,7 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
           </TableContainer>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Showing {data.length} of {total} transactions
           </Typography>

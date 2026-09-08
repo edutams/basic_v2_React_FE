@@ -18,7 +18,7 @@ const StatusBreakdownCard = ({ items = [] }) => {
           fontSize: '15px',
           // fontWeight: 600,
           color: isDark ? '#fff' : '#1f2937',
-          mb: 2,
+          mb: 1.5,
         }}
       >
         TOTAL SETTLEMENT

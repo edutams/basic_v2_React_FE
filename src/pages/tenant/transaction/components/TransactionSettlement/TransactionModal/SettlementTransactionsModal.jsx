@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useTheme,
 } from '@mui/material';
 import { useNotification } from '@/hooks/useNotification';
 import { settlementTransactions } from '@/api/tenant/bursary/transactionApi';
@@ -22,6 +23,8 @@ import dayjs from 'dayjs';
 
 const SettlementTransactionsModal = ({ open, onClose, settlementId, bankLabel }) => {
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -84,49 +87,53 @@ const SettlementTransactionsModal = ({ open, onClose, settlementId, bankLabel })
     setPage(newPage);
   };
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>View Transactions for {bankLabel}</DialogTitle>
+      <DialogTitle sx={{ py: 1.5, px: 2.5 }}>View Transactions for {bankLabel}</DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 2 }}>
         {loading ? (
           <Box display="flex" justifyContent="center" py={8}>
             <CircularProgress />
           </Box>
         ) : (
           <TableContainer component={Paper} variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Transaction ID</TableCell>
-                  <TableCell>Paid By</TableCell>
-                  <TableCell>Payment Description</TableCell>
-                  <TableCell align="right">Amount ₦</TableCell>
-                  <TableCell>Transaction Date</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Transaction ID</TableCell>
+                  <TableCell sx={thCell}>Paid By</TableCell>
+                  <TableCell sx={thCell}>Payment Description</TableCell>
+                  <TableCell sx={thCell} align="right">Amount ₦</TableCell>
+                  <TableCell sx={thCell}>Transaction Date</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={6} align="center" sx={{ ...tdCell, py: 6 }}>
                       No transactions found for this settlement.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id || row.bulk_order_id || index}>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.bulk_order_id || row.order_id}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.bulk_order_id || row.order_id}</TableCell>
+                      <TableCell sx={tdCell}>
                         {`${row.fname || ''} ${row.mname || ''} ${row.lname || ''}`.trim() || 'N/A'}
                         <Typography variant="body2" color="text.secondary">
                           {row.class_name} - {row.class_arm_names}
                         </Typography>
                       </TableCell>
-                      <TableCell>{row.description || '—'}</TableCell>
-                      <TableCell align="right">{formatAmount(row.amount_paid)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{row.description || '—'}</TableCell>
+                      <TableCell sx={tdCell} align="right">{formatAmount(row.amount_paid)}</TableCell>
+                      <TableCell sx={tdCell}>
                         {row.trans_date ? dayjs(row.trans_date).format('YYYY-MM-DD HH:mm:ss') : '—'}
                       </TableCell>
                     </TableRow>
@@ -138,7 +145,7 @@ const SettlementTransactionsModal = ({ open, onClose, settlementId, bankLabel })
         )}
       </DialogContent>
 
-      <DialogActions sx={{ justifyContent: 'space-between', px: 3, py: 2 }}>
+      <DialogActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
           Page {page} of {lastPage} | Total: {total}
         </Typography>

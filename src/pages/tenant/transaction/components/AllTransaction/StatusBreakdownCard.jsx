@@ -8,12 +8,12 @@ const StatusBreakdownCard = ({ title = 'Distribution', items = [] }) => {
 
   return (
     <Box>
-      <Typography sx={{ fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6B7280', mb: 3 }}>
+      <Typography sx={{ fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6B7280', mb: 1.5 }}>
         TRANSACTION STATUS
       </Typography>
 
       {items.map((item, index) => (
-        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 0 : 4 }}>
+        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 0 : 2 }}>
           {/* Amount - Progress Bar - Percentage on ONE LINE */}
           <Box
             sx={{
@@ -76,7 +76,7 @@ const StatusBreakdownCard = ({ title = 'Distribution', items = [] }) => {
 
           {/* Divider between items */}
           {index !== items.length - 1 && (
-            <Divider sx={{ mt: 3.5, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
+            <Divider sx={{ mt: 2, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
           )}
         </Box>
       ))}

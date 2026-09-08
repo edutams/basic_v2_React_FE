@@ -80,6 +80,10 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
     loadData();
   };
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <StandardModal
       open={open}
@@ -87,8 +91,8 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
       maxWidth="lg"
       title={`All Transactions — ${rowData?.bank_name || ''} (${rowData?.account_number || ''})`}
     >
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
@@ -141,34 +145,34 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            <Table>
+            <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Transaction ID</TableCell>
-                  <TableCell>Paid By</TableCell>
-                  <TableCell>Revenue</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Amount ₦</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Date</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Transaction ID</TableCell>
+                  <TableCell sx={thCell}>Paid By</TableCell>
+                  <TableCell sx={thCell}>Revenue</TableCell>
+                  <TableCell sx={thCell}>Description</TableCell>
+                  <TableCell sx={thCell}>Amount ₦</TableCell>
+                  <TableCell sx={thCell}>Status</TableCell>
+                  <TableCell sx={thCell}>Date</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 3 }}>
                       No transactions found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 180 }}>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={{ ...tdCell, wordBreak: 'break-all', maxWidth: 180 }}>
                         {row.transaction_id}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         <Typography variant="body2" fontWeight={600}>
                           {row.paid_by}
                         </Typography>
@@ -176,10 +180,10 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
                           {row.class}
                         </Typography>
                       </TableCell>
-                      <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell>{fmt(row.amount_paid)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
+                      <TableCell sx={tdCell}>{row.description}</TableCell>
+                      <TableCell sx={tdCell}>{fmt(row.amount_paid)}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Typography
                           variant="body2"
                           color={
@@ -190,7 +194,7 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
                           {row.settlement_status}
                         </Typography>
                       </TableCell>
-                      <TableCell>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm')}</TableCell>
+                      <TableCell sx={tdCell}>{dayjs(row.trans_date).format('YYYY-MM-DD HH:mm')}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -199,7 +203,7 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
           </TableContainer>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
           <Typography variant="body2" color="text.secondary">
             Showing {data.length} of {total}
           </Typography>

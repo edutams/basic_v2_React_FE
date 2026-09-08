@@ -386,7 +386,11 @@ const BursarySetupTab = ({
   return (
     <>
       <Stack spacing={2}>
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box
             mb={3}
             display="flex"
@@ -630,11 +634,14 @@ const BursarySetupTab = ({
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
                 '& .MuiCardContent-root': {
                   flexGrow: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  p: 1.5,
+                  '&:last-child': { pb: 1.5 },
                 },
               }}
               title={
@@ -671,7 +678,7 @@ const BursarySetupTab = ({
               }
             >
               <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
-                <Table stickyHeader>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -755,11 +762,14 @@ const BursarySetupTab = ({
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
                 '& .MuiCardContent-root': {
                   flexGrow: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  p: 1.5,
+                  '&:last-child': { pb: 1.5 },
                 },
               }}
               title={
@@ -796,7 +806,7 @@ const BursarySetupTab = ({
               }
             >
               <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
-                <Table stickyHeader>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -872,7 +882,11 @@ const BursarySetupTab = ({
           </Grid>
         </Grid>
 
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box display="flex" alignItems="flex-start" gap={2} mb={2}>
             <Box
               sx={{

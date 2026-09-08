@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Typography,
@@ -38,7 +38,6 @@ import {
   IconDotsVertical,
 } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
-import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent, useAclTour } from '@/context/AclTourContext';
 import {
   fetchTenantSessions,
@@ -139,13 +138,18 @@ const heroIconBadgeSx = (colorIndex) => ({
   boxShadow: `0 4px 12px rgba(0,0,0,0.08)`,
 });
 
-const HolidaySection = ({ refreshKey }) => (
+// forwardRef exposes { startTour } so the page-level "Show Tour Guide
+// Again" button (rendered outside this component's own AclTourProvider —
+// see CalendarPage.jsx) can actually replay it. No auto-play: the tour used
+// to fire on every mount (i.e. every time this tab was clicked), which is
+// exactly what that button already exists to let the user do on demand.
+const HolidaySection = forwardRef(({ refreshKey }, ref) => (
   <AclTourProvider steps={holidayTourSteps}>
-    <HolidaySectionInner refreshKey={refreshKey} />
+    <HolidaySectionInner refreshKey={refreshKey} tourRef={ref} />
   </AclTourProvider>
-);
+));
 
-const HolidaySectionInner = ({ refreshKey }) => {
+const HolidaySectionInner = ({ refreshKey, tourRef }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [sessions, setSessions] = useState([]);
@@ -195,17 +199,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
   };
 
   const { startTour } = useAclTour();
-  const tourStartedRef = useRef(false);
-
-  // Auto-play the tour every time this tab mounts, once the statistics (tour targets) are loaded
-  useEffect(() => {
-    if (!statistics || tourStartedRef.current) return;
-    tourStartedRef.current = true;
-    const timer = setTimeout(() => {
-      startTour();
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [statistics, startTour]);
+  useImperativeHandle(tourRef, () => ({ startTour }), [startTour]);
 
   // Load every session (the filter can browse any of them) on mount and when
   // refreshKey changes, and separately resolve which session-term is actually
@@ -439,7 +433,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
   return (
     <>
       {statistics && (
-        <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ mb: 2 }}>
           <Grid container spacing={2}>
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
@@ -702,8 +696,8 @@ const HolidaySectionInner = ({ refreshKey }) => {
       )}
       <ParentCard
         sx={{
-          '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-          '& .MuiCardContent-root': { pt: 1 },
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
         }}
         title={
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -759,7 +753,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
         ) : (
           <Box>
             <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+              <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>

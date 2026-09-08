@@ -45,6 +45,7 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
           name: l.name,
           admissionNo: l.admission_no,
           avatar: l.avatar,
+          gender: l.gender,
           registered: {},
         }));
         learnerData.forEach((l) => {

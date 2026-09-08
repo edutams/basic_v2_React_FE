@@ -101,8 +101,7 @@ const GenerateInvoiceTab = ({
         if (list.length > 0) {
           const activeSessionTerm = activeRes?.status ? activeRes.data : null;
           const defaultItem =
-            (activeSessionTerm && list.find((item) => item.id === activeSessionTerm.id)) ||
-            list[0];
+            (activeSessionTerm && list.find((item) => item.id === activeSessionTerm.id)) || list[0];
           setSelectedSessionTermId(defaultItem.id);
         }
       } catch (err) {
@@ -268,25 +267,6 @@ const GenerateInvoiceTab = ({
   return (
     <Stack spacing={3}>
       <Box>
-        <Box display="flex" alignItems="center" gap={2} mb={3}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              bgcolor: 'primary.light',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
-          </Box>
-          <Typography variant="h6" fontWeight={600}>
-            Generate Invoice
-          </Typography>
-        </Box>
-
         <Box
           sx={{
             display: 'flex',
@@ -552,7 +532,7 @@ const GenerateInvoiceTab = ({
 
         {hasSchedules && (
           <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 800 }}>
+            <Table size="small" sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>

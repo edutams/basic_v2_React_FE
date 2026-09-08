@@ -68,6 +68,7 @@ const AnalyticsStatCard = ({
   icon: Icon,
   value,
   label,
+  subtitle,
   colorIndex = 0,
   loading = false,
   onClick,
@@ -134,6 +135,18 @@ const AnalyticsStatCard = ({
         >
           {label}
         </Typography>
+        {subtitle && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: isDark ? 'rgba(255,255,255,0.5)' : '#9CA3AF',
+              display: 'block',
+              mt: 0.25,
+            }}
+          >
+            {subtitle}
+          </Typography>
+        )}
       </Box>
     </Paper>
   );
@@ -451,7 +464,8 @@ const SubjectRegistration = () => {
           <AnalyticsStatCard
             icon={SubjectIcon}
             value={stats.all.total_subjects}
-            label={`All Subjects · ${stats.all.registered_learners} registered learners`}
+            label="All Subjects"
+            subtitle={`${stats.all.registered_learners} registered learners`}
             colorIndex={1}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('all', 'All Subjects')}
@@ -461,7 +475,8 @@ const SubjectRegistration = () => {
           <AnalyticsStatCard
             icon={CompulsoryIcon}
             value={stats.compulsory.total_subjects}
-            label={`Compulsory Subjects · ${stats.compulsory.registered_learners} registered learners`}
+            label="Compulsory Subjects"
+            subtitle={`${stats.compulsory.registered_learners} registered learners`}
             colorIndex={0}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('compulsory', 'Compulsory Subjects')}
@@ -471,7 +486,8 @@ const SubjectRegistration = () => {
           <AnalyticsStatCard
             icon={OptionalIcon}
             value={stats.optional.total_subjects}
-            label={`Optional Subjects · ${stats.optional.registered_learners} registered learners`}
+            label="Optional Subjects"
+            subtitle={`${stats.optional.registered_learners} registered learners`}
             colorIndex={2}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('optional', 'Optional Subjects')}
@@ -481,7 +497,8 @@ const SubjectRegistration = () => {
           <AnalyticsStatCard
             icon={TradeIcon}
             value={stats.trade.total_subjects}
-            label={`Trade Subjects · ${stats.trade.registered_learners} registered learners`}
+            label="Trade Subjects"
+            subtitle={`${stats.trade.registered_learners} registered learners`}
             colorIndex={3}
             loading={statsLoading}
             onClick={() => fetchAndShowSubjects('trade', 'Trade Subjects')}
@@ -491,6 +508,10 @@ const SubjectRegistration = () => {
 
       {/* ── Main Section ───────────────────────────────────────── */}
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6" fontWeight={600}>

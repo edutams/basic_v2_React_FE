@@ -341,7 +341,6 @@ const ManageSubscriptionList = () => {
             flexWrap="wrap"
             gap={1}
           >
-            <Typography variant="h5"></Typography>
             <Box display="flex" alignItems="center" gap={1}>
               <TextField
                 placeholder="Search by session term..."
@@ -355,7 +354,7 @@ const ManageSubscriptionList = () => {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ minWidth: 250 }}
+                sx={{ minWidth: 340 }}
               />
               <Button
                 variant="contained"
@@ -365,24 +364,29 @@ const ManageSubscriptionList = () => {
               >
                 Search
               </Button>
-              <Button
-                variant="contained"
-                size="small"
-                color="primary"
-                startIcon={<AddIcon />}
-                onClick={handleAddClick}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Skeleton width={140} height={20} animation="wave" />
-                ) : (
-                  'Add New Subscription'
-                )}
-              </Button>
             </Box>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddClick}
+              disabled={loading}
+            >
+              {loading ? (
+                <Skeleton width={140} height={20} animation="wave" />
+              ) : (
+                'Add New Subscription'
+              )}
+            </Button>
           </Box>
         }
-        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3, py: 0 } }}
+        sx={{
+          px: 0,
+          py: 0,
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { px: 1.5, py: 0 },
+        }}
       >
         <Box sx={{ p: 0 }}>
           <TableContainer sx={{ overflowX: 'auto' }}>

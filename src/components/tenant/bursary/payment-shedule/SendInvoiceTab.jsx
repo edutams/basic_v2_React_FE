@@ -471,7 +471,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const renderSmsMailContent = () => (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="subtitle1" fontWeight={700}>
@@ -630,12 +634,12 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         <ParentCard
           variant="outlined"
           sx={{
-            p: { xs: 2, md: 3 },
             borderRadius: 3,
             borderColor: 'grey.200',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
           }}
         >
           <Typography variant="h6" fontWeight={700} mb={3}>
@@ -939,7 +943,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         variant="outlined"
         sx={{ borderRadius: 2, borderColor: 'grey.200' }}
       >
-        <Table size="medium">
+        <Table size="small">
           <TableHead>
             <TableRow>
               {/* <TableCell padding="checkbox">
@@ -1054,32 +1058,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             pb: 2,
           }}
         >
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid',
-                borderColor: 'grey.200',
-              }}
-            >
-              <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700}>
-                Send invoice to parent
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Review the parent's contact, write a message, and choose how to deliver.
-              </Typography>
-            </Box>
-          </Box>
-
           <Tabs value={deliveryTab} onChange={handleDeliveryTabChange} variant="scrollable">
             <Tab
               label={

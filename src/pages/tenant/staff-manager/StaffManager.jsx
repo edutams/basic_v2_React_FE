@@ -43,6 +43,7 @@ import {
   IconChevronDown,
   IconDownload,
   IconUpload,
+  IconHistory,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -54,6 +55,7 @@ import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import UploadStaffModal from './components/UploadStaffModal';
+import StaffStatusModal from './components/StaffStatusModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
@@ -105,6 +107,7 @@ const StaffManager = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Form data - for staff modal
@@ -365,6 +368,11 @@ const StaffManager = () => {
     handleMenuClose();
   };
 
+  const handleUpdateStatusClick = () => {
+    setStatusModalOpen(true);
+    handleMenuClose();
+  };
+
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
     handleMenuClose();
@@ -509,10 +517,15 @@ const StaffManager = () => {
     switch (status?.toLowerCase()) {
       case 'active':
         return 'success';
-      case 'inactive':
-        return 'error';
       case 'leave':
         return 'warning';
+      case 'inactive':
+      case 'suspended':
+        return 'error';
+      case 'retired':
+      case 'transferred':
+        return 'info';
+      case 'dead':
       default:
         return 'default';
     }
@@ -592,7 +605,7 @@ const StaffManager = () => {
               ? '1px solid rgba(255, 255, 255, 0.08)'
               : '1px solid #eee',
           overflow: 'hidden',
-          p: 2,
+          p: 1.5,
         }}
       >
         {/* Content Area */}
@@ -664,6 +677,10 @@ const StaffManager = () => {
         <MenuItem onClick={handleEditStaff}>
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
+        </MenuItem>
+        <MenuItem onClick={handleUpdateStatusClick}>
+          <IconHistory size={18} style={{ marginRight: 8 }} />
+          Update Status
         </MenuItem>
         <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
           <IconTrash size={18} style={{ marginRight: 8 }} />
@@ -874,6 +891,17 @@ const StaffManager = () => {
         onClose={() => setUploadModalOpen(false)}
         onUpload={handleUploadTemplate}
         onDownloadTemplate={handleDownloadTemplate}
+      />
+
+      <StaffStatusModal
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        staff={selectedStaff}
+        getStatusColor={getStatusColor}
+        onStatusChanged={() => {
+          fetchStaff();
+          fetchStats();
+        }}
       />
 
       {/* Delete Confirmation */}

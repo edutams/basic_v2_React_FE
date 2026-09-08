@@ -671,7 +671,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Grid container spacing={1.5} sx={{ mb: 3, alignItems: 'stretch' }}>
+      <Grid container spacing={1.5} sx={{ mb: 2, alignItems: 'stretch' }}>
         <Grid size={{ xs: 12, lg: 5 }}>
           <TermCalendarCard
             dayCurrent={weekStats?.days_spent ?? 0}
@@ -700,8 +700,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
             sx={{
-              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
-              '& .MuiCardContent-root': { pt: 1 },
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -732,7 +732,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   </Button>
                 </Box>
                 <TableContainer>
-                  <Table sx={{ whiteSpace: 'nowrap' }} stickyHeader>
+                  <Table size="small" sx={{ whiteSpace: 'nowrap' }} stickyHeader>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -828,7 +828,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   </Button>
                 </Box>
                 <TableContainer>
-                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                  <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -945,7 +945,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                 </Box>
 
                 <TableContainer>
-                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                  <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>Session/Term</TableCell>
@@ -1022,6 +1022,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
             id="generate-week-section"
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">Generate Week</Typography>
@@ -1048,7 +1052,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             }
           >
             {weeksLoading || activeSessionTermId ? (
-              <Box ref={paperRef} sx={{ p: 2, position: 'relative' }}>
+              <Box ref={paperRef} sx={{ position: 'relative' }}>
                 <Box
                   sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
                 >
@@ -1116,7 +1120,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   )}
 
                 <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
+                  <Table size="small" stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>

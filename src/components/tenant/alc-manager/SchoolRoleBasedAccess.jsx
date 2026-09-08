@@ -465,7 +465,15 @@ const SchoolRoleBasedAccess = () => {
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
-          <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
+          <ParentCard
+            title="Access Distribution by Role"
+            sx={{
+              width: '100%',
+              height: '100%',
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
             <Box
               sx={{
                 py: 1,
@@ -570,6 +578,7 @@ const SchoolRoleBasedAccess = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
             <Box>
@@ -680,7 +689,7 @@ const SchoolRoleBasedAccess = () => {
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
-                <Table sx={{ minWidth: 1120 }} stickyHeader>
+                <Table size="small" sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>

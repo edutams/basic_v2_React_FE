@@ -1,5 +1,5 @@
 export const makePayment = (data, hash = null) => {
-    const gatewayCode = data[0]?.gateway_code;
+    const gatewayCode = data[0]?.gateway_code || '';
 
     switch (gatewayCode.toLowerCase()) {
         case 'skoolpay':
@@ -61,14 +61,16 @@ const skoolpay = (data) => {
         onClose: () => console.log("SkoolPay closed"),
         onError: (error) => console.error("SkoolPay Error:", error),
     };
-    const skoolPay = new window.SkoolPay(options);
-
-    //Assuming SkoolPay script is loaded globally
-    if (skoolPay) {
-        skoolPay.init();
-    } else {
-        console.error("SkoolPay SDK not loaded");
+    // Guard against the SkoolPay SDK not being ready yet (e.g. the external
+    // script is still loading/slow) instead of throwing and looking like the
+    // page has frozen with no feedback to the user.
+    if (typeof window.SkoolPay !== 'function') {
+        console.error('SkoolPay SDK not loaded');
+        throw new Error('Payment gateway is still loading. Please try again in a moment.');
     }
+
+    const skoolPay = new window.SkoolPay(options);
+    skoolPay.init();
 };
 
 const xpress_pay = (data, hash) => {

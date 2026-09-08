@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar } from '@mui/material';
 import { IconSettings, IconFileText, IconChartBar } from '@tabler/icons-react';
 import {
@@ -34,7 +35,10 @@ const BursarySetup = () => {
   const s1 = schemeMap[1];
   const s2 = schemeMap[2];
 
-  const [currentTab, setCurrentTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  // Lets a link from elsewhere (e.g. "no optional payments yet, set one up")
+  // land directly on the Payment Name tab instead of just the page root.
+  const [currentTab, setCurrentTab] = useState(searchParams.get('tab') === 'payment-name' ? 1 : 0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Session & Term
@@ -475,7 +479,12 @@ const BursarySetup = () => {
       )}
 
       {currentTab === 1 && (
-        <PaymentNameTab showSnackbar={showSnackbar} onStatsRefresh={loadPaymentNameStats} />
+        <PaymentNameTab
+          showSnackbar={showSnackbar}
+          onStatsRefresh={loadPaymentNameStats}
+          autoOpenAdd={Boolean(searchParams.get('new'))}
+          defaultPayOption={searchParams.get('new') || undefined}
+        />
       )}
 
       {/* Snackbar */}

@@ -11,7 +11,6 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  Chip,
   TableContainer,
   Table,
   TableHead,
@@ -35,13 +34,13 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Skeleton,
+  TextField,
+  Avatar,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   Email as EmailIcon,
   NotificationsActive as NotificationsActiveIcon,
-  Male as MaleIcon,
-  Female as FemaleIcon,
   CheckCircle as CheckCircleIcon,
   CancelOutlined as CancelOutlinedIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
@@ -98,6 +97,22 @@ const generateWeekDates = (startDate) => {
   return dates;
 };
 
+/**
+ * Whether a "YYYY-MM-DD" date string is strictly after today — used to lock
+ * out marking attendance for days/weeks that haven't happened yet. Parsed
+ * as a local midnight Date (not `new Date(str)` directly, which reads
+ * "YYYY-MM-DD" as UTC and can shift a day off depending on timezone).
+ */
+const isFutureDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return false;
+  const datePart = dateStr.slice(0, 10);
+  if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+  const date = new Date(datePart + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() > today.getTime();
+};
+
 /** Default morning/afternoon entry (mirrors backend). */
 const defaultPeriodEntry = () => ({
   is_present: null,
@@ -110,6 +125,14 @@ const defaultDateContent = () => ({
   morning: defaultPeriodEntry(),
   afternoon: defaultPeriodEntry(),
 });
+
+/**
+ * Case-insensitive gender check — the API sends `sex` lowercase
+ * ('male'/'female'), but this used to be compared against the literal
+ * 'MALE', so it always fell through to "female" regardless of the actual
+ * value.
+ */
+const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
 
 /**
  * Get the effective status string for a given period entry.
@@ -179,6 +202,14 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [error, setError] = useState('');
   const submittingRef = useRef(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  // Ticking "Excused" doesn't mark it right away — it opens this modal to
+  // collect a reason first. student_registration_id/day null = closed.
+  const [excuseDialog, setExcuseDialog] = useState({
+    open: false,
+    learnerId: null,
+    day: null,
+    reason: '',
+  });
   const [alertConfirmOpen, setAlertConfirmOpen] = useState(false);
   const [alertType, setAlertType] = useState('');
   const [sendingAlert, setSendingAlert] = useState(false);
@@ -463,8 +494,28 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     });
   };
 
+  /** Open the reason modal instead of marking "excused" immediately. */
+  const openExcuseDialog = (learnerId, day) =>
+    setExcuseDialog({ open: true, learnerId, day, reason: '' });
+
+  const closeExcuseDialog = () =>
+    setExcuseDialog({ open: false, learnerId: null, day: null, reason: '' });
+
+  /** Only actually marks "excused" — with the reason — once the modal is submitted. */
+  const confirmExcuseDialog = () => {
+    const { learnerId, day, reason } = excuseDialog;
+    if (learnerId && day) {
+      setDayStatus(learnerId, day, 'excused', reason.trim() || null);
+    }
+    closeExcuseDialog();
+  };
+
   /** Bulk-set all learners for a given day + period. */
   const bulkSetDayStatus = (day, status) => {
+    // A day that hasn't happened yet can't be marked, no matter which
+    // shortcut button triggered this — only guarding the checkbox toggle
+    // wouldn't stop this "mark all" bulk action from still reaching it.
+    if (isFutureDate(day)) return;
     setAttendanceData((prev) => {
       const updated = { ...prev };
       Object.keys(updated).forEach((id) => {
@@ -480,6 +531,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   /** Toggle selected day for checkbox and persist to localStorage. */
   const toggleDaySelection = (day) => {
+    // Future days aren't markable yet — today and every day before it
+    // (this week or any earlier one) are, so a teacher can still catch up
+    // on a whole week at once on, say, Friday.
+    if (isFutureDate(day)) return;
     setSelectedDays((prev) => {
       const next = { ...prev, [day]: prev[day] === true ? false : true };
       const storageKey = attArm && attWeek ? `attendance_selectedDays_${attArm}_${attWeek}` : null;
@@ -776,125 +831,6 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
 
   return (
     <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ sm: 'center' }}
-        mb={1.5}
-        gap={1.5}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6" fontWeight={700}>
-            Learner Attendance
-          </Typography>
-
-          <ToggleButtonGroup
-            value={attendanceType}
-            exclusive
-            size="small"
-            onChange={(_, val) => val && setAttendanceType(val)}
-            sx={{
-              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
-              p: 0.5,
-              borderRadius: '10px',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
-              '& .MuiToggleButton-root': {
-                border: 'none',
-                borderRadius: '8px',
-                px: 1.75,
-                py: 0.5,
-                fontWeight: 600,
-                fontSize: '13px',
-                textTransform: 'none',
-                gap: 0.75,
-                color: isDark ? '#94a3b8' : '#475569',
-                transition: 'all 0.2s ease',
-              },
-            }}
-          >
-            <ToggleButton
-              value="morning"
-              sx={{
-                '&.Mui-selected': {
-                  bgcolor: '#f97316 !important',
-                  color: '#ffffff !important',
-                  fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
-                  '&:hover': {
-                    bgcolor: '#ea580c !important',
-                  },
-                },
-              }}
-            >
-              <MorningIcon
-                sx={{
-                  fontSize: 16,
-                  color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
-                }}
-              />{' '}
-              Morning (AM)
-            </ToggleButton>
-
-            <ToggleButton
-              value="afternoon"
-              sx={{
-                '&.Mui-selected': {
-                  bgcolor: '#0284c7 !important',
-                  color: '#ffffff !important',
-                  fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
-                  '&:hover': {
-                    bgcolor: '#0369a1 !important',
-                  },
-                },
-              }}
-            >
-              <AfternoonIcon
-                sx={{
-                  fontSize: 16,
-                  color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
-                }}
-              />{' '}
-              Afternoon (PM)
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          {/* Export Dropdown */}
-          <Button
-            variant="outlined"
-            // color="primary"
-            size="small"
-            startIcon={<DownloadIcon />}
-            endIcon={<ArrowDropDownIcon />}
-            onClick={(e) => setExportAnchorEl(e.currentTarget)}
-            disabled={!filterApplied || exportingPdf}
-          >
-            {exportingPdf ? 'Exporting...' : 'Export'}
-          </Button>
-          <Menu
-            anchorEl={exportAnchorEl}
-            open={Boolean(exportAnchorEl)}
-            onClose={() => setExportAnchorEl(null)}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem onClick={handleExportExcel}>
-              <ListItemIcon>
-                <ExcelIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Report by Excel</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleExportPdf}>
-              <ListItemIcon>
-                <PdfIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>Report by PDF</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Stack>
-      </Stack>
-
       {/* ── Filters ─────────────────────────────────────── */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
@@ -940,9 +876,15 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
             <Select value={attWeek} label="Week" onChange={(e) => setAttWeek(e.target.value)}>
               {weeks.map((w) => {
                 const weekId = w.wk_id ?? w.week_id ?? w.id;
+                // A week that hasn't started yet has nothing to mark —
+                // only weeks up to and including the current one are
+                // selectable. Past weeks stay open so a teacher can catch
+                // up on attendance they missed.
+                const notReachedYet = isFutureDate(w.start_date);
                 return (
-                  <MenuItem key={weekId} value={weekId}>
+                  <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
                     {w.week_name || `Week ${weekId}`}
+                    {notReachedYet ? ' (upcoming)' : ''}
                   </MenuItem>
                 );
               })}
@@ -1031,9 +973,148 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Alert>
       )}
 
+      {/* ── Learner Attendance heading + AM/PM toggle — moved below the
+          filters/banner so it reads as part of the table beneath it, not
+          the page chrome above the filters. ── */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+          mb: 1.5,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Typography variant="h6" fontWeight={700}>
+            Learner Attendance
+          </Typography>
+
+          <ToggleButtonGroup
+          value={attendanceType}
+          exclusive
+          size="small"
+          onChange={(_, val) => val && setAttendanceType(val)}
+          sx={{
+            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
+            p: 0.5,
+            borderRadius: '10px',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
+            '& .MuiToggleButton-root': {
+              border: 'none',
+              borderRadius: '8px',
+              px: 1.75,
+              py: 0.5,
+              fontWeight: 600,
+              fontSize: '13px',
+              textTransform: 'none',
+              gap: 0.75,
+              color: isDark ? '#94a3b8' : '#475569',
+              transition: 'all 0.2s ease',
+            },
+          }}
+        >
+          <ToggleButton
+            value="morning"
+            sx={{
+              '&.Mui-selected': {
+                bgcolor: '#f97316 !important',
+                color: '#ffffff !important',
+                fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
+                '&:hover': {
+                  bgcolor: '#ea580c !important',
+                },
+              },
+            }}
+          >
+            <MorningIcon
+              sx={{
+                fontSize: 16,
+                color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
+              }}
+            />{' '}
+            Morning (AM)
+          </ToggleButton>
+
+          <ToggleButton
+            value="afternoon"
+            sx={{
+              '&.Mui-selected': {
+                bgcolor: '#0284c7 !important',
+                color: '#ffffff !important',
+                fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+                '&:hover': {
+                  bgcolor: '#0369a1 !important',
+                },
+              },
+            }}
+          >
+            <AfternoonIcon
+              sx={{
+                fontSize: 16,
+                color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
+              }}
+            />{' '}
+            Afternoon (PM)
+          </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* Same action as the button at the bottom of the summary card —
+              duplicated here so marking a whole week doesn't require
+              scrolling all the way down just to submit it. */}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={openConfirmDialog}
+            disabled={
+              submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
+            }
+          >
+            {submitting ? 'Submitting...' : 'Submit Attendance'}
+          </Button>
+
+          {/* Export Dropdown */}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={(e) => setExportAnchorEl(e.currentTarget)}
+            disabled={!filterApplied || exportingPdf}
+          >
+            {exportingPdf ? 'Exporting...' : 'Export'}
+          </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={Boolean(exportAnchorEl)}
+            onClose={() => setExportAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleExportExcel}>
+              <ListItemIcon>
+                <ExcelIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Report by Excel</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleExportPdf}>
+              <ListItemIcon>
+                <PdfIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText>Report by PDF</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Stack>
+      </Box>
+
       {/* ── Attendance Table & Summary ──────────────────── */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 9 }}>
+        <Grid size={{ xs: 12, lg: 9.5 }}>
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>
               {error}
@@ -1111,7 +1192,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   </TableCell>
                   {days.map((day) => {
                     const dayLabel = formatDayHeader(day);
-                    const isSelected = selectedDays[day] === true;
+                    const isFuture = isFutureDate(day);
+                    // A future day never renders as checked, even if stale
+                    // localStorage says otherwise (e.g. it was checked before
+                    // this restriction existed) — checked-but-disabled would
+                    // be more confusing than just greyed out and unchecked.
+                    const isSelected = selectedDays[day] === true && !isFuture;
                     return (
                       <TableCell
                         key={day}
@@ -1131,19 +1217,24 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       >
                         <Box>
                           {/* Weekday Checkbox - above the day name */}
-                          <Checkbox
-                            size="small"
-                            checked={isSelected}
-                            onChange={() => toggleDaySelection(day)}
-                            sx={{
-                              p: 0.25,
-                              color: theme.palette.success.main,
-                              '&.Mui-checked': {
-                                color: theme.palette.success.main,
-                              },
-                              mb: 0.25,
-                            }}
-                          />
+                          <Tooltip title={isFuture ? "Can't mark a day that hasn't happened yet" : ''}>
+                            <span>
+                              <Checkbox
+                                size="small"
+                                checked={isSelected}
+                                disabled={isFuture}
+                                onChange={() => toggleDaySelection(day)}
+                                sx={{
+                                  p: 0.25,
+                                  color: theme.palette.success.main,
+                                  '&.Mui-checked': {
+                                    color: theme.palette.success.main,
+                                  },
+                                  mb: 0.25,
+                                }}
+                              />
+                            </span>
+                          </Tooltip>
                           <Typography
                             variant="subtitle2"
                             fontWeight={700}
@@ -1168,29 +1259,56 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           alignItems="center"
                           mt={0.5}
                         >
-                          <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Present`}>
-                            <IconButton
-                              onClick={() => bulkSetDayStatus(day, 'present')}
-                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
-                            >
-                              <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
-                            </IconButton>
+                          <Tooltip
+                            title={
+                              isFuture
+                                ? "Can't mark a day that hasn't happened yet"
+                                : `Mark all ${dayLabel} ${periodLabel} Present`
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                onClick={() => bulkSetDayStatus(day, 'present')}
+                                disabled={isFuture}
+                                sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
+                              >
+                                <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </span>
                           </Tooltip>
-                          <Tooltip title={`Mark all ${dayLabel} ${periodLabel} Absent`}>
-                            <IconButton
-                              onClick={() => bulkSetDayStatus(day, 'absent')}
-                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
-                            >
-                              <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
-                            </IconButton>
+                          <Tooltip
+                            title={
+                              isFuture
+                                ? "Can't mark a day that hasn't happened yet"
+                                : `Mark all ${dayLabel} ${periodLabel} Absent`
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                onClick={() => bulkSetDayStatus(day, 'absent')}
+                                disabled={isFuture}
+                                sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
+                              >
+                                <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </span>
                           </Tooltip>
-                          <Tooltip title={`Clear all ${dayLabel} ${periodLabel}`}>
-                            <IconButton
-                              onClick={() => bulkSetDayStatus(day, 'unknown')}
-                              sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
-                            >
-                              <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
-                            </IconButton>
+                          <Tooltip
+                            title={
+                              isFuture
+                                ? "Can't mark a day that hasn't happened yet"
+                                : `Clear all ${dayLabel} ${periodLabel}`
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                onClick={() => bulkSetDayStatus(day, 'unknown')}
+                                disabled={isFuture}
+                                sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
+                              >
+                                <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </Stack>
                         <Typography
@@ -1200,10 +1318,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             mt: 0.5,
                             fontSize: '9px',
                             fontWeight: 600,
-                            color:
-                              attendanceType === 'morning'
-                                ? theme.palette.warning.main
-                                : theme.palette.info.main,
+                            // Same exact orange/blue as the Morning (AM) /
+                            // Afternoon (PM) toggle above — theme.palette.
+                            // warning/info.main rendered noticeably
+                            // brighter here and didn't visually match it.
+                            color: attendanceType === 'morning' ? '#f97316' : '#0284c7',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
                           }}
@@ -1353,26 +1472,66 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                 : '2px solid #cbd5e1',
                           }}
                         >
-                          <Box
-                            sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
-                          >
-                            <Typography variant="body2" fontWeight={600}>
-                              {learner.name}
-                            </Typography>
-                            <Chip
-                              icon={
-                                learner.gender === 'MALE' ? (
-                                  <MaleIcon fontSize="small" />
-                                ) : (
-                                  <FemaleIcon fontSize="small" />
-                                )
-                              }
-                              label={learner.gender}
-                              size="small"
-                              color={learner.gender === 'MALE' ? 'primary' : 'success'}
-                              variant="soft"
-                              sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
-                            />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                              src={learner.avatar || undefined}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                bgcolor: 'primary.main',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {(learner.name || '?').charAt(0)}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Stack direction="row" alignItems="center" spacing={0.75}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
+                                  {learner.name}
+                                </Typography>
+                                {/* Single-letter M/F badge, after the name now — the old
+                                    chip compared gender against the literal 'MALE', but
+                                    the API sends it lowercase, so it always fell through
+                                    to the female icon regardless of actual gender. */}
+                                <Box
+                                  title={learner.gender}
+                                  sx={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    bgcolor: alpha(
+                                      isMaleGender(learner.gender)
+                                        ? theme.palette.primary.main
+                                        : theme.palette.success.main,
+                                      isDark ? 0.28 : 0.14,
+                                    ),
+                                    color: isMaleGender(learner.gender)
+                                      ? theme.palette.primary.main
+                                      : theme.palette.success.main,
+                                  }}
+                                >
+                                  {isMaleGender(learner.gender) ? 'M' : 'F'}
+                                </Box>
+                              </Stack>
+                              {learner.admission_no && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', lineHeight: 1.2 }}
+                                  noWrap
+                                >
+                                  {learner.admission_no}
+                                </Typography>
+                              )}
+                            </Box>
                           </Box>
                         </TableCell>
                         {days.map((day) => {
@@ -1381,7 +1540,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                           const status = isHoliday
                             ? 'holiday'
                             : getPeriodStatus(content?.[attendanceType]);
-                          const isSelected = selectedDays[day] === true;
+                          const isSelected = selectedDays[day] === true && !isFutureDate(day);
                           // The radio group only ever offers present/late/
                           // absent/unknown — 'excused' is a qualifier on an
                           // absence (see the checkbox below), not a 5th
@@ -1408,7 +1567,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                   color="text.secondary"
                                   fontStyle="italic"
                                 >
-                                  Holiday
+                                  {holidayDates[day] || 'Holiday'}
                                 </Typography>
                               ) : (
                                 <RadioGroup
@@ -1517,11 +1676,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                           checked={isExcused}
                                           disabled={!isSelected}
                                           onChange={(e) =>
-                                            setDayStatus(
-                                              learner.student_registration_id,
-                                              day,
-                                              e.target.checked ? 'excused' : 'absent',
-                                            )
+                                            e.target.checked
+                                              ? openExcuseDialog(
+                                                  learner.student_registration_id,
+                                                  day,
+                                                )
+                                              : setDayStatus(
+                                                  learner.student_registration_id,
+                                                  day,
+                                                  'absent',
+                                                )
                                           }
                                           sx={{ p: 0.25 }}
                                         />
@@ -1562,7 +1726,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         </Grid>
 
         {/* ── Right Summary Card with Gauge & Submit Button ── */}
-        <Grid size={{ xs: 12, lg: 3 }}>
+        <Grid size={{ xs: 12, lg: 2.5 }}>
           <ParentCard
             elevation={0}
             sx={{
@@ -1737,6 +1901,43 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               autoFocus
             >
               Confirm
+            </Button>
+          </Stack>
+        }
+      />
+
+      {/* ── Excused-absence reason ──────────────────── */}
+      <ReusableDialog
+        open={excuseDialog.open}
+        onClose={closeExcuseDialog}
+        title="Excuse This Absence"
+        content={
+          <Box sx={{ py: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              An excused absence doesn't count against the attendance rate. Enter the reason
+              below.
+            </Typography>
+            <TextField
+              autoFocus
+              fullWidth
+              multiline
+              minRows={3}
+              label="Reason"
+              placeholder="e.g. Medical appointment, family emergency..."
+              value={excuseDialog.reason}
+              onChange={(e) =>
+                setExcuseDialog((prev) => ({ ...prev, reason: e.target.value }))
+              }
+            />
+          </Box>
+        }
+        actions={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={closeExcuseDialog}>
+              Cancel
+            </Button>
+            <Button variant="contained" size="small" onClick={confirmExcuseDialog}>
+              Submit
             </Button>
           </Stack>
         }

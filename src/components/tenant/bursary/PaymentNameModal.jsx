@@ -15,7 +15,7 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import { fetchSkoolPayBanks } from '@/api/tenant/bursary/paymentNameApi';
 import { fetchGatewayChargeBearer } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
+const PaymentNameModal = ({ open, onClose, onSave, paymentName, defaultPayOption }) => {
   const [formData, setFormData] = useState({
     name: '',
     pay_type: 'bursary',
@@ -52,7 +52,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
         setFormData({
           name: '',
           pay_type: 'bursary',
-          pay_option: 'compulsory',
+          pay_option: defaultPayOption || 'compulsory',
           application_stage: null,
           bank: '',
           account_number: '',
@@ -336,6 +336,7 @@ PaymentNameModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   paymentName: PropTypes.object,
+  defaultPayOption: PropTypes.string,
 };
 
 export default PaymentNameModal;

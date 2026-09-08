@@ -121,8 +121,13 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
         ? { label: 'Late', color: 'warning.main' }
         : { label: 'Present', color: 'success.main' };
     }
-    if (morning === 'excused' || afternoon === 'excused')
-      return { label: 'Excused', color: 'info.main' };
+    if (morning === 'excused' || afternoon === 'excused') {
+      // Whichever period was actually excused carries the reason typed into
+      // the excuse modal — same `content.<period>.reason` saved by Submit
+      // Attendance on the marking tab.
+      const reason = (morning === 'excused' ? day.morning?.reason : day.afternoon?.reason) || null;
+      return { label: 'Excused', color: 'info.main', reason };
+    }
     if (morning || afternoon) return { label: 'Absent', color: 'error.main' };
     return { label: '—', color: 'text.secondary' };
   };
@@ -143,7 +148,7 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
         week.
       </Typography>
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <ReusableBarChart
             series={[{ name: 'Students Present', data: dailyData.map((d) => d.present_count) }]}
             categories={dailyData.map((d) => d.day_name)}
@@ -152,7 +157,7 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
             yAxisFormatter={(val) => `${val} / ${totalCount}`}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <TableContainer
             elevation={0}
             variant="outlined"
@@ -217,15 +222,33 @@ const WeekBreakdownContent = ({ dailyData, learners, dates, totalCount, theme })
                         {learner.name}
                       </TableCell>
                       {dates.map((date) => {
-                        const { label, color } = getDayStatus(att, date);
+                        const { label, color, reason } = getDayStatus(att, date);
                         return (
                           <TableCell key={date} align="center">
-                            <Typography
-                              variant="body2"
-                              sx={{ color, fontWeight: label === 'Present' ? 700 : 400 }}
-                            >
-                              {label}
-                            </Typography>
+                            {label === 'Excused' ? (
+                              <Tooltip title={reason || 'No reason was entered.'}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color,
+                                    fontWeight: 400,
+                                    textDecoration: 'underline',
+                                    textDecorationStyle: 'dotted',
+                                    cursor: 'default',
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {label}
+                                </Typography>
+                              </Tooltip>
+                            ) : (
+                              <Typography
+                                variant="body2"
+                                sx={{ color, fontWeight: label === 'Present' ? 700 : 400 }}
+                              >
+                                {label}
+                              </Typography>
+                            )}
                           </TableCell>
                         );
                       })}
@@ -273,7 +296,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
   return (
     <Box>
       {/* ── Term Summary ── */}
-      <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+      <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" color="text.secondary">
@@ -322,7 +345,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
         Weekly attendance rate trend for the selected term.
       </Typography>
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <ReusableBarChart
             series={[{ name: 'Attendance Rate', data: weeklyRates.map((w) => Math.round(w.rate)) }]}
             categories={weeklyRates.map((w) => w.week_name)}
@@ -332,7 +355,7 @@ const TermTrendContent = ({ weeklyData, theme }) => {
             xAxisTitle="Week"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <TableContainer
             elevation={0}
             variant="outlined"
@@ -945,15 +968,20 @@ const AttendanceAnalyticsCards = ({
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Learner Name</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Class Arm</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {learners.map((l, idx) => (
                         <TableRow key={l.student_registration_id || idx} hover>
                           <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {l.admission_no || '—'}
+                            </Typography>
+                          </TableCell>
                           <TableCell>
                             <Stack direction="row" alignItems="center" spacing={0.5}>
                               <Typography variant="body2" fontWeight={600}>
@@ -984,11 +1012,6 @@ const AttendanceAnalyticsCards = ({
                               variant="outlined"
                               color="error"
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary">
-                              {l.admission_no || '—'}
-                            </Typography>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1183,7 +1206,7 @@ const AttendanceAnalyticsCards = ({
   const openSchoolDaysModal = useCallback(() => {
     const fmtPct = (v) => `${Math.min(Math.round(v || 0), 100)}%`;
     const scopeBlock = (label, open, elapsed, remaining, pct, color) => (
-      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+      <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, height: '100%' }}>
         <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
           {label}
         </Typography>

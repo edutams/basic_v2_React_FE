@@ -9,7 +9,6 @@ import {
   InputLabel,
   Stack,
   Avatar,
-  Chip,
   Paper,
   TableContainer,
   Table,
@@ -29,14 +28,13 @@ import {
   ListItemIcon,
   Snackbar,
   Alert,
+  alpha,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   FileDownload as DownloadIcon,
   PictureAsPdf as PdfIcon,
   TableChart as ExcelIcon,
-  Male as MaleIcon,
-  Female as FemaleIcon,
 } from '@mui/icons-material';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
@@ -50,6 +48,29 @@ import {
 import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 const STORAGE_KEY = 'psychomotor_assessments';
+
+/**
+ * Whether a "YYYY-MM-DD" date string is strictly after today — same helper
+ * as Mark Attendance, used to lock out weeks that haven't started yet.
+ * Parsed as a local midnight Date, not `new Date(str)` directly (which
+ * reads "YYYY-MM-DD" as UTC and can shift a day off depending on timezone).
+ */
+const isFutureDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return false;
+  const datePart = dateStr.slice(0, 10);
+  if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+  const date = new Date(datePart + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() > today.getTime();
+};
+
+/**
+ * Case-insensitive gender check — the API sends `sex` lowercase
+ * ('male'/'female'), so comparing against the literal 'MALE' always fell
+ * through to "female" regardless of the actual value.
+ */
+const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
 
 const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
@@ -451,9 +472,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             <Select value={pWeek} label="Week" onChange={(e) => setPWeek(e.target.value)}>
               {weeks.map((w) => {
                 const weekId = w.wk_id ?? w.week_id ?? w.id;
+                // A week that hasn't started yet has nothing to assess —
+                // only weeks up to and including the current one are
+                // selectable. Past weeks stay open for catch-up.
+                const notReachedYet = isFutureDate(w.start_date);
                 return (
-                  <MenuItem key={weekId} value={weekId}>
+                  <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
                     {w.week_name || `Week ${weekId}`}
+                    {notReachedYet ? ' (upcoming)' : ''}
                   </MenuItem>
                 );
               })}
@@ -711,7 +737,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                       }}
                     >
                       <Stack direction="row" alignItems="center" spacing={1}>
-                        <Skeleton variant="circular" width={36} height={36} />
+                        <Skeleton variant="circular" width={32} height={32} />
                         <Skeleton variant="text" width="60%" />
                       </Stack>
                     </TableCell>
@@ -810,44 +836,67 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                                 : '2px solid #cbd5e1',
                           }}
                         >
-                          <Stack direction="row" alignItems="center" spacing={1.5}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar
+                              src={learner.avatar || undefined}
                               sx={{
-                                width: 36,
-                                height: 36,
+                                width: 32,
+                                height: 32,
                                 fontSize: 13,
                                 fontWeight: 700,
                                 bgcolor: 'primary.main',
+                                flexShrink: 0,
                               }}
                             >
                               {(learner.name || '?').charAt(0)}
                             </Avatar>
-                            <Box>
-                              <Stack
-                                direction={{ xs: 'column', sm: 'row' }}
-                                alignItems={{ sm: 'center' }}
-                                spacing={1}
-                              >
-                                <Typography variant="body2" fontWeight={600}>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Stack direction="row" alignItems="center" spacing={0.75}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
                                   {learner.name}
                                 </Typography>
-                                <Chip
-                                  icon={
-                                    learner.gender === 'MALE' ? (
-                                      <MaleIcon fontSize="small" />
-                                    ) : (
-                                      <FemaleIcon fontSize="small" />
-                                    )
-                                  }
-                                  label={learner.gender}
-                                  size="small"
-                                  color={learner.gender === 'MALE' ? 'primary' : 'success'}
-                                  variant="soft"
-                                  sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
-                                />
+                                {/* Single-letter M/F badge, after the name now — the old
+                                    chip compared gender against the literal 'MALE', but
+                                    the API sends it lowercase, so it always fell through
+                                    to the female icon regardless of actual gender. */}
+                                <Box
+                                  title={learner.gender}
+                                  sx={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    bgcolor: alpha(
+                                      isMaleGender(learner.gender)
+                                        ? theme.palette.primary.main
+                                        : theme.palette.success.main,
+                                      isDark ? 0.28 : 0.14,
+                                    ),
+                                    color: isMaleGender(learner.gender)
+                                      ? theme.palette.primary.main
+                                      : theme.palette.success.main,
+                                  }}
+                                >
+                                  {isMaleGender(learner.gender) ? 'M' : 'F'}
+                                </Box>
                               </Stack>
+                              {learner.admission_no && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', lineHeight: 1.2 }}
+                                  noWrap
+                                >
+                                  {learner.admission_no}
+                                </Typography>
+                              )}
                             </Box>
-                          </Stack>
+                          </Box>
                         </TableCell>
                         {/* Affective domain */}
                         <TableCell>
@@ -862,7 +911,12 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                                 >
                                   <Typography
                                     variant="caption"
-                                    sx={{ minWidth: 80, color: 'text.secondary', fontWeight: 500 }}
+                                    sx={{
+                                      width: 140,
+                                      flexShrink: 0,
+                                      color: 'text.secondary',
+                                      fontWeight: 500,
+                                    }}
                                   >
                                     {trait}
                                   </Typography>
@@ -914,7 +968,12 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                                 >
                                   <Typography
                                     variant="caption"
-                                    sx={{ minWidth: 110, color: 'text.secondary', fontWeight: 500 }}
+                                    sx={{
+                                      width: 140,
+                                      flexShrink: 0,
+                                      color: 'text.secondary',
+                                      fontWeight: 500,
+                                    }}
                                   >
                                     {trait}
                                   </Typography>

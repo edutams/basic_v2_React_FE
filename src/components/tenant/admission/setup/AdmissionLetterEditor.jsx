@@ -101,7 +101,13 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
   };
 
   return (
-    <ParentCard title="Admission Letter Editor">
+    <ParentCard
+      title="Admission Letter Editor"
+      sx={{
+        '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+        '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+      }}
+    >
       <Box
         sx={{
           bgcolor: 'primary.main',

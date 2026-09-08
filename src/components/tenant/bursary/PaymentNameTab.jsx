@@ -46,7 +46,7 @@ import {
 } from '@/api/tenant/bursary/paymentNameApi';
 import ReusableModal from '@/components/shared/ReusableModal';
 
-const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
+const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayOption }) => {
   const [paymentNames, setPaymentNames] = useState([]);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(0);
@@ -155,6 +155,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     setModalOpen(true);
   };
 
+  // Lets a link from elsewhere (e.g. "no optional payments set up yet")
+  // land here with the Add modal already open and the right type preselected,
+  // instead of the admin having to find "Add New" and the dropdown themselves.
+  useEffect(() => {
+    if (autoOpenAdd) {
+      handleAddPayment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenAdd]);
+
   const handleEditPayment = (payment) => {
     setEditingPayment(payment);
     setModalOpen(true);
@@ -167,6 +177,10 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     <>
       <Stack spacing={3}>
         <ParentCard
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Box>
@@ -252,7 +266,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           </Box>
 
           <TableContainer variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -517,6 +531,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
         onClose={() => setModalOpen(false)}
         onSave={handleSavePayment}
         paymentName={editingPayment}
+        defaultPayOption={!editingPayment ? defaultPayOption : undefined}
       />
     </>
   );

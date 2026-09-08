@@ -31,6 +31,7 @@ import {
 } from '@tabler/icons-react';
 import ClassTeacherAllocation from '../ClassTeacherAllocation';
 import SubjectTeacherAllocation from '../SubjectTeacherAllocation';
+import { statusLabel } from './StaffStatusModal';
 
 const TeachingStaffTab = ({
   loading,
@@ -76,7 +77,8 @@ const TeachingStaffTab = ({
           {/* Toolbar */}
           <Box
             sx={{
-              p: 2,
+              pb: 1.5,
+              mb: 1.5,
               borderBottom: '1px solid #f0f0f0',
               display: 'flex',
               justifyContent: 'space-between',
@@ -159,7 +161,7 @@ const TeachingStaffTab = ({
 
           {/* Table */}
           <TableContainer>
-            <Table stickyHeader>
+            <Table size="small" stickyHeader>
               <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
@@ -263,10 +265,9 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={staffMember.staff_status}
+                          label={statusLabel(staffMember.staff_status)}
                           color={getStatusColor(staffMember.staff_status)}
                           size="small"
-                          sx={{ textTransform: 'lowercase' }}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -294,7 +295,7 @@ const TeachingStaffTab = ({
       )}
 
       {activeSubTab === 'allocation' && (
-        <Box sx={{ p: 2 }}>
+        <Box>
           <Box sx={{ mb: 3 }}>
             <Tabs
               value={allocationSubTab}

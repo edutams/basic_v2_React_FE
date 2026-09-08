@@ -62,9 +62,9 @@ describe('CalendarIntelligence', () => {
     expect(screen.queryByText('Active Sections')).not.toBeInTheDocument();
   });
 
-  it('fills the Sessions Subscribed card with an active/total breakdown', () => {
+  it('fills the Sessions Subscribed card with a term-level active/total breakdown', () => {
     render(<CalendarIntelligence overview={baseOverview} loading={false} />);
-    expect(screen.getByText('1 of 2 currently active')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 terms active')).toBeInTheDocument();
   });
 
   it('fills the Active Session card with the current week out of the term total', () => {

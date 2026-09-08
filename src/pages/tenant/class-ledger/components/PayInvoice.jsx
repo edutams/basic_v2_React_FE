@@ -651,6 +651,8 @@ const PayInvoice = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
+  const studentGender = studentInfo?.gender || '';
+  const studentArm = studentInfo?.class_arm || '';
   const invoiceNumber = invoiceInfo?.invoice_number || '';
   const breadcrumbTitle = `Pay Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
 
@@ -697,22 +699,48 @@ const PayInvoice = () => {
                 <PersonOutlineIcon sx={{ fontSize: 24 }} />
               </Avatar>
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="subtitle1" fontWeight={800} color="text.primary" noWrap>
-                  {studentName}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                  <Typography variant="subtitle1" fontWeight={800} color="text.primary" noWrap>
+                    {studentName}
+                  </Typography>
+                  {studentGender && (
+                    <Chip
+                      label={
+                        studentGender.toLowerCase() === 'male'
+                          ? 'Male'
+                          : studentGender.toLowerCase() === 'female'
+                            ? 'Female'
+                            : studentGender
+                      }
+                      size="small"
+                      color={
+                        studentGender.toLowerCase() === 'male'
+                          ? 'info'
+                          : studentGender.toLowerCase() === 'female'
+                            ? 'secondary'
+                            : 'default'
+                      }
+                      variant="outlined"
+                      sx={{ fontWeight: 700 }}
+                    />
+                  )}
+                </Stack>
                 <Typography
-                  variant="caption"
+                  variant="body2"
+                  fontWeight={600}
                   color="text.secondary"
-                  sx={{ display: 'block', whiteSpace: 'nowrap' }}
+                  noWrap
+                  sx={{ display: 'block' }}
                 >
-                  ID {studentLearnerId} &nbsp;·&nbsp; {studentClassName} &nbsp;·&nbsp;{' '}
+                  ID {studentLearnerId} &nbsp;·&nbsp; {studentClassName} &nbsp; {studentArm}{' '}
+                  &nbsp;·&nbsp;
                   {activeSessionInfo.session} {activeSessionInfo.term}
                 </Typography>
               </Box>
             </Box>
 
             {/* Print + Back — top right, extreme end */}
-            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" spacing={1} sx={{ flexShrink: 0, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 size="small"
@@ -791,7 +819,7 @@ const PayInvoice = () => {
                 borderLeftColor: '#10b981',
                 icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                 action: (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
                     <Typography variant="caption" fontWeight={700} color="text.secondary">
                       Subtotal ₦{format(compTotal)}
                     </Typography>
@@ -856,312 +884,328 @@ const PayInvoice = () => {
                               : '#ffffff',
                         }}
                       >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                      }}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={fee.checked}
-                        onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{ p: 0.5 }}
-                      />
-
-                      {/* Description + amount breakdown — one truncating line */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          gap: 0.75,
-                          minWidth: 0,
-                          flex: '1 1 200px',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={700}
-                          color="text.primary"
-                          noWrap
-                          sx={{ flexShrink: 0, maxWidth: '55%' }}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          }}
                         >
-                          {idx + 1}. {fee.description}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="text.secondary"
-                          noWrap
-                          sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
-                        >
-                          ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
-                          {format(fee.balance)}
-                          {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
-                          {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
-                        </Typography>
-                      </Box>
-
-                      {/* Installment dropdown (percentage) OR custom amount input — INTERACTIVE */}
-                      <Box sx={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                        {installmentalSetting === 'percentage' ? (
-                          <FormControl size="small" sx={{ minWidth: 100 }}>
-                            <Select
-                              value={fee.installment_id || ''}
-                              onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
-                              displayEmpty
-                              sx={{
-                                borderRadius: 2,
-                                '& .MuiSelect-select': { py: 0.5, fontSize: '0.8125rem' },
-                              }}
-                            >
-                              <MenuItem value="">
-                                <em>Select</em>
-                              </MenuItem>
-                              {(fee.installments || []).map((inst) => (
-                                <MenuItem key={inst.id} value={inst.id}>
-                                  {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        ) : (
-                          <TextField
+                          <Checkbox
                             size="small"
-                            type="number"
-                            sx={{ width: 100, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                            value={fee.custom_amount}
-                            onChange={(e) =>
-                              handleCustomAmountChange(fee.id, e.target.value, 'comp')
-                            }
-                            inputProps={{ min: 0, max: fee.balance }}
+                            checked={fee.checked}
+                            onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ p: 0.5 }}
                           />
-                        )}
-                      </Box>
 
-                      {/* Payable — recalculates on installment/amount change */}
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={800}
-                        color="primary.main"
-                        sx={{ flexShrink: 0, minWidth: 80, textAlign: 'right', fontSize: '1.1rem' }}
-                      >
-                        ₦{format(fee.payable)}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                ))}
-              </Stack>
+                          {/* Description + amount breakdown — one truncating line */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 0.75,
+                              minWidth: 0,
+                              flex: '1 1 200px',
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.primary"
+                              noWrap
+                              sx={{ flexShrink: 0, maxWidth: '55%' }}
+                            >
+                              {idx + 1}. {fee.description}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="text.secondary"
+                              noWrap
+                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                            >
+                              ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                              {format(fee.balance)}
+                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                            </Typography>
+                          </Box>
+
+                          {/* Installment dropdown (percentage) OR custom amount input — INTERACTIVE */}
+                          <Box sx={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                            {installmentalSetting === 'percentage' ? (
+                              <FormControl size="small" sx={{ minWidth: 100 }}>
+                                <Select
+                                  value={fee.installment_id || ''}
+                                  onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
+                                  displayEmpty
+                                  sx={{
+                                    borderRadius: 2,
+                                    '& .MuiSelect-select': { py: 0.5, fontSize: '0.8125rem' },
+                                  }}
+                                >
+                                  <MenuItem value="">
+                                    <em>Select</em>
+                                  </MenuItem>
+                                  {(fee.installments || []).map((inst) => (
+                                    <MenuItem key={inst.id} value={inst.id}>
+                                      {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            ) : (
+                              <TextField
+                                size="small"
+                                type="number"
+                                sx={{ width: 100, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                value={fee.custom_amount}
+                                onChange={(e) =>
+                                  handleCustomAmountChange(fee.id, e.target.value, 'comp')
+                                }
+                                inputProps={{ min: 0, max: fee.balance }}
+                              />
+                            )}
+                          </Box>
+
+                          {/* Payable — recalculates on installment/amount change */}
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={800}
+                            color="primary.main"
+                            sx={{
+                              flexShrink: 0,
+                              minWidth: 80,
+                              textAlign: 'right',
+                              fontSize: '1.1rem',
+                            }}
+                          >
+                            ₦{format(fee.payable)}
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Stack>
                 )}
               </Box>
             </Paper>
 
-        {/* ══════════════════════════════════════════════ */}
-        {/* OPTIONAL PAYMENT — card list, same reasoning as Compulsory */}
-        {/* Header bar + content share one outer Paper — no gap — same as   */}
-        {/* the Compulsory section above.                                  */}
-        {/* ══════════════════════════════════════════════ */}
-        <Paper
-          variant="outlined"
-          sx={{
-            borderRadius: '10px',
-            overflow: 'hidden',
-            mb: 3,
-            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-          }}
-        >
-        {renderHeaderBlock({
-          title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-          borderLeftColor: '#3b82f6',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
+            {/* ══════════════════════════════════════════════ */}
+            {/* OPTIONAL PAYMENT — card list, same reasoning as Compulsory */}
+            {/* Header bar + content share one outer Paper — no gap — same as   */}
+            {/* the Compulsory section above.                                  */}
+            {/* ══════════════════════════════════════════════ */}
+            <Paper
+              variant="outlined"
               sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 2 },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                borderRadius: '10px',
+                overflow: 'hidden',
+                mb: 3,
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
               }}
             >
-              {optionalEnabled && optFees.length > 0 && (
-                <>
-                  <Typography variant="caption" fontWeight={700} color="text.secondary">
-                    Subtotal ₦{format(optTotal)}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={isDark ? '#94a3b8' : '#475569'}
-                    >
-                      Select All
-                    </Typography>
-                    <Checkbox
-                      size="small"
-                      checked={optFees.length > 0 && optFees.every((f) => f.checked)}
-                      indeterminate={
-                        optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
-                      }
-                      onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-                      sx={{ p: 0.5 }}
-                    />
-                  </Box>
-                </>
-              )}
-              {/* Enable / disable optional section */}
-              {can('bursary_manager.ledger.create_invoice_discount') && (
-                <Switch
-                  checked={optionalEnabled}
-                  onChange={(e) => setOptionalEnabled(e.target.checked)}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                    },
-                  }}
-                />
-              )}
-              {owingInfo?.owing_status !== 'owing' && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenOptionalModal}
-                  sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  Add Optional Pay.
-                </Button>
-              )}
-            </Box>
-          ),
-        })}
-
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-          }}
-        >
-        {optionalEnabled && optFees.length > 0 ? (
-          <Stack spacing={1}>
-            {optFees.map((fee, idx) => (
-              <Paper
-                key={fee.id}
-                variant="outlined"
-                onClick={() => handleOptCheckChange(fee.id, !fee.checked)}
-                sx={{
-                  p: 0.75,
-                  borderRadius: 2,
-                  cursor: 'pointer',
-                  borderColor: fee.checked
-                    ? 'success.main'
-                    : isDark
-                      ? 'rgba(255,255,255,0.1)'
-                      : '#e2e8f0',
-                  bgcolor: fee.checked
-                    ? isDark
-                      ? 'rgba(16,185,129,0.12)'
-                      : '#ecfdf5'
-                    : isDark
-                      ? 'rgba(255,255,255,0.03)'
-                      : '#ffffff',
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                  }}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={fee.checked}
-                    onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{ p: 0.5 }}
-                  />
-
-                  {/* Description + amount breakdown — one truncating line */}
+              {renderHeaderBlock({
+                title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
+                borderLeftColor: '#3b82f6',
+                icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+                action: (
                   <Box
                     sx={{
                       display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 0.75,
-                      minWidth: 0,
-                      flex: '1 1 200px',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: { xs: 1.5, sm: 2 },
+                      justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      fontWeight={700}
-                      color="text.primary"
-                      noWrap
-                      sx={{ flexShrink: 0, maxWidth: '55%' }}
-                    >
-                      {idx + 1}. {fee.description}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="text.secondary"
-                      noWrap
-                      sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
-                    >
-                      ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
-                      {format(fee.balance)}
-                      {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
-                      {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
-                    </Typography>
+                    {optionalEnabled && optFees.length > 0 && (
+                      <>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary">
+                          Subtotal ₦{format(optTotal)}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color={isDark ? '#94a3b8' : '#475569'}
+                          >
+                            Select All
+                          </Typography>
+                          <Checkbox
+                            size="small"
+                            checked={optFees.length > 0 && optFees.every((f) => f.checked)}
+                            indeterminate={
+                              optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
+                            }
+                            onChange={(e) => handleAllOptCheckChange(e.target.checked)}
+                            sx={{ p: 0.5 }}
+                          />
+                        </Box>
+                      </>
+                    )}
+                    {/* Enable / disable optional section */}
+                    {can('bursary_manager.ledger.create_invoice_discount') && (
+                      <Switch
+                        checked={optionalEnabled}
+                        onChange={(e) => setOptionalEnabled(e.target.checked)}
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': {
+                            color: '#8338ec',
+                            '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                          },
+                        }}
+                      />
+                    )}
+                    {owingInfo?.owing_status !== 'owing' && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenOptionalModal}
+                        sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
+                      >
+                        Add Optional Pay.
+                      </Button>
+                    )}
                   </Box>
+                ),
+              })}
 
-                  {/* Payable */}
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+                }}
+              >
+                {optionalEnabled && optFees.length > 0 ? (
+                  <Stack spacing={1}>
+                    {optFees.map((fee, idx) => (
+                      <Paper
+                        key={fee.id}
+                        variant="outlined"
+                        onClick={() => handleOptCheckChange(fee.id, !fee.checked)}
+                        sx={{
+                          p: 0.75,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          borderColor: fee.checked
+                            ? 'success.main'
+                            : isDark
+                              ? 'rgba(255,255,255,0.1)'
+                              : '#e2e8f0',
+                          bgcolor: fee.checked
+                            ? isDark
+                              ? 'rgba(16,185,129,0.12)'
+                              : '#ecfdf5'
+                            : isDark
+                              ? 'rgba(255,255,255,0.03)'
+                              : '#ffffff',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          }}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={fee.checked}
+                            onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ p: 0.5 }}
+                          />
+
+                          {/* Description + amount breakdown — one truncating line */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 0.75,
+                              minWidth: 0,
+                              flex: '1 1 200px',
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.primary"
+                              noWrap
+                              sx={{ flexShrink: 0, maxWidth: '55%' }}
+                            >
+                              {idx + 1}. {fee.description}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="text.secondary"
+                              noWrap
+                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                            >
+                              ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                              {format(fee.balance)}
+                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                            </Typography>
+                          </Box>
+
+                          {/* Payable */}
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={800}
+                            color="primary.main"
+                            sx={{
+                              flexShrink: 0,
+                              minWidth: 80,
+                              textAlign: 'right',
+                              fontSize: '1.1rem',
+                            }}
+                          >
+                            ₦{format(fee.payable)}
+                          </Typography>
+                        </Box>
+
+                        {(fee.selectedOptions || []).length > 0 && (
+                          <Box
+                            sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, pl: 4.5, mt: 0.5 }}
+                          >
+                            {fee.selectedOptions.map((opt, oi) => {
+                              const optionData =
+                                typeof opt === 'number'
+                                  ? fee.optionsPool?.find((o) => o.option_id === opt)
+                                  : opt;
+
+                              return (
+                                <Chip
+                                  key={optionData?.option_id || oi}
+                                  label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                                />
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : optionalEnabled ? (
                   <Typography
-                    variant="subtitle1"
-                    fontWeight={800}
-                    color="primary.main"
-                    sx={{ flexShrink: 0, minWidth: 80, textAlign: 'right', fontSize: '1.1rem' }}
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ textAlign: 'center', py: 2.5 }}
                   >
-                    ₦{format(fee.payable)}
+                    No outstanding optional fees. All optional payments have been cleared.
                   </Typography>
-                </Box>
-
-                {(fee.selectedOptions || []).length > 0 && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, pl: 4.5, mt: 0.5 }}>
-                    {fee.selectedOptions.map((opt, oi) => {
-                      const optionData =
-                        typeof opt === 'number'
-                          ? fee.optionsPool?.find((o) => o.option_id === opt)
-                          : opt;
-
-                      return (
-                        <Chip
-                          key={optionData?.option_id || oi}
-                          label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-                        />
-                      );
-                    })}
-                  </Box>
-                )}
-              </Paper>
-            ))}
-          </Stack>
-        ) : optionalEnabled ? (
-          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 2.5 }}>
-            No outstanding optional fees. All optional payments have been cleared.
-          </Typography>
-        ) : null}
-        </Box>
-        </Paper>
+                ) : null}
+              </Box>
+            </Paper>
           </Box>
           {/* ── end LEFT column ── */}
 
@@ -1289,14 +1333,19 @@ const PayInvoice = () => {
                             gap: 1,
                           }}
                         >
-                          <Typography variant="caption" fontWeight={700} noWrap>
+                          <Typography
+                            variant="caption"
+                            fontWeight={700}
+                            noWrap
+                            sx={{ minWidth: 0 }}
+                          >
                             {wallet.name}
                           </Typography>
                           <Typography
                             variant="body2"
                             fontWeight={800}
                             color="error.main"
-                            sx={{ whiteSpace: 'nowrap' }}
+                            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                           >
                             ₦{format(wallet.balance)}
                           </Typography>
@@ -1323,7 +1372,12 @@ const PayInvoice = () => {
                             size="small"
                             color="error"
                             variant="outlined"
-                            sx={{ height: 18, fontSize: '0.65rem', mt: 0.5, '& .MuiChip-label': { px: 0.75 } }}
+                            sx={{
+                              height: 18,
+                              fontSize: '0.65rem',
+                              mt: 0.5,
+                              '& .MuiChip-label': { px: 0.75 },
+                            }}
                           />
                         )}
                       </Box>
@@ -1334,8 +1388,8 @@ const PayInvoice = () => {
 
               {insufficientBalance && (
                 <Alert severity="warning" sx={{ mb: 1.5, py: 0.25 }}>
-                  This wallet's balance is below the total payable — choose another wallet or
-                  reduce your selection.
+                  This wallet's balance is below the total payable — choose another wallet or reduce
+                  your selection.
                 </Alert>
               )}
 
@@ -1461,14 +1515,14 @@ const PayInvoice = () => {
                         gap: 1,
                       }}
                     >
-                      <Typography variant="caption" fontWeight={700} noWrap>
+                      <Typography variant="caption" fontWeight={700} noWrap sx={{ minWidth: 0 }}>
                         {wallet.name}
                       </Typography>
                       <Typography
                         variant="body2"
                         fontWeight={800}
                         color="error.main"
-                        sx={{ whiteSpace: 'nowrap' }}
+                        sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                       >
                         ₦{format(wallet.balance)}
                       </Typography>
@@ -1626,7 +1680,12 @@ const PayInvoice = () => {
                           >
                             <Typography
                               variant="body2"
-                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}
+                              noWrap
+                              sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                mr: 1,
+                                minWidth: 0,
+                              }}
                             >
                               {opt.option_name}
                             </Typography>
@@ -1637,6 +1696,7 @@ const PayInvoice = () => {
                               sx={{
                                 fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                 whiteSpace: 'nowrap',
+                                flexShrink: 0,
                               }}
                             >
                               ₦{(Number(opt.amount) || 0).toLocaleString()}

@@ -347,7 +347,7 @@ export const AuthProvider = ({ children }) => {
         setPrimaryColor(restoredUser.organization.primary_color);
       }
 
-      window.location.href = '/agent';
+      window.location.href = '/dashboard';
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Failed to stop impersonation';

@@ -522,7 +522,7 @@ export default function Dashboard() {
               }}
             >
               <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Typography
                     variant="subtitle2"
                     fontWeight="600"
@@ -549,7 +549,7 @@ export default function Dashboard() {
                   </Box>
                 </Box>
 
-                <Stack spacing={2.5} sx={{ flex: 1 }}>
+                <Stack spacing={1} sx={{ flex: 1 }}>
                   {loginActivitiesLoading
                     ? [...Array(3)].map((_, i) => (
                         <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
@@ -560,21 +560,16 @@ export default function Dashboard() {
                     : loginActivities?.map((activity, index) => (
                     <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
                       <Typography
-                        variant="h5"
-                        fontWeight="500"
-                        sx={{
-                          color: isDark ? '#fff' : '#1a1a1a',
-                          fontSize: '18px'
-                        }}
+                        variant="subtitle2"
+                        fontWeight="700"
+                        sx={{ color: 'text.secondary', fontSize: '12px' }}
                       >
                         {activity.label}:
                       </Typography>
                       <Typography
-                        variant="h5"
-                        fontWeight="600"
-                        sx={{
-                          fontSize: '20px'
-                        }}
+                        variant="subtitle2"
+                        fontWeight="700"
+                        sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}
                       >
                         {activity.value}
                       </Typography>
@@ -609,7 +604,7 @@ export default function Dashboard() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  mb: 5,
+                  mb: 2,
                 }}
               >
                 <Typography
@@ -647,58 +642,73 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Chart
-                  options={{
-                    chart: {
-                      type: 'donut',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
-                      foreColor: theme.palette.text.secondary,
-                      toolbar: { show: false },
-                      background: 'transparent',
-                    },
-                    labels: (analytics?.planDistribution ?? []).map((p) => p.label),
-                    colors: PLAN_DISTRIBUTION_COLORS,
-                    plotOptions: {
-                      pie: {
-                        donut: {
-                          size: '50%',
-                          background: 'transparent',
+                {analyticsLoading ? (
+                  <Skeleton variant="circular" width={160} height={160} sx={{ mx: 'auto' }} />
+                ) : (analytics?.planDistribution ?? []).length === 0 ? (
+                  <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No active plan assignments yet.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Chart
+                    // Remounts once the real labels/series arrive instead of
+                    // reusing the initial empty-array mount — ApexCharts
+                    // donut charts don't reliably pick up a change in the
+                    // number of series/labels on an existing instance.
+                    key={analytics.planDistribution.map((p) => p.label).join('|')}
+                    options={{
+                      chart: {
+                        type: 'donut',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                        foreColor: theme.palette.text.secondary,
+                        toolbar: { show: false },
+                        background: 'transparent',
+                      },
+                      labels: analytics.planDistribution.map((p) => p.label),
+                      colors: PLAN_DISTRIBUTION_COLORS,
+                      plotOptions: {
+                        pie: {
+                          donut: {
+                            size: '50%',
+                            background: 'transparent',
+                          },
                         },
                       },
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      formatter: function (val) {
-                        return val.toFixed(0) + '%';
+                      dataLabels: {
+                        enabled: true,
+                        formatter: function (val) {
+                          return val.toFixed(0) + '%';
+                        },
+                        style: {
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          colors: ['#ffffff'],
+                        },
+                        dropShadow: { enabled: false },
                       },
-                      style: {
-                        fontSize: '10px',
+                      stroke: { show: false },
+                      legend: {
+                        show: true,
+                        position: 'right',
+                        horizontalAlign: 'center',
+                        floating: false,
+                        fontSize: '12px',
                         fontWeight: '600',
-                        colors: ['#ffffff'],
+                        labels: { colors: theme.palette.text.secondary },
+                        itemMargin: { horizontal: 5, vertical: 5 },
                       },
-                      dropShadow: { enabled: false },
-                    },
-                    stroke: { show: false },
-                    legend: {
-                      show: true,
-                      position: 'right',
-                      horizontalAlign: 'center',
-                      floating: false,
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      labels: { colors: theme.palette.text.secondary },
-                      itemMargin: { horizontal: 5, vertical: 5 },
-                    },
-                    tooltip: {
-                      theme: theme.palette.mode,
-                      fillSeriesColor: false,
-                    },
-                  }}
-                  series={(analytics?.planDistribution ?? []).map((p) => p.total)}
-                  type="donut"
-                  height={200}
-                  width="100%"
-                />
+                      tooltip: {
+                        theme: theme.palette.mode,
+                        fillSeriesColor: false,
+                      },
+                    }}
+                    series={analytics.planDistribution.map((p) => p.total)}
+                    type="donut"
+                    height={200}
+                    width="100%"
+                  />
+                )}
               </Box>
             </Card>
           </Grid>
@@ -733,7 +743,7 @@ export default function Dashboard() {
                     </Box>
                     <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
-                  <Button variant="contained" size="small" onClick={() => navigate('/agent/organization')}
+                  <Button variant="contained" size="small" onClick={() => navigate('/organization')}
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',
@@ -867,13 +877,15 @@ export default function Dashboard() {
                   </Button>
                 </Stack>
               <Box sx={{ overflowX: 'auto' }}>
-                <Table stickyHeader sx={{ minWidth: 700,mt:1 }}>
-                  <TableHead >
+                <Table stickyHeader size="small" sx={{ minWidth: 700, mt: 1 }}>
+                  <TableHead>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow sx={{ bgcolor: '#f8f9fa' }} key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
-                          <TableCell key={header.id}>
-                            <Typography variant="h6">
+                          <TableCell key={header.id} sx={{ py: 0.5, px: 1.5 }}>
+                            <Typography
+                              sx={{ fontSize: '11.5px', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.4 }}
+                            >
                               {header.isPlaceholder
                                 ? null
                                 : flexRender(header.column.columnDef.header, header.getContext())}
@@ -884,15 +896,33 @@ export default function Dashboard() {
                     ))}
                   </TableHead>
                   <TableBody>
-                    {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} hover>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
+                    {tableLoading ? (
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(6)].map((_, j) => (
+                            <TableCell key={j} sx={{ py: 0.5, px: 1.5 }}>
+                              <Skeleton variant="text" width={j === 0 ? 40 : 100} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : table.getRowModel().rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                          No organizations found
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} hover>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} sx={{ py: 0.5, px: 1.5 }}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </Box>

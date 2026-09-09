@@ -429,7 +429,7 @@ const RoleBasedAcess = () => {
       </Box>
 
       <Grid container spacing={3} alignItems="stretch">
-        <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
           <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
             <Box
               sx={{
@@ -514,8 +514,8 @@ const RoleBasedAcess = () => {
           </ParentCard>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <ParentCard>
+        <Grid size={{ xs: 12, lg: 9 }} sx={{ display: 'flex' }}>
+          <ParentCard sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}>
             <Box>
               <Box
                 component="form"
@@ -624,28 +624,28 @@ const RoleBasedAcess = () => {
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
-                <Table sx={{ minWidth: 800 }} stickyHeader>
+                <Table size="small" sx={{ minWidth: 800}} stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 0.5 }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ minWidth: 240, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ minWidth: 240, fontWeight: 700, py: 0.5 }}>
                         Role Name
                       </TableCell>
-                      <TableCell sx={{ minWidth: 220, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ minWidth: 220, fontWeight: 700, py: 0.5 }}>
                         Description
                       </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>
+                      <TableCell align="center" sx={{ minWidth: 150, fontWeight: 700, py: 0.5 }}>
                         Total Permissions
                       </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 130, fontWeight: 700, py: 1.5 }}>
+                      <TableCell align="center" sx={{ minWidth: 130, fontWeight: 700, py: 0.5 }}>
                         Assigned Users
                       </TableCell>
-                      <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 1.5 }}>Status</TableCell>
+                      <TableCell sx={{ minWidth: 100, fontWeight: 700, py: 0.5 }}>Status</TableCell>
                       <TableCell
                         align="center"
-                        sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}
+                        sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 0.5 }}
                       >
                         Action
                       </TableCell>
@@ -679,9 +679,9 @@ const RoleBasedAcess = () => {
 
                         return (
                           <TableRow key={row.id || index} hover>
-                            <TableCell sx={{ py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
+                            <TableCell sx={{ py: 0.5 }}>{page * rowsPerPage + index + 1}</TableCell>
 
-                            <TableCell sx={{ py: 1.5, minWidth: 240 }}>
+                            <TableCell sx={{ py: 0.5, minWidth: 240 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   sx={{
@@ -719,7 +719,7 @@ const RoleBasedAcess = () => {
                               </Box>
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.5, minWidth: 220, maxWidth: 300 }}>
+                            <TableCell sx={{ py: 0.5, minWidth: 220, maxWidth: 300 }}>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
@@ -733,7 +733,7 @@ const RoleBasedAcess = () => {
                               </Typography>
                             </TableCell>
 
-                            <TableCell align="center" sx={{ py: 1.5 }}>
+                            <TableCell align="center" sx={{ py: 0.5 }}>
                               <Typography
                                 variant="subtitle2"
                                 fontWeight={700}
@@ -749,7 +749,7 @@ const RoleBasedAcess = () => {
                               </Typography>
                             </TableCell>
 
-                            <TableCell align="center" sx={{ py: 1.5 }}>
+                            <TableCell align="center" sx={{ py: 0.5 }}>
                               <Typography
                                 variant="subtitle2"
                                 fontWeight={700}
@@ -765,7 +765,7 @@ const RoleBasedAcess = () => {
                               </Typography>
                             </TableCell>
 
-                            <TableCell sx={{ py: 1.5 }}>
+                            <TableCell sx={{ py: 0.5 }}>
                               <Chip
                                 label={isInactive ? 'Inactive' : 'Active'}
                                 size="small"
@@ -779,7 +779,7 @@ const RoleBasedAcess = () => {
                               />
                             </TableCell>
 
-                            <TableCell align="center" sx={{ py: 1.5 }}>
+                            <TableCell align="center" sx={{ py: 0.5 }}>
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
                               </IconButton>

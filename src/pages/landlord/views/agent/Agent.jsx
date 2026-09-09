@@ -47,7 +47,6 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
-import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
@@ -55,8 +54,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { IconEye, IconLogin, IconEdit, IconBuilding, IconCreditCard, IconBuildingBank } from '@tabler/icons-react';
 import PlanDistributionModal from './components/PlanDistributionModal';
-import LoggedInUsersModal from './components/LoggedInUsersModal';
-import ViewUsersListModal from './components/ViewUsersListModal';
+import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
@@ -172,7 +170,7 @@ const ActionMenuCell = ({
       >
         <MenuItem
           component="a"
-          href={`/agent/view/${agent.id}`}
+          href={`/view/${agent.id}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleClose}
@@ -341,9 +339,6 @@ const Agent = () => {
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
-  const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
-  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -372,9 +367,6 @@ const Agent = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
-  const [loginActivities, setLoginActivities] = useState([]);
-  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
-  const [selectedUserFilters, setSelectedUserFilters] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analytics, setAnalytics] = useState({
     totalAgents: 0,
@@ -400,22 +392,13 @@ const Agent = () => {
   }, [refreshKey]);
 
   useEffect(() => {
-    const fetchLoginActivities = async () => {
-      try {
-        const res = await activityLogApi.getLoginActivities30Days();
-        if (res.status) {
-          setLoginActivities(res.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch login activities', error);
-      } finally {
-        setLoginActivitiesLoading(false);
-      }
-    };
-    fetchLoginActivities();
-  }, [refreshKey]);
+    // Organization tab only — this table's data was previously fetched once
+    // on mount and never again, so switching away and back to this tab (the
+    // Manage Team tab unmounts/remounts on every switch, this one doesn't)
+    // showed stale data with no loading skeleton. Refetching whenever this
+    // tab becomes active keeps both tabs' behavior consistent.
+    if (tab !== 0) return;
 
-  useEffect(() => {
     const fetchData = async () => {
       setTableLoading(true);
       try {
@@ -468,7 +451,7 @@ const Agent = () => {
       }
     };
     fetchData();
-  }, [refreshKey, page, rowsPerPage]);
+  }, [refreshKey, page, rowsPerPage, tab]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
@@ -802,7 +785,7 @@ const Agent = () => {
           'Impersonation successful',
           `You are now impersonating ${agentToImpersonate.organization_name}`,
         );
-        navigate('/agent');
+        navigate('/dashboard');
       } else {
         alert(result.error || 'Impersonation failed');
       }
@@ -1034,7 +1017,7 @@ const Agent = () => {
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 5,
+              mb: 2,
             }}
           >
             <Typography
@@ -1079,94 +1062,7 @@ const Agent = () => {
         </Paper>
 
         {/* Login Activities */}
-        <Paper
-          elevation={0}
-          sx={{
-                   p: '10px !important',
-            borderRadius: '14px',
-            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-            border: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 5,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700}>
-              Login Activities
-            </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
-                color: isDark ? '#fff' : s2.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onClick={() => setIsLoggedInUsersModalOpen(true)}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
-          </Box>
-
-          <Box sx={{ pb: 0 }}>
-            {loginActivitiesLoading ? (
-              <Box sx={{ py: 1 }}>
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} variant="text" height={30} sx={{ mb: 0.5 }} />
-                ))}
-              </Box>
-            ) : (
-              (loginActivities.length > 0
-                ? loginActivities
-                : [
-                    { label: 'Staffs', value: 0 },
-                    { label: 'Agents', value: 0 },
-                    { label: 'Total', value: 0 },
-                  ]
-              ).map((item, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    py: 0.5,
-                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    sx={{ color: isDark ? '#ffffff' : s2.color }}
-                  >
-                    {item.value}
-                  </Typography>
-                </Box>
-              ))
-            )}
-          </Box>
-        </Paper>
+        <LoginActivitiesCard />
 
         {/* Plan Distribution */}
         <Paper
@@ -1329,40 +1225,37 @@ const Agent = () => {
                 </Button>
               </Stack>
             }
-              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
-
+              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
             >
             <TableContainer>
-              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
+              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                    <TableCell>
-                      <Typography variant="h6">S/N</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Organization Details</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Admin Details</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Access Level</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Sub Organization</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Total School</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Primary Color</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Status</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Action</Typography>
-                    </TableCell>
+                    {[
+                      'S/N',
+                      'Organization Details',
+                      'Admin Details',
+                      'Access Level',
+                      'Sub Organization',
+                      'Total School',
+                      'Primary Color',
+                      'Status',
+                      'Action',
+                    ].map((label) => (
+                      <TableCell key={label}>
+                        <Typography
+                          sx={{
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.4,
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1767,44 +1660,6 @@ const Agent = () => {
         <TotalTransactionModal
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
-        />
-        <LoggedInUsersModal
-          open={isLoggedInUsersModalOpen}
-          onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={(row, filters) => {
-            setSelectedTenantForUsers(row);
-            setSelectedUserFilters(filters);
-            setIsViewUsersListModalOpen(true);
-          }}
-          stats={loginActivities}
-          usersData={data.flatMap((agent) =>
-            (agent.tenants || []).map((tenant) => ({
-              id: tenant.id,
-              school: tenant.tenant_name,
-              url:
-                agent.organization_domain || agent.organizationDomain
-                  ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
-                  : tenant.tenant_short_name
-                    ? `https://${tenant.tenant_short_name}`
-                    : '',
-              agent: agent.organizationName || agent.organization_name,
-              accessLevel: 'Level ' + (agent.access_level || 2),
-              date: tenant.created_at,
-              stats: tenant.login_activities || {
-                Teacher: 0,
-                Student: 0,
-                SPA: 0,
-                Total: 0,
-              },
-            })),
-          )}
-        />
-        <ViewUsersListModal
-          open={isViewUsersListModalOpen}
-          onClose={() => setIsViewUsersListModalOpen(false)}
-          schoolId={selectedTenantForUsers?.id}
-          schoolName={selectedTenantForUsers?.school}
-          filters={selectedUserFilters}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
 

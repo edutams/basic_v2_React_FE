@@ -73,7 +73,7 @@ const Profile = () => {
   /*profile data*/
   const profiledata = [
     {
-      to: '/agent/pages/account-settings',
+      to: '/pages/account-settings',
       title: 'My Profile',
       subtitle: 'Account Settings',
       icon: <IconCurrencyDollar width="20" height="20" />,

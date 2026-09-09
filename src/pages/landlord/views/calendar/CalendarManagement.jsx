@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {
   Box,
   Tabs,
@@ -24,7 +32,9 @@ import {
   Alert,
   Tooltip,
   Menu,
+  InputAdornment,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   IconPlus,
   IconTrash,
@@ -32,10 +42,16 @@ import {
   IconEdit,
   IconDotsVertical,
   IconCheck,
+  IconSearch,
+  IconRefresh,
+  IconX,
+  IconCalendarStats,
+  IconCircleCheck,
+  IconCircleX,
+  IconStar,
 } from '@tabler/icons-react';
 import { IconFilter } from '@tabler/icons-react';
 
-import { FilterList as FilterListIcon } from '@mui/icons-material';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -46,9 +62,185 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
-import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import useNotification from 'src/hooks/useNotification';
 import agentApi from '@/api/landlord/landlord_api';
+
+// Auto-refresh cadence for the "real-time" stats/table polling.
+const AUTO_REFRESH_MS = 30000;
+
+// "3s ago" / "2m ago" — lightweight relative-time label, no date library needed.
+function timeAgo(date) {
+  if (!date) return '';
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
+// ─── Mini Stat Card ────────────────────────────────────────────────────────
+function MiniStat({ label, value, loading, color, icon: Icon }) {
+  return (
+    <Box
+      sx={{
+        flex: '1 1 140px',
+        minWidth: 140,
+        p: 1.25,
+        borderRadius: '10px',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 1,
+      }}
+    >
+      <Box>
+        <Typography
+          sx={{
+            fontSize: '11px',
+            fontWeight: 700,
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+          }}
+        >
+          {label}
+        </Typography>
+        {loading ? (
+          <Skeleton variant="text" width={50} height={28} />
+        ) : (
+          <Typography sx={{ fontSize: '20px', fontWeight: 700, color: color || 'text.primary' }}>
+            {value}
+          </Typography>
+        )}
+      </Box>
+      {Icon && (
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            bgcolor: (theme) => {
+              const paletteKey = color ? color.split('.')[0] : 'primary';
+              return alpha(theme.palette[paletteKey]?.main ?? theme.palette.primary.main, 0.12);
+            },
+            color: color || 'primary.main',
+          }}
+        >
+          <Icon size={18} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ─── Inline Filter Bar (replaces the old side drawer) ─────────────────────
+function InlineFilterBar({
+  searchPlaceholder,
+  draft,
+  onDraftChange,
+  onApply,
+  onReset,
+  hasActiveFilters,
+}) {
+  return (
+    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
+      <TextField
+        size="small"
+        placeholder={searchPlaceholder}
+        value={draft.search}
+        onChange={(e) => onDraftChange({ ...draft, search: e.target.value })}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onApply();
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconSearch size={16} />
+            </InputAdornment>
+          ),
+          endAdornment: draft.search ? (
+            <InputAdornment position="end">
+              <IconButton size="small" onClick={() => onDraftChange({ ...draft, search: '' })}>
+                <IconX size={14} />
+              </IconButton>
+            </InputAdornment>
+          ) : null,
+        }}
+        sx={{ minWidth: 240 }}
+      />
+      <TextField
+        size="small"
+        select
+        label="Status"
+        value={draft.status}
+        onChange={(e) => onDraftChange({ ...draft, status: e.target.value })}
+        sx={{ minWidth: 140 }}
+      >
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="active">Active</MenuItem>
+        <MenuItem value="inactive">Inactive</MenuItem>
+      </TextField>
+      <Button variant="contained" size="small" startIcon={<IconFilter size={16} />} onClick={onApply}>
+        Filter
+      </Button>
+      {hasActiveFilters && (
+        <Button size="small" onClick={onReset}>
+          Reset
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+// ─── Live "last updated" indicator + manual refresh ───────────────────────
+function LiveStatusBar({ loading, lastUpdated, onRefresh }) {
+  const [, forceTick] = useState(0);
+
+  // Re-render every few seconds so the "Xs ago" label keeps advancing.
+  useEffect(() => {
+    const id = setInterval(() => forceTick((n) => n + 1), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box
+          sx={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            bgcolor: 'success.main',
+            animation: 'pulse 2s infinite',
+            '@keyframes pulse': {
+              '0%': { opacity: 1 },
+              '50%': { opacity: 0.35 },
+              '100%': { opacity: 1 },
+            },
+          }}
+        />
+        <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
+          {loading ? 'Updating…' : `Live · updated ${timeAgo(lastUpdated)}`}
+        </Typography>
+      </Box>
+      <Tooltip title="Refresh now">
+        <IconButton size="small" onClick={onRefresh} disabled={loading}>
+          <IconRefresh size={16} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+}
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar Management' }];
 
@@ -105,7 +297,7 @@ function SortableRow({ id, children, disabled }) {
 }
 
 // ─── Sessions Panel ────────────────────────────────────────────────────────
-function SessionsPanel({ isLevel1 }) {
+const SessionsPanel = forwardRef(function SessionsPanel({ isLevel1, onStatsChange }, ref) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -115,69 +307,54 @@ function SessionsPanel({ isLevel1 }) {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState({ search: '', status: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: '' });
   const [submitting, setSubmitting] = useState(false);
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const sessionFilterDefs = [
-    { key: 'search', label: 'Session Name', type: 'text', placeholder: 'Search by session name…' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-    {
-      key: 'is_current',
-      label: 'Current Session',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-      ],
-    },
-  ];
+  const [stats, setStats] = useState({ total: 0, active: 0, current: '—' });
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
+  // Search/status are sent to the backend as query params — never filtered
+  // client-side — so `sessions` here is already exactly what should render.
+  const fetchSessions = useCallback(async (filters, silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const res = await agentApi.get('/v1/landlord/calendar/sessions');
-      setSessions(res.data);
+      const res = await agentApi.get('/v1/landlord/calendar/sessions', { params: filters });
+      setSessions(res.data.data);
+      setStats(res.data.stats);
+      setLastUpdated(new Date());
     } catch {
-      notify.error('Failed to load sessions');
+      if (!silent) notify.error('Failed to load sessions');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    fetchSessions(activeFilters);
+    // Real-time-ish polling so this stays current without a manual reload —
+    // "silent" so it doesn't flash the skeleton loader on every tick.
+    const id = setInterval(() => fetchSessions(activeFilters, true), AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [fetchSessions, activeFilters]);
 
-  const filteredSessions = sessions.filter((session) => {
-    const matchesSearch = !activeFilters.search
-      ? true
-      : session.session_name.toLowerCase().includes(activeFilters.search.toLowerCase());
-    const matchesStatus = !activeFilters.status ? true : session.status === activeFilters.status;
-    const matchesCurrent = !activeFilters.is_current
-      ? true
-      : session.is_current === activeFilters.is_current;
-    return matchesSearch && matchesStatus && matchesCurrent;
-  });
+  // Reported up so the page-level stats row (above the tabs) can show
+  // whichever tab is active, instead of duplicating a stats row per panel.
+  useEffect(() => {
+    onStatsChange?.({ stats, loading, lastUpdated });
+  }, [stats, loading, lastUpdated, onStatsChange]);
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
+  const handleFilterApply = () => {
+    setActiveFilters(filterDraft);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters({});
+    setFilterDraft({ search: '', status: '' });
+    setActiveFilters({ search: '', status: '' });
   };
 
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
@@ -188,6 +365,11 @@ function SessionsPanel({ isLevel1 }) {
     setErrors({});
     setCreateOpen(true);
   };
+
+  // Exposed so the parent can trigger "New Session" and a manual refresh
+  // from the tab bar / page-level stats row, instead of down here.
+  useImperativeHandle(ref, () => ({ openCreate, refresh: () => fetchSessions(activeFilters) }));
+
   const openEdit = (s) => {
     setEditTarget(s);
     setForm({ session_name: s.session_name, status: s.status });
@@ -222,10 +404,10 @@ function SessionsPanel({ isLevel1 }) {
       });
       notify.success('Session order updated successfully');
       // Refresh data to ensure consistency with backend
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch {
       notify.error('Failed to save order');
-      fetchSessions();
+      fetchSessions(activeFilters);
     } finally {
       setReordering(false);
     }
@@ -252,7 +434,7 @@ function SessionsPanel({ isLevel1 }) {
         notify.success('Session created');
       }
       closeDialog();
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch (err) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
@@ -274,7 +456,7 @@ function SessionsPanel({ isLevel1 }) {
         try {
           await agentApi.put(`/v1/landlord/calendar/sessions/${s.id}/toggle-status`);
           notify.success(isInactive ? 'Session activated' : 'Session de-activated');
-          fetchSessions();
+          fetchSessions(activeFilters);
         } catch (err) {
           notify.error(err.response?.data?.message || 'Failed to update');
         }
@@ -318,7 +500,7 @@ function SessionsPanel({ isLevel1 }) {
       });
       notify.success('Current session updated');
       setSetCurrentOpen(false);
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch (err) {
       notify.error(err.response?.data?.message || 'Failed to update current session');
     } finally {
@@ -328,44 +510,19 @@ function SessionsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5"></Typography>
-        {isLevel1 && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Session
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconFilter />}
-              onClick={() => setFilterDrawerOpen(true)}
-              sx={{ minWidth: 140 }}
-            >
-              Filters
-              {activeFilterCount > 0 && (
-                <Chip
-                  label={activeFilterCount}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              )}
-            </Button>
-            
-          </Box>
-        )}
-      </Box>
       {!isLevel1 && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Only Level 1 agents can manage global sessions.
         </Alert>
       )}
+      <InlineFilterBar
+        searchPlaceholder="Search by session name…"
+        draft={filterDraft}
+        onDraftChange={setFilterDraft}
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+        hasActiveFilters={activeFilterCount > 0}
+      />
       {isLevel1 && sessions.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder sessions.
@@ -373,7 +530,7 @@ function SessionsPanel({ isLevel1 }) {
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer>
-          <Table size="small" stickyHeader>
+          <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
             <TableHead sx={{ bgcolor: '#f8f9fa' }}>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
@@ -396,7 +553,7 @@ function SessionsPanel({ isLevel1 }) {
                     ))}
                   </TableRow>
                 ))
-              ) : filteredSessions.length === 0 ? (
+              ) : sessions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     No sessions found
@@ -404,10 +561,10 @@ function SessionsPanel({ isLevel1 }) {
                 </TableRow>
               ) : (
                 <SortableContext
-                  items={filteredSessions.map((s) => s.id)}
+                  items={sessions.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {filteredSessions.map((s, idx) => (
+                  {sessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{s.session_name}</TableCell>
@@ -600,22 +757,12 @@ function SessionsPanel({ isLevel1 }) {
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
-
-      {/* Filter Side Drawer */}
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={sessionFilterDefs}
-        title="Filter Sessions"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
-      />
     </>
   );
-}
+});
 
 // ─── Terms Panel ───────────────────────────────────────────────────────────
-function TermsPanel({ isLevel1 }) {
+const TermsPanel = forwardRef(function TermsPanel({ isLevel1, onStatsChange }, ref) {
   const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -625,56 +772,51 @@ function TermsPanel({ isLevel1 }) {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState({ search: '', status: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: '' });
   const [submitting, setSubmitting] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const termFilterDefs = [
-    { key: 'search', label: 'Term Name', type: 'text', placeholder: 'Search by term name…' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-  ];
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
 
-  const fetchTerms = useCallback(async () => {
-    setLoading(true);
+  // Search/status are sent to the backend as query params — never filtered
+  // client-side — so `terms` here is already exactly what should render.
+  const fetchTerms = useCallback(async (filters, silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const res = await agentApi.get('/v1/landlord/calendar/terms');
-      setTerms(res.data);
+      const res = await agentApi.get('/v1/landlord/calendar/terms', { params: filters });
+      setTerms(res.data.data);
+      setStats(res.data.stats);
+      setLastUpdated(new Date());
     } catch {
-      notify.error('Failed to load terms');
+      if (!silent) notify.error('Failed to load terms');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchTerms();
-  }, [fetchTerms]);
+    fetchTerms(activeFilters);
+    const id = setInterval(() => fetchTerms(activeFilters, true), AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [fetchTerms, activeFilters]);
 
-  const filteredTerms = terms.filter((term) => {
-    const matchesSearch = !activeFilters.search
-      ? true
-      : term.term_name.toLowerCase().includes(activeFilters.search.toLowerCase());
-    const matchesStatus = !activeFilters.status ? true : term.status === activeFilters.status;
-    return matchesSearch && matchesStatus;
-  });
+  // Reported up so the page-level stats row (above the tabs) can show
+  // whichever tab is active, instead of duplicating a stats row per panel.
+  useEffect(() => {
+    onStatsChange?.({ stats, loading, lastUpdated });
+  }, [stats, loading, lastUpdated, onStatsChange]);
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
+  const handleFilterApply = () => {
+    setActiveFilters(filterDraft);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters({});
+    setFilterDraft({ search: '', status: '' });
+    setActiveFilters({ search: '', status: '' });
   };
 
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
@@ -685,6 +827,11 @@ function TermsPanel({ isLevel1 }) {
     setErrors({});
     setCreateOpen(true);
   };
+
+  // Exposed so the page-level stats row can trigger a manual refresh for
+  // whichever tab is active.
+  useImperativeHandle(ref, () => ({ openCreate, refresh: () => fetchTerms(activeFilters) }));
+
   const openEdit = (t) => {
     setEditTarget(t);
     setForm({ term_name: t.term_name, status: t.status });
@@ -719,10 +866,10 @@ function TermsPanel({ isLevel1 }) {
       });
       notify.success('Term order updated successfully');
       // Refresh data to ensure consistency with backend
-      fetchTerms();
+      fetchTerms(activeFilters);
     } catch {
       notify.error('Failed to save order');
-      fetchTerms();
+      fetchTerms(activeFilters);
     } finally {
       setReordering(false);
     }
@@ -748,7 +895,7 @@ function TermsPanel({ isLevel1 }) {
         notify.success('Term created');
       }
       closeDialog();
-      fetchTerms();
+      fetchTerms(activeFilters);
     } catch (err) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
@@ -770,7 +917,7 @@ function TermsPanel({ isLevel1 }) {
         try {
           await agentApi.put(`/v1/landlord/calendar/terms/${t.id}/toggle-status`);
           notify.success(isInactive ? 'Term activated' : 'Term de-activated');
-          fetchTerms();
+          fetchTerms(activeFilters);
         } catch (err) {
           notify.error(err.response?.data?.message || 'Failed to update');
         }
@@ -800,44 +947,19 @@ function TermsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5"></Typography>
-        {isLevel1 && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Term
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconFilter />}
-              onClick={() => setFilterDrawerOpen(true)}
-              sx={{ minWidth: 140 }}
-            >
-              Filters
-              {activeFilterCount > 0 && (
-                <Chip
-                  label={activeFilterCount}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              )}
-            </Button>
-            
-          </Box>
-        )}
-      </Box>
       {!isLevel1 && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Only Level 1 agents can manage global terms.
         </Alert>
       )}
+      <InlineFilterBar
+        searchPlaceholder="Search by term name…"
+        draft={filterDraft}
+        onDraftChange={setFilterDraft}
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+        hasActiveFilters={activeFilterCount > 0}
+      />
       {isLevel1 && terms.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder terms.
@@ -845,7 +967,7 @@ function TermsPanel({ isLevel1 }) {
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer>
-          <Table size="small" stickyHeader>
+          <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
@@ -867,7 +989,7 @@ function TermsPanel({ isLevel1 }) {
                     ))}
                   </TableRow>
                 ))
-              ) : filteredTerms.length === 0 ? (
+              ) : terms.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
                     No terms found
@@ -875,10 +997,10 @@ function TermsPanel({ isLevel1 }) {
                 </TableRow>
               ) : (
                 <SortableContext
-                  items={filteredTerms.map((t) => t.id)}
+                  items={terms.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {filteredTerms.map((t, idx) => (
+                  {terms.map((t, idx) => (
                     <SortableRow key={t.id} id={t.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{t.term_name}</TableCell>
@@ -991,44 +1113,122 @@ function TermsPanel({ isLevel1 }) {
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
-
-      {/* Filter Side Drawer */}
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={termFilterDefs}
-        title="Filter Terms"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
-      />
     </>
   );
-}
+});
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
+const EMPTY_STATS = { stats: {}, loading: true, lastUpdated: null };
+
 const CalendarManagement = () => {
   const [tab, setTab] = useState(0);
   const agentRaw = localStorage.getItem('agent') || sessionStorage.getItem('agent');
   const agent = agentRaw ? JSON.parse(agentRaw) : null;
   const isLevel1 = !agent?.parent_id;
+  const sessionsPanelRef = useRef(null);
+  const termsPanelRef = useRef(null);
+
+  // Fed by each panel (see onStatsChange) so this one row at the very top of
+  // the page can show live totals for whichever tab is active, instead of a
+  // stats row duplicated inside every tab panel.
+  const [sessionStats, setSessionStats] = useState(EMPTY_STATS);
+  const [termStats, setTermStats] = useState(EMPTY_STATS);
+
+  const active = tab === 0 ? sessionStats : termStats;
 
   return (
     <>
       <Breadcrumb title="Calendar Management" items={BCrumb} />
+
+      {/* Page-level live stats — reflects whichever tab is active */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+        {tab === 0 ? (
+          <>
+            <MiniStat
+              label="Total Sessions"
+              value={active.stats.total}
+              loading={active.loading}
+              icon={IconCalendarStats}
+            />
+            <MiniStat
+              label="Active"
+              value={active.stats.active}
+              loading={active.loading}
+              color="success.main"
+              icon={IconCircleCheck}
+            />
+            <MiniStat
+              label="Current Session"
+              value={active.stats.current}
+              loading={active.loading}
+              color="primary.main"
+              icon={IconStar}
+            />
+          </>
+        ) : (
+          <>
+            <MiniStat
+              label="Total Terms"
+              value={active.stats.total}
+              loading={active.loading}
+              icon={IconCalendarStats}
+            />
+            <MiniStat
+              label="Active"
+              value={active.stats.active}
+              loading={active.loading}
+              color="success.main"
+              icon={IconCircleCheck}
+            />
+            <MiniStat
+              label="Inactive"
+              value={active.stats.inactive}
+              loading={active.loading}
+              color="error.main"
+              icon={IconCircleX}
+            />
+          </>
+        )}
+        <LiveStatusBar
+          loading={active.loading}
+          lastUpdated={active.lastUpdated}
+          onRefresh={() =>
+            tab === 0 ? sessionsPanelRef.current?.refresh() : termsPanelRef.current?.refresh()
+          }
+        />
+      </Box>
+
       <ParentCard sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}>
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 36, py: 0 }}
-        >
-          <Tab label="Sessions" />
-          <Tab label="Terms" />
-        </Tabs>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            sx={{ minHeight: 36, py: 0, borderBottom: 0 }}
+          >
+            <Tab label="Sessions" />
+            <Tab label="Terms" />
+          </Tabs>
+          {isLevel1 && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconPlus />}
+              onClick={() =>
+                tab === 0
+                  ? sessionsPanelRef.current?.openCreate()
+                  : termsPanelRef.current?.openCreate()
+              }
+              sx={{ mr: 1.5 }}
+            >
+              {tab === 0 ? 'New Session' : 'New Term'}
+            </Button>
+          )}
+        </Box>
         <TabPanel value={tab} index={0}>
-          <SessionsPanel isLevel1={isLevel1} />
+          <SessionsPanel ref={sessionsPanelRef} isLevel1={isLevel1} onStatsChange={setSessionStats} />
         </TabPanel>
         <TabPanel value={tab} index={1}>
-          <TermsPanel isLevel1={isLevel1} />
+          <TermsPanel ref={termsPanelRef} isLevel1={isLevel1} onStatsChange={setTermStats} />
         </TabPanel>
       </ParentCard>
     </>

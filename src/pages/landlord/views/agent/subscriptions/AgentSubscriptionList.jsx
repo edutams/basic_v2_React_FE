@@ -66,7 +66,7 @@ const StatusChip = ({ status }) => {
 // ─── Table Header Styles ────────────────────────────────────────────────────
 const thSx = { fontWeight: 700, fontSize: '13px' };
 
-const AgentSubscriptionList = ({ status }) => {
+const AgentSubscriptionList = ({ status, onMutate }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
@@ -119,6 +119,7 @@ const AgentSubscriptionList = ({ status }) => {
       await axios.patch(`/v1/landlord/subscriptions/${id}/status`, { status: newStatus });
       notify.success(`Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`);
       fetchSubscriptions();
+      onMutate?.();
       handleMenuClose();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -207,19 +208,39 @@ const AgentSubscriptionList = ({ status }) => {
   return (
     <Box>
       {/* ── Search Bar ───────────────────────────────────────────────────── */}
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <TextField
           placeholder="Search by school, session, or plan..."
           sx={{ width: { xs: '100%', sm: 300, md: 350 } }}
           size="small"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setSearchTerm(searchInput.trim());
+              setPage(0);
+            }
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
+            endAdornment: searchInput ? (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchTerm('');
+                    setPage(0);
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
           }}
         />
         <Button
@@ -235,16 +256,9 @@ const AgentSubscriptionList = ({ status }) => {
       </Box>
 
       {/* ── Table ────────────────────────────────────────────────────────── */}
-      {loading ? (
-        <Box sx={{ py: 2 }}>
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
-          ))}
-        </Box>
-      ) : (
         <Box>
           <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={thSx}>#</TableCell>
@@ -259,7 +273,17 @@ const AgentSubscriptionList = ({ status }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.length > 0 ? (
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(9)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 20 : 90} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : rows.length > 0 ? (
                   rows.map((row, index) => {
                     const amountNum = parseFloat(row.amount) || 0;
                     const discountPct = parseFloat(row.discount) || 0;
@@ -340,32 +364,40 @@ const AgentSubscriptionList = ({ status }) => {
                           <StatusChip status={row.status} />
                         </TableCell>
                         <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon fontSize="small" />
-                          </IconButton>
+                          {row.status === 'pending' ? (
+                            <>
+                              <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                                <MoreVertIcon fontSize="small" />
+                              </IconButton>
 
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                            onClose={handleMenuClose}
-                          >
-                            {/* <MenuItem onClick={() => handleViewDetail(row)}>
-                              <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
-                            </MenuItem> */}
-                            <MenuItem onClick={() => handleOpenDiscount(row)}>
-                              <DiscountIcon sx={{ mr: 1, fontSize: '18px' }} /> Set Discount
-                            </MenuItem>
-                            {/* {row.status !== 'active' && (
-                              <MenuItem onClick={() => handleApproveConfirm(row)}>
-                                <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
-                              </MenuItem>
-                            )}
-                            {row.status !== 'expired' && (
-                              <MenuItem onClick={() => handleRejectConfirm(row)}>
-                                <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
-                              </MenuItem>
-                            )} */}
-                          </Menu>
+                              <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                                onClose={handleMenuClose}
+                              >
+                                {/* <MenuItem onClick={() => handleViewDetail(row)}>
+                                  <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
+                                </MenuItem> */}
+                                {/* Only pending subscriptions haven't been paid for yet —
+                                    once active (paid) or expired, the discount is locked in. */}
+                                <MenuItem onClick={() => handleOpenDiscount(row)}>
+                                  <DiscountIcon sx={{ mr: 1, fontSize: '18px' }} /> Set Discount
+                                </MenuItem>
+                                {/* {row.status !== 'active' && (
+                                  <MenuItem onClick={() => handleApproveConfirm(row)}>
+                                    <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
+                                  </MenuItem>
+                                )}
+                                {row.status !== 'expired' && (
+                                  <MenuItem onClick={() => handleRejectConfirm(row)}>
+                                    <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
+                                  </MenuItem>
+                                )} */}
+                              </Menu>
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="text.disabled">—</Typography>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -382,7 +414,9 @@ const AgentSubscriptionList = ({ status }) => {
                           '& .MuiAlert-icon': { mr: 1.5 },
                         }}
                       >
-                        No subscriptions found
+                        {searchTerm
+                          ? `No subscriptions match "${searchTerm}"`
+                          : 'No subscriptions found'}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -407,7 +441,6 @@ const AgentSubscriptionList = ({ status }) => {
             </Table>
           </TableContainer>
         </Box>
-      )}
 
       {/* ── Discount Modal ───────────────────────────────────────────────── */}
       <Dialog

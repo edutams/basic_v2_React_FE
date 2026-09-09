@@ -295,14 +295,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
   const content = (
     <>
 
-      {loading ? (
-        <Box sx={{ py: 2 }}>
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} variant="text" height={60} sx={{ mb: 1, borderRadius: 1 }} />
-          ))}
-        </Box>
-      ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
+      <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
           <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
             <TableHead>
               <TableRow>
@@ -341,7 +334,17 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
               </TableRow>
             </TableHead>
             <TableBody>
-              {members.length === 0 ? (
+              {loading ? (
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(isLevelOne ? 6 : 5)].map((_, j) => (
+                      <TableCell key={j} sx={{ py: 1.5 }}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 3 }}>
                     <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
@@ -546,7 +549,6 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
             />
           )}
         </TableContainer>
-      )}
 
       <Menu
         anchorEl={anchorEl}

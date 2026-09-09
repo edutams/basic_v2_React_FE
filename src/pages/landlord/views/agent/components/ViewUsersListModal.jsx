@@ -162,7 +162,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
         </Box>
         <Box sx={{ p: 0 }}>
           <TableContainer>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+            <Table size="small" sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
               <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>

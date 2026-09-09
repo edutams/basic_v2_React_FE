@@ -34,10 +34,11 @@ import StatCard from 'src/components/shared/StatCard';
 import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import { useNotification } from '@/hooks/useNotification';
 
+// Backend (getLoginActivities30Days) only ever returns Staffs/Learners/Agents/Total
+// — these must match those exact labels or the card silently shows 0.
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher'], icon: IconUsers, color: '#3B82F6' },
-  { label: 'Learner', searchLabels: ['Learner', 'Student', 'Learners', 'Students'], icon: IconUsers, color: '#10B981' },
-  { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
+  { label: 'Staff', searchLabels: ['Staffs', 'Staff'], icon: IconUsers, color: '#3B82F6' },
+  { label: 'Learner', searchLabels: ['Learners', 'Learner', 'Student', 'Students'], icon: IconUsers, color: '#10B981' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
 
@@ -223,7 +224,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
             const statValue = modalStats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
             const isAgents = stat.label === 'Agents';
             return (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={idx}>
                 <Box
                   onClick={() => {
                     if (isAgents && onViewUserList) {
@@ -429,7 +430,7 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList, stats = [] }) => {
 
           <Box sx={{ p: 0 }}>
             <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+              <Table size="small" sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
                 <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>

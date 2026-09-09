@@ -54,8 +54,8 @@ import {
   Grid,
   InputAdornment,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Subject } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { MoreVert as MoreVertIcon, Subject, Search as SearchIcon } from '@mui/icons-material';
+import { IconEdit, IconTrash, IconFilter } from '@tabler/icons-react';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -658,7 +658,7 @@ const AgentCurriculumManager = () => {
                     }
                     sx={{  px: 0, py: 0, '& .MuiCardContent-root': { py: 0,px:0 } }}
                   >
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <TextField
                         size="small"
                         placeholder="Search subjects..."
@@ -669,23 +669,23 @@ const AgentCurriculumManager = () => {
                         }}
                         slotProps={{
                           input: {
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  onClick={handleSearch}
-                                  aria-label="search"
-                                  sx={{ minWidth: 'auto', px: 1.5 }}
-                                >
-                                  Search
-                                </Button>
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                               </InputAdornment>
                             ),
                           },
                         }}
                         sx={{ width: 300 }}
                       />
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<IconFilter size={16} />}
+                        onClick={handleSearch}
+                      >
+                        Filter
+                      </Button>
                     </Box>
                     <TableContainer
                       sx={{

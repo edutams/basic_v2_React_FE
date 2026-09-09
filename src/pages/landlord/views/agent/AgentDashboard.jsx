@@ -18,6 +18,7 @@ import TotalSubAgentModal from './components/TotalSubAgentModal';
 import { AuthContext } from '@/context/AgentContext/auth';
 
 import agentApi from '@/api/landlord/organizations/agent';
+import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
@@ -46,6 +47,10 @@ const AgentDashboard = () => {
   // Analytics state for TotalSchoolModal
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  // Login activities (30 days) — its own endpoint, same one Analytical.jsx
+  // uses, rather than duplicating the computation inside getAnalytics().
+  const [loginActivities, setLoginActivities] = useState([]);
 
   useEffect(() => {
     const fetchAgentDetails = async () => {
@@ -169,7 +174,19 @@ const AgentDashboard = () => {
     fetchAnalytics();
   }, [refreshKey]);
 
-  const BCrumb = [{ to: '/agent', title: 'Home' }, { title: 'Dashboard' }];
+  useEffect(() => {
+    const fetchLoginActivities = async () => {
+      try {
+        const res = await activityLogApi.getLoginActivities30Days();
+        if (res.status) setLoginActivities(res.data);
+      } catch (e) {
+        console.error('Failed to fetch login activities', e);
+      }
+    };
+    fetchLoginActivities();
+  }, [refreshKey]);
+
+  const BCrumb = [{ to: '/dashboard', title: 'Home' }, { title: 'Dashboard' }];
   const isDark = theme.palette.mode === 'dark';
 
   const mergedStats = useMemo(
@@ -311,7 +328,7 @@ const AgentDashboard = () => {
                       refreshKey={refreshKey}
                       isViewingProfile={false}
                       isDashboard={true}
-                      loginActivities={analytics?.loginActivities || []}
+                      loginActivities={loginActivities}
                     />
                   </TabPanel>
                   <TabPanel value="4" sx={{ p: 3 }}>

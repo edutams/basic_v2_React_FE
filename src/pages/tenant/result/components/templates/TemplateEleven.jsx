@@ -29,6 +29,28 @@ const TemplateEleven = ({ student, report, sessionTerm, className, gradeScale })
         END OF TERM REPORT
       </div>
 
+      {/* ── Learner Info (3 boxes) ─────────────────────── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '2px solid #000', borderRadius: 4, marginBottom: 10 }}>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Name</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{student?.lname} {student?.fname} {student?.mname}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Gender</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700, textTransform: 'uppercase' }}>{student?.sex}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Class</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{className}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Class Population</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{report.class_population}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Student's Avg</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{avg}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Session/Term</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.label}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
+      </div>
+
       {/* ── Student ID ─────────────────────────────────── */}
       <div style={{ marginBottom: 8 }}><strong>Student ID:</strong> ({student?.user_id})</div>
 

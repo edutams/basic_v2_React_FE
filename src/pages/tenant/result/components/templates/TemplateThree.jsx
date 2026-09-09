@@ -8,7 +8,7 @@ const innerCellBorder = { border: '1px solid #000' };
 const responsiveCSS = `
   .tpl3-school-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; justify-content: center; flex-wrap: wrap; text-align: center; }
   .tpl3-school-header .school-name { font-size: 22px; font-weight: 700; text-transform: underline; }
-  .tpl3-info-row { display: flex; flex-wrap: wrap; gap: 0; }
+  .tpl3-info-row { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 4px; }
   .tpl3-info-row > div { flex: 1 1 0%; min-width: 0; }
   .tpl3-affective-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
   .tpl3-affective-row > div { flex: 1 1 0%; min-width: 0; }

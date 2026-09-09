@@ -31,18 +31,26 @@ const TemplateNine = ({ student, report, sessionTerm, className, gradeScale }) =
 
       <SchoolHeader qrValue={`https://school.edu/verify/${student?.user_id}`} />
 
-      {/* ── Student Info ──────────────────────────────── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '1px solid #000', marginBottom: 12 }}>
-        <div style={{ flex: '0 0 30%', padding: '4px 8px', borderRight: '1px solid #000', fontWeight: 700 }}>Name</div>
-        <div style={{ flex: 1, padding: '4px 8px' }}>{student?.lname} {student?.fname} {student?.mname}</div>
-        <div style={{ flex: '0 0 15%', padding: '4px 8px', borderLeft: '1px solid #000', borderRight: '1px solid #000', fontWeight: 700 }}>Gender</div>
-        <div style={{ flex: '0 0 10%', padding: '4px 8px', textTransform: 'capitalize' }}>{student?.sex}</div>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '1px solid #000', marginBottom: 12 }}>
-        <div style={{ flex: '0 0 30%', padding: '4px 8px', borderRight: '1px solid #000', fontWeight: 700 }}>Class</div>
-        <div style={{ flex: 1, padding: '4px 8px' }}>{className}</div>
-        <div style={{ flex: '0 0 15%', padding: '4px 8px', borderLeft: '1px solid #000', borderRight: '1px solid #000', fontWeight: 700 }}>Class Population</div>
-        <div style={{ flex: '0 0 10%', padding: '4px 8px' }}>{report.class_population}</div>
+      {/* ── Learner Info (3 boxes) ─────────────────────── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '2px solid #000', borderRadius: 4, marginBottom: 12 }}>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Name</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{student?.lname} {student?.fname} {student?.mname}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Gender</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700, textTransform: 'uppercase' }}>{student?.sex}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Class</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{className}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Class Population</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{report.class_population}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px' }}>
+          <Table size="small"><TableBody>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Student's Avg</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{avg}</TableCell></TableRow>
+            <TableRow><TableCell style={{ border: 'none', padding: '2px 4px' }}>Session/Term</TableCell><TableCell style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.label}</TableCell></TableRow>
+          </TableBody></Table>
+        </div>
       </div>
 
       {/* ── Height/Weight Table ────────────────────────── */}

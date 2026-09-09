@@ -31,7 +31,7 @@ const responsiveCSS = `
   .tpl8-bottom-row { display: flex; flex-wrap: wrap; gap: 0; }
   .tpl8-bottom-row > div { flex: 1 1 0%; min-width: 0; }
   .tpl8-subject-table { overflow-x: auto; }
-  .tpl8-photo-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+  .tpl8-photo-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; }
   .tpl8-photo-row > div:first-child { flex: 1 1 0%; min-width: 0; }
   .tpl8-photo-row > div:last-child { flex: 0 0 auto; }
   @media (max-width: 900px) {

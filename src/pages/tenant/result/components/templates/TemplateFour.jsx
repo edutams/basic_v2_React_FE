@@ -14,6 +14,7 @@ const responsiveCSS = `
   .tpl4-subject-table { overflow-x: auto; }
   .tpl4-info-row { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 8px; }
   .tpl4-info-row > div { flex: 1 1 0%; min-width: 0; }
+  .tpl4-info-row:last-child { margin-bottom: 12px; }
   @media (max-width: 900px) {
     .tpl4-main { flex-direction: column; }
     .tpl4-left, .tpl4-right { flex: 1 1 100%; }

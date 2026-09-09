@@ -6,7 +6,7 @@ import SchoolHeader from './SchoolHeader';
 const innerCellBorder = { border: '1px solid #999' };
 
 const responsiveCSS = `
-  .tpl2-header-box { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 8px; width: 100%; }
+  .tpl2-header-box { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 12px; width: 100%; }
   .tpl2-header-box > div { flex: 1 1 200px; padding: 4px; min-width: 0; box-sizing: border-box; }
   .tpl2-header-box > div:first-child { border: 2px solid #000; border-radius: 4px 0 0 4px; }
   .tpl2-header-box > div:nth-child(2) { border: 2px solid #000; border-left: none; border-right: none; }

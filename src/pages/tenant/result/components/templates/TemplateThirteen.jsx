@@ -42,6 +42,28 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
         </div>
       </div>
 
+      {/* ── Learner Info (3 boxes) ─────────────────────── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '2px solid #000', borderRadius: 4, marginBottom: 10 }}>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Name</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{student?.lname} {student?.fname} {student?.mname}</td></tr>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Gender</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700, textTransform: 'uppercase' }}>{student?.sex}</td></tr>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px', borderRight: '2px solid #000' }}>
+          <Table size="small"><TableBody>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Class</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{className}</td></tr>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Class Population</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{report.class_population}</td></tr>
+          </TableBody></Table>
+        </div>
+        <div style={{ flex: '1 1 200px', padding: '2px 4px' }}>
+          <Table size="small"><TableBody>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Student's Avg</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{avg}</td></tr>
+            <tr><td style={{ border: 'none', padding: '2px 4px' }}>Session/Term</td><td style={{ border: 'none', padding: '2px 4px', textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.label}</td></tr>
+          </TableBody></Table>
+        </div>
+      </div>
+
       {/* ── Height/Weight Table ────────────────────────── */}
       <TableContainer style={{ ...innerCellBorder, marginBottom: 10 }}>
         <Table size="small"><TableBody>

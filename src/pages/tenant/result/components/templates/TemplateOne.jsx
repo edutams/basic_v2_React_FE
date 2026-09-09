@@ -7,7 +7,7 @@ const cellBorder = { border: '2px solid #1a1a1a' };
 const innerCellBorder = { border: '1px solid #1a1a1a' };
 
 const responsiveCSS = `
-  .tpl1-header-box { display: flex; flex-wrap: wrap; gap: 0; border: 2px solid #000; border-radius: 0; overflow: hidden; width: 100%; }
+  .tpl1-header-box { display: flex; flex-wrap: wrap; gap: 0; border: 2px solid #000; border-radius: 0; overflow: hidden; width: 100%; margin-bottom: 12px; }
   .tpl1-header-box > div { flex: 1 1 200px; padding: 8px; min-width: 0; box-sizing: border-box; }
   .tpl1-header-box > div:not(:last-child) { border-right: 2px solid #000; }
   .tpl1-main { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }

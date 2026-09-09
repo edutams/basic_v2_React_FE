@@ -117,6 +117,7 @@ const SidebarItems = () => {
             return (
               <NavCollapse
                 menu={item}
+                level={1}
                 pathDirect={pathDirect}
                 hideMenu={hideMenu}
                 pathWithoutLastPart={pathWithoutLastPart}

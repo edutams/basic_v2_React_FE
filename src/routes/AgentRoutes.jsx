@@ -121,322 +121,169 @@ const AgentRoutes = [
     element: <Navigate to="/agent/login" replace />,
   },
 
-  // Dashboard — lives at the bare /dashboard URL rather than nested under
-  // /agent: this whole app already is the agent portal, so /agent in the
-  // dashboard's own URL was redundant (mirrors how TenantRoutes.jsx never
-  // prefixes its own routes with /tenant).
+  // Shared layout route — FullLayout (sidebar/header/footer) is declared
+  // ONCE here and every page below is nested as its child, instead of each
+  // page re-wrapping its own <FullLayout/> at the top level. Previously,
+  // navigating between e.g. /dashboard and /organization matched two
+  // disjoint top-level route branches, so react-router unmounted and
+  // remounted the entire layout (sidebar included) on every navigation —
+  // that full-subtree teardown/rebuild was the "flickers like a page
+  // reload" bug. Nesting under one layout route means only the <Outlet/>
+  // content swaps; FullLayout/Sidebar stay mounted, matching how
+  // TenantRoutes.jsx's SchoolLayout already works. This layout route is
+  // pathless (no `path` key) so each child below still matches its own
+  // bare absolute-feeling path (`dashboard`, `gateway`, `view/:id`, …)
+  // exactly as before — only the leading `/` is dropped since nested paths
+  // are given relative to their parent.
   {
-    path: '/dashboard',
-    element: (
-      <LandlordProtectedRoute permission="landlord.dashboard">
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [{ index: true, element: <DashboardRouteWrapper /> }],
-  },
-
-  // Protected agent app routes — each lives at its own bare path (this
-  // whole app is the agent portal, so /agent in every route was redundant —
-  // same reasoning as /dashboard above). Old /agent/* links still work via
-  // the AgentPrefixRedirect catch-all further down.
-  {
-    path: '/analytics_',
     element: (
       <LandlordProtectedRoute>
         <FullLayout />
       </LandlordProtectedRoute>
     ),
     children: [
+      // Dashboard — lives at the bare /dashboard URL rather than nested
+      // under /agent: this whole app already is the agent portal, so
+      // /agent in the dashboard's own URL was redundant (mirrors how
+      // TenantRoutes.jsx never prefixes its own routes with /tenant).
       {
-        index: true,
+        path: 'dashboard',
+        element: (
+          <LandlordProtectedRoute permission="landlord.dashboard">
+            <DashboardRouteWrapper />
+          </LandlordProtectedRoute>
+        ),
+      },
+
+      // Protected agent app routes — each lives at its own bare path (this
+      // whole app is the agent portal, so /agent in every route was
+      // redundant — same reasoning as /dashboard above). Old /agent/*
+      // links still work via the AgentPrefixRedirect catch-all further
+      // down.
+      {
+        path: 'analytics_',
         element: (
           <LandlordProtectedRoute permission="landlord.tenant_analytics_for_landlord_level_one_only.index">
             <Analytics_ />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/acl_manager',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'acl_manager',
         element: (
           <LandlordProtectedRoute permission="landlord.acl.index">
             <AlcManager />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/organization',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'organization',
         element: (
           <LandlordProtectedRoute permission="landlord.organization.index">
             <Agent />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/view/:id',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [{ index: true, element: <ViewAgent /> }],
-  },
-  {
-    path: '/gateway',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
+      { path: 'view/:id', element: <ViewAgent /> },
       {
-        index: true,
+        path: 'gateway',
         element: (
           <LandlordProtectedRoute permission="landlord.gateway.index">
             <Gateway />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/calendar',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'calendar',
         element: (
           <LandlordProtectedRoute permission="landlord.calendar.index">
             <CalendarManagement />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/school',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'school',
         element: (
           <LandlordProtectedRoute permission="landlord.school.index">
             <SchoolDashboard />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/view-school/:id',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [{ index: true, element: <ViewSchool /> }],
-  },
-  {
-    path: '/organization/subscriptions',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
+      { path: 'view-school/:id', element: <ViewSchool /> },
       {
-        index: true,
+        path: 'organization/subscriptions',
         element: (
           <LandlordProtectedRoute permission="landlord.subscription.index">
             <AgentSubscriptionManagement />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/activity_log',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'activity_log',
         element: (
           <LandlordProtectedRoute permission="landlord.activity_log.index">
             <ActivityLog />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/organization/commissions',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'organization/commissions',
         element: (
           <LandlordProtectedRoute permission="landlord.commission.index">
             <CommissionManagement />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/commission/subscription',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'commission/subscription',
         element: (
           <LandlordProtectedRoute permission="landlord.commission.index">
             <MyCommissionBySubscription />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/commission/transaction',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'commission/transaction',
         element: (
           <LandlordProtectedRoute permission="landlord.commission.index">
             <MyCommissionByTransaction />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/plan',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'plan',
         element: (
           <LandlordProtectedRoute permission="landlord.plan.index">
             <PackageManager />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/phet/subject_topics',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'phet/subject_topics',
         element: (
           <LandlordProtectedRoute permission="landlord.phet_simulation.index">
             <SubjectAndTopics />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/phet/stimulation_links',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'phet/stimulation_links',
         element: (
           <LandlordProtectedRoute permission="landlord.phet_simulation.index">
             <StimulationLinks />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/curriculum-manager',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'curriculum-manager',
         element: (
           <LandlordProtectedRoute permission="landlord.curriculum.index">
             <AgentCurriculumManager />
           </LandlordProtectedRoute>
         ),
       },
-    ],
-  },
-  {
-    path: '/pages/account-settings',
-    element: (
-      <LandlordProtectedRoute>
-        <FullLayout />
-      </LandlordProtectedRoute>
-    ),
-    children: [
       {
-        index: true,
+        path: 'pages/account-settings',
         element: (
           <LandlordProtectedRoute anyOf={['landlord.profile.view', 'landlord.profile.edit']}>
             <AccountSetting />

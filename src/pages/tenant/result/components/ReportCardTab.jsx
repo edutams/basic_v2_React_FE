@@ -33,8 +33,8 @@ const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 const ReportCardTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
+  const [selectedClass, setSelectedClass] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);

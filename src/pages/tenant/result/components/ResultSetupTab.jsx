@@ -47,7 +47,7 @@ const ResultSetupTab = () => {
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
-  const [templateDivFilter, setTemplateDivFilter] = useState('');
+  const [templateDivFilter, setTemplateDivFilter] = useState(1);
   const [nomenclature, setNomenclature] = useState(initialNomenclature);
 
   const [nomenclatureDialog, setNomenclatureDialog] = useState({ open: false, editing: null });

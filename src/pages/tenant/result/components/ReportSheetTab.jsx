@@ -66,8 +66,8 @@ const ReportSheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { getTemplateIndex } = useResultTemplate();
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState(1);
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
   // view: { mode: 'list' } | { mode: 'single', student } | { mode: 'class', students }

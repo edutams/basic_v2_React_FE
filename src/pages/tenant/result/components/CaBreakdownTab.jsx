@@ -36,7 +36,7 @@ const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 const CaBreakdownTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedCaType, setSelectedCaType] = useState('');
+  const [selectedCaType, setSelectedCaType] = useState(1);
 
   const student = dummyStudent;
   const caConfig = dummyCaType[selectedCaType];

@@ -98,13 +98,17 @@ const ApprovedSchoolsTab = ({
               <TableCell sx={thSx}>Onboarding Status</TableCell>
               <TableCell sx={thSx}>Completed At</TableCell>
               <TableCell sx={thSx}>Approved By</TableCell>
-              <TableCell sx={thSx} align="right">Action</TableCell>
+              <TableCell sx={thSx} align="right">
+                Action
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {[...Array(5)].map((_, i) => (
               <TableRow key={i}>
-                <TableCell><Skeleton variant="text" width={20} height={20} /></TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={20} height={20} />
+                </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Skeleton variant="circular" width={44} height={44} />
@@ -133,11 +137,31 @@ const ApprovedSchoolsTab = ({
                     </Box>
                   </Stack>
                 </TableCell>
-                <TableCell><Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: '12px' }} /></TableCell>
-                <TableCell><Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: '12px' }} /></TableCell>
-                <TableCell><Skeleton variant="text" width={90} height={14} /></TableCell>
-                <TableCell><Skeleton variant="text" width={110} height={14} /></TableCell>
-                <TableCell align="right"><Skeleton variant="circular" width={28} height={28} /></TableCell>
+                <TableCell>
+                  <Skeleton
+                    variant="rounded"
+                    width={70}
+                    height={24}
+                    sx={{ borderRadius: '12px' }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Skeleton
+                    variant="rounded"
+                    width={70}
+                    height={24}
+                    sx={{ borderRadius: '12px' }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={90} height={14} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={110} height={14} />
+                </TableCell>
+                <TableCell align="right">
+                  <Skeleton variant="circular" width={28} height={28} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -149,7 +173,9 @@ const ApprovedSchoolsTab = ({
   return (
     <>
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', px: 2, py: 1.5 }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', px: 2, py: 1.5 }}
+        >
           <TextField
             placeholder="Search by school name…"
             size="small"
@@ -197,7 +223,12 @@ const ApprovedSchoolsTab = ({
             onChange={(e) => setDraft((p) => ({ ...p, date_to: e.target.value }))}
             InputLabelProps={{ shrink: true }}
           />
-          <Button variant="contained" size="small" startIcon={<IconRefresh size={16} />} onClick={handleFetch}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconRefresh size={16} />}
+            onClick={handleFetch}
+          >
             Fetch
           </Button>
           {hasActiveFilters && (
@@ -344,7 +375,7 @@ const ApprovedSchoolsTab = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                   <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
                     No approved schools yet.
                   </Alert>

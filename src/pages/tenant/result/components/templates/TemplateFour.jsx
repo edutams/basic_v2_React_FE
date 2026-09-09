@@ -165,26 +165,26 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
         {/* ── Right: Domains ───────────────────────────── */}
         <div className="tpl4-right">
           {/* Affective Domain */}
-          <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
             <TableContainer style={{ border: '1px solid #000' }}>
               <Table size="small" style={{ borderCollapse: 'collapse' }}>
                 <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={2} style={{ ...innerCellBorder, fontWeight: 700, fontSize: 15 }}>AFFECTIVE DOMAIN RATING</TableCell>
-                    {[1,2,3,4,5].map(n => <TableCell key={n} style={{ ...innerCellBorder, textAlign: 'center', width: 28 }}>{n}</TableCell>)}
-                  </TableRow>
+                  <tr style={{ border: '1px solid #000' }}>
+                    <td colSpan={2} style={{ ...innerCellBorder, fontWeight: 700, padding: '3px 6px' }}>AFFECTIVE DOMAIN RATING</td>
+                    {[1,2,3,4,5].map(n => <td key={n} style={{ ...innerCellBorder, textAlign: 'center', width: 32, padding: '2px 4px', fontSize: 12 }}>{n}</td>)}
+                  </tr>
                 </TableHead>
                 <TableBody>
                   {Object.entries(report.affective).map(([key, val], i) => (
-                    <TableRow key={key}>
-                      <TableCell style={{ ...innerCellBorder, width: 28, textAlign: 'center' }}>{i + 1}</TableCell>
-                      <TableCell style={innerCellBorder}>{key}</TableCell>
+                    <tr key={key}>
+                      <td style={{ ...innerCellBorder, width: 28, textAlign: 'center', padding: '2px 4px' }}>{i + 1}</td>
+                      <td style={{ ...innerCellBorder, padding: '2px 6px', fontSize: 12 }}>{key}</td>
                       {[1,2,3,4,5].map(n => (
-                        <TableCell key={n} style={{ ...innerCellBorder, textAlign: 'center' }}>
-                          {n === val ? <IconCheck size={14} color="#000" /> : ''}
-                        </TableCell>
+                        <td key={n} style={{ ...innerCellBorder, textAlign: 'center', padding: '2px 4px' }}>
+                          {n === val ? <IconCheck size={13} color="#000" /> : ''}
+                        </td>
                       ))}
-                    </TableRow>
+                    </tr>
                   ))}
                 </TableBody>
               </Table>
@@ -192,26 +192,26 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
           </div>
 
           {/* Psychomotor/Skills */}
-          <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
             <TableContainer style={{ border: '1px solid #000' }}>
               <Table size="small" style={{ borderCollapse: 'collapse' }}>
                 <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={2} style={{ ...innerCellBorder, fontWeight: 700, fontSize: 15 }}>PSYCHOMOTOR/SKILLS</TableCell>
-                    {[1,2,3,4,5].map(n => <TableCell key={n} style={{ ...innerCellBorder, textAlign: 'center', width: 28 }}>{n}</TableCell>)}
-                  </TableRow>
+                  <tr style={{ border: '1px solid #000' }}>
+                    <td colSpan={2} style={{ ...innerCellBorder, fontWeight: 700, padding: '3px 6px' }}>PSYCHOMOTOR/SKILLS</td>
+                    {[1,2,3,4,5].map(n => <td key={n} style={{ ...innerCellBorder, textAlign: 'center', width: 32, padding: '2px 4px', fontSize: 12 }}>{n}</td>)}
+                  </tr>
                 </TableHead>
                 <TableBody>
                   {Object.entries(report.psychomotor).map(([key, val], i) => (
-                    <TableRow key={key}>
-                      <TableCell style={{ ...innerCellBorder, width: 28, textAlign: 'center' }}>{i + 1}</TableCell>
-                      <TableCell style={innerCellBorder}>{key}</TableCell>
+                    <tr key={key}>
+                      <td style={{ ...innerCellBorder, width: 28, textAlign: 'center', padding: '2px 4px' }}>{i + 1}</td>
+                      <td style={{ ...innerCellBorder, padding: '2px 6px', fontSize: 12 }}>{key}</td>
                       {[1,2,3,4,5].map(n => (
-                        <TableCell key={n} style={{ ...innerCellBorder, textAlign: 'center' }}>
-                          {n === val ? <IconCheck size={14} color="#000" /> : ''}
-                        </TableCell>
+                        <td key={n} style={{ ...innerCellBorder, textAlign: 'center', padding: '2px 4px' }}>
+                          {n === val ? <IconCheck size={13} color="#000" /> : ''}
+                        </td>
                       ))}
-                    </TableRow>
+                    </tr>
                   ))}
                 </TableBody>
               </Table>

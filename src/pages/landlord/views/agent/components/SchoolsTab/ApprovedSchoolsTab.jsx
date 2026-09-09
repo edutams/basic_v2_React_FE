@@ -21,13 +21,16 @@ import {
   Link,
   Alert,
   Button,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { Payments as PaymentsIcon } from '@mui/icons-material';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { IconDotsVertical, IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import SearchIcon from '@mui/icons-material/Search';
+import { IconRefresh } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, StatusChip, formatDate } from './schoolTabHelpers';
@@ -41,10 +44,8 @@ const ApprovedSchoolsTab = ({
   setPage,
   rowsPerPage,
   setRowsPerPage,
-  nameValue,
-  activeFilters,
-  setFilterDrawerOpen,
-  activeFilterCount,
+  filters,
+  onApplyFilters,
   onViewProfile,
   onEdit,
   onDeactivate,
@@ -54,6 +55,7 @@ const ApprovedSchoolsTab = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+  const [draft, setDraft] = useState(filters);
 
   const thSx = {
     fontWeight: 700,
@@ -64,36 +66,23 @@ const ApprovedSchoolsTab = ({
     py: 1.5,
   };
 
-  const filter = (arr) => {
-    let result = arr;
-    if (nameValue) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-      );
-    }
-    if (activeFilters.name) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '')
-          .toLowerCase()
-          .includes(activeFilters.name.toLowerCase()),
-      );
-    }
-    if (activeFilters.status) {
-      result = result.filter((r) => r.status === activeFilters.status);
-    }
-    if (activeFilters.date_from) {
-      result = result.filter((r) => r.created_at && r.created_at >= activeFilters.date_from);
-    }
-    if (activeFilters.date_to) {
-      result = result.filter((r) => r.created_at && r.created_at <= activeFilters.date_to);
-    }
-    return result;
+  const handleFetch = () => {
+    onApplyFilters(draft);
+    setPage(0);
   };
+  const handleReset = () => {
+    const empty = { search: '', status: '', date_from: '', date_to: '' };
+    setDraft(empty);
+    onApplyFilters(empty);
+    setPage(0);
+  };
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const approvedList = (schoolList || []).filter((s) => s.onboarding_status === 'approved');
-  const filtered = filter(approvedList);
+  // `schoolList` is already exactly what the backend returned for the
+  // current filters (and already scoped server-side to onboarding-approved
+  // tenants) — no client-side re-filtering here.
 
   if (schoolLoading) {
     return (
@@ -160,42 +149,63 @@ const ApprovedSchoolsTab = ({
   return (
     <>
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" sx={{ px: 2, py: 1.5 }}>
-          <Button
-            variant="contained"
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', px: 2, py: 1.5 }}>
+          <TextField
+            placeholder="Search by school name…"
             size="small"
-            startIcon={<IconAdjustmentsHorizontal />}
-            onClick={() => setFilterDrawerOpen(true)}
-            sx={{
-              textTransform: 'none',
-              borderRadius: 2,
-              px: 2.5,
-              borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-              fontWeight: activeFilterCount > 0 ? 700 : 400,
-              '&:hover': { borderColor: 'primary.main' },
+            value={draft.search}
+            onChange={(e) => setDraft((p) => ({ ...p, search: e.target.value }))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleFetch();
             }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ flexGrow: 1, minWidth: 280 }}
+          />
+          <TextField
+            select
+            size="small"
+            label="Status"
+            value={draft.status}
+            onChange={(e) => setDraft((p) => ({ ...p, status: e.target.value }))}
+            sx={{ minWidth: 130 }}
           >
-            Filters
-            {activeFilterCount > 0 && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 1,
-                  px: 0.8,
-                  py: 0.1,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  lineHeight: 1.6,
-                }}
-              >
-                {activeFilterCount}
-              </Box>
-            )}
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+          </TextField>
+          <TextField
+            type="date"
+            size="small"
+            label="From"
+            value={draft.date_from}
+            onChange={(e) => setDraft((p) => ({ ...p, date_from: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            type="date"
+            size="small"
+            label="To"
+            value={draft.date_to}
+            onChange={(e) => setDraft((p) => ({ ...p, date_to: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Button variant="contained" size="small" startIcon={<IconRefresh size={16} />} onClick={handleFetch}>
+            Fetch
           </Button>
-        </Stack>
+          {hasActiveFilters && (
+            <Button size="small" onClick={handleReset}>
+              Reset
+            </Button>
+          )}
+        </Box>
         <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
@@ -213,8 +223,8 @@ const ApprovedSchoolsTab = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginate(filtered).length > 0 ? (
-              paginate(filtered).map((row, i) => {
+            {paginate(schoolList).length > 0 ? (
+              paginate(schoolList).map((row, i) => {
                 const spa = getSpaContact(row);
                 const org = row.organization || row.agent;
 
@@ -346,7 +356,7 @@ const ApprovedSchoolsTab = ({
             <TableRow>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
-                count={filtered.length}
+                count={schoolList.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={(_, p) => setPage(p)}

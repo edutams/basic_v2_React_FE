@@ -6,7 +6,6 @@ import {
   Typography,
   Stack,
   MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -307,41 +306,12 @@ const OverviewTab = ({ data }) => {
   const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
 
   return (
-    <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: isDarkMode ? 'transparent' : '#F8FAFC' }}>
-      {/* Year Filter — right aligned, consistent style */}
-      <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" mb={3}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            border: `1px solid ${isDarkMode ? '#444' : '#E2E8F0'}`,
-            borderRadius: '6px',
-            bgcolor: isDarkMode ? '#2d2d2d' : 'white',
-            overflow: 'hidden',
-          }}
-        >
-          <Select
-            size="small"
-            value="2026"
-            renderValue={(v) => `Year ${v}`}
-            sx={{
-              '& fieldset': { border: 'none' },
-              minWidth: 120,
-              fontSize: '13px',
-              fontWeight: 600,
-              color: isDarkMode ? '#fff' : '#333',
-            }}
-          >
-            <MenuItem value="2026">2026</MenuItem>
-            <MenuItem value="2025">2025</MenuItem>
-          </Select>
-        </Box>
-        <Button variant="contained" size="small" >
-          Filter
-        </Button>
-      </Stack>
-
-      <Grid container spacing={3}>
+    <Box sx={{ p: { xs: 1, md: 1.5 } }}>
+      {/* alignItems: 'flex-start' — without it, Grid's default stretch makes
+          the shorter Recent Onboarding / Credit Facilities+Plan cards match
+          the tall Transaction chart's height, leaving a large dead blank
+          area at the bottom of each shorter card. */}
+      <Grid container spacing={1.5} alignItems="flex-start">
         {/* Column 1: Transaction Chart */}
         <Grid size={{ xs: 12, md: 5 }}>
           <Card
@@ -362,7 +332,7 @@ const OverviewTab = ({ data }) => {
               },
             }}
           >
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
                 Transaction
               </Typography>
@@ -401,10 +371,12 @@ const OverviewTab = ({ data }) => {
           </Card>
         </Grid>
 
-        {/* Column 2: Plan Distribution & Credit Facilities */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Stack spacing={3} sx={{ maxHeight: '100%' }}>
+        {/* Column 2: Credit Facilities + Plan Distribution side by side, with
+            Recent Onboarding School spanning the full width beneath both. */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Grid container spacing={1.5}>
             {/* Credit Facilities Card */}
+            <Grid size={{ xs: 12, sm: 6 }}>
             <Card
               sx={{
                 px: '3px',
@@ -422,7 +394,7 @@ const OverviewTab = ({ data }) => {
                   boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 },
                 overflow: 'hidden',
-                flex: 1,
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -528,8 +500,10 @@ const OverviewTab = ({ data }) => {
                 </Box>
               </Box>
             </Card>
+            </Grid>
 
             {/* Plan Distribution Card */}
+            <Grid size={{ xs: 12, sm: 6 }}>
             <Card
               sx={{
                 px: '3px',
@@ -546,7 +520,7 @@ const OverviewTab = ({ data }) => {
                   borderColor: '#94a3b8',
                   boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 },
-                flex: 1.5,
+                height: '100%',
                 color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
               }}
             >
@@ -569,11 +543,12 @@ const OverviewTab = ({ data }) => {
                 />
               </Box>
             </Card>
-          </Stack>
-        </Grid>
+            </Grid>
 
-        {/* Column 3: Recent Onboarding School */}
-        <Grid size={{ xs: 12, md: 3 }}>
+            {/* Recent Onboarding School — spans the full width beneath both
+                cards above, with its own internal scroll since this list
+                only grows over time. */}
+            <Grid size={{ xs: 12 }}>
           <Paper
             elevation={0}
             sx={{
@@ -586,13 +561,15 @@ const OverviewTab = ({ data }) => {
               py: "3px",
             }}
           >
-            <Box >
+            <Box sx={{ px: 1, pt: 1 }}>
               <Typography variant="subtitle2" fontWeight={800} color="textPrimary">
                 Recent Onboarding School
               </Typography>
             </Box>
-            <TableContainer >
-              <Table size="small">
+            {/* Fixed height + internal scroll — this list only grows, and we
+                don't want the card itself to keep growing with it. */}
+            <TableContainer sx={{ maxHeight: 260, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
                 <TableHead
                   sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
                 >
@@ -602,6 +579,8 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
+                        width: '45%',
                       }}
                     >
                       School
@@ -611,6 +590,7 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
                       }}
                     >
                       Agent
@@ -620,18 +600,10 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
                       }}
                     >
                       Date
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        color: theme.palette.text.secondary,
-                      }}
-                    >
-                      Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -647,11 +619,15 @@ const OverviewTab = ({ data }) => {
                           '& td': { borderBottom: `1px solid ${theme.palette.divider}` },
                         }}
                       >
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'normal' }}>
                           <Typography
                             variant="caption"
                             fontWeight={800}
-                            sx={{ color: theme.palette.text.primary, fontSize: '11px' }}
+                            sx={{
+                              color: theme.palette.text.primary,
+                              fontSize: '11px',
+                              wordBreak: 'break-word',
+                            }}
                           >
                             {row.school}
                           </Typography>
@@ -697,16 +673,11 @@ const OverviewTab = ({ data }) => {
                             }}
                           />
                         </TableCell>
-                        <TableCell>
-                          <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                            <IconDotsVertical size={16} color={theme.palette.text.secondary} />
-                          </IconButton>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
+                      <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
                         <Alert
                           severity="info"
                           sx={{ justifyContent: 'center', textAlign: 'center' }}
@@ -720,6 +691,8 @@ const OverviewTab = ({ data }) => {
               </Table>
             </TableContainer>
           </Paper>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* Bottom Row: Top Agents */}

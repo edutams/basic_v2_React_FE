@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
-import { Grid, Paper, Typography, Chip, useTheme } from '@mui/material';
+import { Grid, Paper, Typography, Chip, Skeleton, useTheme } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -33,19 +33,9 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import { usePermissions } from '@/context/AgentContext/permissions';
+import agentApi from '@/api/landlord/organizations/agent';
 
-const planSeries = [40, 15, 35, 10];
-
-const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-
-const planData = [
-  { name: 'Freemium', value: 40, color: '#EC468C' },
-  { name: 'Basic', value: 15, color: '#7987FF' },
-  { name: 'Basic +', value: 35, color: '#FFA5CB' },
-  { name: 'Basic ++', value: 10, color: '#8B48E3' },
-];
-
-const planColors = planData.map((p) => p.color);
+const PLAN_DISTRIBUTION_COLORS = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#2ca87f'];
 
 const BCrumb = [
   {
@@ -102,6 +92,26 @@ const EduTier = () => {
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
   const { can } = usePermissions();
+
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
+      try {
+        const response = await agentApi.getAnalytics();
+        if (response.status === true && response.data) {
+          setAnalytics(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics', error);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -209,18 +219,34 @@ const EduTier = () => {
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}>
-              0
+              {analyticsLoading ? (
+                <Skeleton variant="text" width={80} />
+              ) : (
+                `₦${(analytics?.transactionVolume ?? 0).toLocaleString()}`
+              )}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">Commission</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>100,000,000</Typography>
+              <Typography variant="caption" color="text.secondary">Paid</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? (
+                  <Skeleton variant="text" width={70} />
+                ) : (
+                  `₦${(analytics?.transactionVolume ?? 0).toLocaleString()}`
+                )}
+              </Typography>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
-              <Typography variant="caption" color="text.secondary">Volume</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>304,043,000</Typography>
+              <Typography variant="caption" color="text.secondary">Pending</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? (
+                  <Skeleton variant="text" width={70} />
+                ) : (
+                  `₦${(analytics?.transactionPending ?? 0).toLocaleString()}`
+                )}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -295,7 +321,7 @@ const EduTier = () => {
             }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
-              Subscriptions
+              Schools
             </Typography>
             <Box
               sx={{
@@ -308,6 +334,7 @@ const EduTier = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
+              onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={18} color="currentColor" />
             </Box>
@@ -324,18 +351,22 @@ const EduTier = () => {
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}>
-              0
+              {analyticsLoading ? <Skeleton variant="text" width={40} /> : (analytics?.totalSchools ?? 0)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">Primary School</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
+              <Typography variant="caption" color="text.secondary">Active</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? <Skeleton variant="text" width={30} /> : (analytics?.activeSchools ?? 0)}
+              </Typography>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
-              <Typography variant="caption" color="text.secondary">Secondary School</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
+              <Typography variant="caption" color="text.secondary">Pending</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? <Skeleton variant="text" width={30} /> : (analytics?.pendingSchools ?? 0)}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -476,13 +507,25 @@ const EduTier = () => {
             </Box>
           </Box>
           <Box sx={{ height: 140, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-            <ReusablePieChart
-              series={planSeries}
-              colors={planColors}
-              labels={planLabels}
-              height={150}
-              hideCard
-            />
+            {analyticsLoading ? (
+              <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+            ) : (analytics?.planDistribution ?? []).length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ width: '100%', textAlign: 'center' }}>
+                No active plan assignments yet.
+              </Typography>
+            ) : (
+              <ReusablePieChart
+                // Remounts once the real labels/series arrive — ApexCharts
+                // donut charts don't reliably pick up a change in the number
+                // of series/labels on an already-mounted instance.
+                key={analytics.planDistribution.map((p) => p.label).join('|')}
+                series={analytics.planDistribution.map((p) => p.total)}
+                colors={PLAN_DISTRIBUTION_COLORS}
+                labels={analytics.planDistribution.map((p) => p.label)}
+                height={150}
+                hideCard
+              />
+            )}
           </Box>
         </Paper>
 

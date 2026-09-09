@@ -135,16 +135,6 @@ const subscriptionApi = {
   },
 
   /**
-   * Manually extend a pending subscription's grace period — super_admin only
-   * @param {number|string} id
-   * @param {string} dueDate - 'YYYY-MM-DD'
-   */
-  extendDueDate: async (id, dueDate) => {
-    const response = await tenantApi.put(`/subscriptions/${id}/extend-due-date`, { due_date: dueDate });
-    return response.data;
-  },
-
-  /**
    * Download a subscription's invoice as a server-generated PDF.
    * @param {number|string} id
    */

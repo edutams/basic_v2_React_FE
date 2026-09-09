@@ -96,7 +96,7 @@ const MyCommissionBySubscription = () => {
         </Button>
       </Box>
 
-      <Box mt={3}>
+      <Box mt={1.5}>
         {/* Four Stat Cards */}
         <MyCommissionStatCards />
 
@@ -109,7 +109,7 @@ const MyCommissionBySubscription = () => {
             overflow: 'hidden',
           }}
         >
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: 1.5 }}>
             <Box
               sx={{
                 display: 'flex',
@@ -117,7 +117,7 @@ const MyCommissionBySubscription = () => {
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 1,
-                mb: 2,
+                mb: 1.5,
               }}
             >
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
@@ -137,7 +137,7 @@ const MyCommissionBySubscription = () => {
             </Box>
 
             {/* Filter Section */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 1.5 }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} sm={6} md={2}>
                   <TextField

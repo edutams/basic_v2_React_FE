@@ -4,9 +4,14 @@ const phetApi = {
   /**
    * @param {Object} params
    */
+  /**
+   * Returns the full envelope ({ data, stats }), not just the list, so
+   * callers can render the "Total/Active/Inactive" stat cards without a
+   * second round trip.
+   */
   getSubjects: async (params = {}) => {
     const response = await api.get('v1/landlord/phet/subjects', { params });
-    return response.data.data;
+    return { data: response.data.data, stats: response.data.stats };
   },
 
   /**
@@ -53,9 +58,12 @@ const phetApi = {
   /**
    * @param {number|string} subjectId
    */
+  /**
+   * Returns the full envelope ({ data, stats }) — see getSubjects.
+   */
   getTopicsBySubject: async (subjectId, params = {}) => {
     const response = await api.get(`v1/landlord/phet/subjects/${subjectId}/topics`, { params });
-    return response.data.data;
+    return { data: response.data.data, stats: response.data.stats };
   },
 
   /**
@@ -95,9 +103,12 @@ const phetApi = {
   /**
    * @param {Object} params
    */
+  /**
+   * Returns the full envelope ({ data, stats }) — see getSubjects.
+   */
   getSimulationLinks: async (params = {}) => {
     const response = await api.get('v1/landlord/phet/simulation-links', { params });
-    return response.data.data;
+    return { data: response.data.data, stats: response.data.stats };
   },
 
   /**s

@@ -30,7 +30,6 @@ import {
   MenuItem,
   Skeleton,
   Alert,
-  Tooltip,
   Menu,
   InputAdornment,
 } from '@mui/material';
@@ -43,7 +42,6 @@ import {
   IconDotsVertical,
   IconCheck,
   IconSearch,
-  IconRefresh,
   IconX,
   IconCalendarStats,
   IconCircleCheck,
@@ -64,21 +62,6 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import useNotification from 'src/hooks/useNotification';
 import agentApi from '@/api/landlord/landlord_api';
-
-// Auto-refresh cadence for the "real-time" stats/table polling.
-const AUTO_REFRESH_MS = 30000;
-
-// "3s ago" / "2m ago" — lightweight relative-time label, no date library needed.
-function timeAgo(date) {
-  if (!date) return '';
-  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours}h ago`;
-}
 
 // ─── Mini Stat Card ────────────────────────────────────────────────────────
 function MiniStat({ label, value, loading, color, icon: Icon }) {
@@ -202,46 +185,6 @@ function InlineFilterBar({
   );
 }
 
-// ─── Live "last updated" indicator + manual refresh ───────────────────────
-function LiveStatusBar({ loading, lastUpdated, onRefresh }) {
-  const [, forceTick] = useState(0);
-
-  // Re-render every few seconds so the "Xs ago" label keeps advancing.
-  useEffect(() => {
-    const id = setInterval(() => forceTick((n) => n + 1), 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Box
-          sx={{
-            width: 7,
-            height: 7,
-            borderRadius: '50%',
-            bgcolor: 'success.main',
-            animation: 'pulse 2s infinite',
-            '@keyframes pulse': {
-              '0%': { opacity: 1 },
-              '50%': { opacity: 0.35 },
-              '100%': { opacity: 1 },
-            },
-          }}
-        />
-        <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
-          {loading ? 'Updating…' : `Live · updated ${timeAgo(lastUpdated)}`}
-        </Typography>
-      </Box>
-      <Tooltip title="Refresh now">
-        <IconButton size="small" onClick={onRefresh} disabled={loading}>
-          <IconRefresh size={16} />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
-}
-
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar Management' }];
 
 function TabPanel({ children, value, index }) {
@@ -312,7 +255,6 @@ const SessionsPanel = forwardRef(function SessionsPanel({ isLevel1, onStatsChang
   const [submitting, setSubmitting] = useState(false);
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [reordering, setReordering] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -320,33 +262,28 @@ const SessionsPanel = forwardRef(function SessionsPanel({ isLevel1, onStatsChang
 
   // Search/status are sent to the backend as query params — never filtered
   // client-side — so `sessions` here is already exactly what should render.
-  const fetchSessions = useCallback(async (filters, silent = false) => {
-    if (!silent) setLoading(true);
+  const fetchSessions = useCallback(async (filters) => {
+    setLoading(true);
     try {
       const res = await agentApi.get('/v1/landlord/calendar/sessions', { params: filters });
       setSessions(res.data.data);
       setStats(res.data.stats);
-      setLastUpdated(new Date());
     } catch {
-      if (!silent) notify.error('Failed to load sessions');
+      notify.error('Failed to load sessions');
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchSessions(activeFilters);
-    // Real-time-ish polling so this stays current without a manual reload —
-    // "silent" so it doesn't flash the skeleton loader on every tick.
-    const id = setInterval(() => fetchSessions(activeFilters, true), AUTO_REFRESH_MS);
-    return () => clearInterval(id);
   }, [fetchSessions, activeFilters]);
 
   // Reported up so the page-level stats row (above the tabs) can show
   // whichever tab is active, instead of duplicating a stats row per panel.
   useEffect(() => {
-    onStatsChange?.({ stats, loading, lastUpdated });
-  }, [stats, loading, lastUpdated, onStatsChange]);
+    onStatsChange?.({ stats, loading });
+  }, [stats, loading, onStatsChange]);
 
   const handleFilterApply = () => {
     setActiveFilters(filterDraft);
@@ -776,7 +713,6 @@ const TermsPanel = forwardRef(function TermsPanel({ isLevel1, onStatsChange }, r
   const [activeFilters, setActiveFilters] = useState({ search: '', status: '' });
   const [submitting, setSubmitting] = useState(false);
   const [reordering, setReordering] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -784,31 +720,28 @@ const TermsPanel = forwardRef(function TermsPanel({ isLevel1, onStatsChange }, r
 
   // Search/status are sent to the backend as query params — never filtered
   // client-side — so `terms` here is already exactly what should render.
-  const fetchTerms = useCallback(async (filters, silent = false) => {
-    if (!silent) setLoading(true);
+  const fetchTerms = useCallback(async (filters) => {
+    setLoading(true);
     try {
       const res = await agentApi.get('/v1/landlord/calendar/terms', { params: filters });
       setTerms(res.data.data);
       setStats(res.data.stats);
-      setLastUpdated(new Date());
     } catch {
-      if (!silent) notify.error('Failed to load terms');
+      notify.error('Failed to load terms');
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchTerms(activeFilters);
-    const id = setInterval(() => fetchTerms(activeFilters, true), AUTO_REFRESH_MS);
-    return () => clearInterval(id);
   }, [fetchTerms, activeFilters]);
 
   // Reported up so the page-level stats row (above the tabs) can show
   // whichever tab is active, instead of duplicating a stats row per panel.
   useEffect(() => {
-    onStatsChange?.({ stats, loading, lastUpdated });
-  }, [stats, loading, lastUpdated, onStatsChange]);
+    onStatsChange?.({ stats, loading });
+  }, [stats, loading, onStatsChange]);
 
   const handleFilterApply = () => {
     setActiveFilters(filterDraft);
@@ -1118,7 +1051,7 @@ const TermsPanel = forwardRef(function TermsPanel({ isLevel1, onStatsChange }, r
 });
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
-const EMPTY_STATS = { stats: {}, loading: true, lastUpdated: null };
+const EMPTY_STATS = { stats: {}, loading: true };
 
 const CalendarManagement = () => {
   const [tab, setTab] = useState(0);
@@ -1189,13 +1122,6 @@ const CalendarManagement = () => {
             />
           </>
         )}
-        <LiveStatusBar
-          loading={active.loading}
-          lastUpdated={active.lastUpdated}
-          onRefresh={() =>
-            tab === 0 ? sessionsPanelRef.current?.refresh() : termsPanelRef.current?.refresh()
-          }
-        />
       </Box>
 
       <ParentCard sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}>

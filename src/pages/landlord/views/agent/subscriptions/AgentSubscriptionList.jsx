@@ -43,6 +43,7 @@ import {
 import axios from '@/api/landlord/landlord_api';
 import useNotification from 'src/hooks/useNotification';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
+import SubscriptionInvoiceModal from './SubscriptionInvoiceModal';
 
 // ─── Status Chip ────────────────────────────────────────────────────────────
 const StatusChip = ({ status }) => {
@@ -66,16 +67,20 @@ const StatusChip = ({ status }) => {
 // ─── Table Header Styles ────────────────────────────────────────────────────
 const thSx = { fontWeight: 700, fontSize: '13px' };
 
-const AgentSubscriptionList = ({ status, onMutate }) => {
+const EMPTY_FILTERS = { transaction_ref: '', from: '', to: '', session_id: '', term_id: '' };
+
+const AgentSubscriptionList = ({ status, onMutate, subscriptionCharges }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDraft, setFilterDraft] = useState(EMPTY_FILTERS);
+  const [activeFilters, setActiveFilters] = useState(EMPTY_FILTERS);
+  const [filterOptions, setFilterOptions] = useState({ sessions: [], terms: [] });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const notify = useNotification();
 
   // Discount modal state
@@ -98,9 +103,7 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
   const fetchSubscriptions = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/v1/landlord/subscriptions', {
-        params: { status, search: searchTerm },
-      });
+      const res = await axios.post('/v1/landlord/subscriptions', { status, ...activeFilters });
       setRows(res.data.data);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
@@ -108,11 +111,42 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
     } finally {
       setLoading(false);
     }
-  }, [status, searchTerm]);
+  }, [status, activeFilters]);
 
   useEffect(() => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
+
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const res = await axios.get('/v1/landlord/subscriptions/filter-options');
+        if (res.data.status === 'success') {
+          setFilterOptions(res.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription filter options', error);
+      }
+    };
+    loadFilterOptions();
+  }, []);
+
+  const handleFilterApply = () => {
+    // Trim so stray whitespace pasted into the ref field (or a tab from
+    // tabbing between fields mid-typing) doesn't end up baked into the
+    // querystring and silently miss an otherwise-matching row.
+    setActiveFilters({
+      ...filterDraft,
+      transaction_ref: filterDraft.transaction_ref.trim(),
+    });
+  };
+
+  const handleFilterReset = () => {
+    setFilterDraft(EMPTY_FILTERS);
+    setActiveFilters(EMPTY_FILTERS);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
@@ -151,6 +185,13 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
     });
   };
 
+  // ── Invoice Modal ────────────────────────────────────────────────────────
+  const handleViewInvoiceClick = (row) => {
+    setSelectedRow(row);
+    setInvoiceModalOpen(true);
+    setAnchorEl(null);
+  };
+
   // ── Discount Modal ───────────────────────────────────────────────────────
   const handleOpenDiscount = (row) => {
     setDiscountRow(row);
@@ -187,12 +228,17 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   const formatAmount = (val) => parseFloat(val || 0).toLocaleString();
+  const formatDate = (val) => (val ? new Date(val).toLocaleDateString('en-GB') : '—');
 
   const calcAmountDue = (row) => {
     const amount = parseFloat(row.amount) || 0;
     const discountPct = parseFloat(row.discount) || 0;
     const afterDiscount = amount - (amount * discountPct) / 100;
-    return afterDiscount;
+    // Was missing the gateway charge that the page-level "Amount Due" stat
+    // (and the tenant's own equivalent table) already includes — this is
+    // exactly why the stat and this table showed two different numbers.
+    const chargesNum = parseFloat(subscriptionCharges) || 0;
+    return afterDiscount + chargesNum;
   };
 
   const handleMenuOpen = (event, row) => {
@@ -207,19 +253,17 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
 
   return (
     <Box>
-      {/* ── Search Bar ───────────────────────────────────────────────────── */}
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+      {/* ── Filter Bar ───────────────────────────────────────────────────── */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'flex-end', gap: 1.5, flexWrap: 'wrap' }}>
         <TextField
-          placeholder="Search by school, session, or plan..."
-          sx={{ width: { xs: '100%', sm: 300, md: 350 } }}
+          label="Search"
+          placeholder="Transaction Ref. Number"
+          sx={{ width: { xs: '100%', sm: 480 } }}
           size="small"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          value={filterDraft.transaction_ref}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, transaction_ref: e.target.value }))}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              setSearchTerm(searchInput.trim());
-              setPage(0);
-            }
+            if (e.key === 'Enter') handleFilterApply();
           }}
           InputProps={{
             startAdornment: (
@@ -227,56 +271,91 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                 <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
-            endAdornment: searchInput ? (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    setSearchInput('');
-                    setSearchTerm('');
-                    setPage(0);
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ) : null,
           }}
         />
-        <Button
-          variant="contained"
+        <TextField
+          label="From"
+          type="date"
           size="small"
-          onClick={() => {
-            setSearchTerm(searchInput.trim());
-            setPage(0);
-          }}
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.from}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, from: e.target.value }))}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="To"
+          type="date"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.to}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, to: e.target.value }))}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          select
+          label="Session"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.session_id}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, session_id: e.target.value }))}
         >
-          Search
+          <MenuItem value="">-- Select Session --</MenuItem>
+          {filterOptions.sessions.map((s) => (
+            <MenuItem key={s.id} value={s.id}>
+              {s.session_name}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Term"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.term_id}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, term_id: e.target.value }))}
+        >
+          <MenuItem value="">-- Select Term --</MenuItem>
+          {filterOptions.terms.map((t) => (
+            <MenuItem key={t.id} value={t.id}>
+              {t.term_name}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Button variant="contained" size="small" onClick={handleFilterApply}>
+          Fetch
         </Button>
+        {hasActiveFilters && (
+          <Button size="small" onClick={handleFilterReset}>
+            Reset
+          </Button>
+        )}
       </Box>
 
       {/* ── Table ────────────────────────────────────────────────────────── */}
         <Box>
           <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1, verticalAlign: 'top' }, tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={thSx}>#</TableCell>
-                  <TableCell sx={thSx}>School Info</TableCell>
-                  <TableCell sx={thSx}>Session/Term</TableCell>
-                  <TableCell sx={thSx}>Plan Details</TableCell>
-                  <TableCell sx={thSx}>Amount (₦)</TableCell>
-                  <TableCell sx={thSx}>Discount (%)</TableCell>
-                  <TableCell sx={thSx}>Amount Due (₦)</TableCell>
-                  <TableCell sx={thSx}>Status</TableCell>
-                  <TableCell sx={thSx} align="center">Action</TableCell>
+                  <TableCell sx={{ ...thSx, width: '3%' }}>#</TableCell>
+                  <TableCell sx={{ ...thSx, width: '16%' }}>School Info</TableCell>
+                  <TableCell sx={{ ...thSx, width: '10%' }}>Session/Term</TableCell>
+                  <TableCell sx={{ ...thSx, width: '12%' }}>Plan Details</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Amount (₦)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '7%' }}>Discount (%)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Amount Due (₦)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '11%' }}>Trans. Ref. No.</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Transaction Date</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Bank Pay Date</TableCell>
+                  <TableCell sx={{ ...thSx, width: '7%' }}>Status</TableCell>
+                  <TableCell sx={{ ...thSx, width: '2%' }} align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
-                      {[...Array(9)].map((_, j) => (
+                      {[...Array(12)].map((_, j) => (
                         <TableCell key={j}>
                           <Skeleton variant="text" width={j === 0 ? 20 : 90} />
                         </TableCell>
@@ -296,14 +375,14 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                           <Stack direction="row" spacing={1} alignItems="center">
                             <Avatar
                               src={row.tenant?.school_logo || row.tenant?.image}
-                              sx={{ width: 40, height: 40, bgcolor: '#E7E9EB' }}
+                              sx={{ width: 40, height: 40, bgcolor: '#E7E9EB', flexShrink: 0 }}
                             >
                               {!row.tenant?.school_logo && !row.tenant?.image && (
                                 <PersonOutlineIcon sx={{ color: '#000', fontSize: 22 }} />
                               )}
                             </Avatar>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3, wordBreak: 'break-word' }}>
                                 {row.tenant?.tenant_name || '—'}
                               </Typography>
                               {(() => {
@@ -316,7 +395,7 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                                     variant="caption"
                                     color="text.secondary"
                                     underline="hover"
-                                    sx={{ display: 'block', lineHeight: 1.3 }}
+                                    sx={{ display: 'block', lineHeight: 1.3, wordBreak: 'break-all' }}
                                   >
                                     {url.replace('https://', '')}
                                   </Link>
@@ -360,51 +439,54 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                             ₦{formatAmount(amountDue)}
                           </Typography>
                         </TableCell>
+                        <TableCell sx={{ wordBreak: 'break-all' }}>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: 11 }}>
+                            {row.latest_approved_transaction?.trans_id || '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{formatDate(row.latest_approved_transaction?.trans_date)}</TableCell>
+                        <TableCell>{formatDate(row.latest_approved_transaction?.bank_pay_date)}</TableCell>
                         <TableCell>
                           <StatusChip status={row.status} />
                         </TableCell>
                         <TableCell align="center">
-                          {row.status === 'pending' ? (
-                            <>
-                              <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                                <MoreVertIcon fontSize="small" />
-                              </IconButton>
+                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                            <MoreVertIcon fontSize="small" />
+                          </IconButton>
 
-                              <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                                onClose={handleMenuClose}
-                              >
-                                {/* <MenuItem onClick={() => handleViewDetail(row)}>
-                                  <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
-                                </MenuItem> */}
-                                {/* Only pending subscriptions haven't been paid for yet —
-                                    once active (paid) or expired, the discount is locked in. */}
-                                <MenuItem onClick={() => handleOpenDiscount(row)}>
-                                  <DiscountIcon sx={{ mr: 1, fontSize: '18px' }} /> Set Discount
-                                </MenuItem>
-                                {/* {row.status !== 'active' && (
-                                  <MenuItem onClick={() => handleApproveConfirm(row)}>
-                                    <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
-                                  </MenuItem>
-                                )}
-                                {row.status !== 'expired' && (
-                                  <MenuItem onClick={() => handleRejectConfirm(row)}>
-                                    <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
-                                  </MenuItem>
-                                )} */}
-                              </Menu>
-                            </>
-                          ) : (
-                            <Typography variant="body2" color="text.disabled">—</Typography>
-                          )}
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                              <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Invoice
+                            </MenuItem>
+                            {/* Only pending subscriptions haven't been paid for yet —
+                                once active (paid) or expired, the discount is locked in. */}
+                            {row.status === 'pending' && (
+                              <MenuItem onClick={() => handleOpenDiscount(row)}>
+                                <DiscountIcon sx={{ mr: 1, fontSize: '18px' }} /> Set Discount
+                              </MenuItem>
+                            )}
+                            {/* {row.status !== 'active' && (
+                              <MenuItem onClick={() => handleApproveConfirm(row)}>
+                                <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
+                              </MenuItem>
+                            )}
+                            {row.status !== 'expired' && (
+                              <MenuItem onClick={() => handleRejectConfirm(row)}>
+                                <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
+                              </MenuItem>
+                            )} */}
+                          </Menu>
                         </TableCell>
                       </TableRow>
                     );
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} align="center">
+                    <TableCell colSpan={12} align="center">
                       <Alert
                         severity="info"
                         sx={{
@@ -414,9 +496,7 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                           '& .MuiAlert-icon': { mr: 1.5 },
                         }}
                       >
-                        {searchTerm
-                          ? `No subscriptions match "${searchTerm}"`
-                          : 'No subscriptions found'}
+                        {hasActiveFilters ? 'No subscriptions match these filters' : 'No subscriptions found'}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -426,7 +506,7 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    colSpan={9}
+                    colSpan={12}
                     count={rows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
@@ -645,6 +725,17 @@ const AgentSubscriptionList = ({ status, onMutate }) => {
       <ConfirmationDialog
         {...confirm}
         onClose={() => setConfirm((prev) => ({ ...prev, open: false }))}
+      />
+
+      <SubscriptionInvoiceModal
+        open={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        selectedRow={selectedRow}
+        subscriptionCharges={subscriptionCharges}
+        onExtended={() => {
+          fetchSubscriptions();
+          onMutate?.();
+        }}
       />
     </Box>
   );

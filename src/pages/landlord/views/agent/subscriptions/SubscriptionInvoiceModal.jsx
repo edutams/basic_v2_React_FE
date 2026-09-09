@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Table,
@@ -19,12 +19,13 @@ import {
 import {
   Print as PrintIcon,
   Download as DownloadIcon,
+  CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PropTypes from 'prop-types';
 import useNotification from '@/hooks/useNotification';
-import { TenantAuthContext } from 'src/context/TenantContext/auth';
-import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
+import { usePermissions } from '@/context/AgentContext/permissions';
+import axios from '@/api/landlord/landlord_api';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -39,14 +40,25 @@ const getStatusColor = (status) => {
   }
 };
 
-const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
-  const notify = useNotification();
-  const { tenantInfo } = useContext(TenantAuthContext);
+/** Fetch a PDF (auth headers included) and return an object URL for it. */
+const fetchPdfBlobUrl = async (url) => {
+  const response = await axios.get(url, { responseType: 'blob' });
+  return window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+};
 
-  const schoolName = tenantInfo?.tenant_name || tenantInfo?.school_name || tenantInfo?.name || '';
-  const schoolAddress = tenantInfo?.address || '';
-  const schoolPhone = tenantInfo?.phone || '';
-  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
+const SubscriptionInvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges, onExtended }) => {
+  const { can } = usePermissions();
+  const notify = useNotification();
+
+  const [extendModalOpen, setExtendModalOpen] = useState(false);
+  const [extendDate, setExtendDate] = useState('');
+  const [extendLoading, setExtendLoading] = useState(false);
+
+  const tenant = selectedRow?.tenant;
+  const schoolName = tenant?.tenant_name || '';
+  const schoolAddress = tenant?.address || '';
+  const schoolPhone = tenant?.administrator_info?.school_spa?.admin_phone || '';
+  const schoolLogo = tenant?.school_logo || tenant?.image || null;
 
   const planData = useMemo(() => {
     if (!selectedRow?.plans?.data) return {};
@@ -67,8 +79,8 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const studentsLimit = planData.students_limit || 'N/A';
   const planDescription = `${planName} (${studentsLimit} Students)`;
 
-  // extended_due_date (set by a super_admin's manual extension) always wins
-  // over the auto-computed due_date when both are present.
+  // extended_due_date (set by this modal's own Extend Due Date action) always
+  // wins over the auto-computed due_date when both are present.
   const isExtendedDueDate = Boolean(selectedRow?.extended_due_date);
   const dueDateRaw = selectedRow?.extended_due_date || selectedRow?.due_date;
   const dueDateDisplay = dueDateRaw ? new Date(dueDateRaw).toLocaleDateString('en-GB') : null;
@@ -83,7 +95,14 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const handleDownload = async () => {
     setDownloadLoading(true);
     try {
-      await subscriptionApi.downloadInvoicePdf(selectedRow.id);
+      const blobUrl = await fetchPdfBlobUrl(`/v1/landlord/subscriptions/${selectedRow.id}/invoice/download`);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `invoice_${selectedRow.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       notify.error(err.response?.data?.message || 'Failed to download invoice');
     } finally {
@@ -94,11 +113,32 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const handlePrint = async () => {
     setPrintLoading(true);
     try {
-      await subscriptionApi.printInvoicePdf(selectedRow.id);
+      const blobUrl = await fetchPdfBlobUrl(`/v1/landlord/subscriptions/${selectedRow.id}/invoice/download`);
+      window.open(blobUrl, '_blank');
     } catch (err) {
       notify.error(err.response?.data?.message || 'Failed to open invoice');
     } finally {
       setPrintLoading(false);
+    }
+  };
+
+  const handleExtendDueDate = async () => {
+    if (!extendDate) {
+      notify.error('Please select a date');
+      return;
+    }
+    setExtendLoading(true);
+    try {
+      await axios.put(`/v1/landlord/subscriptions/${selectedRow.id}/extend-due-date`, { due_date: extendDate });
+      notify.success(`Due date extended to ${new Date(extendDate).toLocaleDateString('en-GB')}`, 'Success');
+      setExtendModalOpen(false);
+      setExtendDate('');
+      onExtended?.();
+      onClose();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to extend due date');
+    } finally {
+      setExtendLoading(false);
     }
   };
 
@@ -264,6 +304,17 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
 
           {/* Action Buttons */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
+            {can('landlord.subscription.extend_due_date') && selectedRow?.status === 'pending' && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<CalendarIcon />}
+                onClick={() => setExtendModalOpen(true)}
+                sx={{ borderRadius: '8px' }}
+              >
+                Extend Due Date
+              </Button>
+            )}
             <Button
               variant="contained"
               size="small"
@@ -287,15 +338,64 @@ const InvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
           </Box>
         </Box>
       </ReusableModal>
+
+      <ReusableModal
+        open={extendModalOpen}
+        onClose={() => {
+          setExtendModalOpen(false);
+          setExtendDate('');
+        }}
+        title="Extend Due Date"
+        size="small"
+      >
+        <Box sx={{ p: 2 }}>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Select a new due date for this subscription.
+          </Typography>
+          <TextField
+            fullWidth
+            type="date"
+            label="New Due Date"
+            value={extendDate}
+            onChange={(e) => setExtendDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date(Date.now() + 86400000).toISOString().slice(0, 10) }}
+            helperText="Must be a future date — matches the backend's own validation."
+            size="small"
+            sx={{ mb: 3 }}
+          />
+          <Stack direction="row" justifyContent="flex-end" spacing={1}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setExtendModalOpen(false);
+                setExtendDate('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleExtendDueDate}
+              disabled={extendLoading}
+            >
+              {extendLoading ? 'Extending...' : 'Extend'}
+            </Button>
+          </Stack>
+        </Box>
+      </ReusableModal>
     </>
   );
 };
 
-InvoiceModal.propTypes = {
+SubscriptionInvoiceModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   selectedRow: PropTypes.object,
   subscriptionCharges: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onExtended: PropTypes.func,
 };
 
-export default InvoiceModal;
+export default SubscriptionInvoiceModal;

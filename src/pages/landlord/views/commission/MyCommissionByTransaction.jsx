@@ -96,7 +96,7 @@ const MyCommissionByTransaction = () => {
         </Button>
       </Box>
 
-      <Box mt={3}>
+      <Box mt={1.5}>
         {/* Four Stat Cards */}
         <MyCommissionStatCards />
 
@@ -109,9 +109,9 @@ const MyCommissionByTransaction = () => {
             overflow: 'hidden',
           }}
         >
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: 1.5 }}>
             <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}
             >
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                 Transaction Commission Details
@@ -129,7 +129,7 @@ const MyCommissionByTransaction = () => {
             </Box>
 
             {/* Filter Section */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 1.5 }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={2}>
                   <TextField

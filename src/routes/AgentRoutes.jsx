@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import LandlordProtectedRoute from '@/components/protectedroutes/LandlordProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
+import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('@/layouts/landlord/FullLayout')));
@@ -462,6 +463,6 @@ const AgentRoutes = [
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
-];
+].map((route) => ({ errorElement: <RouteErrorBoundary />, ...route }));
 
 export default AgentRoutes;

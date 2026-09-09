@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Typography,
@@ -48,7 +48,10 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   );
 });
 
-const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = false }) => {
+const ManageTeamTab = forwardRef(function ManageTeamTab(
+  { accessLevel = 1, isViewingProfile = false, hideCard = false, hideAddButton = false },
+  ref,
+) {
   const theme = useTheme();
   const isLevelOne = accessLevel === 1;
   const notify = useNotification();
@@ -121,6 +124,11 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
       }
     }
   };
+
+  // Exposed so a parent (e.g. the tab-bar row in ViewAgent.jsx) can trigger
+  // "Add Team Member" from outside, instead of this component always
+  // rendering its own trigger button inline.
+  useImperativeHandle(ref, () => ({ openAddModal: handleOpenAddModal }));
 
   const handleActionClick = (e, member) => {
     setAnchorEl(e.currentTarget);
@@ -284,7 +292,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
 
   const headerContent = (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
-      {!(accessLevel === 1 && isViewingProfile) && (
+      {!hideAddButton && !(accessLevel === 1 && isViewingProfile) && (
         <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
           Add Team Member
         </Button>
@@ -902,12 +910,12 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false, hideCard = f
   }
 
   return (
-    <ParentCard title={headerContent} 
-              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+    <ParentCard title={headerContent}
+              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       {content}
     </ParentCard>
   );
-};
+});
 
 export default ManageTeamTab;

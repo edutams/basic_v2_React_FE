@@ -21,12 +21,7 @@ import {
   DialogActions,
   Snackbar,
 } from '@mui/material';
-import {
-  IconGridDots,
-  IconUserPlus,
-  IconAdjustmentsHorizontal,
-  IconChartBar,
-} from '@tabler/icons-react';
+import { IconGridDots, IconUserPlus, IconChartBar } from '@tabler/icons-react';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -50,7 +45,6 @@ import {
 } from '@/api/landlord/school/schoolApi';
 import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
-import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import TotalSchoolModal from '../TotalSchoolModal';
 
@@ -532,15 +526,30 @@ const SchoolsTab = ({
   const { can } = usePermissions();
 
   const [activeTab, setActiveTab] = useState(0);
-  const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // `schoolList`/`schoolLoading` stay unfiltered — they only feed the
+  // analytics/summary stat cards above the tabs, which need the org's true
+  // totals regardless of whatever filters are active on the tables below.
   const [prospectList, setProspectList] = useState([]);
   const [schoolList, setSchoolList] = useState([]);
   const [prospectLoading, setProspectLoading] = useState(true);
   const [schoolLoading, setSchoolLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Each sub-tab's table now queries the backend independently with its own
+  // filters, instead of all three re-deriving from one shared, unfiltered
+  // list via client-side filtering.
+  const [setupList, setSetupList] = useState([]);
+  const [setupLoading, setSetupLoading] = useState(true);
+  const [approvedList, setApprovedList] = useState([]);
+  const [approvedLoading, setApprovedLoading] = useState(true);
+
+  const EMPTY_SCHOOL_FILTERS = { search: '', status: '', date_from: '', date_to: '' };
+  const [prospectFilters, setProspectFilters] = useState(EMPTY_SCHOOL_FILTERS);
+  const [setupFilters, setSetupFilters] = useState(EMPTY_SCHOOL_FILTERS);
+  const [approvedFilters, setApprovedFilters] = useState(EMPTY_SCHOOL_FILTERS);
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
@@ -558,9 +567,6 @@ const SchoolsTab = ({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileSchool, setProfileSchool] = useState(null);
 
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
-
   const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
   const [gatewaySchool, setGatewaySchool] = useState(null);
 
@@ -576,24 +582,6 @@ const SchoolsTab = ({
   // Analytics state for TotalSchoolModal
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const schoolFilterDefs = [
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'pending', label: 'Pending' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-    { key: 'name', label: 'School Name', type: 'text', placeholder: 'Filter by name…' },
-    { key: 'date_from', label: 'Submitted From', type: 'date' },
-    { key: 'date_to', label: 'Submitted To', type: 'date' },
-  ];
-
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
@@ -614,10 +602,12 @@ const SchoolsTab = ({
     }
   };
 
-  const fetchProspects = useCallback(async () => {
+  // Applications Review's own filtered fetch — search/status/date range are
+  // sent to the backend, never filtered client-side.
+  const fetchProspects = useCallback(async (filters = prospectFilters) => {
     setProspectLoading(true);
     try {
-      const data = await getProspectiveTenants();
+      const data = await getProspectiveTenants(filters);
       const all = Array.isArray(data) ? data : [];
       setProspectList(
         organizationId
@@ -629,8 +619,9 @@ const SchoolsTab = ({
     } finally {
       setProspectLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, prospectFilters]);
 
+  // Unfiltered — only feeds the analytics/summary stat cards above the tabs.
   const fetchSchools = useCallback(async () => {
     setSchoolLoading(true);
     try {
@@ -648,13 +639,71 @@ const SchoolsTab = ({
     }
   }, [organizationId]);
 
+  // Setup Approvals' own filtered fetch — always scoped server-side to
+  // tenants that haven't finished onboarding approval yet.
+  const fetchSetupSchools = useCallback(async (filters = setupFilters) => {
+    setSetupLoading(true);
+    try {
+      const data = await getSchools({ ...filters, exclude_onboarding_status: 'approved' });
+      const all = Array.isArray(data) ? data : [];
+      setSetupList(
+        organizationId
+          ? all.filter((s) => String(s.organization_id) === String(organizationId))
+          : all,
+      );
+    } catch (err) {
+      notify(err?.message || 'Failed to fetch schools', 'error');
+    } finally {
+      setSetupLoading(false);
+    }
+  }, [organizationId, setupFilters]);
+
+  // Approved Schools' own filtered fetch — always scoped server-side to
+  // onboarding-approved tenants.
+  const fetchApprovedSchools = useCallback(async (filters = approvedFilters) => {
+    setApprovedLoading(true);
+    try {
+      const data = await getSchools({ ...filters, onboarding_status: 'approved' });
+      const all = Array.isArray(data) ? data : [];
+      setApprovedList(
+        organizationId
+          ? all.filter((s) => String(s.organization_id) === String(organizationId))
+          : all,
+      );
+    } catch (err) {
+      notify(err?.message || 'Failed to fetch schools', 'error');
+    } finally {
+      setApprovedLoading(false);
+    }
+  }, [organizationId, approvedFilters]);
+
+  const handleProspectFilterApply = (filters) => {
+    setProspectFilters(filters);
+    fetchProspects(filters);
+  };
+  const handleSetupFilterApply = (filters) => {
+    setSetupFilters(filters);
+    fetchSetupSchools(filters);
+  };
+  const handleApprovedFilterApply = (filters) => {
+    setApprovedFilters(filters);
+    fetchApprovedSchools(filters);
+  };
+
+  // The unfiltered summary fetch always runs — the stat cards above the tabs
+  // need the org's true totals regardless of which tab is open.
   useEffect(() => {
-    // Refetch on every tab switch too — Applications Review, Setup Approvals
-    // and Approved Schools all read from these same two lists, and without
-    // `activeTab` here switching tabs showed stale data with no skeleton.
-    fetchProspects();
     fetchSchools();
-  }, [fetchProspects, fetchSchools, activeTab]);
+  }, [fetchSchools]);
+
+  // Each sub-tab now queries the backend independently, so only the tab
+  // that's actually visible needs to (re)fetch on mount / tab switch.
+  useEffect(() => {
+    if (activeTab === 0) fetchProspects();
+    else if (activeTab === 1) fetchSetupSchools();
+    else if (activeTab === 2) fetchApprovedSchools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Fetch analytics for TotalSchoolModal
   useEffect(() => {
@@ -673,26 +722,21 @@ const SchoolsTab = ({
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleFilterApply = (v) => {
-    setActiveFilters(v);
-    setPage(0);
-  };
   const handleApplicationStatusChange = () => {
     // Increment refresh key to trigger fresh analytics fetch
     setAnalyticsRefreshKey((prev) => prev + 1);
     if (handleRefresh) handleRefresh();
-  };
-  const handleFilterReset = () => {
-    setActiveFilters({});
-    setPage(0);
   };
 
   const handleApprove = async (id) => {
     setActionLoading(true);
     try {
       await approveProspectiveTenant(id);
+      // The approved application just became a real tenant — it now shows
+      // up in Setup Approvals (pending onboarding), not the applications list.
       await fetchProspects();
       await fetchSchools();
+      await fetchSetupSchools();
       setReviewOpen(false);
       handleApplicationStatusChange(); // Trigger analytics refresh
       notify('School approved and provisioned successfully');
@@ -730,7 +774,11 @@ const SchoolsTab = ({
 
       notify(`School successfully ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
 
+      // The status change could affect whichever of the two tables' status
+      // filter is currently applied, so refresh both alongside the summary.
       await fetchSchools();
+      await fetchSetupSchools();
+      await fetchApprovedSchools();
       await fetchProspects();
       setOpenDeactivateDialog(false);
       setSchoolToDeactivate(null);
@@ -752,7 +800,11 @@ const SchoolsTab = ({
     try {
       await approveSchoolOnboarding(schoolToApproveOnboarding.id);
       notify('Onboarding approved successfully', 'success');
-      await fetchSchools(); // Refresh list
+      // This moves the row from Setup Approvals to Approved Schools — both
+      // tables need refreshing, plus the unfiltered summary counts.
+      await fetchSchools();
+      await fetchSetupSchools();
+      await fetchApprovedSchools();
       setOpenApproveOnboardingDialog(false);
       setSchoolToApproveOnboarding(null);
     } catch (err) {
@@ -784,12 +836,6 @@ const SchoolsTab = ({
   };
 
   // ── Derived / summary ─────────────────────────────────────────────────────
-
-  const pendingProspects = prospectList.filter((p) => p.status === 'pending');
-
-  const setupPendingCount = schoolList.filter((s) => s.onboarding_status !== 'approved').length;
-
-  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
   const getSchoolType = (s) => {
     const raw = s.raw || s;
@@ -831,7 +877,7 @@ const SchoolsTab = ({
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
   const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
 
-  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, nameValue, activeFilters, setFilterDrawerOpen, activeFilterCount, setOpenAddModal, can };
+  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, setOpenAddModal, can };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -1117,7 +1163,6 @@ const SchoolsTab = ({
             onChange={(_, v) => {
               setActiveTab(v);
               setPage(0);
-              setNameValue('');
             }}
             variant="scrollable"
             scrollButtons="auto"
@@ -1162,6 +1207,8 @@ const SchoolsTab = ({
               {...sharedTabProps}
               prospectList={prospectList}
               prospectLoading={prospectLoading}
+              filters={prospectFilters}
+              onApplyFilters={handleProspectFilterApply}
               onReview={(row) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
@@ -1172,9 +1219,11 @@ const SchoolsTab = ({
           {activeTab === 1 && (
             <SetupApprovals
               {...sharedTabProps}
-              schoolList={schoolList}
-              schoolLoading={schoolLoading}
+              schoolList={setupList}
+              schoolLoading={setupLoading}
               prospectLoading={prospectLoading}
+              filters={setupFilters}
+              onApplyFilters={handleSetupFilterApply}
               onReview={(row) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
@@ -1186,8 +1235,10 @@ const SchoolsTab = ({
           {activeTab === 2 && (
             <ApprovedSchoolsTab
               {...sharedTabProps}
-              schoolList={schoolList}
-              schoolLoading={schoolLoading}
+              schoolList={approvedList}
+              schoolLoading={approvedLoading}
+              filters={approvedFilters}
+              onApplyFilters={handleApprovedFilterApply}
               onViewProfile={handleViewProfile}
               onApproveOnboarding={handleApproveOnboarding}
               onEdit={handleEdit}
@@ -1249,6 +1300,8 @@ const SchoolsTab = ({
               setOpenEditModal(false);
               fetchProspects();
               fetchSchools();
+              fetchSetupSchools();
+              fetchApprovedSchools();
             }}
             onCancel={() => setOpenEditModal(false)}
             useProspective={isEditingProspective}
@@ -1289,15 +1342,6 @@ const SchoolsTab = ({
           message={`Are you sure you want to approve onboarding for "${schoolToApproveOnboarding?.tenant_name}"? This will mark the school setup as complete.`}
           confirmText="Approve Onboarding"
           severity="success"
-        />
-
-        <FilterSideDrawer
-          open={filterDrawerOpen}
-          onClose={() => setFilterDrawerOpen(false)}
-          filters={schoolFilterDefs}
-          title="Filter Schools"
-          onApply={handleFilterApply}
-          onReset={handleFilterReset}
         />
 
         <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} />

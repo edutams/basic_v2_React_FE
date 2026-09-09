@@ -1,5 +1,16 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Box, Tab, Grid, useTheme, Skeleton, Typography } from '@mui/material';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import {
+  Box,
+  Tab,
+  Grid,
+  Stack,
+  useTheme,
+  Skeleton,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
@@ -25,10 +36,53 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ParentCard from '@/components/shared/ParentCard';
 
+// Mirrors the general shape of the tab strip + OverviewTab grid (chart /
+// credit-facility+plan-distribution / recent-onboarding / two revenue
+// tables) so the page isn't just blank while `agentData` is still loading.
+const TabContentSkeleton = () => (
+  <ParentCard
+    sx={{
+      borderRadius: '12px',
+      overflow: 'hidden',
+      border: '1px solid',
+      borderColor: 'divider',
+    }}
+  >
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, py: 1.5, display: 'flex', gap: 3 }}>
+      {[...Array(4)].map((_, i) => (
+        <Skeleton key={i} variant="text" width={90} height={28} />
+      ))}
+    </Box>
+    <Box sx={{ p: 2 }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Skeleton variant="rounded" height={380} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Stack spacing={3}>
+            <Skeleton variant="rounded" height={140} sx={{ borderRadius: '14px' }} />
+            <Skeleton variant="rounded" height={220} sx={{ borderRadius: '14px' }} />
+          </Stack>
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Skeleton variant="rounded" height={380} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: '14px' }} />
+        </Grid>
+      </Grid>
+    </Box>
+  </ParentCard>
+);
+
 const ViewAgent = () => {
   const { id } = useParams();
 
   const [value, setValue] = useState('1');
+  const manageTeamRef = useRef(null);
 
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -254,7 +308,11 @@ const ViewAgent = () => {
               </Grid>
             </Grid>
 
-        {agentData ? (
+        {isLoading && !agentData ? (
+          <Box mt={3}>
+            <TabContentSkeleton />
+          </Box>
+        ) : agentData ? (
           <Box mt={3}>
             <ParentCard
               sx={{
@@ -263,15 +321,28 @@ const ViewAgent = () => {
                 overflow: 'hidden',
                 border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                '& .MuiCardContent-root': { p: 0, pt: 0 },
               }}
             >
               <TabContext value={value}>
-                <Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    pr: { xs: 1.5, sm: 2 },
+                  }}
+                >
                   <TabList
                     onChange={(_, newValue) => setValue(newValue)}
                     variant="scrollable"
                     scrollButtons="auto"
                     allowScrollButtonsMobile
+                    sx={{ borderBottom: 0 }}
                   >
                     <Tab
                       icon={<IconLayoutDashboard size={18} />}
@@ -301,6 +372,53 @@ const ViewAgent = () => {
                       value="4"
                     />
                   </TabList>
+
+                  {/* Tab-specific actions — shown only while their own tab is
+                      active, instead of living inside each tab's own content. */}
+                  {value === '1' && (
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
+                          borderRadius: '6px',
+                          bgcolor: isDark ? '#2d2d2d' : 'white',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Select
+                          size="small"
+                          value="2026"
+                          renderValue={(v) => `Year ${v}`}
+                          sx={{
+                            '& fieldset': { border: 'none' },
+                            minWidth: 120,
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: isDark ? '#fff' : '#333',
+                          }}
+                        >
+                          <MenuItem value="2026">2026</MenuItem>
+                          <MenuItem value="2025">2025</MenuItem>
+                        </Select>
+                      </Box>
+                      <Button variant="contained" size="small">
+                        Filter
+                      </Button>
+                    </Stack>
+                  )}
+
+                  {value === '4' && accessLevel !== 1 && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => manageTeamRef.current?.openAddModal()}
+                      sx={{ textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Add Team Member
+                    </Button>
+                  )}
                 </Box>
 
                 <Box>
@@ -308,7 +426,7 @@ const ViewAgent = () => {
                     <OverviewTab data={agentData} />
                   </TabPanel>
 
-                  <TabPanel value="2" sx={{ p: 3 }}>
+                  <TabPanel value="2" sx={{ p: 1.5 }}>
                     <TeamTab
                       team={agentData.team || []}
                       onAddAgent={() => setIsAddAgentModalOpen(true)}
@@ -319,7 +437,7 @@ const ViewAgent = () => {
                     />
                   </TabPanel>
 
-                  <TabPanel value="3" sx={{ p: 3 }}>
+                  <TabPanel value="3" sx={{ p: 1.5 }}>
                     <SchoolsTab
                       schools={agentData.schools || []}
                       onAddSchool={() => setIsAddSchoolModalOpen(true)}
@@ -330,11 +448,14 @@ const ViewAgent = () => {
                     />
                   </TabPanel>
 
-                  <TabPanel value="4" sx={{ p: 3 }}>
+                  <TabPanel value="4" sx={{ p: 1.5 }}>
                     <ManageTeamTab
+                      ref={manageTeamRef}
                       organizationId={id}
                       accessLevel={accessLevel}
                       isViewingProfile
+                      hideCard
+                      hideAddButton
                     />
                   </TabPanel>
                 </Box>

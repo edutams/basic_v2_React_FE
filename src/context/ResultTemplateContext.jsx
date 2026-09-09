@@ -19,7 +19,7 @@ const TEMPLATE_SAMPLES = [
 ];
 
 export const ResultTemplateProvider = ({ children }) => {
-  const [activeTemplate, setActiveTemplate] = useState('Sample 11');
+  const [activeTemplate, setActiveTemplate] = useState('Sample 1');
   const [enableCAReport, setEnableCAReport] = useState(false);
 
   const selectTemplate = useCallback((sampleName) => {

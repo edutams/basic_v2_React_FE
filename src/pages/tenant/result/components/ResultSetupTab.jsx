@@ -14,22 +14,7 @@ import SetupAffectivePsychomotorTab from '@/pages/tenant/attendance/components/S
 import SessionTermSelector from './SessionTermSelector';
 import GradeConfiguration from './GradeConfiguration';
 import PromotionSettings from './PromotionSettings';
-
-const templateSamples = [
-  { id: 1, sample: 'Sample 1', image: 'https://i.ibb.co/Pt1LngW/Template01-Screenshot.png' },
-  { id: 2, sample: 'Sample 2', image: 'https://i.ibb.co/sJFDMCj/Template02-Screenshot.png' },
-  { id: 3, sample: 'Sample 3', image: 'https://i.ibb.co/G01BBMM/Template03-Screenshot.png' },
-  { id: 4, sample: 'Sample 4', image: 'https://i.ibb.co/tbDkbP8/Template04-Screenshot.png' },
-  { id: 5, sample: 'Sample 5', image: 'https://i.ibb.co/pPv4w6N/Template05-Screenshot.png' },
-  { id: 6, sample: 'Sample 6', image: 'https://i.ibb.co/w00w4kt/Template06-Screenshot.png' },
-  { id: 7, sample: 'Sample 7', image: 'https://i.ibb.co/88vdsKW/Template07-Screenshot.png' },
-  { id: 8, sample: 'Sample 8', image: 'https://i.ibb.co/WnYdb83/Template08-Screenshot.png' },
-  { id: 9, sample: 'Sample 9', image: 'https://i.ibb.co/6bdvW2m/Template09-Screenshot.png' },
-  { id: 10, sample: 'Sample 10', image: 'https://i.ibb.co/LvHLWyW/Template10-Screenshot.png' },
-  { id: 11, sample: 'Sample 11', image: 'https://i.ibb.co/KrpPzsL/Template11-Screenshot.png' },
-  { id: 12, sample: 'Sample 12', image: 'https://i.ibb.co/1mPDkpB/Template12-Screenshot.png' },
-  { id: 13, sample: 'Sample 13', image: 'https://i.ibb.co/JmkK00t/Template13-Screenshot.png' },
-];
+import { useResultTemplate } from '@/context/ResultTemplateContext';
 
 const dummySessionTerms = [
   { id: 1, label: '2025/2026 - First Term' },
@@ -58,11 +43,10 @@ function InnerTabPanel({ children, value, index }) {
 const ResultSetupTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { activeTemplate, selectTemplate, enableCAReport, setEnableCAReport, templateSamples } = useResultTemplate();
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
-  const [activeTemplate, setActiveTemplate] = useState('Sample 1');
-  const [enableCAReport, setEnableCAReport] = useState(false);
   const [templateDivFilter, setTemplateDivFilter] = useState('');
   const [nomenclature, setNomenclature] = useState(initialNomenclature);
 
@@ -102,7 +86,7 @@ const ResultSetupTab = () => {
   };
 
   const handleTemplateSelect = (sample) => {
-    setActiveTemplate(sample);
+    selectTemplate(sample);
     showSnackbar(`Template "${sample}" selected`);
   };
 

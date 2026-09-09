@@ -71,7 +71,7 @@ const TenantProfile = () => {
 
   const firstName = displayName.split(' ')[0];
   const userEmail = displayUser?.email || displayUser?.user_id;
-  const userAvatar = displayUser?.image || user1;
+  const userAvatar = displayUser?.avatar || user1;
 
   return (
     <Box display="flex" gap={1}>

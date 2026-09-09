@@ -67,7 +67,7 @@ const UploadScoresTab = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const [allocations, setAllocations] = useState(dummyAllocations);
-  const [filter, setFilter] = useState({ session_term: '', programme: '', class_id: '', subject_id: '' });
+  const [filter, setFilter] = useState({ session_term: 1, programme: 1, class_id: 1, subject_id: 1 });
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

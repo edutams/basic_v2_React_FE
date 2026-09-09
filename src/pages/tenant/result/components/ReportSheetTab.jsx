@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Avatar, Divider,
@@ -6,6 +6,8 @@ import {
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconPrinter, IconClipboardCheck, IconArrowLeft, IconEye, IconFolder } from '@tabler/icons-react';
+import { useResultTemplate } from '@/context/ResultTemplateContext';
+import { getResultTemplate } from './templates';
 
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -63,12 +65,14 @@ const nextClassFor = (className) => {
 const ReportSheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const { getTemplateIndex } = useResultTemplate();
+  const [selectedClass, setSelectedClass] = useState(1);
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
   // view: { mode: 'list' } | { mode: 'single', student } | { mode: 'class', students }
   const [view, setView] = useState({ mode: 'list' });
+  const printRef = useRef(null);
 
   const className = dummyClasses.find(c => c.id === selectedClass)?.name || '';
   const classStudents = dummyStudents.filter(s => s.class_id === selectedClass);
@@ -77,242 +81,54 @@ const ReportSheetTab = () => {
   const activeStudent = view.mode === 'single' ? view.student : null;
   const dossierStudents = view.mode === 'class' ? (view.students || []) : [];
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Dossier</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #000; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            table { border-collapse: collapse; width: 100%; }
+            table, th, td { border: 1px solid #000; }
+            th, td { padding: 4px 8px; text-align: left; vertical-align: middle; }
+            th { font-weight: 700; }
+            img { max-width: 100%; height: auto; }
+            strong { font-weight: 700; }
+            u { text-decoration: underline; }
+            .tpl1-header-box, .tpl2-header-box { display: flex; flex-wrap: wrap; }
+            .tpl1-header-box > div, .tpl2-header-box > div { flex: 1 1 200px; }
+            .tpl1-main, .tpl2-main { display: flex; flex-wrap: wrap; }
+            .tpl1-cognitive, .tpl2-cognitive { flex: 3 1 0%; }
+            .tpl1-affective, .tpl2-right { flex: 1 1 0%; }
+            .tpl1-bottom-row, .tpl2-keys-row { display: flex; flex-wrap: wrap; }
+            .tpl1-bottom-row > div, .tpl2-keys-row > div { flex: 1 1 0%; }
+            @page { size: A4 portrait; margin: 10mm 10mm 10mm 10mm; }
+            @media print { body { margin: 0; } table { page-break-inside: auto; } tr { page-break-inside: avoid; } }
+          </style>
+        </head>
+        <body>${printContent.innerHTML}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
+  };
 
   const renderDossier = (s, term) => {
     const cls = dummyClasses.find(c => c.id === s.class_id);
-    const avg = dummyReport.subjects.length
-      ? +(Math.round((dummyReport.total_score / dummyReport.subjects.length) * 100) / 100)
-      : 0;
+    const TemplateComponent = getResultTemplate(getTemplateIndex());
     return (
-      <Box>
-        {/* ── Student Header ──────────────────────────────── */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 24 }}>
-            {s?.fname?.[0]}{s?.lname?.[0]}
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h5" fontWeight={700}>{s?.lname} {s?.fname} {s?.mname}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {s?.user_id} • {cls?.name} • {term?.label}
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="body2" color="text.secondary">Gender: <strong>{s?.sex}</strong></Typography>
-            <Typography variant="body2" color="text.secondary">No. in Class: <strong>{dummyReport.class_population}</strong></Typography>
-          </Box>
-        </Box>
-        <Divider sx={{ mb: 2 }} />
-
-        {/* ── Summary Cards ───────────────────────────────── */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h5" fontWeight={700} color="primary">{dummyReport.position}</Typography>
-              <Typography variant="caption">Position</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h5" fontWeight={700} color="primary">{avg}</Typography>
-              <Typography variant="caption">Average</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h5" fontWeight={700} color="primary">{dummyReport.total_score}/{dummyReport.subjects.length * 100}</Typography>
-              <Typography variant="caption">Total Score</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h5" fontWeight={700} color="primary">{dummyReport.class_population}</Typography>
-              <Typography variant="caption">Class Size</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* ── Subject Results Table ───────────────────────── */}
-        <Typography variant="h6" fontWeight={600} mb={1}>Cognitive Domain</Typography>
-        <TableContainer sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 3 }}>
-          <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
-            <TableHead>
-              <TableRow>
-                {['#', 'Subject', 'CA1', 'CA2', 'Exam', 'Total', 'Grade', 'Remark', 'Highest', 'Lowest', 'Position'].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align={['#', 'Subject', 'Remark'].includes(h) ? 'left' : 'center'}>
-                    {h}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dummyReport.subjects.map((s2, i) => (
-                <TableRow key={i} hover>
-                  <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
-                  <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{s2.subject_name}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.ca1}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.ca2}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.exam}</TableCell>
-                  <TableCell align="center" sx={{ ...cellBorderSx, fontWeight: 700 }}>{s2.total}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>
-                    <Chip label={s2.grade} size="small" sx={{ fontWeight: 700, color: '#fff', bgcolor: gradeColors[s2.grade] || '#6B7280' }} />
-                  </TableCell>
-                  <TableCell sx={cellBorderSx}>{s2.remark}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.highest}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.lowest}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>{s2.position}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* ── Affective & Psychomotor ─────────────────────── */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" fontWeight={600} mb={1}>Affective Domain</Typography>
-            <TableContainer sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: 400 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}>Behaviour</TableCell>
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <TableCell key={n} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">{n}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(dummyReport.affective).map(([key, val]) => (
-                    <TableRow key={key}>
-                      <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{key}</TableCell>
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <TableCell key={n} align="center" sx={cellBorderSx}>
-                          {n === val ? <Chip label="✓" size="small" color="primary" sx={{ minWidth: 24 }} /> : ''}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" fontWeight={600} mb={1}>Psychomotor Domain</Typography>
-            <TableContainer sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: 400 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}>Skill</TableCell>
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <TableCell key={n} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">{n}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(dummyReport.psychomotor).map(([key, val]) => (
-                    <TableRow key={key}>
-                      <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{key}</TableCell>
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <TableCell key={n} align="center" sx={cellBorderSx}>
-                          {n === val ? <Chip label="✓" size="small" color="primary" sx={{ minWidth: 24 }} /> : ''}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        </Grid>
-
-        {/* ── Attendance ──────────────────────────────────── */}
-        <Typography variant="h6" fontWeight={600} mb={1}>Attendance</Typography>
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 4 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h6" fontWeight={700}>{dummyReport.attendance.opened}</Typography>
-              <Typography variant="caption">Times School Opened</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 4 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h6" fontWeight={700}>{dummyReport.attendance.present}</Typography>
-              <Typography variant="caption">Times Present</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 4 }}>
-            <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-              <Typography variant="h6" fontWeight={700}>{dummyReport.attendance.absent}</Typography>
-              <Typography variant="caption">Times Absent</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* ── Comments ────────────────────────────────────── */}
-        <Divider sx={{ my: 2 }} />
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle2" color="text.secondary">Class Teacher's Comment</Typography>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, mt: 0.5 }}>
-              <Typography variant="body1">{dummyReport.teacherComment}</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle2" color="text.secondary">Head of School's Comment</Typography>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, mt: 0.5 }}>
-              <Typography variant="body1">{dummyReport.adminComment}</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* ── Promotion Status ────────────────────────────── */}
-        <Box sx={{ p: 2, bgcolor: isDark ? 'grey.900' : 'grey.50', borderRadius: 1, mb: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary">Promotion Status</Typography>
-          <Typography variant="body1" fontWeight={600}>Promoted to {nextClassFor(cls?.name)}</Typography>
-        </Box>
-
-        {/* ── Grade Scale ─────────────────────────────────── */}
-        <Typography variant="h6" fontWeight={600} mb={1}>Grade Scale</Typography>
-        <TableContainer sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 3 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}>Score Range (%)</TableCell>
-                <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">Grade</TableCell>
-                <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Remark</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {gradeScale.map((g, i) => (
-                <TableRow key={i}>
-                  <TableCell sx={cellBorderSx}>{g.range}</TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>
-                    <Chip label={g.grade} size="small" sx={{ fontWeight: 700, color: '#fff', bgcolor: gradeColors[g.grade] || '#6B7280' }} />
-                  </TableCell>
-                  <TableCell>{g.remark}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* ── Term Dates ──────────────────────────────────── */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="body2" color="text.secondary">This Term Ends: <strong>{term?.closing_date}</strong></Typography>
-          </Grid>
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="body2" color="text.secondary">Next Term Begins: <strong>{term?.resumption_date}</strong></Typography>
-          </Grid>
-        </Grid>
-
-        {/* ── Signature ───────────────────────────────────── */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-          <Box sx={{ textAlign: 'center', borderTop: '1px solid', borderColor: 'divider', pt: 1, minWidth: 200 }}>
-            <Typography variant="body2" color="text.secondary">Head of School's Signature</Typography>
-          </Box>
-        </Box>
-      </Box>
+      <TemplateComponent
+        student={s}
+        report={dummyReport}
+        sessionTerm={term}
+        className={cls?.name}
+        gradeScale={gradeScale}
+      />
     );
   };
 
@@ -320,7 +136,7 @@ const ReportSheetTab = () => {
   if (view.mode === 'single' || view.mode === 'class') {
     const students = view.mode === 'single' ? [activeStudent] : dossierStudents;
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB', width: '100%', overflow: 'hidden' }}>
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Button size="small" variant="outlined" startIcon={<IconArrowLeft size={16} />} onClick={() => setView({ mode: 'list' })}>
@@ -339,7 +155,7 @@ const ReportSheetTab = () => {
           )}
         </Box>
 
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, overflow: 'auto', width: '100%', maxWidth: '100%' }} ref={printRef}>
           {students.length > 0 ? (
             students.map((s, i) => (
               <Box key={s.id} sx={{ mb: 2, '@media print': { pageBreakAfter: 'always' } }}>

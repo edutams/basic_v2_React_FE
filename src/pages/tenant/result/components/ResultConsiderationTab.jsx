@@ -35,7 +35,7 @@ const ResultConsiderationTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [results, setResults] = useState(initialResults);
-  const [filter, setFilter] = useState({ session_term: '', programme: '', class: '', subject: '' });
+  const [filter, setFilter] = useState({ session_term: 1, programme: 1, class: 1, subject: 1 });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });

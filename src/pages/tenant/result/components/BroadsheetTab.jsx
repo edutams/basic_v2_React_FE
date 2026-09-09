@@ -84,9 +84,9 @@ const BroadsheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [activeTab, setActiveTab] = useState(0);
-  const [filters, setFilters] = useState({ session_id: '', term_id: '', programme_id: '', classId: '', perf_range: '' });
+  const [filters, setFilters] = useState({ session_id: 1, term_id: 1, programme_id: 1, classId: 1, perf_range: '' });
   const [broadsheetData, setBroadsheetData] = useState(() => generateBroadsheetData());
-  const [showData, setShowData] = useState(false);
+  const [showData, setShowData] = useState(true);
   const [showPromotionButtons, setShowPromotionButtons] = useState(false);
   const [nextClasses] = useState(['JSS 2A', 'JSS 2B', 'SS 1A', 'SS 1B', 'SS 2A']);
   const [selectedNextClass, setSelectedNextClass] = useState({});

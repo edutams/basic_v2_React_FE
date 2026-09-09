@@ -78,9 +78,9 @@ const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 const ScoreSheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState(1);
+  const [selectedSubject, setSelectedSubject] = useState(1);
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
 

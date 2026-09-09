@@ -11,7 +11,7 @@ const dummyStudent = {
 };
 
 const dummySchoolInfo = {
-  name: 'EDUTAMS COLLEGE',
+  name: 'Tai Solarin University of Education Secondary School',
   address: '123 Education Avenue, Lagos, Nigeria',
   phone: '+234 801 234 5678',
   logo: '',
@@ -36,7 +36,7 @@ const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 const CaBreakdownTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedCaType, setSelectedCaType] = useState('');
+  const [selectedCaType, setSelectedCaType] = useState(1);
 
   const student = dummyStudent;
   const caConfig = dummyCaType[selectedCaType];
@@ -67,24 +67,23 @@ const CaBreakdownTab = () => {
       </Box>
 
       {/* ── School Info Header ──────────────────────────────── */}
-      <Box sx={{ p: 3, pb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        {dummySchoolInfo.logo ? (
-          <Avatar src={dummySchoolInfo.logo} sx={{ width: 64, height: 64 }} variant="rounded" />
-        ) : (
-          <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 20 }} variant="rounded">
-            {dummySchoolInfo.name?.[0]}
-          </Avatar>
-        )}
-        <Box>
-          <Typography variant="h6" fontWeight={700} sx={{ textTransform: 'uppercase' }}>
-            {dummySchoolInfo.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Address: {dummySchoolInfo.address}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Phone: {dummySchoolInfo.phone}
-          </Typography>
+      <Box sx={{ p: 2, pb: 2, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {dummySchoolInfo.logo ? (
+            <Avatar src={dummySchoolInfo.logo} sx={{ width: 64, height: 64 }} variant="rounded" />
+          ) : (
+            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 20 }} variant="rounded">
+              {dummySchoolInfo.name?.[0]}
+            </Avatar>
+          )}
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h2" fontWeight={900} sx={{ textTransform: 'uppercase' }}>
+              {dummySchoolInfo.name}
+            </Typography>
+            <Typography variant="h6" fontWeight={800} color="text.secondary">
+              {dummySchoolInfo.address}  |  Phone: {dummySchoolInfo.phone}
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
@@ -92,17 +91,17 @@ const CaBreakdownTab = () => {
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, sm: 5 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="h6"  color="text.dark" fontWeight={800}>
               Name Of Student: <strong>{student.lname} {student.fname} {student.mname}</strong>
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="h6"  color="text.dark" fontWeight={800}>
               Student Class: <strong>{student.class_name} {student.arm_name}</strong>
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="h6" color="text.dark" fontWeight={800}>
               Student ID: <strong>{student.user_id}</strong>
             </Typography>
           </Grid>

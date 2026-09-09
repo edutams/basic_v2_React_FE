@@ -28,7 +28,7 @@ const MessagingTab = () => {
   const isDark = theme.palette.mode === 'dark';
   const [history, setHistory] = useState(initialHistory);
   const [sendDialog, setSendDialog] = useState({ open: false, channel: '' });
-  const [sendForm, setSendForm] = useState({ session_term: '', class: '' });
+  const [sendForm, setSendForm] = useState({ session_term: 1, class: 1 });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 

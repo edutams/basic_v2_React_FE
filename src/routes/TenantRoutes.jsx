@@ -4,6 +4,7 @@ import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
 import PrintReceipt from '@/pages/tenant/finance/bursary/PrintReceipt';
+import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary';
 
 const SchoolLayout = Loadable(lazy(() => import('@/layouts/tenant/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
@@ -750,6 +751,6 @@ const TenantRoutes = [
       },
     ],
   },
-];
+].map((route) => ({ errorElement: <RouteErrorBoundary />, ...route }));
 
 export default TenantRoutes;

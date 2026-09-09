@@ -21,13 +21,15 @@ import {
   Link,
   Alert,
   Button,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { IconDotsVertical, IconEye, IconEdit, IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import SearchIcon from '@mui/icons-material/Search';
+import { IconDotsVertical, IconRefresh, IconUserPlus } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { IconUserPlus } from '@tabler/icons-react';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
 import { usePermissions } from '@/context/AgentContext/permissions';
 
@@ -38,10 +40,8 @@ const ApplicationReview = ({
   setPage,
   rowsPerPage,
   setRowsPerPage,
-  nameValue,
-  activeFilters,
-  setFilterDrawerOpen,
-  activeFilterCount,
+  filters,
+  onApplyFilters,
   setOpenAddModal,
   can,
   onReview,
@@ -52,6 +52,7 @@ const ApplicationReview = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+  const [draft, setDraft] = useState(filters);
 
   const thSx = {
     fontWeight: 700,
@@ -62,35 +63,23 @@ const ApplicationReview = ({
     py: 1.5,
   };
 
-  const filter = (arr) => {
-    let result = arr;
-    if (nameValue) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-      );
-    }
-    if (activeFilters.name) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '')
-          .toLowerCase()
-          .includes(activeFilters.name.toLowerCase()),
-      );
-    }
-    if (activeFilters.status) {
-      result = result.filter((r) => r.status === activeFilters.status);
-    }
-    if (activeFilters.date_from) {
-      result = result.filter((r) => r.created_at && r.created_at >= activeFilters.date_from);
-    }
-    if (activeFilters.date_to) {
-      result = result.filter((r) => r.created_at && r.created_at <= activeFilters.date_to);
-    }
-    return result;
+  const handleFetch = () => {
+    onApplyFilters(draft);
+    setPage(0);
   };
+  const handleReset = () => {
+    const empty = { search: '', status: '', date_from: '', date_to: '' };
+    setDraft(empty);
+    onApplyFilters(empty);
+    setPage(0);
+  };
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const filtered = filter(prospectList);
+  // `prospectList` is already exactly what the backend returned for the
+  // current filters — no client-side re-filtering here, only client-side
+  // paging over that already-scoped list.
 
   if (prospectLoading) {
     return (
@@ -153,8 +142,76 @@ const ApplicationReview = ({
   return (
     <>
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" sx={{ px: 2, py: 1.5 }}>
-          
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            px: 2,
+            py: 1.5,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" flexGrow={1}>
+            <TextField
+              placeholder="Search by school name…"
+              size="small"
+              value={draft.search}
+              onChange={(e) => setDraft((p) => ({ ...p, search: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFetch();
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ flexGrow: 1, minWidth: 280 }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={draft.status}
+              onChange={(e) => setDraft((p) => ({ ...p, status: e.target.value }))}
+              sx={{ minWidth: 130 }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </TextField>
+            <TextField
+              type="date"
+              size="small"
+              label="From"
+              value={draft.date_from}
+              onChange={(e) => setDraft((p) => ({ ...p, date_from: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              type="date"
+              size="small"
+              label="To"
+              value={draft.date_to}
+              onChange={(e) => setDraft((p) => ({ ...p, date_to: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+            />
+            <Button variant="contained" size="small" startIcon={<IconRefresh size={16} />} onClick={handleFetch}>
+              Fetch
+            </Button>
+            {hasActiveFilters && (
+              <Button size="small" onClick={handleReset}>
+                Reset
+              </Button>
+            )}
+          </Box>
+
           {canPerm('landlord.school.create') && (
             <Button
               variant="contained"
@@ -170,41 +227,7 @@ const ApplicationReview = ({
               Add New School
             </Button>
           )}
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<IconAdjustmentsHorizontal />}
-            onClick={() => setFilterDrawerOpen(true)}
-            sx={{
-              textTransform: 'none',
-              borderRadius: 2,
-              px: 2.5,
-              borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-              fontWeight: activeFilterCount > 0 ? 700 : 400,
-              '&:hover': { borderColor: 'primary.main' },
-            }}
-          >
-            Filters
-            {activeFilterCount > 0 && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 1,
-                  px: 0.8,
-                  py: 0.1,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  lineHeight: 1.6,
-                }}
-              >
-                {activeFilterCount}
-              </Box>
-            )}
-          </Button>
-        </Stack>
+        </Box>
         <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
@@ -220,8 +243,8 @@ const ApplicationReview = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginate(filtered).length > 0 ? (
-              paginate(filtered).map((row, i) => {
+            {paginate(prospectList).length > 0 ? (
+              paginate(prospectList).map((row, i) => {
                 const spa = getSpaContact(row);
                 const agent = row.agent;
                 const domainHost = agent?.organization_domain
@@ -339,7 +362,7 @@ const ApplicationReview = ({
             <TableRow>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
-                count={filtered.length}
+                count={prospectList.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={(_, p) => setPage(p)}

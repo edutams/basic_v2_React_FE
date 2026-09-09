@@ -415,7 +415,7 @@ const TeamTab = ({
       </Stack>
 
       {/* Filters */}
-      <Grid container spacing={2} mb={3} alignItems="center">
+      <Grid container spacing={2} mb={1.5} alignItems="center">
         <Grid size={{ xs: 12, md: 4 }}>
           <TextField
             fullWidth

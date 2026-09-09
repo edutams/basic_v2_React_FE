@@ -144,7 +144,7 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
       </div>
 
       {/* ── Comments + Promotion Status ────────────────── */}
-      <div style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 12, border: '2px solid #000', padding: '8px 12px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ flex: '2 1 0%', minWidth: 0 }}>
             <p><strong>Class Teacher's Comment:</strong> {report.teacherComment}</p>

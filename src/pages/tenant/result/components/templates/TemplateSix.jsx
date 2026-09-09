@@ -161,7 +161,7 @@ const TemplateSix = ({ student, report, sessionTerm, className, gradeScale }) =>
           </div>
 
           {/* Comments */}
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, border: '2px solid #000', padding: '8px 12px' }}>
             <p><strong>Class Teacher's Comment:</strong> {report.teacherComment}</p>
             <p style={{ marginTop: 8 }}><strong>Name & Sign:</strong></p>
             <p style={{ marginTop: 8 }}><strong>Principal's Comment:</strong> {report.adminComment}</p>

@@ -124,13 +124,13 @@ const TemplateSeven = ({ student, report, sessionTerm, className, gradeScale }) 
           </div>
 
           {/* Comments */}
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, border: '2px solid #000', padding: '8px 12px' }}>
             <p><strong>Class teacher's Comment:</strong> {report.teacherComment}</p>
             <p style={{ marginTop: 8 }}><strong>Head of School's Comment:</strong> {report.adminComment}</p>
           </div>
 
           {/* Promotion Status */}
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 8, border: '2px solid #000', padding: '8px 12px' }}>
             <u><strong>Promotion Status</strong></u>
             <p>Promoted to {className}</p>
           </div>

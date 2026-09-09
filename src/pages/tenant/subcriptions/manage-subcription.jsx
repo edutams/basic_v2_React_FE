@@ -74,7 +74,11 @@ const ManageSubscriptionList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [activeSessionTerm, setActiveSessionTerm] = useState(null);
-  const [subscriptionCharges, setSubscriptionCharges] = useState('10');
+  // Real value always comes from getSubscriptionCharges() below (itself
+  // reading SUBSCRIPTION_CHARGES from .env) — this is just a neutral
+  // placeholder for the brief window before that resolves, not a guess at
+  // today's configured amount (which would go stale the moment .env changes).
+  const [subscriptionCharges, setSubscriptionCharges] = useState('0');
   const notify = useNotification();
   const { refreshSubscriptionStatus } = useContext(TenantAuthContext);
 
@@ -682,10 +686,6 @@ const ManageSubscriptionList = () => {
         onClose={() => setInvoiceModalOpen(false)}
         selectedRow={selectedRow}
         subscriptionCharges={subscriptionCharges}
-        onExtended={() => {
-          fetchSubscriptions();
-          refreshSubscriptionStatus?.();
-        }}
       />
       <SubscriptionPaymentModal
         open={paymentModalOpen}

@@ -23,19 +23,18 @@ const MyCommissionStatCards = () => {
   const s3 = schemeMap[3];
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 1.5 }}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
           gap: 2,
-          mb: 3,
         }}
       >
         {/* GUPSA Ogun State Card */}
         <Paper
           sx={{
-            p: '14px',
+            p: '10px',
             borderRadius: '14px',
             border: '1px solid',
             borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
@@ -49,7 +48,7 @@ const MyCommissionStatCards = () => {
             },
           }}
         >
-          <Typography variant="h6" fontWeight={600} mb={2}>
+          <Typography variant="h6" fontWeight={600} mb={1}>
             GUPSA Ogun State
           </Typography>
 
@@ -140,7 +139,7 @@ const MyCommissionStatCards = () => {
         {/* Total Transaction Card */}
         <Paper
           sx={{
-            p: '14px',
+            p: '10px',
             borderRadius: '14px',
             border: '1px solid',
             borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
@@ -159,7 +158,7 @@ const MyCommissionStatCards = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 1,
             }}
           >
             <Typography variant="h6" fontWeight={600}>
@@ -193,12 +192,22 @@ const MyCommissionStatCards = () => {
             }}
           >
             <Box>
-              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s1.color }}>
+              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s1.color, mb: 0.5 }}>
                 Inflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: isDarkMode ? '#fff' : s1.color }}>
-                0
-              </Typography>
+              <Box
+                sx={{
+                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s1.bg,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 0.5,
+                  display: 'inline-block',
+                }}
+              >
+                <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : s1.color }}>
+                  0
+                </Typography>
+              </Box>
             </Box>
 
             <Box
@@ -210,12 +219,22 @@ const MyCommissionStatCards = () => {
             />
 
             <Box>
-              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s3.color }}>
+              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s3.color, mb: 0.5 }}>
                 Outflow
               </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: isDarkMode ? '#fff' : s3.color }}>
-                0
-              </Typography>
+              <Box
+                sx={{
+                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 0.5,
+                  display: 'inline-block',
+                }}
+              >
+                <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : s3.color }}>
+                  0
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Paper>
@@ -223,7 +242,7 @@ const MyCommissionStatCards = () => {
         {/* Total Sub Orgs Card */}
         <Paper
           sx={{
-            p: '14px',
+            p: '10px',
             borderRadius: '14px',
             border: '1px solid',
             borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
@@ -242,7 +261,7 @@ const MyCommissionStatCards = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 1,
             }}
           >
             <Typography variant="h6" fontWeight={600}>
@@ -274,7 +293,7 @@ const MyCommissionStatCards = () => {
               py: 1,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 2,
             }}
           >
             <Typography
@@ -343,7 +362,7 @@ const MyCommissionStatCards = () => {
         {/* Total School Card */}
         <Paper
           sx={{
-            p: '14px',
+            p: '10px',
             borderRadius: '14px',
             border: '1px solid',
             borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
@@ -362,7 +381,7 @@ const MyCommissionStatCards = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 1,
             }}
           >
             <Typography variant="h6" fontWeight={600}>
@@ -394,7 +413,7 @@ const MyCommissionStatCards = () => {
               py: 1,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 4,
+              mb: 2,
             }}
           >
             <Typography

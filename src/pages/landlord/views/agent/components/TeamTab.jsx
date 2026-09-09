@@ -89,7 +89,7 @@ const ActionMenuCell = ({
             <MenuItem
               onClick={() => {
                 handleClose();
-                navigate(`/agent/view/${agent.id}`);
+                navigate(`/view/${agent.id}`);
               }}
             >
               View Profile

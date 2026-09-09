@@ -35,13 +35,13 @@ const AccessAnalysis = () => {
 
       <Box data-tour="acl-analysis-content">
         {subActiveTab === 'Role Based' && (
-          <Box sx={{ p: 2 }} data-tour="acl-analysis-role">
+          <Box sx={{ pt: 2 }} data-tour="acl-analysis-role">
             <RoleBasedAcess />
           </Box>
         )}
 
         {subActiveTab === 'Permission Based' && (
-          <Box sx={{ p: 2 }} data-tour="acl-analysis-permission">
+          <Box sx={{ pt: 2 }} data-tour="acl-analysis-permission">
             <PermissionBased />
           </Box>
         )}

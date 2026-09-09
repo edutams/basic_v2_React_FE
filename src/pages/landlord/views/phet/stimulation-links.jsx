@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,6 @@ import {
   TableCell,
   TableFooter,
   TablePagination,
-  Paper,
   Chip,
   IconButton,
   Menu,
@@ -22,13 +21,17 @@ import {
   Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconRefresh, IconLink, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
+import MiniStat from '@/components/shared/stats/MiniStat';
 import StimulationLinkModal from '@/pages/landlord/phet/stimulation-links/StimulationLinkModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import useNotification from '@/hooks/useNotification';
 import phetApi from '@/api/landlord/phet/phetApi';
+
+const EMPTY_STATS = { total: 0, active: 0, inactive: 0 };
 
 const StimulationLinks = () => {
   return (
@@ -48,8 +51,10 @@ const StimulationLinks = () => {
 
 const ManagePhETLinks = () => {
   const [rows, setRows] = useState([]);
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDraft, setSearchDraft] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -60,36 +65,44 @@ const ManagePhETLinks = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const notify = useNotification();
 
-  // Fetch simulation links from API
-  const fetchSimulationLinks = async () => {
+  // Search is sent to the backend, never filtered client-side — `rows` here
+  // is already exactly what should render for the current search term.
+  const fetchSimulationLinks = useCallback(async (search = '') => {
     try {
       setLoading(true);
-      const data = await phetApi.getSimulationLinks({ search: searchTerm });
-      setRows(data);
+      const { data, stats: fetchedStats } = await phetApi.getSimulationLinks({ search });
+      setRows(data || []);
+      setStats(fetchedStats || EMPTY_STATS);
     } catch (error) {
       // console.error('Error fetching simulation links:', error);
       notify.error('Failed to fetch simulation links');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSimulationLinks();
-  }, [searchTerm]);
+    fetchSimulationLinks(activeSearch);
+  }, [fetchSimulationLinks, activeSearch]);
 
-  const filteredRows = rows.filter((row) =>
-    (row.sub_topic || '').toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  useEffect(() => {
+    setPage(0);
+  }, [rows]);
 
-  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const clearFilters = () => {
-    setSearchTerm('');
+  const handleFetch = () => {
+    setActiveSearch(searchDraft.trim());
     setPage(0);
   };
 
-  const hasActiveFilters = searchTerm !== '';
+  const clearFilters = () => {
+    setSearchDraft('');
+    setActiveSearch('');
+    setPage(0);
+  };
+
+  const hasActiveFilters = activeSearch !== '';
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -122,24 +135,25 @@ const ManagePhETLinks = () => {
   const handleModalSubmit = async (data) => {
     try {
       if (modalType === 'create') {
-        const newLink = await phetApi.createSimulationLink({
+        await phetApi.createSimulationLink({
           topic_id: data.topic_id,
           sub_topic: data.sub_topic,
           link: data.link,
           status: data.status,
         });
-        setRows((prev) => [newLink, ...prev]);
         notify.success('Stimulation link added successfully', 'Success');
       } else if (modalType === 'update') {
-        const updatedLink = await phetApi.updateSimulationLink(data.id, {
+        await phetApi.updateSimulationLink(data.id, {
           topic_id: data.topic_id,
           sub_topic: data.sub_topic,
           link: data.link,
           status: data.status,
         });
-        setRows((prev) => prev.map((row) => (row.id === data.id ? updatedLink : row)));
         notify.success('Stimulation link updated successfully', 'Success');
       }
+      // Re-fetch instead of splicing the row in locally — keeps the list in
+      // the backend's sort order and the stat cards' totals in sync.
+      fetchSimulationLinks(activeSearch);
       setModalOpen(false);
     } catch (error) {
       // console.error('Error submitting simulation link:', error);
@@ -150,9 +164,9 @@ const ManagePhETLinks = () => {
   const handleDeleteConfirm = async () => {
     try {
       await phetApi.deleteSimulationLink(rowToDelete.id);
-      setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
       setConfirmOpen(false);
       setRowToDelete(null);
+      fetchSimulationLinks(activeSearch);
       notify.success('Stimulation link deleted successfully', 'Success');
     } catch (error) {
       // console.error('Error deleting simulation link:', error);
@@ -162,25 +176,50 @@ const ManagePhETLinks = () => {
 
   return (
     <>
+      {/* Page-level stats — sits above the card, same as Gateway/Calendar/Subscriptions */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap', mb: 2 }}>
+        <MiniStat label="Total Links" value={stats.total} loading={loading} icon={IconLink} />
+        <MiniStat
+          label="Active"
+          value={stats.active}
+          loading={loading}
+          color="success.main"
+          icon={IconCircleCheck}
+        />
+        <MiniStat
+          label="Inactive"
+          value={stats.inactive}
+          loading={loading}
+          color="error.main"
+          icon={IconCircleX}
+        />
+      </Box>
+
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
             <Typography variant="h5">Manage Simulation Links</Typography>
-            <Button variant="contained" size="small" color="primary" onClick={handleAddClick} sx={{ minWidth: 120, fontSize: { xs: '0.95rem', md: '1rem' }, }}>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleAddClick}
+              sx={{ minWidth: 120, fontSize: { xs: '0.95rem', md: '1rem' } }}
+            >
               Add New Link
             </Button>
           </Box>
         }
-        sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+        sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
       >
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ p: 1.5, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
               placeholder="Search by sub-topic..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(0);
+              value={searchDraft}
+              onChange={(e) => setSearchDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFetch();
               }}
               slotProps={{
                 input: {
@@ -191,18 +230,21 @@ const ManagePhETLinks = () => {
                   ),
                 },
               }}
-              size='small'
-            // sx={{ flexGrow: 1, minWidth: 200 }}
+              size="small"
+              sx={{ width: { xs: '100%', sm: 420 } }}
             />
+            <Button variant="outlined" size="small" onClick={handleFetch} startIcon={<IconRefresh size={16} />}>
+              Fetch
+            </Button>
             {hasActiveFilters && (
-              <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+              <Button size="small" onClick={clearFilters}>
                 Clear Filters
               </Button>
             )}
           </Box>
 
             <TableContainer>
-              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
@@ -286,7 +328,7 @@ const ManagePhETLinks = () => {
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
                       colSpan={7}
-                      count={filteredRows.length}
+                      count={rows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}

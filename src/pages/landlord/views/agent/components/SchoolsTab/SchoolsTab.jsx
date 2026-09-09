@@ -68,6 +68,7 @@ import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from '../PlanDistributionModal';
 import ManageSchoolGateway from '../ManageSchoolGateway';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
+import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 
 // ── PersonCard ────────────────────────────────────────────────────────────────
 
@@ -512,7 +513,6 @@ const SchoolsTab = ({
   refreshKey,
   isViewingProfile = false,
   isDashboard = false,
-  loginActivities = [],
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -570,7 +570,6 @@ const SchoolsTab = ({
 
   // Analytics modals
   const [openPlanModal, setOpenPlanModal] = useState(false);
-  const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
 
@@ -650,9 +649,12 @@ const SchoolsTab = ({
   }, [organizationId]);
 
   useEffect(() => {
+    // Refetch on every tab switch too — Applications Review, Setup Approvals
+    // and Approved Schools all read from these same two lists, and without
+    // `activeTab` here switching tabs showed stale data with no skeleton.
     fetchProspects();
     fetchSchools();
-  }, [fetchProspects, fetchSchools]);
+  }, [fetchProspects, fetchSchools, activeTab]);
 
   // Fetch analytics for TotalSchoolModal
   useEffect(() => {
@@ -902,7 +904,7 @@ const SchoolsTab = ({
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 5,
+                    mb: 2,
                   }}
                 >
                   <Typography
@@ -912,7 +914,7 @@ const SchoolsTab = ({
                       color: isDark ? '#ffffff' : s0.color,
                     }}
                   >
-                    {schoolSummary.total}
+                    {analyticsLoading ? <Skeleton variant="text" width={30} /> : schoolSummary.total}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -920,7 +922,9 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Approved
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.active}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.active}
+                    </Typography>
                   </Box>
                   <Divider
                     orientation="vertical"
@@ -931,7 +935,9 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Pending
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.pending}
+                    </Typography>
                   </Box>
                   <Divider
                     orientation="vertical"
@@ -942,7 +948,9 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Rejected
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.rejected}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.rejected}
+                    </Typography>
                   </Box>
                 </Box>
               </Paper>
@@ -998,7 +1006,7 @@ const SchoolsTab = ({
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 5,
+                    mb: 2,
                   }}
                 >
                   <Typography
@@ -1008,7 +1016,11 @@ const SchoolsTab = ({
                       color: isDark ? '#ffffff' : s1.color,
                     }}
                   >
-                    {schoolSummary.subscriptions}
+                    {analyticsLoading ? (
+                      <Skeleton variant="text" width={30} />
+                    ) : (
+                      schoolSummary.subscriptions
+                    )}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1016,7 +1028,9 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Primary
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.primary}
+                    </Typography>
                   </Box>
                   <Divider
                     orientation="vertical"
@@ -1027,88 +1041,15 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Secondary
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.secondary}
+                    </Typography>
                   </Box>
                 </Box>
               </Paper>
 
               {/* Login Activities */}
-              <Paper
-                elevation={0}
-                sx={{
-                   p:"10px !important",
-                  borderRadius: '14px',
-                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    borderColor: '#94a3b8',
-                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 5,
-                  }}
-                >
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Login Activities
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => setOpenLoginModal(true)}
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '8px',
-                      bgcolor: s2.bg,
-                      color: s2.color,
-                      '&:hover': { opacity: 0.85 },
-                    }}
-                  >
-                    <IconChartBar size={18} color={s2.color} />
-                  </IconButton>
-                </Box>
-                <Box sx={{ pb: 0 }}>
-                  {(loginActivities && loginActivities.length > 0
-                    ? loginActivities
-                    : [
-                        { label: 'Staffs', value: 0 },
-                        { label: 'Agents', value: 0 },
-                        { label: 'Total', value: 0 },
-                      ]
-                  ).map((activity) => (
-                    <Box
-                      key={activity.label}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        py: 0.5,
-                        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {activity.label}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        sx={{ color: isDark ? '#ffffff' : s2.color }}
-                      >
-                        {activity.value}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Paper>
+              <LoginActivitiesCard />
 
               {/* Plan Distribution */}
               <Paper

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -20,7 +19,7 @@ import {
   TextField,
   Skeleton,
   InputAdornment,
-  Alert
+  Alert,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -29,10 +28,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconRefresh, IconListDetails, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
+import MiniStat from '@/components/shared/stats/MiniStat';
 
-const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false, onFetch }) => {
+const TopicPanel = ({ selectedSubject, topics = [], stats, onAction, isLoading = false, onFetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -60,37 +60,78 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
     onFetch?.(selectedSubject?.id, searchTerm);
   };
 
-  const filteredTopics = topics.filter((topic) =>
-    topic.topic.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // `topics` is already exactly what the backend returned for the currently
+  // selected subject + search term — no client-side re-filtering here, only
+  // client-side paging over that already-scoped list.
+  const paginatedTopics = topics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const paginatedTopics = filteredTopics.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+  // Reset to page 1 whenever the underlying list changes (new search results,
+  // switching subject, a row added/removed) so pagination never points past
+  // the end.
+  useEffect(() => {
+    setPage(0);
+  }, [topics]);
+
+  // Search is subject-scoped, so clear any leftover term when the selected
+  // subject changes — otherwise switching subjects silently keeps filtering
+  // by a search term that belonged to the previous one.
+  useEffect(() => {
+    setSearchTerm('');
+  }, [selectedSubject?.id]);
 
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-          <Typography variant="h5" sx={{ minWidth: 0 }}>
-            {selectedSubject ? (
-              <>
-                Manage Topics in{' '}
-                <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {selectedSubject.subject_name}
-                </Box>
-              </>
-            ) : (
-              'Manage Topics'
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          {selectedSubject && stats && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <MiniStat label="Total Topics" value={stats.total} loading={isLoading} icon={IconListDetails} />
+              <MiniStat
+                label="Active"
+                value={stats.active}
+                loading={isLoading}
+                color="success.main"
+                icon={IconCircleCheck}
+              />
+              <MiniStat
+                label="Inactive"
+                value={stats.inactive}
+                loading={isLoading}
+                color="error.main"
+                icon={IconCircleX}
+              />
+            </Box>
+          )}
+
+          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap">
+            <Typography variant="h5" sx={{ minWidth: 0 }}>
+              {selectedSubject ? (
+                <>
+                  Manage Topics in{' '}
+                  <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {selectedSubject.subject_name}
+                  </Box>
+                </>
+              ) : (
+                'Manage Topics'
+              )}
+            </Typography>
+            {selectedSubject && (
+              <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                Add New Topic
+              </Button>
             )}
-          </Typography>
+          </Box>
+
           {selectedSubject && (
-            <Box display="flex" alignItems="center" gap={1} sx={{ ml: 'auto' }}>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
               <TextField
                 placeholder="Search topics..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleFetch();
+                }}
                 size="small"
                 sx={{ minWidth: 200 }}
                 slotProps={{
@@ -108,15 +149,11 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
                   Fetch
                 </Button>
               )}
-              <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-                Add New Topic
-              </Button>
             </Box>
           )}
         </Box>
       }
-       sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
-
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       {!selectedSubject ? (
         <Box>
@@ -127,7 +164,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
       ) : isLoading ? (
         <Box sx={{ p: 0 }}>
           <TableContainer>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   {['S/N', 'Topic', 'Status', 'Action'].map((h) => (
@@ -151,7 +188,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
       ) : (
         <Box sx={{ p: 0 }}>
          <TableContainer>
-              <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -198,11 +235,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
                               <EditIcon fontSize="small" sx={{ mr: 1 }} />
                               Edit Topic
                             </MenuItem>
-                            {/* <MenuItem onClick={() =>
-                              handleActionClick(t.status === 'active' ? 'deactivate' : 'activate')
-                            }>
-                              {t.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </MenuItem> */}
                             <MenuItem onClick={() => handleActionClick('delete')} sx={{ color: 'error.main' }}>
                               <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                               Delete Topic
@@ -213,7 +245,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">
+                      <TableCell colSpan={4} align="center">
                         <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
                           <Typography variant="body2" color="textSecondary">
                             No topics found
@@ -227,8 +259,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      colSpan={3}
-                      count={filteredTopics.length}
+                      colSpan={4}
+                      count={topics.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}
@@ -250,8 +282,14 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false,
 TopicPanel.propTypes = {
   selectedSubject: PropTypes.object,
   topics: PropTypes.array,
+  stats: PropTypes.shape({
+    total: PropTypes.number,
+    active: PropTypes.number,
+    inactive: PropTypes.number,
+  }),
   onAction: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  onFetch: PropTypes.func,
 };
 
 export default TopicPanel;

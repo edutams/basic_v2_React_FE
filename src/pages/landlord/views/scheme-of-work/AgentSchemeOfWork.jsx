@@ -70,7 +70,7 @@ import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 
 const BCrumb = [
   {
-    to: '/agent',
+    to: '/dashboard',
     title: 'Agent Dashboard',
   },
   { title: 'Scheme Of Work' },
@@ -606,7 +606,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       {!isTab && <Breadcrumb title="Scheme Of Work" items={BCrumb} />}
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard
@@ -839,7 +839,17 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.length > 0 ? (
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j} sx={{ border: '1px solid #dee2e6' }}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const isFirstInWeek = idx === 0 || row.week !== paginatedRows[idx - 1].week;
                   const isFirstInTopic =
@@ -1003,15 +1013,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    {loading ? (
-                      [...Array(3)].map((_, i) => (
-                        <Skeleton key={i} variant="text" height={40} sx={{ mb: 0.5, borderRadius: 1 }} />
-                      ))
-                    ) : (
-                      <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                        No records found. Select filters to begin.
-                      </Alert>
-                    )}
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                      No records found. Select filters to begin.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

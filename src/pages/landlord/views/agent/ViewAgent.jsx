@@ -213,8 +213,8 @@ const ViewAgent = () => {
     [agentData?.stats, analytics],
   );
   const BCrumb = [
-    { to: '/agent', title: 'Home' },
-    { to: '/agent/organization', title: 'Organization' },
+    { to: '/dashboard', title: 'Home' },
+    { to: '/organization', title: 'Organization' },
     { title: 'View Profile' },
   ];
 

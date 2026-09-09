@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
-  Typography,
   TextField,
   TableContainer,
   Table,
@@ -12,7 +11,6 @@ import {
   TableBody,
   TableFooter,
   TablePagination,
-  Paper,
   Chip,
   Button,
   IconButton,
@@ -20,33 +18,44 @@ import {
   MenuItem,
   InputAdornment,
   Alert,
-  Skeleton
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
-  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { IconList, IconRefresh } from '@tabler/icons-react';
+import { IconList, IconRefresh, IconBooks, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
+import MiniStat from '@/components/shared/stats/MiniStat';
 
-const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction, loading = false, onFetch }) => {
+const SubjectTable = ({
+  subjects = [],
+  stats,
+  onSelect,
+  selectedId,
+  onAddSubject,
+  onSubjectAction,
+  loading = false,
+  onFetch,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const filteredSubjects = subjects.filter((subj) =>
-    subj.subject_name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // `subjects` is already exactly what the backend returned for the current
+  // search term — no client-side re-filtering here, only client-side paging
+  // over that already-scoped list.
+  const paginatedSubjects = subjects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const paginatedSubjects = filteredSubjects.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+  // Reset to page 1 whenever the underlying list changes (new search results,
+  // a row added/removed) so pagination never points past the end.
+  useEffect(() => {
+    setPage(0);
+  }, [subjects]);
 
   const handleMenuOpen = (event, subject) => {
     setAnchorEl(event.currentTarget);
@@ -70,41 +79,76 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-          <Typography variant="h5"></Typography>
-          <Box display="flex" alignItems="center" gap={1} sx={{ ml: 'auto' }}>
-            <TextField
-              placeholder="Search subjects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
-              sx={{ minWidth: 200 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            {onFetch && (
-              <Button variant="outlined" size="small" onClick={handleFetch} startIcon={<IconRefresh size={16} />}>
-                Fetch
-              </Button>
-            )}
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          {stats && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <MiniStat label="Total Subjects" value={stats.total} loading={loading} icon={IconBooks} />
+              <MiniStat
+                label="Active"
+                value={stats.active}
+                loading={loading}
+                color="success.main"
+                icon={IconCircleCheck}
+              />
+              <MiniStat
+                label="Inactive"
+                value={stats.inactive}
+                loading={loading}
+                color="error.main"
+                icon={IconCircleX}
+              />
+            </Box>
+          )}
+
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            gap={1}
+            flexWrap="wrap"
+          >
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <TextField
+                placeholder="Search subjects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleFetch();
+                }}
+                size="small"
+                sx={{ minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {onFetch && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleFetch}
+                  startIcon={<IconRefresh size={16} />}
+                >
+                  Fetch
+                </Button>
+              )}
+            </Box>
             <Button variant="contained" size="small" onClick={onAddSubject} sx={{ whiteSpace: 'nowrap' }}>
               Add New Subject
             </Button>
           </Box>
         </Box>
       }
-       sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       <Box sx={{ p: 0 }}>
           <TableContainer>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -128,7 +172,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                   ))
                 ) : paginatedSubjects.length > 0 ? (
                   paginatedSubjects.map((subject, index) => (
-                    <TableRow key={subject.id || index} hover>
+                    <TableRow
+                      key={subject.id || index}
+                      hover
+                      selected={subject.id === selectedId}
+                      onClick={() => onSelect(subject)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{subject.subject_name}</TableCell>
                       <TableCell>
@@ -199,7 +249,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     colSpan={4}
-                    count={filteredSubjects.length}
+                    count={subjects.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
@@ -219,10 +269,17 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
 
 SubjectTable.propTypes = {
   subjects: PropTypes.array.isRequired,
+  stats: PropTypes.shape({
+    total: PropTypes.number,
+    active: PropTypes.number,
+    inactive: PropTypes.number,
+  }),
   onSelect: PropTypes.func.isRequired,
   selectedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onAddSubject: PropTypes.func.isRequired,
   onSubjectAction: PropTypes.func,
+  loading: PropTypes.bool,
+  onFetch: PropTypes.func,
 };
 
 export default SubjectTable;

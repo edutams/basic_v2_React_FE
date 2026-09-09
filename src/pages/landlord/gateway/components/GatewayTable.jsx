@@ -15,18 +15,19 @@ import {
   Menu,
   MenuItem,
   Button,
+  TextField,
+  InputAdornment,
   Chip,
   Alert,
   Skeleton,
 } from '@mui/material';
-import { FilterList as FilterListIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconFilter } from '@tabler/icons-react';
-
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { MoreVert as MoreVertIcon, Search as SearchIcon } from '@mui/icons-material';
+import { IconFilter, IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
-import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
+
+const EMPTY_FILTERS = { search: '', status: '' };
 
 const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoading = false }) => {
   const [gatewaysList, setGatewaysList] = useState(gateways);
@@ -34,30 +35,15 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedGateway, setSelectedGateway] = useState(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState(EMPTY_FILTERS);
+  const [activeFilters, setActiveFilters] = useState(EMPTY_FILTERS);
   const [isLoading, setIsLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
-
-  const gatewayFilterDefs = [
-    { key: 'search', label: 'Gateway Name', type: 'text', placeholder: 'Search by gateway name…' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-  ];
 
   const fetchGateways = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await gatewayApi.getAll({
-        page: page + 1,
-        per_page: rowsPerPage,
         search: activeFilters.search || '',
         status: activeFilters.status || '',
       });
@@ -80,23 +66,24 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
     } finally {
       setIsLoading(false);
     }
-  }, [page, rowsPerPage, activeFilters, gateways]);
+  }, [activeFilters, gateways]);
 
   useEffect(() => {
     fetchGateways();
   }, [fetchGateways]);
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
+  const handleFilterApply = () => {
+    setActiveFilters(filterDraft);
     setPage(0);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters({});
+    setFilterDraft(EMPTY_FILTERS);
+    setActiveFilters(EMPTY_FILTERS);
     setPage(0);
   };
 
-  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
+  const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   const handleMenuOpen = (event, gateway) => {
     setAnchorEl(event.currentTarget);
@@ -113,64 +100,73 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
     handleMenuClose();
   };
 
-  const hasActiveFilters = Object.values(activeFilters).some((v) => v !== '');
-
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5"></Typography>
-          <Box display="flex" gap={1} alignItems="center">
-            
-            <Button variant="contained" size="small"
-              onClick={() => onGatewayAction('create')}
-              sx={{
-                minWidth: 120,
-                fontSize: { xs: '0.95rem', md: '1rem' },
-              }}
-            >
-              Register Gateway
-            </Button>
-            <Button
-              variant="outlined"
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={1.5}
+        >
+          <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
+            <TextField
+              placeholder="Search by gateway name…"
               size="small"
-              startIcon={<IconFilter />}
-              onClick={() => setFilterDrawerOpen(true)}
+              value={filterDraft.search}
+              onChange={(e) => setFilterDraft((p) => ({ ...p, search: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFilterApply();
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: 220 }}
+            />
+            <TextField
+              select
+              label="Status"
+              size="small"
+              value={filterDraft.status}
+              onChange={(e) => setFilterDraft((p) => ({ ...p, status: e.target.value }))}
+              sx={{ minWidth: 130 }}
             >
-              Filters
-              {activeFilterCount > 0 && (
-                <Chip
-                  label={activeFilterCount}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              )}
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </TextField>
+            <Button variant="contained" size="small" startIcon={<IconFilter size={16} />} onClick={handleFilterApply}>
+              Filter
             </Button>
+            {hasActiveFilters && (
+              <Button size="small" onClick={handleFilterReset}>
+                Reset
+              </Button>
+            )}
           </Box>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => onGatewayAction('create')}
+            sx={{
+              minWidth: 120,
+              fontSize: { xs: '0.95rem', md: '1rem' },
+            }}
+          >
+            Register Gateway
+          </Button>
         </Box>
       }
-      sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
-
-      {/* Filter Side Drawer */}
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={gatewayFilterDefs}
-        title="Filter Gateways"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
-      />
-
       <Box>
         <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+          <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
             <TableHead>
               <TableRow>
                 <TableCell>#</TableCell>

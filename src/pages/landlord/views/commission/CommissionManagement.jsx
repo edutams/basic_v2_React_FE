@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -30,7 +29,6 @@ const BCrumb = [
 ];
 
 const CommissionManagement = () => {
-  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -45,11 +43,10 @@ const CommissionManagement = () => {
   const isDarkMode = theme.palette.mode === 'dark';
 
   const handleMyCommissionClick = (type) => {
-    if (type === 'subscription') {
-      navigate('/agent/commission/subscription');
-    } else if (type === 'transaction') {
-      navigate('/agent/commission/transaction');
-    }
+    // Opens in a new browser tab instead of navigating away from the
+    // Commission Management tab the agent was already on.
+    const url = type === 'subscription' ? '/commission/subscription' : '/commission/transaction';
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleChangePage = (event, newPage) => {
@@ -106,7 +103,7 @@ const CommissionManagement = () => {
     <PageContainer title="Manage Commission" description="Commission management dashboard">
       <Breadcrumb title="Manage Commission" items={BCrumb} />
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1.5 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           {mockSummaryStats.map((stat, index) => {
             const colors = ['primary', 'error', 'success', 'warning'];
@@ -124,7 +121,7 @@ const CommissionManagement = () => {
       </Box>
 
       <Box
-        mt={4}
+        mt={1.5}
         sx={{
           bgcolor: theme.palette.background.paper,
           borderRadius: '16px',
@@ -132,7 +129,7 @@ const CommissionManagement = () => {
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pb: 0 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, pb: 0 }}>
           <Tabs
             value={value}
             onChange={handleTabChange}
@@ -174,7 +171,7 @@ const CommissionManagement = () => {
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 1.5 }}>
           <Box
             sx={{
               display: 'flex',
@@ -182,7 +179,7 @@ const CommissionManagement = () => {
               alignItems: { xs: 'flex-start', sm: 'center' },
               flexDirection: { xs: 'column', sm: 'row' },
               gap: 1,
-              mb: 3,
+              mb: 1.5,
             }}
           >
             {/* Dynamic Title */}

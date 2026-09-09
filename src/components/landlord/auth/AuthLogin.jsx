@@ -40,7 +40,7 @@ const AuthLogin = ({
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/agent';
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

@@ -594,7 +594,7 @@ const AssignmentManagement = () => {
             <ShowTourGuideButton />
           </Box>
         }
-               sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
+               sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
 
       >
 

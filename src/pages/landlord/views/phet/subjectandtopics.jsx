@@ -18,10 +18,14 @@ const BCrumb = [
   { title: 'Subject & Topics' },
 ];
 
+const EMPTY_STATS = { total: 0, active: 0, inactive: 0 };
+
 const SubjectTopicView = () => {
   const [subjects, setSubjects] = useState([]);
+  const [subjectStats, setSubjectStats] = useState(EMPTY_STATS);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [topics, setTopics] = useState([]);
+  const [topicStats, setTopicStats] = useState(EMPTY_STATS);
   const [loading, setLoading] = useState(false);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -49,14 +53,16 @@ const SubjectTopicView = () => {
       fetchTopicsBySubject(selectedSubject.id);
     } else {
       setTopics([]);
+      setTopicStats(EMPTY_STATS);
     }
   }, [selectedSubject]);
 
   const fetchSubjects = async (search = '') => {
     try {
       setLoading(true);
-      const response = await phetApi.getSubjects({ search });
-      setSubjects(response || []);
+      const { data, stats } = await phetApi.getSubjects({ search });
+      setSubjects(data || []);
+      setSubjectStats(stats || EMPTY_STATS);
     } catch (error) {
       // console.error('Error fetching subjects:', error);
       notify.error('Failed to load subjects', 'Error');
@@ -68,8 +74,9 @@ const SubjectTopicView = () => {
   const fetchTopicsBySubject = async (subjectId, search = '') => {
     try {
       setTopicsLoading(true);
-      const response = await phetApi.getTopicsBySubject(subjectId, { search });
-      setTopics(response || []);
+      const { data, stats } = await phetApi.getTopicsBySubject(subjectId, { search });
+      setTopics(data || []);
+      setTopicStats(stats || EMPTY_STATS);
     } catch (error) {
       // console.error('Error fetching topics:', error);
       notify.error('Failed to load topics', 'Error');
@@ -90,8 +97,10 @@ const SubjectTopicView = () => {
         subject_code: newSubject.code,
         status: newSubject.status,
       };
-      const createdSubject = await phetApi.createSubject(apiData);
-      setSubjects((prev) => [...prev, createdSubject]);
+      await phetApi.createSubject(apiData);
+      // Re-fetch instead of splicing the new row in locally — keeps the list
+      // in the backend's sort order and the stat cards' totals in sync.
+      fetchSubjects();
       setAddModalOpen(false);
       notify.success('Subject added successfully', 'Success');
     } catch (error) {
@@ -115,15 +124,15 @@ const SubjectTopicView = () => {
           subject_code: updated.code,
           status: updated.status,
         };
-        const result = await phetApi.updateSubject(updated.id, apiData);
-        setSubjects((prev) => prev.map((s) => (s.id === updated.id ? result : s)));
+        await phetApi.updateSubject(updated.id, apiData);
+        fetchSubjects();
         notify.success('Subject updated successfully', 'Success');
       } else if (type === 'delete') {
         await phetApi.deleteSubject(updated.id);
-        setSubjects((prev) => prev.filter((s) => s.id !== updated.id));
         if (selectedSubject?.id === updated.id) {
           setSelectedSubject(null);
         }
+        fetchSubjects();
         notify.success('Subject deleted successfully', 'Success');
       }
       setModalOpen(false);
@@ -153,16 +162,16 @@ const SubjectTopicView = () => {
           subject_id: selectedSubject.id,
           status: data.status,
         };
-        const newTopic = await phetApi.createTopic(apiData);
-        setTopics((prev) => [...prev, newTopic]);
+        await phetApi.createTopic(apiData);
+        fetchTopicsBySubject(selectedSubject.id);
         notify.success('Topic added successfully', 'Success');
       } else if (type === 'update') {
         const apiData = {
           topic: data.topic,
           status: data.status,
         };
-        const result = await phetApi.updateTopic(data.id, apiData);
-        setTopics((prev) => prev.map((t) => (t.id === data.id ? result : t)));
+        await phetApi.updateTopic(data.id, apiData);
+        fetchTopicsBySubject(selectedSubject.id);
         notify.success('Topic updated successfully', 'Success');
       }
       setTopicModalOpen(false);
@@ -176,7 +185,9 @@ const SubjectTopicView = () => {
     if (topicToDelete) {
       try {
         await phetApi.deleteTopic(topicToDelete.id);
-        setTopics((prev) => prev.filter((t) => t.id !== topicToDelete.id));
+        if (selectedSubject) {
+          fetchTopicsBySubject(selectedSubject.id);
+        }
         notify.success('Topic deleted successfully', 'Success');
         setTopicToDelete(null);
       } catch (error) {
@@ -203,10 +214,11 @@ const SubjectTopicView = () => {
     >
       <Breadcrumb title="Manage Phet Subjects And Topics" items={BCrumb} />
       {/* <ParentCard  sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}> */}
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 7 }}>
+        <Grid container spacing={1.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <SubjectTable
               subjects={subjects}
+              stats={subjectStats}
               onSelect={handleSubjectSelect}
               selectedId={selectedSubject?.id}
               onAddSubject={() => setAddModalOpen(true)}
@@ -215,10 +227,11 @@ const SubjectTopicView = () => {
               onFetch={fetchSubjects}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TopicPanel
               selectedSubject={selectedSubject}
               topics={filteredTopics}
+              stats={topicStats}
               onAction={handleTopicAction}
               isLoading={topicsLoading}
               onFetch={fetchTopicsBySubject}

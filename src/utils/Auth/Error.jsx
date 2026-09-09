@@ -2,14 +2,8 @@ import { Box, Container, Typography, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import ErrorImg from '@/assets/images/backgrounds/errorimg.svg';
 
-const hostname = window.location.hostname;
-const centralHost = import.meta.env.VITE_API_BASE_URL
-  ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
-  : 'basic_v2.test';
-
-const isTenantSubdomain =
-  hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
-
+// Both the tenant and agent portals use /dashboard as their home route now,
+// so there's no longer a need to branch on which subdomain this is.
 const Error = ({ message = 'This page you are looking for could not be found.' }) => (
   <Box
     display="flex"
@@ -26,7 +20,7 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
       <Typography align="center" variant="h4" mb={4}>
         {message}
       </Typography>
-      <Button variant="contained" size="small" color="primary" component={Link} to={isTenantSubdomain ? '/dashboard' : '/agent'} disableElevation>
+      <Button variant="contained" size="small" color="primary" component={Link} to="/dashboard" disableElevation>
         Go Back
       </Button>
     </Container>

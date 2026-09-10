@@ -139,6 +139,8 @@ const TeamTab = ({
   accessLevel,
   isViewingProfile = false,
   organizationId = null,
+  hideAddButton = false,
+  refreshKey = 0,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -314,7 +316,7 @@ const TeamTab = ({
       }
     };
     fetchData();
-  }, [page, rowsPerPage, isViewingProfile, organizationId]);
+  }, [page, rowsPerPage, isViewingProfile, organizationId, refreshKey]);
 
   // Handle search button click
   const handleSearch = () => {
@@ -407,7 +409,7 @@ const TeamTab = ({
             {isViewingProfile ? 'Sub Organizations' : 'List of Organization'}
           </Typography> */}
         </Stack>
-        {!isViewingProfile && (
+        {!isViewingProfile && !hideAddButton && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
             Add New Organization
           </Button>

@@ -72,7 +72,7 @@ const LoginActivitiesCard = ({ sx }) => {
           ...sx,
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
           <Typography variant="subtitle1" fontWeight={700}>
             Login Activities
           </Typography>

@@ -45,6 +45,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
+import PlanDistributionModal from './PlanDistributionModal';
 import agentApi from '@/api/landlord/organizations/agent';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
@@ -72,6 +73,7 @@ const OverviewTab = ({ data }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const open = Boolean(anchorEl);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
   // Transaction chart filters
   const [period, setPeriod] = useState('this_year');
@@ -618,7 +620,10 @@ const OverviewTab = ({ data }) => {
                     display: 'flex',
                     color: schemeMap[3].color,
                     flexShrink: 0,
+                    cursor: 'pointer',
+                    '&:hover': { opacity: 0.85 },
                   }}
+                  onClick={() => setIsPlanModalOpen(true)}
                 >
                   <IconChartBar size={18} strokeWidth={2.5} />
                 </Box>
@@ -1018,6 +1023,13 @@ const OverviewTab = ({ data }) => {
       >
         <IconHelpCircle size={32} />
       </IconButton>
+
+      <PlanDistributionModal
+        open={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        planDistribution={planDistribution}
+        totalOrganizations={data.totalOrganizations ?? 0}
+      />
     </Box>
   );
 };

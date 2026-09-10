@@ -22,7 +22,7 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
   return (
     <Card
       sx={{
-        p: 2,
+        p: 1.25,
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -158,13 +158,13 @@ const TotalTransactionModal = ({ open, onClose, transactionVolume = 0, transacti
       onClose={onClose}
       title="Total Transaction"
       maxWidth="lg"
-      padding={3}
+      padding={1.5}
       dividers={false}
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
       {/* Top stat cards */}
-      <Grid container spacing={2} mb={3}>
+      <Grid container spacing={1.5} mb={2}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TopCard label="Collected" value={formatNaira(transactionVolume)} colorIndex={0} icon={IconCash} />
         </Grid>
@@ -197,7 +197,7 @@ const TotalTransactionModal = ({ open, onClose, transactionVolume = 0, transacti
               border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
               borderRadius: '10px',
               bgcolor: isDark ? theme.palette.background.paper : '#fff',
-              p: 2,
+              p: 1.25,
               height: '100%',
             }}
           >

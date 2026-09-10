@@ -936,7 +936,7 @@ const Agent = () => {
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb:5
+              mb: 2,
             }}
           >
             <Typography

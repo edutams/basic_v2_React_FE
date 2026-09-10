@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Box, Tab, Grid, useTheme, Skeleton, Typography } from '@mui/material';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import { Box, Tab, Button, Grid, useTheme, Skeleton, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool, IconBuildingBank } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,6 +31,7 @@ const AgentDashboard = () => {
   const { can } = usePermissions();
   const id = currentUser?.organization?.id || currentUser?.organization_id;
   const [value, setValue] = useState('1');
+  const manageTeamRef = useRef(null);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
@@ -237,6 +238,11 @@ const AgentDashboard = () => {
               <TabContext value={value}>
                 <Box
                   sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 1,
                     borderBottom: 1,
                     borderColor: isDark ? '#333' : '#E2E8F0',
                     bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
@@ -297,22 +303,55 @@ const AgentDashboard = () => {
                       />
                     )}
                   </TabList>
+
+                  {/* Tab-specific actions — shown only while their own tab is
+                      active, positioned at the extreme right of the tab row
+                      instead of living inside each tab's own content. */}
+                  {value === '2' && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => setIsAddAgentModalOpen(true)}
+                      sx={{ textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Add New Organization
+                    </Button>
+                  )}
+
+                  {value === '4' && currentUser?.organization?.access_level !== 1 && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => manageTeamRef.current?.openAddModal()}
+                      sx={{ textTransform: 'none', borderRadius: '8px' }}
+                    >
+                      Add Team Member
+                    </Button>
+                  )}
                 </Box>
 
                 <Box>
                   <TabPanel value="1" sx={{ p: 0 }}>
-                    <OverviewTab data={{ ...agentData, planDistribution: analytics?.planDistribution ?? agentData?.planDistribution ?? [] }} />
+                    <OverviewTab
+                      data={{
+                        ...agentData,
+                        planDistribution: analytics?.planDistribution ?? agentData?.planDistribution ?? [],
+                        totalOrganizations: analytics?.totalOrganizations ?? 0,
+                      }}
+                    />
                   </TabPanel>
-                  <TabPanel value="2" sx={{ p: 3 }}>
+                  <TabPanel value="2" sx={{ p: 0.5 }}>
                     <TeamTab
                       team={agentData.team || []}
                       onAddAgent={() => setIsAddAgentModalOpen(true)}
                       isDashboard={isDashboard}
                       accessLevel={currentUser?.organization?.access_level}
                       isViewingProfile={false}
+                      hideAddButton
+                      refreshKey={refreshKey}
                     />
                   </TabPanel>
-                  <TabPanel value="3" sx={{ p: 3 }}>
+                  <TabPanel value="3" sx={{ p: 0.5 }}>
                     <SchoolsTab
                       schools={agentData.schools || []}
                       onAddSchool={() => setIsAddSchoolModalOpen(true)}
@@ -324,16 +363,18 @@ const AgentDashboard = () => {
                       loginActivities={loginActivities}
                     />
                   </TabPanel>
-                  <TabPanel value="4" sx={{ p: 3 }}>
+                  <TabPanel value="4" sx={{ p: 0.5 }}>
                     <ManageTeamTab
+                      ref={manageTeamRef}
                       organizationId={id}
                       accessLevel={currentUser?.organization?.access_level}
                       isViewingProfile={false}
                       hideCard
+                      hideAddButton
                     />
                   </TabPanel>
                   {can('landlord.bank_account.manage') && (
-                    <TabPanel value="5" sx={{ p: 3 }}>
+                    <TabPanel value="5" sx={{ p: 0.5 }}>
                       <BankAccountDetailsTab
                         organizationId={id}
                         organization={agentData.raw}

@@ -56,10 +56,19 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
     loadBanks();
   }, [organizationId]);
 
-  const hasAccount = Boolean(organization?.bank_account?.wallet_no);
+  const bankAccount = organization?.bank_account;
+  const hasAccount = Boolean(bankAccount?.withdrawal_account_number);
 
   const openEdit = () => {
-    setForm(EMPTY_FORM);
+    // Prefill from the agent's current real-world bank details (not the
+    // virtual wallet) so they only have to change what's actually wrong,
+    // instead of re-entering everything from scratch.
+    const matchedBank = banks.find((b) => b.bank_name === bankAccount?.withdrawal_bank_name);
+    setForm({
+      bankCode: matchedBank?.bank_code || '',
+      bankName: matchedBank?.bank_name || bankAccount?.withdrawal_bank_name || '',
+      account_number: bankAccount?.withdrawal_account_number || '',
+    });
     setEditOpen(true);
   };
 
@@ -150,10 +159,19 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
             <Typography variant="body2" color="text.secondary">
+              Bank Name
+            </Typography>
+            <Typography variant="body2" fontWeight={600}>
+              {bankAccount.withdrawal_bank_name}
+            </Typography>
+          </Box>
+          <Divider />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
+            <Typography variant="body2" color="text.secondary">
               Account Number
             </Typography>
             <Typography variant="body2" fontWeight={600}>
-              {organization.bank_account.wallet_no}
+              {bankAccount.withdrawal_account_number}
             </Typography>
           </Box>
           <Divider />
@@ -162,16 +180,7 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
               Account Name
             </Typography>
             <Typography variant="body2" fontWeight={600}>
-              {organization.bank_account.wallet_account_name}
-            </Typography>
-          </Box>
-          <Divider />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-            <Typography variant="body2" color="text.secondary">
-              Wallet Balance
-            </Typography>
-            <Typography variant="body2" fontWeight={600}>
-              ₦{Number(organization.bank_account.wallet_balance || 0).toLocaleString()}
+              {bankAccount.withdrawal_account_name}
             </Typography>
           </Box>
         </Box>

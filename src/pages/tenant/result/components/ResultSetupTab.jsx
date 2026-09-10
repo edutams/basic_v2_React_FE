@@ -3,11 +3,12 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, TextField, Grid, Tabs, Tab, IconButton, Tooltip, Snackbar, Alert,
   Switch, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent,
-  DialogActions, Menu, useTheme,
+  DialogActions, Menu, useTheme, Stack,
 } from '@mui/material';
 import {
   IconSettings, IconTemplate, IconMoodSmile, IconMessageCircle, IconAward,
   IconPlus, IconEdit, IconTrash, IconCheck, IconX,
+  IconBook, IconHash, IconSchool, IconFile, IconUsers, IconList, IconStack,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import SetupAffectivePsychomotorTab from '@/pages/tenant/attendance/components/SetupAffectivePsychomotorTab';
@@ -15,6 +16,7 @@ import SessionTermSelector from './SessionTermSelector';
 import GradeConfiguration from './GradeConfiguration';
 import PromotionSettings from './PromotionSettings';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
+import StatCard from '@/components/shared/StatCard';
 
 const dummySessionTerms = [
   { id: 1, label: '2025/2026 - First Term' },
@@ -31,6 +33,35 @@ const initialNomenclature = [
   { id: 4, position_name: '4th', status: 'active' },
   { id: 5, position_name: '5th', status: 'active' },
 ];
+
+// Mock data for stat cards
+const mockGradeStats = {
+  totalGrades: 12,
+  passMark: '40%',
+  subjects: 18,
+  markRange: '0 - 100',
+};
+
+const mockTemplateStats = {
+  templates: 13,
+  active: 1,
+  programmes: 2,
+  caReports: 'Enabled',
+};
+
+const mockNomenclatureStats = {
+  total: 5,
+  active: 4,
+  inactive: 1,
+  positionsUsed: 5,
+};
+
+const mockPromotionStats = {
+  classes: 6,
+  autoPromo: 'Enabled',
+  criteria: 3,
+  passMark: '40%',
+};
 
 function InnerTabPanel({ children, value, index }) {
   return (
@@ -115,6 +146,40 @@ const ResultSetupTab = () => {
           1. GRADE & CONFIG SETTINGS
           ════════════════════════════════════════════════════════ */}
       <InnerTabPanel value={innerTab} index={0}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard
+            count={mockGradeStats.totalGrades}
+            label="Total Grades"
+            subtitle="A1, B2, B3, C4, C5, C6, D7, E8, F9"
+            icon={IconAward}
+            colorIndex={0}
+            loading={false}
+          />
+          <StatCard
+            count={mockGradeStats.passMark}
+            label="Pass Mark"
+            subtitle="Minimum passing grade"
+            icon={IconCheck}
+            colorIndex={1}
+            loading={false}
+          />
+          <StatCard
+            count={mockGradeStats.subjects}
+            label="Subjects"
+            subtitle="Configured for results"
+            icon={IconBook}
+            colorIndex={2}
+            loading={false}
+          />
+          <StatCard
+            count={mockGradeStats.markRange}
+            label="Mark Range"
+            subtitle="Min - Max marks"
+            icon={IconHash}
+            colorIndex={3}
+            loading={false}
+          />
+        </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
           <GradeConfiguration sessionTermId={currentSessionTermId} />
@@ -125,6 +190,40 @@ const ResultSetupTab = () => {
           2. RESULT TEMPLATES
           ════════════════════════════════════════════════════════ */}
       <InnerTabPanel value={innerTab} index={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard
+            count={mockTemplateStats.templates}
+            label="Templates"
+            subtitle="Available report card designs"
+            icon={IconTemplate}
+            colorIndex={0}
+            loading={false}
+          />
+          <StatCard
+            count={mockTemplateStats.active}
+            label="Active Template"
+            subtitle="Currently selected"
+            icon={IconCheck}
+            colorIndex={1}
+            loading={false}
+          />
+          <StatCard
+            count={mockTemplateStats.programmes}
+            label="Programmes"
+            subtitle="Junior & Senior Secondary"
+            icon={IconSchool}
+            colorIndex={2}
+            loading={false}
+          />
+          <StatCard
+            count={mockTemplateStats.caReports}
+            label="CA Reports"
+            subtitle="Reportsheet status"
+            icon={IconFile}
+            colorIndex={3}
+            loading={false}
+          />
+        </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight={600}>Template Samples</Typography>
@@ -202,6 +301,40 @@ const ResultSetupTab = () => {
           4. COMMENT NOMENCLATURE
           ════════════════════════════════════════════════════════ */}
       <InnerTabPanel value={innerTab} index={3}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard
+            count={mockNomenclatureStats.total}
+            label="Total Positions"
+            subtitle="Defined position names"
+            icon={IconList}
+            colorIndex={0}
+            loading={false}
+          />
+          <StatCard
+            count={mockNomenclatureStats.active}
+            label="Active"
+            subtitle="Currently in use"
+            icon={IconCheck}
+            colorIndex={1}
+            loading={false}
+          />
+          <StatCard
+            count={mockNomenclatureStats.inactive}
+            label="Inactive"
+            subtitle="Deactivated positions"
+            icon={IconX}
+            colorIndex={3}
+            loading={false}
+          />
+          <StatCard
+            count={mockNomenclatureStats.positionsUsed}
+            label="Positions Used"
+            subtitle="Mapped to students"
+            icon={IconAward}
+            colorIndex={2}
+            loading={false}
+          />
+        </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight={600}>Comment Nomenclature</Typography>
@@ -261,6 +394,40 @@ const ResultSetupTab = () => {
           5. PROMOTION SETTINGS
           ════════════════════════════════════════════════════════ */}
       <InnerTabPanel value={innerTab} index={4}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard
+            count={mockPromotionStats.classes}
+            label="Classes"
+            subtitle="With promotion rules"
+            icon={IconSchool}
+            colorIndex={0}
+            loading={false}
+          />
+          <StatCard
+            count={mockPromotionStats.autoPromo}
+            label="Auto-Promotion"
+            subtitle="Status"
+            icon={IconCheck}
+            colorIndex={1}
+            loading={false}
+          />
+          <StatCard
+            count={mockPromotionStats.criteria}
+            label="Criteria"
+            subtitle="Promotion requirements"
+            icon={IconSettings}
+            colorIndex={2}
+            loading={false}
+          />
+          <StatCard
+            count={mockPromotionStats.passMark}
+            label="Pass Mark"
+            subtitle="Minimum for promotion"
+            icon={IconAward}
+            colorIndex={3}
+            loading={false}
+          />
+        </Stack>
         <Paper elevation={0} sx={{ p: 2, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <Typography variant="h6" fontWeight={600} mb={2}></Typography>
           <PromotionSettings />

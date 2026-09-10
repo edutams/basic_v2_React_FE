@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Box, Typography, Stack, Card, useTheme } from '@mui/material';
+import { Grid, Box, Typography, Stack, Card, useTheme, Skeleton } from '@mui/material';
 import Chart from 'react-apexcharts';
 import StandardModal from '@/components/shared/StandardModal';
 import { IconBuildingBank } from '@tabler/icons-react';
@@ -175,17 +175,26 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
     >
       {/* Top card per plan */}
       <Grid container spacing={2} mb={3}>
-        {planDistribution.map((plan, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={plan.label}>
-            <TopCard label={plan.label} value={plan.total} colorIndex={i} icon={IconBuildingBank} />
-          </Grid>
-        ))}
-        {planDistribution.length === 0 && (
-          <Grid size={12}>
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              No active plan assignments yet.
-            </Typography>
-          </Grid>
+        {planDistribution.length > 0 ? (
+          planDistribution.map((plan, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={plan.label}>
+              <TopCard label={plan.label} value={plan.total} colorIndex={i} icon={IconBuildingBank} />
+            </Grid>
+          ))
+        ) : (
+          [...Array(4)].map((_, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+              <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                  <Box sx={{ textAlign: 'right', flex: 1 }}>
+                    <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
+                    <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
+                  </Box>
+                </Stack>
+              </Card>
+            </Grid>
+          ))
         )}
       </Grid>
 
@@ -200,7 +209,13 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
               p: 1,
             }}
           >
-            <Chart options={chartOptions} series={chartSeries} type="bar" height={360} />
+            {planDistribution.length > 0 ? (
+              <Chart options={chartOptions} series={chartSeries} type="bar" height={360} />
+            ) : (
+              <Box sx={{ p: 2 }}>
+                <Skeleton variant="rounded" height={360} sx={{ borderRadius: '8px' }} />
+              </Box>
+            )}
           </Box>
         </Grid>
 
@@ -221,15 +236,27 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
             >
               Plan per Organization
             </Typography>
-            {planDistribution.map((plan, i) => (
-              <SideStatRow
-                key={plan.label}
-                label={plan.label}
-                count={plan.total}
-                colorIndex={i}
-                icon={IconBuildingBank}
-              />
-            ))}
+            {planDistribution.length > 0 ? (
+              planDistribution.map((plan, i) => (
+                <SideStatRow
+                  key={plan.label}
+                  label={plan.label}
+                  count={plan.total}
+                  colorIndex={i}
+                  icon={IconBuildingBank}
+                />
+              ))
+            ) : (
+              [...Array(4)].map((_, i) => (
+                <Stack key={i} direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ py: 1.2 }}>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+                    <Skeleton variant="text" width={70} height={16} />
+                  </Stack>
+                  <Skeleton variant="rounded" width={36} height={24} sx={{ borderRadius: '4px' }} />
+                </Stack>
+              ))
+            )}
             <Stack
               direction="row"
               spacing={1.5}

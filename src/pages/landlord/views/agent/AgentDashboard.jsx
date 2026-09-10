@@ -117,11 +117,7 @@ const AgentDashboard = () => {
               { month: 'Dec', revenue: 410000 },
             ],
             loginActivities: [],
-            planDistribution: [
-              { label: 'Basic', value: 50 },
-              { label: 'Basic +', value: 35 },
-              { label: 'Basic ++', value: 15 },
-            ],
+            planDistribution: analytics?.planDistribution ?? [],
             recentOnboarding: (data.tenants || [])
               .slice()
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -308,7 +304,7 @@ const AgentDashboard = () => {
 
                 <Box>
                   <TabPanel value="1" sx={{ p: 0 }}>
-                    <OverviewTab data={agentData} />
+                    <OverviewTab data={{ ...agentData, planDistribution: analytics?.planDistribution ?? agentData?.planDistribution ?? [] }} />
                   </TabPanel>
                   <TabPanel value="2" sx={{ p: 3 }}>
                     <TeamTab

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  useTheme, TextField, Button, CircularProgress, Tooltip, Chip,
+  useTheme, TextField, Button, CircularProgress, Tooltip, Chip, Stack,
 } from '@mui/material';
-import { IconHelp } from '@tabler/icons-react';
+import { IconHelp, IconListNumbers, IconGridDots, IconCheck, IconX } from '@tabler/icons-react';
+import StatCard from '@/components/shared/StatCard';
 
 const initialBankComments = [
   { id: 1, grade_score: '90-100', comment1: 'An excellent performance. Keep it up!', comment2: 'A brilliant student with outstanding results.', comment3: 'Exceptional performance across all areas.' },
@@ -95,8 +96,22 @@ const CommentBankTab = () => {
     );
   };
 
+  // Compute stats
+  const totalCells = bankComments.length * 3;
+  const filledCells = bankComments.reduce((count, row) => {
+    return count + (row.comment1 ? 1 : 0) + (row.comment2 ? 1 : 0) + (row.comment3 ? 1 : 0);
+  }, 0);
+
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
+      {/* ── Stat Cards ──────────────────────────────────────────── */}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+        <StatCard count={bankComments.length} label="Score Ranges" subtitle="Editable comment rows" icon={IconListNumbers} colorIndex={0} loading={false} />
+        <StatCard count={totalCells} label="Total Cells" subtitle="8 rows x 3 columns" icon={IconGridDots} colorIndex={1} loading={false} />
+        <StatCard count={filledCells} label="Filled" subtitle="Comments completed" icon={IconCheck} colorIndex={2} loading={false} />
+        <StatCard count={totalCells - filledCells} label="Empty" subtitle="Awaiting input" icon={IconX} colorIndex={3} loading={false} />
+      </Stack>
+
       {/* ── Header ──────────────────────────────────────────── */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${borderColor}` }}>
         <Typography variant="h6" fontWeight={700}>Comment Bank</Typography>

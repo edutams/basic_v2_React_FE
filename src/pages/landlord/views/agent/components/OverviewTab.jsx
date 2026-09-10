@@ -23,6 +23,7 @@ import {
   Divider,
   useTheme,
   Alert,
+  Skeleton,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -301,9 +302,10 @@ const OverviewTab = ({ data }) => {
 
   const revenueSeries = [{ name: 'Transaction', data: data.revenueData.map((d) => d.revenue) }];
 
-  const planSeries = [40, 15, 35, 10];
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
+  const planDistribution = data.planDistribution ?? [];
+  const planSeries = planDistribution.map((p) => p.total ?? 0);
+  const planLabels = planDistribution.map((p) => p.label ?? '');
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
   return (
     <Box sx={{ p: { xs: 1, md: 1.5 } }}>
@@ -521,26 +523,70 @@ const OverviewTab = ({ data }) => {
                   boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                 },
                 height: '100%',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
                 color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
               }}
             >
-              <Typography
-                variant="subtitle2"
-                fontWeight={800}
-                color="textPrimary"
-                mb={2}
-                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
+              {/* Header Section */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
               >
-                Plan Distribution
-              </Typography>
-              <Box sx={{ height: 140, display: 'flex', alignItems: 'center' }}>
-                <ReusablePieChart
-                  series={planSeries}
-                  colors={planColors}
-                  labels={planLabels}
-                  height={140}
-                  hideCard
-                />
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      color: theme.palette.text.primary,
+                      fontSize: '14px',
+                      letterSpacing: '0.2px',
+                    }}
+                  >
+                    Plan Distribution
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                  >
+                    Breakdown of active subscriptions by plan type across all schools.
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    p: 0.6,
+                    background: schemeMap[3].bg,
+                    borderRadius: '4px',
+                    display: 'flex',
+                    color: schemeMap[3].color,
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconChartBar size={18} strokeWidth={2.5} />
+                </Box>
+              </Box>
+
+              {/* Chart Section */}
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
+                {planSeries.length > 0 ? (
+                  <ReusablePieChart
+                    series={planSeries}
+                    colors={planColors}
+                    labels={planLabels}
+                    height={140}
+                    hideCard
+                  />
+                ) : (
+                  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+                    <Skeleton variant="circular" width={120} height={120} />
+                    <Skeleton variant="text" width="60%" height={14} />
+                    <Skeleton variant="text" width="40%" height={14} />
+                  </Box>
+                )}
               </Box>
             </Card>
             </Grid>

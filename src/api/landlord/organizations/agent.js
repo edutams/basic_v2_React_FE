@@ -83,6 +83,16 @@ const agentApi = {
     const response = await api.get(`/v1/landlord/organizations/${orgId}/schools`);
     return response.data;
   },
+  getSubscriptionStats: async (orgId = null) => {
+    const params = orgId ? { organization_id: orgId } : {};
+    const response = await api.get('/v1/landlord/subscriptions/stats', { params });
+    return response.data;
+  },
+  getSubscriptionStatsBySchoolType: async (orgId = null) => {
+    const params = orgId ? { organization_id: orgId } : {};
+    const response = await api.get('/v1/landlord/subscriptions/stats/school-type', { params });
+    return response.data;
+  },
 
 };
 

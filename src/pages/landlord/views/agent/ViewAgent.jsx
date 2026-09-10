@@ -188,11 +188,7 @@ const ViewAgent = () => {
 
             loginActivities: [],
 
-            planDistribution: [
-              { label: 'Basic', value: 50 },
-              { label: 'Basic +', value: 35 },
-              { label: 'Basic ++', value: 15 },
-            ],
+            planDistribution: analytics?.planDistribution ?? [],
 
             recentOnboarding: (data.tenants || [])
               .slice()
@@ -423,7 +419,7 @@ const ViewAgent = () => {
 
                 <Box>
                   <TabPanel value="1" sx={{ p: 0 }}>
-                    <OverviewTab data={agentData} />
+                    <OverviewTab data={{ ...agentData, planDistribution: analytics?.planDistribution ?? agentData?.planDistribution ?? [] }} />
                   </TabPanel>
 
                   <TabPanel value="2" sx={{ p: 1.5 }}>

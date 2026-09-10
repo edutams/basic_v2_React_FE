@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Grid,
   Card,
@@ -24,6 +24,9 @@ import {
   useTheme,
   Alert,
   Skeleton,
+  FormControl,
+  Select,
+  InputLabel,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -42,6 +45,13 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
+import agentApi from '@/api/landlord/organizations/agent';
+import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
+
+dayjs.extend(weekOfYear);
+dayjs.extend(isoWeek);
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
@@ -63,6 +73,14 @@ const OverviewTab = ({ data }) => {
   const [selectedRow, setSelectedRow] = useState(null);
   const open = Boolean(anchorEl);
 
+  // Transaction chart filters
+  const [period, setPeriod] = useState('this_year');
+  const [periodValue, setPeriodValue] = useState(null);
+  const [chartData, setChartData] = useState({ categories: [], series: [] });
+  const [chartLoading, setChartLoading] = useState(true);
+
+  const orgId = data?.raw?.id ?? data?.raw?.organization_id ?? null;
+
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(row);
@@ -72,6 +90,36 @@ const OverviewTab = ({ data }) => {
     setAnchorEl(null);
     setSelectedRow(null);
   };
+
+  // ── Transaction chart fetch ──────────────────────────────────────
+  const fetchChartData = useCallback(async () => {
+    if (!orgId) return;
+    setChartLoading(true);
+    try {
+      const params = { period };
+      if (period === 'today' && periodValue) {
+        params.periodValue = periodValue;
+      } else if (period === 'this_week' && periodValue) {
+        params.periodValue = JSON.stringify(periodValue);
+      } else if (period === 'this_month' && periodValue) {
+        params.periodValue = JSON.stringify(periodValue);
+      } else if (period === 'this_year' && periodValue) {
+        params.periodValue = periodValue;
+      }
+      const res = await agentApi.getTransactionChart(orgId, params);
+      if (res.status && res.data) {
+        setChartData(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch chart data', err);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [orgId, period, periodValue]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
 
   // ── Top Agents columns ──────────────────────────────────────────────
   const agentColumns = useMemo(
@@ -269,7 +317,7 @@ const OverviewTab = ({ data }) => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const revenueOptions = {
+  const revenueOptions = useMemo(() => ({
     chart: {
       type: 'bar',
       toolbar: { show: false },
@@ -281,7 +329,7 @@ const OverviewTab = ({ data }) => {
     dataLabels: { enabled: false },
     stroke: { show: true, width: 2, colors: ['transparent'] },
     xaxis: {
-      categories: data.revenueData.map((d) => d.month),
+      categories: chartData.categories,
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: { style: { colors: theme.palette.text.secondary, fontSize: '12px' } },
@@ -289,18 +337,26 @@ const OverviewTab = ({ data }) => {
     yaxis: {
       labels: {
         style: { colors: theme.palette.text.secondary, fontSize: '12px' },
-        formatter: (val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val / 1000}K`),
+        formatter: (val) => {
+          if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+          if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+          return val.toLocaleString();
+        },
       },
     },
-    fill: { opacity: 1, colors: [schemeMap[0].color] },
+    colors: ['#2563EB', '#F59E0B'],
+    fill: { opacity: 1 },
+    legend: { show: true, position: 'top', horizontalAlign: 'right' },
     tooltip: {
+      shared: true,
+      intersect: false,
       theme: isDarkMode ? 'dark' : 'light',
       y: { formatter: (val) => `# ${val.toLocaleString()}` },
     },
     grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
-  };
+  }), [chartData.categories, theme.palette.text.secondary, theme.palette.divider, isDarkMode]);
 
-  const revenueSeries = [{ name: 'Transaction', data: data.revenueData.map((d) => d.revenue) }];
+  const revenueSeries = useMemo(() => chartData.series, [chartData.series]);
 
   const planDistribution = data.planDistribution ?? [];
   const planSeries = planDistribution.map((p) => p.total ?? 0);
@@ -338,23 +394,16 @@ const OverviewTab = ({ data }) => {
               <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
                 Transaction
               </Typography>
-              <Button variant="outlined" size="small" startIcon={<IconFilter size={16} />}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  bgcolor: '#FFFFFF !important',
-                  color: isDarkMode ? '#333333' : 'text.primary',
-                  borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : '#E2E8F0',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  '&:hover': {
-                    bgcolor: '#F8FAFC !important',
-                    borderColor: '#CBD5E1',
-                  },
-                }}
-              >
-                Filter by Date
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select value={period} onChange={(e) => { setPeriod(e.target.value); setPeriodValue(null); }}>
+                    <MenuItem value="today">Today</MenuItem>
+                    <MenuItem value="this_week">This Week</MenuItem>
+                    <MenuItem value="this_month">This Month</MenuItem>
+                    <MenuItem value="this_year">This Year</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </Stack>
             <Box
               sx={{
@@ -362,13 +411,18 @@ const OverviewTab = ({ data }) => {
                 '& .apexcharts-svg': { background: 'transparent !important' },
               }}
             >
-              <Chart
-                options={revenueOptions}
-                series={revenueSeries}
-                type="bar"
-                height={320}
-                width="100%"
-              />
+              {chartLoading ? (
+                <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
+              ) : (
+                <Chart
+                  key={`chart-${period}-${JSON.stringify(chartData.categories)}`}
+                  options={revenueOptions}
+                  series={revenueSeries}
+                  type="bar"
+                  height={320}
+                  width="100%"
+                />
+              )}
             </Box>
           </Card>
         </Grid>

@@ -57,6 +57,7 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
+import SubscriptionModal from '@/pages/landlord/dashboard/components/SubscriptionModal';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 import ManageTeamTab from './components/ManageTeamTab';
@@ -350,6 +351,7 @@ const Agent = () => {
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
 
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
@@ -1022,7 +1024,7 @@ const Agent = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onClick={() => setIsPlanModalOpen(true)}
+              onClick={() => setOpenSubscriptionModal(true)}
             >
               <IconChartBar size={18} color="currentColor" />
             </Box>
@@ -1710,6 +1712,7 @@ const Agent = () => {
           onClose={() => setIsTransactionModalOpen(false)}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} />
+        <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
 
         {/* Filter Side Drawer */}
         <FilterSideDrawer

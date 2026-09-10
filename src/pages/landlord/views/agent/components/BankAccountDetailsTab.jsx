@@ -101,14 +101,15 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
   const handleConfirmSave = async () => {
     setSaving(true);
     try {
+      // fname/lname/email/phone for the external interest_party record now
+      // come from the logged-in agent's own user record on the backend
+      // (BankController::saveAccount) — only the bank + account number
+      // actually need to travel from this form.
       const bankValue = `${form.bankCode}, ${form.bankName}`;
       await saveAccount({
         organizationId,
         bank: bankValue,
         accountNumber: form.account_number,
-        name: organization?.organization_name,
-        email: organization?.organization_email,
-        phone: organization?.organization_phone,
       });
       notify.success('Bank account details saved successfully');
       setEditOpen(false);

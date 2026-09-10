@@ -30,17 +30,13 @@ export const resolveAccount = async ({ organizationId, bank, accountNumber }) =>
 };
 
 // Step 2 — persists the bank account once the resolved name has been
-// confirmed. `name`/`email`/`phone` are the organization's own contact
-// details (used to register the payee with the gateway).
-export const saveAccount = async ({ organizationId, bank, accountNumber, name, email, phone, orgTitle }) => {
+// confirmed. The payee's fname/lname/email/phone are resolved server-side
+// from the logged-in agent's own user record, not sent from here.
+export const saveAccount = async ({ organizationId, bank, accountNumber }) => {
     const res = await api.post('/v1/landlord/bank_service/save_account', {
         id: organizationId,
         bank,
         account_number: accountNumber,
-        name,
-        email,
-        phone,
-        org_title: orgTitle,
     });
     return res.data;
 };

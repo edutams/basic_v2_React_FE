@@ -935,6 +935,7 @@ export default function Dashboard() {
         open={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
         planDistribution={analytics?.planDistribution ?? []}
+        totalOrganizations={analytics?.totalOrganizations ?? 0}
       />
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}

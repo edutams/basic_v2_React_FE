@@ -1711,7 +1711,7 @@ const Agent = () => {
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
         />
-        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} />
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
         <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
 
         {/* Filter Side Drawer */}

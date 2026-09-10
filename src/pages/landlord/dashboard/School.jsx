@@ -1697,7 +1697,7 @@ const SchoolDashboard = () => {
         </Alert>
       </Snackbar>
 
-      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={analytics?.planDistribution ?? []} />
+      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={analytics?.planDistribution ?? []} totalOrganizations={analytics?.totalOrganizations ?? 0} />
       <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
       <LoginActivities open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
       <TotalSchoolModal

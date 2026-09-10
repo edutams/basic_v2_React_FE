@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Grid } from '@mui/material';
-import { IconCreditCard, IconCheck, IconSchool, IconBuilding } from '@tabler/icons-react';
+import { IconCheck, IconSchool, IconBuilding, IconBuildingBank } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from '@/components/shared/StatCard';
 import Chart from 'react-apexcharts';
 import axios from '@/api/landlord/landlord_api';
+import agentApi from '@/api/landlord/organizations/agent';
 import SubscriptionSchoolsModal from './SubscriptionSchoolsModal';
 
 const tooltipTexts = {
-  total: 'Total number of subscription requests across all schools under this organization.',
+  totalOrgs: 'Total number of organizations (agents) registered under this account.',
   active: 'Schools with an active, paid subscription that is currently in use.',
   secondary: 'Subscription requests from secondary school types.',
   primary: 'Subscription requests from primary school types.',
@@ -16,18 +17,26 @@ const tooltipTexts = {
 
 const SubscriptionModal = ({ open, onClose }) => {
   const [stats, setStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [totalOrgs, setTotalOrgs] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Schools-by-category modal state
   const [schoolsModalOpen, setSchoolsModalOpen] = useState(false);
   const [schoolsCategory, setSchoolsCategory] = useState('total');
 
-  const fetchStats = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const res = await axios.get('/v1/landlord/subscriptions/stats/school-type');
-      if (res.data.status === 'success') {
-        setStats(res.data.data);
+      const [statsRes, analyticsRes] = await Promise.all([
+        axios.get('/v1/landlord/subscriptions/stats/school-type'),
+        agentApi.getAnalytics(),
+      ]);
+
+      if (statsRes.data.status === 'success') {
+        setStats(statsRes.data.data);
+      }
+
+      if (analyticsRes.status && analyticsRes.data) {
+        setTotalOrgs(analyticsRes.data.totalOrganizations ?? 0);
       }
     } catch (error) {
       console.error('Failed to fetch subscription stats', error);
@@ -38,9 +47,9 @@ const SubscriptionModal = ({ open, onClose }) => {
 
   useEffect(() => {
     if (open) {
-      fetchStats();
+      fetchData();
     }
-  }, [open, fetchStats]);
+  }, [open, fetchData]);
 
   const handleStatCardClick = (category) => {
     setSchoolsCategory(category);
@@ -49,11 +58,11 @@ const SubscriptionModal = ({ open, onClose }) => {
 
   const statCards = [
     {
-      label: 'Total Subscriptions',
-      count: stats.total,
-      icon: IconCreditCard,
+      label: 'Total Organizations',
+      count: totalOrgs,
+      icon: IconBuildingBank,
       colorIndex: 0,
-      tooltip: tooltipTexts.total,
+      tooltip: tooltipTexts.totalOrgs,
       category: 'total',
     },
     {
@@ -130,7 +139,6 @@ const SubscriptionModal = ({ open, onClose }) => {
         }
       >
         <Box>
-          {/* Stat cards */}
           <Grid container spacing={1.5} mb={3}>
             {statCards.map((card) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={card.label}>
@@ -148,7 +156,6 @@ const SubscriptionModal = ({ open, onClose }) => {
             ))}
           </Grid>
 
-          {/* Chart */}
           <Box sx={{ p: 3, borderRadius: 2 }}>
             {statsLoading ? (
               <Box sx={{ height: 300 }} />
@@ -159,7 +166,6 @@ const SubscriptionModal = ({ open, onClose }) => {
         </Box>
       </ReusableModal>
 
-      {/* Schools-by-category modal */}
       <SubscriptionSchoolsModal
         open={schoolsModalOpen}
         onClose={() => setSchoolsModalOpen(false)}

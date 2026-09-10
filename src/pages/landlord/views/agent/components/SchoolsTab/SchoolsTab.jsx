@@ -1390,7 +1390,7 @@ const SchoolsTab = ({
           severity="success"
         />
 
-        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={planDistribution} />
+        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
         <TotalSchoolModal
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}

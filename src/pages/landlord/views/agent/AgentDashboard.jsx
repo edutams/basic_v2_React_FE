@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Box, Tab, Grid, useTheme, Skeleton, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconUsers, IconSchool, IconBuildingBank } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -23,9 +24,11 @@ import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ReusableModal from '@/components/shared/ReusableModal';
+import BankAccountDetailsTab from './components/BankAccountDetailsTab';
 
 const AgentDashboard = () => {
   const { user: currentUser } = useAuth();
+  const { can } = usePermissions();
   const id = currentUser?.organization?.id || currentUser?.organization_id;
   const [value, setValue] = useState('1');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
@@ -299,6 +302,14 @@ const AgentDashboard = () => {
                       label="Manage Team"
                       value="4"
                     />
+                    {can('landlord.bank_account.manage') && (
+                      <Tab
+                        icon={<IconBuildingBank size={18} />}
+                        iconPosition="start"
+                        label="Bank Account Details"
+                        value="5"
+                      />
+                    )}
                   </TabList>
                 </Box>
 
@@ -335,6 +346,15 @@ const AgentDashboard = () => {
                       hideCard
                     />
                   </TabPanel>
+                  {can('landlord.bank_account.manage') && (
+                    <TabPanel value="5" sx={{ p: 3 }}>
+                      <BankAccountDetailsTab
+                        organizationId={id}
+                        organization={agentData.raw}
+                        onSaved={() => setRefreshKey((prev) => prev + 1)}
+                      />
+                    </TabPanel>
+                  )}
                 </Box>
               </TabContext>
             </Box>

@@ -15,10 +15,10 @@ import {
 } from '@mui/material';
 import * as dropdownData from './data';
 import { useTheme } from '@mui/material/styles';
-import { useAuth } from '../../../../hooks/useAuth';
-import { useNotification } from '../../../../hooks/useNotification';
-import user1 from '../../../../assets/images/users/1.jpg';
-import bgLearn from '../../../../assets/images/backgrounds/unlimited-bg.png';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotification } from '@/hooks/useNotification';
+import user1 from '@/assets/images/users/1.jpg';
+import bgLearn from '@/assets/images/backgrounds/unlimited-bg.png';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
@@ -103,13 +103,22 @@ const Profile = () => {
   const displayName = displayUser?.organization?.organization_name;
   const firstName = displayName.split(' ')[0];
   const userEmail = displayUser?.email || 'user@example.com';
-  const userAvatar = displayUser?.image || user1;
+  const userAvatar = displayUser?.avatar || user1;
 
   return (
     <Box display="flex" gap={1}>
       {lgUp ? <Divider orientation="vertical" variant="middle" /> : null}
 
-      <Button variant="contained" size="small" aria-label="menu" color="inherit" aria-controls="msgs-menu" aria-haspopup="true" sx={{ ...(typeof anchorEl2 === 'object' && { borderRadius: '9px', }), }} onClick={handleClick2}>
+      <Button
+        variant="contained"
+        size="small"
+        aria-label="menu"
+        color="inherit"
+        aria-controls="msgs-menu"
+        aria-haspopup="true"
+        sx={{ ...(typeof anchorEl2 === 'object' && { borderRadius: '9px' }) }}
+        onClick={handleClick2}
+      >
         <Avatar
           src={userAvatar}
           alt={'ProfileImg'}
@@ -237,7 +246,13 @@ const Profile = () => {
         ))}
 
         <Box mt={2}>
-          <Button variant="contained" size="small" color="secondary" fullWidth onClick={handleLogout} startIcon={<IconLogout width="18" height="18" />}
+          <Button
+            variant="contained"
+            size="small"
+            color="secondary"
+            fullWidth
+            onClick={handleLogout}
+            startIcon={<IconLogout width="18" height="18" />}
           >
             Logout
           </Button>

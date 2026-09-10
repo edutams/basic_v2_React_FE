@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -96,22 +96,27 @@ const EduTier = () => {
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      setAnalyticsLoading(true);
-      try {
-        const response = await agentApi.getAnalytics();
-        if (response.status === true && response.data) {
-          setAnalytics(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch analytics', error);
-      } finally {
-        setAnalyticsLoading(false);
+  // Extracted so it can also be called after a plan is created/updated/
+  // deleted elsewhere on this page — those stat cards otherwise only ever
+  // reflected the data as of the initial page load, requiring a full reload
+  // to pick up a just-created plan.
+  const fetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await agentApi.getAnalytics();
+      if (response.status === true && response.data) {
+        setAnalytics(response.data);
       }
-    };
-    fetchAnalytics();
+    } catch (error) {
+      console.error('Failed to fetch analytics', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -136,7 +141,7 @@ const EduTier = () => {
         id: 'plan',
         label: 'Plan',
         icon: <IconArticle size="22" />,
-        component: <PlanTab />,
+        component: <PlanTab onPlanChanged={fetchAnalytics} />,
       });
     }
     if (can('landlord.plan.my_plan')) {
@@ -148,7 +153,7 @@ const EduTier = () => {
       });
     }
     return tabs;
-  }, [can]);
+  }, [can, fetchAnalytics]);
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
@@ -645,11 +650,14 @@ const EduTier = () => {
       <PlanDistributionModal
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
+        planDistribution={analytics?.planDistribution ?? []}
+        totalOrganizations={analytics?.totalOrganizations ?? 0}
       />
 
       <TotalSchoolModal
         open={openTotalSchoolModal}
         onClose={() => setOpenTotalSchoolModal(false)}
+        stats={analytics}
       />
 
       <TotalTransactionModal

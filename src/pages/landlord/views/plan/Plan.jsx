@@ -40,7 +40,7 @@ import PackageModal from '@/components/landlord/add-package/components/PackageMo
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 
-const Plan = () => {
+const Plan = ({ onPlanChanged }) => {
   const [open, setOpen] = useState(false);
   const [openPackageModal, setOpenPackageModal] = useState(false);
   const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
@@ -122,6 +122,11 @@ const Plan = () => {
       setSnackbarOpen(true);
       handleClose();
       fetchData();
+      // A new/updated active plan rolls out to every organization's
+      // my_plans immediately (EduTierService::rolloutPlanToOrganizations),
+      // so the dashboard's stat cards are stale the moment this succeeds —
+      // let the parent page know to refetch them too.
+      onPlanChanged?.();
     } catch (error) {
       setSnackbarMessage(`Failed to ${actionType} plan`);
       setSnackbarSeverity('error');
@@ -156,6 +161,7 @@ const Plan = () => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
         fetchData();
+        onPlanChanged?.();
       } catch (error) {
         setSnackbarMessage('Failed to delete plan');
         setSnackbarSeverity('error');

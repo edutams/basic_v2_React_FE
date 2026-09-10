@@ -23,7 +23,7 @@ const schemeMap = [
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
-const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
+const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrganizations = 0 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   
@@ -34,7 +34,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
     colorIndex: i % schemeMap.length
   }));
 
-  const totalSchools = plans.reduce((sum, p) => sum + (p.schoolCount ?? 0), 0);
+  const totalSchools = totalOrganizations || plans.reduce((sum, p) => sum + (p.schoolCount ?? 0), 0);
 
   const chartOptions = {
     chart: {

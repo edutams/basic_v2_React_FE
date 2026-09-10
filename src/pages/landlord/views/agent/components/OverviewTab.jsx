@@ -289,7 +289,7 @@ const OverviewTab = ({ data }) => {
         header: () => 'Transaction',
         cell: (info) => (
           <Typography variant="body2" fontWeight={700} color="textPrimary" fontSize={12}>
-            #{info.getValue()}
+            ₦{info.getValue()}
           </Typography>
         ),
       }),
@@ -351,7 +351,7 @@ const OverviewTab = ({ data }) => {
       shared: true,
       intersect: false,
       theme: isDarkMode ? 'dark' : 'light',
-      y: { formatter: (val) => `# ${val.toLocaleString()}` },
+      y: { formatter: (val) => `₦${val.toLocaleString()}` },
     },
     grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
   }), [chartData.categories, theme.palette.text.secondary, theme.palette.divider, isDarkMode]);

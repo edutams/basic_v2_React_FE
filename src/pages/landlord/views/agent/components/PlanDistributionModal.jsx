@@ -131,11 +131,9 @@ const SideStatRow = ({ label, count, colorIndex, icon: Icon }) => {
   );
 };
 
-const PlanDistributionModal = ({ open, onClose, planDistribution = [] }) => {
+const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrganizations = 0 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-
-  const totalOrganizations = planDistribution.reduce((sum, p) => sum + (p.total ?? 0), 0);
 
   const chartOptions = {
     chart: {

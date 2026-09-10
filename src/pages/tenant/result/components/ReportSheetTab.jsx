@@ -2,12 +2,13 @@ import { useState, useRef } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Avatar, Divider,
-  IconButton, Menu, ListItemIcon, ListItemText, useTheme,
+  IconButton, Menu, ListItemIcon, ListItemText, useTheme, Stack,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconPrinter, IconClipboardCheck, IconArrowLeft, IconEye, IconFolder } from '@tabler/icons-react';
+import { IconPrinter, IconClipboardCheck, IconArrowLeft, IconEye, IconFolder, IconUsers, IconCreditCard, IconAward, IconCalendar } from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { getResultTemplate } from './templates';
+import StatCard from '@/components/shared/StatCard';
 
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -182,6 +183,14 @@ const ReportSheetTab = () => {
   /* ── Class list (dossier landing) view ─────────────────── */
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      {/* ── Stat Cards ──────────────────────────────────────────── */}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+        <StatCard count={classStudents.length} label="Total Students" subtitle={`In ${className || 'selected class'}`} icon={IconUsers} colorIndex={0} loading={false} />
+        <StatCard count={paidStudents.length} label="Paid Students" subtitle="Eligible for dossier" icon={IconCreditCard} colorIndex={1} loading={false} />
+        <StatCard count={classStudents.length - paidStudents.length} label="Unpaid Students" subtitle="Pending payment" icon={IconCreditCard} colorIndex={3} loading={false} />
+        <StatCard count={`${dummyReport.attendance.present}/${dummyReport.attendance.opened}`} label="Attendance" subtitle="Present / Total days" icon={IconCalendar} colorIndex={2} loading={false} />
+      </Stack>
+
       {/* ── Card Header ─────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>

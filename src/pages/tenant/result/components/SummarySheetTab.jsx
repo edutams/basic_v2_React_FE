@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
   Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem,
-  Table, TableBody, TableCell, TableHead, TableRow, useTheme,
+  Table, TableBody, TableCell, TableHead, TableRow, useTheme, Stack,
   Avatar, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconX, IconUsers, IconBook, IconAward, IconAlertTriangle } from '@tabler/icons-react';
+import StatCard from '@/components/shared/StatCard';
 
 const dummySessionTerms = [
   { id: 1, label: '2025/2026 - First Term' },
@@ -57,6 +58,14 @@ const SummarySheetTab = () => {
 
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
+      {/* ── Stat Cards ──────────────────────────────────────────── */}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+        <StatCard count={42} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
+        <StatCard count={dummySubjects.length} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={false} />
+        <StatCard count={grades.length} label="Grade Bands" subtitle="A+ through F" icon={IconAward} colorIndex={2} loading={false} />
+        <StatCard count={0} label="Outliers" subtitle="Students below threshold" icon={IconAlertTriangle} colorIndex={3} loading={false} />
+      </Stack>
+
       {/* ── Header ──────────────────────────────────────────── */}
       <Box sx={{ p: 2, textAlign: 'center', borderBottom: `1px solid ${borderColor}` }}>
         <Typography variant="h6" fontWeight={700}>SUMMARY SHEET ON GRADE DISTRIBUTIONS.</Typography>

@@ -47,6 +47,7 @@ import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import TotalSchoolModal from '../TotalSchoolModal';
+import SubscriptionModal from '@/pages/landlord/dashboard/components/SubscriptionModal';
 
 import {
   getSpaContact,
@@ -577,11 +578,17 @@ const SchoolsTab = ({
   // Analytics modals
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
   const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
 
   // Analytics state for TotalSchoolModal
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  // Subscription stats
+  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
+
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
@@ -719,6 +726,24 @@ const SchoolsTab = ({
     };
     fetchAnalytics();
   }, [analyticsRefreshKey, refreshKey]);
+
+  // Fetch subscription stats by school type
+  useEffect(() => {
+    const fetchSubscriptionStats = async () => {
+      setSubscriptionStatsLoading(true);
+      try {
+        const res = await agentApi.getSubscriptionStatsBySchoolType(organizationId);
+        if (res.status && res.data) {
+          setSubscriptionStats(res.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch subscription stats', e);
+      } finally {
+        setSubscriptionStatsLoading(false);
+      }
+    };
+    fetchSubscriptionStats();
+  }, [analyticsRefreshKey, refreshKey, organizationId]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -873,9 +898,10 @@ const SchoolsTab = ({
     [analytics, subscribedSchools],
   );
 
-  const planSeries = [40, 15, 35, 10];
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
+  const planDistribution = analytics?.planDistribution ?? [];
+  const planSeries = planDistribution.map((p) => p.total ?? 0);
+  const planLabels = planDistribution.map((p) => p.label ?? '');
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
   const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, setOpenAddModal, can };
 
@@ -1033,6 +1059,7 @@ const SchoolsTab = ({
                   </Typography>
                   <IconButton
                     size="small"
+                    onClick={() => setOpenSubscriptionModal(true)}
                     sx={{
                       width: 32,
                       height: 32,
@@ -1062,20 +1089,20 @@ const SchoolsTab = ({
                       color: isDark ? '#ffffff' : s1.color,
                     }}
                   >
-                    {analyticsLoading ? (
+                    {subscriptionStatsLoading ? (
                       <Skeleton variant="text" width={30} />
                     ) : (
-                      schoolSummary.subscriptions
+                      subscriptionStats.total
                     )}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Primary
+                      Active
                     </Typography>
                     <Typography fontWeight={600}>
-                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.primary}
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
                     </Typography>
                   </Box>
                   <Divider
@@ -1088,7 +1115,20 @@ const SchoolsTab = ({
                       Secondary
                     </Typography>
                     <Typography fontWeight={600}>
-                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.secondary}
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
+                    </Typography>
+                  </Box>
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: '#E5E7EB' }}
+                  />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Primary
+                    </Typography>
+                    <Typography fontWeight={600}>
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
                     </Typography>
                   </Box>
                 </Box>
@@ -1145,13 +1185,19 @@ const SchoolsTab = ({
                 <Box
                   sx={{ height: 130, display: 'flex', alignItems: 'center', }}
                 >
-                  <ReusablePieChart
-                    series={planSeries}
-                    colors={planColors}
-                    labels={planLabels}
-                    height={130}
-                    hideCard
-                  />
+                  {analyticsLoading ? (
+                    <Skeleton variant="circular" width={110} height={110} sx={{ mx: 'auto' }} />
+                  ) : planSeries.length > 0 ? (
+                    <ReusablePieChart
+                      series={planSeries}
+                      colors={planColors}
+                      labels={planLabels}
+                      height={130}
+                      hideCard
+                    />
+                  ) : (
+                    <Skeleton variant="circular" width={110} height={110} sx={{ mx: 'auto' }} />
+                  )}
                 </Box>
               </Paper>
             </Box>
@@ -1344,12 +1390,16 @@ const SchoolsTab = ({
           severity="success"
         />
 
-        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} />
+        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={planDistribution} />
         <TotalSchoolModal
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}
           stats={analytics}
           refreshKey={analyticsRefreshKey}
+        />
+        <SubscriptionModal
+          open={openSubscriptionModal}
+          onClose={() => setOpenSubscriptionModal(false)}
         />
 
         <Snackbar

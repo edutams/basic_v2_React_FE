@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
-import { IconListNumbers, IconClockHour4, IconCircleCheck, IconCash } from '@tabler/icons-react';
+import { IconListNumbers, IconSchool, IconBuilding, IconCircleCheck } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from 'src/components/container/PageContainer';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -20,14 +20,14 @@ const BCrumb = [
 
 const AgentSubscriptionIndex = () => {
   const [value, setValue] = useState(0);
-  const [stats, setStats] = useState({ total: 0, pending: 0, active: 0, amountDue: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [subscriptionCharges, setSubscriptionCharges] = useState('0');
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const res = await axios.get('/v1/landlord/subscriptions/stats');
+      const res = await axios.get('/v1/landlord/subscriptions/stats/school-type');
       if (res.data.status === 'success') {
         setStats(res.data.data);
       }
@@ -73,18 +73,18 @@ const AgentSubscriptionIndex = () => {
           icon={IconCircleCheck}
         />
         <MiniStat
-          label="Pending Payment"
-          value={stats.pending}
+          label="Secondary"
+          value={stats.secondary}
           loading={statsLoading}
           color="warning.main"
-          icon={IconClockHour4}
+          icon={IconSchool}
         />
         <MiniStat
-          label="Amount Due"
-          value={`₦${(stats.amountDue ?? 0).toLocaleString()}`}
+          label="Primary"
+          value={stats.primary}
           loading={statsLoading}
-          color="error.main"
-          icon={IconCash}
+          color="info.main"
+          icon={IconBuilding}
         />
       </Box>
 

@@ -57,6 +57,7 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
+import SubscriptionModal from '@/pages/landlord/dashboard/components/SubscriptionModal';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 import ManageTeamTab from './components/ManageTeamTab';
@@ -92,28 +93,15 @@ const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'Inactive' },
 ];
-const schoolSummary = {
+const schoolSummaryDefault = {
   total: 350,
   active: 200,
   inactive: 100,
   subAgents: 0,
-
   primary: 30,
-
   secondary: 900,
 };
-const planSeries = [40, 15, 35, 10];
-
-const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-
-const planData = [
-  { name: 'Freemium', value: 40, color: '#EC468C' },
-  { name: 'Basic', value: 15, color: '#7987FF' },
-  { name: 'Basic +', value: 35, color: '#FFA5CB' },
-  { name: 'Basic ++', value: 10, color: '#8B48E3' },
-];
-
-const planColors = planData.map((p) => p.color);
+const PLAN_DISTRIBUTION_COLORS = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
 // Separate component for action menu to avoid hooks in loops
 const ActionMenuCell = ({
@@ -304,6 +292,17 @@ const Agent = () => {
 
   const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
   const [agentToImpersonate, setAgentToImpersonate] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState({
+    totalAgents: 0,
+    totalSubAgents: 0,
+    totalSchools: 0,
+    planDistribution: [],
+  });
+
+  // Subscription stats
+  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -327,9 +326,19 @@ const Agent = () => {
     'Dec',
   ];
 
-  // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39, 25];
-  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
+  const schoolSummary = {
+    total: analytics?.totalSchools ?? schoolSummaryDefault.total,
+    active: analytics?.activeSchools ?? schoolSummaryDefault.active,
+    inactive: analytics?.inactiveSchools ?? schoolSummaryDefault.inactive,
+    subAgents: analytics?.totalSubAgents ?? schoolSummaryDefault.subAgents,
+    primary: analytics?.primarySchools ?? schoolSummaryDefault.primary,
+    secondary: analytics?.secondarySchools ?? schoolSummaryDefault.secondary,
+    subscriptions: analytics?.subscriptions ?? 0,
+    pending: analytics?.pendingSchools ?? 0,
+    rejected: analytics?.rejectedSchools ?? 0,
+  };
+
+  const planDistribution = analytics?.planDistribution ?? [];
 
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
@@ -342,6 +351,7 @@ const Agent = () => {
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
 
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
@@ -367,13 +377,6 @@ const Agent = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const [analytics, setAnalytics] = useState({
-    totalAgents: 0,
-    totalSubAgents: 0,
-    totalSchools: 0,
-  });
-
   useEffect(() => {
     const fetchAnalytics = async () => {
       setAnalyticsLoading(true);
@@ -389,6 +392,24 @@ const Agent = () => {
       }
     };
     fetchAnalytics();
+  }, [refreshKey]);
+
+  // Fetch subscription stats
+  useEffect(() => {
+    const fetchSubscriptionStats = async () => {
+      setSubscriptionStatsLoading(true);
+      try {
+        const res = await agentApi.getSubscriptionStatsBySchoolType();
+        if (res.status && res.data) {
+          setSubscriptionStats(res.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch subscription stats', e);
+      } finally {
+        setSubscriptionStatsLoading(false);
+      }
+    };
+    fetchSubscriptionStats();
   }, [refreshKey]);
 
   useEffect(() => {
@@ -1003,7 +1024,7 @@ const Agent = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onClick={() => setIsPlanModalOpen(true)}
+              onClick={() => setOpenSubscriptionModal(true)}
             >
               <IconChartBar size={18} color="currentColor" />
             </Box>
@@ -1027,7 +1048,11 @@ const Agent = () => {
                 color: isDark ? '#ffffff' : s1.color,
               }}
             >
-              {schoolSummary.total}
+              {subscriptionStatsLoading ? (
+                <Skeleton variant="text" width={30} />
+              ) : (
+                subscriptionStats.total
+              )}
             </Typography>
           </Box>
 
@@ -1041,9 +1066,11 @@ const Agent = () => {
           >
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Primary
+                Active
               </Typography>
-              <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
+              <Typography fontWeight={600}>
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
+              </Typography>
             </Box>
 
             <Divider
@@ -1056,7 +1083,24 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Secondary
               </Typography>
-              <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
+              <Typography fontWeight={600}>
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
+              </Typography>
+            </Box>
+
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 2 }}
+            />
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Primary
+              </Typography>
+              <Typography fontWeight={600}>
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -1123,14 +1167,20 @@ const Agent = () => {
                 overflow: 'hidden',
               }}
             >
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={150}
-                width="100%"
-                hideCard
-              />
+              {analyticsLoading ? (
+                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+              ) : planDistribution.length > 0 ? (
+                <ReusablePieChart
+                  series={planDistribution.map((p) => p.total)}
+                  colors={PLAN_DISTRIBUTION_COLORS}
+                  labels={planDistribution.map((p) => p.label)}
+                  height={150}
+                  width="100%"
+                  hideCard
+                />
+              ) : (
+                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+              )}
             </Box>
           </Box>
         </Paper>  
@@ -1661,7 +1711,8 @@ const Agent = () => {
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
         />
-        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} />
+        <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
 
         {/* Filter Side Drawer */}
         <FilterSideDrawer

@@ -49,6 +49,7 @@ import BlankCard from '@/components/shared/BlankCard';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from './components/PlanDistributionModal';
+import SubscriptionModal from './components/SubscriptionModal';
 import LoginActivities from './components/LoginActivities';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
@@ -63,6 +64,7 @@ import {
   rejectProspectiveTenant,
   deleteProspectiveTenant,
 } from '@/api/landlord/school/schoolApi';
+import agentApi from '@/api/landlord/organizations/agent';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -649,6 +651,8 @@ const SchoolDashboard = () => {
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -740,6 +744,18 @@ const SchoolDashboard = () => {
     fetchSchools();
     fetchProspects();
   }, [fetchSchools, fetchProspects]);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await agentApi.getAnalytics();
+        if (res.status) setAnalytics(res.data);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      }
+    };
+    fetchAnalytics();
+  }, []);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -895,9 +911,9 @@ const SchoolDashboard = () => {
 
   const isActive = String(schoolToDeactivate?.status).toLowerCase() === 'active';
 
-  const planSeries = [40, 15, 35, 10];
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
+  const planSeries = (analytics?.planDistribution ?? []).map((p) => p.total);
+  const planLabels = (analytics?.planDistribution ?? []).map((p) => p.label);
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -1024,7 +1040,9 @@ const SchoolDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenSubscriptionModal(true)}
             >
               <IconChartBar size={18} color="currentColor" />
             </Box>
@@ -1679,7 +1697,8 @@ const SchoolDashboard = () => {
         </Alert>
       </Snackbar>
 
-      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} />
+      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={analytics?.planDistribution ?? []} />
+      <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
       <LoginActivities open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
       <TotalSchoolModal
         open={openTotalSchoolModal}

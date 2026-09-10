@@ -398,7 +398,10 @@ export default function Dashboard() {
           </Grid>
         </Grid>
 
-        {/* Row 2: Charts and Login Activities */}
+        {/* Row 2: Charts and Login Activities — cards stay equal height
+            (default stretch) so the row reads as one aligned unit; each
+            card centers its own shorter content vertically instead, rather
+            than leaving a blank gap anchored to the bottom. */}
         <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card
@@ -523,13 +526,22 @@ export default function Dashboard() {
             >
               <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="600"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    Login Activities (30 days)
-                  </Typography>
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="600"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      Login Activities (30 days)
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                    >
+                      Staff, learner, and agent sign-ins across all your schools.
+                    </Typography>
+                  </Box>
                   <Box
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
                     sx={{
@@ -549,7 +561,7 @@ export default function Dashboard() {
                   </Box>
                 </Box>
 
-                <Stack spacing={1} sx={{ flex: 1 }}>
+                <Stack spacing={1} justifyContent="center" sx={{ flex: 1 }}>
                   {loginActivitiesLoading
                     ? [...Array(3)].map((_, i) => (
                         <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
@@ -585,6 +597,8 @@ export default function Dashboard() {
               sx={{
                 p: '10px !important',
                 height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 borderRadius: '14px',
                 bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -605,15 +619,25 @@ export default function Dashboard() {
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
                   mb: 2,
+                  flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight="600"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  Plan Distribution
-                </Typography>
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="600"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Plan Distribution
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                  >
+                    Breakdown of active subscriptions by plan type across all schools.
+                  </Typography>
+                </Box>
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
@@ -632,8 +656,16 @@ export default function Dashboard() {
                   <IconChartBar size={18} color="currentColor" />
                 </Box>
               </Box>
+              {/* flex:1 + centered — so on a row where the Transaction chart
+                  card ends up taller, the donut centers in the leftover
+                  space instead of sitting flush at the top with a gap
+                  below it. */}
               <Box
                 sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   '& .apexcharts-canvas': {
                     background: 'transparent !important',
                   },

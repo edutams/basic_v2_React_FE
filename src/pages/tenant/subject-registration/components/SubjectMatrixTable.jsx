@@ -87,7 +87,6 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 bgcolor: isDark ? '#1e293b' : '#f8fafc',
 
                 ...(!isMobile && { zIndex: 2 }),
-                bgcolor: isDark ? '#1e293b' : '#f8fafc',
 
                 borderBottom: '2px solid',
                 borderRight: '2px solid',
@@ -192,7 +191,6 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   // bgcolor: 'background.paper',
                   bgcolor: `${isDark ? '#1e293b' : '#f1f4f6'} !important`,
                   ...(!isMobile && { zIndex: 1 }),
-                  borderRight: '1px solid',
                   borderRight: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '2px solid rgba(255, 255, 255, 0.2)'
@@ -269,7 +267,6 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                   ...(!isMobile && { position: 'sticky', left: 240 }),
                   bgcolor: 'background.paper',
                   ...(!isMobile && { zIndex: 1 }),
-                  borderRight: '1px solid',
                   borderRight: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '2px solid rgba(255, 255, 255, 0.2)'

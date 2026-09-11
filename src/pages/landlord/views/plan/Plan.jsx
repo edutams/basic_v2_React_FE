@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Typography,
   Box,
@@ -18,10 +18,6 @@ import {
   TablePagination,
   Snackbar,
   Alert,
-  Switch,
-  FormControlLabel,
-  useMediaQuery,
-  useTheme,
   Tooltip,
   Skeleton,
 } from '@mui/material';
@@ -40,7 +36,7 @@ import PackageModal from '@/components/landlord/add-package/components/PackageMo
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 
-const Plan = ({ onPlanChanged }) => {
+const Plan = forwardRef(({ onPlanChanged }, ref) => {
   const [open, setOpen] = useState(false);
   const [openPackageModal, setOpenPackageModal] = useState(false);
   const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
@@ -57,7 +53,6 @@ const Plan = ({ onPlanChanged }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [lockSubscription, setLockSubscription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [modules, setModules] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -170,13 +165,6 @@ const Plan = ({ onPlanChanged }) => {
     }
   };
 
-  const handleLockSubscriptionChange = (event) => {
-    setLockSubscription(event.target.checked);
-    setSnackbarMessage(`Subscription ${event.target.checked ? 'locked' : 'unlocked'}`);
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
-  };
-
   const handleOpenManagePackages = (plan) => {
     handleActionClose();
     setSelectedPlan(plan);
@@ -234,8 +222,11 @@ const Plan = ({ onPlanChanged }) => {
   };
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const theme = useTheme();
-  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Exposes the "Add New Plan" action to the parent (PackageManager.jsx),
+  // whose tab-header row now owns this button instead of it living inside
+  // this tab's own card header.
+  useImperativeHandle(ref, () => ({ openAddModal: () => handleOpen('create') }));
 
   const renderDescriptionList = (description) => {
     const lines = description.split('\n').filter((line) => line.trim() !== '');
@@ -268,59 +259,6 @@ const Plan = ({ onPlanChanged }) => {
     <PageContainer title="Plans" description="This is the Plans page">
       {/* <Breadcrumb title="Plans" items={BCrumb} /> */}
       <ParentCard
-        title={
-          <Box sx={{ width: '100%' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-                gap: 2,
-              }}
-            >
-              <Typography variant="h5"></Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {!isMobileOrTablet && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={lockSubscription}
-                        onChange={handleLockSubscriptionChange}
-                        color="primary"
-                        aria-label="Lock subscription toggle"
-                      />
-                    }
-                    label="Lock Subscription"
-                    labelPlacement="start"
-                    sx={{ m: 0 }}
-                  />
-                )}
-                <Button variant="contained" size="small" color="primary" onClick={() => handleOpen('create')} sx={{ minWidth: 120 }}>
-                  Add New Plan
-                </Button>
-              </Box>
-            </Box>
-            {isMobileOrTablet && (
-              <Box sx={{ mt: 2, width: '100%' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={lockSubscription}
-                      onChange={handleLockSubscriptionChange}
-                      color="primary"
-                      aria-label="Lock subscription toggle"
-                    />
-                  }
-                  label="Lock Subscription"
-                  labelPlacement="start"
-                  sx={{ m: 0 }}
-                />
-              </Box>
-            )}
-          </Box>
-        }
         sx={{ px: 0, py: 0, backgroundColor: 'transparent', boxShadow: 'none', border: 'none', '& .MuiCardHeader-root': { p: 0 }, '& .MuiCardContent-root': { p: 0 } }}
       >
           <TableContainer>
@@ -586,6 +524,6 @@ const Plan = ({ onPlanChanged }) => {
       </ParentCard>
     </PageContainer>
   );
-};
+});
 
 export default Plan;

@@ -256,55 +256,41 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
       }
     >
       <Box sx={{ bgcolor: isDark ? theme.palette.background.default : '#f8fafc' }}>
-        {/* Top Plan Value Cards — "Total Organizations" joins the row as its
-            own card instead of being a separate summary block further down.
-            Capped height + its own scroll so this doesn't keep growing as
-            more plans get created — new plans are common (every active plan
-            rolls out to every organization automatically), so this list is
-            genuinely unbounded over time. */}
-        <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 3, pr: 0.5 }}>
-          <Grid container spacing={2}>
+        {/* Top KPI cards — deliberately a FIXED count (2), not one card per
+            plan. One-card-per-plan would grow forever (every active plan
+            rolls out to every organization automatically, so the plan list
+            is genuinely unbounded) — the per-plan breakdown lives entirely
+            in the chart and the "Plan per Organization" list below, both of
+            which already scale/scroll. This row never grows no matter how
+            many plans exist. */}
+        <Grid container spacing={2} mb={3}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             {plans.length > 0 ? (
-              <>
-                {plans.map((plan, i) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={plan.label}>
-                    <TopCard label={plan.label} value={plan.value} colorIndex={i} isDark={isDark} />
-                  </Grid>
-                ))}
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <TopCard
-                    label="Total Organizations"
-                    value={totalOrgs.toLocaleString()}
-                    colorIndex={plans.length}
-                    isDark={isDark}
-                  />
-                </Grid>
-              </>
+              <TopCard label="Total Plans" value={plans.length} colorIndex={0} isDark={isDark} />
             ) : (
-              [...Array(4)].map((_, i) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-                  <Card
-                    sx={{
-                      p: '14px',
-                      borderRadius: '14px',
-                      bgcolor: '#ffffff',
-                      border: '1px solid #E5E7EB',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
-                    <Box sx={{ textAlign: 'right', flex: 1 }}>
-                      <Skeleton variant="text" width={50} height={28} sx={{ ml: 'auto' }} />
-                      <Skeleton variant="text" width={70} height={16} sx={{ ml: 'auto' }} />
-                    </Box>
-                  </Card>
-                </Grid>
-              ))
+              <Card sx={{ p: '14px', borderRadius: '14px', bgcolor: '#ffffff', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                <Box sx={{ textAlign: 'right', flex: 1 }}>
+                  <Skeleton variant="text" width={50} height={28} sx={{ ml: 'auto' }} />
+                  <Skeleton variant="text" width={70} height={16} sx={{ ml: 'auto' }} />
+                </Box>
+              </Card>
             )}
           </Grid>
-        </Box>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            {plans.length > 0 ? (
+              <TopCard label="Total Organizations" value={totalOrgs.toLocaleString()} colorIndex={1} isDark={isDark} />
+            ) : (
+              <Card sx={{ p: '14px', borderRadius: '14px', bgcolor: '#ffffff', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                <Box sx={{ textAlign: 'right', flex: 1 }}>
+                  <Skeleton variant="text" width={50} height={28} sx={{ ml: 'auto' }} />
+                  <Skeleton variant="text" width={70} height={16} sx={{ ml: 'auto' }} />
+                </Box>
+              </Card>
+            )}
+          </Grid>
+        </Grid>
 
         {/* Chart Section */}
         <Box

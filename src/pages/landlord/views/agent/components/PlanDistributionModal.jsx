@@ -292,43 +292,44 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
-      {/* Top card per plan — capped height + its own scroll so a large
-          number of plans doesn't push the chart/side panel further down. */}
-      <Box sx={{ maxHeight: 168, overflowY: 'auto', mb: 2, pr: 0.5 }}>
-        <Grid container spacing={1.5}>
+      {/* Top KPI cards — deliberately a FIXED count (2), not one card per
+          plan. One-card-per-plan grows forever (every active plan rolls out
+          to every organization automatically, so the plan list is genuinely
+          unbounded) — the per-plan breakdown lives entirely in the chart and
+          the "Plan per Organization" list below, both of which already
+          scale/scroll. This row never grows no matter how many plans exist. */}
+      <Grid container spacing={1.5} mb={2}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           {planDistribution.length > 0 ? (
-            <>
-              {planDistribution.map((plan, i) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={plan.label}>
-                  <TopCard label={plan.label} value={plan.total} colorIndex={i} icon={IconBuildingBank} />
-                </Grid>
-              ))}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TopCard
-                  label="Total Organizations"
-                  value={totalOrganizations}
-                  colorIndex={planDistribution.length}
-                  icon={IconBuildingBank}
-                />
-              </Grid>
-            </>
+            <TopCard label="Total Plans" value={planDistribution.length} colorIndex={0} icon={IconBuildingBank} />
           ) : (
-            [...Array(4)].map((_, i) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-                <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
-                  <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                    <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
-                    <Box sx={{ textAlign: 'right', flex: 1 }}>
-                      <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
-                      <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
-                    </Box>
-                  </Stack>
-                </Card>
-              </Grid>
-            ))
+            <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                <Box sx={{ textAlign: 'right', flex: 1 }}>
+                  <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
+                  <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
+                </Box>
+              </Stack>
+            </Card>
           )}
         </Grid>
-      </Box>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          {planDistribution.length > 0 ? (
+            <TopCard label="Total Organizations" value={totalOrganizations} colorIndex={1} icon={IconBuildingBank} />
+          ) : (
+            <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                <Box sx={{ textAlign: 'right', flex: 1 }}>
+                  <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
+                  <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
+                </Box>
+              </Stack>
+            </Card>
+          )}
+        </Grid>
+      </Grid>
 
       {/* Chart md:9 + side panel md:3 */}
       <Grid container spacing={2} alignItems="flex-start">

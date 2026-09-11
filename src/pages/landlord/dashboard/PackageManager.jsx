@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
-import { Grid, Paper, Typography, Chip, Skeleton, useTheme } from '@mui/material';
+import { Grid, Paper, Typography, Chip, Skeleton, useTheme, Button } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -88,6 +88,7 @@ const EduTier = () => {
   const s3 = schemeMap[3];
 
   const [value, setValue] = React.useState(0);
+  const planRef = useRef(null);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
@@ -141,7 +142,7 @@ const EduTier = () => {
         id: 'plan',
         label: 'Plan',
         icon: <IconArticle size="22" />,
-        component: <PlanTab onPlanChanged={fetchAnalytics} />,
+        component: <PlanTab ref={planRef} onPlanChanged={fetchAnalytics} />,
       });
     }
     if (can('landlord.plan.my_plan')) {
@@ -616,24 +617,47 @@ const EduTier = () => {
       <Grid container spacing={2}>
         <Grid size={12}>
           <BlankCard>
-            <Box sx={{ width: '100%', overflowX: 'auto' }}>
-              <Tabs
-                value={value}
-                onChange={handleChange}
-                scrollButtons="auto"
-                variant="scrollable"
-                aria-label="basic tabs example"
-              >
-                {availableTabs.map((tab, idx) => (
-                  <Tab
-                    key={tab.id}
-                    iconPosition="start"
-                    icon={tab.icon}
-                    label={tab.label}
-                    {...a11yProps(idx)}
-                  />
-                ))}
-              </Tabs>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+              }}
+            >
+              <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                <Tabs
+                  value={value}
+                  onChange={handleChange}
+                  scrollButtons="auto"
+                  variant="scrollable"
+                  aria-label="basic tabs example"
+                >
+                  {availableTabs.map((tab, idx) => (
+                    <Tab
+                      key={tab.id}
+                      iconPosition="start"
+                      icon={tab.icon}
+                      label={tab.label}
+                      {...a11yProps(idx)}
+                    />
+                  ))}
+                </Tabs>
+              </Box>
+
+              {/* Tab-specific action — shown only while the Plan tab is
+                  active, instead of living inside that tab's own card
+                  header. */}
+              {availableTabs[value]?.id === 'plan' && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => planRef.current?.openAddModal()}
+                  sx={{ minWidth: 120, mr: 2, flexShrink: 0 }}
+                >
+                  Add New Plan
+                </Button>
+              )}
             </Box>
             <Divider />
             <CardContent sx={{ p: 0 }}>

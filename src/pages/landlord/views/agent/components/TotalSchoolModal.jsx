@@ -83,7 +83,7 @@ const TopCard = ({ label, value, icon: Icon, colorIndex = 0 }) => {
   );
 };
 
-const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) => {
+const TotalSchoolModal = ({ open, onClose, stats, organizationId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [tabValue, setTabValue] = useState('1');
@@ -94,8 +94,6 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
   const [chartLoading, setChartLoading] = useState(false);
   const [pendingYear, setPendingYear] = useState(year);
   const [allAgents, setAllAgents] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const fetchChartData = useCallback(async (selectedYear, selectedAgent = null) => {
     setChartLoading(true);
@@ -138,31 +136,26 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) 
     }
   }, []);
 
-  // Fetch analytics for TotalSchoolModal
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await agentApi.getAnalytics();
-        if (res.status) setAnalytics(res.data);
-      } catch (e) {
-        console.error('Failed to fetch analytics', e);
-      } finally {
-        setAnalyticsLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, [refreshKey]);
+  // `stats` already comes from the parent's own getAnalytics() call — this
+  // modal used to also fetch its own copy of the exact same endpoint into
+  // an `analytics` state that nothing ever read, a redundant call on every
+  // open/refresh. Removed; refreshKey no longer needs a listener here.
 
-  // Fetch initial data when modal opens
+  // Fetch initial data when the modal opens. Deliberately NOT re-run when
+  // `year` changes — it used to depend on `year` too, so clicking Filter
+  // (which calls setYear) fired this AND handleFilter's own fetch at the
+  // same time: two concurrent requests to the same endpoint, one without
+  // the agent filter, racing to set chartData last. handleFilter is now the
+  // sole trigger for any filter-driven refetch.
   useEffect(() => {
     if (open) {
       fetchChartData(year);
     }
-  }, [open, year, fetchChartData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleFilter = () => {
     setYear(pendingYear);
-    // Fetch filtered data only when filter button is clicked
     fetchFilteredChartData(pendingYear, agent);
   };
 

@@ -26,7 +26,12 @@ import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
-const SubscriptionPaymentModal = ({ open, onClose, selectedRow, subscriptionCharges, onPaymentSuccess }) => {
+// Table refresh on a real successful payment is handled by the parent
+// (manage-subcription.jsx), listening for the 'paymentCompleted' window
+// event paymentGateway.js dispatches once the gateway itself confirms —
+// not a prop here, since this modal has no way to know that happened
+// (makePayment() hands off to an external widget asynchronously).
+const SubscriptionPaymentModal = ({ open, onClose, selectedRow, subscriptionCharges }) => {
   const notify = useNotification();
   const { tenantInfo } = useContext(TenantAuthContext);
 
@@ -115,9 +120,20 @@ const SubscriptionPaymentModal = ({ open, onClose, selectedRow, subscriptionChar
               },
             ];
 
-        makePayment(data, hash);
+        // Confirm against the subscription transaction itself, not
+        // bursary's card-payment endpoint (makePayment()'s default) — that
+        // one looks up a bursary invoice by this reference and would 404
+        // /crash, since a subscription's trans_bulk_id was never a bursary
+        // transaction to begin with.
+        // The table refresh (onPaymentSuccess) happens later, off the
+        // 'paymentCompleted' event manage-subcription.jsx listens for —
+        // not here. Calling it right after makePayment() would refresh the
+        // table before the gateway has even run, showing the same
+        // still-pending row right back.
+        makePayment(data, hash, {
+          onConfirm: (transref) => subscriptionApi.checkTransactionStatus(transref),
+        });
         onClose();
-        onPaymentSuccess?.();
       }
     } catch (err) {
       console.error('Error creating transaction:', err);
@@ -279,7 +295,6 @@ SubscriptionPaymentModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   selectedRow: PropTypes.object,
   subscriptionCharges: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onPaymentSuccess: PropTypes.func,
 };
 
 export default SubscriptionPaymentModal;

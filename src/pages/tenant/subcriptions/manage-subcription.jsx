@@ -320,6 +320,20 @@ const ManageSubscriptionList = () => {
     refreshSubscriptionStatus?.();
   };
 
+  // The payment modals hand off to an external gateway widget and have no
+  // way to know when it actually finishes — paymentGateway.js dispatches
+  // this once the gateway itself confirms success and our backend accepts
+  // it, so the table only refreshes once there's really something new to
+  // show (same pattern PayInvoice.jsx uses for class-ledger payments).
+  useEffect(() => {
+    const handler = () => {
+      notify.success('Payment successful and confirmed!');
+      handlePaymentSuccess();
+    };
+    window.addEventListener('paymentCompleted', handler);
+    return () => window.removeEventListener('paymentCompleted', handler);
+  }, [fetchSubscriptions]);
+
   const handleDeleteConfirm = async () => {
     try {
       await subscriptionApi.deleteSubscription(rowToDelete.id);
@@ -695,7 +709,6 @@ const ManageSubscriptionList = () => {
         }}
         selectedRow={rowToPay}
         subscriptionCharges={subscriptionCharges}
-        onPaymentSuccess={handlePaymentSuccess}
       />
       <SubscriptionBulkPaymentModal
         open={bulkPaymentModalOpen}
@@ -705,7 +718,6 @@ const ManageSubscriptionList = () => {
         }}
         sessionId={sessionToPay?.id}
         sessionName={sessionToPay?.name}
-        onPaymentSuccess={handlePaymentSuccess}
       />
       <ConfirmationDialog
         open={confirmOpen}

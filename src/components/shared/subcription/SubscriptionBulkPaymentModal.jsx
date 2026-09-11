@@ -28,8 +28,12 @@ import { makePayment } from '@/utils/paymentGateway';
  * Pays for every pending term in a per_session subscription group with a
  * single gateway transaction — the bulk counterpart to
  * SubscriptionPaymentModal, which pays one subscription row at a time.
+ *
+ * Table refresh on a real successful payment is handled by the parent
+ * (manage-subcription.jsx), listening for the 'paymentCompleted' window
+ * event — not a prop here, same reasoning as SubscriptionPaymentModal.
  */
-const SubscriptionBulkPaymentModal = ({ open, onClose, sessionId, sessionName, onPaymentSuccess }) => {
+const SubscriptionBulkPaymentModal = ({ open, onClose, sessionId, sessionName }) => {
   const notify = useNotification();
 
   const [loading, setLoading] = useState(false);
@@ -96,9 +100,13 @@ const SubscriptionBulkPaymentModal = ({ open, onClose, sessionId, sessionName, o
           },
         ];
 
-        makePayment(data, hash);
+        // Confirm against the subscription transaction itself, not
+        // bursary's card-payment endpoint (makePayment()'s default) — see
+        // the matching comment in SubscriptionPaymentModal.jsx.
+        makePayment(data, hash, {
+          onConfirm: (transref) => subscriptionApi.checkTransactionStatus(transref),
+        });
         onClose();
-        onPaymentSuccess?.();
       }
     } catch (err) {
       console.error('Error creating bulk transaction:', err);
@@ -210,7 +218,6 @@ SubscriptionBulkPaymentModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   sessionName: PropTypes.string,
-  onPaymentSuccess: PropTypes.func,
 };
 
 export default SubscriptionBulkPaymentModal;

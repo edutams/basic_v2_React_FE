@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,13 +19,16 @@ import {
   useTheme,
   TablePagination,
   Alert,
+  Skeleton,
 } from '@mui/material';
 import { IconX, IconDownload } from '@tabler/icons-react';
-import { mockCommissionData } from '../mockData';
+import { getTransactions } from '@/api/landlord/commission/commissionApi';
+import { useNotification } from '@/hooks/useNotification';
 
 const CommissionDetailsModal = ({ open, onClose, agent }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const notify = useNotification();
 
   // Filter states
   const [fromDate, setFromDate] = useState('');
@@ -36,31 +39,39 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Get filtered data based on agent and filters
-  const getFilteredData = () => {
-    if (!agent) return [];
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    let data = mockCommissionData.filter(
-      (item) => item.agentName === agent.agentName || item.email === agent.email,
-    );
-
-    // Apply filters
-    if (fromDate) {
-      data = data.filter((item) => item.transactionDate >= fromDate);
+  const fetchTransactions = useCallback(async () => {
+    if (!agent?.id) return;
+    setLoading(true);
+    try {
+      const res = await getTransactions({
+        organizationId: agent.id,
+        from: fromDate || undefined,
+        to: toDate || undefined,
+        search: transactionId || undefined,
+      });
+      const list = res?.data?.data ?? res?.data ?? [];
+      setRows(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error('Failed to fetch commission transactions', err);
+      notify.error('Failed to load transaction details');
+      setRows([]);
+    } finally {
+      setLoading(false);
     }
-    if (toDate) {
-      data = data.filter((item) => item.transactionDate <= toDate);
-    }
-    if (transactionId) {
-      data = data.filter((item) =>
-        item.transactionId.toLowerCase().includes(transactionId.toLowerCase()),
-      );
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent?.id]);
 
-    return data;
-  };
+  useEffect(() => {
+    if (open) {
+      setPage(0);
+      fetchTransactions();
+    }
+  }, [open, fetchTransactions]);
 
-  const filteredData = getFilteredData();
+  const filteredData = rows;
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -72,8 +83,8 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
   };
 
   const handleFilter = () => {
-    // Trigger re-render with filtered data
     setPage(0);
+    fetchTransactions();
   };
 
   const handleExport = () => {
@@ -199,38 +210,56 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => (
-                  <TableRow
-                    key={row.id}
-                    sx={{
-                      '&:hover': {
-                        bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                      },
-                    }}
-                  >
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{row.transactionId}</Typography>
-                    </TableCell>
-                    <TableCell>{row.sessionId}</TableCell>
-                    <TableCell>{row.narration}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{row.amount}</Typography>
-                    </TableCell>
-                    <TableCell>{row.paymentType}</TableCell>
-                    <TableCell>{row.transactionDate}</TableCell>
+              {loading ? (
+                [...Array(3)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((__, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" />
+                      </TableCell>
+                    ))}
                   </TableRow>
-                ))}
-              {filteredData.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                      No records found
-                    </Alert>
-                  </TableCell>
-                </TableRow>
+                ))
+              ) : (
+                <>
+                  {filteredData
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, index) => (
+                      <TableRow
+                        key={row.id ?? row.trans_id ?? index}
+                        sx={{
+                          '&:hover': {
+                            bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                          },
+                        }}
+                      >
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {row.transaction_id ?? row.trans_id ?? row.id ?? '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{row.session_id ?? row.sessionId ?? '—'}</TableCell>
+                        <TableCell>{row.narration ?? row.description ?? '—'}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            ₦{Number(row.amount ?? 0).toLocaleString()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{row.credit_type ?? row.creditType ?? row.payment_type ?? '—'}</TableCell>
+                        <TableCell>{row.created_at ?? row.transaction_date ?? '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  {filteredData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                        <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                          No records found
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               )}
             </TableBody>
           </Table>

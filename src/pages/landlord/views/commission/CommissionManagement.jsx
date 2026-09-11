@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,16 +11,40 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
-import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
+import {
+  IconLayoutDashboard,
+  IconWallet,
+  IconReceipt,
+  IconCoins,
+  IconPigMoney,
+} from '@tabler/icons-react';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CommissionTable from './components/CommissionTable';
 import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
 import CommissionDetailsModal from './components/CommissionDetailsModal';
-import { mockCommissionData, mockSummaryStats } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
 import StatCard from 'src/components/shared/StatCard';
+import { getStats, getOrganizations } from '@/api/landlord/commission/commissionApi';
+
+const formatNaira = (value) =>
+  `₦ ${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Backend returns commission_type as lowercase 'subscription'/'transaction'
+// — the table/modals display it capitalized.
+const mapOrganization = (org) => ({
+  id: org.id,
+  agentName: org.organization_name,
+  email: org.organization_email,
+  commissionTypeRaw: org.commission_type,
+  commissionType: org.commission_type === 'transaction' ? 'Transaction' : 'Subscription',
+  schools: org.schools_count,
+  commission: org.commission,
+  commissionPercentage: `${org.commission ?? 0}%`,
+  status: org.status,
+  earnings: formatNaira(org.earnings),
+});
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -41,6 +65,67 @@ const CommissionManagement = () => {
 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+
+  const organizationId = currentUser?.organization?.id || currentUser?.organization_id;
+
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let cancelled = false;
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const res = await getStats({ organizationId });
+        if (!cancelled && res.status) setStats(res.data);
+      } catch (error) {
+        console.error('Failed to fetch commission stats', error);
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+    fetchStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
+
+  const [organizations, setOrganizations] = useState([]);
+  const [organizationsLoading, setOrganizationsLoading] = useState(true);
+
+  const fetchOrganizations = async () => {
+    setOrganizationsLoading(true);
+    try {
+      const res = await getOrganizations();
+      if (res.status) setOrganizations((res.data || []).map(mapOrganization));
+    } catch (error) {
+      console.error('Failed to fetch organizations', error);
+    } finally {
+      setOrganizationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  // Volume is a count, not a currency figure — everything else here is a
+  // real Naira amount pulled from the organization's own SkoolPay wallet.
+  const summaryStats = [
+    {
+      title: 'Total Transaction Value',
+      value: formatNaira(stats?.totalTransactionValue),
+      icon: IconWallet,
+    },
+    {
+      title: 'Total Transaction Volume',
+      value: (stats?.totalTransactionVolume ?? 0).toLocaleString(),
+      icon: IconReceipt,
+    },
+    { title: 'Total Commission', value: formatNaira(stats?.totalCommission), icon: IconCoins },
+    { title: 'My Commission', value: formatNaira(stats?.myCommission), icon: IconPigMoney },
+  ];
 
   const handleMyCommissionClick = (type) => {
     // Opens in a new browser tab instead of navigating away from the
@@ -79,9 +164,9 @@ const CommissionManagement = () => {
   };
 
   const getFilteredData = () => {
-    if (value === '3') return mockCommissionData.filter((a) => a.commissionType === 'Subscription');
-    if (value === '4') return mockCommissionData.filter((a) => a.commissionType === 'Transaction');
-    return mockCommissionData;
+    if (value === '3') return organizations.filter((a) => a.commissionTypeRaw === 'subscription');
+    if (value === '4') return organizations.filter((a) => a.commissionTypeRaw === 'transaction');
+    return organizations;
   };
 
   const getTitle = () => {
@@ -105,18 +190,16 @@ const CommissionManagement = () => {
 
       <Box sx={{ mb: 1.5 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          {mockSummaryStats.map((stat, index) => {
-            const colors = ['primary', 'error', 'success', 'warning'];
-            return (
-              <StatCard
-                key={index}
-                count={stat.value}
-                label={stat.title}
-                icon={stat.icon}
-                colorIndex={index}
-              />
-            );
-          })}
+          {summaryStats.map((stat, index) => (
+            <StatCard
+              key={index}
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              colorIndex={index}
+              loading={statsLoading}
+            />
+          ))}
         </Stack>
       </Box>
 
@@ -208,7 +291,10 @@ const CommissionManagement = () => {
             )}
 
             {(value === '3' || value === '4') && (
-              <Button variant="contained" size="small" startIcon={<IconLayoutDashboard />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconLayoutDashboard />}
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }
@@ -260,17 +346,19 @@ const CommissionManagement = () => {
       <SetCommissionModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        Organization={selectedOrganization}
+        agent={selectedOrganization}
+        onSaved={fetchOrganizations}
       />
       <ChangeCommissionTypeModal
         open={typeModalOpen}
         onClose={() => setTypeModalOpen(false)}
-        Organization={selectedOrganization}
+        agent={selectedOrganization}
+        onSaved={fetchOrganizations}
       />
       <CommissionDetailsModal
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
-        Organization={selectedOrganization}
+        agent={selectedOrganization}
       />
     </PageContainer>
   );

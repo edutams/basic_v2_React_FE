@@ -1,9 +1,6 @@
 import React from 'react';
-import { Box, useTheme, Paper, Typography, Button } from '@mui/material';
-import {
-  IconAdjustments,
-  IconChartBar,
-} from '@tabler/icons-react';
+import { Box, useTheme, Paper, Typography, Skeleton } from '@mui/material';
+import { IconChartBar, IconWallet } from '@tabler/icons-react';
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
@@ -13,7 +10,89 @@ const schemeMap = [
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
-const MyCommissionStatCards = () => {
+const formatNaira = (value) =>
+  `₦${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const Divider = ({ isDarkMode }) => (
+  <Box
+    sx={{
+      width: '1px',
+      height: 40,
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    }}
+  />
+);
+
+const CardIcon = ({ scheme, isDarkMode, icon: Icon = IconChartBar }) => (
+  <Box
+    sx={{
+      width: 32,
+      height: 32,
+      borderRadius: '8px',
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : scheme.bg,
+      color: isDarkMode ? '#fff' : scheme.color,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <Icon size={18} color="currentColor" />
+  </Box>
+);
+
+const Badge = ({ scheme, isDarkMode, value }) => (
+  <Box
+    sx={{
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : scheme.bg,
+      borderRadius: '8px',
+      px: 3,
+      py: 1,
+      display: 'inline-flex',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+    }}
+  >
+    <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : scheme.color }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
+const SplitRow = ({ left, right, isDarkMode }) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box>
+      <Typography variant="body2" color="text.secondary">
+        {left.label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }} noWrap>
+        {left.value}
+      </Typography>
+    </Box>
+
+    <Divider isDarkMode={isDarkMode} />
+
+    <Box sx={{ textAlign: 'right' }}>
+      <Typography variant="body2" color="text.secondary">
+        {right.label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }} noWrap>
+        {right.value}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+const MyCommissionStatCards = ({
+  organizationName,
+  wallet,
+  subOrgs,
+  schools,
+  loading,
+  onViewTransactions,
+  onViewSubOrgs,
+  onViewSchools,
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
@@ -22,444 +101,125 @@ const MyCommissionStatCards = () => {
   const s2 = schemeMap[2];
   const s3 = schemeMap[3];
 
+  const cardSx = (clickable) => ({
+    p: '10px',
+    borderRadius: '14px',
+    border: '1px solid',
+    borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    gap: 1,
+    cursor: clickable ? 'pointer' : 'default',
+    transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+    '&:hover': clickable
+      ? {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        }
+      : undefined,
+  });
+
+  if (loading) {
+    return (
+      <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' }, gap: 2 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rounded" height={150} sx={{ borderRadius: '14px' }} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ mb: 1.5 }}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+          alignItems: 'stretch',
           gap: 2,
         }}
       >
-        {/* GUPSA Ogun State Card */}
-        <Paper
-          sx={{
-            p: '10px',
-            borderRadius: '14px',
-            border: '1px solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Typography variant="h6" fontWeight={600} mb={1}>
-            GUPSA Ogun State
-          </Typography>
-
-          <Box
-            sx={{
-              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s0.bg,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-block',
-              mb: 1,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: isDarkMode ? '#fff' : s0.color,
-              }}
-            >
-              ₦7,000,234.00
+        {/* Wallet Card — informational only, not clickable */}
+        <Paper sx={cardSx(false)}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" fontWeight={600} noWrap>
+              {organizationName || 'My Organization'}
             </Typography>
+            <CardIcon scheme={s0} isDarkMode={isDarkMode} icon={IconWallet} />
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Box
-              fontWeight="600"
-              sx={{
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#F3F4F6',
-                color: isDarkMode ? '#fff' : s0.color,
-                px: 2,
-                py: '4px',
-                borderRadius: '5px',
-                fontSize: 10,
-              }}
-            >
-              Account Number
-            </Box>
+          <Badge scheme={s0} isDarkMode={isDarkMode} value={formatNaira(wallet?.myCommission)} />
 
-            <Typography fontSize={15} fontWeight={800}>
-              93458438484
-            </Typography>
-          </Box>
-
-          <Typography fontWeight="500" sx={{ mb: 1 }}>
-            Bank : Globus
-          </Typography>
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconAdjustments size={16} />}
-              sx={{
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.3)' : s0.color,
-                color: isDarkMode ? '#fff' : s0.color,
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                '&:hover': {
-                  borderColor: s0.color,
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : `${s0.bg}`,
-                },
-              }}
-            >
-              View Details
-            </Button>
-
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                backgroundColor: `${s0.color} !important`,
-                color: '#ffffff',
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                '&:hover': {
-                  opacity: 0.9,
-                },
-              }}
-            >
-              Withdraw
-            </Button>
-          </Box>
+          <SplitRow
+            isDarkMode={isDarkMode}
+            left={{ label: 'Account Number', value: wallet?.accountNumber || '—' }}
+            right={{ label: 'Bank', value: wallet?.bankName || '—' }}
+          />
         </Paper>
 
         {/* Total Transaction Card */}
-        <Paper
-          sx={{
-            p: '10px',
-            borderRadius: '14px',
-            border: '1px solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewTransactions}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
               Total Transaction
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s1.bg,
-                color: isDarkMode ? '#fff' : s1.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
+            <CardIcon scheme={s1} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flex: 1,
-              height: '100%',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s1.color, mb: 0.5 }}>
-                Inflow
-              </Typography>
-              <Box
-                sx={{
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s1.bg,
-                  borderRadius: '8px',
-                  px: 2,
-                  py: 0.5,
-                  display: 'inline-block',
-                }}
-              >
-                <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : s1.color }}>
-                  0
-                </Typography>
-              </Box>
-            </Box>
+          <Badge
+            scheme={s1}
+            isDarkMode={isDarkMode}
+            value={(wallet?.totalTransactionVolume ?? 0).toLocaleString()}
+          />
 
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" sx={{ color: isDarkMode ? '#fff' : s3.color, mb: 0.5 }}>
-                Outflow
-              </Typography>
-              <Box
-                sx={{
-                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
-                  borderRadius: '8px',
-                  px: 2,
-                  py: 0.5,
-                  display: 'inline-block',
-                }}
-              >
-                <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : s3.color }}>
-                  0
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+          <SplitRow
+            isDarkMode={isDarkMode}
+            left={{ label: 'Inflow', value: formatNaira(wallet?.totalInflow) }}
+            right={{ label: 'Outflow', value: formatNaira(wallet?.totalOutflow) }}
+          />
         </Paper>
 
         {/* Total Sub Orgs Card */}
-        <Paper
-          sx={{
-            p: '10px',
-            borderRadius: '14px',
-            border: '1px solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewSubOrgs}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
               Total Sub Orgs
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s2.bg,
-                color: isDarkMode ? '#fff' : s2.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
+            <CardIcon scheme={s2} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s2.bg,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: isDarkMode ? '#fff' : s2.color,
-              }}
-            >
-              0
-            </Typography>
-          </Box>
+          <Badge scheme={s2} isDarkMode={isDarkMode} value={subOrgs?.total ?? 0} />
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 3
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 4
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 5
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {(subOrgs?.total ?? 0) === 1
+              ? '1 agent is currently earning commission under your organization.'
+              : `${subOrgs?.total ?? 0} agents are currently earning commission under your organization.`}
+          </Typography>
         </Paper>
 
         {/* Total School Card */}
-        <Paper
-          sx={{
-            p: '10px',
-            borderRadius: '14px',
-            border: '1px solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewSchools}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
               Total School
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
-                color: isDarkMode ? '#fff' : s3.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
+            <CardIcon scheme={s3} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : s3.bg,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: isDarkMode ? '#fff' : s3.color,
-              }}
-            >
-              0
-            </Typography>
-          </Box>
+          <Badge scheme={s3} isDarkMode={isDarkMode} value={schools?.total ?? 0} />
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Primary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Secondary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-          </Box>
+          <SplitRow
+            isDarkMode={isDarkMode}
+            left={{ label: 'Primary', value: schools?.primary ?? 0 }}
+            right={{ label: 'Secondary', value: schools?.secondary ?? 0 }}
+          />
         </Paper>
       </Box>
     </Box>

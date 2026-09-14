@@ -5,9 +5,14 @@ import {
   Card, CardHeader, CardContent, TablePagination,
 } from '@mui/material';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
-  { id: 2, label: '2025/2026 - Second Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 const dummyProgrammes = [
   { id: 1, name: 'Junior Secondary' },
@@ -35,7 +40,7 @@ const ResultConsiderationTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [results, setResults] = useState(initialResults);
-  const [filter, setFilter] = useState({ session_term: 1, programme: 1, class: 1, subject: 1 });
+  const [filter, setFilter] = useState({ session: 1, term: 1, programme: 1, class: 1, subject: 1 });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -59,9 +64,17 @@ const ResultConsiderationTab = () => {
           <Grid container spacing={2} alignItems="center" >
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session Term</InputLabel>
-                <Select value={filter.session_term} label="Session Term" onChange={e => setFilter({ ...filter, session_term: e.target.value })}>
-                  {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                <InputLabel>Session</InputLabel>
+                <Select value={filter.session} label="Session" onChange={e => setFilter({ ...filter, session: e.target.value })}>
+                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select value={filter.term} label="Term" onChange={e => setFilter({ ...filter, term: e.target.value })}>
+                  {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>

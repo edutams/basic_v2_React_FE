@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import {
   Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem,
-  Table, TableBody, TableCell, TableHead, TableRow, useTheme, Stack,
+  Table, TableBody, TableCell, TableHead, TableRow, useTheme,
   Avatar, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
-import { IconX, IconUsers, IconBook, IconAward, IconAlertTriangle } from '@tabler/icons-react';
-import StatCard from '@/components/shared/StatCard';
+import { IconX } from '@tabler/icons-react';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -45,7 +50,8 @@ const generateSummary = () => {
 const SummarySheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
+  const [selectedSession, setSelectedSession] = useState(1);
+  const [selectedTerm, setSelectedTerm] = useState(1);
   const [selectedClass, setSelectedClass] = useState(1);
   const [summary] = useState(() => generateSummary());
   const [breakdownDialog, setBreakdownDialog] = useState({ open: false, subject: '', gradeIdx: 0 });
@@ -53,19 +59,11 @@ const SummarySheetTab = () => {
   const getGradeCount = (subj, gradeIdx) => summary[subj]?.[gradeIdx] || 0;
   const getSubjectTotal = (subj) => grades.reduce((sum, g, i) => sum + getGradeCount(subj, i), 0);
 
-  const showData = selectedSessionTerm && selectedClass;
+  const showData = selectedSession && selectedTerm && selectedClass;
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
-      {/* ── Stat Cards ──────────────────────────────────────────── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
-        <StatCard count={42} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
-        <StatCard count={dummySubjects.length} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={false} />
-        <StatCard count={grades.length} label="Grade Bands" subtitle="A+ through F" icon={IconAward} colorIndex={2} loading={false} />
-        <StatCard count={0} label="Outliers" subtitle="Students below threshold" icon={IconAlertTriangle} colorIndex={3} loading={false} />
-      </Stack>
-
       {/* ── Header ──────────────────────────────────────────── */}
       <Box sx={{ p: 2, textAlign: 'center', borderBottom: `1px solid ${borderColor}` }}>
         <Typography variant="h6" fontWeight={700}>SUMMARY SHEET ON GRADE DISTRIBUTIONS.</Typography>
@@ -76,10 +74,19 @@ const SummarySheetTab = () => {
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Session Term</InputLabel>
-              <Select value={selectedSessionTerm} label="Session Term" onChange={e => setSelectedSessionTerm(e.target.value)}>
-                <MenuItem value="">-- Select Session Term --</MenuItem>
-                {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+              <InputLabel>Session</InputLabel>
+              <Select value={selectedSession} label="Session" onChange={e => setSelectedSession(e.target.value)}>
+                <MenuItem value="">-- Select Session --</MenuItem>
+                {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Term</InputLabel>
+              <Select value={selectedTerm} label="Term" onChange={e => setSelectedTerm(e.target.value)}>
+                <MenuItem value="">-- Select Term --</MenuItem>
+                {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>

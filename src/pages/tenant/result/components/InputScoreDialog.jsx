@@ -3,8 +3,9 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Typography, Alert,
-  CircularProgress, useTheme,
+  CircularProgress, useTheme, Box,
 } from '@mui/material';
+import { IconDownload, IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
 
 const dummyStudents = [
   { id: 1, fullname: 'Adebayo Tunde', reg_id: 'STD/2025/001', ca_details: null, examScores: '', loading: false },
@@ -125,13 +126,25 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
     onClose();
   };
 
+  const handleSaveAll = () => {
+    students.forEach((_, si) => handleSave(si));
+  };
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
       <DialogTitle>
         Input Score — {allocation?.subject_name} ({allocation?.className})
       </DialogTitle>
       <DialogContent>
-        <TableContainer sx={{ overflowX: 'auto', mt: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
+          <Button variant="contained" size="small" color="info" startIcon={<IconFileSpreadsheet size={16} />}>
+            Download Excel
+          </Button>
+          <Button variant="contained" size="small" color="error" startIcon={<IconPdf size={16} />}>
+            Download PDF
+          </Button>
+        </Box>
+        <TableContainer sx={{ overflowX: 'auto' }}>
           <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
             <TableHead>
               <TableRow>
@@ -205,7 +218,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
           </Table>
         </TableContainer>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button variant="contained" size="small" color="success" startIcon={<IconDeviceFloppy size={16} />} onClick={handleSaveAll}>
+          Save All
+        </Button>
         <Button onClick={handleClose}>Close</Button>
       </DialogActions>
     </Dialog>

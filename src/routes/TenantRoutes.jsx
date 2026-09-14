@@ -121,6 +121,7 @@ const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
 );
 const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
+const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
 const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
 const ResultConsiderationPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')));
 const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
@@ -477,6 +478,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="dashboard.index">
             <ResultModule />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'score-manager',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <ScoreManagerPage />
           </TenantProtectedRoute>
         ),
       },

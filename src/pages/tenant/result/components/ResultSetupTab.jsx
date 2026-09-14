@@ -27,11 +27,8 @@ const dummyProgrammes = [
 ];
 
 const initialNomenclature = [
-  { id: 1, position_name: '1st', status: 'active' },
-  { id: 2, position_name: '2nd', status: 'active' },
-  { id: 3, position_name: '3rd', status: 'active' },
-  { id: 4, position_name: '4th', status: 'active' },
-  { id: 5, position_name: '5th', status: 'active' },
+  { id: 1, position_name: "Principal's", status: 'active' },
+  { id: 2, position_name: "Class Teacher's", status: 'active' },
 ];
 
 // Mock data for stat cards
@@ -78,7 +75,7 @@ const ResultSetupTab = () => {
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
-  const [templateDivFilter, setTemplateDivFilter] = useState(1);
+  const [templateDivFilter, setTemplateDivFilter] = useState(dummyProgrammes[0].name);
   const [nomenclature, setNomenclature] = useState(initialNomenclature);
 
   const [nomenclatureDialog, setNomenclatureDialog] = useState({ open: false, editing: null });
@@ -181,7 +178,12 @@ const ResultSetupTab = () => {
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+            <Button variant="outlined" size="small" startIcon={<IconSettings size={16} />} onClick={() => showSnackbar('Config applied to previous term')}>
+              Use same Config for previous Term
+            </Button>
+          </Box>
           <GradeConfiguration sessionTermId={currentSessionTermId} />
         </Paper>
       </InnerTabPanel>
@@ -239,13 +241,19 @@ const ResultSetupTab = () => {
           <Alert severity="info" sx={{ mb: 2 }}>
             The current template is the one with the green outline. To change, click on a template image or use the <strong>Select</strong> button.
           </Alert>
-          <FormControl size="small" sx={{ minWidth: 200, mb: 2 }}>
-            <InputLabel>Programme</InputLabel>
-            <Select value={templateDivFilter} label="Programme" onChange={e => setTemplateDivFilter(e.target.value)}>
-              <MenuItem value="">All Programmes</MenuItem>
-              {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.name}>{p.name}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs
+              value={templateDivFilter}
+              onChange={(_, v) => setTemplateDivFilter(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '13px' } }}
+            >
+              {dummyProgrammes.map(p => (
+                <Tab key={p.id} label={p.name} value={p.name} />
+              ))}
+            </Tabs>
+          </Box>
           <Grid container spacing={2}>
             {templateSamples.map((t) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={t.id}>

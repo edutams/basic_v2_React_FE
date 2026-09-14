@@ -5,11 +5,16 @@ import {
   FormControl, InputLabel, Select, MenuItem, Avatar, Snackbar, Alert, useTheme,
   Card, CardHeader, CardContent, TablePagination,
 } from '@mui/material';
-import { IconEdit, IconSearch } from '@tabler/icons-react';
+import { IconEdit, IconSearch, IconDownload, IconFileSpreadsheet, IconTable } from '@tabler/icons-react';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
-  { id: 2, label: '2025/2026 - Second Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 const dummySubjects = [
   { id: 1, name: 'Mathematics' }, { id: 2, name: 'English' }, { id: 3, name: 'Physics' },
@@ -29,7 +34,7 @@ const dummyResults = [
 const ResultEditTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [filter, setFilter] = useState({ session_term: '', subject: '', query: '' });
+  const [filter, setFilter] = useState({ session: 1, term: 1, subject: '', query: '' });
   const [searchResults, setSearchResults] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentResults, setStudentResults] = useState([]);
@@ -86,9 +91,17 @@ const ResultEditTab = () => {
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session Term</InputLabel>
-                <Select value={filter.session_term} label="Session Term" onChange={e => setFilter({ ...filter, session_term: e.target.value })}>
-                  {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                <InputLabel>Session</InputLabel>
+                <Select value={filter.session} label="Session" onChange={e => setFilter({ ...filter, session: e.target.value })}>
+                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select value={filter.term} label="Term" onChange={e => setFilter({ ...filter, term: e.target.value })}>
+                  {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -200,15 +213,19 @@ const ResultEditTab = () => {
       <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, data: null })} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Score</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'flex-end' }}>
+            <Button variant="outlined" size="small" startIcon={<IconFileSpreadsheet size={16} />} color="info">Download Excel</Button>
+            <Button variant="outlined" size="small" startIcon={<IconDownload size={16} />} color="error">Download PDF</Button>
+          </Box>
+          <Grid container spacing={2}>
             <Grid size={{ xs: 4 }}><TextField label="CA1" fullWidth size="small" type="number" value={editForm.ca1} onChange={e => setEditForm({ ...editForm, ca1: e.target.value })} /></Grid>
             <Grid size={{ xs: 4 }}><TextField label="CA2" fullWidth size="small" type="number" value={editForm.ca2} onChange={e => setEditForm({ ...editForm, ca2: e.target.value })} /></Grid>
             <Grid size={{ xs: 4 }}><TextField label="Exam" fullWidth size="small" type="number" value={editForm.exam} onChange={e => setEditForm({ ...editForm, exam: e.target.value })} /></Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setEditDialog({ open: false, data: null })}>Cancel</Button>
-          <Button variant="contained" onClick={handleEditSave}>Save</Button>
+          <Button variant="contained" color="success" onClick={handleEditSave}>Update All</Button>
         </DialogActions>
       </Dialog>
 

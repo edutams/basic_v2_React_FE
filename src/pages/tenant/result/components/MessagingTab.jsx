@@ -6,9 +6,14 @@ import {
 } from '@mui/material';
 import { IconMail, IconMessage, IconSend } from '@tabler/icons-react';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
-  { id: 2, label: '2025/2026 - Second Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -28,17 +33,18 @@ const MessagingTab = () => {
   const isDark = theme.palette.mode === 'dark';
   const [history, setHistory] = useState(initialHistory);
   const [sendDialog, setSendDialog] = useState({ open: false, channel: '' });
-  const [sendForm, setSendForm] = useState({ session_term: 1, class: 1 });
+  const [sendForm, setSendForm] = useState({ session: 1, term: 1, class: 1 });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
   const handleSend = () => {
     const classObj = dummyClasses.find(c => c.id === sendForm.class);
-    const stObj = dummySessionTerms.find(s => s.id === sendForm.session_term);
+    const sessionObj = dummySessions.find(s => s.id === sendForm.session);
+    const termObj = dummyTerms.find(t => t.id === sendForm.term);
     const newEntry = {
       id: Date.now(),
       class: classObj?.name || 'JSS 1A',
-      session_term: stObj?.label || '2025/2026 - First Term',
+      session_term: `${sessionObj?.label || '2025/2026'} - ${termObj?.label || 'First Term'}`,
       recipients: Math.floor(Math.random() * 20) + 30,
       channel: sendDialog.channel,
       sent_at: new Date().toISOString().slice(0, 16).replace('T', ' '),
@@ -46,7 +52,7 @@ const MessagingTab = () => {
     };
     setHistory([newEntry, ...history]);
     setSendDialog({ open: false, channel: '' });
-    setSendForm({ session_term: '', class: '' });
+    setSendForm({ session: 1, term: 1, class: 1 });
     showSnackbar(`Results sent via ${sendDialog.channel} successfully!`);
   };
 
@@ -136,9 +142,17 @@ const MessagingTab = () => {
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session/Term</InputLabel>
-                <Select value={sendForm.session_term} label="Session/Term" onChange={e => setSendForm({ ...sendForm, session_term: e.target.value })}>
-                  {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                <InputLabel>Session</InputLabel>
+                <Select value={sendForm.session} label="Session" onChange={e => setSendForm({ ...sendForm, session: e.target.value })}>
+                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select value={sendForm.term} label="Term" onChange={e => setSendForm({ ...sendForm, term: e.target.value })}>
+                  {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -154,7 +168,7 @@ const MessagingTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSendDialog({ open: false, channel: '' })}>Cancel</Button>
-          <Button variant="contained" onClick={handleSend} disabled={!sendForm.session_term || !sendForm.class}>
+          <Button variant="contained" onClick={handleSend} disabled={!sendForm.session || !sendForm.term || !sendForm.class}>
             Send via {sendDialog.channel}
           </Button>
         </DialogActions>

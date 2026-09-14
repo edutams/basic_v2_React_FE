@@ -243,16 +243,6 @@ const BroadsheetTab = () => {
   return (
     <Box>
       <Card elevation={0} sx={{ border: `1px solid ${borderColor}`, borderRadius: 1 }}>
-        <CardHeader
-          title="Result Broadsheet"
-          action={showData && <Button variant="contained" size="small" startIcon={<IconDownload size={16} />}>Export Broadsheet</Button>}
-          sx={{
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: { xs: 1, sm: 0 },
-            '& .MuiCardHeader-action': { m: 0 },
-          }}
-        />
 
         {/* ── Nested Tabs ────────────────────────────────────── */}
         <Box sx={{ px: 2 }}>
@@ -264,8 +254,8 @@ const BroadsheetTab = () => {
 
         {/* ── Shared Filters ─────────────────────────────────── */}
         <CardContent>
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: 1, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+            <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Session</InputLabel>
                 <Select value={filters.session_id} label="Session" onChange={e => setFilters({ ...filters, session_id: e.target.value })}>
@@ -273,9 +263,9 @@ const BroadsheetTab = () => {
                   {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
             {activeTab === 0 && (
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Term</InputLabel>
                   <Select value={filters.term_id} label="Term" onChange={e => setFilters({ ...filters, term_id: e.target.value })}>
@@ -283,9 +273,9 @@ const BroadsheetTab = () => {
                     {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
                   </Select>
                 </FormControl>
-              </Grid>
+              </Box>
             )}
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
                 <Select value={filters.programme_id} label="Programme" onChange={e => setFilters({ ...filters, programme_id: e.target.value })}>
@@ -293,8 +283,8 @@ const BroadsheetTab = () => {
                   {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            </Box>
+            <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class</InputLabel>
                 <Select value={filters.classId} label="Class" onChange={e => setFilters({ ...filters, classId: e.target.value })}>
@@ -302,9 +292,9 @@ const BroadsheetTab = () => {
                   {dummyClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
             {showData && (
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Performance</InputLabel>
                   <Select value={filters.perf_range} label="Performance" onChange={e => setFilters({ ...filters, perf_range: e.target.value })}>
@@ -316,12 +306,12 @@ const BroadsheetTab = () => {
                     <MenuItem value="20">Best 20</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
+              </Box>
             )}
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Box sx={{ flex: '1 1 0', minWidth: 120 }}>
               <Button variant="contained" fullWidth onClick={handleFilter}>Filter</Button>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {showData && showPromotionButtons && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>

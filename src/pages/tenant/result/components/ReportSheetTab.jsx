@@ -5,7 +5,7 @@ import {
   IconButton, Menu, ListItemIcon, ListItemText, useTheme, Stack,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconPrinter, IconClipboardCheck, IconArrowLeft, IconEye, IconFolder, IconUsers, IconCreditCard, IconAward, IconCalendar } from '@tabler/icons-react';
+import { IconPrinter, IconClipboardCheck, IconArrowLeft, IconEye, IconFolder, IconUsers, IconMan, IconWoman, IconCalendar } from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { getResultTemplate } from './templates';
 import StatCard from '@/components/shared/StatCard';
@@ -185,9 +185,9 @@ const ReportSheetTab = () => {
     <>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <StatCard count={classStudents.length} label="Total Students" subtitle={`In ${className || 'selected class'}`} icon={IconUsers} colorIndex={0} loading={false} />
-        <StatCard count={paidStudents.length} label="Paid Students" subtitle="Eligible for dossier" icon={IconCreditCard} colorIndex={1} loading={false} />
-        <StatCard count={classStudents.length - paidStudents.length} label="Unpaid Students" subtitle="Pending payment" icon={IconCreditCard} colorIndex={3} loading={false} />
-        <StatCard count={`${dummyReport.attendance.present}/${dummyReport.attendance.opened}`} label="Attendance" subtitle="Present / Total days" icon={IconCalendar} colorIndex={2} loading={false} />
+        <StatCard count={classStudents.filter(s => s.sex === 'Male').length} label="Male Students" subtitle="Boys in class" icon={IconMan} colorIndex={1} loading={false} />
+        <StatCard count={classStudents.filter(s => s.sex === 'Female').length} label="Female Students" subtitle="Girls in class" icon={IconWoman} colorIndex={2} loading={false} />
+        <StatCard count={`${dummyReport.attendance.present}/${dummyReport.attendance.opened}`} label="Attendance" subtitle="Present / Total days" icon={IconCalendar} colorIndex={3} loading={false} />
       </Stack>
 
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>

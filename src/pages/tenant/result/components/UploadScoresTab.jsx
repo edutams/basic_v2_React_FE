@@ -22,9 +22,14 @@ import ScoreUploadCard from './ScoreUploadCard';
 import ActionSelectionDialog from './ActionSelectionDialog';
 
 const dummySessions = [
-  { id: 1, label: '2025/2026 - First Term' },
-  { id: 2, label: '2025/2026 - Second Term' },
-  { id: 3, label: '2025/2026 - Third Term' },
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 
 const dummyProgrammes = [
@@ -67,7 +72,7 @@ const UploadScoresTab = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const [allocations, setAllocations] = useState(dummyAllocations);
-  const [filter, setFilter] = useState({ session_term: 1, programme: 1, class_id: 1, subject_id: 1 });
+  const [filter, setFilter] = useState({ session: 1, term: 1, programme: 1, class_id: 1, subject_id: 1 });
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -91,7 +96,7 @@ const UploadScoresTab = () => {
     : dummyClasses;
 
   const filteredAllocations = allocations.filter(a => {
-    if (filter.session_term && a.session_term !== dummySessions.find(s => s.id === filter.session_term)?.label) return false;
+    if (filter.session && a.session_term !== `${dummySessions.find(s => s.id === filter.session)?.label} - ${dummyTerms.find(t => t.id === filter.term)?.label}`) return false;
     if (filter.programme && a.programme !== dummyProgrammes.find(p => p.id === filter.programme)?.name) return false;
     if (filter.class_id && a.className !== dummyClasses.find(c => c.id === filter.class_id)?.name) return false;
     if (filter.subject_id && a.subject_name !== dummySubjects.find(s => s.id === filter.subject_id)?.name) return false;
@@ -103,8 +108,8 @@ const UploadScoresTab = () => {
     return dummyClasses.find(c => c.id === filter.class_id)?.name || '';
   }, [filter.class_id]);
 
-  const canShowBulkActions = filter.session_term && filter.programme && filter.class_id;
-  const canShowSubmitAll = filter.session_term && filter.programme && filter.class_id;
+  const canShowBulkActions = filter.session && filter.term && filter.programme && filter.class_id;
+  const canShowSubmitAll = filter.session && filter.term && filter.programme && filter.class_id;
 
   // Calculate analytics for Analytics Component
   const analyticsData = useMemo(() => {
@@ -178,10 +183,13 @@ const UploadScoresTab = () => {
   };
 
   const handleSubmitAllScores = () => {
+    const sessionLabel = dummySessions.find(s => s.id === filter.session)?.label || '';
+    const termLabel = dummyTerms.find(t => t.id === filter.term)?.label || '';
+    const sessionTermLabel = `${sessionLabel} - ${termLabel}`;
     setAllocations(prev =>
       prev.map(a => {
         if (
-          (!filter.session_term || a.session_term === dummySessions.find(s => s.id === filter.session_term)?.label) &&
+          (!filter.session || a.session_term === sessionTermLabel) &&
           (!filter.programme || a.programme === dummyProgrammes.find(p => p.id === filter.programme)?.name) &&
           (!filter.class_id || a.className === dummyClasses.find(c => c.id === filter.class_id)?.name)
         ) {
@@ -202,7 +210,7 @@ const UploadScoresTab = () => {
         {/* ── Card Header with Bulk Actions & View Toggle ──────── */}
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
           <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1.1rem' }}>
-            Result Score Upload
+             Score Upload
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -265,17 +273,26 @@ const UploadScoresTab = () => {
 
         {/* ── Filters Section ───────────────────────────────── */}
         <Box sx={{ p: 2, borderBottom: viewMode === 'cards' ? 'none' : '1px solid divider' }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid container spacing={1.5} alignItems="center">
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session-Term</InputLabel>
-                <Select value={filter.session_term} label="Session-Term" onChange={e => setFilter({ ...filter, session_term: e.target.value })}>
+                <InputLabel>Session</InputLabel>
+                <Select value={filter.session} label="Session" onChange={e => setFilter({ ...filter, session: e.target.value })}>
                   <MenuItem value="">-- Choose --</MenuItem>
                   {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select value={filter.term} label="Term" onChange={e => setFilter({ ...filter, term: e.target.value })}>
+                  <MenuItem value="">-- Choose --</MenuItem>
+                  {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
                 <Select value={filter.programme} label="Programme" onChange={e => setFilter({ ...filter, programme: e.target.value, class_id: '' })}>
@@ -284,7 +301,7 @@ const UploadScoresTab = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class</InputLabel>
                 <Select value={filter.class_id} label="Class" onChange={e => setFilter({ ...filter, class_id: e.target.value })}>
@@ -302,7 +319,7 @@ const UploadScoresTab = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 12, md: 1.5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <Button
                 fullWidth
                 variant="contained"

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, useTheme,
-  IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip, Stack,
+  IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip, Stack, alpha,
 } from '@mui/material';
 import {
   IconClipboardCheck, IconPrinter, IconChartBar, IconEye, IconEdit, IconSend,
@@ -17,8 +17,14 @@ const dummyClasses = [
 const dummySubjects = [
   { id: 1, name: 'Mathematics' }, { id: 2, name: 'English' }, { id: 3, name: 'Physics' },
 ];
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 
 const dummyCaType = [
@@ -75,6 +81,20 @@ const getOverallTotal = (ca, exam) => {
   return caTotal + Number(exam || 0);
 };
 
+const gradeScale = [
+  { min: 75, max: 100, grade: 'A', remark: 'Excellent' },
+  { min: 65, max: 74, grade: 'B', remark: 'Good' },
+  { min: 55, max: 64, grade: 'C+', remark: 'Above Average' },
+  { min: 45, max: 54, grade: 'C', remark: 'Average' },
+  { min: 35, max: 44, grade: 'D', remark: 'Fair' },
+  { min: 0, max: 34, grade: 'F', remark: 'Fail' },
+];
+
+const getGrade = (score) => {
+  const found = gradeScale.find(g => score >= g.min && score <= g.max);
+  return found ? found.grade : '-';
+};
+
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 
 const ScoreSheetTab = () => {
@@ -82,11 +102,12 @@ const ScoreSheetTab = () => {
   const isDark = theme.palette.mode === 'dark';
   const [selectedClass, setSelectedClass] = useState(1);
   const [selectedSubject, setSelectedSubject] = useState(1);
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
+  const [selectedSession, setSelectedSession] = useState(1);
+  const [selectedTerm, setSelectedTerm] = useState(1);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
 
-  const showTable = selectedClass && selectedSubject && selectedSessionTerm;
+  const showTable = selectedClass && selectedSubject && selectedSession && selectedTerm;
   const submissionStatus = showTable ? dummyResults[0]?.teacher_submit : null;
 
   const totals = dummyResults.map(r => getOverallTotal(r.ca, r.exam_score));
@@ -123,14 +144,15 @@ const ScoreSheetTab = () => {
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>
           {showTable
-            ? `Score Sheet — ${dummyClasses.find(c => c.id === selectedClass)?.name} • ${dummySubjects.find(s => s.id === selectedSubject)?.name} • ${dummySessionTerms.find(s => s.id === selectedSessionTerm)?.label}`
+            ? `Score Sheet — ${dummyClasses.find(c => c.id === selectedClass)?.name} • ${dummySubjects.find(s => s.id === selectedSubject)?.name} • ${dummySessions.find(s => s.id === selectedSession)?.label} - ${dummyTerms.find(t => t.id === selectedTerm)?.label}`
             : 'View Score Sheet'}
         </Typography>
         {showTable && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button variant="contained" size="small" color="info" startIcon={<IconPrinter size={16} />}>
               Print Score Sheet
             </Button>
+            <Box sx={{ width: '1px', height: 24, bgcolor: 'divider' }} />
             <Button variant="contained" size="small" color="success" startIcon={<IconChartBar size={16} />}
               onClick={() => window.open('/result-analytics', '_blank', 'noopener,noreferrer')}>
               View Performance Analytics
@@ -142,13 +164,23 @@ const ScoreSheetTab = () => {
       {/* ── Filters ─────────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: showTable ? 1 : 0, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Session-Term</InputLabel>
-              <Select value={selectedSessionTerm} label="Session-Term"
-                onChange={e => setSelectedSessionTerm(e.target.value)}>
+              <InputLabel>Session</InputLabel>
+              <Select value={selectedSession} label="Session"
+                onChange={e => setSelectedSession(e.target.value)}>
+                <MenuItem value="">-- Select Session --</MenuItem>
+                {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 3 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Term</InputLabel>
+              <Select value={selectedTerm} label="Term"
+                onChange={e => setSelectedTerm(e.target.value)}>
                 <MenuItem value="">-- Select Term --</MenuItem>
-                {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
@@ -222,9 +254,7 @@ const ScoreSheetTab = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '3%' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '5%' }}>Photo</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '9%' }}>Reg ID</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}>Student Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '220px', minWidth: 220 }}>Learner's Info</TableCell>
                   {dummyCaType.map((ca) => (
                     <TableCell key={ca.display_name} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '10%' }} align="center">
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
@@ -234,6 +264,7 @@ const ScoreSheetTab = () => {
                             <IconPrinter size={13} color="#0288D1" />
                           </IconButton>
                         </Tooltip>
+                        <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
                         <Tooltip title={`View ${ca.display_name} Analytics`}>
                           <IconButton size="small" sx={{ p: 0.25 }}>
                             <IconChartBar size={13} color="#16A34A" />
@@ -250,6 +281,7 @@ const ScoreSheetTab = () => {
                           <IconPrinter size={13} color="#0288D1" />
                         </IconButton>
                       </Tooltip>
+                      <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
                       <Tooltip title="View Exam Analytics">
                         <IconButton size="small" sx={{ p: 0.25 }}>
                           <IconChartBar size={13} color="#16A34A" />
@@ -258,38 +290,64 @@ const ScoreSheetTab = () => {
                     </Box>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '7%' }} align="center">Total</TableCell>
+                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '6%' }} align="center">Grade</TableCell>
                   <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', width: '4%' }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {dummyResults.map((res, i) => (
-                  <TableRow key={res.id} hover>
-                    <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
-                    <TableCell sx={cellBorderSx}>
-                      <Avatar src={res.image} sx={{ width: 30, height: 30, fontSize: 12 }}>
-                        {!res.image && `${res.fname?.[0]}${res.lname?.[0]}`}
-                      </Avatar>
-                    </TableCell>
-                    <TableCell sx={cellBorderSx}>{res.user_id}</TableCell>
-                    <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{res.lname} {res.fname} {res.mname}</TableCell>
-                    {(res.ca || []).map((caItem, ci) => (
-                      <TableCell key={ci} align="center" sx={cellBorderSx}>
-                        {getEntityTotal(caItem?.entities) || '-'}
+                {dummyResults.map((res, i) => {
+                  const total = getOverallTotal(res.ca, res.exam_score);
+                  const grade = getGrade(total);
+                  return (
+                    <TableRow key={res.id} hover>
+                      <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
+                      <TableCell sx={{ ...cellBorderSx, width: 220, minWidth: 220 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar src={res.image} sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main', flexShrink: 0 }}>
+                            {(!res.image && `${res.fname?.[0]}${res.lname?.[0]}`) || '?'}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Stack direction="row" alignItems="center" spacing={0.75}>
+                              <Typography variant="body2" fontWeight={600} noWrap>
+                                {res.lname} {res.fname} {res.mname}
+                              </Typography>
+                              <Box
+                                title={res.sex}
+                                sx={{
+                                  width: 18, height: 18, borderRadius: '5px', flexShrink: 0,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: '10px', fontWeight: 700,
+                                  bgcolor: alpha(res.sex === 'Male' ? theme.palette.primary.main : theme.palette.success.main, isDark ? 0.28 : 0.14),
+                                  color: res.sex === 'Male' ? theme.palette.primary.main : theme.palette.success.main,
+                                }}
+                              >
+                                {res.sex === 'Male' ? 'M' : 'F'}
+                              </Box>
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }} noWrap>
+                              {res.user_id}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </TableCell>
-                    ))}
-                    <TableCell align="center" sx={cellBorderSx}>{res.exam_score || '-'}</TableCell>
-                    <TableCell align="center" sx={cellBorderSx}>
-                      {/* <Chip label={getOverallTotal(res.ca, res.exam_score) || '-'} size="small"
-                        sx={{ fontWeight: 700, minWidth: 40 }} /> */}
-                        {getOverallTotal(res.ca, res.exam_score) || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={(e) => { setActionMenuAnchor(e.currentTarget); setActionMenuRow(res); }}>
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      {(res.ca || []).map((caItem, ci) => (
+                        <TableCell key={ci} align="center" sx={cellBorderSx}>
+                          {getEntityTotal(caItem?.entities) || '-'}
+                        </TableCell>
+                      ))}
+                      <TableCell align="center" sx={cellBorderSx}>{res.exam_score || '-'}</TableCell>
+                      <TableCell align="center" sx={cellBorderSx}>{total || '-'}</TableCell>
+                      <TableCell align="center" sx={cellBorderSx}>
+                        <Chip label={grade} size="small" sx={{ fontWeight: 700, minWidth: 36 }} />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small" onClick={(e) => { setActionMenuAnchor(e.currentTarget); setActionMenuRow(res); }}>
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -301,7 +359,7 @@ const ScoreSheetTab = () => {
         <Box sx={{ p: 5, textAlign: 'center' }}>
           <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
           <Typography variant="h6" color="text.secondary" fontWeight={600}>
-            Select a session-term, class and subject to view the score sheet
+            Select a session, term, class and subject to view the score sheet
           </Typography>
         </Box>
       )}

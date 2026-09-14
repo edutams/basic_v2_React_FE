@@ -42,11 +42,6 @@ const classRegisterApi = {
   getUnassignedStudents: (params = {}) => tenantApi.get('/students/unassigned', { params }),
   addStudentsToClass: (data) => tenantApi.post('/students/add-to-class', data),
 
-  // Bulk-register students for a (new) session term. `data` may include
-  // `session_term_id` (defaults to the active term) and `class_arm_id`
-  // (omit to register school-wide).
-  bulkRegisterForTerm: (data = {}) => tenantApi.post('/students/register-for-term', data),
-
   exportStudentListPdf: (params = {}) =>
     tenantApi.get('/students/export-pdf', { params, responseType: 'blob' }),
 

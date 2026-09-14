@@ -14,7 +14,7 @@ import {
   useTheme,
   Skeleton,
 } from '@mui/material';
-import { People as PeopleIcon, HowToReg as RegisterIcon } from '@mui/icons-material';
+import { People as PeopleIcon, SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
 
@@ -22,7 +22,8 @@ import SingleArmView from './components/SingleArmView';
 import MultipleArmView from './components/MultipleArmView';
 import ClassEnrollmentCard from './components/ClassEnrollmentCard';
 import EnrollmentBreakdownModal from './components/EnrollmentBreakdownModal';
-import RegisterForTermModal from './components/RegisterForTermModal';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import { migrateStudents } from '@/api/tenant/term-migration/termMigrationApi';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -172,7 +173,7 @@ const ClassRegister = () => {
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [classFilterData, setClassFilterData] = useState(null);
-  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
@@ -286,10 +287,10 @@ const ClassRegister = () => {
             {can('manage.class_manager.class_register.bulk_register') && (
               <Button
                 variant="contained"
-                startIcon={<RegisterIcon />}
-                onClick={() => setRegisterModalOpen(true)}
+                startIcon={<MigrateIcon />}
+                onClick={() => setMigrateModalOpen(true)}
               >
-                Register for New Term
+                Migrate Students from Previous Term
               </Button>
             )}
           </Box>
@@ -319,9 +320,12 @@ const ClassRegister = () => {
         onClose={() => setSelectedEnrollmentClass(null)}
       />
 
-      <RegisterForTermModal
-        open={registerModalOpen}
-        onClose={() => setRegisterModalOpen(false)}
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title="Migrate Students to New Term"
+        description="Carries every currently-enrolled student forward from the term you pick into the term you're moving to — same class, curriculum and everything. Only works within the same session; moving into a new session is promotion, handled separately."
+        migrateFn={migrateStudents}
         onSuccess={() => {
           fetchEnrollmentStats();
           fetchEnrollmentBreakdown();

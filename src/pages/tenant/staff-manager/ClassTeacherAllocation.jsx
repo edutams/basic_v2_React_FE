@@ -18,9 +18,12 @@ import {
   Alert,
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
+import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
+import { migrateClassTeacherAllocations } from '@/api/tenant/term-migration/termMigrationApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
@@ -37,6 +40,7 @@ const ClassTeacherAllocation = () => {
   const [teachers, setTeachers] = useState([]);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
   // Filters
   const [selectedTerm, setSelectedTerm] = useState('');
@@ -214,9 +218,20 @@ const ClassTeacherAllocation = () => {
   return (
     <Box>
       {/* Description */}
-      <Alert severity="info" sx={{ mb: 3, color: '#000000', backgroundColor: '#FFFAE6' }}>
-        Select from classes below and allocate teacher to the class
-      </Alert>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
+        <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', flex: 1 }}>
+          Select from classes below and allocate teacher to the class
+        </Alert>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<MigrateIcon />}
+          onClick={() => setMigrateModalOpen(true)}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          Migrate from Previous Term
+        </Button>
+      </Box>
 
       {/* Filters Row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -358,6 +373,19 @@ const ClassTeacherAllocation = () => {
         message="Are you sure you want to remove this teacher from the allocation?"
         severity="error"
         confirmText="Remove"
+      />
+
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title="Migrate Class Teacher Allocations"
+        description="Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
+        migrateFn={migrateClassTeacherAllocations}
+        onSuccess={() => {
+          if (selectedProgramme) {
+            fetchAllocations(selectedProgramme, selectedTerm);
+          }
+        }}
       />
     </Box>
   );

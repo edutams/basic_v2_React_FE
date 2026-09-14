@@ -31,6 +31,7 @@ import {
   Email as EmailIcon,
   Article as ArticleIcon,
   Settings as SettingsIcon,
+  SwapHoriz as MigrateIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
@@ -49,6 +50,8 @@ import {
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchSendInvoiceStats } from '@/api/tenant/bursary/sendInvoiceApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import { migrateBursarySchedules } from '@/api/tenant/term-migration/termMigrationApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -111,6 +114,7 @@ const PaymentShedule = () => {
   const [loadingInvoiceStats, setLoadingInvoiceStats] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [scheduleRefreshKey, setScheduleRefreshKey] = useState(0);
 
   const refreshStats = () => {
@@ -1082,18 +1086,29 @@ const PaymentShedule = () => {
                   />
                 </Tabs>
               </Box>
-              {canImportSchedule && (
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   size="small"
-                  startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
-                  onClick={handleImportSchedule}
-                  disabled={importing}
+                  startIcon={<MigrateIcon />}
+                  onClick={() => setMigrateModalOpen(true)}
                   sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
-                  Import schedule for current term
+                  Migrate Schedules from Previous Term
                 </Button>
-              )}
+                {canImportSchedule && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={importing ? <CircularProgress color="inherit" /> : <UploadIcon />}
+                    onClick={handleImportSchedule}
+                    disabled={importing}
+                    sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                  >
+                    Import schedule for current term
+                  </Button>
+                )}
+              </Box>
             </Box>
 
             <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
@@ -1373,6 +1388,18 @@ const PaymentShedule = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title="Migrate Fee Schedules"
+        description="Carries every active fee schedule (and its installment options) forward from the term you pick into the term you're moving to. Only works within the same session — fees for a new academic session should be reviewed, not assumed."
+        migrateFn={migrateBursarySchedules}
+        onSuccess={() => {
+          setScheduleRefreshKey((key) => key + 1);
+          refreshStats();
+        }}
+      />
 
       <Snackbar
         open={snackbar.open}

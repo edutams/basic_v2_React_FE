@@ -178,7 +178,12 @@ const ResultSetupTab = () => {
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+            <Button variant="outlined" size="small" startIcon={<IconSettings size={16} />} onClick={() => showSnackbar('Config applied to previous term')}>
+              Use same Config for previous Term
+            </Button>
+          </Box>
           <GradeConfiguration sessionTermId={currentSessionTermId} />
         </Paper>
       </InnerTabPanel>

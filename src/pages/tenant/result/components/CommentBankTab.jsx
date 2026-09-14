@@ -1,28 +1,15 @@
 import { useState } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
-  useTheme, TextField, Button, CircularProgress, Tooltip, Chip, Stack,
+  useTheme, TextField, Button, CircularProgress, Tooltip, Chip,
 } from '@mui/material';
-import { IconHelp, IconListNumbers, IconGridDots, IconCheck, IconX } from '@tabler/icons-react';
-import StatCard from '@/components/shared/StatCard';
+import { IconHelp } from '@tabler/icons-react';
 
-const initialBankComments = [
-  { id: 1, grade_score: '90-100', comment1: 'An excellent performance. Keep it up!', comment2: 'A brilliant student with outstanding results.', comment3: 'Exceptional performance across all areas.' },
-  { id: 2, grade_score: '80-89', comment1: 'Very good effort. Sustained this standard.', comment2: 'Good performance with room for improvement.', comment3: 'A hardworking student.' },
-  { id: 3, grade_score: '70-79', comment1: 'Good performance. Keep pushing higher.', comment2: 'Above average, can do better.', comment3: 'Consistent effort shown.' },
-  { id: 4, grade_score: '60-69', comment2: 'Fair performance. More effort needed.', comment3: 'Needs to improve on weak areas.' },
-  { id: 5, grade_score: '50-59', comment1: 'Average performance. Needs more dedication.', comment2: 'Below average. Requires parental support.', comment3: 'Needs serious attention.' },
-  { id: 6, grade_score: '40-49', comment1: 'Below expectations. Needs serious attention.', comment2: 'Poor performance. More effort required.', comment3: 'Needs to attend tutorials.' },
-  { id: 7, grade_score: '30-39', comment1: 'Poor performance. Urgent improvement needed.', comment2: 'Very poor. Requires immediate intervention.', comment3: 'Not meeting basic standards.' },
-  { id: 8, grade_score: '0-29', comment1: 'Very poor performance. Needs urgent help.', comment2: 'Highly unsatisfactory. Seek help immediately.', comment3: 'Requires special attention.' },
-];
-
-const CommentBankTab = () => {
+const CommentBankTab = ({ bankComments, setBankComments }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
-  const [bankComments, setBankComments] = useState(initialBankComments);
   const [editingCell, setEditingCell] = useState({ rowIdx: null, field: null });
   const [editValue, setEditValue] = useState('');
   const [originalValue, setOriginalValue] = useState('');
@@ -96,22 +83,8 @@ const CommentBankTab = () => {
     );
   };
 
-  // Compute stats
-  const totalCells = bankComments.length * 3;
-  const filledCells = bankComments.reduce((count, row) => {
-    return count + (row.comment1 ? 1 : 0) + (row.comment2 ? 1 : 0) + (row.comment3 ? 1 : 0);
-  }, 0);
-
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
-      {/* ── Stat Cards ──────────────────────────────────────────── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
-        <StatCard count={bankComments.length} label="Score Ranges" subtitle="Editable comment rows" icon={IconListNumbers} colorIndex={0} loading={false} />
-        <StatCard count={totalCells} label="Total Cells" subtitle="8 rows x 3 columns" icon={IconGridDots} colorIndex={1} loading={false} />
-        <StatCard count={filledCells} label="Filled" subtitle="Comments completed" icon={IconCheck} colorIndex={2} loading={false} />
-        <StatCard count={totalCells - filledCells} label="Empty" subtitle="Awaiting input" icon={IconX} colorIndex={3} loading={false} />
-      </Stack>
-
       {/* ── Header ──────────────────────────────────────────── */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${borderColor}` }}>
         <Typography variant="h6" fontWeight={700}>Comment Bank</Typography>

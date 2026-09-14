@@ -182,14 +182,15 @@ const ReportSheetTab = () => {
 
   /* ── Class list (dossier landing) view ─────────────────── */
   return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-      {/* ── Stat Cards ──────────────────────────────────────────── */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+    <>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <StatCard count={classStudents.length} label="Total Students" subtitle={`In ${className || 'selected class'}`} icon={IconUsers} colorIndex={0} loading={false} />
         <StatCard count={paidStudents.length} label="Paid Students" subtitle="Eligible for dossier" icon={IconCreditCard} colorIndex={1} loading={false} />
         <StatCard count={classStudents.length - paidStudents.length} label="Unpaid Students" subtitle="Pending payment" icon={IconCreditCard} colorIndex={3} loading={false} />
         <StatCard count={`${dummyReport.attendance.present}/${dummyReport.attendance.opened}`} label="Attendance" subtitle="Present / Total days" icon={IconCalendar} colorIndex={2} loading={false} />
       </Stack>
+
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
 
       {/* ── Card Header ─────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
@@ -299,6 +300,7 @@ const ReportSheetTab = () => {
         </MenuItem>
       </Menu>
     </Paper>
+    </>
   );
 };
 

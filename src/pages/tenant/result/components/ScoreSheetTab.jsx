@@ -2,12 +2,14 @@ import { useState } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, useTheme,
-  IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip,
+  IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip, Stack,
 } from '@mui/material';
 import {
   IconClipboardCheck, IconPrinter, IconChartBar, IconEye, IconEdit, IconSend,
+  IconUsers, IconTrophy, IconArrowUp, IconArrowDown,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import StatCard from '@/components/shared/StatCard';
 
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -87,6 +89,11 @@ const ScoreSheetTab = () => {
   const showTable = selectedClass && selectedSubject && selectedSessionTerm;
   const submissionStatus = showTable ? dummyResults[0]?.teacher_submit : null;
 
+  const totals = dummyResults.map(r => getOverallTotal(r.ca, r.exam_score));
+  const classAverage = Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
+  const highestScore = Math.max(...totals);
+  const lowestScore = Math.min(...totals);
+
   const handleReverseSubmission = () => {};
   const handleSubmitScores = () => {};
 
@@ -101,7 +108,17 @@ const ScoreSheetTab = () => {
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+    <>
+      {showTable && (
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard count={dummyResults.length} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
+          <StatCard count={classAverage} label="Class Average" subtitle="Overall score" icon={IconTrophy} colorIndex={1} loading={false} />
+          <StatCard count={highestScore} label="Highest Score" subtitle="Top performer" icon={IconArrowUp} colorIndex={2} loading={false} />
+          <StatCard count={lowestScore} label="Lowest Score" subtitle="Needs attention" icon={IconArrowDown} colorIndex={3} loading={false} />
+        </Stack>
+      )}
+
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
       {/* ── Card Header ─────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>
@@ -328,6 +345,7 @@ const ScoreSheetTab = () => {
         )}
       </Menu>
     </Paper>
+    </>
   );
 };
 

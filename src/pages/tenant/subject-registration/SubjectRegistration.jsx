@@ -31,7 +31,7 @@ import {
   CheckCircle as CompulsoryIcon,
   Stars as OptionalIcon,
   Build as TradeIcon,
-  LibraryAddCheck as CarryForwardIcon,
+  SwapHoriz as MigrateIcon,
 } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
@@ -47,7 +47,8 @@ import { usePermissions } from '@/context/TenantContext/permissions';
 import GeneralSubjectsTab from './components/GeneralSubjectsTab';
 import OptionalSubjectsTab from './components/OptionalSubjectsTab';
 import TradeSubjectsTab from './components/TradeSubjectsTab';
-import CarryForwardSubjectsModal from './components/CarryForwardSubjectsModal';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import { migrateCourseRegistrations } from '@/api/tenant/term-migration/termMigrationApi';
 import AnalyticsModal from '@/pages/tenant/attendance/components/AnalyticsModal';
 
 const BCrumb = [
@@ -158,7 +159,7 @@ const SubjectRegistration = () => {
   const { can } = usePermissions();
 
   const [activeTab, setActiveTab] = useState(0);
-  const [carryForwardModalOpen, setCarryForwardModalOpen] = useState(false);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -521,10 +522,10 @@ const SubjectRegistration = () => {
               <Button
                 variant="contained"
                 size="small"
-                startIcon={<CarryForwardIcon />}
-                onClick={() => setCarryForwardModalOpen(true)}
+                startIcon={<MigrateIcon />}
+                onClick={() => setMigrateModalOpen(true)}
               >
-                Carry Forward to New Term
+                Migrate Subject Registrations from Previous Term
               </Button>
             )}
           </Box>
@@ -685,9 +686,12 @@ const SubjectRegistration = () => {
         loading={analyticsModal.loading}
       />
 
-      <CarryForwardSubjectsModal
-        open={carryForwardModalOpen}
-        onClose={() => setCarryForwardModalOpen(false)}
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title="Migrate Subject Registrations"
+        description="Carries forward which subjects each continuing student was registered for, from the term you pick into the term you're moving to. Only applies to students already registered for the target term — run Class Register's migration first if you haven't. Only works within the same session."
+        migrateFn={migrateCourseRegistrations}
         onSuccess={fetchStats}
       />
     </PageContainer>

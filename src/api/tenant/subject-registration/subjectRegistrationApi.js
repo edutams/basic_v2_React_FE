@@ -66,13 +66,6 @@ const subjectRegistrationApi = {
   bulkToggle: (changes, term = {}) =>
     tenantApi.post(`/subject-registration/bulk-toggle`, { changes, ...term }),
 
-  // ── Bulk carry-forward ────────────────────────────────────
-  // Carries each active student's most-recent subject registrations forward
-  // into a target term (defaults to the active term), optionally scoped to
-  // one class arm. Idempotent - safe to run more than once.
-  carryForwardTerm: (params = {}) =>
-    tenantApi.post('/subject-registration/carry-forward-term', params),
-
   // ── Stats ────────────────────────────────────────────────
   getRegistrationStats: (params = {}) =>
     tenantApi.get('/subject-registration/stats', { params }),

@@ -84,7 +84,7 @@ const CommentBankTab = ({ bankComments, setBankComments }) => {
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
+    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor ,mt:2}}>
       {/* ── Header ──────────────────────────────────────────── */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${borderColor}` }}>
         <Typography variant="h6" fontWeight={700}>Comment Bank</Typography>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Box, Tabs, Tab, Paper, Stack, useTheme } from '@mui/material';
-import { IconUsers, IconBook, IconAward, IconAlertTriangle, IconListNumbers, IconGridDots, IconCheck, IconX } from '@tabler/icons-react';
+import { Box, Tabs, Tab, Paper, Stack, Button, useTheme } from '@mui/material';
+import { IconUsers, IconBook, IconAward, IconAlertTriangle, IconListNumbers, IconGridDots, IconCheck, IconX, IconDownload } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import BroadsheetTab from './BroadsheetTab';
 import SummarySheetTab from './SummarySheetTab';
@@ -29,48 +29,52 @@ const ResultSheetTab = () => {
   }, 0);
 
   return (
-    <>
-      {activeTab === 1 && (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <StatCard count={42} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
-          <StatCard count={12} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={false} />
-          <StatCard count={9} label="Grade Bands" subtitle="A+ through F" icon={IconAward} colorIndex={2} loading={false} />
-          <StatCard count={0} label="Outliers" subtitle="Students below threshold" icon={IconAlertTriangle} colorIndex={3} loading={false} />
-        </Stack>
-      )}
-
-      {activeTab === 2 && (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <StatCard count={bankComments.length} label="Score Ranges" subtitle="Editable comment rows" icon={IconListNumbers} colorIndex={0} loading={false} />
-          <StatCard count={totalCells} label="Total Cells" subtitle="8 rows x 3 columns" icon={IconGridDots} colorIndex={1} loading={false} />
-          <StatCard count={filledCells} label="Filled" subtitle="Comments completed" icon={IconCheck} colorIndex={2} loading={false} />
-          <StatCard count={totalCells - filledCells} label="Empty" subtitle="Awaiting input" icon={IconX} colorIndex={3} loading={false} />
-        </Stack>
-      )}
-
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
-        value={activeTab}
-        onChange={(_, v) => setActiveTab(v)}
-        sx={{
-          px: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
-          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none' },
-        }}
-      >
-        <Tab label="Broadsheet." />
-        <Tab label="Summary Sheet." />
-        <Tab label="Comment Bank." />
-      </Tabs>
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{
+            px: 2,
+            flex: 1,
+            '& .MuiTab-root': { fontWeight: 600, textTransform: 'none' },
+          }}
+        >
+          <Tab label="Broadsheet." />
+          <Tab label="Summary Sheet." />
+          <Tab label="Comment Bank." />
+        </Tabs>
+        {activeTab === 0 && (
+          <Button variant="contained" size="small" startIcon={<IconDownload size={16} />} sx={{ mr: 2 }}>
+            Export Broadsheet
+          </Button>
+        )}
+      </Box>
 
       <Box sx={{ p: activeTab === 2 ? 0 : 2 }}>
+        {activeTab === 1 && (
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+            <StatCard count={42} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
+            <StatCard count={12} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={false} />
+            <StatCard count={9} label="Grade Bands" subtitle="A+ through F" icon={IconAward} colorIndex={2} loading={false} />
+            <StatCard count={0} label="Outliers" subtitle="Students below threshold" icon={IconAlertTriangle} colorIndex={3} loading={false} />
+          </Stack>
+        )}
+
+        {activeTab === 2 && (
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+            <StatCard count={bankComments.length} label="Score Ranges" subtitle="Editable comment rows" icon={IconListNumbers} colorIndex={0} loading={false} />
+            <StatCard count={totalCells} label="Total Cells" subtitle="8 rows x 3 columns" icon={IconGridDots} colorIndex={1} loading={false} />
+            <StatCard count={filledCells} label="Filled" subtitle="Comments completed" icon={IconCheck} colorIndex={2} loading={false} />
+            <StatCard count={totalCells - filledCells} label="Empty" subtitle="Awaiting input" icon={IconX} colorIndex={3} loading={false} />
+          </Stack>
+        )}
+
         {activeTab === 0 && <BroadsheetTab />}
         {activeTab === 1 && <SummarySheetTab />}
         {activeTab === 2 && <CommentBankTab bankComments={bankComments} setBankComments={setBankComments} />}
       </Box>
-      </Paper>
-    </>
+    </Paper>
   );
 };
 

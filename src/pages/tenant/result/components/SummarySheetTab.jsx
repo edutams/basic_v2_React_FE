@@ -6,8 +6,14 @@ import {
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
+const dummySessions = [
+  { id: 1, label: '2025/2026' },
+  { id: 2, label: '2024/2025' },
+];
+const dummyTerms = [
+  { id: 1, label: 'First Term' },
+  { id: 2, label: 'Second Term' },
+  { id: 3, label: 'Third Term' },
 ];
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -44,7 +50,8 @@ const generateSummary = () => {
 const SummarySheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState(1);
+  const [selectedSession, setSelectedSession] = useState(1);
+  const [selectedTerm, setSelectedTerm] = useState(1);
   const [selectedClass, setSelectedClass] = useState(1);
   const [summary] = useState(() => generateSummary());
   const [breakdownDialog, setBreakdownDialog] = useState({ open: false, subject: '', gradeIdx: 0 });
@@ -52,7 +59,7 @@ const SummarySheetTab = () => {
   const getGradeCount = (subj, gradeIdx) => summary[subj]?.[gradeIdx] || 0;
   const getSubjectTotal = (subj) => grades.reduce((sum, g, i) => sum + getGradeCount(subj, i), 0);
 
-  const showData = selectedSessionTerm && selectedClass;
+  const showData = selectedSession && selectedTerm && selectedClass;
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
   return (
@@ -67,10 +74,19 @@ const SummarySheetTab = () => {
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Session Term</InputLabel>
-              <Select value={selectedSessionTerm} label="Session Term" onChange={e => setSelectedSessionTerm(e.target.value)}>
-                <MenuItem value="">-- Select Session Term --</MenuItem>
-                {dummySessionTerms.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+              <InputLabel>Session</InputLabel>
+              <Select value={selectedSession} label="Session" onChange={e => setSelectedSession(e.target.value)}>
+                <MenuItem value="">-- Select Session --</MenuItem>
+                {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Term</InputLabel>
+              <Select value={selectedTerm} label="Term" onChange={e => setSelectedTerm(e.target.value)}>
+                <MenuItem value="">-- Select Term --</MenuItem>
+                {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>

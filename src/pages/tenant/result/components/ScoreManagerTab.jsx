@@ -24,7 +24,7 @@ const ScoreManagerTab = () => {
         <Tab label="Score Sheet." />
       </Tabs>
 
-      <Box sx={{ p: activeTab === 1 ? 0 : 0 }}>
+      <Box sx={{ p: 2 }}>
         {activeTab === 0 && <UploadScoresTab />}
         {activeTab === 1 && <ScoreSheetTab />}
       </Box>

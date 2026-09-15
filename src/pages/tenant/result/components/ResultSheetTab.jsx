@@ -51,7 +51,7 @@ const ResultSheetTab = () => {
         )}
       </Box>
 
-      <Box sx={{ p: activeTab === 2 ? 0 : 2 }}>
+      <Box sx={{ p: 2 }}>
         {activeTab === 1 && (
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
             <StatCard count={42} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
@@ -62,7 +62,7 @@ const ResultSheetTab = () => {
         )}
 
         {activeTab === 2 && (
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ p: 2, pb: 0 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
             <StatCard count={bankComments.length} label="Score Ranges" subtitle="Editable comment rows" icon={IconListNumbers} colorIndex={0} loading={false} />
             <StatCard count={totalCells} label="Total Cells" subtitle="8 rows x 3 columns" icon={IconGridDots} colorIndex={1} loading={false} />
             <StatCard count={filledCells} label="Filled" subtitle="Comments completed" icon={IconCheck} colorIndex={2} loading={false} />

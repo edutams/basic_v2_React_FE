@@ -3,9 +3,10 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Grid, FormControl, InputLabel, Select, MenuItem, Menu, Alert, useTheme, Tooltip, Tabs, Tab,
   Card, CardHeader, CardContent, Button, Avatar, TablePagination, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, Snackbar, Alert as MuiAlert,
+  DialogContent, DialogActions, TextField, Snackbar, Alert as MuiAlert, Stack,
 } from '@mui/material';
-import { IconDownload, IconCheck, IconX, IconMessage, IconEdit, IconArrowsHorizontal } from '@tabler/icons-react';
+import { IconDownload, IconCheck, IconX, IconMessage, IconEdit, IconArrowsHorizontal, IconUsers, IconBook, IconChartBar, IconAward } from '@tabler/icons-react';
+import StatCard from '@/components/shared/StatCard';
 
 const dummySessions = [
   { id: 1, name: '2025/2026' },
@@ -240,8 +241,20 @@ const BroadsheetTab = () => {
 
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
+  const totalStudents = broadsheetData.length;
+  const totalSubjects = dummySubjects.length;
+  const avgScore = broadsheetData.length > 0 ? (broadsheetData.reduce((sum, s) => sum + parseFloat(s.student_average), 0) / broadsheetData.length).toFixed(1) : 0;
+  const passCount = broadsheetData.filter(s => parseFloat(s.student_average) >= 40).length;
+  const passRate = totalStudents > 0 ? ((passCount / totalStudents) * 100).toFixed(0) : 0;
+
   return (
     <Box>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+        <StatCard count={totalStudents} label="Total Students" subtitle="In this class" icon={IconUsers} colorIndex={0} loading={false} />
+        <StatCard count={totalSubjects} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={false} />
+        <StatCard count={`${avgScore}%`} label="Average Score" subtitle="Class average" icon={IconChartBar} colorIndex={2} loading={false} />
+        <StatCard count={`${passRate}%`} label="Pass Rate" subtitle="Students above 40%" icon={IconAward} colorIndex={3} loading={false} />
+      </Stack>
       <Card elevation={0} sx={{ border: `1px solid ${borderColor}`, borderRadius: 1 }}>
 
         {/* ── Nested Tabs ────────────────────────────────────── */}

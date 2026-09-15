@@ -9,6 +9,7 @@ import {
   IconSettings, IconTemplate, IconMoodSmile, IconMessageCircle, IconAward,
   IconPlus, IconEdit, IconTrash, IconCheck, IconX,
   IconBook, IconHash, IconSchool, IconFile, IconUsers, IconList, IconStack,
+  IconSignature, IconEye,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import SetupAffectivePsychomotorTab from '@/pages/tenant/attendance/components/SetupAffectivePsychomotorTab';
@@ -84,6 +85,9 @@ const ResultSetupTab = () => {
   const [nomMenuRow, setNomMenuRow] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [imagePreview, setImagePreview] = useState({ open: false, src: '' });
+  const [signatureDialog, setSignatureDialog] = useState({ open: false, positionName: '' });
+  const [signaturePreview, setSignaturePreview] = useState({ open: false, src: '' });
+  const [signatureFile, setSignatureFile] = useState(null);
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
@@ -385,6 +389,12 @@ const ResultSetupTab = () => {
                         }}>
                           {n.status === 'active' ? <><IconX size={18} style={{ marginRight: 8 }} /> Deactivate</> : <><IconCheck size={18} style={{ marginRight: 8 }} /> Activate</>}
                         </MenuItem>
+                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignatureDialog({ open: true, positionName: n.position_name }); setSignatureFile(null); }}>
+                          <IconSignature size={18} style={{ marginRight: 8 }} /> Change Signature
+                        </MenuItem>
+                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignaturePreview({ open: true, src: '' }); }}>
+                          <IconEye size={18} style={{ marginRight: 8 }} /> Preview Signature
+                        </MenuItem>
                         <MenuItem onClick={() => handleNomDelete(n.id)} sx={{ color: 'error.main' }}>
                           <IconTrash size={18} style={{ marginRight: 8 }} /> Delete
                         </MenuItem>
@@ -488,6 +498,72 @@ const ResultSetupTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setImagePreview({ open: false, src: '' })}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Change Signature Dialog ──────────────────────────── */}
+      <Dialog open={signatureDialog.open} onClose={() => setSignatureDialog({ open: false, positionName: '' })} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>Change Signature — {signatureDialog.positionName}</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Box
+              component="input"
+              type="file"
+              accept="image/*"
+              id="signature-upload"
+              sx={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setSignatureFile(ev.target.result);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            {signatureFile ? (
+              <Box sx={{ mb: 2 }}>
+                <Box component="img" src={signatureFile} alt="Signature Preview" sx={{ maxWidth: '100%', maxHeight: 200, borderRadius: 1, border: '1px solid', borderColor: 'divider' }} />
+              </Box>
+            ) : (
+              <Box sx={{ mb: 2, py: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 1, bgcolor: 'grey.50' }}>
+                <Typography variant="body2" color="text.secondary">No signature uploaded yet</Typography>
+              </Box>
+            )}
+            <label htmlFor="signature-upload">
+              <Button variant="outlined" component="span" startIcon={<IconPlus size={16} />}>
+                {signatureFile ? 'Change Signature' : 'Upload Signature'}
+              </Button>
+            </label>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSignatureDialog({ open: false, positionName: '' })}>Cancel</Button>
+          <Button variant="contained" disabled={!signatureFile} onClick={() => { setSignatureDialog({ open: false, positionName: '' }); showSnackbar('Signature updated successfully'); }}>
+            Save Signature
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Preview Signature Dialog ──────────────────────────── */}
+      <Dialog open={signaturePreview.open} onClose={() => setSignaturePreview({ open: false, src: '' })} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>Preview Signature</DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <Box sx={{ textAlign: 'center', py: 4, bgcolor: '#fff' }}>
+            {signaturePreview.src ? (
+              <Box component="img" src={signaturePreview.src} alt="Signature" sx={{ maxWidth: '100%', maxHeight: 300 }} />
+            ) : (
+              <Box sx={{ py: 6 }}>
+                <IconSignature size={64} color="#ccc" />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>No signature uploaded yet</Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSignaturePreview({ open: false, src: '' })}>Close</Button>
         </DialogActions>
       </Dialog>
 

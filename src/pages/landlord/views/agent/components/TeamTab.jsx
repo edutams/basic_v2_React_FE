@@ -29,12 +29,16 @@ import {
   DialogActions,
   Skeleton,
   Alert,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import { IconUsers } from '@tabler/icons-react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { IconUsers, IconEye, IconLogin, IconEdit, IconBuilding, IconCoins } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/context/AgentContext/auth.jsx';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 // Separate component for action menu to avoid hooks in loops
 const ActionMenuCell = ({
@@ -51,6 +55,7 @@ const ActionMenuCell = ({
   isViewingProfile = false,
 }) => {
   const [anchor, setAnchor] = useState(null);
+  const { can } = usePermissions();
 
   const handleClick = (event) => {
     setAnchor(event.currentTarget);
@@ -81,7 +86,10 @@ const ActionMenuCell = ({
               handleImpersonate(agent);
             }}
           >
-            Login As Agent
+            <ListItemIcon>
+              <IconLogin size={18} />
+            </ListItemIcon>
+            <ListItemText primary="Login As Agent" />
           </MenuItem>
         ) : (
           // When not viewing profile, show all menu items
@@ -92,7 +100,10 @@ const ActionMenuCell = ({
                 navigate(`/view/${agent.id}`);
               }}
             >
-              View Profile
+              <ListItemIcon>
+                <IconEye size={18} />
+              </ListItemIcon>
+              <ListItemText primary="View Profile" />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -100,7 +111,10 @@ const ActionMenuCell = ({
                 handleImpersonate(agent);
               }}
             >
-              Login As Agent
+              <ListItemIcon>
+                <IconLogin size={18} />
+              </ListItemIcon>
+              <ListItemText primary="Login As Agent" />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -108,23 +122,46 @@ const ActionMenuCell = ({
                 handleUpdateAgent(agent, 'update');
               }}
             >
-              Update Agent Info
+              <ListItemIcon>
+                <IconEdit size={18} />
+              </ListItemIcon>
+              <ListItemText primary="Update Agent Info" />
             </MenuItem>
+            {can('landlord.commission.manage') && (
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  handleSetCommission(agent);
+                }}
+              >
+                <ListItemIcon>
+                  <IconCoins size={18} />
+                </ListItemIcon>
+                <ListItemText primary="Update Commission" />
+              </MenuItem>
+            )}
             <MenuItem
               onClick={() => {
                 handleClose();
                 handleViewSchools(agent, 'view');
               }}
             >
-              View School
+              <ListItemIcon>
+                <IconBuilding size={18} />
+              </ListItemIcon>
+              <ListItemText primary="View School" />
             </MenuItem>
             <MenuItem
               onClick={() => {
                 handleClose();
                 handleDeleteAgent(agent);
               }}
+              sx={{ color: 'error.main' }}
             >
-              Delete Agent
+              <ListItemIcon sx={{ color: 'error.main' }}>
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText primary="Delete Agent" />
             </MenuItem>
           </>
         )}
@@ -390,7 +427,11 @@ const TeamTab = ({
     <Box>
       {/* Header */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        {!isViewingProfile && !hideAddButton && (
+        {/* Level 5 is the last level — it can't create a level 6, so it
+            never gets an "Add New Agent" button (matches the backend's own
+            OrganizationService::createOrganization() abort for
+            access_level >= 5). */}
+        {!isViewingProfile && !hideAddButton && userAccessLevel < 5 && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
             Add New Agent
           </Button>

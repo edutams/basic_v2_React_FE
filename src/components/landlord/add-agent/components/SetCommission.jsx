@@ -1,25 +1,31 @@
 import React from 'react';
-import { Box, Typography, FormControl, OutlinedInput, useTheme } from '@mui/material';
+import { Box, Typography, FormControl, OutlinedInput, FormHelperText, Button, useTheme } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import PropTypes from 'prop-types';
-import PrimaryButton from '@/components/shared/PrimaryButton';
+import useAuth from '@/hooks/useAuth';
 
 const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const { user } = useAuth();
+
+  // The backend enforces this cap too (a child can never exceed its own
+  // parent's commission — see CommissionController::updateCommission()),
+  // this is just showing the caller the same ceiling up front.
+  const referrerCommission = Number(user?.organization?.commission ?? 100);
 
   const validationSchema = yup.object({
     commissionPercentage: yup
       .number()
       .min(0, 'Minimum is 0%')
-      .max(100, 'Maximum is 100%')
+      .max(referrerCommission, `Cannot exceed your own commission (${referrerCommission}%)`)
       .required('Required'),
   });
 
   const formik = useFormik({
     initialValues: {
-      commissionPercentage: selectedAgent?.commissionPercentage || '',
+      commissionPercentage: selectedAgent?.commission ?? selectedAgent?.commissionPercentage ?? '',
     },
     validationSchema,
     enableReinitialize: true,
@@ -28,7 +34,6 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
         ...selectedAgent,
         commission_percentage: values.commissionPercentage,
       });
-      onClose();
     },
   });
 
@@ -44,7 +49,7 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
       <Typography variant="body1" sx={{ color: theme.palette.text.secondary, mb: 3 }}>
         Editing commission for{' '}
         <Box component="span" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
-          {selectedAgent?.agentDetails || 'Adebayo Ogunlesi'}
+          {selectedAgent?.agentDetails || selectedAgent?.organization_name || 'this agent'}
         </Box>
       </Typography>
 
@@ -81,6 +86,9 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
             color: theme.palette.text.primary,
           }}
         />
+        <FormHelperText error={Boolean(formik.errors.commissionPercentage)}>
+          {formik.errors.commissionPercentage || `Cannot exceed your own commission (${referrerCommission}%)`}
+        </FormHelperText>
       </FormControl>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>

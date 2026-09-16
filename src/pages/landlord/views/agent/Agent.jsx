@@ -52,7 +52,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
-import { IconEye, IconLogin, IconEdit, IconBuilding, IconCreditCard, IconBuildingBank } from '@tabler/icons-react';
+import { IconEye, IconLogin, IconEdit, IconBuilding, IconCreditCard, IconBuildingBank, IconCoins } from '@tabler/icons-react';
+import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 import TotalSchoolModal from './components/TotalSchoolModal';
@@ -120,6 +121,7 @@ const ActionMenuCell = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { can } = usePermissions();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -190,6 +192,19 @@ const ActionMenuCell = ({
           </ListItemIcon>
           <ListItemText primary="Update Agent Info" />
         </MenuItem>
+        {can('landlord.commission.manage') && (
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              handleSetCommission(agent);
+            }}
+          >
+            <ListItemIcon>
+              <IconCoins size={18} />
+            </ListItemIcon>
+            <ListItemText primary="Update Commission" />
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             handleClose();
@@ -242,14 +257,6 @@ const ActionMenuCell = ({
           }}
         >
           Manage Permission
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleSetCommission(agent);
-          }}
-        >
-          Update Commission
         </MenuItem> */}
         {/* <MenuItem
           onClick={() => {

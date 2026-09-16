@@ -39,6 +39,17 @@ export const getOrganizations = async () => {
   return res.data;
 };
 
+// Set an agent's commission percentage — triggered from the "Update
+// Commission" action on the Agents tab (/organization, level 1) and the
+// Sub Agents tab (/dashboard, level 2-5), NOT from Commission Management
+// (which is read-only reporting).
+export const updateCommission = async (organizationId, commission) => {
+  const res = await api.post(`/v1/landlord/commission/organizations/${organizationId}/commission`, {
+    commission,
+  });
+  return res.data;
+};
+
 // Every school across the given organization's own subtree (itself
 // included) — the same scope the "Total School" stat card counts.
 export const getCommissionSchools = async ({ organizationId } = {}) => {

@@ -10,6 +10,7 @@ import ChangeColorScheme from './ChangeColorScheme';
 import { createAgentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '@/api/landlord/organizations/agent';
+import { updateCommission } from '@/api/landlord/commission/commissionApi';
 import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -307,6 +308,38 @@ const AgentModal = ({
     }
   }, [selectedAgent, handleRefresh, notify, onClose]);
 
+  // SetCommissionModal's own onSave passes back {...selectedAgent,
+  // commission_percentage}. This previously reused handleUpdate (the
+  // generic "update agent profile" flow), which built its payload from
+  // AgentForm's own field names (organizationName/organizationDomain/...)
+  // — none of which exist on this data, and which never even read
+  // commission_percentage — so it silently sent the wrong request to the
+  // wrong endpoint and never actually persisted a commission change. This
+  // calls the dedicated commission endpoint instead.
+  const handleSetCommissionSave = useCallback(
+    async (values) => {
+      setLoading(true);
+      try {
+        const agentId = selectedAgent?.id || selectedAgent?.s_n;
+        const response = await updateCommission(agentId, values.commission_percentage);
+
+        if (response.status) {
+          handleRefresh(response.data);
+          notify.success(response.message || 'Commission updated successfully.');
+          onClose();
+        } else {
+          notify.error(response.message || 'Failed to update commission.');
+        }
+      } catch (error) {
+        console.error('Commission update failed:', error);
+        notify.error(error?.response?.data?.message || 'Failed to update commission.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedAgent, handleRefresh, notify, onClose],
+  );
+
   const handleAddTeamMember = useCallback(
     async (values) => {
       setLoading(true);
@@ -384,8 +417,8 @@ const AgentModal = ({
         return (
           <SetCommissionModal
             selectedAgent={selectedAgent}
-            onSave={handleUpdate}
-            onClose={handleClose}
+            onSave={handleSetCommissionSave}
+            onClose={onClose}
             loading={loading}
           />
         );

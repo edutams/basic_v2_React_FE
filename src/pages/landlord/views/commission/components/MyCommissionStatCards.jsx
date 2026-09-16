@@ -150,7 +150,7 @@ const MyCommissionStatCards = ({
         <Paper sx={cardSx(false)}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600} noWrap>
-              {organizationName || 'My Organization'}
+              {organizationName || 'My Agent'}
             </Typography>
             <CardIcon scheme={s0} isDarkMode={isDarkMode} icon={IconWallet} />
           </Box>
@@ -190,7 +190,7 @@ const MyCommissionStatCards = ({
         <Paper sx={cardSx(true)} onClick={onViewSubOrgs}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
-              Total Sub Orgs
+              Total Sub Agents
             </Typography>
             <CardIcon scheme={s2} isDarkMode={isDarkMode} />
           </Box>
@@ -199,8 +199,8 @@ const MyCommissionStatCards = ({
 
           <Typography variant="body2" color="text.secondary">
             {(subOrgs?.total ?? 0) === 1
-              ? '1 agent is currently earning commission under your organization.'
-              : `${subOrgs?.total ?? 0} agents are currently earning commission under your organization.`}
+              ? '1 agent is currently earning commission under you.'
+              : `${subOrgs?.total ?? 0} agents are currently earning commission under you.`}
           </Typography>
         </Paper>
 

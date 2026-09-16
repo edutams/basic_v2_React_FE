@@ -18,16 +18,21 @@ import {
   TableCell,
   TableBody,
 } from '@mui/material';
-import { IconDotsVertical, IconEdit, IconExchange, IconEye } from '@tabler/icons-react';
+import { IconDotsVertical, IconCoins, IconReceipt } from '@tabler/icons-react';
 
-const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onViewDetails }) => {
+// Read-only reporting table — commission%/commission_type are set once at
+// agent-creation time (see add-agent's AgentFormFields.jsx) and never
+// edited from here, so the only row actions are the two "go look at this
+// agent's numbers" views.
+const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransactions }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState(null);
 
-  const handleViewDetails = onViewDetails || (() => { });
+  const handleViewCommissions = onViewCommissions || (() => { });
+  const handleViewTransactions = onViewTransactions || (() => { });
 
   const handleClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -48,7 +53,6 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
   const showCommissionType = !isOther;
   const showSchools = isOverview || isOther;
   const showPayoutDate = isOverview;
-  const showCommission = isActive || isOther;
   const showStatus = isActive || isOther;
   const showEarnings = isOverview || isOther;
 
@@ -77,11 +81,10 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
           {/* HEADER */}
           <TableHead>
             <TableRow>
-              <TableCell>Organization</TableCell>
+              <TableCell>Agent</TableCell>
               {showCommissionType && <TableCell>Commission Type</TableCell>}
               {showSchools && <TableCell>Schools</TableCell>}
               {showPayoutDate && <TableCell>Payout Date</TableCell>}
-              {showCommission && <TableCell>Commission %</TableCell>}
               {showStatus && <TableCell>Status</TableCell>}
               {showEarnings && <TableCell align="right">Earnings</TableCell>}
               {showActions && <TableCell align="right">Actions</TableCell>}
@@ -143,13 +146,6 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
                 {/* PAYOUT DATE */}
                 {showPayoutDate && <TableCell>{row.payoutDate}</TableCell>}
 
-                {/* COMMISSION % */}
-                {showCommission && (
-                  <TableCell>
-                    <Typography fontWeight={700}>{row.commissionPercentage}</Typography>
-                  </TableCell>
-                )}
-
                 {/* STATUS */}
                 {showStatus && (
                   <TableCell>
@@ -205,38 +201,26 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
         <MenuItem
           onClick={() => {
-            handleViewDetails(selectedItem);
+            handleViewCommissions(selectedItem);
             handleClose();
           }}
         >
           <ListItemIcon>
-            <IconEye size={18} />
+            <IconCoins size={18} />
           </ListItemIcon>
-          <ListItemText>View Details</ListItemText>
+          <ListItemText>View Commissions</ListItemText>
         </MenuItem>
 
         <MenuItem
           onClick={() => {
-            onEditCommission(selectedItem);
+            handleViewTransactions(selectedItem);
             handleClose();
           }}
         >
           <ListItemIcon>
-            <IconEdit size={18} />
+            <IconReceipt size={18} />
           </ListItemIcon>
-          <ListItemText>Edit Commission</ListItemText>
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            onChangeType(selectedItem);
-            handleClose();
-          }}
-        >
-          <ListItemIcon>
-            <IconExchange size={18} />
-          </ListItemIcon>
-          <ListItemText>Change Type</ListItemText>
+          <ListItemText>View Transactions</ListItemText>
         </MenuItem>
       </Menu>
     </Box>

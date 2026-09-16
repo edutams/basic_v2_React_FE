@@ -39,20 +39,6 @@ export const getOrganizations = async () => {
   return res.data;
 };
 
-export const updateCommission = async (organizationId, commission) => {
-  const res = await api.post(`/v1/landlord/commission/organizations/${organizationId}/commission`, {
-    commission,
-  });
-  return res.data;
-};
-
-export const updateCommissionType = async (organizationId, commissionType) => {
-  const res = await api.post(`/v1/landlord/commission/organizations/${organizationId}/commission-type`, {
-    commission_type: commissionType,
-  });
-  return res.data;
-};
-
 // Every school across the given organization's own subtree (itself
 // included) — the same scope the "Total School" stat card counts.
 export const getCommissionSchools = async ({ organizationId } = {}) => {

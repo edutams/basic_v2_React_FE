@@ -21,7 +21,7 @@ import {
   Alert,
   Skeleton,
 } from '@mui/material';
-import { IconX, IconDownload } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import { getTransactions } from '@/api/landlord/commission/commissionApi';
 import { useNotification } from '@/hooks/useNotification';
 
@@ -87,11 +87,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
     fetchTransactions();
   };
 
-  const handleExport = () => {
-    // Export functionality would go here
-    alert('Export functionality would download the filtered data');
-  };
-
   return (
     <Dialog
       open={open}
@@ -116,11 +111,11 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
       >
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Subscription Commission Details
+            Transaction Details
           </Typography>
           {agent && (
             <Typography variant="body2" color="text.secondary">
-              Organization: {agent.agentName} ({agent.email})
+              Agent: {agent.agentName} ({agent.email})
             </Typography>
           )}
         </Box>
@@ -172,15 +167,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               }}
             >
               Filter
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconDownload />}
-              onClick={handleExport}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Export
             </Button>
           </Box>
         </Box>

@@ -21,7 +21,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CommissionTable from './components/CommissionTable';
-import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
+import CommissionSummaryModal from './components/CommissionSummaryModal';
 import CommissionDetailsModal from './components/CommissionDetailsModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
@@ -41,22 +41,21 @@ const mapOrganization = (org) => ({
   commissionType: org.commission_type === 'transaction' ? 'Transaction' : 'Subscription',
   schools: org.schools_count,
   commission: org.commission,
-  commissionPercentage: `${org.commission ?? 0}%`,
   status: org.status,
+  earningsRaw: org.earnings,
   earnings: formatNaira(org.earnings),
 });
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { to: '/Organization', title: 'Organization' },
+  { to: '/Organization', title: 'Agent' },
   { title: 'Manage Commission' },
 ];
 
 const CommissionManagement = () => {
   const { user: currentUser } = useAuth();
   const [value, setValue] = useState('1');
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
 
@@ -112,6 +111,14 @@ const CommissionManagement = () => {
 
   // Volume is a count, not a currency figure — everything else here is a
   // real Naira amount pulled from the organization's own SkoolPay wallet.
+  //
+  // The 3rd card swaps meaning depending on whether this agent has any
+  // sub-agents under them (subOrgs.total, from getStats() — already scoped
+  // to this agent's own subtree): with sub-agents, "Total Commission" is
+  // the aggregate across the whole subtree; with none (a leaf agent),
+  // there's nothing to total, so it shows "My Commission" — their own
+  // figure — instead.
+  const isLeafAgent = (stats?.subOrgs?.total ?? 0) === 0;
   const summaryStats = [
     {
       title: 'Total Transaction Value',
@@ -123,8 +130,9 @@ const CommissionManagement = () => {
       value: (stats?.totalTransactionVolume ?? 0).toLocaleString(),
       icon: IconReceipt,
     },
-    { title: 'Total Commission', value: formatNaira(stats?.totalCommission), icon: IconCoins },
-    { title: 'My Commission', value: formatNaira(stats?.myCommission), icon: IconPigMoney },
+    isLeafAgent
+      ? { title: 'My Commission', value: formatNaira(stats?.myCommission), icon: IconPigMoney }
+      : { title: 'Total Commission', value: formatNaira(stats?.totalCommission), icon: IconCoins },
   ];
 
   const handleMyCommissionClick = (type) => {
@@ -148,18 +156,13 @@ const CommissionManagement = () => {
     setPage(0);
   };
 
-  const handleEditCommission = (Organization) => {
-    setSelectedOrganization(Organization);
-    setEditModalOpen(true);
+  const handleViewCommissions = (agent) => {
+    setSelectedOrganization(agent);
+    setSummaryModalOpen(true);
   };
 
-  const handleChangeType = (Organization) => {
-    setSelectedOrganization(Organization);
-    setTypeModalOpen(true);
-  };
-
-  const handleViewDetails = (Organization) => {
-    setSelectedOrganization(Organization);
+  const handleViewTransactions = (agent) => {
+    setSelectedOrganization(agent);
     setDetailsModalOpen(true);
   };
 
@@ -172,15 +175,15 @@ const CommissionManagement = () => {
   const getTitle = () => {
     switch (value) {
       case '1':
-        return 'Organization Overview';
+        return 'Agent Overview';
       case '2':
-        return 'Manage Organization Commission';
+        return 'Manage Agent Commission';
       case '3':
         return 'Commission by Subscription';
       case '4':
         return 'Commission by Transaction';
       default:
-        return 'Organization Overview';
+        return 'Agent Overview';
     }
   };
 
@@ -270,9 +273,9 @@ const CommissionManagement = () => {
               {(() => {
                 switch (value) {
                   case '1':
-                    return 'Organization Overview';
+                    return 'Agent Overview';
                   case '2':
-                    return 'Manage Organization Commission';
+                    return 'Manage Agent Commission';
                   case '3':
                     return 'Commission by Subscription';
                   case '4':
@@ -322,9 +325,8 @@ const CommissionManagement = () => {
                 <CommissionTable
                   data={paginatedData}
                   activeTab={value}
-                  onEditCommission={handleEditCommission}
-                  onChangeType={handleChangeType}
-                  onViewDetails={handleViewDetails}
+                  onViewCommissions={handleViewCommissions}
+                  onViewTransactions={handleViewTransactions}
                   rowsPerPage={rowsPerPage}
                 />
                 <TablePagination
@@ -343,17 +345,10 @@ const CommissionManagement = () => {
         </Box>
       </Box>
 
-      <SetCommissionModal
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+      <CommissionSummaryModal
+        open={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
         agent={selectedOrganization}
-        onSaved={fetchOrganizations}
-      />
-      <ChangeCommissionTypeModal
-        open={typeModalOpen}
-        onClose={() => setTypeModalOpen(false)}
-        agent={selectedOrganization}
-        onSaved={fetchOrganizations}
       />
       <CommissionDetailsModal
         open={detailsModalOpen}

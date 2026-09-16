@@ -25,7 +25,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { IconArrowLeft, IconDownload, IconDotsVertical, IconEye, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconDotsVertical, IconEye, IconX } from '@tabler/icons-react';
 import PageContainer from '../../../../../components/container/PageContainer';
 import Breadcrumb from '../../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useAuth from 'src/hooks/useAuth';
@@ -265,17 +265,6 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage }) => {
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                 {tableTitle}
               </Typography>
-              <Button variant="contained" size="small" startIcon={<IconDownload />}
-                sx={{
-                  bgcolor: '#3949ab',
-                  textTransform: 'none',
-                  borderRadius: '8px',
-                  width: { xs: '100%', sm: 'auto' },
-                  '&:hover': { bgcolor: '#303f9f' },
-                }}
-              >
-                Export
-              </Button>
             </Box>
 
             {/* Filter Section */}
@@ -467,11 +456,11 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage }) => {
       <CommissionListModal
         open={subOrgsOpen}
         onClose={() => setSubOrgsOpen(false)}
-        title="Sub Organizations"
+        title="Sub Agents"
         loading={subOrgsLoading}
         rows={subOrgsRows}
         columns={[
-          { key: 'organization_name', label: 'Organization' },
+          { key: 'organization_name', label: 'Agent' },
           { key: 'schools_count', label: 'Schools', align: 'right' },
           {
             key: 'commission',
@@ -491,7 +480,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage }) => {
         rows={schoolsRows}
         columns={[
           { key: 'tenant_name', label: 'School' },
-          { key: 'organization_name', label: 'Organization' },
+          { key: 'organization_name', label: 'Agent' },
           {
             key: 'school_type',
             label: 'Type',

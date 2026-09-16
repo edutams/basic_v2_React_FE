@@ -25,7 +25,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { IconArrowLeft, IconDotsVertical, IconEye, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconDotsVertical, IconEye, IconReceipt, IconX } from '@tabler/icons-react';
 import PageContainer from '../../../../../components/container/PageContainer';
 import Breadcrumb from '../../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useAuth from 'src/hooks/useAuth';
@@ -39,6 +39,7 @@ import {
 } from '@/api/landlord/commission/commissionApi';
 import MyCommissionStatCards from './MyCommissionStatCards';
 import CommissionListModal from './CommissionListModal';
+import SchoolTransactionsModal from './SchoolTransactionsModal';
 
 const BCrumb = [];
 
@@ -87,6 +88,9 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
   const [schoolsOpen, setSchoolsOpen] = useState(false);
   const [schoolsRows, setSchoolsRows] = useState([]);
   const [schoolsLoading, setSchoolsLoading] = useState(false);
+
+  const [schoolTxnOpen, setSchoolTxnOpen] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState(null);
 
   const fetchWallet = useCallback(async () => {
     if (!organizationId) return;
@@ -184,6 +188,11 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
     } finally {
       setSchoolsLoading(false);
     }
+  };
+
+  const handleViewSchoolTransactions = (school) => {
+    setSelectedSchool(school);
+    setSchoolTxnOpen(true);
   };
 
   const handleViewDetails = async () => {
@@ -499,6 +508,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
         title="Schools"
         loading={schoolsLoading}
         rows={schoolsRows}
+        maxWidth="lg"
         columns={[
           { key: 'tenant_name', label: 'School' },
           { key: 'organization_name', label: 'Agent' },
@@ -516,7 +526,53 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
             },
           },
           { key: 'status', label: 'Status' },
+          {
+            key: 'subscription_transaction_value',
+            label: 'Subscription Value',
+            align: 'right',
+            render: (row) => formatNaira(row.subscription_transaction_value),
+          },
+          {
+            key: 'subscription_transaction_volume',
+            label: 'Subscription Volume',
+            align: 'right',
+            render: (row) => row.subscription_transaction_volume ?? 0,
+          },
+          {
+            key: 'subscription_commission',
+            label: 'Subscription Commission',
+            align: 'right',
+            render: (row) => formatNaira(row.subscription_commission),
+          },
+          {
+            key: 'transaction_value',
+            label: 'Transaction Value',
+            align: 'right',
+            render: (row) => formatNaira(row.transaction_value),
+          },
+          {
+            key: 'transaction_volume',
+            label: 'Transaction Volume',
+            align: 'right',
+            render: (row) => row.transaction_volume ?? 0,
+          },
+          {
+            key: 'actions',
+            label: 'Actions',
+            align: 'right',
+            render: (row) => (
+              <IconButton size="small" onClick={() => handleViewSchoolTransactions(row)} title="View Transactions">
+                <IconReceipt size={18} />
+              </IconButton>
+            ),
+          },
         ]}
+      />
+
+      <SchoolTransactionsModal
+        open={schoolTxnOpen}
+        onClose={() => setSchoolTxnOpen(false)}
+        school={selectedSchool}
       />
     </PageContainer>
   );

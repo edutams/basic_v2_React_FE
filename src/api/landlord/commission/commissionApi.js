@@ -51,10 +51,20 @@ export const updateCommission = async (organizationId, commission) => {
 };
 
 // Every school across the given organization's own subtree (itself
-// included) — the same scope the "Total School" stat card counts.
+// included) — the same scope the "Total School" stat card counts. Each row
+// also carries subscription/transaction value+volume and subscription
+// commission for that specific school.
 export const getCommissionSchools = async ({ organizationId } = {}) => {
   const res = await api.get('/v1/landlord/commission/schools', {
     params: { organization_id: organizationId },
   });
+  return res.data;
+};
+
+// One school's own transactions — subscription transactions (full rows,
+// from our own DB) and its SkoolPay settlement batches. Powers "View
+// Transactions" on a row in the Schools list.
+export const getSchoolTransactions = async (tenantId) => {
+  const res = await api.get(`/v1/landlord/commission/schools/${tenantId}/transactions`);
   return res.data;
 };

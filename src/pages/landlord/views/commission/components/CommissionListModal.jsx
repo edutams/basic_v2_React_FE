@@ -22,12 +22,12 @@ import { IconX } from '@tabler/icons-react';
 
 // Generic read-only list modal shared by the "Total Sub Orgs" and "Total
 // School" stat cards — each just supplies its own columns/rows.
-const CommissionListModal = ({ open, onClose, title, columns, rows, loading }) => {
+const CommissionListModal = ({ open, onClose, title, columns, rows, loading, maxWidth = 'sm' }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5" fontWeight={700}>
           {title}

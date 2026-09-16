@@ -107,7 +107,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
       }
     } catch (err) {
       console.error('Failed to fetch role organizations:', err);
-      setError('Failed to load organizations. Please try again.');
+      setError('Failed to load agents. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -246,7 +246,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
                 <TableCell sx={{ width: '33%' }}>Team Name</TableCell>
-                <TableCell sx={{ width: '25%' }}>Organization</TableCell>
+                <TableCell sx={{ width: '25%' }}>Agent</TableCell>
                 <TableCell sx={{ width: '13%' }} align="center">
                   Status
                 </TableCell>
@@ -371,8 +371,8 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
                       }}
                     >
                       {search
-                        ? 'No organizations match your search.'
-                        : 'No organizations have this role yet.'}
+                        ? 'No agents match your search.'
+                        : 'No agents have this role yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>

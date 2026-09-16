@@ -123,7 +123,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Roles Table"
-        body="Each row shows a role, description, assigned organizations/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned organizations."
+        body="Each row shows a role, description, assigned agents/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned agents."
       />
     ),
   },
@@ -135,7 +135,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Permission Assignment"
-        body="Assign roles and permissions to organizations. Search for an organization, then use the columns to assign roles or direct permissions."
+        body="Assign roles and permissions to agents. Search for an agent, then use the columns to assign roles or direct permissions."
       />
     ),
   },
@@ -144,7 +144,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Search"
-        body="Search for an organization by name to quickly find the one you want to manage."
+        body="Search for an agent by name to quickly find the one you want to manage."
       />
     ),
   },
@@ -153,7 +153,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Assign Direct Permission"
-        body="Open the ⋮ (More) menu on any row and choose 'Assign Direct Permission'. Permissions are grouped by module — tick the ones to assign directly to the organization."
+        body="Open the ⋮ (More) menu on any row and choose 'Assign Direct Permission'. Permissions are grouped by module — tick the ones to assign directly to the agent."
       />
     ),
   },
@@ -162,7 +162,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="View Permission"
-        body="In the same ⋮ (More) menu, choose 'View Permission' to see all permissions attached to the organization. Check or uncheck permissions, then submit your changes."
+        body="In the same ⋮ (More) menu, choose 'View Permission' to see all permissions attached to the agent. Check or uncheck permissions, then submit your changes."
       />
     ),
   },
@@ -183,7 +183,7 @@ const analysisTourSteps = [
     content: (
       <StepContent
         title="Analysis Views"
-        body="Role Based shows each role with its total permissions and the organizations assigned to it. Permission Based shows each permission with the roles and organization teams that use it. Click the numbers to drill down."
+        body="Role Based shows each role with its total permissions and the agents assigned to it. Permission Based shows each permission with the roles and agent teams that use it. Click the numbers to drill down."
       />
     ),
   },
@@ -828,7 +828,7 @@ const AlcManager = () => {
                               </TableCell>
 
                               <TableCell>
-                                <Tooltip title="Click to view assigned organizations & users">
+                                <Tooltip title="Click to view assigned agents & users">
                                   <Typography
                                     variant="body2"
                                     onClick={() => handleOpenOrgsModal(row)}

@@ -172,7 +172,7 @@ export default function Dashboard() {
         ),
       }),
       columnHelper.accessor('agentDetails', {
-        header: () => 'Organization Details',
+        header: () => 'Agent Details',
         cell: (info) => {
           const agent = info.row.original;
           const initials = (agent.organizationName || 'NA')
@@ -221,7 +221,7 @@ export default function Dashboard() {
         },
       }),
       columnHelper.accessor('sub_agents_count', {
-        header: () => 'Sub Org.',
+        header: () => 'Sub Agents',
         cell: (info) => (
           <Box
             sx={{
@@ -370,7 +370,7 @@ export default function Dashboard() {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
-              title="Total Organization"
+              title="Total Agents"
               value={String(analytics?.totalSubAgents ?? 0)}
               colorIndex={2}
               loading={analyticsLoading}
@@ -941,7 +941,7 @@ export default function Dashboard() {
                     ) : table.getRowModel().rows.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                          No organizations found
+                          No agents found
                         </TableCell>
                       </TableRow>
                     ) : (

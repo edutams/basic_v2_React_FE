@@ -70,7 +70,7 @@ const AgentDashboard = () => {
               id: data.id,
               name: data.organization_name,
               handle: data.organization_email,
-              level: `Level ${data.access_level} Organization`,
+              level: `Level ${data.access_level} Agent`,
               status: data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'Inactive',
@@ -191,8 +191,8 @@ const AgentDashboard = () => {
 
   return (
     <PageContainer
-      title="Organization Dashboard"
-      description="Detailed organization dashboard view"
+      title="Agent Dashboard"
+      description="Detailed agent dashboard view"
     >
       <Breadcrumb title="Dashboard" items={BCrumb} />
 
@@ -279,7 +279,7 @@ const AgentDashboard = () => {
                     <Tab
                       icon={<IconUsers size={18} />}
                       iconPosition="start"
-                      label="Sub Organizations"
+                      label="Sub Agents"
                       value="2"
                     />
                     <Tab
@@ -314,7 +314,7 @@ const AgentDashboard = () => {
                       onClick={() => setIsAddAgentModalOpen(true)}
                       sx={{ textTransform: 'none', borderRadius: '8px' }}
                     >
-                      Add New Organization
+                      Add New Agent
                     </Button>
                   )}
 
@@ -388,7 +388,7 @@ const AgentDashboard = () => {
           </Box>
         ) : !isLoading ? (
           <Box p={3} textAlign="center">
-            <Typography variant="h6">Failed to load organization data.</Typography>
+            <Typography variant="h6">Failed to load agent data.</Typography>
           </Box>
         ) : null}
 

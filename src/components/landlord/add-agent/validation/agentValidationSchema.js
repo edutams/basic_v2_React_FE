@@ -4,9 +4,9 @@ export const createAgentValidationSchema = (canEditDomain = true, canSelectColor
   const schema = {
     organizationName: yup
       .string()
-      .min(2, 'Organization name must be at least 2 characters')
-      .max(100, 'Organization name must be less than 100 characters')
-      .required('Organization name is required'),
+      .min(2, 'Agent name must be at least 2 characters')
+      .max(100, 'Agent name must be less than 100 characters')
+      .required('Agent name is required'),
     contactDetails: yup
       .string()
       .email('Enter a valid email address')
@@ -36,7 +36,7 @@ export const createAgentValidationSchema = (canEditDomain = true, canSelectColor
   if (canEditDomain) {
     schema.organizationDomain = yup
       .string()
-      .required('Organization domain is required');
+      .required('Agent domain is required');
   }
 
   // Only add color validation if user can select color

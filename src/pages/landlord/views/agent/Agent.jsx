@@ -233,7 +233,7 @@ const ActionMenuCell = ({
           <ListItemIcon sx={{ color: 'error.main' }}>
             <DeleteIcon sx={{ fontSize: 18 }} />
           </ListItemIcon>
-          <ListItemText primary="Delete Organization" />
+          <ListItemText primary="Delete Agent" />
         </MenuItem>
         {/* <MenuItem
           onClick={() => {
@@ -750,18 +750,18 @@ const Agent = () => {
     try {
       const res = await agentApi.deleteOrganization(selectedAgent.id);
       if (res.status) {
-        notify.success('Organization deleted successfully!');
+        notify.success('Agent deleted successfully!');
         // Refresh the data
         setRefreshKey((prevData) => prevData + 1);
       } else {
-        notify.error(res.message || 'Failed to delete organization');
+        notify.error(res.message || 'Failed to delete agent');
       }
     } catch (e) {
       // Check if the error response contains a message from the backend
       if (e.response && e.response.data && e.response.data.message) {
         notify.error(e.response.data.message);
       } else {
-        notify.error('Failed to delete organization');
+        notify.error('Failed to delete agent');
       }
     } finally {
       setDeleteConfirmOpen(false);
@@ -849,8 +849,8 @@ const Agent = () => {
   };
 
   return (
-    <PageContainer title="Organization Page" description="This is the Organization page">
-      <Breadcrumb title="Organization" items={BCrumb} />
+    <PageContainer title="Agent Page" description="This is the Agent page">
+      <Breadcrumb title="Agent" items={BCrumb} />
 
       <Box
         sx={{
@@ -1198,7 +1198,7 @@ const Agent = () => {
             indicatorColor="primary"
           >
             <Tab
-              label="Organizations"
+              label="Agents"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
@@ -1238,7 +1238,7 @@ const Agent = () => {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Add New Organization
+                  Add New Agent
                 </Button>
                  <Button
                   variant="contained"
@@ -1283,10 +1283,10 @@ const Agent = () => {
                   <TableRow sx={{ bgcolor: '#f8f9fa' }}>
                     {[
                       'S/N',
-                      'Organization Details',
+                      'Agent Details',
                       'Admin Details',
                       'Access Level',
-                      'Sub Organization',
+                      'Sub Agents',
                       'Total School',
                       'Primary Color',
                       'Status',
@@ -1678,13 +1678,13 @@ const Agent = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle sx={{ fontWeight: 600 }}>Delete Organization</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{selectedAgent?.organizationName || 'this organization'}</strong>? This action
+              <strong>{selectedAgent?.organizationName || 'this agent'}</strong>? This action
               cannot be undone. This can only be done if no schools are attached to this
-              organization.
+              agent.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>

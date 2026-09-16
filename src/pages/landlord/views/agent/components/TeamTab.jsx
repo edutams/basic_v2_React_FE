@@ -390,28 +390,9 @@ const TeamTab = ({
     <Box>
       {/* Header */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          {/* <Box
-            sx={{
-              width: 24,
-              height: 24,
-              bgcolor: '#2ca87f',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <IconUsers size={16} />
-          </Box>
-          <Typography variant="h5">
-            {isViewingProfile ? 'Sub Organizations' : 'List of Organization'}
-          </Typography> */}
-        </Stack>
         {!isViewingProfile && !hideAddButton && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
-            Add New Organization
+            Add New Agent
           </Button>
         )}
       </Stack>
@@ -465,14 +446,17 @@ const TeamTab = ({
 
       {/* Table */}
       <TableContainer>
-        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+        <Table
+          stickyHeader
+          sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}
+        >
           <TableHead>
             <TableRow>
               <TableCell>
                 <Typography variant="h6">S/N</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Organization Details</Typography>
+                <Typography variant="h6">Agent Details</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Admin Details</Typography>
@@ -481,7 +465,7 @@ const TeamTab = ({
                 <Typography variant="h6">Access Level</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Sub Org.</Typography>
+                <Typography variant="h6">Sub Agents</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Total School</Typography>
@@ -519,11 +503,11 @@ const TeamTab = ({
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                    .split(' ')
-                    .slice(0, 2)
-                    .map((w) => w[0])
-                    .join('')
-                    .toUpperCase()
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -733,7 +717,7 @@ const TeamTab = ({
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                   <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                    No organizations found
+                    No agents found
                   </Alert>
                 </TableCell>
               </TableRow>
@@ -761,7 +745,7 @@ const TeamTab = ({
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => { }}
+        handleRefresh={() => {}}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />
@@ -776,7 +760,9 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCancelDelete}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCancelDelete}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleConfirmDelete} color="error">
             Delete
           </Button>

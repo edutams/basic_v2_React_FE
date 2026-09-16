@@ -321,7 +321,7 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
                   <TableCell
                     sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
                   >
-                    Organization
+                    Agent
                   </TableCell>
                 )}
                 <TableCell

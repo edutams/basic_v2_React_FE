@@ -106,7 +106,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
     <StandardModal
       open={open}
       onClose={onClose}
-      title="Total Organizations"
+      title="Total Agents"
       maxWidth="md"
       padding={3}
       dividers={false}
@@ -116,7 +116,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
         <TextField
           size="small"
-          placeholder="Search by organization name or code"
+          placeholder="Search by agent name or code"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -150,7 +150,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Organization Details</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Agent Details</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">
                 Access Level
               </TableCell>
@@ -231,7 +231,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                   <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                    {search ? 'No organizations match your search.' : 'No organizations found.'}
+                    {search ? 'No agents match your search.' : 'No agents found.'}
                   </Alert>
                 </TableCell>
               </TableRow>

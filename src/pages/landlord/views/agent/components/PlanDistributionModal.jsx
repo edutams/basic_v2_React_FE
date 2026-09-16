@@ -192,7 +192,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
     <StandardModal
       open={open}
       onClose={onClose}
-      title={plan ? `${plan.label} — Organizations` : 'Organizations'}
+      title={plan ? `${plan.label} — Agents` : 'Agents'}
       maxWidth="sm"
       padding={1.5}
       dividers={false}
@@ -204,7 +204,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Organization</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Agent</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Status</TableCell>
             </TableRow>
@@ -234,7 +234,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3, color: theme.palette.text.secondary }}>
-                  No organizations on this plan.
+                  No agents on this plan.
                 </TableCell>
               </TableRow>
             )}
@@ -262,7 +262,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
     colors: schemeMap.map((s) => s.color),
     xaxis: {
       categories: planDistribution.map((p) => p.label),
-      title: { text: 'Organizations', style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' } },
+      title: { text: 'Agents', style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' } },
       labels: { style: { colors: isDark ? '#aaa' : '#333' } },
     },
     yaxis: {
@@ -273,7 +273,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
     tooltip: { theme: isDark ? 'dark' : 'light' },
   };
 
-  const chartSeries = [{ name: 'Organizations', data: planDistribution.map((p) => p.total) }];
+  const chartSeries = [{ name: 'Agents', data: planDistribution.map((p) => p.total) }];
 
   // Fixed viewport for the side panel — it scrolls internally past this
   // instead of growing the modal without bound when there are many plans
@@ -316,7 +316,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           {planDistribution.length > 0 ? (
-            <TopCard label="Total Organizations" value={totalOrganizations} colorIndex={1} icon={IconBuildingBank} />
+            <TopCard label="Total Agents" value={totalOrganizations} colorIndex={1} icon={IconBuildingBank} />
           ) : (
             <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
               <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
@@ -369,7 +369,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
               fontWeight={700}
               sx={{ mb: 1.5, color: isDark ? '#fff' : '#1a1a1a', flexShrink: 0 }}
             >
-              Plan per Organization
+              Plan per Agent
             </Typography>
 
             {/* Scrolls on its own — the title above stays pinned in view

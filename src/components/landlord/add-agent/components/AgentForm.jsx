@@ -48,8 +48,8 @@ const AgentForm = ({
             {loading
               ? 'Saving...'
               : actionType === 'update'
-                ? 'Update Organization'
-                : 'Create Organization'}
+                ? 'Update Agent'
+                : 'Create Agent'}
           </Button>
         )}
       </Box>

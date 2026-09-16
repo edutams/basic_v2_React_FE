@@ -268,7 +268,7 @@ const StatCards = ({
           <StatCardSkeleton colorIndex={1} subStatCount={accessLevel === 1 ? 4 : accessLevel === 2 ? 3 : accessLevel === 3 ? 2 : accessLevel === 4 ? 1 : 4} titleWidth="85%" valueWidth={60} />
         ) : (
           <StatCard
-            title="Total Sub Organizations"
+            title="Total Sub Agents"
             value={stats.totalSubAgents}
             colorIndex={1}
             subStats={getSubAgentLevels()}

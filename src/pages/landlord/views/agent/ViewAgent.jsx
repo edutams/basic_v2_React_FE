@@ -128,7 +128,7 @@ const ViewAgent = () => {
               id: data.id,
               name: data.organization_name,
               handle: data.organization_email,
-              level: `Level ${data.access_level} Organization`,
+              level: `Level ${data.access_level} Agent`,
               status: data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'Inactive',
@@ -252,14 +252,14 @@ const ViewAgent = () => {
   );
   const BCrumb = [
     { to: '/dashboard', title: 'Home' },
-    { to: '/organization', title: 'Organization' },
+    { to: '/organization', title: 'Agent' },
     { title: 'View Profile' },
   ];
 
   return (
     <PageContainer
-      title="View Organization Profile"
-      description="Detailed organization profile view"
+      title="View Agent Profile"
+      description="Detailed agent profile view"
     >
       <Breadcrumb title="View Profile" items={BCrumb} />
 
@@ -338,7 +338,7 @@ const ViewAgent = () => {
                   <Tab
                     icon={<IconUsers size={18} />}
                     iconPosition="start"
-                    label="Sub Organizations"
+                    label="Sub Agents"
                     value="2"
                   />
 
@@ -467,7 +467,7 @@ const ViewAgent = () => {
         </Box>
       ) : !isLoading ? (
         <Box p={3} textAlign="center">
-          <Typography variant="h6">Failed to load organization data.</Typography>
+          <Typography variant="h6">Failed to load agent data.</Typography>
         </Box>
       ) : null}
 

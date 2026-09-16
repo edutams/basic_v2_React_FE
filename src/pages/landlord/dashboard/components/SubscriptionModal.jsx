@@ -9,7 +9,7 @@ import agentApi from '@/api/landlord/organizations/agent';
 import SubscriptionSchoolsModal from './SubscriptionSchoolsModal';
 
 const tooltipTexts = {
-  totalOrgs: 'Total number of organizations (agents) registered under this account.',
+  totalOrgs: 'Total number of agents registered under this account.',
   active: 'Schools with an active, paid subscription that is currently in use.',
   secondary: 'Subscription requests from secondary school types.',
   primary: 'Subscription requests from primary school types.',
@@ -58,7 +58,7 @@ const SubscriptionModal = ({ open, onClose }) => {
 
   const statCards = [
     {
-      label: 'Total Organizations',
+      label: 'Total Agents',
       count: totalOrgs,
       icon: IconBuildingBank,
       colorIndex: 0,

@@ -179,7 +179,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AgentsIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="span">
-            Organization with this Permission
+            Agents with this Permission
           </Typography>
           {totalRows > 0 && !loading && (
             <Chip
@@ -238,8 +238,8 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '33%' }}>Organization Name</TableCell>
-                <TableCell sx={{ width: '22%' }}>Organization</TableCell>
+                <TableCell sx={{ width: '33%' }}>Agent Name</TableCell>
+                <TableCell sx={{ width: '22%' }}>Agent</TableCell>
                 <TableCell sx={{ width: '18%' }}>Email</TableCell>
                 <TableCell sx={{ width: '12%' }} align="center">
                   Status

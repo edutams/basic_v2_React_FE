@@ -1296,7 +1296,7 @@ const SchoolDashboard = () => {
                       <TableCell sx={thSx}>#</TableCell>
                       <TableCell sx={thSx}>School</TableCell>
                       <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                      <TableCell sx={thSx}>Organisation</TableCell>
+                      <TableCell sx={thSx}>Agent</TableCell>
                       <TableCell sx={thSx}>Submitted</TableCell>
                       <TableCell sx={thSx}>Approved By</TableCell>
                       <TableCell sx={thSx}>Status</TableCell>
@@ -1356,7 +1356,7 @@ const SchoolDashboard = () => {
                     <TableCell sx={thSx}>#</TableCell>
                     <TableCell sx={thSx}>School</TableCell>
                     <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                    <TableCell sx={thSx}>Organisation</TableCell>
+                    <TableCell sx={thSx}>Agent</TableCell>
                     <TableCell sx={thSx}>Submitted</TableCell>
                     <TableCell sx={thSx}>Approved By</TableCell>
                     <TableCell sx={thSx}>Status</TableCell>
@@ -1423,7 +1423,7 @@ const SchoolDashboard = () => {
                       <TableCell sx={thSx}>#</TableCell>
                       <TableCell sx={thSx}>School</TableCell>
                       <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                      <TableCell sx={thSx}>Organisation</TableCell>
+                      <TableCell sx={thSx}>Agent</TableCell>
                       <TableCell sx={thSx}>Approved By</TableCell>
                       <TableCell sx={thSx}>Status</TableCell>
                       <TableCell sx={thSx} align="right">

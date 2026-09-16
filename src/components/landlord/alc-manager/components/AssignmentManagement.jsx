@@ -589,7 +589,7 @@ const AssignmentManagement = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
             <Typography variant="h5" data-tour="acl-assign-heading">
-              Assign Roles/Permission to Organizations
+              Assign Roles/Permission to Agents
             </Typography>
             <ShowTourGuideButton />
           </Box>
@@ -649,11 +649,11 @@ const AssignmentManagement = () => {
           {currentUserLevel === 1 && (
             <Grid size={{ xs: 12, md: 2.5 }}>
               <FormControl fullWidth size="small">
-                <InputLabel id="level-filter-label">Organization Level</InputLabel>
+                <InputLabel id="level-filter-label">Agent Level</InputLabel>
                 <Select
                   labelId="level-filter-label"
                   value={levelFilter}
-                  label="Organization Level"
+                  label="Agent Level"
                   onChange={(e) => setLevelFilter(e.target.value)}
                 >
                   <SelectMenuItem value="">All Levels</SelectMenuItem>
@@ -718,7 +718,7 @@ const AssignmentManagement = () => {
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>User Details</TableCell>
-                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Organization</TableCell>
+                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Agent</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '10%' }}>Status</TableCell>
                   <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>

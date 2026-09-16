@@ -185,7 +185,7 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
           </Box>
         </Box>
       ) : (
-        <Alert severity="info">No bank account has been set up for this organization yet.</Alert>
+        <Alert severity="info">No bank account has been set up for this agent yet.</Alert>
       )}
 
       <ReusableModal

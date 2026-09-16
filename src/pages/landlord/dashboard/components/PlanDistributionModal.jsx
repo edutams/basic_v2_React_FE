@@ -95,7 +95,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
       size="medium"
       title={
         <Typography fontSize={20} fontWeight={700} sx={{ color: theme.palette.text.secondary }}>
-          {plan ? `${plan.label} — Organizations` : 'Organizations'}
+          {plan ? `${plan.label} — Agents` : 'Agents'}
         </Typography>
       }
     >
@@ -104,7 +104,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Organization</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Agent</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Status</TableCell>
             </TableRow>
@@ -134,7 +134,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3, color: theme.palette.text.secondary }}>
-                  No schools/organizations on this plan.
+                  No schools/agents on this plan.
                 </TableCell>
               </TableRow>
             )}
@@ -202,7 +202,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
     },
     yaxis: {
       title: {
-        text: 'NO of Organizations',
+        text: 'NO of Agents',
         style: {
           fontWeight: 700,
           fontSize: '12px',
@@ -235,7 +235,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
   };
 
   const chartSeries = [
-    { name: 'Organizations', data: plans.map((p) => p.schoolCount ?? 0) },
+    { name: 'Agents', data: plans.map((p) => p.schoolCount ?? 0) },
   ];
 
   return (
@@ -279,7 +279,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             {plans.length > 0 ? (
-              <TopCard label="Total Organizations" value={totalOrgs.toLocaleString()} colorIndex={1} isDark={isDark} />
+              <TopCard label="Total Agents" value={totalOrgs.toLocaleString()} colorIndex={1} isDark={isDark} />
             ) : (
               <Card sx={{ p: '14px', borderRadius: '14px', bgcolor: '#ffffff', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
@@ -320,7 +320,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
                     fontWeight="700"
                     sx={{ color: isDark ? '#fff' : '#1E3A5F', mb: 2, fontSize: '15px' }}
                   >
-                    Plan per Organization
+                    Plan per Agent
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
@@ -376,7 +376,7 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
                             </Stack>
                             <Stack direction="row" alignItems="center" spacing={0.5}>
                               <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#888' }}>
-                                Orgs
+                                Agents
                               </Typography>
                               <Box
                                 sx={{

@@ -387,7 +387,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         {prospect.status === 'pending' && !can('landlord.school.approval') && (
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            Only Level 1 organizations can approve or reject applications
+            Only Level 1 agents can approve or reject applications
           </Typography>
         )}
         <Button

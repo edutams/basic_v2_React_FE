@@ -23,10 +23,11 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CommissionTable from './components/CommissionTable';
 import CommissionSummaryModal from './components/CommissionSummaryModal';
 import CommissionDetailsModal from './components/CommissionDetailsModal';
+import SchoolsListModal from './components/SchoolsListModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
 import StatCard from 'src/components/shared/StatCard';
-import { getStats, getOrganizations } from '@/api/landlord/commission/commissionApi';
+import { getStats, getOrganizations, getCommissionSchools } from '@/api/landlord/commission/commissionApi';
 
 const formatNaira = (value) =>
   `₦ ${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -58,6 +59,11 @@ const CommissionManagement = () => {
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+
+  const [schoolsModalOpen, setSchoolsModalOpen] = useState(false);
+  const [schoolsModalRows, setSchoolsModalRows] = useState([]);
+  const [schoolsModalLoading, setSchoolsModalLoading] = useState(false);
+  const [schoolsModalTitle, setSchoolsModalTitle] = useState('Schools');
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -164,6 +170,24 @@ const CommissionManagement = () => {
   const handleViewTransactions = (agent) => {
     setSelectedOrganization(agent);
     setDetailsModalOpen(true);
+  };
+
+  // Scopes the same Schools drill-down used by "Total School" on the
+  // wallet-view pages to just this one agent's own subtree — clicking the
+  // "Schools" number on a row.
+  const handleViewSchools = async (agent) => {
+    setSchoolsModalTitle(`${agent.agentName || 'Agent'}'s Schools`);
+    setSchoolsModalOpen(true);
+    setSchoolsModalLoading(true);
+    try {
+      const res = await getCommissionSchools({ organizationId: agent.id });
+      setSchoolsModalRows(res?.status ? res.data || [] : []);
+    } catch (error) {
+      console.error('Failed to fetch agent schools', error);
+      setSchoolsModalRows([]);
+    } finally {
+      setSchoolsModalLoading(false);
+    }
   };
 
   const getFilteredData = () => {
@@ -320,6 +344,7 @@ const CommissionManagement = () => {
                   activeTab={value}
                   onViewCommissions={handleViewCommissions}
                   onViewTransactions={handleViewTransactions}
+                  onViewSchools={handleViewSchools}
                   rowsPerPage={rowsPerPage}
                 />
                 <TablePagination
@@ -347,6 +372,13 @@ const CommissionManagement = () => {
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         agent={selectedOrganization}
+      />
+      <SchoolsListModal
+        open={schoolsModalOpen}
+        onClose={() => setSchoolsModalOpen(false)}
+        title={schoolsModalTitle}
+        rows={schoolsModalRows}
+        loading={schoolsModalLoading}
       />
     </PageContainer>
   );

@@ -17,6 +17,7 @@ import {
   Skeleton,
   Alert,
   Box,
+  TablePagination,
   useTheme,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
@@ -47,6 +48,11 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
   const [subscriptionTransactions, setSubscriptionTransactions] = useState([]);
   const [settlements, setSettlements] = useState([]);
 
+  const [subPage, setSubPage] = useState(0);
+  const [subRowsPerPage, setSubRowsPerPage] = useState(5);
+  const [settlementPage, setSettlementPage] = useState(0);
+  const [settlementRowsPerPage, setSettlementRowsPerPage] = useState(5);
+
   const fetchData = useCallback(async () => {
     if (!school?.id) return;
     setLoading(true);
@@ -67,8 +73,21 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
   }, [school?.id]);
 
   useEffect(() => {
-    if (open) fetchData();
+    if (open) {
+      setSubPage(0);
+      setSettlementPage(0);
+      fetchData();
+    }
   }, [open, fetchData]);
+
+  const pagedSubscriptionTransactions = subscriptionTransactions.slice(
+    subPage * subRowsPerPage,
+    subPage * subRowsPerPage + subRowsPerPage,
+  );
+  const pagedSettlements = settlements.slice(
+    settlementPage * settlementRowsPerPage,
+    settlementPage * settlementRowsPerPage + settlementRowsPerPage,
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
@@ -122,7 +141,7 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                subscriptionTransactions.map((row, index) => (
+                pagedSubscriptionTransactions.map((row, index) => (
                   <TableRow key={row.trans_id ?? index} hover>
                     <TableCell>{row.trans_id ?? '—'}</TableCell>
                     <TableCell>{formatNaira(row.amount)}</TableCell>
@@ -134,6 +153,21 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
             </TableBody>
           </Table>
         </TableContainer>
+        {!loading && subscriptionTransactions.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            count={subscriptionTransactions.length}
+            rowsPerPage={subRowsPerPage}
+            page={subPage}
+            onPageChange={(event, newPage) => setSubPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              setSubRowsPerPage(parseInt(event.target.value, 10));
+              setSubPage(0);
+            }}
+            component="Box"
+            sx={{ mb: 3 }}
+          />
+        )}
 
         <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
           Settlements (fee payments, via SkoolPay)
@@ -168,7 +202,7 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                settlements.map((row, index) => (
+                pagedSettlements.map((row, index) => (
                   <TableRow key={row.id ?? index} hover>
                     <TableCell>{row.id ?? '—'}</TableCell>
                     <TableCell>{row.transactions ?? '—'}</TableCell>
@@ -180,6 +214,20 @@ const SchoolTransactionsModal = ({ open, onClose, school }) => {
             </TableBody>
           </Table>
         </TableContainer>
+        {!loading && settlements.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            count={settlements.length}
+            rowsPerPage={settlementRowsPerPage}
+            page={settlementPage}
+            onPageChange={(event, newPage) => setSettlementPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              setSettlementRowsPerPage(parseInt(event.target.value, 10));
+              setSettlementPage(0);
+            }}
+            component="Box"
+          />
+        )}
       </DialogContent>
 
       <DialogActions>

@@ -33,7 +33,7 @@ const dummyCaType = [
 
 const dummySettings = { exam_max_score: 60 };
 
-const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
+const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [students, setStudents] = useState([]);
@@ -44,7 +44,20 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
 
   useEffect(() => {
     if (open) {
-      const initialized = dummyStudents.map((s) => ({
+      let sourceStudents;
+      if (singleStudent) {
+        sourceStudents = [{
+          id: singleStudent.id,
+          fullname: `${singleStudent.fname} ${singleStudent.lname}`,
+          reg_id: singleStudent.user_id,
+          ca_details: null,
+          examScores: '',
+          loading: false,
+        }];
+      } else {
+        sourceStudents = dummyStudents;
+      }
+      const initialized = sourceStudents.map((s) => ({
         ...s,
         ca_details: JSON.parse(JSON.stringify(caType)),
         examScores: '',
@@ -54,7 +67,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
       setCaScoreErrors(initialized.map(() => new Array(caType.length).fill(false)));
       setExamScoreErrors(new Array(initialized.length).fill(false));
     }
-  }, [open]);
+  }, [open, singleStudent]);
 
   const getColspan = (ca) => Object.keys(ca.entities).length;
 
@@ -133,7 +146,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
       <DialogTitle>
-        Input Score — {allocation?.subject_name} ({allocation?.className})
+        {singleStudent
+          ? `Edit Score — ${singleStudent.fname} ${singleStudent.lname}`
+          : `Input Score — ${allocation?.subject_name} (${allocation?.className})`
+        }
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
@@ -219,9 +235,11 @@ const InputScoreDialog = ({ open, onClose, allocation, filter }) => {
         </TableContainer>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button variant="contained" size="small" color="success" startIcon={<IconDeviceFloppy size={16} />} onClick={handleSaveAll}>
-          Save All
-        </Button>
+        {!singleStudent && (
+          <Button variant="contained" size="small" color="success" startIcon={<IconDeviceFloppy size={16} />} onClick={handleSaveAll}>
+            Save All
+          </Button>
+        )}
         <Button onClick={handleClose}>Close</Button>
       </DialogActions>
     </Dialog>

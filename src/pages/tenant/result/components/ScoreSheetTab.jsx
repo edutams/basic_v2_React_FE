@@ -3,13 +3,15 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, useTheme,
   IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip, Stack, alpha,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
   IconClipboardCheck, IconPrinter, IconChartBar, IconEye, IconEdit, IconSend,
-  IconUsers, IconTrophy, IconArrowUp, IconArrowDown,
+  IconUsers, IconTrophy, IconArrowUp, IconArrowDown, IconCloudUpload, IconTrash,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import StatCard from '@/components/shared/StatCard';
+import InputScoreDialog from './InputScoreDialog';
 
 const dummyClasses = [
   { id: 1, name: 'JSS 1A' }, { id: 2, name: 'JSS 2A' }, { id: 3, name: 'SS 1A' }, { id: 4, name: 'SS 2A' },
@@ -106,6 +108,8 @@ const ScoreSheetTab = () => {
   const [selectedTerm, setSelectedTerm] = useState(1);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
+  const [inputScoreDialog, setInputScoreDialog] = useState({ open: false, allocation: null, singleStudent: null });
+  const [purgeDialog, setPurgeDialog] = useState({ open: false, allocation: null });
 
   const showTable = selectedClass && selectedSubject && selectedSession && selectedTerm;
   const submissionStatus = showTable ? dummyResults[0]?.teacher_submit : null;
@@ -143,19 +147,30 @@ const ScoreSheetTab = () => {
       {/* ── Card Header ─────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>
-          {showTable
+          {/* {showTable
             ? `Score Sheet — ${dummyClasses.find(c => c.id === selectedClass)?.name} • ${dummySubjects.find(s => s.id === selectedSubject)?.name} • ${dummySessions.find(s => s.id === selectedSession)?.label} - ${dummyTerms.find(t => t.id === selectedTerm)?.label}`
-            : 'View Score Sheet'}
+            : 'View Score Sheet'} */}
         </Typography>
         {showTable && (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Button variant="contained" size="small" color="info" startIcon={<IconCloudUpload size={16} />}
+              onClick={() => setInputScoreDialog({ open: true, allocation: null, singleStudent: null })}>
+              Upload Scores
+            </Button>
+            <Button variant="contained" size="small" color="primary" startIcon={<IconEdit size={16} />}
+              onClick={() => setInputScoreDialog({ open: true, allocation: null, singleStudent: null })}>
+              Edit Scores
+            </Button>
+            <Button variant="contained" size="small" color="error" startIcon={<IconTrash size={16} />}
+              onClick={() => setPurgeDialog({ open: true, allocation: null })}>
+              Purge Scores
+            </Button>
             <Button variant="contained" size="small" color="info" startIcon={<IconPrinter size={16} />}>
               Print Score Sheet
             </Button>
-            <Box sx={{ width: '1px', height: 24, bgcolor: 'divider' }} />
             <Button variant="contained" size="small" color="success" startIcon={<IconChartBar size={16} />}
               onClick={() => window.open('/result-analytics', '_blank', 'noopener,noreferrer')}>
-              View Performance Analytics
+              View Analytics
             </Button>
           </Box>
         )}
@@ -387,6 +402,10 @@ const ScoreSheetTab = () => {
 
       {/* ── Row Action Menu ─────────────────────────────────── */}
       <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={() => { setActionMenuAnchor(null); setActionMenuRow(null); }}>
+        <MenuItem onClick={() => { setActionMenuAnchor(null); setInputScoreDialog({ open: true, allocation: null, singleStudent: actionMenuRow }); }}>
+          <ListItemIcon><IconEdit size={18} /></ListItemIcon>
+          <ListItemText>Edit Score</ListItemText>
+        </MenuItem>
         <MenuItem onClick={() => viewCAReport(actionMenuRow)}>
           <ListItemIcon><IconEye size={18} /></ListItemIcon>
           <ListItemText>View CA Report</ListItemText>
@@ -395,13 +414,31 @@ const ScoreSheetTab = () => {
           <ListItemIcon><IconEye size={18} /></ListItemIcon>
           <ListItemText>View Result</ListItemText>
         </MenuItem>
-        {actionMenuRow?.teacher_submit === 'no' && (
-          <MenuItem onClick={() => setActionMenuAnchor(null)}>
-            <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-            <ListItemText>Edit Score</ListItemText>
-          </MenuItem>
-        )}
       </Menu>
+
+      {/* ── Input Score Dialog ─────────────────────────────── */}
+      <InputScoreDialog
+        open={inputScoreDialog.open}
+        onClose={() => setInputScoreDialog({ open: false, allocation: null, singleStudent: null })}
+        allocation={inputScoreDialog.allocation}
+        singleStudent={inputScoreDialog.singleStudent}
+      />
+
+      {/* ── Purge Confirmation Dialog ──────────────────────── */}
+      <Dialog open={purgeDialog.open} onClose={() => setPurgeDialog({ open: false, allocation: null })} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>Purge Scores</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to purge all scores for this class and subject? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPurgeDialog({ open: false, allocation: null })}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={() => { setPurgeDialog({ open: false, allocation: null }); }}>
+            Purge All Scores
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
     </>
   );

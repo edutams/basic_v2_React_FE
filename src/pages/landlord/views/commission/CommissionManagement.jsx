@@ -247,13 +247,6 @@ const CommissionManagement = () => {
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
             />
-            <Tab
-              label="My Plan"
-              value="5"
-              icon={<IconLayoutDashboard size={18} />}
-              iconPosition="start"
-              sx={{ display: currentUser?.access_level === 1 ? 'none' : 'block' }}
-            />
           </Tabs>
         </Box>
 

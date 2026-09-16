@@ -6,6 +6,7 @@ const MyCommissionByTransaction = () => (
     pageTitle="My Commission by Transaction"
     tableTitle="Transaction Commission Details"
     emptyMessage="No transaction commission transactions yet."
+    commissionType="transaction"
   />
 );
 

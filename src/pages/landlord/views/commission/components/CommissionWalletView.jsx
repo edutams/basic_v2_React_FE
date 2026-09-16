@@ -49,7 +49,7 @@ const formatNaira = (value) =>
 // Transaction" — both read the exact same wallet/stats/transaction data
 // (the organization's own SkoolPay wallet), the only difference is the
 // page's own copy/labels.
-const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage }) => {
+const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionType }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -229,10 +229,31 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage }) => {
       <Box mt={1.5}>
         {/* Stat cards — wallet balance, inflow/outflow, sub-orgs, schools
             by type. Purely informational, no withdraw action here — this
-            page is a read-only statement of commission activity. */}
+            page is a read-only statement of commission activity.
+
+            The wallet card's headline figure is the type-specific earnings
+            SkoolPay itself computed (subscriptionEarning/transactionEarning
+            — see CommissionController::fetchInterestPartyEarnings()), not
+            the wallet's current spendable balance, which mixes both types
+            together and doesn't answer "how much did I earn via
+            subscription/transaction specifically" — the whole point of
+            these two dedicated pages. Falls back to the generic
+            myCommission (balance) figure when no commissionType is passed
+            (shouldn't happen from either real caller, but keeps this
+            component safe to reuse without one). */}
         <MyCommissionStatCards
           organizationName={currentUser?.organization?.organization_name}
-          wallet={wallet}
+          wallet={
+            commissionType
+              ? {
+                  ...wallet,
+                  myCommission:
+                    commissionType === 'transaction'
+                      ? wallet?.transactionEarning
+                      : wallet?.subscriptionEarning,
+                }
+              : wallet
+          }
           subOrgs={wallet?.subOrgs}
           schools={wallet?.schools}
           loading={walletLoading}

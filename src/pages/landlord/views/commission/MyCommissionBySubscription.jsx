@@ -6,6 +6,7 @@ const MyCommissionBySubscription = () => (
     pageTitle="My Commission by Subscription"
     tableTitle="Subscription Commission Details"
     emptyMessage="No subscription commission transactions yet."
+    commissionType="subscription"
   />
 );
 

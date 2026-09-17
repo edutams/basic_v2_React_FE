@@ -6,30 +6,7 @@ import {
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
-
-const mockSubjectSearchResults = {
-  compulsory: [
-    { id: 1, subject_code: 'MTH', subject_name: 'Mathematics' },
-    { id: 2, subject_code: 'ENG', subject_name: 'English Language' },
-    { id: 3, subject_code: 'SCI', subject_name: 'Basic Science' },
-    { id: 4, subject_code: 'SOC', subject_name: 'Social Studies' },
-    { id: 5, subject_code: 'CIV', subject_name: 'Civic Education' },
-  ],
-  elective: [
-    { id: 6, subject_code: 'PHY', subject_name: 'Physics' },
-    { id: 7, subject_code: 'CHM', subject_name: 'Chemistry' },
-    { id: 8, subject_code: 'BIO', subject_name: 'Biology' },
-    { id: 9, subject_code: 'ECO', subject_name: 'Economics' },
-    { id: 10, subject_code: 'LIT', subject_name: 'Literature' },
-  ],
-  trade: [
-    { id: 11, subject_code: 'WLD', subject_name: 'Welding' },
-    { id: 12, subject_code: 'ELC', subject_name: 'Electrical Installation' },
-    { id: 13, subject_code: 'COS', subject_name: 'Cosmetology' },
-    { id: 14, subject_code: 'ATM', subject_name: 'Automobile Mechanics' },
-    { id: 15, subject_code: 'ICT', subject_name: 'Information Technology' },
-  ],
-};
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 
 const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionId }) => {
   const theme = useTheme();
@@ -40,20 +17,67 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
   const [passMark, setPassMark] = useState('');
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [allSubjects, setAllSubjects] = useState([]);
+  const [subjectSearch, setSubjectSearch] = useState('');
 
+  // ── Fetch existing settings and available subjects when dialog opens ──
   useEffect(() => {
-    if (open) {
+    if (!open || !progId || !sessionId) return;
+
+    let cancelled = false;
+
+    const loadData = async () => {
       setLoading(true);
-      const timer = setTimeout(() => {
-        setAllSubjects(mockSubjectSearchResults[subjType] || []);
-        setTotalSubj('');
-        setPassMark('');
-        setSelectedSubjects([]);
-        setLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [open, subjType, progId, sessionId]);
+      setTotalSubj('');
+      setPassMark('');
+      setSelectedSubjects([]);
+      setAllSubjects([]);
+
+      try {
+        // Fetch existing promotion settings for this subject type
+        const settingsRes = await resultSetupApi.getPromotionBySubjectSettings({
+          prog_id: progId,
+          session_id: sessionId,
+          subj_type: subjType,
+        });
+
+        if (cancelled) return;
+
+        const settings = settingsRes?.data?.data;
+        if (settings) {
+          setTotalSubj(settings.total_subj?.toString() || '');
+          setPassMark(settings.pass_mark?.toString() || '');
+          if (settings.subjects && Array.isArray(settings.subjects)) {
+            setSelectedSubjects(settings.subjects);
+          }
+        }
+
+        // Fetch available subjects for this programme
+        const subjectsRes = await resultSetupApi.searchSubjects({
+          prog_id: progId,
+        });
+
+        if (cancelled) return;
+
+        const subjects = subjectsRes?.data?.data ?? [];
+        setAllSubjects(subjects);
+      } catch (err) {
+        console.error('Failed to load promotion data:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadData();
+
+    return () => { cancelled = true; };
+  }, [open, progId, sessionId, subjType]);
+
+  // ── Filter subjects based on search input ──────────────────────
+  const filteredSubjects = subjectSearch
+    ? allSubjects.filter((s) =>
+        s.subject_name?.toLowerCase().includes(subjectSearch.toLowerCase()) ||
+        s.subject_code?.toLowerCase().includes(subjectSearch.toLowerCase())
+      )
+    : allSubjects;
 
   const handleSave = () => {
     if (!totalSubj || !passMark) return;
@@ -97,12 +121,13 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
             {/* Subject Autocomplete with Chips */}
             <Autocomplete
               multiple
-              options={allSubjects}
-              getOptionLabel={(s) => `${s.subject_code} - ${s.subject_name}`}
+              options={filteredSubjects}
+              getOptionLabel={(s) => s.subject_code ? `${s.subject_code} - ${s.subject_name}` : s.subject_name}
               value={selectedSubjects}
               onChange={(_, selected) => setSelectedSubjects(selected)}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               noOptionsText="No subjects found"
+              onInputChange={(_, value) => setSubjectSearch(value)}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -127,7 +152,8 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
                   <Typography variant="body2">
-                    <strong>{option.subject_code}</strong> — {option.subject_name}
+                    {option.subject_name}-
+                    {option.subject_code && <strong>{option.subject_code}  </strong>}
                   </Typography>
                 </li>
               )}
@@ -135,23 +161,23 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
 
             {/* Selected Subjects Table */}
             {selectedSubjects.length > 0 && (
-              <TableContainer sx={{ mt: 2 }}>
-                <Table size="small">
+              <TableContainer sx={{ mt: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                <Table size="small" sx={{ '& .MuiTableCell-root': { borderRight: '1px solid', borderColor: 'divider' } }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, width: '5%', borderBottom: 'none' }}>#</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '15%', borderBottom: 'none' }}>Code</TableCell>
-                      <TableCell sx={{ fontWeight: 700, borderBottom: 'none' }}>Subject</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '10%', borderBottom: 'none' }}>Action</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '5%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '15%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Code</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Subject</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Action</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {selectedSubjects.map((subject, i) => (
-                      <TableRow key={subject.id}>
-                        <TableCell sx={{ borderBottom: 'none' }}>{i + 1}</TableCell>
-                        <TableCell sx={{ borderBottom: 'none' }}>{subject.subject_code}</TableCell>
-                        <TableCell sx={{ borderBottom: 'none' }}>{subject.subject_name}</TableCell>
-                        <TableCell sx={{ borderBottom: 'none' }}>
+                      <TableRow key={subject.id} hover>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell>{subject.subject_code || '-'}</TableCell>
+                        <TableCell>{subject.subject_name || subject}</TableCell>
+                        <TableCell>
                           <IconButton size="small" color="error" onClick={() => setSelectedSubjects(selectedSubjects.filter((_, idx) => idx !== i))}>
                             <IconTrash size={16} />
                           </IconButton>
@@ -167,7 +193,7 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSave} disabled={!totalSubj || !passMark}>
+        <Button size='small' onClick={handleSave} disabled={!totalSubj || !passMark}>
           Save
         </Button>
       </DialogActions>

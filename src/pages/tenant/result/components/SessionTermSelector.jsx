@@ -1,43 +1,56 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, FormControl, InputLabel, Select, MenuItem, Typography, Tabs, Tab, Skeleton,
+  Box, FormControl, InputLabel, Select, MenuItem, Typography, Tabs, Tab, Skeleton, Alert,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
-const mockSessions = [
-  { id: 1, session_name: '2025/2026' },
-  { id: 2, session_name: '2024/2025' },
-];
-
-const mockTermsBySession = {
-  1: [
-    { id: 10, term_name: 'First Term' },
-    { id: 11, term_name: 'Second Term' },
-    { id: 12, term_name: 'Third Term' },
-  ],
-  2: [
-    { id: 20, term_name: 'First Term' },
-    { id: 21, term_name: 'Second Term' },
-    { id: 22, term_name: 'Third Term' },
-  ],
-};
+import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 
 const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [sessions] = useState(mockSessions);
+  const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
   const [currentTab, setCurrentTab] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // ── Fetch sessions on mount ────────────────────────────────────
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession) {
-      setSelectedSession(String(sessions[0].id));
-    }
-  }, [sessions]);
+    let cancelled = false;
 
+    const loadSessions = async () => {
+      setSessionsLoading(true);
+      setError(null);
+      try {
+        const res = await fetchTenantSessions({ pagination: false });
+        if (cancelled) return;
+
+        const list = res?.data ?? [];
+        setSessions(list);
+
+        if (list.length > 0) {
+          setSelectedSession(String(list[0].id));
+        } else {
+          setError('No sessions found. Please create a session first.');
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to fetch sessions:', err);
+        setError('Failed to load sessions. Please try again.');
+        setSessions([]);
+      } finally {
+        if (!cancelled) setSessionsLoading(false);
+      }
+    };
+    loadSessions();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Fetch terms when session changes ───────────────────────────
   useEffect(() => {
     if (!selectedSession) {
       setSessionTerms([]);
@@ -45,21 +58,43 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) 
       onSessionTermChange?.(null);
       return;
     }
-    setLoading(true);
-    const timer = setTimeout(() => {
-      const terms = mockTermsBySession[selectedSession] || [];
-      setSessionTerms(terms);
-      if (terms.length > 0) {
-        setCurrentTab(String(terms[0].id));
-        onSessionTermChange?.(terms[0].id);
-      } else {
+
+    let cancelled = false;
+
+    const loadTerms = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetchSessionTerms(selectedSession);
+        if (cancelled) return;
+
+        const list = res?.data ?? [];
+        setSessionTerms(list);
+
+        if (list.length > 0) {
+          const active = list.find((st) => st.status === 'active');
+          const pick = active ?? list[0];
+          setCurrentTab(String(pick.id));
+          onSessionTermChange?.(pick.id);
+        } else {
+          setCurrentTab('');
+          onSessionTermChange?.(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to fetch session terms:', err);
+        setError('Failed to load terms for this session.');
+        setSessionTerms([]);
         setCurrentTab('');
         onSessionTermChange?.(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [selectedSession]);
+    };
+    loadTerms();
+
+    return () => { cancelled = true; };
+  }, [selectedSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSessionChange = (e) => {
     setSelectedSession(e.target.value);
@@ -67,31 +102,46 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) 
 
   const handleTabChange = (_, newValue) => {
     setCurrentTab(newValue);
-    const term = sessionTerms.find((t) => String(t.id) === newValue);
+    const term = sessionTerms.find((st) => String(st.id) === newValue);
     onSessionTermChange?.(term ? term.id : null);
   };
 
   return (
     <Box sx={{ mb: 3 }}>
+      {/* ── Error Banner ───────────────────────────────────── */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* ── Session Dropdown ──────────────────────────────── */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Session</InputLabel>
-          <Select value={selectedSession} label="Session" onChange={handleSessionChange}>
-            {sessions.map((s) => (
-              <MenuItem key={s.id} value={String(s.id)}>{s.session_name}</MenuItem>
-            ))}
-          </Select>
+          {sessionsLoading ? (
+            <Skeleton variant="rounded" height={40} sx={{ borderRadius: 1 }} />
+          ) : (
+            <Select value={selectedSession} label="Session" onChange={handleSessionChange}>
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={String(s.id)}>{s.session_name}</MenuItem>
+              ))}
+            </Select>
+          )}
         </FormControl>
       </Box>
 
-      {sessionTerms.length === 0 && !loading ? (
+      {/* ── Term Tabs ─────────────────────────────────────── */}
+      {loading ? (
+        <Skeleton variant="rounded" height={40} sx={{ borderRadius: 1 }} />
+      ) : sessionTerms.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 3 }}>
           <Typography variant="body2" color="text.secondary">
-            No terms available. Please select a session.
+            {selectedSession
+              ? 'No terms available for this session. Please set up session terms first.'
+              : 'Please select a session.'}
           </Typography>
         </Box>
-      ) : loading ? (
-        <Skeleton variant="rounded" height={40} sx={{ borderRadius: 1 }} />
       ) : (
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
@@ -108,8 +158,12 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) 
               },
             }}
           >
-            {sessionTerms.map((term) => (
-              <Tab key={term.id} label={term.term_name} value={String(term.id)} />
+            {sessionTerms.map((st) => (
+              <Tab
+                key={st.id}
+                label={st.term_name ?? st.term?.term_name ?? `Term ${st.term_id}`}
+                value={String(st.id)}
+              />
             ))}
           </Tabs>
         </Box>

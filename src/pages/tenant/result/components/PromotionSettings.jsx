@@ -3,94 +3,25 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Button, TextField, Grid, Chip, IconButton,
   FormControl, InputLabel, Select, MenuItem, CircularProgress, Tooltip, Menu,
-  MenuItem as MuiMenuItem,
+  MenuItem as MuiMenuItem, Alert, Skeleton,
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import EditPromotionDialog from './EditPromotionDialog';
-
-const mockProgrammes = [
-  { id: 1, prog_name: 'Junior Secondary' },
-  { id: 2, prog_name: 'Senior Secondary' },
-];
-
-const mockSessions = [
-  { id: 1, sesname: '2025/2026' },
-  { id: 2, sesname: '2024/2025' },
-];
-
-const mockConfigData = {
-  1: {
-    1: {
-      cummulative_mark: 40,
-      compulsory: {
-        total_subj: 5,
-        pass_mark: 40,
-        subjects: [
-          { subject_name: 'Mathematics' },
-          { subject_name: 'English Language' },
-          { subject_name: 'Basic Science' },
-          { subject_name: 'Social Studies' },
-          { subject_name: 'Civic Education' },
-        ],
-      },
-      elective: {
-        total_subj: 3,
-        pass_mark: 40,
-        subjects: [
-          { subject_name: 'Physics' },
-          { subject_name: 'Chemistry' },
-          { subject_name: 'Biology' },
-        ],
-      },
-      trade: {
-        total_subj: 2,
-        pass_mark: 35,
-        subjects: [
-          { subject_name: 'Information Technology' },
-        ],
-      },
-    },
-  },
-  2: {
-    1: {
-      cummulative_mark: 45,
-      compulsory: {
-        total_subj: 6,
-        pass_mark: 45,
-        subjects: [
-          { subject_name: 'Mathematics' },
-          { subject_name: 'English Language' },
-          { subject_name: 'Civic Education' },
-        ],
-      },
-      elective: {
-        total_subj: 4,
-        pass_mark: 45,
-        subjects: [
-          { subject_name: 'Physics' },
-          { subject_name: 'Chemistry' },
-        ],
-      },
-      trade: {
-        total_subj: 2,
-        pass_mark: 40,
-        subjects: [
-          { subject_name: 'Electrical Installation' },
-        ],
-      },
-    },
-  },
-};
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
+import { fetchTenantSessions } from '@/api/tenant/session-term/sessionTermApi';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const PromotionSettings = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [programmes] = useState(mockProgrammes);
-  const [sessions] = useState(mockSessions);
+  const [programmes, setProgrammes] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dropdownsLoading, setDropdownsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [form, setForm] = useState({ prog_id: '', ses_id: '', use_mark: '' });
   const [cummulativeMark, setCummulativeMark] = useState('');
@@ -102,57 +33,119 @@ const PromotionSettings = () => {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuSubjType, setMenuSubjType] = useState('');
 
+  // ── Fetch dropdown data on mount ────────────────────────────────
   useEffect(() => {
-    if (sessions.length > 0 && !form.ses_id) {
-      setForm((prev) => ({ ...prev, ses_id: sessions[0].id }));
-    }
-    if (programmes.length > 0 && !form.prog_id) {
-      setForm((prev) => ({ ...prev, prog_id: programmes[0].id }));
-    }
-  }, [sessions, programmes]);
+    let cancelled = false;
 
+    const fetchDropdowns = async () => {
+      setDropdownsLoading(true);
+      try {
+        const [sesRes, progRes] = await Promise.all([
+          fetchTenantSessions({ per_page: 100 }),
+          tenantApi.get('/curriculum/programmes'),
+        ]);
+
+        if (cancelled) return;
+
+        const sesList = sesRes?.data ?? [];
+        setSessions(sesList);
+
+        const progList = progRes?.data?.data ?? [];
+        setProgrammes(progList);
+
+        // Auto-select first session
+        if (sesList.length > 0) {
+          setForm((prev) => ({ ...prev, ses_id: sesList[0].id }));
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to load dropdowns:', err);
+        setError('Failed to load sessions or programmes');
+      } finally {
+        if (!cancelled) setDropdownsLoading(false);
+      }
+    };
+    fetchDropdowns();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Fetch promotion config when filters change ──────────────────
   useEffect(() => {
     if (form.ses_id && form.prog_id && form.use_mark) {
       fetchConfig();
     }
-  }, [form.ses_id, form.prog_id, form.use_mark]);
+  }, [form.ses_id, form.prog_id, form.use_mark]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchConfig = useCallback(() => {
+  const fetchConfig = useCallback(async () => {
     setLoading(true);
-    const timer = setTimeout(() => {
-      const config = mockConfigData[form.prog_id]?.[form.ses_id];
-      if (config) {
-        setCummulativeMark(config.cummulative_mark);
-        setCompulsory(config.compulsory);
-        setElective(config.elective);
-        setTrade(config.trade);
-      } else {
-        setCummulativeMark('');
-        setCompulsory({ total_subj: '', pass_mark: '', subjects: [] });
-        setElective({ total_subj: '', pass_mark: '', subjects: [] });
-        setTrade({ total_subj: '', pass_mark: '', subjects: [] });
+    setError(null);
+    try {
+      const response = await resultSetupApi.getPromotionConfigurations({
+        prog_id: form.prog_id,
+        session_id: form.ses_id,
+      });
+
+      if (response.data.status) {
+        const data = response.data.data;
+        if (data.cummulative_mark) {
+          setCummulativeMark(data.cummulative_mark.cummulative_mark || '');
+        } else {
+          setCummulativeMark('');
+        }
+        setCompulsory(data.compulsory || { total_subj: '', pass_mark: '', subjects: [] });
+        setElective(data.elective || { total_subj: '', pass_mark: '', subjects: [] });
+        setTrade(data.trade || { total_subj: '', pass_mark: '', subjects: [] });
       }
+    } catch (err) {
+      console.error('Failed to fetch promotion config:', err);
+      setError('Failed to load promotion settings');
+    } finally {
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
+    }
   }, [form.ses_id, form.prog_id]);
 
-  const submitPassmark = () => {
+  const submitPassmark = async () => {
     if (Number(cummulativeMark) > 100) return;
     setLoading(true);
-    setTimeout(() => { setLoading(false); }, 300);
+    try {
+      const response = await resultSetupApi.saveCumulativeMark({
+        prog_id: form.prog_id,
+        session_id: form.ses_id,
+        cummulative_mark: cummulativeMark,
+      });
+
+      if (response.data.status) {
+        await fetchConfig();
+      }
+    } catch (err) {
+      console.error('Failed to save cumulative mark:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditSave = (data) => {
+  const handleEditSave = async (data) => {
     setLoading(true);
-    setTimeout(() => {
-      const setter = { compulsory: setCompulsory, elective: setElective, trade: setTrade }[editDialog.subjType];
-      if (setter) {
-        setter({ total_subj: data.total_subj, pass_mark: data.pass_mark, subjects: data.subjects });
+    try {
+      const response = await resultSetupApi.savePromotionBySubjectSettings({
+        prog_id: form.prog_id,
+        session_id: form.ses_id,
+        subj_type: editDialog.subjType,
+        total_subj: data.total_subj,
+        pass_mark: data.pass_mark,
+        subjects: data.subjects?.map(s => s.id || s) || [],
+      });
+
+      if (response.data.status) {
+        await fetchConfig();
       }
+    } catch (err) {
+      console.error('Failed to save promotion settings:', err);
+    } finally {
       setEditDialog({ open: false, subjType: '' });
       setLoading(false);
-    }, 300);
+    }
   };
 
   const openMenu = (e, subjType) => {
@@ -172,7 +165,7 @@ const PromotionSettings = () => {
     return (
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
         {subjects.map((sub, i) => (
-          <Chip key={i} label={sub.subject_name} size="small" variant="outlined" />
+          <Chip key={i} label={sub.subject_name || sub} size="small" variant="outlined" />
         ))}
       </Box>
     );
@@ -182,26 +175,37 @@ const PromotionSettings = () => {
 
   return (
     <Box>
+      {/* Error Banner */}
+      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+
       {/* Three Filter Dropdowns */}
       <Grid container spacing={2} sx={{ mb: 1 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
-            <Select value={form.ses_id} label="Session" onChange={(e) => setForm({ ...form, ses_id: e.target.value })}>
-              {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>{s.sesname}</MenuItem>
-              ))}
-            </Select>
+            {dropdownsLoading ? (
+              <Skeleton variant="rounded" height={40} />
+            ) : (
+              <Select value={form.ses_id} label="Session" onChange={(e) => setForm({ ...form, ses_id: e.target.value })}>
+                {sessions.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>{s.session_name}</MenuItem>
+                ))}
+              </Select>
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={form.prog_id} label="Programme" onChange={(e) => setForm({ ...form, prog_id: e.target.value })}>
-              {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.prog_name}</MenuItem>
-              ))}
-            </Select>
+            {dropdownsLoading ? (
+              <Skeleton variant="rounded" height={40} />
+            ) : (
+              <Select value={form.prog_id} label="Programme" onChange={(e) => setForm({ ...form, prog_id: e.target.value })}>
+                {programmes.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>{p.programme_name || p.programme_title}</MenuItem>
+                ))}
+              </Select>
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
@@ -231,7 +235,7 @@ const PromotionSettings = () => {
                     <TextField label="Passmark (%)" fullWidth size="small" type="number" value={cummulativeMark} onChange={(e) => setCummulativeMark(e.target.value)} inputProps={{ min: 0, max: 100 }} />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <Button type="submit"  size="small">Submit</Button>
+                    <Button type="submit" size="small">Submit</Button>
                   </Grid>
                 </Grid>
               </Box>

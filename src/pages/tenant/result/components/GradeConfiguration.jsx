@@ -1,66 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, CircularProgress, Alert, Tooltip,
+  TableHead, TableRow, IconButton, CircularProgress, Alert, Tooltip, Snackbar,
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
 import GradeSettingsDialog from './GradeSettingsDialog';
 import MarkConfigDialog from './MarkConfigDialog';
 import PassMarkDialog from './PassMarkDialog';
-
-const mockDivisions = [
-  {
-    id: 1,
-    division_name: 'Junior Secondary',
-    examRatio: 70,
-    caRatio: 30,
-    numberOfCAs: 2,
-    maxPoint: 5,
-    caContent: [
-      { display_name: 'First Test', max_score: 15, entities: [{ display_name: 'Classwork', max_score: 15 }] },
-      { display_name: 'Second Test', max_score: 15, entities: [{ display_name: 'Quiz', max_score: 15 }] },
-    ],
-    statePassMark: 40,
-    schoolAdopted: 45,
-    grades: [
-      { min_score: 0, max_score: 20, grade: 'F', remark: 'Fail', grade_point: 0 },
-      { min_score: 21, max_score: 30, grade: 'E', remark: 'Poor', grade_point: 1 },
-      { min_score: 31, max_score: 40, grade: 'D', remark: 'Fair', grade_point: 2 },
-      { min_score: 41, max_score: 50, grade: 'C', remark: 'Average', grade_point: 3 },
-      { min_score: 51, max_score: 60, grade: 'C+', remark: 'Above Average', grade_point: 4 },
-      { min_score: 61, max_score: 70, grade: 'B', remark: 'Good', grade_point: 5 },
-      { min_score: 71, max_score: 80, grade: 'B+', remark: 'Very Good', grade_point: 6 },
-      { min_score: 81, max_score: 90, grade: 'A', remark: 'Excellent', grade_point: 7 },
-      { min_score: 91, max_score: 100, grade: 'A+', remark: 'Outstanding', grade_point: 8 },
-    ],
-  },
-  {
-    id: 2,
-    division_name: 'Senior Secondary',
-    examRatio: 60,
-    caRatio: 40,
-    numberOfCAs: 2,
-    maxPoint: 5,
-    caContent: [
-      { display_name: 'First Test', max_score: 20, entities: [{ display_name: 'Classwork', max_score: 20 }] },
-      { display_name: 'Second Test', max_score: 20, entities: [{ display_name: 'Quiz', max_score: 20 }] },
-    ],
-    statePassMark: 45,
-    schoolAdopted: 45,
-    grades: [
-      { min_score: 0, max_score: 20, grade: 'F', remark: 'Fail', grade_point: 0 },
-      { min_score: 21, max_score: 30, grade: 'E', remark: 'Poor', grade_point: 1 },
-      { min_score: 31, max_score: 40, grade: 'D', remark: 'Fair', grade_point: 2 },
-      { min_score: 41, max_score: 50, grade: 'C', remark: 'Average', grade_point: 3 },
-      { min_score: 51, max_score: 60, grade: 'C+', remark: 'Above Average', grade_point: 4 },
-      { min_score: 61, max_score: 70, grade: 'B', remark: 'Good', grade_point: 5 },
-      { min_score: 71, max_score: 80, grade: 'B+', remark: 'Very Good', grade_point: 6 },
-      { min_score: 81, max_score: 90, grade: 'A', remark: 'Excellent', grade_point: 7 },
-      { min_score: 91, max_score: 100, grade: 'A+', remark: 'Outstanding', grade_point: 8 },
-    ],
-  },
-];
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 
 const GradeConfiguration = ({ sessionTermId }) => {
   const theme = useTheme();
@@ -68,85 +16,129 @@ const GradeConfiguration = ({ sessionTermId }) => {
 
   const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Dialog state
   const [gradeDialog, setGradeDialog] = useState({ open: false, division: null, index: -1 });
   const [markDialog, setMarkDialog] = useState({ open: false, division: null, index: -1 });
   const [passMarkDialog, setPassMarkDialog] = useState({ open: false, division: null, index: -1 });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  useEffect(() => {
-    if (sessionTermId) {
-      setLoading(true);
-      const timer = setTimeout(() => {
-        setDivisions(mockDivisions);
-        setLoading(false);
-      }, 400);
-      return () => clearTimeout(timer);
-    } else {
+  const fetchConfigurations = useCallback(async () => {
+    if (!sessionTermId) {
       setDivisions([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await resultSetupApi.getConfigurations(sessionTermId);
+      if (response.data.status) {
+        setDivisions(response.data.data.divisions || []);
+      } else {
+        setError(response.data.message || 'Failed to fetch configurations');
+      }
+    } catch (err) {
+      console.error('Failed to fetch configurations:', err);
+      setError('Failed to load configurations. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }, [sessionTermId]);
 
-  const handleGradeSave = useCallback((grades) => {
-    const mapped = grades.map((g) => ({
-      min_score: Number(g.minimumScore),
-      max_score: Number(g.maximumScore),
-      grade: g.grade,
-      remark: g.remark,
-      grade_point: Number(g.gradePoint),
-    }));
-    setDivisions((prev) => {
-      const updated = [...prev];
-      updated[gradeDialog.index] = { ...updated[gradeDialog.index], grades: mapped };
-      return updated;
-    });
-    setGradeDialog({ open: false, division: null, index: -1 });
-  }, [gradeDialog.index]);
+  useEffect(() => {
+    fetchConfigurations();
+  }, [fetchConfigurations]);
 
-  const handleMarkSave = useCallback((markData) => {
-    setDivisions((prev) => {
-      const updated = [...prev];
-      updated[markDialog.index] = {
-        ...updated[markDialog.index],
+  const handleGradeSave = useCallback(async (grades) => {
+    try {
+      const response = await resultSetupApi.saveGradeSettings({
+        session_term_id: sessionTermId,
+        division_id: gradeDialog.division.id,
+        grades,
+      });
+
+      if (response.data.status) {
+        // Refresh configurations
+        await fetchConfigurations();
+        showSnackbar(response.data.message || 'Grade settings saved successfully');
+      } else {
+        showSnackbar(response.data.message || 'Failed to save grade settings', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to save grade settings:', err);
+      showSnackbar('Failed to save grade settings', 'error');
+    }
+    setGradeDialog({ open: false, division: null, index: -1 });
+  }, [gradeDialog.division, sessionTermId, fetchConfigurations]);
+
+  const handleMarkSave = useCallback(async (markData) => {
+    try {
+      const response = await resultSetupApi.saveMarkConfiguration({
+        session_term_id: sessionTermId,
+        division_id: markDialog.division.id,
         examRatio: markData.examRatio,
         caRatio: markData.caRatio,
         numberOfCAs: markData.numberOfCAs,
         maxPoint: markData.maxPoint,
         caContent: markData.caContent,
-      };
-      return updated;
-    });
-    setMarkDialog({ open: false, division: null, index: -1 });
-  }, [markDialog.index]);
+      });
 
-  const handleMarkReset = useCallback(() => {
-    setDivisions((prev) => {
-      const updated = [...prev];
-      updated[markDialog.index] = {
-        ...updated[markDialog.index],
-        examRatio: 70,
-        caRatio: 30,
-        numberOfCAs: 1,
-        maxPoint: 5,
-        caContent: [{ display_name: 'CA1', max_score: 30, entities: [{ display_name: 'CA1', max_score: 30 }] }],
-      };
-      return updated;
-    });
+      if (response.data.status) {
+        await fetchConfigurations();
+        showSnackbar(response.data.message || 'Mark configuration saved successfully');
+      } else {
+        showSnackbar(response.data.message || 'Failed to save mark configuration', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to save mark configuration:', err);
+      showSnackbar('Failed to save mark configuration', 'error');
+    }
     setMarkDialog({ open: false, division: null, index: -1 });
-  }, [markDialog.index]);
+  }, [markDialog.division, sessionTermId, fetchConfigurations]);
 
-  const handlePassMarkSave = useCallback((passData) => {
-    setDivisions((prev) => {
-      const updated = [...prev];
-      updated[passMarkDialog.index] = {
-        ...updated[passMarkDialog.index],
-        statePassMark: passData.statePassMark,
-        schoolAdopted: passData.schoolAdopted,
-      };
-      return updated;
-    });
+  const handleMarkReset = useCallback(async () => {
+    try {
+      const response = await resultSetupApi.resetMarkConfiguration({
+        session_term_id: sessionTermId,
+        division_id: markDialog.division.id,
+      });
+
+      if (response.data.status) {
+        await fetchConfigurations();
+        showSnackbar(response.data.message || 'Mark configuration reset successfully');
+      } else {
+        showSnackbar(response.data.message || 'Failed to reset mark configuration', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to reset mark configuration:', err);
+      showSnackbar('Failed to reset mark configuration', 'error');
+    }
+    setMarkDialog({ open: false, division: null, index: -1 });
+  }, [markDialog.division, sessionTermId, fetchConfigurations]);
+
+  const handlePassMarkSave = useCallback(async (passData) => {
+    try {
+      const response = await resultSetupApi.savePassMark({
+        session_term_id: sessionTermId,
+        division_id: passMarkDialog.division.id,
+        pass_mark: passData.passMark || passData.schoolAdopted,
+      });
+
+      if (response.data.status) {
+        await fetchConfigurations();
+        showSnackbar(response.data.message || 'Pass mark saved successfully');
+      } else {
+        showSnackbar(response.data.message || 'Failed to save pass mark', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to save pass mark:', err);
+      showSnackbar('Failed to save pass mark', 'error');
+    }
     setPassMarkDialog({ open: false, division: null, index: -1 });
-  }, [passMarkDialog.index]);
+  }, [passMarkDialog.division, sessionTermId, fetchConfigurations]);
 
   if (!sessionTermId) {
     return (
@@ -164,6 +156,8 @@ const GradeConfiguration = ({ sessionTermId }) => {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress />
         </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : divisions.length === 0 ? (
         <Alert severity="info">No configurations found for this session term.</Alert>
       ) : (
@@ -214,7 +208,21 @@ const GradeConfiguration = ({ sessionTermId }) => {
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Box sx={{ flex: 1, overflow: 'auto' }}>
-                        <Table size="small" sx={{ border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+                        <Table
+                          size="small"
+                          sx={{
+                            border: '1px solid',
+                            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                            '& .MuiTableCell-root': {
+                              borderRight: '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                            },
+                            '& tbody tr:nth-of-type(odd)': {
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FAFAFA',
+                            },
+                          }}
+                        >
                           <TableHead>
                             <TableRow>
                               <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>#</TableCell>
@@ -295,6 +303,21 @@ const GradeConfiguration = ({ sessionTermId }) => {
         divisionName={passMarkDialog.division?.division_name}
         isSchoolUser={false}
       />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

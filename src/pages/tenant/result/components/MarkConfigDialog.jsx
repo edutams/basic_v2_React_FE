@@ -15,10 +15,18 @@ const defaultForm = () => ({
     {
       display_name: 'CA1',
       max_score: 15,
-      entities: [{ display_name: 'Classwork', max_score: 15 }],
+      entities: [{ display_name: '', max_score: '' }],
     },
   ],
 });
+
+// Score inputs are text fields (so they can start empty) that only accept
+// digits and a decimal point — block the keys type="number" would have let
+// through (minus/plus/exponent) so negative scores can't be typed.
+const INVALID_SCORE_KEYS = ['-', '+', 'e', 'E'];
+const blockInvalidScoreKeys = (e) => {
+  if (INVALID_SCORE_KEYS.includes(e.key)) e.preventDefault();
+};
 
 const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }) => {
   const theme = useTheme();
@@ -29,24 +37,47 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
   const [caErr, setCaErr] = useState('');
   const [entityErr, setEntityErr] = useState(['']);
 
+  // Treat '', null and undefined as 0 whenever a number is needed; '' keeps
+  // the field visually empty until the user types (0 would be stuck there —
+  // deleting it coerced straight back to 0 with numeric state).
+  const toNum = (v) => (v === '' || v === null || v === undefined ? 0 : Number(v) || 0);
+  const clampScore = (raw) => {
+    if (raw === '' || raw === null || raw === undefined) return '';
+    const num = Number(raw);
+    if (Number.isNaN(num)) return '';
+    return String(Math.max(0, num));
+  };
+
   useEffect(() => {
     if (open) {
       if (data && (data.examRatio || data.numberOfCAs)) {
+        // The API returns saved entities keyed as an object ({entity1: …},
+        // {entity2: …}…) because the backend re-keys caContent on save, so
+        // normalize both levels to plain arrays before hydrating the form.
+        const toEntityArray = (entities) =>
+          Object.values(entities ?? {})
+            .filter(Boolean)
+            .map((e) => ({
+              display_name: e.display_name || '',
+              max_score: e.max_score ?? '',
+            }));
+
         const caContent = data.caContent && data.caContent.length
-          ? data.caContent.map((ca) => ({
-              display_name: ca.display_name || '',
-              max_score: ca.max_score || 0,
-              entities: ca.entities && ca.entities.length
-                ? ca.entities.map((e) => ({ display_name: e.display_name || '', max_score: e.max_score || 0 }))
-                : [{ display_name: '', max_score: 0 }],
-            }))
-          : [{ display_name: 'CA1', max_score: data.caRatio || 30, entities: [{ display_name: 'CA1', max_score: data.caRatio || 30 }] }];
+          ? data.caContent.map((ca) => {
+              const entities = toEntityArray(ca.entities);
+              return {
+                display_name: ca.display_name || '',
+                max_score: ca.max_score ?? '',
+                entities: entities.length ? entities : [{ display_name: '', max_score: '' }],
+              };
+            })
+          : [{ display_name: 'CA1', max_score: data.caRatio ?? 30, entities: [{ display_name: '', max_score: '' }] }];
 
         setForm({
-          examRatio: data.examRatio || 70,
-          caRatio: data.caRatio || 30,
+          examRatio: data.examRatio ?? 70,
+          caRatio: data.caRatio ?? 30,
           numberOfCAs: data.numberOfCAs || 1,
-          maxPoint: data.maxPoint || 5,
+          maxPoint: data.maxPoint ?? 5,
           caContent,
         });
         setEntityErr(new Array(data.numberOfCAs || 1).fill(''));
@@ -60,23 +91,23 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
   }, [open, data]);
 
   const checkTotalScore = (exam, ca) => {
-    const total = Number(exam) + Number(ca);
+    const total = toNum(exam) + toNum(ca);
     if (total < 100) return 'The overall score cannot be less than 100';
     if (total > 100) return 'The overall score cannot be greater than 100';
     return '';
   };
 
   const checkCATotal = (items, caMax) => {
-    const total = items.reduce((sum, c) => sum + Number(c.max_score || 0), 0);
-    if (total < Number(caMax)) return 'The sum of all C.As cannot be less than the overall C.A score';
-    if (total > Number(caMax)) return 'The sum of all C.As cannot be greater than the overall C.A score';
+    const total = items.reduce((sum, c) => sum + toNum(c.max_score), 0);
+    if (total < toNum(caMax)) return 'The sum of all C.As cannot be less than the overall C.A score';
+    if (total > toNum(caMax)) return 'The sum of all C.As cannot be greater than the overall C.A score';
     return '';
   };
 
   const checkEntityTotal = (caIndex, entities, caMaxScore) => {
-    const total = entities.reduce((sum, e) => sum + Number(e.max_score || 0), 0);
-    if (total < Number(caMaxScore)) return 'The sum of all breakdowns cannot be less than the C.A score';
-    if (total > Number(caMaxScore)) return 'The sum of all breakdowns cannot be greater than the C.A score';
+    const total = entities.reduce((sum, e) => sum + toNum(e.max_score), 0);
+    if (total < toNum(caMaxScore)) return 'The sum of all breakdowns cannot be less than the C.A score';
+    if (total > toNum(caMaxScore)) return 'The sum of all breakdowns cannot be greater than the C.A score';
     return '';
   };
 
@@ -87,7 +118,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
       numberOfCAs: newNum,
       caContent: [
         ...form.caContent,
-        { display_name: `CA${newNum}`, max_score: 0, entities: [{ display_name: `CA${newNum}`, max_score: 0 }] },
+        { display_name: `CA${newNum}`, max_score: '', entities: [{ display_name: '', max_score: '' }] },
       ],
     });
     setEntityErr([...entityErr, '']);
@@ -103,7 +134,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
 
   const addEntity = (caIndex) => {
     const updated = [...form.caContent];
-    updated[caIndex].entities = [...updated[caIndex].entities, { display_name: '', max_score: 0 }];
+    updated[caIndex].entities = [...updated[caIndex].entities, { display_name: '', max_score: '' }];
     setForm({ ...form, caContent: updated });
   };
 
@@ -144,11 +175,15 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
   const handleSave = () => {
     if (!validate()) return;
     onSave({
-      examRatio: form.examRatio,
-      caRatio: form.caRatio,
+      examRatio: toNum(form.examRatio),
+      caRatio: toNum(form.caRatio),
       numberOfCAs: form.numberOfCAs,
-      maxPoint: form.maxPoint,
-      caContent: form.caContent,
+      maxPoint: toNum(form.maxPoint),
+      caContent: form.caContent.map((ca) => ({
+        ...ca,
+        max_score: toNum(ca.max_score),
+        entities: ca.entities.map((e) => ({ ...e, max_score: toNum(e.max_score) })),
+      })),
     });
   };
 
@@ -159,7 +194,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
       </DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button variant="outlined" color="warning" size="small" onClick={() => { setForm(defaultForm()); setTotalErr(''); setCaErr(''); setEntityErr(['']); }}>
+          <Button  color="warning" size="small" onClick={() => { setForm(defaultForm()); setTotalErr(''); setCaErr(''); setEntityErr(['']); }}>
             Reset
           </Button>
         </Box>
@@ -174,10 +209,11 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Exam (Max. Obtainable Score)" fullWidth size="small" type="number"
+                label="Exam (Max. Obtainable Score)" fullWidth size="small" type="text" inputMode="decimal"
                 value={form.examRatio}
+                onKeyDown={blockInvalidScoreKeys}
                 onChange={(e) => {
-                  const val = Number(e.target.value);
+                  const val = clampScore(e.target.value);
                   setForm({ ...form, examRatio: val });
                   setTotalErr(checkTotalScore(val, form.caRatio));
                 }}
@@ -185,10 +221,11 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="C.A (Max. Obtainable Score)" fullWidth size="small" type="number"
+                label="C.A (Max. Obtainable Score)" fullWidth size="small" type="text" inputMode="decimal"
                 value={form.caRatio}
+                onKeyDown={blockInvalidScoreKeys}
                 onChange={(e) => {
-                  const val = Number(e.target.value);
+                  const val = clampScore(e.target.value);
                   setForm({ ...form, caRatio: val });
                   setTotalErr(checkTotalScore(form.examRatio, val));
                   setCaErr(checkCATotal(form.caContent, val));
@@ -203,9 +240,10 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Maximum Obtainable Point" fullWidth size="small" type="number"
+                label="Maximum Obtainable Point" fullWidth size="small" type="text" inputMode="decimal"
                 value={form.maxPoint}
-                onChange={(e) => setForm({ ...form, maxPoint: Number(e.target.value) })}
+                onKeyDown={blockInvalidScoreKeys}
+                onChange={(e) => setForm({ ...form, maxPoint: clampScore(e.target.value) })}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -216,7 +254,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
             <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TextField label="Number of C.As" fullWidth size="small" disabled value={form.numberOfCAs} />
-                <Button variant="contained" size="small" onClick={addCA} sx={{ whiteSpace: 'nowrap', minWidth: 100, height: 40 }}>
+                <Button  size="small" onClick={addCA} sx={{ whiteSpace: 'nowrap' }}>
                   Add More
                 </Button>
               </Box>
@@ -244,12 +282,14 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  label="Max. Score" fullWidth size="small" type="number" placeholder="Enter Maximum Obtainable Score"
+                  label="Max. Score" fullWidth size="small" type="text" inputMode="decimal" placeholder="Enter Maximum Obtainable Score"
                   value={ca.max_score}
+                  onKeyDown={blockInvalidScoreKeys}
                   onChange={(e) => {
-                    updateCA(caIndex, 'max_score', Number(e.target.value));
+                    const val = clampScore(e.target.value);
+                    updateCA(caIndex, 'max_score', val);
                     setCaErr(checkCATotal(
-                      form.caContent.map((c, i) => i === caIndex ? { ...c, max_score: Number(e.target.value) } : c),
+                      form.caContent.map((c, i) => i === caIndex ? { ...c, max_score: val } : c),
                       form.caRatio
                     ));
                   }}
@@ -259,7 +299,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TextField label="Breakdown" fullWidth size="small" disabled value={`${ca.entities.length} item(s)`} />
-                  <Button variant="contained" size="small" onClick={() => addEntity(caIndex)} sx={{ whiteSpace: 'nowrap', minWidth: 100, height: 40 }}>
+                  <Button  size="small" onClick={() => addEntity(caIndex)} sx={{ whiteSpace: 'nowrap' }}>
                     Add More
                   </Button>
                 </Box>
@@ -276,12 +316,14 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
                     </Grid>
                     <Grid size={{ xs: 12, sm: 5 }}>
                       <TextField
-                        label="Max. Score" fullWidth size="small" type="number" placeholder="Enter Max. Score"
+                        label="Max. Score" fullWidth size="small" type="text" inputMode="decimal" placeholder="Enter Max. Score"
                         value={ent.max_score}
+                        onKeyDown={blockInvalidScoreKeys}
                         onChange={(e) => {
-                          updateEntity(caIndex, entIndex, 'max_score', Number(e.target.value));
+                          const val = clampScore(e.target.value);
+                          updateEntity(caIndex, entIndex, 'max_score', val);
                           const updatedEntities = ca.entities.map((en, ei) =>
-                            ei === entIndex ? { ...en, max_score: Number(e.target.value) } : en
+                            ei === entIndex ? { ...en, max_score: val } : en
                           );
                           const newErr = [...entityErr];
                           newErr[caIndex] = checkEntityTotal(caIndex, updatedEntities, ca.max_score);
@@ -306,7 +348,7 @@ const MarkConfigDialog = ({ open, onClose, onSave, onReset, data, divisionName }
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSave} sx={{ minWidth: 200, height: 45 }}>
+        <Button size='small' onClick={handleSave} >
           SUBMIT CONFIGURATION
         </Button>
       </DialogActions>

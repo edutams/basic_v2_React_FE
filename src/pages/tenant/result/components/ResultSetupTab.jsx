@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, TextField, Grid, Tabs, Tab, IconButton, Tooltip, Snackbar, Alert,
@@ -18,40 +18,17 @@ import GradeConfiguration from './GradeConfiguration';
 import PromotionSettings from './PromotionSettings';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import StatCard from '@/components/shared/StatCard';
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 
-const dummySessionTerms = [
-  { id: 1, label: '2025/2026 - First Term' },
-  { id: 2, label: '2025/2026 - Second Term' },
-];
 const dummyProgrammes = [
   { id: 1, name: 'Junior Secondary' }, { id: 2, name: 'Senior Secondary' },
 ];
-
-const initialNomenclature = [
-  { id: 1, position_name: "Principal's", status: 'active' },
-  { id: 2, position_name: "Class Teacher's", status: 'active' },
-];
-
-// Mock data for stat cards
-const mockGradeStats = {
-  totalGrades: 12,
-  passMark: '40%',
-  subjects: 18,
-  markRange: '0 - 100',
-};
 
 const mockTemplateStats = {
   templates: 13,
   active: 1,
   programmes: 2,
   caReports: 'Enabled',
-};
-
-const mockNomenclatureStats = {
-  total: 5,
-  active: 4,
-  inactive: 1,
-  positionsUsed: 5,
 };
 
 const mockPromotionStats = {
@@ -76,8 +53,11 @@ const ResultSetupTab = () => {
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
+  const [gradeStats, setGradeStats] = useState({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
+  const [gradeStatsLoading, setGradeStatsLoading] = useState(false);
   const [templateDivFilter, setTemplateDivFilter] = useState(dummyProgrammes[0].name);
-  const [nomenclature, setNomenclature] = useState(initialNomenclature);
+  const [nomenclature, setNomenclature] = useState([]);
+  const [nomenclatureLoading, setNomenclatureLoading] = useState(false);
 
   const [nomenclatureDialog, setNomenclatureDialog] = useState({ open: false, editing: null });
   const [nomenclatureForm, setNomenclatureForm] = useState({ position_name: '', status: 'active' });
@@ -85,11 +65,56 @@ const ResultSetupTab = () => {
   const [nomMenuRow, setNomMenuRow] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [imagePreview, setImagePreview] = useState({ open: false, src: '' });
-  const [signatureDialog, setSignatureDialog] = useState({ open: false, positionName: '' });
+  const [signatureDialog, setSignatureDialog] = useState({ open: false, id: null, positionName: '' });
   const [signaturePreview, setSignaturePreview] = useState({ open: false, src: '' });
   const [signatureFile, setSignatureFile] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null, action: '', label: '' });
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+
+  // ── Comment Nomenclature API ──────────────────────────────
+  const fetchNomenclatures = useCallback(async () => {
+    setNomenclatureLoading(true);
+    try {
+      const response = await resultSetupApi.getCommentNomenclatures();
+      if (response.data.status) {
+        setNomenclature(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch nomenclatures:', err);
+    } finally {
+      setNomenclatureLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNomenclatures();
+  }, [fetchNomenclatures]);
+
+  // ── Fetch grade config stats when session term changes ──────
+  useEffect(() => {
+    if (!currentSessionTermId) {
+      setGradeStats({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
+      return;
+    }
+
+    let cancelled = false;
+    const loadStats = async () => {
+      setGradeStatsLoading(true);
+      try {
+        const res = await resultSetupApi.getGradeConfigStats(currentSessionTermId);
+        if (!cancelled && res.data.status) {
+          setGradeStats(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch grade stats:', err);
+      } finally {
+        if (!cancelled) setGradeStatsLoading(false);
+      }
+    };
+    loadStats();
+    return () => { cancelled = true; };
+  }, [currentSessionTermId]);
 
   const innerTabs = [
     { label: '1. Grade & Config. Settings', icon: <IconAward size={16} /> },
@@ -99,21 +124,54 @@ const ResultSetupTab = () => {
     { label: '5. Promotion Settings', icon: <IconSettings size={16} /> },
   ];
 
-  const handleNomSave = () => {
-    if (nomenclatureDialog.editing) {
-      setNomenclature(nomenclature.map(n => n.id === nomenclatureDialog.editing.id ? { ...n, ...nomenclatureForm } : n));
-      showSnackbar('Nomenclature updated');
-    } else {
-      setNomenclature([...nomenclature, { id: Date.now(), ...nomenclatureForm, status: 'active' }]);
-      showSnackbar('Nomenclature added');
+  const handleNomSave = async () => {
+    try {
+      const payload = {
+        position_name: nomenclatureForm.position_name,
+        status: nomenclatureForm.status,
+      };
+      if (nomenclatureDialog.editing) {
+        payload.id = nomenclatureDialog.editing.id;
+      }
+      const response = await resultSetupApi.saveCommentNomenclature(payload);
+      if (response.data.status) {
+        showSnackbar(response.data.message);
+        await fetchNomenclatures();
+      }
+    } catch (err) {
+      console.error('Failed to save nomenclature:', err);
+      showSnackbar('Failed to save nomenclature', 'error');
     }
     setNomenclatureDialog({ open: false, editing: null });
     setNomenclatureForm({ position_name: '', status: 'active' });
   };
 
-  const handleNomDelete = (id) => {
-    setNomenclature(nomenclature.filter(n => n.id !== id));
-    showSnackbar('Nomenclature deleted');
+  const handleNomDelete = async (id) => {
+    try {
+      const response = await resultSetupApi.deleteCommentNomenclature(id);
+      if (response.data.status) {
+        showSnackbar(response.data.message);
+        await fetchNomenclatures();
+      }
+    } catch (err) {
+      console.error('Failed to delete nomenclature:', err);
+      showSnackbar('Failed to delete nomenclature', 'error');
+    }
+    setNomMenuAnchor(null);
+  };
+
+  const handleNomToggleStatus = async (id) => {
+    try {
+      const response = await resultSetupApi.toggleCommentNomenclatureStatus(id);
+      if (response.data.status) {
+        showSnackbar(response.data.message);
+        await fetchNomenclatures();
+      }
+    } catch (err) {
+      console.error('Failed to toggle nomenclature status:', err);
+      showSnackbar('Failed to update status', 'error');
+    }
+    setConfirmDialog({ open: false, id: null, action: '', label: '' });
     setNomMenuAnchor(null);
   };
 
@@ -149,43 +207,58 @@ const ResultSetupTab = () => {
       <InnerTabPanel value={innerTab} index={0}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <StatCard
-            count={mockGradeStats.totalGrades}
+            count={gradeStats.total_grades}
             label="Total Grades"
-            subtitle="A1, B2, B3, C4, C5, C6, D7, E8, F9"
+            subtitle="Distinct grade letters configured"
             icon={IconAward}
             colorIndex={0}
-            loading={false}
+            loading={gradeStatsLoading}
           />
           <StatCard
-            count={mockGradeStats.passMark}
+            count={gradeStats.pass_mark}
             label="Pass Mark"
             subtitle="Minimum passing grade"
             icon={IconCheck}
             colorIndex={1}
-            loading={false}
+            loading={gradeStatsLoading}
           />
           <StatCard
-            count={mockGradeStats.subjects}
+            count={gradeStats.subjects}
             label="Subjects"
-            subtitle="Configured for results"
+            subtitle="Available for results"
             icon={IconBook}
             colorIndex={2}
-            loading={false}
+            loading={gradeStatsLoading}
           />
           <StatCard
-            count={mockGradeStats.markRange}
+            count={gradeStats.mark_range}
             label="Mark Range"
-            subtitle="Min - Max marks"
+            subtitle="Min - Max scores"
             icon={IconHash}
             colorIndex={3}
-            loading={false}
+            loading={gradeStatsLoading}
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
-            <Button variant="outlined" size="small" startIcon={<IconSettings size={16} />} onClick={() => showSnackbar('Config applied to previous term')}>
-              Use same Config for previous Term
+          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<IconSettings size={16} />}
+              disabled={!currentSessionTermId}
+              onClick={async () => {
+                try {
+                  const res = await resultSetupApi.syncConfig();
+                  if (res.data.status) {
+                    showSnackbar(res.data.message);
+                  }
+                } catch (err) {
+                  showSnackbar('Failed to sync config', 'error');
+                }
+              }}
+            >
+              Sync previous Term Config to New Term
             </Button>
           </Box>
           <GradeConfiguration sessionTermId={currentSessionTermId} />
@@ -290,7 +363,7 @@ const ResultSetupTab = () => {
                   <Box sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="subtitle2" fontWeight={600}>{t.sample}</Typography>
                     {activeTemplate !== t.sample ? (
-                      <Button size="small" variant="contained" onClick={() => handleTemplateSelect(t.sample)}>Select</Button>
+                      <Button size="small"  onClick={() => handleTemplateSelect(t.sample)}>Select</Button>
                     ) : (
                       <Chip label="Active" size="small" color="success" />
                     )}
@@ -315,42 +388,34 @@ const ResultSetupTab = () => {
       <InnerTabPanel value={innerTab} index={3}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <StatCard
-            count={mockNomenclatureStats.total}
+            count={nomenclature.length}
             label="Total Positions"
             subtitle="Defined position names"
             icon={IconList}
             colorIndex={0}
-            loading={false}
+            loading={nomenclatureLoading}
           />
           <StatCard
-            count={mockNomenclatureStats.active}
+            count={nomenclature.filter(n => n.status === 'active').length}
             label="Active"
             subtitle="Currently in use"
             icon={IconCheck}
             colorIndex={1}
-            loading={false}
+            loading={nomenclatureLoading}
           />
           <StatCard
-            count={mockNomenclatureStats.inactive}
+            count={nomenclature.filter(n => n.status === 'inactive').length}
             label="Inactive"
             subtitle="Deactivated positions"
             icon={IconX}
             colorIndex={3}
-            loading={false}
-          />
-          <StatCard
-            count={mockNomenclatureStats.positionsUsed}
-            label="Positions Used"
-            subtitle="Mapped to students"
-            icon={IconAward}
-            colorIndex={2}
-            loading={false}
+            loading={nomenclatureLoading}
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight={600}>Comment Nomenclature</Typography>
-            <Button variant="contained" size="small" startIcon={<IconPlus size={16} />} onClick={() => { setNomenclatureDialog({ open: true, editing: null }); setNomenclatureForm({ position_name: '', status: 'active' }); }}>
+            <Button  size="small" startIcon={<IconPlus size={16} />} onClick={() => { setNomenclatureDialog({ open: true, editing: null }); setNomenclatureForm({ position_name: '', status: 'active' }); }}>
               Add Position Name
             </Button>
           </Box>
@@ -383,16 +448,16 @@ const ResultSetupTab = () => {
                           <IconEdit size={18} style={{ marginRight: 8 }} /> Edit
                         </MenuItem>
                         <MenuItem onClick={() => {
-                          setNomenclature(nomenclature.map(nm => nm.id === n.id ? { ...nm, status: nm.status === 'active' ? 'inactive' : 'active' } : nm));
                           setNomMenuAnchor(null);
-                          showSnackbar('Nomenclature status updated');
+                          const newStatus = n.status === 'active' ? 'inactive' : 'active';
+                          setConfirmDialog({ open: true, id: n.id, action: newStatus, label: n.position_name });
                         }}>
                           {n.status === 'active' ? <><IconX size={18} style={{ marginRight: 8 }} /> Deactivate</> : <><IconCheck size={18} style={{ marginRight: 8 }} /> Activate</>}
                         </MenuItem>
-                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignatureDialog({ open: true, positionName: n.position_name }); setSignatureFile(null); }}>
+                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignatureDialog({ open: true, id: n.id, positionName: n.position_name }); setSignatureFile(n.signature || null); }}>
                           <IconSignature size={18} style={{ marginRight: 8 }} /> Change Signature
                         </MenuItem>
-                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignaturePreview({ open: true, src: '' }); }}>
+                        <MenuItem onClick={() => { setNomMenuAnchor(null); setSignaturePreview({ open: true, src: n.signature || '' }); }}>
                           <IconEye size={18} style={{ marginRight: 8 }} /> Preview Signature
                         </MenuItem>
                         <MenuItem onClick={() => handleNomDelete(n.id)} sx={{ color: 'error.main' }}>
@@ -475,7 +540,7 @@ const ResultSetupTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNomenclatureDialog({ open: false, editing: null })}>Cancel</Button>
-          <Button variant="contained" onClick={handleNomSave}>Save</Button>
+          <Button size='small' onClick={handleNomSave}>Save</Button>
         </DialogActions>
       </Dialog>
 
@@ -502,7 +567,7 @@ const ResultSetupTab = () => {
       </Dialog>
 
       {/* ── Change Signature Dialog ──────────────────────────── */}
-      <Dialog open={signatureDialog.open} onClose={() => setSignatureDialog({ open: false, positionName: '' })} maxWidth="sm" fullWidth>
+      <Dialog open={signatureDialog.open} onClose={() => setSignatureDialog({ open: false, id: null, positionName: '' })} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>Change Signature — {signatureDialog.positionName}</DialogTitle>
         <DialogContent dividers>
           <Box sx={{ textAlign: 'center', py: 3 }}>
@@ -540,8 +605,25 @@ const ResultSetupTab = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSignatureDialog({ open: false, positionName: '' })}>Cancel</Button>
-          <Button variant="contained" disabled={!signatureFile} onClick={() => { setSignatureDialog({ open: false, positionName: '' }); showSnackbar('Signature updated successfully'); }}>
+          <Button onClick={() => setSignatureDialog({ open: false, id: null, positionName: '' })}>Cancel</Button>
+          <Button size='small' disabled={!signatureFile} onClick={async () => {
+            try {
+              const response = await resultSetupApi.saveCommentNomenclature({
+                id: signatureDialog.id,
+                position_name: signatureDialog.positionName,
+                signature: signatureFile,
+              });
+              if (response.data.status) {
+                showSnackbar('Signature updated successfully');
+                await fetchNomenclatures();
+              }
+            } catch (err) {
+              console.error('Failed to save signature:', err);
+              showSnackbar('Failed to save signature', 'error');
+            }
+            setSignatureDialog({ open: false, id: null, positionName: '' });
+            setSignatureFile(null);
+          }}>
             Save Signature
           </Button>
         </DialogActions>
@@ -564,6 +646,24 @@ const ResultSetupTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSignaturePreview({ open: false, src: '' })}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Confirm Status Toggle Dialog ──────────────────────── */}
+      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, id: null, action: '', label: '' })} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {confirmDialog.action === 'active' ? 'Activate' : 'Deactivate'} Nomenclature
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to {confirmDialog.action === 'active' ? 'activate' : 'deactivate'} <strong>{confirmDialog.label}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialog({ open: false, id: null, action: '', label: '' })}>Cancel</Button>
+          <Button   onClick={() => handleNomToggleStatus(confirmDialog.id)}>
+            {confirmDialog.action === 'active' ? 'Activate' : 'Deactivate'}
+          </Button>
         </DialogActions>
       </Dialog>
 

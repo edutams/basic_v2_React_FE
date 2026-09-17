@@ -31,13 +31,6 @@ const mockTemplateStats = {
   caReports: 'Enabled',
 };
 
-const mockPromotionStats = {
-  classes: 6,
-  autoPromo: 'Enabled',
-  criteria: 3,
-  passMark: '40%',
-};
-
 function InnerTabPanel({ children, value, index }) {
   return (
     <div role="tabpanel" hidden={value !== index}>
@@ -55,6 +48,8 @@ const ResultSetupTab = () => {
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
   const [gradeStats, setGradeStats] = useState({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
   const [gradeStatsLoading, setGradeStatsLoading] = useState(false);
+  const [promotionStats, setPromotionStats] = useState({ total_rules: 0, programmes: 0, subject_types: 0, total_subjects: 0, pass_mark: '—' });
+  const [promotionStatsLoading, setPromotionStatsLoading] = useState(false);
   const [templateDivFilter, setTemplateDivFilter] = useState(dummyProgrammes[0].name);
   const [nomenclature, setNomenclature] = useState([]);
   const [nomenclatureLoading, setNomenclatureLoading] = useState(false);
@@ -115,6 +110,25 @@ const ResultSetupTab = () => {
     loadStats();
     return () => { cancelled = true; };
   }, [currentSessionTermId]);
+
+  // ── Fetch promotion stats on mount ──────────────────────────
+  const fetchPromotionStats = useCallback(async () => {
+    setPromotionStatsLoading(true);
+    try {
+      const res = await resultSetupApi.getPromotionStats();
+      if (res.data.status) {
+        setPromotionStats(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch promotion stats:', err);
+    } finally {
+      setPromotionStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPromotionStats();
+  }, [fetchPromotionStats]);
 
   const innerTabs = [
     { label: '1. Grade & Config. Settings', icon: <IconAward size={16} /> },
@@ -479,41 +493,41 @@ const ResultSetupTab = () => {
       <InnerTabPanel value={innerTab} index={4}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <StatCard
-            count={mockPromotionStats.classes}
-            label="Classes"
+            count={promotionStats.programmes}
+            label="Programmes"
             subtitle="With promotion rules"
             icon={IconSchool}
             colorIndex={0}
-            loading={false}
+            loading={promotionStatsLoading}
           />
           <StatCard
-            count={mockPromotionStats.autoPromo}
-            label="Auto-Promotion"
-            subtitle="Status"
+            count={promotionStats.pass_mark}
+            label="Pass Mark"
+            subtitle="Cumulative minimum"
             icon={IconCheck}
             colorIndex={1}
-            loading={false}
+            loading={promotionStatsLoading}
           />
           <StatCard
-            count={mockPromotionStats.criteria}
-            label="Criteria"
-            subtitle="Promotion requirements"
+            count={promotionStats.subject_types}
+            label="Subject Types"
+            subtitle="Compulsory / Elective / Trade"
             icon={IconSettings}
             colorIndex={2}
-            loading={false}
+            loading={promotionStatsLoading}
           />
           <StatCard
-            count={mockPromotionStats.passMark}
-            label="Pass Mark"
-            subtitle="Minimum for promotion"
+            count={promotionStats.total_subjects}
+            label="Total Subjects"
+            subtitle="Assigned across all types"
             icon={IconAward}
             colorIndex={3}
-            loading={false}
+            loading={promotionStatsLoading}
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 2, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
           <Typography variant="h6" fontWeight={600} mb={2}></Typography>
-          <PromotionSettings />
+          <PromotionSettings onStatsRefresh={fetchPromotionStats} />
         </Paper>
       </InnerTabPanel>
 

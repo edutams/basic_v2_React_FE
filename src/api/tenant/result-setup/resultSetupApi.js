@@ -44,6 +44,9 @@ const resultSetupApi = {
     tenantApi.delete('/result-setup/mark-configurations/reset', { data }),
 
   // ── Promotion Settings ───────────────────────────────────
+  getPromotionStats: (params) =>
+    tenantApi.get('/result-setup/promotion-stats', { params }),
+
   getPromotionConfigurations: (params) =>
     tenantApi.get('/result-setup/promotion-settings', { params }),
 

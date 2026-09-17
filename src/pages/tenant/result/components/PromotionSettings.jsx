@@ -13,7 +13,7 @@ import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 import { fetchTenantSessions } from '@/api/tenant/session-term/sessionTermApi';
 import tenantApi from '@/api/tenant/tenant_api';
 
-const PromotionSettings = () => {
+const PromotionSettings = ({ onStatsRefresh }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -117,6 +117,7 @@ const PromotionSettings = () => {
 
       if (response.data.status) {
         await fetchConfig();
+        onStatsRefresh?.();
       }
     } catch (err) {
       console.error('Failed to save cumulative mark:', err);
@@ -139,6 +140,7 @@ const PromotionSettings = () => {
 
       if (response.data.status) {
         await fetchConfig();
+        onStatsRefresh?.();
       }
     } catch (err) {
       console.error('Failed to save promotion settings:', err);

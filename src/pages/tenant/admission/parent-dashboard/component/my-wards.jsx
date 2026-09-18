@@ -184,7 +184,9 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           </Stack>
         </Box>
 
-        {/* Financial Info — single total payable figure from the wards payload */}
+        {/* Financial Info — this ward's own outstanding balance, not what's
+            already been paid (that's still available as ward.paid, just
+            not what this card is labeled to show). */}
         <Box sx={{ borderTop: '1px solid #e2e8f0', pt: 1.25, mb: 1.5 }}>
           <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
             TOTAL PAYABLE
@@ -199,7 +201,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               whiteSpace: 'nowrap',
             }}
           >
-            ₦{Number(ward.paid).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ₦{Number(ward.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Typography>
         </Box>
 
@@ -249,7 +251,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             }}
           >
             <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
-              ℹ️ A wallet account has not been generated for {ward.name.split(' ')[0]} make payment to generate.
+              ℹ️ A wallet account has not been generated for {ward.name.split(' ').slice(0, 2).join(' ')}, make payment to generate.
             </Typography>
           </Box>
         )}

@@ -84,6 +84,17 @@ const CONFIGS = {
       { key: 'quizzes', label: 'Quiz Avg %' },
     ],
   },
+  subjects: {
+    title: 'Subjects',
+    icon: MenuBookOutlined,
+    color: '#9333EA',
+    columns: [
+      { key: 'ward', label: 'Ward' },
+      { key: 'subject_name', label: 'Subject' },
+      { key: 'subject_code', label: 'Code' },
+      { key: 'subject_status', label: 'Status' },
+    ],
+  },
   outstanding: {
     title: 'Outstanding Fees Breakdown',
     icon: AccountBalanceWalletOutlined,
@@ -136,6 +147,9 @@ const CONFIGS = {
 
 const riskColor = (risk) =>
   risk === 'At Risk' ? '#DC2626' : risk === 'Moderate' ? '#D97706' : '#16A34A';
+
+const subjectStatusColor = (status) =>
+  status === 'Compulsory' ? '#2563EB' : status === 'Trade' ? '#D97706' : '#16A34A';
 
 /**
  * Detail modal for the parent analytics cards. On open it calls
@@ -278,6 +292,18 @@ const InsightsDetailModal = ({ open, onClose, type = 'academic' }) => {
                               height: 20,
                               bgcolor: `${riskColor(row[col.key])}1A`,
                               color: riskColor(row[col.key]),
+                              fontWeight: 700,
+                            }}
+                          />
+                        ) : col.key === 'subject_status' ? (
+                          <Chip
+                            label={row[col.key]}
+                            size="small"
+                            sx={{
+                              fontSize: '0.62rem',
+                              height: 20,
+                              bgcolor: `${subjectStatusColor(row[col.key])}1A`,
+                              color: subjectStatusColor(row[col.key]),
                               fontWeight: 700,
                             }}
                           />

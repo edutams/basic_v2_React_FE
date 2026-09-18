@@ -238,8 +238,10 @@ export const fetchSessionTerms = async () => {
   return { ...response.data, data: response.data.data ?? [] };
 };
 
-// Fetch session terms for a specific session ID
-export const fetchSessionTermsBySession = async (sessionId) => {
-  const response = await api.get('/session-terms', { params: { session_id: sessionId, active_only: true, per_page: 100 } });
+// Fetch session terms for a specific session ID. activeOnly=false returns
+// every term in that session regardless of each term's own active/inactive
+// status (still scoped to just this one session, not every session ever).
+export const fetchSessionTermsBySession = async (sessionId, activeOnly = true) => {
+  const response = await api.get('/session-terms', { params: { session_id: sessionId, active_only: activeOnly, per_page: 100 } });
   return { ...response.data, data: response.data.data ?? [] };
 };

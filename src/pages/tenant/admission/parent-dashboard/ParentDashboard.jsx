@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
+import useAuth from '@/hooks/useAuth';
 import {
   getParentWards,
   getParentBatches,
@@ -11,7 +12,7 @@ import {
 } from '@/api/tenant/admission/admissionApi';
 import {
   fetchActiveSessionTerm,
-  fetchSessionTerms,
+  fetchSessionTermsBySession,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import MyWards from './component/my-wards';
@@ -35,6 +36,7 @@ const fmtDate = (d) => {
 
 const ParentDashboard2 = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
 
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -53,7 +55,18 @@ const ParentDashboard2 = () => {
 
     const load = async () => {
       try {
-        const res = await fetchSessionTerms();
+        // Only the current session's own terms (every term in it, active or
+        // not — the parent should still be able to pick a past term within
+        // the current session) — the Academic Overview dropdown was
+        // previously fed every session_term this tenant has ever had
+        // (fetchSessionTerms(), unscoped across every session ever).
+        // Resolve the active session first, then ask for just that
+        // session's terms.
+        const active = await fetchActiveSessionTerm();
+        const sessionId = active?.status ? active?.data?.session_id : null;
+        if (!sessionId) return;
+
+        const res = await fetchSessionTermsBySession(sessionId, false);
         if (!mounted || !res?.status) return;
 
         setSessionTerms(
@@ -226,7 +239,12 @@ const ParentDashboard2 = () => {
             gap: 1.5,
           }}
         >
-          <ParentWalletAccount totalPayable={finance?.outstanding} />
+          <ParentWalletAccount
+            totalPayable={finance?.outstanding}
+            accountNumber={finance?.walletAccount}
+            walletBalance={finance?.walletBalance}
+            parentName={[user?.fname, user?.lname].filter(Boolean).join(' ')}
+          />
           <TermCalendar {...termInfo} />
           <ActivityLogs />
         </Box>

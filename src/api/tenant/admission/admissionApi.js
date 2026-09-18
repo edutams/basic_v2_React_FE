@@ -168,6 +168,17 @@ export const getParentBatches = async (sessionTermId = null) => {
   return response.data;
 };
 
+// Wallet options for one specific payment — the guardian's own wallet plus
+// whichever wards (by user_id) are actually being paid for right now.
+// Powers the "pick which wallet to pay from" modal (PaySchoolFees /
+// PayInvoice). Only returns wallets that actually exist yet.
+export const getParentPaymentWallets = async (wardIds = []) => {
+  const response = await api.get('/admission/parent/payment-wallets', {
+    params: { ward_ids: wardIds },
+  });
+  return response.data;
+};
+
 export const getParentInsightsDetail = async (type, sessionTermId = null) => {
   const params = { type };
   if (sessionTermId) params.session_term_id = sessionTermId;

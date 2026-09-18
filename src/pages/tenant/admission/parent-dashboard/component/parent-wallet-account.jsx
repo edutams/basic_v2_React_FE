@@ -5,7 +5,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 
-const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', bank = 'Zenith Bank' }) => {
+const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, parentName }) => {
   return (
     <Card
       elevation={0}
@@ -78,26 +78,42 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
         <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569', mb: 0.75 }}>
           Wallet Account Details (Parent)
         </Typography>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-              Account Number
-            </Typography>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-              {accountNumber}
-            </Typography>
-          </Box>
-          {bank && (
-            <Box textAlign="right">
+        {accountNumber ? (
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box>
               <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-                Bank
+                Account Number
               </Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                {bank}
+                {accountNumber}
               </Typography>
             </Box>
-          )}
-        </Stack>
+            {walletBalance != null && (
+              <Box textAlign="right">
+                <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
+                  Balance
+                </Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                  ₦{Number(walletBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        ) : (
+          <Box
+            sx={{
+              bgcolor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '9px',
+              px: 1.25,
+              py: 0.75,
+            }}
+          >
+            <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
+              ℹ️ A wallet account has not been generated for {parentName || 'you'}, make payment to generate.
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Buttons */}

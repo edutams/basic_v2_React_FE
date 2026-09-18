@@ -14,8 +14,10 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
+import { getParentAcademics } from '@/api/tenant/admission/admissionApi';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
@@ -78,6 +80,9 @@ const StatBox = ({ label, onClick, children }) => (
 const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms = [] }) => {
   const [detailType, setDetailType] = useState(null);
   const [academicSessionTermId, setAcademicSessionTermId] = useState('');
+  const [wardAcademics, setWardAcademics] = useState([]);
+  const [academicsLoading, setAcademicsLoading] = useState(false);
+  const [wardSwitching, setWardSwitching] = useState(false);
 
   // Default to the first session term when it arrives
   useEffect(() => {
@@ -86,7 +91,42 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
     if (first) setAcademicSessionTermId(first.id);
   }, [sessionTerms, academicSessionTermId]);
 
-  // TODO: fetch academic data using academicSessionTermId and selectedWard.id
+  // Fetched once per session-term change, for every ward at once —
+  // switching the ward dropdown just re-selects from this same array below,
+  // it doesn't need its own fetch.
+  useEffect(() => {
+    if (!academicSessionTermId) return;
+    let mounted = true;
+    setAcademicsLoading(true);
+    getParentAcademics(academicSessionTermId)
+      .then((res) => {
+        if (mounted && res?.status) setWardAcademics(res.data?.wards || []);
+      })
+      .catch((err) => console.error('Failed to load ward academics:', err))
+      .finally(() => {
+        if (mounted) setAcademicsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [academicSessionTermId]);
+
+  const activeWardId = selectedWard?.id || wards[0]?.id;
+  const activeWardAcademics = wardAcademics.find((w) => w.id === activeWardId);
+  const totalSubjects = activeWardAcademics?.subjects?.total ?? null;
+
+  // Switching the ward dropdown re-selects from the same already-fetched
+  // wardAcademics array (see above — no separate network call per ward),
+  // but that switch should still read as "loading this ward's data" to the
+  // parent, same as the session-term filter, not an instant silent swap.
+  useEffect(() => {
+    if (!activeWardId) return;
+    setWardSwitching(true);
+    const t = setTimeout(() => setWardSwitching(false), 300);
+    return () => clearTimeout(t);
+  }, [activeWardId]);
+
+  const showLoadingSkeleton = academicsLoading || wardSwitching;
 
   return (
     <Card
@@ -112,6 +152,9 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
 
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" gap={0.75}>
           {/* Session / Term dropdown — filters academic data */}
+          {sessionTerms.length === 0 && (
+            <Skeleton variant="rounded" width={170} height={32} sx={{ borderRadius: '7px' }} />
+          )}
           {sessionTerms.length > 0 && (
             <FormControl size="small" sx={{ minWidth: { xs: 130, sm: 170 }, maxWidth: 230 }}>
               <Select
@@ -139,6 +182,9 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
           )}
 
           {/* Ward selector */}
+          {wards.length === 0 && (
+            <Skeleton variant="rounded" width={140} height={32} sx={{ borderRadius: '7px' }} />
+          )}
           {wards.length > 0 && (
             <Select
               value={selectedWard?.id || wards[0]?.id}
@@ -167,6 +213,31 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
         </Stack>
       </Stack>
 
+      {showLoadingSkeleton ? (
+        <>
+          {/* Skeleton for the 5 stat tiles */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' },
+              gap: 1.25,
+              mb: 2,
+            }}
+          >
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={64} sx={{ borderRadius: '9px' }} />
+            ))}
+          </Box>
+
+          {/* Skeleton for the 3 bottom sub-panels */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5 }}>
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={220} sx={{ borderRadius: '14px' }} />
+            ))}
+          </Box>
+        </>
+      ) : (
+        <>
       {/* Top 5 Stat Cards Row — on a white background wrapper */}
       <Box
       // sx={{
@@ -218,13 +289,15 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
           </StatBox>
 
           {/* Stat 3: Total Subjects */}
-          <StatBox label="Total Subjects" onClick={() => setDetailType('academic')}>
+          <StatBox label="Total Subjects" onClick={() => setDetailType('subjects')}>
             <Box sx={{ width: 30, height: 30, borderRadius: '7px', bgcolor: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <MenuBookOutlinedIcon sx={{ fontSize: 17 }} />
             </Box>
             <Box sx={{ minWidth: 0, ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
               <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Total Subjects</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>9</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                {totalSubjects ?? '—'}
+              </Typography>
               <Typography sx={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>This Term</Typography>
             </Box>
           </StatBox>
@@ -393,6 +466,8 @@ const AcademicOverview = ({ selectedWard, wards = [], onSelectWard, sessionTerms
           </Stack>
         </Box>
       </Box>
+        </>
+      )}
 
       {/* Detail modal — fetches from /admission/parent-insights/detail on open */}
       <InsightsDetailModal

@@ -22,8 +22,10 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import { fetchParentPayments } from '@/api/tenant/bursary/classLedger';
 import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
+import { getParentPaymentWallets } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
+import SelectWalletModal from '@/components/tenant/bursary/SelectWalletModal';
 
 const naira = (n) => `₦${(Number(n) || 0).toLocaleString()}`;
 
@@ -50,6 +52,14 @@ const PaySchoolFees = () => {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState({}); // invoice_id -> true
+
+  // Wallet picker — opened by "Pay Now", scoped to just the wards that
+  // actually have a selected payment right now (not every ward this
+  // guardian has).
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [wallets, setWallets] = useState([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+  const [selectedWalletId, setSelectedWalletId] = useState(null);
 
   const loadPayments = useCallback(async () => {
     setLoading(true);
@@ -88,39 +98,64 @@ const PaySchoolFees = () => {
     setSelected(next);
   };
 
+  // Build the same schedule payload the invoice page uses — extracted so
+  // both "Pay Now" (to know which wards to fetch wallets for) and the
+  // actual confirm step can share it.
+  const buildSchedulePayload = () => {
+    const payload = [];
+    wards.forEach((ward) => {
+      const fname = ward.name?.split(' ')[0] || '';
+      const lname = ward.name?.split(' ').slice(1).join(' ') || '';
+      (ward.payments || []).forEach((p) => {
+        if (!selected[p.invoice_id]) return;
+        payload.push({
+          bursary_schedule_id: p.bursary_schedule_id,
+          user_id: ward.id,
+          session_term_id: p.session_term_id,
+          amount: p.schedule_amount || p.payable,
+          instValue: p.payable,
+          paymentname: { name: p.payment_name, rev_code: p.rev_code },
+          fee_bearer: p.fee_bearer || 'client',
+          checked: true,
+          fname,
+          lname,
+          payment_type: 'ONLINE',
+        });
+      });
+    });
+    return payload;
+  };
+
   const handlePay = async () => {
     if (totalPayable <= 0) {
       notify.error('Please select at least one payment');
       return;
     }
 
+    const wardIds = [...new Set(buildSchedulePayload().map((p) => p.user_id))];
+
+    setSelectedWalletId(null);
+    setWalletModalOpen(true);
+    setWalletsLoading(true);
+    try {
+      const res = await getParentPaymentWallets(wardIds);
+      setWallets(res?.status ? res.data || [] : []);
+    } catch (err) {
+      console.error('Failed to load payment wallets:', err);
+      setWallets([]);
+    } finally {
+      setWalletsLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedWalletId) return;
+
     setPaying(true);
     setError('');
     try {
-      // Build the same schedule payload the invoice page uses.
-      const payload = [];
-      wards.forEach((ward) => {
-        const fname = ward.name?.split(' ')[0] || '';
-        const lname = ward.name?.split(' ').slice(1).join(' ') || '';
-        (ward.payments || []).forEach((p) => {
-          if (!selected[p.invoice_id]) return;
-          payload.push({
-            bursary_schedule_id: p.bursary_schedule_id,
-            user_id: ward.id,
-            session_term_id: p.session_term_id,
-            amount: p.schedule_amount || p.payable,
-            instValue: p.payable,
-            paymentname: { name: p.payment_name, rev_code: p.rev_code },
-            fee_bearer: p.fee_bearer || 'client',
-            checked: true,
-            fname,
-            lname,
-            payment_type: 'ONLINE',
-          });
-        });
-      });
-
-      const res = await createPendingPayment({ schedules: payload });
+      const payload = buildSchedulePayload();
+      const res = await createPendingPayment({ schedules: payload, payer_user_id: selectedWalletId });
       if (res?.success) {
         const paymentData = res.data || [];
         if (paymentData.length === 0) {
@@ -139,6 +174,7 @@ const PaySchoolFees = () => {
           hash,
         }));
 
+        setWalletModalOpen(false);
         makePayment(data, hash);
       } else {
         setError(res?.message || 'Payment initiation failed');
@@ -354,6 +390,18 @@ const PaySchoolFees = () => {
           </Paper>
         </>
       )}
+
+      <SelectWalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        wallets={wallets}
+        loading={walletsLoading}
+        selectedWalletId={selectedWalletId}
+        onSelect={setSelectedWalletId}
+        onConfirm={handleConfirmPayment}
+        amount={totalPayable}
+        confirmLoading={paying}
+      />
     </PageContainer>
   );
 };

@@ -179,6 +179,13 @@ export const getParentPaymentWallets = async (wardIds = []) => {
   return response.data;
 };
 
+// The guardian's own wallet + the bursary payments settled from it.
+// Powers "Wallet Transactions" on the Parent Wallet Account card.
+export const getParentWalletTransactions = async (page = 1) => {
+  const response = await api.get('/admission/parent/wallet-transactions', { params: { page } });
+  return response.data;
+};
+
 export const getParentInsightsDetail = async (type, sessionTermId = null) => {
   const params = { type };
   if (sessionTermId) params.session_term_id = sessionTermId;

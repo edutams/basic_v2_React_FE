@@ -1,12 +1,20 @@
-import React from 'react';
-import { Box, Card, Typography, Stack, Button, IconButton } from '@mui/material';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Card, Typography, Stack, Button, IconButton, useTheme } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import WalletTransactionsModal from './wallet-transactions-modal';
 
 const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, parentName }) => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const [transactionsOpen, setTransactionsOpen] = useState(false);
+
   return (
+    <>
     <Card
       elevation={0}
       sx={{
@@ -123,6 +131,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, p
           size="small"
           disableElevation
           startIcon={<AddCircleOutlineIcon sx={{ fontSize: 14 }} />}
+          onClick={() => navigate('/pay-school-fees')}
           sx={{
             flex: 1,
             borderRadius: '7px',
@@ -142,8 +151,10 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, p
         </Button>
         <Button
           variant="outlined"
+          color="inherit"
           size="small"
           startIcon={<ReceiptLongOutlinedIcon sx={{ fontSize: 14 }} />}
+          onClick={() => setTransactionsOpen(true)}
           sx={{
             flex: 1,
             borderRadius: '7px',
@@ -155,13 +166,26 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, p
             px: 0.75,
             py: 0.5,
             whiteSpace: 'nowrap',
-            '&:hover': { borderColor: '#1d4ed8', bgcolor: '#eff6ff' },
+            // The real cause of "hover is white": this app's theme
+            // (theme/Components.jsx MuiButton.outlinedPrimary) hardcodes
+            // outlined+primary buttons to `color: white` on hover — that
+            // theme rule was winning over this file's own hover sx, since
+            // an unset `color` prop here defaults to "primary" and matches
+            // it. `color="inherit"` above opts this button out of that
+            // variant entirely so this sx is the only styling in play.
+            '&:hover': {
+              borderColor: '#1d4ed8',
+              bgcolor: isDarkMode ? 'rgba(37,99,235,0.25)' : '#dbeafe',
+              color: '#1d4ed8',
+            },
           }}
         >
           Wallet Transactions
         </Button>
       </Stack>
     </Card>
+    <WalletTransactionsModal open={transactionsOpen} onClose={() => setTransactionsOpen(false)} />
+    </>
   );
 };
 

@@ -152,7 +152,11 @@ const SelectWalletModal = ({
         <Button
           variant="contained"
           onClick={onConfirm}
-          disabled={!selectedWalletId || confirmLoading || wallets.length === 0}
+          // A wallet selection is only required when there's actually a
+          // wallet to choose from — if none exists yet, the payment should
+          // still proceed: SkoolPay's own widget creates one as part of
+          // the checkout flow itself.
+          disabled={(wallets.length > 0 && !selectedWalletId) || confirmLoading}
           sx={{ textTransform: 'none', fontWeight: 700 }}
         >
           {confirmLoading ? 'Processing…' : confirmLabel}

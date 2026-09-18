@@ -107,7 +107,10 @@ const ParentDashboard2 = () => {
         const ends = weeks.map((w) => new Date(w.end_date).getTime());
         const first = Math.min(...starts);
         const last = Math.max(...ends);
-        const schoolDays = weeksRes?.school_days_count ?? 0;
+        // WeekManagementController::getWeeks() nests this under `stats`,
+        // not a top-level `school_days_count` — reading the wrong key was
+        // why this always showed 0.
+        const schoolDays = weeksRes?.stats?.total_school_days ?? 0;
 
         setTermInfo({
           termName: `${session_name || ''} ${term_name || ''}`.trim(),

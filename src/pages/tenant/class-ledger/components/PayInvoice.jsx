@@ -1558,7 +1558,11 @@ const PayInvoice = () => {
           </Button>
           <Button
             size="small"
-            disabled={!selectedWallet || submittingPayment}
+            // A wallet selection is only required when there's actually a
+            // wallet to choose from — if none exists yet (availableWallets
+            // is empty), the payment should still proceed: SkoolPay's own
+            // widget creates one as part of the checkout flow itself.
+            disabled={(availableWallets.length > 0 && !selectedWallet) || submittingPayment}
             onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();

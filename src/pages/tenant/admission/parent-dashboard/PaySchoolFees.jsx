@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -46,6 +46,11 @@ const initialsOf = (name = '') =>
 const PaySchoolFees = () => {
   const navigate = useNavigate();
   const notify = useNotification();
+  const [searchParams] = useSearchParams();
+  // Set when this page is reached via a specific ward's own "Fund Wallet"
+  // button (my-wards.jsx) — narrows everything below to just that ward's
+  // own payments instead of every ward this guardian has.
+  const wardIdFilter = searchParams.get('ward_id');
 
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +84,8 @@ const PaySchoolFees = () => {
     loadPayments();
   }, [loadPayments]);
 
-  const allPayments = wards.flatMap((w) => w.payments || []);
+  const visibleWards = wardIdFilter ? wards.filter((w) => w.id === wardIdFilter) : wards;
+  const allPayments = visibleWards.flatMap((w) => w.payments || []);
   const selectedCount = Object.values(selected).filter(Boolean).length;
   const totalPayable = allPayments
     .filter((p) => selected[p.invoice_id])
@@ -90,7 +96,7 @@ const PaySchoolFees = () => {
   };
 
   const toggleWard = (wardId, checked) => {
-    const ward = wards.find((w) => w.id === wardId);
+    const ward = visibleWards.find((w) => w.id === wardId);
     const next = { ...selected };
     (ward?.payments || []).forEach((p) => {
       next[p.invoice_id] = checked;
@@ -103,7 +109,7 @@ const PaySchoolFees = () => {
   // actual confirm step can share it.
   const buildSchedulePayload = () => {
     const payload = [];
-    wards.forEach((ward) => {
+    visibleWards.forEach((ward) => {
       const fname = ward.name?.split(' ')[0] || '';
       const lname = ward.name?.split(' ').slice(1).join(' ') || '';
       (ward.payments || []).forEach((p) => {
@@ -139,7 +145,15 @@ const PaySchoolFees = () => {
     setWalletsLoading(true);
     try {
       const res = await getParentPaymentWallets(wardIds);
-      setWallets(res?.status ? res.data || [] : []);
+      const wardWallets = res?.status ? res.data || [] : [];
+      setWallets(wardWallets);
+      // Reached via one specific ward's own "Fund Wallet" button — default
+      // to that ward's own wallet rather than making the parent pick
+      // between it and their own (still free to change it in the modal).
+      if (wardIdFilter) {
+        const wardWallet = wardWallets.find((w) => w.id === wardIdFilter);
+        if (wardWallet) setSelectedWalletId(wardWallet.id);
+      }
     } catch (err) {
       console.error('Failed to load payment wallets:', err);
       setWallets([]);
@@ -149,7 +163,10 @@ const PaySchoolFees = () => {
   };
 
   const handleConfirmPayment = async () => {
-    if (!selectedWalletId) return;
+    // A selection is only required when there's actually a wallet to pick
+    // — if wallets is empty, proceed anyway: SkoolPay's own widget creates
+    // one as part of the checkout flow itself.
+    if (wallets.length > 0 && !selectedWalletId) return;
 
     setPaying(true);
     setError('');
@@ -223,7 +240,7 @@ const PaySchoolFees = () => {
           <Skeleton variant="rounded" height={160} />
           <Skeleton variant="rounded" height={160} />
         </Stack>
-      ) : wards.length === 0 ? (
+      ) : visibleWards.length === 0 ? (
         <Paper
           elevation={0}
           sx={{ p: 5, textAlign: 'center', borderRadius: 3, border: '1px dashed #D1D5DB' }}
@@ -233,14 +250,14 @@ const PaySchoolFees = () => {
             No outstanding payments
           </Typography>
           <Typography variant="body2" sx={{ color: '#9CA3AF', mt: 0.5 }}>
-            All fees for your wards are settled.
+            {wardIdFilter ? 'All fees for this ward are settled.' : 'All fees for your wards are settled.'}
           </Typography>
         </Paper>
       ) : (
         <>
           {/* ── Ward payment cards ── */}
           <Stack spacing={2}>
-            {wards.map((ward) => {
+            {visibleWards.map((ward) => {
               const wardSelected = (ward.payments || []).every((p) => selected[p.invoice_id]);
               const wardSome = (ward.payments || []).some((p) => selected[p.invoice_id]);
               const wardTotal = (ward.payments || []).reduce(

@@ -70,6 +70,10 @@ const PaySchoolFees = () => {
     setLoading(true);
     setError('');
     try {
+      // getParentPayments() only returns invoices with an outstanding
+      // balance — already-settled ones are excluded server-side, so a
+      // refetch after paying naturally drops that item with no client-side
+      // filtering needed here.
       const res = await fetchParentPayments();
       if (res?.status) setWards(res.data || []);
       else setError(res?.message || 'Failed to load payments');
@@ -84,6 +88,9 @@ const PaySchoolFees = () => {
     loadPayments();
   }, [loadPayments]);
 
+  // getParentPayments() only ever includes a ward here if they have at
+  // least one outstanding invoice, so no separate "hide empty ward" check
+  // is needed — this is purely the ?ward_id= display scope.
   const visibleWards = wardIdFilter ? wards.filter((w) => w.id === wardIdFilter) : wards;
   const allPayments = visibleWards.flatMap((w) => w.payments || []);
   const selectedCount = Object.values(selected).filter(Boolean).length;

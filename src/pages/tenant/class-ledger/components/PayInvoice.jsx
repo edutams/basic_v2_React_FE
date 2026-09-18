@@ -327,7 +327,10 @@ const PayInvoice = () => {
       setClassId(data.student_info?.class_id);
       setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
-      /* Map compulsory fees — all values come straight from API; payable pre-set from API */
+      /* Map compulsory fees — all values come straight from API; payable
+         pre-set from API. getStudentSchedule() already excludes
+         fully-settled invoices server-side (balance <= 0), so every row
+         here genuinely still needs payment — nothing to filter client-side. */
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const instList = item.installments || [];
         /* Auto-preselect the first installment if none is already set */
@@ -373,7 +376,8 @@ const PayInvoice = () => {
       });
       setCompFees(mappedComp);
 
-      /* Map optional fees */
+      /* Map optional fees — getStudentSchedule() already excludes
+         fully-settled invoices server-side, same as compulsory above. */
       const mappedOpt = (data.optional_data || []).map((item) => ({
         id: item.id,
         bursary_schedule_id: item.bursary_schedule_id,

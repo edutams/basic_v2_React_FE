@@ -55,9 +55,13 @@ export const fetchLandlordSessions = async () => {
   return response.data;
 };
 
-// Fetch the tenant's own sessions (paginated)
-export const fetchTenantSessions = async ({ page = 1, per_page = 10 } = {}) => {
-  const response = await api.get('/sessions', { params: { page, per_page } });
+// Fetch the tenant's own sessions. Paginated by default; pass `pagination: false`
+// to get the full unpaginated list (dropdowns/pickers), which returns just
+// `{ data, total }` without page metadata.
+export const fetchTenantSessions = async ({ page = 1, per_page = 10, pagination = true } = {}) => {
+  const params = { page, per_page };
+  if (pagination === false) params.pagination = false;
+  const response = await api.get('/sessions', { params });
   return response.data;
 };
 

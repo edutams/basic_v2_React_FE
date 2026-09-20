@@ -15,6 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { fetchPrintReceipt } from '@/api/tenant/bursary/transactionApi';
 import { useSearchParams } from 'react-router-dom';
+import PageContainer from '@/components/container/PageContainer';
 
 const PrintReceipt = () => {
   const [searchParams] = useSearchParams();
@@ -50,35 +51,50 @@ const PrintReceipt = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
+      <PageContainer title="Payment Receipt">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </PageContainer>
     );
   }
 
   if (error || !receiptData) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <Typography color="error">{error || 'No data found.'}</Typography>
-      </Box>
+      <PageContainer title="Payment Receipt">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <Typography color="error">{error || 'No data found.'}</Typography>
+        </Box>
+      </PageContainer>
     );
   }
 
   const { tenant, transaction, user, sessionDetails, total } = receiptData;
 
   return (
-    <>
-      <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-        <Button variant="contained" color="success" onClick={() => window.print()}>
-          🖨️ Print Receipt
-        </Button>
+    <PageContainer title="Payment Receipt">
+      {/* Same header-row convention every other page in this app uses
+          (title left, action button right) — this page previously had no
+          PageContainer/header at all, just a bare button floating above a
+          separately-centered receipt block, which is why it read as
+          "outside" the page. */}
+      <Box
+        className="no-print"
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+      >
+        <Typography variant="h5" fontWeight={700}>
+          Payment Receipt
+        </Typography>
       </Box>
 
       <Box
-        sx={{ padding: '40px 30px', maxWidth: 1000, margin: 'auto', background: '#fff' }}
+        sx={{ maxWidth: 1000, margin: 'auto', padding: '40px 30px', background: '#fff' }}
         className="receipt"
       >
         {/* School Header */}
+        <Button variant="contained" color="success" onClick={() => window.print()}>
+          🖨️ Print Receipt
+        </Button>
         <Box display="flex" alignItems="center" justifyContent="center" mb={4} gap={3}>
           {tenant?.school_logo && (
             <Box>
@@ -170,7 +186,16 @@ const PrintReceipt = () => {
           Thank you for your payment • This is a computer-generated receipt
         </Typography>
       </Box>
-    </>
+
+      <Box
+        className="no-print"
+        sx={{ maxWidth: 1000, margin: 'auto', display: 'flex', justifyContent: 'flex-end', mt: 2 }}
+      >
+        <Button variant="contained" color="success" onClick={() => window.print()}>
+          🖨️ Print Receipt
+        </Button>
+      </Box>
+    </PageContainer>
   );
 };
 

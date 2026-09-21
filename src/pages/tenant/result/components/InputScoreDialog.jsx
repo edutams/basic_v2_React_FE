@@ -3,90 +3,161 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Typography, Alert,
-  CircularProgress, useTheme, Box,
+  CircularProgress, useTheme, Box, Snackbar,
 } from '@mui/material';
 import { IconDownload, IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
-
-const dummyStudents = [
-  { id: 1, fullname: 'Adebayo Tunde', reg_id: 'STD/2025/001', ca_details: null, examScores: '', loading: false },
-  { id: 2, fullname: 'Chidinma Obi', reg_id: 'STD/2025/002', ca_details: null, examScores: '', loading: false },
-  { id: 3, fullname: 'Emeka Uche', reg_id: 'STD/2025/003', ca_details: null, examScores: '', loading: false },
-  { id: 4, fullname: 'Aisha Mohammed', reg_id: 'STD/2025/004', ca_details: null, examScores: '', loading: false },
-  { id: 5, fullname: 'Fatima Abubakar', reg_id: 'STD/2025/005', ca_details: null, examScores: '', loading: false },
-  { id: 6, fullname: 'Ibrahim Musa', reg_id: 'STD/2025/006', ca_details: null, examScores: '', loading: false },
-];
-
-const dummyCaType = [
-  {
-    display_name: 'CA1',
-    entities: [
-      { display_name: 'Test', max_score: 10 },
-    ],
-  },
-  {
-    display_name: 'CA2',
-    entities: [
-      { display_name: 'Assignment', max_score: 10 },
-    ],
-  },
-];
-
-const dummySettings = { exam_max_score: 60 };
+import { Link as RouterLink } from 'react-router-dom';
+import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 
 const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [students, setStudents] = useState([]);
-  const [caType] = useState(dummyCaType);
-  const [settings] = useState(dummySettings);
+  const [caType, setCaType] = useState([]);
+  const [settings, setSettings] = useState({ exam_max_score: 60 });
   const [caScoreErrors, setCaScoreErrors] = useState([]);
   const [examScoreErrors, setExamScoreErrors] = useState([]);
+  const [fetching, setFetching] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
   useEffect(() => {
-    if (open) {
-      let sourceStudents;
-      if (singleStudent) {
-        sourceStudents = [{
-          id: singleStudent.id,
-          fullname: `${singleStudent.fname} ${singleStudent.lname}`,
-          reg_id: singleStudent.user_id,
-          ca_details: null,
-          examScores: '',
-          loading: false,
-        }];
-      } else {
-        sourceStudents = dummyStudents;
-      }
-      const initialized = sourceStudents.map((s) => ({
-        ...s,
-        ca_details: JSON.parse(JSON.stringify(caType)),
-        examScores: '',
-        loading: false,
-      }));
-      setStudents(initialized);
-      setCaScoreErrors(initialized.map(() => new Array(caType.length).fill(false)));
-      setExamScoreErrors(new Array(initialized.length).fill(false));
-    }
-  }, [open, singleStudent]);
+    if (!open) return;
 
-  const getColspan = (ca) => Object.keys(ca.entities).length;
+    if (singleStudent) {
+      // Single student edit mode - use the student data directly
+      setCaType(singleStudent.caType || []);
+      setSettings(singleStudent.settings || { exam_max_score: 60 });
+      const initialized = [{
+        id: singleStudent.id,
+        fullname: `${singleStudent.fname} ${singleStudent.lname}`,
+        reg_id: singleStudent.user_id,
+        ca_details: normalizeCaDetails(singleStudent.ca, singleStudent.caType || []),
+        examScores: singleStudent.exam_score || '',
+        loading: false,
+      }];
+      setStudents(initialized);
+      setCaScoreErrors(initialized.map(() => new Array((singleStudent.caType || []).length).fill(false)));
+      setExamScoreErrors(new Array(initialized.length).fill(false));
+      return;
+    }
+
+    // Bulk mode - fetch students from API
+    const fetchStudents = async () => {
+      if (!allocation || !filter) return;
+      setFetching(true);
+      try {
+        const [studentsRes, configRes] = await Promise.all([
+          scoreManagerApi.getRegisteredStudents({
+            subject_id: allocation.subject_id,
+            session_term_id: filter.session_term_id || filter.session_id,
+            class_arm_id: allocation.class_arm_id,
+          }),
+          scoreManagerApi.fetchMarksConfiguration({
+            session_id: filter.session_id,
+            term_id: filter.term_id,
+            programme_id: filter.programme_id,
+          }),
+        ]);
+
+        const studentsData = studentsRes?.data?.data || [];
+        const configData = configRes?.data?.data?.[0];
+
+        // Parse CA type from config
+        // The API may return ca_content as an object (keyed by ca1, ca2, etc.) or as an array
+        let parsedCaType = [];
+        if (configData?.ca_content) {
+          const raw = typeof configData.ca_content === 'string'
+            ? JSON.parse(configData.ca_content)
+            : configData.ca_content;
+          if (Array.isArray(raw)) {
+            parsedCaType = raw;
+          } else if (typeof raw === 'object') {
+            parsedCaType = Object.values(raw);
+          }
+        }
+
+        setCaType(parsedCaType);
+        setSettings({ exam_max_score: configData?.exam_max_score || 60 });
+
+        const initialized = studentsData.map((s) => ({
+          id: s.user_id,
+          fullname: `${s.fname} ${s.lname}`,
+          reg_id: s.student_id,
+          course_registration_id: s.course_registration_id,
+          ca_details: normalizeCaDetails(s.ca_details, parsedCaType),
+          examScores: s.exam_score || '',
+          loading: false,
+        }));
+
+        setStudents(initialized);
+        setCaScoreErrors(initialized.map(() => new Array(parsedCaType.length).fill(false)));
+        setExamScoreErrors(new Array(initialized.length).fill(false));
+      } catch (err) {
+        console.error('Failed to fetch students:', err);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchStudents();
+  }, [open, singleStudent, allocation, filter]);
+
+  // CA entities may come back as an array or an object keyed by index/name — normalize to array
+  const getEntities = (ca) => {
+    if (!ca?.entities) return [];
+    return Array.isArray(ca.entities) ? ca.entities : Object.values(ca.entities);
+  };
+
+  const getColspan = (ca) => getEntities(ca).length;
+
+  // Normalize a student's saved ca_details into an array matching the caType
+  // template (entities as arrays with score fields). Without this, students
+  // with no saved scores get ca_details: [] and keystrokes are dropped, while
+  // students with saved scores get keyed objects that break .map().
+  const normalizeCaDetails = (details, template) => {
+    const source = Array.isArray(details) ? details : Object.values(details || {});
+    return template.map((ca, ci) => {
+      const savedCa = source[ci] || {};
+      const savedEntities = Array.isArray(savedCa.entities)
+        ? savedCa.entities
+        : Object.values(savedCa.entities || {});
+      return {
+        ...ca,
+        entities: getEntities(ca).map((ent, ei) => ({
+          ...ent,
+          score: savedEntities[ei]?.score ?? '',
+        })),
+      };
+    });
+  };
 
   const handleCaScoreChange = (studentIndex, caIndex, entityIndex, value) => {
     const numeric = value.replace(/[^0-9.]/g, '');
-    const maxScore = Number(caType[caIndex].entities[entityIndex].max_score);
+    const caEntities = getEntities(caType[caIndex]);
+    const maxScore = Number(caEntities[entityIndex].max_score);
     const parsed = parseFloat(numeric);
 
     const updated = [...students];
+    const currentStudent = updated[studentIndex];
+    // Defensive: if ca_details is missing/empty, rebuild it from the template
+    const baseDetails = Array.isArray(currentStudent.ca_details) && currentStudent.ca_details.length
+      ? currentStudent.ca_details
+      : normalizeCaDetails(null, caType);
     updated[studentIndex] = {
-      ...updated[studentIndex],
-      ca_details: updated[studentIndex].ca_details.map((ca, ci) => {
+      ...currentStudent,
+      ca_details: baseDetails.map((ca, ci) => {
         if (ci !== caIndex) return ca;
+        // Normalize entities to array before mapping
+        const currentEntities = getEntities(ca);
+        const updatedEntities = currentEntities.map((ent, ei) => {
+          if (ei !== entityIndex) return ent;
+          return { ...ent, score: numeric };
+        });
         return {
           ...ca,
-          entities: ca.entities.map((ent, ei) => {
-            if (ei !== entityIndex) return ent;
-            return { ...ent, score: numeric };
-          }),
+          entities: updatedEntities,
         };
       }),
     };
@@ -112,10 +183,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
     setExamScoreErrors(newErrors);
   };
 
-  const handleSave = (studentIndex) => {
+  const handleSave = async (studentIndex) => {
     const student = students[studentIndex];
     const hasFilledCA = student.ca_details?.some((ca) =>
-      ca.entities?.some((ent) => ent.score !== '' && ent.score !== undefined)
+      getEntities(ca).some((ent) => ent.score !== '' && ent.score !== undefined)
     );
     const hasFilledExam = student.examScores !== '';
 
@@ -127,11 +198,27 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
     updated[studentIndex] = { ...updated[studentIndex], loading: true };
     setStudents(updated);
 
-    setTimeout(() => {
-      const final = [...students];
-      final[studentIndex] = { ...final[studentIndex], loading: false };
-      setStudents(final);
-    }, 800);
+    try {
+      await scoreManagerApi.manualUpload({
+        student: {
+          user_id: student.id,
+          course_registration_id: student.course_registration_id,
+          ca_details: student.ca_details,
+          examScores: student.examScores,
+        },
+        session_id: filter?.session_id,
+        term_id: filter?.term_id,
+      });
+      showSnackbar(`Scores saved for ${student.fullname}`);
+    } catch (err) {
+      console.error('Failed to save score:', err);
+      showSnackbar(
+        err?.response?.data?.message || `Failed to save scores for ${student.fullname}`,
+        'error'
+      );
+    } finally {
+      setStudents((prev) => prev.map((s, si) => (si === studentIndex ? { ...s, loading: false } : s)));
+    }
   };
 
   const handleClose = () => {
@@ -148,10 +235,29 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
       <DialogTitle>
         {singleStudent
           ? `Edit Score — ${singleStudent.fname} ${singleStudent.lname}`
-          : `Input Score — ${allocation?.subject_name} (${allocation?.className})`
+          : `Input Score — ${allocation?.subject_name} (${allocation?.class_name ?? allocation?.className})`
         }
       </DialogTitle>
       <DialogContent>
+        {!fetching && students.length === 0 ? (
+          <Alert
+            severity="info"
+            sx={{ borderRadius: '8px', '& .MuiAlert-message': { width: '100%' } }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                component={RouterLink}
+                to="/subject-registration"
+              >
+                Go to Subject Registration
+              </Button>
+            }
+          >
+            No student has been registered for this allocated subject. Register students to input their scores.
+          </Alert>
+        ) : (
+          <>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
           <Button variant="contained" size="small" color="info" startIcon={<IconFileSpreadsheet size={16} />}>
             Download Excel
@@ -160,7 +266,15 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
             Download PDF
           </Button>
         </Box>
-        <TableContainer sx={{ overflowX: 'auto' }}>
+        <TableContainer sx={{
+          overflowX: 'auto',
+          // Hide number-input spinners (arrow up/down)
+          '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+            WebkitAppearance: 'none',
+            margin: 0,
+          },
+          '& input[type=number]': { MozAppearance: 'textfield' },
+        }}>
           <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
             <TableHead>
               <TableRow>
@@ -177,9 +291,9 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
                 <TableCell sx={{ fontWeight: 700 }} rowSpan={2} align="center">Action</TableCell>
               </TableRow>
               <TableRow>
-                {caType.map((ca) =>
-                  ca.entities.map((entity) => (
-                    <TableCell key={entity.display_name} sx={{ fontWeight: 700 }} align="center">
+                {caType.map((ca, ci) =>
+                  getEntities(ca).map((entity, ei) => (
+                    <TableCell key={`${ci}-${ei}`} sx={{ fontWeight: 700 }} align="center">
                       {entity.display_name} ({entity.max_score})
                     </TableCell>
                   ))
@@ -191,8 +305,9 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
                 <TableRow key={student.id} hover>
                   <TableCell>{si + 1}</TableCell>
                   <TableCell>{student.fullname}</TableCell>
-                  {caType.map((ca, ci) =>
-                    ca.entities.map((entity, ei) => (
+                  {caType.map((ca, ci) => {
+                    const entities = getEntities(ca);
+                    return entities.map((entity, ei) => (
                       <TableCell key={`${ci}-${ei}`} align="center">
                         <TextField
                           size="small"
@@ -205,8 +320,8 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
                           helperText={caScoreErrors[si]?.[ci] ? 'Invalid' : ''}
                         />
                       </TableCell>
-                    ))
-                  )}
+                    ));
+                  })}
                   <TableCell align="center">
                     <TextField
                       size="small"
@@ -233,6 +348,8 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
             </TableBody>
           </Table>
         </TableContainer>
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         {!singleStudent && (
@@ -242,6 +359,16 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
         )}
         <Button onClick={handleClose}>Close</Button>
       </DialogActions>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 };

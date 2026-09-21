@@ -21,6 +21,7 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
 
   const [editable, setEditable] = useState([]);
   const [errors, setErrors] = useState([]);
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -38,6 +39,7 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
         setEditable([emptyGrade()]);
       }
       setErrors([]);
+      setValidated(false);
     }
   }, [open, initialGrades]);
 
@@ -78,6 +80,7 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
       }
     }
     setErrors(errs);
+    setValidated(true);
     return errs.length === 0;
   };
 
@@ -105,7 +108,21 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
         )}
 
         <TableContainer>
-          <Table size="small">
+          <Table
+            size="small"
+            sx={{
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              '& .MuiTableCell-root': {
+                borderRight: '1px solid',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              },
+              '& tbody tr:nth-of-type(odd)': {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FAFAFA',
+              },
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: '5%' }}>#</TableCell>
@@ -127,6 +144,8 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
                       value={g.minimumScore}
                       onChange={(e) => updateRow(i, 'minimumScore', e.target.value)}
                       inputProps={{ step: 0.01, min: 0, max: 100 }}
+                      error={validated && g.minimumScore === ''}
+                      helperText={validated && g.minimumScore === '' ? 'Required' : ''}
                     />
                   </TableCell>
                   <TableCell>
@@ -135,6 +154,8 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
                       value={g.maximumScore}
                       onChange={(e) => updateRow(i, 'maximumScore', e.target.value)}
                       inputProps={{ step: 0.01, min: 0, max: 100 }}
+                      error={validated && g.maximumScore === ''}
+                      helperText={validated && g.maximumScore === '' ? 'Required' : ''}
                     />
                   </TableCell>
                   <TableCell>
@@ -142,6 +163,8 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
                       size="small" placeholder="Grade" fullWidth
                       value={g.grade}
                       onChange={(e) => updateRow(i, 'grade', e.target.value)}
+                      error={validated && !g.grade}
+                      helperText={validated && !g.grade ? 'Required' : ''}
                     />
                   </TableCell>
                   <TableCell>
@@ -149,6 +172,8 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
                       size="small" placeholder="Remark" fullWidth
                       value={g.remark}
                       onChange={(e) => updateRow(i, 'remark', e.target.value)}
+                      error={validated && !g.remark}
+                      helperText={validated && !g.remark ? 'Required' : ''}
                     />
                   </TableCell>
                   <TableCell>
@@ -157,6 +182,8 @@ const GradeSettingsDialog = ({ open, onClose, onSave, grades: initialGrades, div
                       value={g.gradePoint}
                       onChange={(e) => updateRow(i, 'gradePoint', e.target.value)}
                       inputProps={{ min: 0, max: 5 }}
+                      error={validated && g.gradePoint === ''}
+                      helperText={validated && g.gradePoint === '' ? 'Required' : ''}
                     />
                   </TableCell>
                   <TableCell>

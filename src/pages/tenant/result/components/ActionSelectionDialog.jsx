@@ -78,7 +78,7 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
           </Box>
           <Box>
             <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ fontSize: '0.85rem' }}>
-              {allocation.subject_name} ({allocation.className})
+              {allocation.subject_name} ({allocation.class_name ?? allocation.className})
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.725rem' }}>
               Select an option below to proceed

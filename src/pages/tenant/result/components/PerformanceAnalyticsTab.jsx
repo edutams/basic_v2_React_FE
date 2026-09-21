@@ -1,36 +1,124 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Grid, FormControl, InputLabel, Select, MenuItem, Avatar, Dialog, DialogTitle,
-  DialogContent, DialogActions, Chip, useTheme,
+  DialogContent, DialogActions, Chip, useTheme, Alert, CircularProgress,
 } from '@mui/material';
 import { IconChartBar, IconPrinter, IconX } from '@tabler/icons-react';
+import { useSearchParams } from 'react-router-dom';
 import Chart from 'react-apexcharts';
-
-const dummyResults = [
-  { id: 1, user_id: 'STD/2025/001', lname: 'Tunde', fname: 'Adebayo', mname: '', image: '', ca_score: 18, exam_score: 55, total: 73, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 2, user_id: 'STD/2025/002', lname: 'Obi', fname: 'Chidinma', mname: '', image: '', ca_score: 15, exam_score: 48, total: 63, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 3, user_id: 'STD/2025/003', lname: 'Uche', fname: 'Emeka', mname: '', image: '', ca_score: 12, exam_score: 42, total: 54, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 4, user_id: 'STD/2025/004', lname: 'Mohammed', fname: 'Aisha', mname: '', image: '', ca_score: 16, exam_score: 50, total: 66, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 5, user_id: 'STD/2025/005', lname: 'Abubakar', fname: 'Fatima', mname: '', image: '', ca_score: 10, exam_score: 38, total: 48, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 6, user_id: 'STD/2025/006', lname: 'Musa', fname: 'Ibrahim', mname: '', image: '', ca_score: 14, exam_score: 45, total: 59, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 7, user_id: 'STD/2025/007', lname: 'Okafor', fname: 'Chioma', mname: '', image: '', ca_score: 19, exam_score: 60, total: 79, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 8, user_id: 'STD/2025/008', lname: 'Adeyemi', fname: 'Bolaji', mname: '', image: '', ca_score: 8, exam_score: 30, total: 38, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 9, user_id: 'STD/2025/009', lname: 'Ibrahim', fname: 'Yusuf', mname: '', image: '', ca_score: 13, exam_score: 40, total: 53, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-  { id: 10, user_id: 'STD/2025/010', lname: 'Bello', fname: 'Zainab', mname: '', image: '', ca_score: 17, exam_score: 52, total: 69, subject_name: 'Mathematics', class_name: 'JSS 1', arm_name: 'A' },
-];
+import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 
 const PerformanceAnalyticsTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [searchParams] = useSearchParams();
   const [scoreRange, setScoreRange] = useState(10);
   const [participantsDialog, setParticipantsDialog] = useState({ open: false, range: null });
   const [distribution, setDistribution] = useState({ labels: [], values: [], ranges: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [results, setResults] = useState([]);
 
-  const computeDistribution = (range) => {
-    const totalScores = dummyResults.map(r => r.total);
+  // Context from the score sheet page
+  const context = useMemo(() => ({
+    sessionId: searchParams.get('session_id') || '',
+    termId: searchParams.get('term_id') || '',
+    programmeId: searchParams.get('programme_id') || '',
+    classId: searchParams.get('class_id') || '',
+    classArmId: searchParams.get('class_arm_id') || '',
+    subjectId: searchParams.get('subject_id') || '',
+    column: searchParams.get('column') || '', // '', 'exam' or 'ca:N'
+  }), [searchParams]);
+
+  const hasContext = Boolean(context.sessionId && context.termId && context.classArmId && context.subjectId);
+
+  // Column label for the header
+  const columnLabel = context.column === 'exam'
+    ? 'Exam'
+    : context.column.startsWith('ca:')
+      ? `CA ${Number(context.column.slice(3)) + 1}`
+      : 'Overall';
+
+  // Fetch real score-sheet data and reduce it to the selected column's scores
+  const fetchAnalytics = useCallback(async () => {
+    if (!hasContext) return;
+    setLoading(true);
+    setError('');
+    try {
+      // Resolve session_term_id from session + term
+      const stRes = await fetchSessionTerms();
+      const stData = stRes?.data || [];
+      const match = stData.find(
+        (st) => String(st.session?.id) === String(context.sessionId) && String(st.term?.id) === String(context.termId)
+      );
+      if (!match) {
+        setError('Session term not found for the selected filters.');
+        setResults([]);
+        return;
+      }
+
+      const res = await scoreManagerApi.getScoreSheetData({
+        session_term_id: match.id,
+        subject_id: context.subjectId,
+        class_arm_id: context.classArmId,
+      });
+      const students = res?.data?.data?.students || [];
+
+      // Reduce each student's result to the score for the selected column
+      const reduced = students.map((r, i) => {
+        let caScore = 0;
+        let score = 0;
+        if (context.column === 'exam') {
+          score = Number(r.exam_score || 0);
+        } else if (context.column.startsWith('ca:')) {
+          const ci = Number(context.column.slice(3));
+          const entities = r.ca?.[ci]?.entities;
+          caScore = entities
+            ? Object.values(entities).reduce((sum, e) => sum + Number(e?.score || 0), 0)
+            : 0;
+          score = caScore;
+        } else {
+          const caTotal = (r.ca || []).reduce(
+            (sum, caItem) => sum + (caItem?.entities
+              ? Object.values(caItem.entities).reduce((s, e) => s + Number(e?.score || 0), 0)
+              : 0),
+            0
+          );
+          score = caTotal + Number(r.exam_score || 0);
+        }
+        return {
+          id: r.course_registration_id || i,
+          user_id: r.student_id || r.user_id,
+          lname: r.lname,
+          fname: r.fname,
+          mname: r.mname || '',
+          image: r.avatar || '',
+          ca_score: caScore,
+          exam_score: Number(r.exam_score || 0),
+          total: score,
+        };
+      });
+      setResults(reduced);
+    } catch (err) {
+      console.error('Failed to fetch analytics data:', err);
+      setError('Failed to load analytics data. Please try again.');
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [context]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const computeDistribution = useCallback((range) => {
+    const totalScores = results.map((r) => r.total);
+    // The theoretical max for the selected column determines the top of the scale
     const maxScore = 100;
     const labels = [];
     const values = [];
@@ -41,7 +129,7 @@ const PerformanceAnalyticsTab = () => {
 
     while (low <= maxScore) {
       const label = `${low} - ${high}`;
-      const count = totalScores.filter(s => s >= low && s <= high).length;
+      const count = totalScores.filter((s) => s >= low && s <= high).length;
       cumulative += count;
       labels.push(label);
       values.push(count);
@@ -50,11 +138,11 @@ const PerformanceAnalyticsTab = () => {
       low += range;
     }
     setDistribution({ labels, values, ranges });
-  };
+  }, [results]);
 
   useEffect(() => {
     computeDistribution(scoreRange);
-  }, [scoreRange]);
+  }, [scoreRange, computeDistribution]);
 
   const chartOptions = {
     chart: { type: 'bar', toolbar: { show: false } },
@@ -70,17 +158,27 @@ const PerformanceAnalyticsTab = () => {
   const chartSeries = [{ name: 'No. of Participants', data: distribution.values }];
 
   const getParticipantsForRange = (rangeData) => {
-    return dummyResults.filter(r => r.total >= rangeData.low_interval && r.total <= rangeData.high_interval);
+    return results.filter((r) => r.total >= rangeData.low_interval && r.total <= rangeData.high_interval);
   };
 
   const handlePrint = () => window.print();
+
+  if (!hasContext) {
+    return (
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB', p: 4 }}>
+        <Alert severity="info" sx={{ borderRadius: '10px' }}>
+          Open the analytics from a score sheet (View Analytics) to see performance for a specific subject and class.
+        </Alert>
+      </Paper>
+    );
+  }
 
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
       {/* ── Card Header ─────────────────────────────────────── */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>
-          Mathematics (JSS 1 A) Performance Analytics
+          Performance Analytics — {columnLabel}
         </Typography>
         <Button variant="contained" size="small" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
           Print Analytics
@@ -88,65 +186,77 @@ const PerformanceAnalyticsTab = () => {
       </Box>
 
       <Box sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          {/* ── Bar Chart ────────────────────────────────────── */}
-          <Grid size={{ xs: 12, md: 9 }}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>Bar-Chart View</Typography>
-              <Box sx={{ height: 360 }}>
-                <Chart options={chartOptions} series={chartSeries} type="bar" height="100%" />
-              </Box>
-            </Paper>
-          </Grid>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ borderRadius: '10px' }}>{error}</Alert>
+        ) : results.length === 0 ? (
+          <Alert severity="info" sx={{ borderRadius: '10px' }}>
+            No student results available for this subject/class yet.
+          </Alert>
+        ) : (
+          <Grid container spacing={3}>
+            {/* ── Bar Chart ────────────────────────────────────── */}
+            <Grid size={{ xs: 12, md: 9 }}>
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>Bar-Chart View</Typography>
+                <Box sx={{ height: 360 }}>
+                  <Chart options={chartOptions} series={chartSeries} type="bar" height="100%" />
+                </Box>
+              </Paper>
+            </Grid>
 
-          {/* ── Analysis Table ───────────────────────────────── */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600} mb={2}>Analysis Table</Typography>
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel>Choose a Range</InputLabel>
-                <Select value={scoreRange} label="Choose a Range"
-                  onChange={e => setScoreRange(Number(e.target.value))}>
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                </Select>
-              </FormControl>
+            {/* ── Analysis Table ───────────────────────────────── */}
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                <Typography variant="subtitle1" fontWeight={600} mb={2}>Analysis Table</Typography>
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                  <InputLabel>Choose a Range</InputLabel>
+                  <Select value={scoreRange} label="Choose a Range"
+                    onChange={(e) => setScoreRange(Number(e.target.value))}>
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                  </Select>
+                </FormControl>
 
-              <TableContainer sx={{ maxHeight: 320 }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, fontSize: '0.75rem' }}>Score Range</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, fontSize: '0.75rem' }} align="center">No. of Participants</TableCell>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', fontSize: '0.75rem' }} align="center">Cumulative Score</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {distribution.ranges.map((r) => (
-                      <TableRow key={r.range} hover>
-                        <TableCell sx={{ ...cellBorderSx, fontSize: '0.8rem' }}>{r.range}</TableCell>
-                        <TableCell align="center" sx={{ ...cellBorderSx, fontSize: '0.8rem' }}>
-                          <Chip label={r.range_count} size="small" color="primary" variant="outlined"
-                            onClick={() => r.range_count > 0 && setParticipantsDialog({ open: true, range: r })}
-                            clickable={r.range_count > 0}
-                            sx={{ cursor: r.range_count > 0 ? 'pointer' : 'default', minWidth: 32 }}
-                          />
-                        </TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
-                          <Chip label={r.cumulative} size="small" color="success" variant="outlined"
-                            onClick={() => setParticipantsDialog({ open: true, range: { ...r, low_interval: 0 } })}
-                            clickable
-                            sx={{ minWidth: 32 }}
-                          />
-                        </TableCell>
+                <TableContainer sx={{ maxHeight: 320 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, fontSize: '0.75rem' }}>Score Range</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, fontSize: '0.75rem' }} align="center">No. of Participants</TableCell>
+                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', fontSize: '0.75rem' }} align="center">Cumulative Score</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
+                    </TableHead>
+                    <TableBody>
+                      {distribution.ranges.map((r) => (
+                        <TableRow key={r.range} hover>
+                          <TableCell sx={{ ...cellBorderSx, fontSize: '0.8rem' }}>{r.range}</TableCell>
+                          <TableCell align="center" sx={{ ...cellBorderSx, fontSize: '0.8rem' }}>
+                            <Chip label={r.range_count} size="small" color="primary" variant="outlined"
+                              onClick={() => r.range_count > 0 && setParticipantsDialog({ open: true, range: r })}
+                              clickable={r.range_count > 0}
+                              sx={{ cursor: r.range_count > 0 ? 'pointer' : 'default', minWidth: 32 }}
+                            />
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                            <Chip label={r.cumulative} size="small" color="success" variant="outlined"
+                              onClick={() => setParticipantsDialog({ open: true, range: { ...r, low_interval: 0 } })}
+                              clickable
+                              sx={{ minWidth: 32 }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Box>
 
       {/* ── Participants Dialog ─────────────────────────────── */}
@@ -180,9 +290,9 @@ const PerformanceAnalyticsTab = () => {
                     </TableCell>
                     <TableCell sx={cellBorderSx}>{p.user_id}</TableCell>
                     <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{p.lname} {p.fname} {p.mname}</TableCell>
-                    <TableCell align="center" sx={cellBorderSx}>{p.ca_score}</TableCell>
-                    <TableCell align="center" sx={cellBorderSx}>{p.exam_score}</TableCell>
-                    <TableCell align="center" sx={{ ...cellBorderSx, fontWeight: 700 }}>{p.total}</TableCell>
+                    <TableCell align="center" sx={cellBorderSx}>{p.ca_score || '-'}</TableCell>
+                    <TableCell align="center" sx={cellBorderSx}>{p.exam_score || '-'}</TableCell>
+                    <TableCell align="center" sx={{ ...cellBorderSx, fontWeight: 700 }}>{p.total || '-'}</TableCell>
                   </TableRow>
                 ))}
                 {participantsDialog.range && getParticipantsForRange(participantsDialog.range).length === 0 && (

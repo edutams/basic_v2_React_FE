@@ -1,5 +1,5 @@
-import { Box, Typography, Paper, Chip, Button, LinearProgress, useTheme } from '@mui/material';
-import { IconCloudUpload, IconEye, IconCheck, IconLoader } from '@tabler/icons-react';
+import { Box, Typography, Paper, Chip, Button, LinearProgress, Tooltip, useTheme } from '@mui/material';
+import { IconCloudUpload, IconEye, IconCheck, IconLoader, IconInfoCircle } from '@tabler/icons-react';
 
 const ScoreUploadCard = ({
   allocation,
@@ -19,6 +19,8 @@ const ScoreUploadCard = ({
 
   const isSubmitted = allocation?.teacher_submit === 'yes' || allocation?.isSubmitted || allocation?.submissionStatus === 'Submitted';
   const isSubmitting = allocation?.isSubmitting || false;
+  // No CA and no exam scores uploaded yet → submitting makes no sense
+  const hasAnyScores = caUploaded > 0 || examUploaded > 0;
 
   return (
     <Paper
@@ -49,7 +51,7 @@ const ScoreUploadCard = ({
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
           <Chip
-            label={allocation.className}
+            label={allocation.class_name ?? allocation.className}
             size="small"
             sx={{
               fontWeight: 600,
@@ -96,24 +98,29 @@ const ScoreUploadCard = ({
                 sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
               />
             ) : totalReg > 0 ? (
-              <Button
-                variant="contained"
-                size="small"
-                color="warning"
-                onClick={() => onSubmitScore && onSubmitScore(allocation)}
-                sx={{
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  textTransform: 'none',
-                  px: 1.2,
-                  py: 0.2,
-                  minHeight: '24px',
-                  borderRadius: '4px',
-                  boxShadow: 'none',
-                }}
-              >
-                Submit Score
-              </Button>
+              <Tooltip title={hasAnyScores ? '' : 'No scores uploaded yet for this subject'}>
+                <span>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="warning"
+                    disabled={!hasAnyScores}
+                    onClick={() => onSubmitScore && onSubmitScore(allocation)}
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '11px',
+                      textTransform: 'none',
+                      px: 1.2,
+                      py: 0.2,
+                      minHeight: '24px',
+                      borderRadius: '4px',
+                      boxShadow: 'none',
+                    }}
+                  >
+                    Submit Score
+                  </Button>
+                </span>
+              </Tooltip>
             ) : null}
           </Box>
         </Box>
@@ -206,6 +213,14 @@ const ScoreUploadCard = ({
       </Box>
 
       {/* ── Action Buttons Footer ────────────────────────────── */}
+      {totalReg === 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 1, pt: 1 }}>
+          <IconInfoCircle size={14} color={theme.palette.info.main} />
+          <Typography variant="caption" color="info.main" sx={{ fontSize: '0.725rem' }}>
+            No registered student for the subject
+          </Typography>
+        </Box>
+      )}
       <Box
         sx={{
           p: 1.25,
@@ -224,6 +239,7 @@ const ScoreUploadCard = ({
             color="warning"
             size="small"
             startIcon={<IconCloudUpload size={14} />}
+            disabled={totalReg === 0}
             onClick={() => onUploadScore && onUploadScore(allocation)}
             sx={{
               fontWeight: 600,
@@ -242,6 +258,7 @@ const ScoreUploadCard = ({
           color="primary"
           size="small"
           startIcon={<IconEye size={14} />}
+          disabled={totalReg === 0}
           onClick={() => onViewScoreSheet && onViewScoreSheet(allocation)}
           sx={{
             fontWeight: 600,

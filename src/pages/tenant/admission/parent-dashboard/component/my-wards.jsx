@@ -14,8 +14,10 @@ import {
 } from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WardPaymentHistoryModal from './ward-payment-history-modal';
 
 function GaugeRing({ value, label, color }) {
   return (
@@ -74,7 +76,7 @@ const initialsOf = (name = '') =>
     .join('')
     .toUpperCase() || 'W';
 
-const WardCard = ({ ward, onSelect, isSelected }) => {
+const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
   const navigate = useNavigate();
 
   return (
@@ -361,6 +363,31 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         >
           Fund Wallet
         </Button>
+
+        {/* Only shown once this ward has actually paid something — fully
+            or partially — since there'd be no receipt to view otherwise. */}
+        {Number(ward.paid) > 0 && (
+          <Tooltip title={`View past receipts for ${ward.name}`} placement="top" arrow>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewPayments && onViewPayments(ward);
+              }}
+              sx={{
+                width: 30,
+                height: 30,
+                flexShrink: 0,
+                borderRadius: '7px',
+                border: '1px solid #e2e8f0',
+                color: '#16a34a',
+                '&:hover': { bgcolor: '#f0fdf4', borderColor: '#86efac' },
+              }}
+            >
+              <ReceiptOutlinedIcon sx={{ fontSize: 15 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Stack>
     </Card>
   );
@@ -368,6 +395,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
 
 const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) => {
   const [startIndex, setStartIndex] = useState(0);
+  const [paymentHistoryWard, setPaymentHistoryWard] = useState(null);
 
   const VISIBLE_COUNT = 3;
   const canPrev = startIndex > 0;
@@ -487,6 +515,7 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
                 ward={ward}
                 isSelected={selectedWard?.id === ward.id && selectedWard?.class === ward.class}
                 onSelect={onSelectWard}
+                onViewPayments={setPaymentHistoryWard}
               />
             ))}
           </Box>
@@ -510,6 +539,12 @@ const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) =>
           </Box>
         )}
       </Box>
+
+      <WardPaymentHistoryModal
+        open={Boolean(paymentHistoryWard)}
+        onClose={() => setPaymentHistoryWard(null)}
+        ward={paymentHistoryWard}
+      />
     </Box>
   );
 };

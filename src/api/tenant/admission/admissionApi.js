@@ -186,6 +186,13 @@ export const getParentWalletTransactions = async (page = 1) => {
   return response.data;
 };
 
+export const getParentWardPayments = async (wardId, page = 1) => {
+  const response = await api.get('/admission/parent/ward-payments', {
+    params: { ward_id: wardId, page },
+  });
+  return response.data;
+};
+
 export const getParentInsightsDetail = async (type, sessionTermId = null) => {
   const params = { type };
   if (sessionTermId) params.session_term_id = sessionTermId;

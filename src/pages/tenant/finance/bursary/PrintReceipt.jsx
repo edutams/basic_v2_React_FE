@@ -299,6 +299,14 @@ const PrintReceipt = () => {
                     <strong>{transaction[0].received_by}</strong>
                   </Typography>
                 )}
+                {tenant?.bursar_phone && (
+                  <Typography variant="body2">
+                    <Box component="span" color="text.secondary">
+                      Bursar Phone:
+                    </Box>{' '}
+                    <strong>{tenant.bursar_phone}</strong>
+                  </Typography>
+                )}
                 {(sessionDetails?.session?.session_name || sessionDetails?.term?.term_name) && (
                   <Typography variant="body2">
                     <Box component="span" color="text.secondary">

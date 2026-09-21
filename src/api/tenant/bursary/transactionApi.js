@@ -30,9 +30,12 @@ export const revenueTransactionAmount = async (payload) => {
     return res.data;
 };
 
-export const fetchPrintReceipt = async ({ order_id, user_id, session_term_id }) => {
-    const res = await api.get('/bursary/transactions/print_receipt', {
-        params: { order_id, user_id, session_term_id },
+export const fetchPrintReceipt = async ({ order_id, bulk_order_id, user_id, session_term_id }) => {
+    const res = await api.post('/bursary/transactions/print_receipt', {
+        order_id,
+        bulk_order_id,
+        user_id,
+        session_term_id,
     });
     return res.data;
 };
@@ -115,6 +118,16 @@ export const exportSettlementReconciliationCsv = (data, config = {}) =>
 export const fetchWalletTransactions = async (wallet_account_no) => {
     const res = await api.get('/bursary/transactions/wallet_transactions', {
         params: { wallet_account_no: wallet_account_no },
+    });
+    return res.data;
+}
+
+// Class Ledger only has each row's user_id on hand, not their wallet
+// number, so this looks the wallet up by student instead — same endpoint,
+// alternate lookup key (see WalletController::getWalletTransactions).
+export const fetchLearnerWalletTransactions = async (user_id, page = 1) => {
+    const res = await api.get('/bursary/transactions/wallet_transactions', {
+        params: { user_id, page },
     });
     return res.data;
 }

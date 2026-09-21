@@ -455,6 +455,7 @@ export const TenantAuthProvider = ({ children }) => {
     stopImpersonation,
     tenantInfo,
     refreshTenantInfo,
+    fetchTenantOnboardingInfo,
     subscriptionStatus,
     refreshSubscriptionStatus,
   }), [
@@ -477,6 +478,7 @@ export const TenantAuthProvider = ({ children }) => {
     stopImpersonation,
     tenantInfo,
     refreshTenantInfo,
+    fetchTenantOnboardingInfo,
     subscriptionStatus,
     refreshSubscriptionStatus,
   ]);

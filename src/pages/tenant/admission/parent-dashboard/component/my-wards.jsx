@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Stack, Avatar, Card, Button, CircularProgress, IconButton, Skeleton, Tooltip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Stack,
+  Avatar,
+  Card,
+  Button,
+  CircularProgress,
+  IconButton,
+  Skeleton,
+  Tooltip,
+} from '@mui/material';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WardPaymentHistoryModal from './ward-payment-history-modal';
 
 function GaugeRing({ value, label, color }) {
   return (
@@ -44,7 +57,9 @@ function GaugeRing({ value, label, color }) {
         >
           {label}
         </Typography>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.1, mt: 0.1 }}>
+        <Typography
+          sx={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.1, mt: 0.1 }}
+        >
           {value != null ? value : 0}%
         </Typography>
       </Box>
@@ -61,10 +76,8 @@ const initialsOf = (name = '') =>
     .join('')
     .toUpperCase() || 'W';
 
-const WardCard = ({ ward, onSelect, isSelected }) => {
+const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
   const navigate = useNavigate();
-
- 
 
   return (
     <Card
@@ -77,7 +90,9 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         borderColor: isSelected ? '#dc2626' : '#e2e8f0',
         bgcolor: isSelected ? '#fff5f5' : '#ffffff',
         p: 1,
-        boxShadow: isSelected ? '0 4px 16px rgba(220, 38, 38, 0.12)' : '0 4px 16px rgba(15, 23, 42, 0.08)',
+        boxShadow: isSelected
+          ? '0 4px 16px rgba(220, 38, 38, 0.12)'
+          : '0 4px 16px rgba(15, 23, 42, 0.08)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -119,7 +134,8 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               }}
             >
               {ward.name}
-            </Typography>            <Typography
+            </Typography>{' '}
+            <Typography
               sx={{
                 fontSize: 11,
                 color: '#64748b',
@@ -133,7 +149,10 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
                   {ward.age != null && ` • Age: ${ward.age} yrs`}
                 </>
               ) : (
-                <Typography component="span" sx={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}>
+                <Typography
+                  component="span"
+                  sx={{ fontSize: 10, color: '#94a3b8', fontStyle: 'italic' }}
+                >
                   Not yet added to class
                 </Typography>
               )}
@@ -184,7 +203,9 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           </Stack>
         </Box>
 
-        {/* Financial Info — single total payable figure from the wards payload */}
+        {/* Financial Info — this ward's own outstanding balance, not what's
+            already been paid (that's still available as ward.paid, just
+            not what this card is labeled to show). */}
         <Box sx={{ borderTop: '1px solid #e2e8f0', pt: 1.25, mb: 1.5 }}>
           <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
             TOTAL PAYABLE
@@ -199,7 +220,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               whiteSpace: 'nowrap',
             }}
           >
-            ₦{Number(ward.paid).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ₦{Number(ward.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Typography>
         </Box>
 
@@ -207,7 +228,9 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           <Box sx={{ mb: 1.5 }}>
             <Stack direction="row" alignItems="stretch" spacing={1.25}>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
+                <Typography
+                  sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}
+                >
                   WALLET ACCOUNT
                 </Typography>
                 <Typography
@@ -227,10 +250,22 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
               </Box>
               {ward.walletBalance != null && (
                 <>
-                  <Box sx={{ alignSelf: 'stretch', borderRight: '1px solid #e2e8f0', my: 0.2, flexShrink: 0 }} />
+                  <Box
+                    sx={{
+                      alignSelf: 'stretch',
+                      borderRight: '1px solid #e2e8f0',
+                      my: 0.2,
+                      flexShrink: 0,
+                    }}
+                  />
                   <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                    <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}>
-                      ₦{Number(ward.walletBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    <Typography
+                      sx={{ fontSize: 10, color: '#64748b', fontWeight: 500, lineHeight: 1.2 }}
+                    >
+                      ₦
+                      {Number(ward.walletBalance).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                      })}
                     </Typography>
                   </Box>
                 </>
@@ -249,7 +284,8 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
             }}
           >
             <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
-              ℹ️ A wallet account has not been generated for {ward.name.split(' ')[0]} make payment to generate.
+              ℹ️ A wallet account has not been generated for{' '}
+              {ward.name.split(' ').slice(0, 2).join(' ')}, make payment to generate.
             </Typography>
           </Box>
         )}
@@ -261,7 +297,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           title={
             ward.invoice_number
               ? `View invoice for ${ward.name}`
-              : 'No invoice generated yet. Go to Class Ledger to generate one.'
+              : 'No invoice generated yet. You will be able to view the invoice once it is generated for your ward.'
           }
           placement="top"
           arrow
@@ -310,6 +346,7 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
           size="small"
           disableElevation
           startIcon={<AddCircleOutlineIcon sx={{ fontSize: 14 }} />}
+          onClick={() => navigate(`/pay-school-fees?ward_id=${ward.id}`)}
           sx={{
             flex: 1,
             borderRadius: '7px',
@@ -326,18 +363,39 @@ const WardCard = ({ ward, onSelect, isSelected }) => {
         >
           Fund Wallet
         </Button>
+
+        {/* Only shown once this ward has actually paid something — fully
+            or partially — since there'd be no receipt to view otherwise. */}
+        {Number(ward.paid) > 0 && (
+          <Tooltip title={`View past receipts for ${ward.name}`} placement="top" arrow>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewPayments && onViewPayments(ward);
+              }}
+              sx={{
+                width: 30,
+                height: 30,
+                flexShrink: 0,
+                borderRadius: '7px',
+                border: '1px solid #e2e8f0',
+                color: '#16a34a',
+                '&:hover': { bgcolor: '#f0fdf4', borderColor: '#86efac' },
+              }}
+            >
+              <ReceiptOutlinedIcon sx={{ fontSize: 15 }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Stack>
     </Card>
   );
 };
 
-const MyWards = ({
-  wards = [],
-  loading = false,
-  selectedWard,
-  onSelectWard,
-}) => {
+const MyWards = ({ wards = [], loading = false, selectedWard, onSelectWard }) => {
   const [startIndex, setStartIndex] = useState(0);
+  const [paymentHistoryWard, setPaymentHistoryWard] = useState(null);
 
   const VISIBLE_COUNT = 3;
   const canPrev = startIndex > 0;
@@ -359,7 +417,13 @@ const MyWards = ({
         <Skeleton variant="text" width={120} height={24} sx={{ mb: 1.5 }} />
         <Stack direction="row" spacing={2}>
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} variant="rounded" width="33%" height={240} sx={{ borderRadius: '12px' }} />
+            <Skeleton
+              key={i}
+              variant="rounded"
+              width="33%"
+              height={240}
+              sx={{ borderRadius: '12px' }}
+            />
           ))}
         </Stack>
       </Box>
@@ -367,7 +431,7 @@ const MyWards = ({
   }
 
   return (
-    <Box  height="100%">
+    <Box height="100%">
       {/* Wrapper panel wrapping the title, session-term filter, prev/next controls and the ward cards */}
       <Box
         sx={{
@@ -382,57 +446,57 @@ const MyWards = ({
         }}
       >
         {/* Header with Title, Session-Term Filter, and Prev/Next Navigation Controls */}
-          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-            <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
-              My Wards
-            </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+          <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: -0.3 }}>
+            My Wards
+          </Typography>
 
-            <Stack
-              direction="row"
-              spacing={0.75}
-              alignItems="center"
-              sx={{ flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: 0.75 }}
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            sx={{ flexWrap: 'wrap', justifyContent: 'flex-end', rowGap: 0.75 }}
+          >
+            <IconButton
+              size="small"
+              onClick={handlePrev}
+              disabled={!canPrev}
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '7px',
+                bgcolor: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: canPrev ? '#1e293b' : '#94a3b8',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                '&:hover': { bgcolor: '#f8fafc' },
+                '&.Mui-disabled': { opacity: 0.4 },
+              }}
             >
-              <IconButton
-                size="small"
-                onClick={handlePrev}
-                disabled={!canPrev}
-                sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '7px',
-                  bgcolor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  color: canPrev ? '#1e293b' : '#94a3b8',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  '&:hover': { bgcolor: '#f8fafc' },
-                  '&.Mui-disabled': { opacity: 0.4 },
-                }}
-              >
-                <ChevronLeftIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={handleNext}
-                disabled={!canNext}
-                sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '7px',
-                  bgcolor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  color: canNext ? '#1e293b' : '#94a3b8',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  '&:hover': { bgcolor: '#f8fafc' },
-                  '&.Mui-disabled': { opacity: 0.4 },
-                }}
-              >
-                <ChevronRightIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Stack>
+              <ChevronLeftIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleNext}
+              disabled={!canNext}
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '7px',
+                bgcolor: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: canNext ? '#1e293b' : '#94a3b8',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                '&:hover': { bgcolor: '#f8fafc' },
+                '&.Mui-disabled': { opacity: 0.4 },
+              }}
+            >
+              <ChevronRightIcon sx={{ fontSize: 18 }} />
+            </IconButton>
           </Stack>
+        </Stack>
 
-          {wards.length > 0 ? (
+        {wards.length > 0 ? (
           /* Grid displaying exactly 3 ward cards per view */
           <Box
             sx={{
@@ -451,6 +515,7 @@ const MyWards = ({
                 ward={ward}
                 isSelected={selectedWard?.id === ward.id && selectedWard?.class === ward.class}
                 onSelect={onSelectWard}
+                onViewPayments={setPaymentHistoryWard}
               />
             ))}
           </Box>
@@ -474,6 +539,12 @@ const MyWards = ({
           </Box>
         )}
       </Box>
+
+      <WardPaymentHistoryModal
+        open={Boolean(paymentHistoryWard)}
+        onClose={() => setPaymentHistoryWard(null)}
+        ward={paymentHistoryWard}
+      />
     </Box>
   );
 };

@@ -41,6 +41,7 @@ import {
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { getParentPaymentWallets } from '@/api/tenant/admission/admissionApi';
 
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -104,58 +105,31 @@ const PayInvoice = () => {
      has frozen. */
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
-  // Dummy wallet balances for UI representation
-  const availableWallets = [
-    {
-      id: 'father',
-      name: "Father's Wallet",
-      balance: 150000,
-      parent: {
-        id: 1,
-        name: 'Nwafor Chukwudi',
-        email: 'father@example.com',
-        phone: '08012345678',
-        wallet_number: '9048121392',
-      },
-      themeMain: 'primary.main',
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeBorder: isDark ? 'rgba(25,118,210,0.2)' : '#dbeafe',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.1)' : '#e0e7ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.2)' : '#e0e7ff',
-    },
-    {
-      id: 'mother',
-      name: "Mother's Wallet",
-      balance: 85000,
-      parent: {
-        id: 2,
-        name: 'Jane Nwafor',
-        email: 'mother@example.com',
-        phone: '08087654321',
-        wallet_number: '9048121391',
-      },
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
-      themeMain: '#0288d1',
-    },
-    {
-      id: 'child',
-      name: "Child's Wallet",
-      balance: 25000,
-      parent: {
-        id: 3,
-        name: 'David Nwafor',
-        email: 'child@example.com',
-        phone: '08011223344',
-        wallet_number: '9048121395',
-      },
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
-      themeMain: 'secondary.main',
-    },
-  ];
+  // The guardian's own wallet plus this one ward's wallet — whichever of
+  // the two actually exist yet. Real data from getParentPaymentWallets(),
+  // replacing what used to be a hardcoded 3-wallet dummy array.
+  const [availableWallets, setAvailableWallets] = useState([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user_id) return;
+    let mounted = true;
+    setWalletsLoading(true);
+    getParentPaymentWallets([user_id])
+      .then((res) => {
+        if (mounted) setAvailableWallets(res?.status ? res.data || [] : []);
+      })
+      .catch((err) => {
+        console.error('Failed to load payment wallets:', err);
+        if (mounted) setAvailableWallets([]);
+      })
+      .finally(() => {
+        if (mounted) setWalletsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [user_id]);
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -353,7 +327,10 @@ const PayInvoice = () => {
       setClassId(data.student_info?.class_id);
       setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
-      /* Map compulsory fees — all values come straight from API; payable pre-set from API */
+      /* Map compulsory fees — all values come straight from API; payable
+         pre-set from API. getStudentSchedule() already excludes
+         fully-settled invoices server-side (balance <= 0), so every row
+         here genuinely still needs payment — nothing to filter client-side. */
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const instList = item.installments || [];
         /* Auto-preselect the first installment if none is already set */
@@ -399,7 +376,8 @@ const PayInvoice = () => {
       });
       setCompFees(mappedComp);
 
-      /* Map optional fees */
+      /* Map optional fees — getStudentSchedule() already excludes
+         fully-settled invoices server-side, same as compulsory above. */
       const mappedOpt = (data.optional_data || []).map((item) => ({
         id: item.id,
         bursary_schedule_id: item.bursary_schedule_id,
@@ -544,7 +522,7 @@ const PayInvoice = () => {
     }
 
     try {
-      const res = await createPendingPayment({ schedules: payload });
+      const res = await createPendingPayment({ schedules: payload, payer_user_id: selectedWallet });
       // console.log('Full API response:', res?.success);
       // console.log('SkoolPay on window:', window.SkoolPay);
       if (res?.success) {
@@ -1290,100 +1268,114 @@ const PayInvoice = () => {
                 Pay From
               </Typography>
               <Stack spacing={1} sx={{ mt: 1, mb: 1.5 }}>
-                {availableWallets.map((wallet) => {
-                  const walletInsufficient = grandTotal > 0 && wallet.balance < grandTotal;
-                  return (
-                    <Box
-                      key={wallet.id}
-                      onClick={() => setSelectedWallet(wallet.id)}
-                      sx={{
-                        p: 1,
-                        borderRadius: 1.5,
-                        cursor: 'pointer',
-                        transition: 'all .15s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        bgcolor:
-                          selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg,
-                        border: '1.5px solid',
-                        borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
-                        '&:hover': {
-                          bgcolor: wallet.themeHoverBg,
-                          borderColor: wallet.themeMain,
-                        },
-                      }}
-                    >
-                      <Radio
-                        checked={selectedWallet === wallet.id}
-                        value={wallet.id}
-                        size="small"
+                {walletsLoading ? (
+                  <>
+                    <Box sx={{ height: 64, borderRadius: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }} />
+                    <Box sx={{ height: 64, borderRadius: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }} />
+                  </>
+                ) : availableWallets.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+                    No wallet has been generated yet. Make a payment to generate one.
+                  </Alert>
+                ) : (
+                  availableWallets.map((wallet) => {
+                    const walletInsufficient = grandTotal > 0 && wallet.balance < grandTotal;
+                    return (
+                      <Box
+                        key={wallet.id}
+                        onClick={() => setSelectedWallet(wallet.id)}
                         sx={{
-                          color: 'error.main',
-                          p: 0,
-                          '&.Mui-checked': { color: 'error.main' },
+                          p: 1,
+                          borderRadius: 1.5,
+                          cursor: 'pointer',
+                          transition: 'all .15s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          bgcolor:
+                            selectedWallet === wallet.id
+                              ? isDark
+                                ? 'rgba(25,118,210,0.2)'
+                                : '#e0e7ff'
+                              : isDark
+                                ? 'rgba(25,118,210,0.05)'
+                                : '#f0f4ff',
+                          border: '1.5px solid',
+                          borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
+                          '&:hover': { borderColor: 'primary.main' },
                         }}
-                      />
-                      <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Box
+                      >
+                        <Radio
+                          checked={selectedWallet === wallet.id}
+                          value={wallet.id}
+                          size="small"
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 1,
+                            color: 'error.main',
+                            p: 0,
+                            '&.Mui-checked': { color: 'error.main' },
                           }}
-                        >
+                        />
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              noWrap
+                              sx={{ minWidth: 0 }}
+                            >
+                              {wallet.label}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={800}
+                              color="error.main"
+                              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              ₦{format(wallet.balance)}
+                            </Typography>
+                          </Box>
                           <Typography
                             variant="caption"
-                            fontWeight={700}
+                            color="text.primary"
                             noWrap
-                            sx={{ minWidth: 0 }}
+                            sx={{ display: 'block', fontWeight: 600 }}
                           >
                             {wallet.name}
                           </Typography>
                           <Typography
-                            variant="body2"
-                            fontWeight={800}
-                            color="error.main"
-                            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ display: 'block' }}
                           >
-                            ₦{format(wallet.balance)}
+                            Wallet No: {wallet.wallet_no}
                           </Typography>
+                          {walletInsufficient && (
+                            <Chip
+                              label="Insufficient balance"
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              sx={{
+                                height: 18,
+                                fontSize: '0.65rem',
+                                mt: 0.5,
+                                '& .MuiChip-label': { px: 0.75 },
+                              }}
+                            />
+                          )}
                         </Box>
-                        <Typography
-                          variant="caption"
-                          color="text.primary"
-                          noWrap
-                          sx={{ display: 'block', fontWeight: 600 }}
-                        >
-                          {wallet.parent.name}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          noWrap
-                          sx={{ display: 'block' }}
-                        >
-                          Wallet No: {wallet.parent.wallet_number}
-                        </Typography>
-                        {walletInsufficient && (
-                          <Chip
-                            label="Insufficient balance"
-                            size="small"
-                            color="error"
-                            variant="outlined"
-                            sx={{
-                              height: 18,
-                              fontSize: '0.65rem',
-                              mt: 0.5,
-                              '& .MuiChip-label': { px: 0.75 },
-                            }}
-                          />
-                        )}
                       </Box>
-                    </Box>
-                  );
-                })}
+                    );
+                  })
+                )}
               </Stack>
 
               {insufficientBalance && (
@@ -1487,13 +1479,17 @@ const PayInvoice = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg,
+                    bgcolor:
+                      selectedWallet === wallet.id
+                        ? isDark
+                          ? 'rgba(25,118,210,0.2)'
+                          : '#e0e7ff'
+                        : isDark
+                          ? 'rgba(25,118,210,0.05)'
+                          : '#f0f4ff',
                     border: '1.5px solid',
                     borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
-                    '&:hover': {
-                      bgcolor: wallet.themeHoverBg,
-                      borderColor: wallet.themeMain,
-                    },
+                    '&:hover': { borderColor: 'primary.main' },
                   }}
                 >
                   <Radio
@@ -1516,7 +1512,7 @@ const PayInvoice = () => {
                       }}
                     >
                       <Typography variant="caption" fontWeight={700} noWrap sx={{ minWidth: 0 }}>
-                        {wallet.name}
+                        {wallet.label}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -1533,7 +1529,7 @@ const PayInvoice = () => {
                       noWrap
                       sx={{ display: 'block', fontWeight: 600 }}
                     >
-                      {wallet.parent.name}
+                      {wallet.name}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -1541,7 +1537,7 @@ const PayInvoice = () => {
                       noWrap
                       sx={{ display: 'block' }}
                     >
-                      Wallet No: {wallet.parent.wallet_number}
+                      Wallet No: {wallet.wallet_no}
                     </Typography>
                   </Box>
                 </Box>
@@ -1566,7 +1562,11 @@ const PayInvoice = () => {
           </Button>
           <Button
             size="small"
-            disabled={!selectedWallet || submittingPayment}
+            // A wallet selection is only required when there's actually a
+            // wallet to choose from — if none exists yet (availableWallets
+            // is empty), the payment should still proceed: SkoolPay's own
+            // widget creates one as part of the checkout flow itself.
+            disabled={(availableWallets.length > 0 && !selectedWallet) || submittingPayment}
             onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();

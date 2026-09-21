@@ -24,7 +24,7 @@ import { IconDotsVertical, IconCoins, IconReceipt } from '@tabler/icons-react';
 // agent-creation time (see add-agent's AgentFormFields.jsx) and never
 // edited from here, so the only row actions are the two "go look at this
 // agent's numbers" views.
-const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransactions }) => {
+const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransactions, onViewSchools }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
@@ -33,6 +33,7 @@ const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransaction
 
   const handleViewCommissions = onViewCommissions || (() => { });
   const handleViewTransactions = onViewTransactions || (() => { });
+  const handleViewSchools = onViewSchools || (() => { });
 
   const handleClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -140,8 +141,24 @@ const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransaction
                   </TableCell>
                 )}
 
-                {/* SCHOOLS */}
-                {showSchools && <TableCell>{row.schools}</TableCell>}
+                {/* SCHOOLS — clickable, scopes the Schools drill-down to just this agent */}
+                {showSchools && (
+                  <TableCell>
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      fontWeight={700}
+                      onClick={() => handleViewSchools(row)}
+                      sx={{
+                        cursor: 'pointer',
+                        color: 'primary.main',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      {row.schools}
+                    </Typography>
+                  </TableCell>
+                )}
 
                 {/* PAYOUT DATE */}
                 {showPayoutDate && <TableCell>{row.payoutDate}</TableCell>}

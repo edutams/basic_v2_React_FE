@@ -1,12 +1,20 @@
-import React from 'react';
-import { Box, Card, Typography, Stack, Button, IconButton } from '@mui/material';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Card, Typography, Stack, Button, IconButton, useTheme } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import WalletTransactionsModal from './wallet-transactions-modal';
 
-const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', bank = 'Zenith Bank' }) => {
+const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, parentName }) => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const [transactionsOpen, setTransactionsOpen] = useState(false);
+
   return (
+    <>
     <Card
       elevation={0}
       sx={{
@@ -78,26 +86,42 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
         <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569', mb: 0.75 }}>
           Wallet Account Details (Parent)
         </Typography>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-              Account Number
-            </Typography>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-              {accountNumber}
-            </Typography>
-          </Box>
-          {bank && (
-            <Box textAlign="right">
+        {accountNumber ? (
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box>
               <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
-                Bank
+                Account Number
               </Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                {bank}
+                {accountNumber}
               </Typography>
             </Box>
-          )}
-        </Stack>
+            {walletBalance != null && (
+              <Box textAlign="right">
+                <Typography sx={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
+                  Balance
+                </Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                  ₦{Number(walletBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        ) : (
+          <Box
+            sx={{
+              bgcolor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '9px',
+              px: 1.25,
+              py: 0.75,
+            }}
+          >
+            <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1d4ed8', lineHeight: 1.4 }}>
+              ℹ️ A wallet account has not been generated for {parentName || 'you'}, make payment to generate.
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Buttons */}
@@ -107,6 +131,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
           size="small"
           disableElevation
           startIcon={<AddCircleOutlineIcon sx={{ fontSize: 14 }} />}
+          onClick={() => navigate('/pay-school-fees')}
           sx={{
             flex: 1,
             borderRadius: '7px',
@@ -126,8 +151,10 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
         </Button>
         <Button
           variant="outlined"
+          color="inherit"
           size="small"
           startIcon={<ReceiptLongOutlinedIcon sx={{ fontSize: 14 }} />}
+          onClick={() => setTransactionsOpen(true)}
           sx={{
             flex: 1,
             borderRadius: '7px',
@@ -139,13 +166,26 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber = '3021587491', b
             px: 0.75,
             py: 0.5,
             whiteSpace: 'nowrap',
-            '&:hover': { borderColor: '#1d4ed8', bgcolor: '#eff6ff' },
+            // The real cause of "hover is white": this app's theme
+            // (theme/Components.jsx MuiButton.outlinedPrimary) hardcodes
+            // outlined+primary buttons to `color: white` on hover — that
+            // theme rule was winning over this file's own hover sx, since
+            // an unset `color` prop here defaults to "primary" and matches
+            // it. `color="inherit"` above opts this button out of that
+            // variant entirely so this sx is the only styling in play.
+            '&:hover': {
+              borderColor: '#1d4ed8',
+              bgcolor: isDarkMode ? 'rgba(37,99,235,0.25)' : '#dbeafe',
+              color: '#1d4ed8',
+            },
           }}
         >
           Wallet Transactions
         </Button>
       </Stack>
     </Card>
+    <WalletTransactionsModal open={transactionsOpen} onClose={() => setTransactionsOpen(false)} />
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, useTheme, Paper, Typography, Skeleton } from '@mui/material';
-import { IconChartBar, IconWallet } from '@tabler/icons-react';
+import { Box, useTheme, Paper, Typography, Skeleton, Button } from '@mui/material';
+import { IconChartBar, IconWallet, IconArrowRight } from '@tabler/icons-react';
 
 const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
@@ -92,6 +92,7 @@ const MyCommissionStatCards = ({
   onViewTransactions,
   onViewSubOrgs,
   onViewSchools,
+  onSetupWallet,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -146,7 +147,8 @@ const MyCommissionStatCards = ({
           gap: 2,
         }}
       >
-        {/* Wallet Card — informational only, not clickable */}
+        {/* Wallet Card — informational only, not clickable (except the
+            "Set up wallet" prompt below, when there's no wallet yet). */}
         <Paper sx={cardSx(false)}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600} noWrap>
@@ -157,11 +159,23 @@ const MyCommissionStatCards = ({
 
           <Badge scheme={s0} isDarkMode={isDarkMode} value={formatNaira(wallet?.myCommission)} />
 
-          <SplitRow
-            isDarkMode={isDarkMode}
-            left={{ label: 'Account Number', value: wallet?.accountNumber || '—' }}
-            right={{ label: 'Bank', value: wallet?.bankName || '—' }}
-          />
+          {wallet?.accountNumber || !onSetupWallet ? (
+            <SplitRow
+              isDarkMode={isDarkMode}
+              left={{ label: 'Account Number', value: wallet?.accountNumber || '—' }}
+              right={{ label: 'Bank', value: wallet?.bankName || '—' }}
+            />
+          ) : (
+            <Button
+              size="small"
+              variant="outlined"
+              endIcon={<IconArrowRight size={16} />}
+              onClick={onSetupWallet}
+              sx={{ alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+            >
+              Set up your wallet
+            </Button>
+          )}
         </Paper>
 
         {/* Total Transaction Card */}
@@ -173,10 +187,16 @@ const MyCommissionStatCards = ({
             <CardIcon scheme={s1} isDarkMode={isDarkMode} />
           </Box>
 
+          {/* The headline figure here is money (how much has moved through
+              this ledger), not a transaction count — matches how SkoolPay's
+              own wallet-transaction-details-analytics reports this
+              (total_inflow/total_outflow/balance, no count field). Volume
+              is still available as `wallet.totalTransactionVolume` if a
+              count is ever needed elsewhere. */}
           <Badge
             scheme={s1}
             isDarkMode={isDarkMode}
-            value={(wallet?.totalTransactionVolume ?? 0).toLocaleString()}
+            value={formatNaira(wallet?.totalTransactionValue)}
           />
 
           <SplitRow

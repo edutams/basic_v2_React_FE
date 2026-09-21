@@ -38,6 +38,7 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -238,18 +239,36 @@ const ActionMenuCell = ({
           </ListItemIcon>
           <ListItemText primary="Manage Bank Service" />
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleDeleteOrganization(agent);
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <ListItemIcon sx={{ color: 'error.main' }}>
-            <DeleteIcon sx={{ fontSize: 18 }} />
-          </ListItemIcon>
-          <ListItemText primary="Delete Agent" />
-        </MenuItem>
+        {(() => {
+          const hasSchools = (agent.tenants_count ?? 0) > 0;
+          const deleteItem = (
+            <MenuItem
+              onClick={() => {
+                if (hasSchools) return;
+                handleClose();
+                handleDeleteOrganization(agent);
+              }}
+              disabled={hasSchools}
+              sx={{ color: 'error.main' }}
+            >
+              <ListItemIcon sx={{ color: 'error.main' }}>
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText primary="Delete Agent" />
+            </MenuItem>
+          );
+
+          // Disabled MenuItems block pointer events, so the Tooltip needs a
+          // wrapping span to still receive hover — bare disabled elements
+          // don't fire mouse events for MUI's Tooltip to anchor to.
+          return hasSchools ? (
+            <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+              <span>{deleteItem}</span>
+            </Tooltip>
+          ) : (
+            deleteItem
+          );
+        })()}
         {/* <MenuItem
           onClick={() => {
             handleClose();

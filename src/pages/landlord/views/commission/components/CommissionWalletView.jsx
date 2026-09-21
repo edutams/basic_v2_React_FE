@@ -9,9 +9,6 @@ import {
   TextField,
   Grid,
   Chip,
-  Menu,
-  MenuItem,
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -20,25 +17,22 @@ import {
   TableRow,
   Paper,
   Skeleton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
-import { IconArrowLeft, IconDotsVertical, IconEye, IconX } from '@tabler/icons-react';
-import PageContainer from '../../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
+import { IconArrowLeft } from '@tabler/icons-react';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useAuth from 'src/hooks/useAuth';
+import { usePermissions } from '@/context/AgentContext/permissions';
 import { useNotification } from '@/hooks/useNotification';
 import {
   getStats,
   getTransactions,
-  getTransactionDetails,
   getOrganizations,
   getCommissionSchools,
 } from '@/api/landlord/commission/commissionApi';
 import MyCommissionStatCards from './MyCommissionStatCards';
 import CommissionListModal from './CommissionListModal';
+import SchoolsListModal from './SchoolsListModal';
 
 const BCrumb = [];
 
@@ -54,6 +48,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const { user: currentUser } = useAuth();
+  const { can } = usePermissions();
   const notify = useNotification();
   const organizationId = currentUser?.organization?.id || currentUser?.organization_id;
 
@@ -64,8 +59,6 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [transactionId, setTransactionId] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
 
   const [wallet, setWallet] = useState(null);
   const [walletLoading, setWalletLoading] = useState(true);
@@ -74,11 +67,8 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
   const [rowsLoading, setRowsLoading] = useState(true);
 
   const tableRef = useRef(null);
-  const scrollToTable = () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [details, setDetails] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
+  const scrollToTable = () =>
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const [subOrgsOpen, setSubOrgsOpen] = useState(false);
   const [subOrgsRows, setSubOrgsRows] = useState([]);
@@ -92,14 +82,15 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
     if (!organizationId) return;
     setWalletLoading(true);
     try {
-      const res = await getStats({ organizationId });
+      const res = await getStats({ organizationId, type: commissionType });
       if (res.status) setWallet(res.data);
     } catch (error) {
       console.error('Failed to fetch commission wallet', error);
     } finally {
       setWalletLoading(false);
     }
-  }, [organizationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId, commissionType]);
 
   const fetchRows = useCallback(async () => {
     if (!organizationId) return;
@@ -110,6 +101,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
         from: fromDate || undefined,
         to: toDate || undefined,
         search: transactionId || undefined,
+        type: commissionType,
       });
       const list = res?.data?.data ?? res?.data ?? [];
       setRows(Array.isArray(list) ? list : []);
@@ -121,7 +113,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
       setRowsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organizationId]);
+  }, [organizationId, commissionType]);
 
   useEffect(() => {
     fetchWallet();
@@ -131,16 +123,6 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
     setPage(0);
     fetchRows();
   }, [fetchRows]);
-
-  const handleClick = (event, item) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedItem(item);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    setSelectedItem(null);
-  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -186,26 +168,6 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
     }
   };
 
-  const handleViewDetails = async () => {
-    const row = selectedItem;
-    handleClose();
-    const rowId = row?.transaction_id ?? row?.trans_id ?? row?.id;
-    if (!rowId) return;
-
-    setDetails(null);
-    setDetailsOpen(true);
-    setDetailsLoading(true);
-    try {
-      const res = await getTransactionDetails(rowId, { organizationId });
-      setDetails(res?.data ?? res);
-    } catch (error) {
-      console.error('Failed to fetch transaction details', error);
-      notify.error('Failed to load transaction details');
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
-
   return (
     <PageContainer title={pageTitle} description={`View your ${tableTitle.toLowerCase()}`}>
       <Box
@@ -216,7 +178,10 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
         }}
       >
         <Breadcrumb title={pageTitle} items={BCrumb} />
-        <Button variant="contained" size="small" startIcon={<IconArrowLeft />}
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<IconArrowLeft />}
           onClick={() => navigate('/organization/commissions')}
           sx={{
             textTransform: 'none',
@@ -260,6 +225,11 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
           onViewTransactions={scrollToTable}
           onViewSubOrgs={handleViewSubOrgs}
           onViewSchools={handleViewSchools}
+          onSetupWallet={
+            can('landlord.bank_account.manage')
+              ? () => navigate('/dashboard', { state: { activeTab: '5' } })
+              : undefined
+          }
         />
 
         {/* Table Section */}
@@ -324,7 +294,18 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
                   />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Button variant="contained" size="small" onClick={handleFilter} fullWidth sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' }, }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleFilter}
+                    fullWidth
+                    sx={{
+                      bgcolor: '#3949ab',
+                      textTransform: 'none',
+                      borderRadius: '8px',
+                      '&:hover': { bgcolor: '#303f9f' },
+                    }}
+                  >
                     Filter
                   </Button>
                 </Grid>
@@ -341,16 +322,17 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
                     <TableCell sx={{ fontWeight: 700 }}>Session ID</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Narration</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="center">Payment Type</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="center">
+                      Payment Type
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Transaction Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rowsLoading ? (
                     [...Array(4)].map((_, i) => (
                       <TableRow key={i}>
-                        {[...Array(8)].map((__, j) => (
+                        {[...Array(7)].map((__, j) => (
                           <TableCell key={j}>
                             <Skeleton variant="text" />
                           </TableCell>
@@ -359,73 +341,56 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
                     ))
                   ) : rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                         {emptyMessage}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
-                      <TableRow key={row.id ?? row.trans_id ?? index} hover>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {row.transaction_id ?? row.trans_id ?? row.id ?? '—'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{row.session_id ?? row.sessionId ?? '—'}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ whiteSpace: 'normal', minWidth: 200 }}>
-                            {row.narration ?? row.description ?? '—'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{formatNaira(row.amount)}</Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={row.credit_type ?? row.creditType ?? row.payment_type ?? '—'}
-                            size="small"
-                            color="success"
-                            sx={{ textTransform: 'capitalize', fontWeight: 500 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {row.created_at ?? row.transaction_date ?? '—'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" onClick={(e) => handleClick(e, row)}>
-                            <IconDotsVertical size={18} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    rows
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((row, index) => (
+                        <TableRow key={row.id ?? row.trans_id ?? index} hover>
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {row.transaction_id ?? row.trans_id ?? row.id ?? '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {row.session_id ?? row.sessionId ?? '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{ whiteSpace: 'normal', minWidth: 200 }}
+                            >
+                              {row.narration ?? row.description ?? '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">{formatNaira(row.amount)}</Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={row.credit_type ?? row.creditType ?? row.payment_type ?? '—'}
+                              size="small"
+                              color="success"
+                              sx={{ textTransform: 'capitalize', fontWeight: 500 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {row.created_at ?? row.transaction_date ?? '—'}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>
             </TableContainer>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              PaperProps={{
-                sx: {
-                  width: 180,
-                  bgcolor: theme.palette.background.paper,
-                  boxShadow: theme.shadows[3],
-                  borderRadius: '12px',
-                },
-              }}
-            >
-              <MenuItem onClick={handleViewDetails}>
-                <IconEye size={16} style={{ marginRight: 8 }} />
-                View Details
-              </MenuItem>
-            </Menu>
 
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
@@ -440,39 +405,6 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
           </Box>
         </Box>
       </Box>
-
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          Transaction Details
-          <IconButton size="small" onClick={() => setDetailsOpen(false)}>
-            <IconX size={18} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {detailsLoading ? (
-            <Skeleton variant="rounded" height={160} />
-          ) : details ? (
-            <Box
-              component="pre"
-              sx={{
-                fontSize: 13,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                fontFamily: 'monospace',
-              }}
-            >
-              {JSON.stringify(details, null, 2)}
-            </Box>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No details available.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailsOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
 
       <CommissionListModal
         open={subOrgsOpen}
@@ -493,30 +425,12 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
         ]}
       />
 
-      <CommissionListModal
+      <SchoolsListModal
         open={schoolsOpen}
         onClose={() => setSchoolsOpen(false)}
         title="Schools"
         loading={schoolsLoading}
         rows={schoolsRows}
-        columns={[
-          { key: 'tenant_name', label: 'School' },
-          { key: 'organization_name', label: 'Agent' },
-          {
-            key: 'school_type',
-            label: 'Type',
-            render: (row) => {
-              const raw = row.school_type;
-              try {
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed.join(', ') : raw;
-              } catch {
-                return raw;
-              }
-            },
-          },
-          { key: 'status', label: 'Status' },
-        ]}
       />
     </PageContainer>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Tab, Button, Grid, useTheme, Skeleton, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool, IconBuildingBank } from '@tabler/icons-react';
@@ -29,8 +30,12 @@ import BankAccountDetailsTab from './components/BankAccountDetailsTab';
 const AgentDashboard = () => {
   const { user: currentUser } = useAuth();
   const { can } = usePermissions();
+  const location = useLocation();
   const id = currentUser?.organization?.id || currentUser?.organization_id;
-  const [value, setValue] = useState('1');
+  // Lets a caller (e.g. "Set up your wallet" on the Commission wallet
+  // pages) land directly on a specific tab, most commonly Bank Account
+  // Details (value "5"), instead of always opening on Overview.
+  const [value, setValue] = useState(location.state?.activeTab || '1');
   const manageTeamRef = useRef(null);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);

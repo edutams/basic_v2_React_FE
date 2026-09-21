@@ -36,7 +36,8 @@ const RoleAttachmentModal = ({ open, onClose, currentUser, onRoleSelection }) =>
   const fetchRoles = async () => {
     setLoadingRoles(true);
     try {
-      const res = await aclApi.getSchoolRolesList();
+      const params = { exclude_super_admin: true };
+      const res = await aclApi.getSchoolRolesList(params);
       setAvailableRoles(res.data || []);
     } catch (err) {
       console.error('Failed to fetch school roles:', err);
@@ -150,8 +151,12 @@ const RoleAttachmentModal = ({ open, onClose, currentUser, onRoleSelection }) =>
       </DialogContent>
 
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onClose}>Cancel</Button>
-        <Button size="small" onClick={handleAttach}>Attach Roles</Button>
+        <Button variant="contained" size="small" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button size="small" onClick={handleAttach}>
+          Attach Roles
+        </Button>
       </DialogActions>
     </Dialog>
   );

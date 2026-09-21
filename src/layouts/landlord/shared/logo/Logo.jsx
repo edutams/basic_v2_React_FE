@@ -9,11 +9,18 @@ import { styled, Box, Typography } from '@mui/material';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
-import EduTAMSLogo from '@/assets/images/logos/EduTAMS2.png';
+import EduTAMSLogoDark from '@/assets/images/logos/EduTAMS.jpeg';
+import EduTAMSLogoLight from '@/assets/images/logos/EduTams2.png';
 
 const Logo = () => {
-  const { isCollapse, isSidebarHover } = useContext(CustomizerContext);
+  const { isCollapse, isSidebarHover, activeMode } = useContext(CustomizerContext);
   const TopbarHeight = config.topbarHeight;
+
+  // EduTAMS.jpeg is the full-color (green/black) wordmark, legible on the
+  // light sidebar background. EduTams2.png is a white/cream wordmark meant
+  // for dark backgrounds — it was previously used unconditionally, which
+  // made it read as a blank white box against the light sidebar.
+  const EduTAMSLogo = activeMode === 'dark' ? EduTAMSLogoLight : EduTAMSLogoDark;
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,

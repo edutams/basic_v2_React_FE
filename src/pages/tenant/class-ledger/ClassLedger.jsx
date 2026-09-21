@@ -54,6 +54,7 @@ import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
+import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import {
   fetchClassAndArmsByProgramme,
   fetchProgrammes,
@@ -68,6 +69,7 @@ import {
 } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
 import StudentLedgerModal from './StudentLedgerModal';
+import LearnerWalletTransactionsModal from './LearnerWalletTransactionsModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -86,12 +88,11 @@ const ClassLedger = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
 
-  const [payForStudentConfirmOpen, setPayForStudentConfirmOpen] = useState(false);
-  const [studentToPayFor, setStudentToPayFor] = useState(null);
-  const [selectedWallet, setSelectedWallet] = useState(null);
-
   const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
   const [selectedStudentForLedger, setSelectedStudentForLedger] = useState(null);
+
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [selectedUserIdForWallet, setSelectedUserIdForWallet] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -110,6 +111,7 @@ const ClassLedger = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
   const [meta, setMeta] = useState(null);
+  const [bursarySessionTermId, setBursarySessionTermId] = useState(null);
 
   const notify = useNotification();
 
@@ -328,6 +330,7 @@ const ClassLedger = () => {
       const tableRes = await getClassStudentsPaymentStatus(payload);
       setLedgerData(tableRes.students?.data || []);
       setMeta(tableRes.students);
+      setBursarySessionTermId(tableRes.bursary_session_term_id ?? null);
     } catch (error) {
       console.error(error);
       notify.error('Failed to load class ledger data');
@@ -738,21 +741,39 @@ const ClassLedger = () => {
               {loadingTable ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={20} />
+                    </TableCell>
                     <TableCell sx={tdCell}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Skeleton variant="circular" width={36} height={36} />
                         <Skeleton variant="text" width={140} height={20} />
                       </Box>
                     </TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={60} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={60} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell align="center" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={60} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={60} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell align="center" sx={tdCell}>
+                      <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : ledgerData.length > 0 ? (
@@ -784,11 +805,21 @@ const ClassLedger = () => {
                           0
                         ).toLocaleString()}
                       </TableCell>
-                      <TableCell sx={tdCell}>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
-                      <TableCell sx={tdCell}>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
-                      <TableCell sx={tdCell}>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
-                      <TableCell sx={tdCell}>₦{(student.total_penalty || 0).toLocaleString()}</TableCell>{' '}
-                      <TableCell sx={tdCell}>₦{(student.total_discount || 0).toLocaleString()}</TableCell>{' '}
+                      <TableCell sx={tdCell}>
+                        ₦{(student.total_optional || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell sx={tdCell}>
+                        ₦{(student.total_payable || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell sx={tdCell}>
+                        ₦{(student.total_paid || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell sx={tdCell}>
+                        ₦{(student.total_penalty || 0).toLocaleString()}
+                      </TableCell>{' '}
+                      <TableCell sx={tdCell}>
+                        ₦{(student.total_discount || 0).toLocaleString()}
+                      </TableCell>{' '}
                       <TableCell
                         sx={{
                           ...tdCell,
@@ -920,9 +951,35 @@ const ClassLedger = () => {
             Cash Posting
           </MenuItem>
 
-          <MenuItem onClick={() => setAnchorEl(null)}>
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                setSelectedUserIdForWallet(activeRow.user_id);
+                setIsWalletModalOpen(true);
+              }
+            }}
+          >
             <AccountBalanceWalletOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Wallet Transaction
+          </MenuItem>
+
+          <MenuItem
+            disabled={!activeRow?.latest_bulk_order_id}
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow?.latest_bulk_order_id) {
+                const params = new URLSearchParams({
+                  bulk_order_id: activeRow.latest_bulk_order_id,
+                  user_id: activeRow.user_id,
+                  session_term_id: bursarySessionTermId,
+                });
+                window.open(`/bursary/transactions/print_receipt?${params.toString()}`, '_blank');
+              }
+            }}
+          >
+            <ReceiptOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+            View Receipt
           </MenuItem>
         </Menu>
         <FeeChart
@@ -952,6 +1009,15 @@ const ClassLedger = () => {
           setSelectedStudentForLedger(null);
         }}
         student={selectedStudentForLedger}
+      />
+
+      <LearnerWalletTransactionsModal
+        open={isWalletModalOpen}
+        onClose={() => {
+          setIsWalletModalOpen(false);
+          setSelectedUserIdForWallet(null);
+        }}
+        userId={selectedUserIdForWallet}
       />
     </PageContainer>
   );

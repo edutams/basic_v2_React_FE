@@ -31,6 +31,7 @@ import {
   Alert,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconUsers, IconEye, IconLogin, IconEdit, IconBuilding, IconCoins } from '@tabler/icons-react';
@@ -39,6 +40,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/context/AgentContext/auth.jsx';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import { usePermissions } from '@/context/AgentContext/permissions';
+import useNotification from '@/hooks/useNotification';
 
 // Separate component for action menu to avoid hooks in loops
 const ActionMenuCell = ({
@@ -151,18 +153,35 @@ const ActionMenuCell = ({
               </ListItemIcon>
               <ListItemText primary="View School" />
             </MenuItem>
-            <MenuItem
-              onClick={() => {
-                handleClose();
-                handleDeleteAgent(agent);
-              }}
-              sx={{ color: 'error.main' }}
-            >
-              <ListItemIcon sx={{ color: 'error.main' }}>
-                <DeleteIcon sx={{ fontSize: 18 }} />
-              </ListItemIcon>
-              <ListItemText primary="Delete Agent" />
-            </MenuItem>
+            {(() => {
+              const hasSchools = (agent.tenants_count ?? 0) > 0;
+              const deleteItem = (
+                <MenuItem
+                  onClick={() => {
+                    if (hasSchools) return;
+                    handleClose();
+                    handleDeleteAgent(agent);
+                  }}
+                  disabled={hasSchools}
+                  sx={{ color: 'error.main' }}
+                >
+                  <ListItemIcon sx={{ color: 'error.main' }}>
+                    <DeleteIcon sx={{ fontSize: 18 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Delete Agent" />
+                </MenuItem>
+              );
+
+              // Disabled MenuItems block pointer events, so the Tooltip
+              // needs a wrapping span to still receive hover.
+              return hasSchools ? (
+                <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+                  <span>{deleteItem}</span>
+                </Tooltip>
+              ) : (
+                deleteItem
+              );
+            })()}
           </>
         )}
       </Menu>
@@ -184,6 +203,7 @@ const TeamTab = ({
   const isDark = theme.palette.mode === 'dark';
   const { user } = useContext(AuthContext);
   const userAccessLevel = user?.organization?.access_level ?? 1;
+  const notify = useNotification();
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -208,6 +228,8 @@ const TeamTab = ({
   const [actionType, setActionType] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const handleAction = (agent, type) => {
     setSelectedAgent(agent);
@@ -215,9 +237,22 @@ const TeamTab = ({
     setIsModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (agentToDelete) {
-      // Add delete logic here if needed
+  const handleConfirmDelete = async () => {
+    if (!agentToDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await agentApi.deleteOrganization(agentToDelete.id);
+      if (res.status) {
+        notify.success('Agent deleted successfully!');
+        setReloadKey((prev) => prev + 1);
+      } else {
+        notify.error(res.message || 'Failed to delete agent');
+      }
+    } catch (error) {
+      notify.error(error?.response?.data?.message || 'Failed to delete agent');
+    } finally {
+      setDeleteLoading(false);
       setDeleteDialogOpen(false);
       setAgentToDelete(null);
     }
@@ -353,7 +388,7 @@ const TeamTab = ({
       }
     };
     fetchData();
-  }, [page, rowsPerPage, isViewingProfile, organizationId, refreshKey]);
+  }, [page, rowsPerPage, isViewingProfile, organizationId, refreshKey, reloadKey]);
 
   // Handle search button click
   const handleSearch = () => {
@@ -801,11 +836,11 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCancelDelete}>
+          <Button variant="contained" size="small" onClick={handleCancelDelete} disabled={deleteLoading}>
             Cancel
           </Button>
-          <Button size="small" onClick={handleConfirmDelete} color="error">
-            Delete
+          <Button size="small" onClick={handleConfirmDelete} color="error" disabled={deleteLoading}>
+            {deleteLoading ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

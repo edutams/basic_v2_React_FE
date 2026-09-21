@@ -51,6 +51,7 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
         from: fromDate || undefined,
         to: toDate || undefined,
         search: transactionId || undefined,
+        type: agent.commissionTypeRaw,
       });
       const list = res?.data?.data ?? res?.data ?? [];
       setRows(Array.isArray(list) ? list : []);

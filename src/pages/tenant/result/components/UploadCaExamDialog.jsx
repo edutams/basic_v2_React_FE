@@ -49,7 +49,7 @@ const UploadCaExamDialog = ({ open, onClose, allocation, onUploaded }) => {
     <ReusableModal
       open={open}
       onClose={handleClose}
-      title={`Upload CA & Exam — ${allocation?.subject_name} (${allocation?.className})`}
+      title={`Upload CA & Exam — ${allocation?.subject_name} (${allocation?.class_name ?? allocation?.className})`}
       size="small"
     >
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

@@ -1,15 +1,20 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Snackbar, Alert,
   IconButton, Menu, ListItemIcon, ListItemText, useTheme, TablePagination, Tooltip, ToggleButtonGroup, ToggleButton,
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
   IconCloudUpload, IconDownload, IconEye, IconCheck, IconFileSpreadsheet,
   IconUpload, IconEdit, IconTrash, IconSend, IconLayoutGrid, IconList,
-  IconFilter,
+  IconFilter, IconAlertTriangle,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+
+import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
 
 import DownloadSampleDialog from './DownloadSampleDialog';
 import DownloadCombinedDialog from './DownloadCombinedDialog';
@@ -21,66 +26,33 @@ import ScoreUploadAnalytics from './ScoreUploadAnalytics';
 import ScoreUploadCard from './ScoreUploadCard';
 import ActionSelectionDialog from './ActionSelectionDialog';
 
-const dummySessions = [
-  { id: 1, label: '2025/2026' },
-  { id: 2, label: '2024/2025' },
-];
-
-const dummyTerms = [
-  { id: 1, label: 'First Term' },
-  { id: 2, label: 'Second Term' },
-  { id: 3, label: 'Third Term' },
-];
-
-const dummyProgrammes = [
-  { id: 1, name: 'Junior Secondary' },
-  { id: 2, name: 'Senior Secondary' },
-];
-
-const dummyClasses = [
-  { id: 1, name: 'JSS 1A', programme_id: 1 },
-  { id: 2, name: 'JSS 1B', programme_id: 1 },
-  { id: 3, name: 'JSS 2A', programme_id: 1 },
-  { id: 4, name: 'JSS 2B', programme_id: 1 },
-  { id: 5, name: 'SS 1A', programme_id: 2 },
-  { id: 6, name: 'SS 1B', programme_id: 2 },
-  { id: 7, name: 'SS 2A', programme_id: 2 },
-  { id: 8, name: 'SS 2B', programme_id: 2 },
-];
-
-const dummySubjects = [
-  { id: 1, name: 'Mathematics' },
-  { id: 2, name: 'English Language' },
-  { id: 3, name: 'Physics' },
-  { id: 4, name: 'Chemistry' },
-  { id: 5, name: 'Biology' },
-  { id: 6, name: 'Civic Education' },
-];
-
-const dummyAllocations = [
-  { id: 1, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 1A', subject_name: 'Mathematics', total_reg: 42, ca1_count: 42, ca2_count: 40, exam_upload_count: 38, teacher_submit: 'yes', spa_approval: null },
-  { id: 2, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 1A', subject_name: 'English Language', total_reg: 42, ca1_count: 42, ca2_count: 42, exam_upload_count: 42, teacher_submit: 'yes', spa_approval: { spa_publish: 'no' } },
-  { id: 3, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 2A', subject_name: 'Physics', total_reg: 38, ca1_count: 35, ca2_count: 30, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
-  { id: 4, session_term: '2025/2026 - First Term', programme: 'Junior Secondary', className: 'JSS 2A', subject_name: 'Chemistry', total_reg: 38, ca1_count: 38, ca2_count: 0, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
-  { id: 5, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 1A', subject_name: 'Biology', total_reg: 35, ca1_count: 35, ca2_count: 35, exam_upload_count: 35, teacher_submit: 'yes', spa_approval: null },
-  { id: 6, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 1A', subject_name: 'Civic Education', total_reg: 35, ca1_count: 30, ca2_count: 0, exam_upload_count: 0, teacher_submit: 'no', spa_approval: null },
-  { id: 7, session_term: '2025/2026 - First Term', programme: 'Senior Secondary', className: 'SS 2A', subject_name: 'Mathematics', total_reg: 30, ca1_count: 30, ca2_count: 30, exam_upload_count: 30, teacher_submit: 'yes', spa_approval: { spa_publish: 'yes' } },
-];
-
 const UploadScoresTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [allocations, setAllocations] = useState(dummyAllocations);
-  const [filter, setFilter] = useState({ session: 1, term: 1, programme: 1, class_id: 1, subject_id: 1 });
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
+  const [allocations, setAllocations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [classArms, setClassArms] = useState([]);
+  const [curriculums, setCurriculums] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [filter, setFilter] = useState({ session_id: '', term_id: '', programme_id: '', class_id: '', class_arm_id: '', curriculum_id: '', subject_id: '' });
+  const [sessionTerms, setSessionTerms] = useState([]);
+  const [dataFetched, setDataFetched] = useState(false);
+  const [viewMode, setViewMode] = useState('cards');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [analyticsData, setAnalyticsData] = useState(null);
 
   // Dialog States
+  // Submit confirmation prompt state (single + submit-all)
+  const [submitConfirm, setSubmitConfirm] = useState({ open: false, allocation: null, all: false });
   const [actionSelectionDialog, setActionSelectionDialog] = useState({ open: false, allocation: null });
   const [downloadSampleDialog, setDownloadSampleDialog] = useState({ open: false, allocation: null });
   const [downloadCombinedDialog, setDownloadCombinedDialog] = useState(false);
@@ -91,64 +63,171 @@ const UploadScoresTab = () => {
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  const filteredClasses = filter.programme
-    ? dummyClasses.filter(c => c.programme_id === filter.programme)
-    : dummyClasses;
+  // ── Fetch dropdown data on mount ──────────────────────────
+  useEffect(() => {
+    const loadDropdowns = async () => {
+      try {
+        const [sessionTermsRes, classStructuresRes] = await Promise.all([
+          fetchSessionTerms(),
+          fetchClassStructures(),
+        ]);
 
-  const filteredAllocations = allocations.filter(a => {
-    if (filter.session && a.session_term !== `${dummySessions.find(s => s.id === filter.session)?.label} - ${dummyTerms.find(t => t.id === filter.term)?.label}`) return false;
-    if (filter.programme && a.programme !== dummyProgrammes.find(p => p.id === filter.programme)?.name) return false;
-    if (filter.class_id && a.className !== dummyClasses.find(c => c.id === filter.class_id)?.name) return false;
-    if (filter.subject_id && a.subject_name !== dummySubjects.find(s => s.id === filter.subject_id)?.name) return false;
-    return true;
-  });
+        // Extract unique sessions and terms from session_terms
+        const stData = sessionTermsRes?.data || [];
+        setSessionTerms(stData);
+        const sessionsMap = new Map();
+        const termsMap = new Map();
+        stData.forEach((st) => {
+          if (st.session) {
+            sessionsMap.set(st.session.id, st.session);
+          }
+          if (st.term) {
+            termsMap.set(st.term.id, st.term);
+          }
+        });
+        setSessions(Array.from(sessionsMap.values()));
+        setTerms(Array.from(termsMap.values()));
+
+        // Extract programmes, classes, and class arms from class structures
+        const csData = classStructuresRes?.data || [];
+        const programmesMap = new Map();
+        const classesMap = new Map();
+        const armsList = [];
+        csData.forEach((division) => {
+          if (division.programmes) {
+            division.programmes.forEach((prog) => {
+              programmesMap.set(prog.id, prog);
+              if (prog.classes) {
+                prog.classes.forEach((cls) => {
+                  classesMap.set(cls.id, { ...cls, programme_id: prog.id });
+                  if (cls.class_arms) {
+                    cls.class_arms.forEach((arm) => {
+                      armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id });
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+        setProgrammes(Array.from(programmesMap.values()));
+        setClasses(Array.from(classesMap.values()));
+        setClassArms(armsList);
+      } catch (err) {
+        console.error('Failed to load dropdowns:', err);
+      }
+    };
+    loadDropdowns();
+  }, []);
+
+  const filteredClasses = useMemo(() => {
+    if (!filter.programme_id) return classes;
+    return classes.filter((c) => c.programme_id === filter.programme_id);
+  }, [filter.programme_id, classes]);
+
+  const filteredClassArms = useMemo(() => {
+    let arms = classArms;
+    if (filter.programme_id) arms = arms.filter((arm) => arm.programme_id === filter.programme_id);
+    if (filter.class_id) arms = arms.filter((arm) => arm.class_id === filter.class_id);
+    return arms;
+  }, [filter.programme_id, filter.class_id, classArms]);
+
+  const filteredAllocations = allocations;
 
   const selectedClassName = useMemo(() => {
-    if (!filter.class_id) return '';
-    return dummyClasses.find(c => c.id === filter.class_id)?.name || '';
-  }, [filter.class_id]);
+    if (!filter.class_arm_id) return '';
+    return classArms.find(c => c.id === filter.class_arm_id)?.class_arm_names || '';
+  }, [filter.class_arm_id, classArms]);
 
-  const canShowBulkActions = filter.session && filter.term && filter.programme && filter.class_id;
-  const canShowSubmitAll = filter.session && filter.term && filter.programme && filter.class_id;
+  // Build lookup: session_id + term_id → session_term_id (the session_terms row id)
+  const sessionTermId = useMemo(() => {
+    if (!filter.session_id || !filter.term_id) return null;
+    const match = sessionTerms.find(
+      (st) => String(st.session?.id) === String(filter.session_id) && String(st.term?.id) === String(filter.term_id)
+    );
+    return match?.id || null;
+  }, [filter.session_id, filter.term_id, sessionTerms]);
 
-  // Calculate analytics for Analytics Component
-  const analyticsData = useMemo(() => {
-    const list = filteredAllocations.length > 0 ? filteredAllocations : allocations;
-    let caUploaded = 0;
-    let caTotal = 0;
-    let examUploaded = 0;
-    let examTotal = 0;
-    let submittedSubjects = 0;
+  const canShowBulkActions = filter.session_id && filter.term_id && filter.programme_id && filter.class_arm_id;
+  const canShowSubmitAll = filter.session_id && filter.term_id && filter.programme_id && filter.class_arm_id;
+  // Gate the bulk scoresheet/submit-all buttons until every filter field is selected
+  const allFiltersSelected = Boolean(
+    filter.session_id && filter.term_id && filter.programme_id && filter.class_id && filter.class_arm_id && filter.subject_id
+  );
 
-    list.forEach(item => {
-      const reg = item.total_reg || 0;
-      caUploaded += (item.ca1_count || 0);
-      caTotal += reg;
-      examUploaded += (item.exam_upload_count || 0);
-      examTotal += reg;
-      if (item.teacher_submit === 'yes' || item.isSubmitted || item.submissionStatus === 'Submitted') {
-        submittedSubjects += 1;
+  // ── Fetch allocations and analytics ────────────────────────
+  const fetchAllocations = useCallback(async () => {
+    if (!filter.session_id || !filter.term_id || !filter.programme_id) return;
+    setLoading(true);
+    try {
+      const params = {
+        session_id: filter.session_id,
+        term_id: filter.term_id,
+        programme_id: filter.programme_id,
+      };
+      if (filter.class_id) params.class_id = filter.class_id;
+      if (filter.class_arm_id) params.class_arm_id = filter.class_arm_id;
+      if (filter.subject_id) params.subject_id = filter.subject_id;
+
+      const [allocRes, analyticsRes] = await Promise.all([
+        scoreManagerApi.getScoreUploadOverview(params),
+        scoreManagerApi.getScoreUploadAnalytics(params),
+      ]);
+
+      setAllocations(allocRes?.data?.data || []);
+      setAnalyticsData(analyticsRes?.data?.data || null);
+      setDataFetched(true);
+    } catch (err) {
+      console.error('Failed to fetch allocations:', err);
+      showSnackbar('Failed to load data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [filter.session_id, filter.term_id, filter.programme_id, filter.class_id, filter.class_arm_id, filter.subject_id]);
+
+  // ── Fetch curriculums when class_arm changes ───────────────
+  useEffect(() => {
+    if (!filter.class_arm_id || !filter.session_id || !filter.term_id) {
+      setCurriculums([]);
+      return;
+    }
+    const loadCurriculums = async () => {
+      try {
+        const res = await scoreManagerApi.getClassCurriculums({
+          class_arm_id: filter.class_arm_id,
+          session_id: filter.session_id,
+          term_id: filter.term_id,
+        });
+        setCurriculums(res?.data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch curriculums:', err);
       }
-    });
-
-    return {
-      ca_scores: {
-        uploaded: caUploaded,
-        total: caTotal,
-        percentage: caTotal > 0 ? Math.round((caUploaded / caTotal) * 100) : 0,
-      },
-      exam_scores: {
-        uploaded: examUploaded,
-        total: examTotal,
-        percentage: examTotal > 0 ? Math.round((examUploaded / examTotal) * 100) : 0,
-      },
-      score_submission: {
-        submitted: submittedSubjects,
-        total: list.length,
-        percentage: list.length > 0 ? Math.round((submittedSubjects / list.length) * 100) : 0,
-      },
     };
-  }, [filteredAllocations, allocations]);
+    loadCurriculums();
+  }, [filter.class_arm_id, filter.session_id, filter.term_id]);
+
+  // ── Fetch subjects when class_arm or curriculum changes ─────
+  useEffect(() => {
+    if (!filter.class_arm_id || !filter.session_id || !filter.term_id) {
+      setSubjects([]);
+      return;
+    }
+    const loadSubjects = async () => {
+      try {
+        const params = {
+          class_arm_id: filter.class_arm_id,
+          session_id: filter.session_id,
+          term_id: filter.term_id,
+        };
+        if (filter.curriculum_id) params.curriculum_id = filter.curriculum_id;
+        const res = await scoreManagerApi.getClassSubjects(params);
+        setSubjects(res?.data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch subjects:', err);
+      }
+    };
+    loadSubjects();
+  }, [filter.class_arm_id, filter.session_id, filter.term_id, filter.curriculum_id]);
 
   const openActionMenu = (e, row) => {
     setActionMenuAnchor(e.currentTarget);
@@ -162,6 +241,7 @@ const UploadScoresTab = () => {
 
   const handleUploaded = () => {
     showSnackbar('Operation completed successfully!');
+    fetchAllocations();
   };
 
   const handleProceedActionSelection = (action, allocation) => {
@@ -175,30 +255,61 @@ const UploadScoresTab = () => {
     }
   };
 
-  const handleSubmitScore = (allocation) => {
-    setAllocations(prev =>
-      prev.map(a => (a.id === allocation.id ? { ...a, teacher_submit: 'yes' } : a))
-    );
-    showSnackbar(`Scores for ${allocation.subject_name} (${allocation.className}) submitted successfully!`);
+  const openSubmitConfirm = (allocation = null) => setSubmitConfirm({ open: true, allocation, all: !allocation });
+
+  const closeSubmitConfirm = () => setSubmitConfirm({ open: false, allocation: null, all: false });
+
+  const handleSubmitScore = async (allocation) => {
+    try {
+      await scoreManagerApi.submitScores({
+        subject_id: allocation.subject_id,
+        class_arm_id: allocation.class_arm_id,
+        session_term_id: sessionTermId,
+      });
+      setAllocations(prev =>
+        prev.map(a => (a.id === allocation.id ? { ...a, teacher_submit: 'yes' } : a))
+      );
+      showSnackbar(`Scores for ${allocation.subject_name} (${allocation.class_name}) submitted successfully!`);
+    } catch (err) {
+      showSnackbar('Failed to submit scores', 'error');
+    }
   };
 
-  const handleSubmitAllScores = () => {
-    const sessionLabel = dummySessions.find(s => s.id === filter.session)?.label || '';
-    const termLabel = dummyTerms.find(t => t.id === filter.term)?.label || '';
-    const sessionTermLabel = `${sessionLabel} - ${termLabel}`;
-    setAllocations(prev =>
-      prev.map(a => {
-        if (
-          (!filter.session || a.session_term === sessionTermLabel) &&
-          (!filter.programme || a.programme === dummyProgrammes.find(p => p.id === filter.programme)?.name) &&
-          (!filter.class_id || a.className === dummyClasses.find(c => c.id === filter.class_id)?.name)
-        ) {
-          return { ...a, teacher_submit: 'yes' };
-        }
-        return a;
-      })
-    );
-    showSnackbar('All subject scores submitted! Waiting for approval.');
+  const handleSubmitAllScores = async () => {
+    try {
+      const res = await scoreManagerApi.submitAllScoresValidated({
+        class_arm_id: filter.class_arm_id,
+        session_term_id: sessionTermId,
+        allocations: filteredAllocations.map((a) => ({
+          id: a.id,
+          subject_id: a.subject_id,
+        })),
+      });
+
+      const data = res?.data?.data || {};
+      const submittedCount = data.submitted_count || 0;
+      const skipped = data.skipped || [];
+
+      if (submittedCount > 0) {
+        const submittedIds = filteredAllocations
+          .filter((a) => !skipped.some((s) => s.subject_id === a.subject_id))
+          .map((a) => a.id);
+        setAllocations((prev) =>
+          prev.map((a) => (submittedIds.includes(a.id) ? { ...a, teacher_submit: 'yes' } : a))
+        );
+      }
+
+      if (skipped.length > 0) {
+        showSnackbar(
+          `${submittedCount} subject(s) submitted. ${skipped.length} skipped — exam scores must be uploaded first.`,
+          submittedCount > 0 ? 'warning' : 'error'
+        );
+      } else {
+        showSnackbar(`All ${submittedCount} subject scores submitted! Waiting for approval.`);
+      }
+    } catch (err) {
+      showSnackbar('Failed to submit all scores', 'error');
+    }
   };
 
   return (
@@ -216,40 +327,55 @@ const UploadScoresTab = () => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {canShowBulkActions && (
               <>
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="info"
-                  startIcon={<IconDownload size={16} />}
-                  onClick={() => setDownloadCombinedDialog(true)}
-                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
-                >
-                  Download {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
-                </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="success"
-                  startIcon={<IconCloudUpload size={16} />}
-                  onClick={() => setUploadCombinedDialog(true)}
-                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
-                >
-                  Upload {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
-                </Button>
+                <Tooltip title={allFiltersSelected ? '' : 'Select Session, Term, Programme, Class, Class Arm and Subject first'}>
+                  <span>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="info"
+                      startIcon={<IconDownload size={16} />}
+                      disabled={!allFiltersSelected}
+                      onClick={() => setDownloadCombinedDialog(true)}
+                      sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                    >
+                      Download {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                    </Button>
+                  </span>
+                </Tooltip>
+                <Tooltip title={allFiltersSelected ? '' : 'Select Session, Term, Programme, Class, Class Arm and Subject first'}>
+                  <span>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="success"
+                      startIcon={<IconCloudUpload size={16} />}
+                      disabled={!allFiltersSelected}
+                      onClick={() => setUploadCombinedDialog(true)}
+                      sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                    >
+                      Upload {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                    </Button>
+                  </span>
+                </Tooltip>
               </>
             )}
 
             {canShowSubmitAll && (
-              <Button
-                variant="contained"
-                size="small"
-                color="warning"
-                startIcon={<IconSend size={16} />}
-                onClick={handleSubmitAllScores}
-                sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
-              >
-                Submit All Scores
-              </Button>
+              <Tooltip title={allFiltersSelected ? '' : 'Select Session, Term, Programme, Class, Class Arm and Subject first'}>
+                <span>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="warning"
+                    startIcon={<IconSend size={16} />}
+                    disabled={!allFiltersSelected}
+                    onClick={() => openSubmitConfirm()}
+                    sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                  >
+                    Submit All Scores
+                  </Button>
+                </span>
+              </Tooltip>
             )}
 
             {/* View Mode Toggle */}
@@ -277,36 +403,54 @@ const UploadScoresTab = () => {
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Session</InputLabel>
-                <Select value={filter.session} label="Session" onChange={e => setFilter({ ...filter, session: e.target.value })}>
+                <Select value={filter.session_id} label="Session" onChange={e => setFilter({ ...filter, session_id: e.target.value, programme_id: '', class_id: '', class_arm_id: '', curriculum_id: '', subject_id: '' })}>
                   <MenuItem value="">-- Choose --</MenuItem>
-                  {dummySessions.map(s => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
+                  {sessions.map(s => <MenuItem key={s.id} value={s.id}>{s.session_name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Term</InputLabel>
-                <Select value={filter.term} label="Term" onChange={e => setFilter({ ...filter, term: e.target.value })}>
+                <Select value={filter.term_id} label="Term" onChange={e => setFilter({ ...filter, term_id: e.target.value, programme_id: '', class_id: '', class_arm_id: '', curriculum_id: '', subject_id: '' })}>
                   <MenuItem value="">-- Choose --</MenuItem>
-                  {dummyTerms.map(t => <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>)}
+                  {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
-                <Select value={filter.programme} label="Programme" onChange={e => setFilter({ ...filter, programme: e.target.value, class_id: '' })}>
+                <Select value={filter.programme_id} label="Programme" onChange={e => setFilter({ ...filter, programme_id: e.target.value, class_id: '', class_arm_id: '', curriculum_id: '', subject_id: '' })}>
                   <MenuItem value="">-- Choose --</MenuItem>
-                  {dummyProgrammes.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+                  {programmes.map(p => <MenuItem key={p.id} value={p.id}>{p.programme_name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class</InputLabel>
-                <Select value={filter.class_id} label="Class" onChange={e => setFilter({ ...filter, class_id: e.target.value })}>
+                <Select value={filter.class_id} label="Class" onChange={e => setFilter({ ...filter, class_id: e.target.value, class_arm_id: '', curriculum_id: '', subject_id: '' })}>
                   <MenuItem value="">-- Choose --</MenuItem>
-                  {filteredClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                  {filteredClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.class_name}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Class Arm</InputLabel>
+                <Select value={filter.class_arm_id} label="Class Arm" onChange={e => setFilter({ ...filter, class_arm_id: e.target.value, curriculum_id: '', subject_id: '' })}>
+                  <MenuItem value="">-- Choose --</MenuItem>
+                  {filteredClassArms.map(c => <MenuItem key={c.id} value={c.id}>{c.class_arm_names}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Curriculum</InputLabel>
+                <Select value={filter.curriculum_id} label="Curriculum" onChange={e => setFilter({ ...filter, curriculum_id: e.target.value, subject_id: '' })}>
+                  <MenuItem value="">-- All --</MenuItem>
+                  {curriculums.map(c => <MenuItem key={c.id} value={c.id}>{c.curriculum_name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -315,7 +459,7 @@ const UploadScoresTab = () => {
                 <InputLabel>Subject</InputLabel>
                 <Select value={filter.subject_id} label="Subject" onChange={e => setFilter({ ...filter, subject_id: e.target.value })}>
                   <MenuItem value="">-- Select Subject --</MenuItem>
-                  {dummySubjects.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+                  {subjects.map(s => <MenuItem key={s.id} value={s.id}>{s.subject_name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -324,17 +468,18 @@ const UploadScoresTab = () => {
                 fullWidth
                 variant="contained"
                 color="primary"
-                onClick={() => setPage(0)}
+                onClick={fetchAllocations}
+                disabled={loading || !filter.session_id || !filter.term_id || !filter.programme_id || !filter.class_id}
                 sx={{ fontWeight: 600, height: '40px' }}
               >
-                Fetch
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Fetch'}
               </Button>
             </Grid>
           </Grid>
         </Box>
 
         {/* ── Prompt when filter not selected ─────────────────── */}
-        {!filter.programme && (
+        {!filter.programme_id && (
           <Box sx={{ p: 3, textAlign: 'center' }}>
             <Alert severity="info" sx={{ borderRadius: '8px', display: 'inline-flex', py: 0.5, px: 2 }}>
               Select a Programme and Class filter above to view subject score upload status.
@@ -343,7 +488,7 @@ const UploadScoresTab = () => {
         )}
 
         {/* ── CARD GRID VIEW (Primary Layout matching essential_v2) ──────── */}
-        {filter.programme && viewMode === 'cards' && (
+        {filter.programme_id && viewMode === 'cards' && (
           <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             {filteredAllocations.length > 0 ? (
               <Grid container spacing={2}>
@@ -353,7 +498,7 @@ const UploadScoresTab = () => {
                       allocation={alloc}
                       onUploadScore={(a) => setActionSelectionDialog({ open: true, allocation: a })}
                       onViewScoreSheet={(a) => setInputScoreDialog({ open: true, allocation: a })}
-                      onSubmitScore={(a) => handleSubmitScore(a)}
+                      onSubmitScore={(a) => openSubmitConfirm(a)}
                     />
                   </Grid>
                 ))}
@@ -369,7 +514,7 @@ const UploadScoresTab = () => {
         )}
 
         {/* ── TABLE VIEW (Fallback Option) ────────────────────── */}
-        {filter.programme && viewMode === 'table' && (
+        {filter.programme_id && viewMode === 'table' && (
           <Box>
             {filteredAllocations.length > 0 ? (
               <Box sx={{ p: 2 }}>
@@ -378,8 +523,6 @@ const UploadScoresTab = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 700, width: '3%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>#</TableCell>
-                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Session-Term</TableCell>
-                        <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Programme</TableCell>
                         <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Class</TableCell>
                         <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Subject</TableCell>
                         <TableCell sx={{ fontWeight: 700, width: '10%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Total Registered</TableCell>
@@ -394,9 +537,7 @@ const UploadScoresTab = () => {
                       {filteredAllocations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((a, i) => (
                         <TableRow key={a.id} hover>
                           <TableCell>{page * rowsPerPage + i + 1}</TableCell>
-                          <TableCell>{a.session_term}</TableCell>
-                          <TableCell>{a.programme}</TableCell>
-                          <TableCell>{a.className}</TableCell>
+                          <TableCell>{a.class_name}</TableCell>
                           <TableCell>{a.subject_name}</TableCell>
                           <TableCell>{a.total_reg}</TableCell>
                           <TableCell>{a.ca1_count}</TableCell>
@@ -492,6 +633,56 @@ const UploadScoresTab = () => {
         )}
       </Menu>
 
+      {/* ── Submit Confirmation Prompt ─────────────────────── */}
+      <Dialog
+        open={submitConfirm.open}
+        onClose={closeSubmitConfirm}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconAlertTriangle size={22} color={theme.palette.warning.main} />
+          {submitConfirm.all ? 'Submit All Scores' : 'Submit Score'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {submitConfirm.all ? (
+              <>
+                You are about to submit scores for <strong>all subjects</strong> in{' '}
+                <strong>{selectedClassName || 'this class arm'}</strong>. Subjects without exam scores uploaded
+                will be skipped.
+              </>
+            ) : (
+              <>
+                You are about to submit scores for <strong>{submitConfirm.allocation?.subject_name}</strong> (
+                {submitConfirm.allocation?.class_name}).
+              </>
+            )}
+            {' '}This action flags the scores as ready for approval. Are you sure you want to continue?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeSubmitConfirm} color="inherit">Cancel</Button>
+          <Button
+            variant="contained"
+            color="warning"
+            startIcon={<IconSend size={16} />}
+            onClick={async () => {
+              const target = submitConfirm.allocation;
+              const isAll = submitConfirm.all;
+              closeSubmitConfirm();
+              if (isAll) {
+                await handleSubmitAllScores();
+              } else if (target) {
+                await handleSubmitScore(target);
+              }
+            }}
+          >
+            Yes, Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* ── Dialogs & Modals ───────────────────────────────── */}
       <ActionSelectionDialog
         open={actionSelectionDialog.open}
@@ -504,12 +695,15 @@ const UploadScoresTab = () => {
         open={downloadSampleDialog.open}
         onClose={() => setDownloadSampleDialog({ open: false, allocation: null })}
         allocation={downloadSampleDialog.allocation}
+        filter={{ ...filter, session_term_id: sessionTermId }}
       />
 
       <DownloadCombinedDialog
         open={downloadCombinedDialog}
         onClose={() => setDownloadCombinedDialog(false)}
         allocations={filteredAllocations}
+        filter={{ ...filter, session_term_id: sessionTermId }}
+        sessionTermId={sessionTermId}
       />
 
       <UploadResultDialog
@@ -523,6 +717,7 @@ const UploadScoresTab = () => {
         open={uploadCombinedDialog}
         onClose={() => setUploadCombinedDialog(false)}
         allocations={filteredAllocations}
+        filter={{ ...filter, session_term_id: sessionTermId }}
         onUploaded={handleUploaded}
       />
 
@@ -537,7 +732,7 @@ const UploadScoresTab = () => {
         open={inputScoreDialog.open}
         onClose={() => setInputScoreDialog({ open: false, allocation: null })}
         allocation={inputScoreDialog.allocation}
-        filter={filter}
+        filter={{ ...filter, session_term_id: sessionTermId }}
       />
 
       <Snackbar

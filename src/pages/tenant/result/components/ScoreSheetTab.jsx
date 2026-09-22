@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, useTheme,
@@ -14,8 +14,10 @@ import { useNavigate } from 'react-router-dom';
 import StatCard from '@/components/shared/StatCard';
 import InputScoreDialog from './InputScoreDialog';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
-import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
+import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchCurrentSession } from '@/api/tenant/session-term/sessionTermApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 
@@ -72,6 +74,7 @@ const ScoreSheetTab = () => {
   const [selectedClassArm, setSelectedClassArm] = useState('');
   const [selectedCurriculum, setSelectedCurriculum] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [dataFetched, setDataFetched] = useState(false);
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
   const [inputScoreDialog, setInputScoreDialog] = useState({ open: false, allocation: null, singleStudent: null });
@@ -106,52 +109,40 @@ const ScoreSheetTab = () => {
     return match?.id || null;
   }, [selectedSession, selectedTerm, sessionTermsData]);
 
-  const showTable = selectedClassArm && selectedSubject && selectedSession && selectedTerm;
+  const showTable = selectedClassArm && selectedSubject && selectedSession && selectedTerm && dataFetched;
+  const canFetch = Boolean(selectedSession && selectedTerm && selectedClassArm && selectedSubject && sessionTermId);
 
-  // ── Fetch dropdown data on mount ──────────────────────────
+  const activeSessionTermRef = useRef(null);
+
+  // ── Fetch dropdown data on mount (Class Register endpoints) ─
   useEffect(() => {
     const loadDropdowns = async () => {
       try {
-        const [sessionTermsRes, classStructuresRes] = await Promise.all([
+        const [sessRes, progRes, activeRes, stRes] = await Promise.all([
+          fetchSessions(),
+          fetchProgrammes(),
+          fetchActiveTenantSessionTerm(),
           fetchSessionTerms(),
-          fetchClassStructures(),
         ]);
 
-        const stData = sessionTermsRes?.data || [];
-        setSessionTermsData(stData);
-        const sessionsMap = new Map();
-        const termsMap = new Map();
-        stData.forEach((st) => {
-          if (st.session) sessionsMap.set(st.session.id, st.session);
-          if (st.term) termsMap.set(st.term.id, st.term);
-        });
-        setSessions(Array.from(sessionsMap.values()));
-        setTerms(Array.from(termsMap.values()));
+        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+          ? sessRes.data?.data || sessRes.data
+          : [];
+        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+          ? progRes.data?.data || progRes.data
+          : [];
 
-        const csData = classStructuresRes?.data || [];
-        const programmesMap = new Map();
-        const classesMap = new Map();
-        const armsList = [];
-        csData.forEach((division) => {
-          if (division.programmes) {
-            division.programmes.forEach((prog) => {
-              programmesMap.set(prog.id, prog);
-              if (prog.classes) {
-                prog.classes.forEach((cls) => {
-                  classesMap.set(cls.id, { ...cls, programme_id: prog.id });
-                  if (cls.class_arms) {
-                    cls.class_arms.forEach((arm) => {
-                      armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id });
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        setProgrammes(Array.from(programmesMap.values()));
-        setClasses(Array.from(classesMap.values()));
-        setClassArms(armsList);
+        setSessions(sessionsData);
+        setProgrammes(programmesData);
+        setSessionTermsData(stRes?.data || []);
+
+        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+        activeSessionTermRef.current = activeSessionTerm;
+
+        const defaultSession =
+          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+          sessionsData[0];
+        if (defaultSession) setSelectedSession(defaultSession.id);
       } catch (err) {
         console.error('Failed to load dropdowns:', err);
       }
@@ -159,16 +150,55 @@ const ScoreSheetTab = () => {
     loadDropdowns();
   }, []);
 
-  const filteredClasses = selectedProgramme
-    ? classes.filter((c) => c.programme_id === selectedProgramme)
-    : classes;
+  // ── Terms for the selected session (defaults to the active term) ──
+  useEffect(() => {
+    if (!selectedSession) {
+      setTerms([]);
+      return;
+    }
+    fetchTerms(selectedSession)
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setTerms(data);
+        const activeSessionTerm = activeSessionTermRef.current;
+        const activeTermId =
+          activeSessionTerm?.session_id === selectedSession ? activeSessionTerm.term_id : null;
+        const active = (activeTermId && data.find((t) => t.id === activeTermId)) || data[0];
+        if (active) setSelectedTerm(active.id);
+      })
+      .catch(console.error);
+  }, [selectedSession]);
 
-  const filteredClassArms = (() => {
-    let arms = classArms;
-    if (selectedProgramme) arms = arms.filter((arm) => arm.programme_id === selectedProgramme);
-    if (selectedClass) arms = arms.filter((arm) => arm.class_id === selectedClass);
-    return arms;
-  })();
+  // ── Classes for the selected programme ─────────────────────
+  useEffect(() => {
+    if (!selectedProgramme) {
+      setClasses([]);
+      return;
+    }
+    fetchClassesByProgramme(selectedProgramme)
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setClasses(data);
+      })
+      .catch(console.error);
+  }, [selectedProgramme]);
+
+  // ── Class arms for the selected class ──────────────────────
+  useEffect(() => {
+    if (!selectedClass) {
+      setClassArms([]);
+      return;
+    }
+    fetchClassArmsByClass(selectedClass, selectedProgramme ? { programme_id: selectedProgramme } : {})
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setClassArms(data);
+      })
+      .catch(console.error);
+  }, [selectedClass, selectedProgramme]);
+
+  const filteredClasses = classes;
+  const filteredClassArms = classArms;
 
   // ── Fetch curriculums when class arm changes ────────────────
   useEffect(() => {
@@ -244,6 +274,7 @@ const ScoreSheetTab = () => {
           }
         }
       }
+      setDataFetched(true);
     } catch (err) {
       console.error('Failed to fetch score sheet:', err);
     } finally {
@@ -251,9 +282,10 @@ const ScoreSheetTab = () => {
     }
   }, [selectedSubject, sessionTermId, selectedClassArm]);
 
+  // Reset the fetched flag whenever the filters change (fetch is manual now)
   useEffect(() => {
-    if (showTable) fetchScoreSheet();
-  }, [showTable, fetchScoreSheet]);
+    setDataFetched(false);
+  }, [selectedSession, selectedTerm, selectedProgramme, selectedClass, selectedClassArm, selectedCurriculum, selectedSubject]);
 
   // Fetch tenant school info once for print headers
   useEffect(() => {
@@ -342,6 +374,18 @@ const ScoreSheetTab = () => {
   const subjectLabel = subjects.find((s) => String(s.id) === String(selectedSubject))?.subject_name || '';
   const armLabel = classArms.find((a) => String(a.id) === String(selectedClassArm))?.class_arm_names || '';
   const subtitle = `${termLabel} | ${subjectLabel} | ${armLabel}`;
+
+  // Allocation for the Input Score dialog, built from the Score Sheet's own
+  // filters (the dialog bails out when allocation is null).
+  const currentAllocation =
+    selectedSubject && selectedClassArm
+      ? {
+          subject_id: selectedSubject,
+          class_arm_id: selectedClassArm,
+          subject_name: subjectLabel,
+          class_name: armLabel,
+        }
+      : null;
 
   // Print the full score sheet (CA columns + exam + total + grade)
   const handlePrintScoreSheet = () => {
@@ -459,11 +503,11 @@ const ScoreSheetTab = () => {
         {showTable && (
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button variant="contained" size="small" color="info" startIcon={<IconCloudUpload size={16} />}
-              onClick={() => setInputScoreDialog({ open: true, allocation: null, singleStudent: null })}>
+              onClick={() => setInputScoreDialog({ open: true, allocation: currentAllocation, singleStudent: null })}>
               Upload Scores
             </Button>
             <Button variant="contained" size="small" color="primary" startIcon={<IconEdit size={16} />}
-              onClick={() => setInputScoreDialog({ open: true, allocation: null, singleStudent: null })}>
+              onClick={() => setInputScoreDialog({ open: true, allocation: currentAllocation, singleStudent: null })}>
               Edit Scores
             </Button>
             <Button variant="contained" size="small" color="error" startIcon={<IconTrash size={16} />}
@@ -553,6 +597,18 @@ const ScoreSheetTab = () => {
                 {subjects.map(s => <MenuItem key={s.id} value={s.id}>{s.subject_name}</MenuItem>)}
               </Select>
             </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 2 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              onClick={fetchScoreSheet}
+              disabled={loading || !canFetch}
+              sx={{ fontWeight: 600, height: '40px' }}
+            >
+              {loading ? <CircularProgress size={20} color="inherit" /> : 'Fetch'}
+            </Button>
           </Grid>
         </Grid>
       </Box>
@@ -718,10 +774,21 @@ const ScoreSheetTab = () => {
       {/* ── Empty State ─────────────────────────────────────── */}
       {!showTable && (
         <Box sx={{ p: 5, textAlign: 'center' }}>
-          <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
-          <Typography variant="h6" color="text.secondary" fontWeight={600}>
-            Select a session, term, class and subject to view the score sheet
-          </Typography>
+          {loading ? (
+            <>
+              <CircularProgress size={36} />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Loading score sheet...
+              </Typography>
+            </>
+          ) : (
+            <>
+              <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+              <Typography variant="h6" color="text.secondary" fontWeight={600}>
+                Select a session, term, class arm and subject, then click Fetch to view the score sheet
+              </Typography>
+            </>
+          )}
         </Box>
       )}
 
@@ -779,6 +846,7 @@ const ScoreSheetTab = () => {
           settings: markConfig ? { exam_max_score: markConfig.exam_max_score } : { exam_max_score: 60 },
           session_term_id: sessionTermId,
         } : null}
+        onSaved={fetchScoreSheet}
       />
 
       {/* ── Purge Confirmation Dialog ──────────────────────── */}

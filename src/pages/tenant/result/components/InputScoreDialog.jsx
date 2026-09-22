@@ -9,7 +9,7 @@ import { IconDownload, IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@t
 import { Link as RouterLink } from 'react-router-dom';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 
-const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) => {
+const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, onSaved }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [students, setStudents] = useState([]);
@@ -26,15 +26,19 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
     if (!open) return;
 
     if (singleStudent) {
-      // Single student edit mode - use the student data directly
+      // Single student edit mode - use the student data directly.
+      // `user_id` (UUID) must go to the backend as user_id, and
+      // course_registration_id is required by the manual-upload validation —
+      // the Score Sheet row carries both (`user_id` + `course_registration_id`/`id`).
       setCaType(singleStudent.caType || []);
       setSettings(singleStudent.settings || { exam_max_score: 60 });
       const initialized = [{
-        id: singleStudent.id,
+        id: singleStudent.user_id ?? singleStudent.id,
         fullname: `${singleStudent.fname} ${singleStudent.lname}`,
-        reg_id: singleStudent.user_id,
+        reg_id: singleStudent.student_id ?? singleStudent.user_id,
+        course_registration_id: singleStudent.course_registration_id ?? singleStudent.id,
         ca_details: normalizeCaDetails(singleStudent.ca, singleStudent.caType || []),
-        examScores: singleStudent.exam_score || '',
+        examScores: singleStudent.exam_score ?? '',
         loading: false,
       }];
       setStudents(initialized);
@@ -87,7 +91,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
           reg_id: s.student_id,
           course_registration_id: s.course_registration_id,
           ca_details: normalizeCaDetails(s.ca_details, parsedCaType),
-          examScores: s.exam_score || '',
+          examScores: s.exam_score ?? '',
           loading: false,
         }));
 
@@ -210,6 +214,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
         term_id: filter?.term_id,
       });
       showSnackbar(`Scores saved for ${student.fullname}`);
+      onSaved?.();
     } catch (err) {
       console.error('Failed to save score:', err);
       showSnackbar(
@@ -244,17 +249,21 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent }) 
             severity="info"
             sx={{ borderRadius: '8px', '& .MuiAlert-message': { width: '100%' } }}
             action={
-              <Button
-                color="inherit"
-                size="small"
-                component={RouterLink}
-                to="/subject-registration"
-              >
-                Go to Subject Registration
-              </Button>
+              !singleStudent && allocation ? (
+                <Button
+                  color="inherit"
+                  size="small"
+                  component={RouterLink}
+                  to="/subject-registration"
+                >
+                  Go to Subject Registration
+                </Button>
+              ) : null
             }
           >
-            No student has been registered for this allocated subject. Register students to input their scores.
+            {!singleStudent && !allocation
+              ? 'Select a subject and class arm first, then open the score editor.'
+              : 'No student has been registered for this allocated subject. Register students to input their scores.'}
           </Alert>
         ) : (
           <>

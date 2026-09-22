@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar } from '@mui/material';
+import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar, Skeleton } from '@mui/material';
 import { IconSettings, IconFileText, IconChartBar } from '@tabler/icons-react';
 import {
   Settings as SettingsIcon,
@@ -63,6 +63,9 @@ const BursarySetup = () => {
     fee_bearer: {},
   });
 
+  const [bursaryStatsLoading, setBursaryStatsLoading] = useState(true);
+  const [paymentNameStatsLoading, setPaymentNameStatsLoading] = useState(true);
+
   useEffect(() => {
     loadSessionTerms();
     if (currentTab === 1) {
@@ -71,11 +74,14 @@ const BursarySetup = () => {
   }, [currentTab]);
 
   const loadPaymentNameStats = async () => {
+    setPaymentNameStatsLoading(true);
     try {
       const res = await fetchPaymentNameStats();
       if (res.status) setPaymentNameStats(res.data);
     } catch {
       console.error('Failed to load payment name stats');
+    } finally {
+      setPaymentNameStatsLoading(false);
     }
   };
 
@@ -148,6 +154,7 @@ const BursarySetup = () => {
               label="Total Categories"
               icon={SettingsIcon}
               colorIndex={0}
+              loading={bursaryStatsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -156,6 +163,7 @@ const BursarySetup = () => {
               label="Active Categories"
               icon={CheckCircleIcon}
               colorIndex={1}
+              loading={bursaryStatsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -164,6 +172,7 @@ const BursarySetup = () => {
               label="Instalment Plans"
               icon={CreditCardIcon}
               colorIndex={2}
+              loading={bursaryStatsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -172,6 +181,7 @@ const BursarySetup = () => {
               label="Active Plans"
               icon={CheckCircleIcon}
               colorIndex={3}
+              loading={bursaryStatsLoading}
             />
           </Grid>
         </Grid>
@@ -198,6 +208,25 @@ const BursarySetup = () => {
                 },
               }}
             >
+              {paymentNameStatsLoading ? (
+                <>
+                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+                    <Skeleton variant="text" width={140} height={24} />
+                  </Box>
+                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
+                  <Grid container spacing={2} mb={2}>
+                    {[0, 1, 2, 3].map((i) => (
+                      <Grid key={i} size={{ xs: 3 }}>
+                        <Skeleton variant="text" width="80%" height={14} />
+                        <Skeleton variant="text" width="50%" height={18} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Skeleton variant="text" width="70%" height={16} />
+                </>
+              ) : (
+              <>
               <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                 <Box
                   sx={{
@@ -274,6 +303,8 @@ const BursarySetup = () => {
                     : 'All payment items are currently active'}
                 </Typography>
               </Box>
+              </>
+              )}
             </Paper>
           </Grid>
 
@@ -297,6 +328,25 @@ const BursarySetup = () => {
                 },
               }}
             >
+              {paymentNameStatsLoading ? (
+                <>
+                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+                    <Skeleton variant="text" width={140} height={24} />
+                  </Box>
+                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
+                  <Grid container spacing={2} mb={2}>
+                    {[0, 1].map((i) => (
+                      <Grid key={i} size={{ xs: 6 }}>
+                        <Skeleton variant="text" width="80%" height={14} />
+                        <Skeleton variant="text" width="50%" height={18} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Skeleton variant="text" width="70%" height={16} />
+                </>
+              ) : (
+              <>
               <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                 <Box
                   sx={{
@@ -361,6 +411,8 @@ const BursarySetup = () => {
                     : 'No settlement accounts configured'}
                 </Typography>
               </Box>
+              </>
+              )}
             </Paper>
           </Grid>
 
@@ -384,6 +436,25 @@ const BursarySetup = () => {
                 },
               }}
             >
+              {paymentNameStatsLoading ? (
+                <>
+                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+                    <Skeleton variant="text" width={160} height={24} />
+                  </Box>
+                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
+                  <Grid container spacing={2} mb={2}>
+                    {[0, 1].map((i) => (
+                      <Grid key={i} size={{ xs: 6 }}>
+                        <Skeleton variant="text" width="80%" height={14} />
+                        <Skeleton variant="text" width="50%" height={18} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Skeleton variant="text" width="70%" height={16} />
+                </>
+              ) : (
+              <>
               <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                 <Box
                   sx={{
@@ -437,6 +508,8 @@ const BursarySetup = () => {
                     : 'All charges currently borne by parent'}
                 </Typography>
               </Box>
+              </>
+              )}
             </Paper>
           </Grid>
         </Grid>
@@ -474,6 +547,7 @@ const BursarySetup = () => {
           selectedSessionTerm={selectedSessionTerm}
           setSelectedSessionTerm={setSelectedSessionTerm}
           onStatsChange={setBursaryStats}
+          onLoadingChange={setBursaryStatsLoading}
           showSnackbar={showSnackbar}
         />
       )}

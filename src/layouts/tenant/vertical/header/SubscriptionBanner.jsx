@@ -11,7 +11,7 @@ import { TenantAuthContext } from '@/context/TenantContext/auth';
 // TenantProtectedRoute.jsx's ADMIN_TIER_ROLES. Only they see this banner:
 // end users must never be told their school is behind on payment (see
 // SubscriptionLockedNotice for their generic, role-blind message instead).
-const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head'];
+const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head', 'bursar'];
 
 /**
  * Fixed strip docked beneath the header (and beneath the impersonation bar,

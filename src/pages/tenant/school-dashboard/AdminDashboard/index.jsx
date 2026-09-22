@@ -193,7 +193,7 @@ const AdminDashboard = () => {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' },
           gap: 1.3,
-          alignItems: 'start',
+          alignItems: 'stretch',
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
@@ -230,6 +230,14 @@ const AdminDashboard = () => {
               />
             </Grid>
           </Grid>
+
+          <EnrolmentByClass
+            classData={enrollmentData}
+            loading={enrollmentLoading}
+            onCellClick={(classCode, sex) => {
+              handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
+            }}
+          />
         </Box>
 
         {/* Right Column: Term Calendar, Announcements, Enrolment By Class */}
@@ -245,17 +253,8 @@ const AdminDashboard = () => {
               onViewCalendar={() => setCalendarModalOpen(true)}
             />
           </Box>
-          <Box sx={{ flexShrink: 0 }}>
+          <Box sx={{ flex: 1, minHeight: 0 }}>
             <AnnouncementsCard />
-          </Box>
-          <Box sx={{ flexShrink: 0 }}>
-            <EnrolmentByClass
-              classData={enrollmentData}
-              loading={enrollmentLoading}
-              onCellClick={(classCode, sex) => {
-                handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
-              }}
-            />
           </Box>
         </Box>
       </Box>

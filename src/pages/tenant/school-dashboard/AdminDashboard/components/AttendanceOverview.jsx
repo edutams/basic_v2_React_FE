@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, useTheme, Skeleton } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -60,8 +60,10 @@ const AttendanceOverview = ({
 
         {/* Grouped Bar Chart */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={28} />
+          <Box sx={{ width: '100%', height: 180, mb: 1.5, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', px: 1, pb: 2.5 }}>
+            {[60, 90, 75, 100, 50].map((h, i) => (
+              <Skeleton key={i} variant="rounded" width={16} height={h} sx={{ borderRadius: '4px 4px 0 0' }} />
+            ))}
           </Box>
         ) : data.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -120,6 +122,16 @@ const AttendanceOverview = ({
           justifyContent: 'space-between',
         }}
       >
+        {loading ? (
+          <>
+            <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
+              <Skeleton variant="text" width={90} height={14} />
+              <Skeleton variant="text" width={50} height={22} />
+            </Box>
+            <Skeleton variant="text" width={100} height={18} />
+          </>
+        ) : (
+        <>
         <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
           <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
             Average Attendance
@@ -135,6 +147,8 @@ const AttendanceOverview = ({
             {trend} vs last week
           </Typography>
         </Box>
+        </>
+        )}
       </Box>
     </Paper>
   );

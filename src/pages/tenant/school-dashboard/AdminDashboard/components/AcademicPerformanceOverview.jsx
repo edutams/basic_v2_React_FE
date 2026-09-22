@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, useTheme, Skeleton } from '@mui/material';
 import { ArrowUpward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -58,8 +58,10 @@ const AcademicPerformanceOverview = ({
 
         {/* Chart */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={28} />
+          <Box sx={{ width: '100%', height: 180, mb: 1.5, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', px: 1, pb: 2.5 }}>
+            {[70, 100, 55, 40].map((h, i) => (
+              <Skeleton key={i} variant="rounded" width={36} height={h} sx={{ borderRadius: '6px 6px 0 0' }} />
+            ))}
           </Box>
         ) : (
         <Box sx={{ width: '100%', height: 180, mb: 1.5 }}>
@@ -110,6 +112,16 @@ const AcademicPerformanceOverview = ({
           justifyContent: 'space-between',
         }}
       >
+        {loading ? (
+          <>
+            <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
+              <Skeleton variant="text" width={80} height={14} />
+              <Skeleton variant="text" width={50} height={22} />
+            </Box>
+            <Skeleton variant="text" width={110} height={18} />
+          </>
+        ) : (
+        <>
         <Box sx={{ borderRight: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pr: 3 }}>
           <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
             Average Score
@@ -125,6 +137,8 @@ const AcademicPerformanceOverview = ({
             {trend} vs last term
           </Typography>
         </Box>
+        </>
+        )}
       </Box>
     </Paper>
   );

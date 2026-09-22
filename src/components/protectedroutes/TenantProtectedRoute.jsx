@@ -7,7 +7,7 @@ import SubscriptionLockedNotice from './SubscriptionLockedNotice';
 
 // Tenant-guard Spatie roles that can manage the school's subscription — same
 // list as config/subscription.php's admin_roles on the backend.
-const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head'];
+const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head', 'bursar'];
 
 const TenantProtectedRoute = ({ children, permission = null, anyOf = null }) => {
   const { isAuthenticated, isLoading, user, roles, subscriptionStatus } = useTenantAuth();

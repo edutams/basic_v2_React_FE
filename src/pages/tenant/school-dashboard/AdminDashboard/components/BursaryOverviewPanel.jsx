@@ -66,7 +66,7 @@ const BursaryOverviewPanel = ({
           <MetricTile
             icon={Payments}
             color={GREEN}
-            label="Total Collected Income"
+            label="Total Collection"
             value={formatCompact(bo.revenue_performance?.total_collected_income)}
             sub={
               bo.revenue_performance?.revenue_growth
@@ -105,7 +105,9 @@ const BursaryOverviewPanel = ({
               borderRadius: '14px',
               border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
-                t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+                t.palette.mode === 'dark'
+                  ? '0 10px 30px rgba(0,0,0,0.35)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
             }}
           >
@@ -125,7 +127,10 @@ const BursaryOverviewPanel = ({
                 {revenueDonut.map((d) => (
                   <Box key={d.name}>
                     <LegendItem color={d.color} label={d.name} value={`${d.value}%`} />
-                    <Typography variant="caption" sx={{ fontSize: 9.5, color: 'text.secondary', ml: 1.75, display: 'block' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: 9.5, color: 'text.secondary', ml: 1.75, display: 'block' }}
+                    >
                       {formatCompact(d.amount)}
                     </Typography>
                   </Box>
@@ -142,7 +147,9 @@ const BursaryOverviewPanel = ({
               borderRadius: '14px',
               border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
-                t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+                t.palette.mode === 'dark'
+                  ? '0 10px 30px rgba(0,0,0,0.35)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
             }}
           >
@@ -168,7 +175,9 @@ const BursaryOverviewPanel = ({
               borderRadius: '14px',
               border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: (t) =>
-                t.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
+                t.palette.mode === 'dark'
+                  ? '0 10px 30px rgba(0,0,0,0.35)'
+                  : '0 4px 20px rgba(0,0,0,0.07)',
               height: '100%',
             }}
           >
@@ -185,7 +194,12 @@ const BursaryOverviewPanel = ({
                     {['Class', 'Expected', 'Collected', 'Outstanding', 'Rate'].map((h) => (
                       <TableCell
                         key={h}
-                        sx={{ fontWeight: 800, fontSize: 9.5, color: 'text.secondary', borderBottom: (t) => `1px solid ${t.palette.divider}` }}
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 9.5,
+                          color: 'text.secondary',
+                          borderBottom: (t) => `1px solid ${t.palette.divider}`,
+                        }}
                       >
                         {h}
                       </TableCell>
@@ -197,9 +211,15 @@ const BursaryOverviewPanel = ({
                     const rate = num(row.efficiency);
                     const rateColor = rate >= 75 ? GREEN : rate >= 60 ? ORANGE : RED;
                     return (
-                      <TableRow key={i} hover sx={{ '&:last-of-type td': { borderBottom: 'none' } }}>
+                      <TableRow
+                        key={i}
+                        hover
+                        sx={{ '&:last-of-type td': { borderBottom: 'none' } }}
+                      >
                         <TableCell sx={{ fontWeight: 700, fontSize: 10.5 }}>{row.class}</TableCell>
-                        <TableCell sx={{ fontSize: 10.5 }}>{formatCompact(row.expected_fees)}</TableCell>
+                        <TableCell sx={{ fontSize: 10.5 }}>
+                          {formatCompact(row.expected_fees)}
+                        </TableCell>
                         <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: GREEN }}>
                           {formatCompact(row.collected_fees)}
                         </TableCell>

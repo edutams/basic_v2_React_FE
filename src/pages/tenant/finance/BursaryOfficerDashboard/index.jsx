@@ -211,55 +211,61 @@ const BursaryOfficerDashboard = () => {
     }
   };
 
-  const handleQuickAction = useCallback((action) => {
-    const routes = {
-      create_invoice: '/payment-schedule',
-      bulk_invoice: '/payment-schedule',
-      record_payment: '/class-ledger',
-      manage_fees: '/class-ledger',
-      generate_report: null,
-      send_reminder: '/bursary-setup',
-      fee_structure: '/bursary-setup',
-      export_data: null,
-    };
-    if (action === 'generate_report') {
-      handleExport('excel');
-      return;
-    }
-    if (action === 'export_data') {
-      handleExport('excel');
-      return;
-    }
-    const route = routes[action];
-    if (route) {
-      navigate(route);
-    } else {
-      notify.info(`${action.replace(/_/g, ' ')} feature coming soon`);
-    }
-  }, [navigate, notify]);
+  const handleQuickAction = useCallback(
+    (action) => {
+      const routes = {
+        create_invoice: '/payment-schedule',
+        bulk_invoice: '/payment-schedule',
+        record_payment: '/class-ledger',
+        manage_fees: '/class-ledger',
+        generate_report: null,
+        send_reminder: '/bursary-setup',
+        fee_structure: '/bursary-setup',
+        export_data: null,
+      };
+      if (action === 'generate_report') {
+        handleExport('excel');
+        return;
+      }
+      if (action === 'export_data') {
+        handleExport('excel');
+        return;
+      }
+      const route = routes[action];
+      if (route) {
+        navigate(route);
+      } else {
+        notify.info(`${action.replace(/_/g, ' ')} feature coming soon`);
+      }
+    },
+    [navigate, notify],
+  );
 
-  const handleSearchStudent = useCallback(async (query) => {
-    setSearchLoading(true);
-    try {
-      const res = await tenantApi.get('/dashboard/bursary/search-student', {
-        params: { q: query },
-      });
-      if (res.data?.status) {
-        setSearchResults(res.data.data || []);
-        if (res.data.data?.length === 0) {
+  const handleSearchStudent = useCallback(
+    async (query) => {
+      setSearchLoading(true);
+      try {
+        const res = await tenantApi.get('/dashboard/bursary/search-student', {
+          params: { q: query },
+        });
+        if (res.data?.status) {
+          setSearchResults(res.data.data || []);
+          if (res.data.data?.length === 0) {
+            notify.info('No students found matching your search');
+          }
+        } else {
+          setSearchResults([]);
           notify.info('No students found matching your search');
         }
-      } else {
+      } catch {
         setSearchResults([]);
-        notify.info('No students found matching your search');
+        notify.error('Failed to search students');
+      } finally {
+        setSearchLoading(false);
       }
-    } catch {
-      setSearchResults([]);
-      notify.error('Failed to search students');
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [notify]);
+    },
+    [notify],
+  );
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -310,7 +316,7 @@ const BursaryOfficerDashboard = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
-              label="Total Collected Income"
+              label="Total Collection"
               value={formatCurrency(rp.data.total_collected_income)}
               sublabel="This Session"
               progress={rp.data.collected_vs_last_session}
@@ -324,7 +330,11 @@ const BursaryOfficerDashboard = () => {
               label="Total Outstanding Balance"
               value={formatCurrency(rp.data.total_outstanding_balance)}
               sublabel="This Session"
-              progress={rp.data.outstanding_vs_last_session ? -rp.data.outstanding_vs_last_session : undefined}
+              progress={
+                rp.data.outstanding_vs_last_session
+                  ? -rp.data.outstanding_vs_last_session
+                  : undefined
+              }
               icon={ErrorOutline}
               colorName="warning"
               onClick={() => setBreakdownType('outstanding_balance')}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Snackbar, Alert,
@@ -13,8 +13,10 @@ import {
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
-import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
+import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import DownloadSampleDialog from './DownloadSampleDialog';
 import DownloadCombinedDialog from './DownloadCombinedDialog';
@@ -63,56 +65,37 @@ const UploadScoresTab = () => {
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  // ── Fetch dropdown data on mount ──────────────────────────
+  // ── Fetch dropdown data on mount (Class Register endpoints) ─
+  const activeSessionTermRef = useRef(null);
+
   useEffect(() => {
     const loadDropdowns = async () => {
       try {
-        const [sessionTermsRes, classStructuresRes] = await Promise.all([
+        const [sessRes, progRes, activeRes, stRes] = await Promise.all([
+          fetchSessions(),
+          fetchProgrammes(),
+          fetchActiveTenantSessionTerm(),
           fetchSessionTerms(),
-          fetchClassStructures(),
         ]);
 
-        // Extract unique sessions and terms from session_terms
-        const stData = sessionTermsRes?.data || [];
-        setSessionTerms(stData);
-        const sessionsMap = new Map();
-        const termsMap = new Map();
-        stData.forEach((st) => {
-          if (st.session) {
-            sessionsMap.set(st.session.id, st.session);
-          }
-          if (st.term) {
-            termsMap.set(st.term.id, st.term);
-          }
-        });
-        setSessions(Array.from(sessionsMap.values()));
-        setTerms(Array.from(termsMap.values()));
+        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+          ? sessRes.data?.data || sessRes.data
+          : [];
+        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+          ? progRes.data?.data || progRes.data
+          : [];
 
-        // Extract programmes, classes, and class arms from class structures
-        const csData = classStructuresRes?.data || [];
-        const programmesMap = new Map();
-        const classesMap = new Map();
-        const armsList = [];
-        csData.forEach((division) => {
-          if (division.programmes) {
-            division.programmes.forEach((prog) => {
-              programmesMap.set(prog.id, prog);
-              if (prog.classes) {
-                prog.classes.forEach((cls) => {
-                  classesMap.set(cls.id, { ...cls, programme_id: prog.id });
-                  if (cls.class_arms) {
-                    cls.class_arms.forEach((arm) => {
-                      armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id });
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        setProgrammes(Array.from(programmesMap.values()));
-        setClasses(Array.from(classesMap.values()));
-        setClassArms(armsList);
+        setSessions(sessionsData);
+        setProgrammes(programmesData);
+        setSessionTerms(stRes?.data || []);
+
+        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+        activeSessionTermRef.current = activeSessionTerm;
+
+        const defaultSession =
+          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+          sessionsData[0];
+        if (defaultSession) setFilter((prev) => ({ ...prev, session_id: defaultSession.id }));
       } catch (err) {
         console.error('Failed to load dropdowns:', err);
       }
@@ -120,17 +103,55 @@ const UploadScoresTab = () => {
     loadDropdowns();
   }, []);
 
-  const filteredClasses = useMemo(() => {
-    if (!filter.programme_id) return classes;
-    return classes.filter((c) => c.programme_id === filter.programme_id);
-  }, [filter.programme_id, classes]);
+  // ── Terms for the selected session (defaults to the active term) ──
+  useEffect(() => {
+    if (!filter.session_id) {
+      setTerms([]);
+      return;
+    }
+    fetchTerms(filter.session_id)
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setTerms(data);
+        const activeSessionTerm = activeSessionTermRef.current;
+        const activeTermId =
+          activeSessionTerm?.session_id === filter.session_id ? activeSessionTerm.term_id : null;
+        const active = (activeTermId && data.find((t) => t.id === activeTermId)) || data[0];
+        if (active) setFilter((prev) => ({ ...prev, term_id: active.id }));
+      })
+      .catch(console.error);
+  }, [filter.session_id]);
 
-  const filteredClassArms = useMemo(() => {
-    let arms = classArms;
-    if (filter.programme_id) arms = arms.filter((arm) => arm.programme_id === filter.programme_id);
-    if (filter.class_id) arms = arms.filter((arm) => arm.class_id === filter.class_id);
-    return arms;
-  }, [filter.programme_id, filter.class_id, classArms]);
+  // ── Classes for the selected programme ─────────────────────
+  useEffect(() => {
+    if (!filter.programme_id) {
+      setClasses([]);
+      return;
+    }
+    fetchClassesByProgramme(filter.programme_id)
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setClasses(data);
+      })
+      .catch(console.error);
+  }, [filter.programme_id]);
+
+  // ── Class arms for the selected class ──────────────────────
+  useEffect(() => {
+    if (!filter.class_id) {
+      setClassArms([]);
+      return;
+    }
+    fetchClassArmsByClass(filter.class_id, filter.programme_id ? { programme_id: filter.programme_id } : {})
+      .then((res) => {
+        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
+        setClassArms(data);
+      })
+      .catch(console.error);
+  }, [filter.class_id, filter.programme_id]);
+
+  const filteredClasses = classes;
+  const filteredClassArms = classArms;
 
   const filteredAllocations = allocations;
 

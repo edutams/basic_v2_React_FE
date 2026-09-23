@@ -53,7 +53,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
-import { IconEye, IconLogin, IconEdit, IconBuilding, IconCreditCard, IconBuildingBank, IconCoins } from '@tabler/icons-react';
+import { IconEye, IconLogin, IconEdit, IconBuilding, IconBuildingBank, IconCoins } from '@tabler/icons-react';
+// import { IconCreditCard } from '@tabler/icons-react'; // Manage Payment Gateway — disabled, see ActionMenuCell
 import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
@@ -115,8 +116,8 @@ const ActionMenuCell = ({
   handleManagePermissions,
   handleSetCommission,
   handleManageReferral,
-  handleManageGateway,
   handleManageBankService,
+  // handleManageGateway,
   handleDeleteAgent,
   handleDeleteOrganization,
 }) => {
@@ -220,17 +221,6 @@ const ActionMenuCell = ({
         <MenuItem
           onClick={() => {
             handleClose();
-            handleManageGateway(agent);
-          }}
-        >
-          <ListItemIcon>
-            <IconCreditCard size={18} />
-          </ListItemIcon>
-          <ListItemText primary="Manage Payment Gateway" />
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
             handleManageBankService(agent);
           }}
         >
@@ -239,6 +229,21 @@ const ActionMenuCell = ({
           </ListItemIcon>
           <ListItemText primary="Manage Bank Service" />
         </MenuItem>
+        {/* Gateway config is per-school (tenant_gateways.tenant_id), not
+            per-agent — already handled properly in the Bank Account
+            Details tab. Disabled here, kept for reference.
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleManageGateway(agent);
+          }}
+        >
+          <ListItemIcon>
+            <IconCreditCard size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Manage Payment Gateway" />
+        </MenuItem>
+        */}
         {(() => {
           const hasSchools = (agent.tenants_count ?? 0) > 0;
           const deleteItem = (
@@ -293,6 +298,7 @@ const ActionMenuCell = ({
 
 import locationApi from '@/api/landlord/location/location';
 import useNotification from '@/hooks/useNotification';
+import { fetchBankServices } from '@/api/landlord/bank-service/bankService';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
@@ -403,6 +409,19 @@ const Agent = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
+
+  // Bank service names for the table's "Bank Service" column — the row
+  // data only carries bank_service_id (organizations.bank_service_id),
+  // same field ManageBankService's "Current Bank Service" display
+  // resolves against.
+  const [bankServices, setBankServices] = useState([]);
+  useEffect(() => {
+    fetchBankServices()
+      .then((res) => setBankServices(res.data?.data || []))
+      .catch(() => setBankServices([]));
+  }, []);
+  const bankServiceName = (id) => bankServices.find((s) => s.id === id)?.name || null;
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       setAnalyticsLoading(true);
@@ -732,17 +751,20 @@ const Agent = () => {
     setIsModalOpen(true);
   };
 
-  const handleManageGateway = (agentData) => {
-    setSelectedAgent(agentData);
-    setActionType('manageGateway');
-    setIsModalOpen(true);
-  };
-
   const handleManageBankService = (agentData) => {
     setSelectedAgent(agentData);
     setActionType('manageBankService');
     setIsModalOpen(true);
   };
+
+  // Gateway management is a per-school concept (tenant_gateways.tenant_id),
+  // not per-agent — proper gateway management already exists at the school
+  // level (Bank Account Details tab). Disabled here, kept for reference.
+  // const handleManageGateway = (agentData) => {
+  //   setSelectedAgent(agentData);
+  //   setActionType('manageGateway');
+  //   setIsModalOpen(true);
+  // };
 
   const handleChangeColorScheme = (agentData) => {
     setSelectedAgent(agentData);
@@ -1314,6 +1336,8 @@ const Agent = () => {
                       'Access Level',
                       'Sub Agents',
                       'Total School',
+                      'Commission',
+                      'Bank Service',
                       'Primary Color',
                       'Status',
                       'Action',
@@ -1528,6 +1552,16 @@ const Agent = () => {
                             </Stack>
                           </TableCell>
                           <TableCell>
+                            <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
+                              {agent.commission != null ? `${agent.commission}%` : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
+                              {agent.bank_service_id ? (bankServiceName(agent.bank_service_id) || 'Configured') : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
                             <Box
                               sx={{
                                 width: 24,
@@ -1586,8 +1620,8 @@ const Agent = () => {
                               handleManagePermissions={handleManagePermissions}
                               handleSetCommission={handleSetCommission}
                               handleManageReferral={handleManageReferral}
-                              handleManageGateway={handleManageGateway}
                               handleManageBankService={handleManageBankService}
+                              // handleManageGateway={handleManageGateway}
                               handleDeleteAgent={handleDeleteAgent}
                               handleDeleteOrganization={handleDeleteOrganization}
                             />
@@ -1597,7 +1631,7 @@ const Agent = () => {
                     })
                   ) : (
                     <EmptyTableState
-                      colSpan={10}
+                      colSpan={12}
                       message={emptyState.message}
                       description={emptyState.description}
                       type={emptyState.type}

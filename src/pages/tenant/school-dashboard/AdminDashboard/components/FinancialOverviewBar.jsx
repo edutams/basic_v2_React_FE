@@ -4,7 +4,17 @@ import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 // Custom SVG Icons matching the design mockup image exactly
 const WalletIcon = (props) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
     <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
     <path d="M16 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
     <path d="M4 7V5a2 2 0 0 1 2-2h12" />
@@ -12,7 +22,17 @@ const WalletIcon = (props) => (
 );
 
 const StackedCoinsIcon = (props) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
     <ellipse cx="12" cy="6" rx="8" ry="3" />
     <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
     <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
@@ -20,14 +40,34 @@ const StackedCoinsIcon = (props) => (
 );
 
 const ClockIcon = (props) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const PercentIcon = (props) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
     <line x1="19" y1="5" x2="5" y2="19" />
     <circle cx="6.5" cy="6.5" r="2.5" />
     <circle cx="17.5" cy="17.5" r="2.5" />
@@ -37,7 +77,15 @@ const PercentIcon = (props) => (
 /**
  * Mini Card Item Component
  */
-const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconComponent, onClick, loading = false }) => {
+const MiniFeeCard = ({
+  label,
+  value,
+  trend,
+  isPositive = true,
+  icon: IconComponent,
+  onClick,
+  loading = false,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -73,7 +121,7 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
       sx={{
         p: 1.25,
         borderRadius: '12px',
-        fontSize:'9px',
+        fontSize: '9px',
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -84,7 +132,9 @@ const MiniFeeCard = ({ label, value, trend, isPositive = true, icon: IconCompone
         justifyContent: 'space-between',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.15s ease',
-        '&:hover': onClick ? { transform: 'translateY(-2px)', boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)' } : {},
+        '&:hover': onClick
+          ? { transform: 'translateY(-2px)', boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)' }
+          : {},
       }}
     >
       {/* Top Row: Icon + Label & Value */}
@@ -240,7 +290,7 @@ const FinancialOverviewBar = ({
 
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <MiniFeeCard
-            label="Total Collected Income"
+            label="Total Collection"
             value={collectedIncome}
             trend={collectedTrendInfo.text}
             isPositive={collectedTrendInfo.isPositive}

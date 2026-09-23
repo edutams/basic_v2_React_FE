@@ -5,7 +5,7 @@ import {
   LinearProgress,
   Button,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { CalendarMonth, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -48,8 +48,30 @@ const TermCalendarCard = ({
       }}
     >
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress size={28} />
+        <Box>
+          {/* Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Skeleton variant="circular" width={18} height={18} />
+              <Skeleton variant="text" width={100} height={14} />
+            </Box>
+            <Skeleton variant="rounded" width={140} height={30} sx={{ borderRadius: '6px' }} />
+          </Box>
+
+          {/* Info Row */}
+          <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1.5, mb: 2.5 }}>
+            <Skeleton variant="rounded" width={72} height={62} sx={{ borderRadius: '10px', flexShrink: 0 }} />
+            <Skeleton variant="rounded" sx={{ flex: 1, borderRadius: '10px' }} height={62} />
+          </Box>
+
+          {/* Progress Bar */}
+          <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+              <Skeleton variant="text" width={80} height={14} />
+              <Skeleton variant="text" width={30} height={14} />
+            </Box>
+            <Skeleton variant="rounded" width="100%" height={8} sx={{ borderRadius: 4 }} />
+          </Box>
         </Box>
       ) : (
         <Box>

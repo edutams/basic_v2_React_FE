@@ -73,7 +73,14 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
     setBanksLoading(true);
     try {
       const res = await fetchSkoolPayBanks(orgId);
-      setBanks(res.data?.result || []);
+      // The SkoolPay bank list response has duplicate entries sharing the
+      // same bank_code — deduped here (not just at the render key) since
+      // duplicate <MenuItem> values also make the select behave oddly,
+      // not just trigger React's duplicate-key warning.
+      const uniqueBanks = Array.from(
+        new Map((res.data?.result || []).map((b) => [b.bank_code, b])).values(),
+      );
+      setBanks(uniqueBanks);
     } catch {
       // fallback silently
     } finally {
@@ -92,15 +99,15 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
     enableReinitialize: true,
     onSubmit: (values) => {
       const selectedGateway = gateways.find((g) => g.id === values.gateway);
-      const selectedBank = banks.find((b) => b.code === values.bank);
+      const selectedBank = banks.find((b) => b.bank_code === values.bank);
       const selectedCurrency = availableCurrencies.find((c) => c.code === values.currency);
 
       onSave({
         ...selectedAgent,
         gateway: values.gateway,
-        gatewayName: selectedGateway?.name || values.gateway,
+        gatewayName: selectedGateway?.gateway_name || values.gateway,
         bank: values.bank,
-        bankName: selectedBank?.name || values.bank,
+        bankName: selectedBank?.bank_name || values.bank,
         accountNumber: values.accountNumber,
         currency: values.currency,
         currencyName: selectedCurrency?.name || values.currency,
@@ -203,8 +210,8 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                   </MenuItem>
                 ) : (
                   banks.map((bank) => (
-                    <MenuItem key={bank.bankCode} value={bank.bankCode}>
-                      {bank.bankName}
+                    <MenuItem key={bank.bank_code} value={bank.bank_code}>
+                      {bank.bank_name}
                     </MenuItem>
                   ))
                 )}
@@ -280,7 +287,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                       Bank:
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {banks.find((b) => b.bankCode === formik.values.bank)?.bankName}
+                      {banks.find((b) => b.bank_code === formik.values.bank)?.bank_name}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
@@ -309,7 +316,11 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
           <Button variant="contained" size="small" onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button size="small" type="submit" disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}>
+          <Button
+            size="small"
+            type="submit"
+            disabled={!formik.isValid || formik.isSubmitting || gatewaysLoading || banksLoading}
+          >
             {formik.isSubmitting ? 'Saving...' : 'Create Payment Gateway'}
           </Button>
         </Box>

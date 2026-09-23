@@ -176,6 +176,7 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   const [statistics, setStatistics] = useState(null);
+  const [statisticsLoading, setStatisticsLoading] = useState(true);
 
   // Calendar date range for the selected term (min/max for date inputs)
   const [termDateRange, setTermDateRange] = useState(null); // { start_date, end_date }
@@ -284,6 +285,7 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
   };
 
   const loadHolidayStatistics = async (termId) => {
+    setStatisticsLoading(true);
     try {
       const res = await fetchHolidayStatistics(termId);
 
@@ -292,6 +294,8 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
       }
     } catch {
       showSnackbar('Failed to load holiday statistics', 'error');
+    } finally {
+      setStatisticsLoading(false);
     }
   };
 
@@ -432,7 +436,6 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
 
   return (
     <>
-      {statistics && (
         <Box sx={{ mb: 2 }}>
           <Grid container spacing={2}>
             {/* Card 1: Total School Days */}
@@ -460,9 +463,13 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Total School Days
                     </Typography>
-                    <Box sx={heroIconBadgeSx(0)}>
-                      <IconCalendar size={20} />
-                    </Box>
+                    {statisticsLoading ? (
+                      <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                    ) : (
+                      <Box sx={heroIconBadgeSx(0)}>
+                        <IconCalendar size={20} />
+                      </Box>
+                    )}
                   </Stack>
                   <Box
                     sx={{
@@ -473,6 +480,9 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                       mt: 1,
                     }}
                   >
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={60} height={48} />
+                    ) : (
                     <Typography
                       variant="h2"
                       fontWeight={900}
@@ -483,8 +493,9 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                         color: heroAccent(0),
                       }}
                     >
-                      {statistics.total_school_days}
+                      {statistics?.total_school_days ?? 0}
                     </Typography>
+                    )}
                   </Box>
                 </Box>
               </Paper>
@@ -518,10 +529,21 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Holiday Utilization
                     </Typography>
-                    <Box sx={heroIconBadgeSx(1)}>
-                      <IconClock size={20} />
-                    </Box>
+                    {statisticsLoading ? (
+                      <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                    ) : (
+                      <Box sx={heroIconBadgeSx(1)}>
+                        <IconClock size={20} />
+                      </Box>
+                    )}
                   </Stack>
+                  {statisticsLoading ? (
+                    <>
+                      <Skeleton variant="rounded" width="100%" height={5} sx={{ borderRadius: 4, mb: 1 }} />
+                      <Skeleton variant="text" width="60%" height={16} />
+                    </>
+                  ) : (
+                  <>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <LinearProgress
                       variant="determinate"
@@ -557,9 +579,11 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     </Typography>
                   </Stack>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
-                    {statistics.holiday_days_allocated} of {statistics.total_school_days} days
+                    {statistics?.holiday_days_allocated ?? 0} of {statistics?.total_school_days ?? 0} days
                     allocated
                   </Typography>
+                  </>
+                  )}
                 </Box>
               </Paper>
             </Grid>
@@ -583,9 +607,13 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                   <Typography variant="h6" fontWeight={700} color="text.primary">
                     Holiday Summary
                   </Typography>
-                  <Box sx={heroIconBadgeSx(2)}>
-                    <IconCalendarX size={20} />
-                  </Box>
+                  {statisticsLoading ? (
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                  ) : (
+                    <Box sx={heroIconBadgeSx(2)}>
+                      <IconCalendarX size={20} />
+                    </Box>
+                  )}
                 </Stack>
                 <Box
                   sx={{
@@ -604,13 +632,17 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     >
                       Holiday Count
                     </Typography>
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={30} height={32} />
+                    ) : (
                     <Typography
                       variant="h4"
                       fontWeight={800}
                       sx={{ color: heroAccent(2) }}
                     >
-                      {statistics.holiday_count}
+                      {statistics?.holiday_count ?? 0}
                     </Typography>
+                    )}
                   </Box>
                   {/* Days Used with progress bar */}
                   <Box data-tour="holiday-analytics">
@@ -622,6 +654,13 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     >
                       Days Used
                     </Typography>
+                    {statisticsLoading ? (
+                      <>
+                        <Skeleton variant="rounded" width="100%" height={5} sx={{ borderRadius: 4, mt: 0.75, mb: 0.5 }} />
+                        <Skeleton variant="text" width="70%" height={16} />
+                      </>
+                    ) : (
+                    <>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.75 }}>
                       <LinearProgress
                         variant="determinate"
@@ -662,9 +701,11 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                       display="block"
                       sx={{ mt: 0.5 }}
                     >
-                      {statistics.holiday_days_used} of {statistics.holiday_days_allocated} days
+                      {statistics?.holiday_days_used ?? 0} of {statistics?.holiday_days_allocated ?? 0} days
                       used
                     </Typography>
+                    </>
+                    )}
                   </Box>
                   {/* Upcoming holiday days still ahead in the term */}
                   <Box data-tour="holiday-analytics">
@@ -676,9 +717,13 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
                     >
                       Upcoming
                     </Typography>
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={30} height={32} />
+                    ) : (
                     <Typography variant="h4" fontWeight={800} sx={{ color: heroAccent(2) }}>
-                      {statistics.upcoming_holiday_days ?? 0}
+                      {statistics?.upcoming_holiday_days ?? 0}
                     </Typography>
+                    )}
                     <Typography
                       variant="caption"
                       color="text.secondary"
@@ -693,7 +738,6 @@ const HolidaySectionInner = ({ refreshKey, tourRef }) => {
             </Grid>
           </Grid>
         </Box>
-      )}
       <ParentCard
         sx={{
           '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },

@@ -426,7 +426,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/:session_term_id/:class_id/:category_id/view_class_invoice',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceView />
           </TenantProtectedRoute>
         ),
@@ -434,7 +434,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/print/:session_term_id/:class_id/:id',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <PrintInvoicePage />
           </TenantProtectedRoute>
         ),
@@ -476,7 +476,7 @@ const TenantRoutes = [
       {
         path: 'result-setup',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.setup">
             <ResultModule />
           </TenantProtectedRoute>
         ),
@@ -484,7 +484,7 @@ const TenantRoutes = [
       {
         path: 'score-manager',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.upload.score">
             <ScoreManagerPage />
           </TenantProtectedRoute>
         ),
@@ -492,7 +492,7 @@ const TenantRoutes = [
       {
         path: 'result-upload',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.upload.score">
             <UploadScoresPage />
           </TenantProtectedRoute>
         ),
@@ -500,7 +500,7 @@ const TenantRoutes = [
       {
         path: 'result-consideration',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.consideration.view">
             <ResultConsiderationPage />
           </TenantProtectedRoute>
         ),
@@ -508,7 +508,7 @@ const TenantRoutes = [
       {
         path: 'result-edit',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.edit">
             <ResultEditPage />
           </TenantProtectedRoute>
         ),
@@ -516,7 +516,7 @@ const TenantRoutes = [
       {
         path: 'result-scoresheet',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.view.scoresheet">
             <ScoreSheetPage />
           </TenantProtectedRoute>
         ),
@@ -524,7 +524,7 @@ const TenantRoutes = [
       {
         path: 'result-cabreakdown',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.ca_breakdown.view">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),
@@ -532,7 +532,7 @@ const TenantRoutes = [
       {
         path: 'result-analytics',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.analytics.view">
             <PerformanceAnalyticsPage />
           </TenantProtectedRoute>
         ),
@@ -540,7 +540,7 @@ const TenantRoutes = [
       {
         path: 'result-sheet',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.broadsheet.view">
             <ResultSheetPage />
           </TenantProtectedRoute>
         ),
@@ -548,7 +548,7 @@ const TenantRoutes = [
       {
         path: 'result-broadsheet',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.school_broadsheet.view">
             <BroadsheetPage />
           </TenantProtectedRoute>
         ),
@@ -556,7 +556,7 @@ const TenantRoutes = [
       {
         path: 'result-summary',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.summary.view">
             <SummarySheetPage />
           </TenantProtectedRoute>
         ),
@@ -564,7 +564,7 @@ const TenantRoutes = [
       {
         path: 'result-reportsheet',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.dossier.view">
             <ReportSheetPage />
           </TenantProtectedRoute>
         ),
@@ -572,7 +572,7 @@ const TenantRoutes = [
       {
         path: 'result-reportcard',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.client.reportsheet">
             <ReportCardPage />
           </TenantProtectedRoute>
         ),
@@ -580,7 +580,7 @@ const TenantRoutes = [
       {
         path: 'result-comment-bank',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.comment_bank.index">
             <CommentBankPage />
           </TenantProtectedRoute>
         ),
@@ -588,7 +588,7 @@ const TenantRoutes = [
       {
         path: 'result-messaging',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="result.admin.messaging.index">
             <MessagingPage />
           </TenantProtectedRoute>
         ),

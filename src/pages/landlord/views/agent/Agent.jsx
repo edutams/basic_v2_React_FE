@@ -137,8 +137,8 @@ const ActionMenuCell = ({
     <>
       <IconButton
         aria-label="more"
-        id={`action-menu-button-${agent.s_n}`}
-        aria-controls={open ? `action-menu-${agent.s_n}` : undefined}
+        id={`action-menu-button-${agent.id}`}
+        aria-controls={open ? `action-menu-${agent.id}` : undefined}
         aria-expanded={open ? 'true' : undefined}
         aria-haspopup="true"
         onClick={handleClick}
@@ -146,9 +146,9 @@ const ActionMenuCell = ({
         <MoreVertIcon />
       </IconButton>
       <Menu
-        id={`action-menu-${agent.s_n}`}
+        id={`action-menu-${agent.id}`}
         MenuListProps={{
-          'aria-labelledby': `action-menu-button-${agent.s_n}`,
+          'aria-labelledby': `action-menu-button-${agent.id}`,
         }}
         anchorEl={anchorEl}
         open={open}
@@ -703,7 +703,12 @@ const Agent = () => {
 
   const handleRefresh = (newData) => {
     setData((prevData) => {
-      const existingIndex = prevData.findIndex((item) => item.s_n === newData.s_n);
+      // Match by id, not s_n — s_n is just a positional display number
+      // (page * rowsPerPage + index) that a background refetch can
+      // reassign while a modal is open, which made an update land here
+      // with a now-stale s_n that no longer matched any row and got
+      // appended as a duplicate instead of replacing the real one.
+      const existingIndex = prevData.findIndex((item) => item.id === newData.id);
 
       if (existingIndex !== -1) {
         const updatedData = [...prevData];
@@ -779,7 +784,7 @@ const Agent = () => {
 
   const handleConfirmDelete = () => {
     if (agentToDelete) {
-      const updatedData = data.filter((agent) => agent.s_n !== agentToDelete.s_n);
+      const updatedData = data.filter((agent) => agent.id !== agentToDelete.id);
       setData(updatedData);
 
       setDeleteDialogOpen(false);
@@ -869,7 +874,7 @@ const Agent = () => {
 
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
-      prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
+      prevData.map((agent) => (agent.id === updatedAgent.id ? updatedAgent : agent)),
     );
   };
 
@@ -884,13 +889,13 @@ const Agent = () => {
   };
 
   const handleEdit = (row) => {
-    setEditRowId(row.s_n);
+    setEditRowId(row.id);
     setEditedData({ ...row });
   };
 
   const handleSave = (rowId) => {
     if (editedData) {
-      setData(data.map((item) => (item.s_n === editedData.s_n ? editedData : item)));
+      setData(data.map((item) => (item.id === editedData.id ? editedData : item)));
       setEditRowId(null);
       setEditedData(null);
     }
@@ -1402,7 +1407,7 @@ const Agent = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            {editRowId === agent.s_n ? (
+                            {editRowId === agent.id ? (
                               <TextField
                                 value={editedData?.organizationName || ''}
                                 onChange={(e) => handleChange(e, 'organizationName', agent)}
@@ -1574,7 +1579,7 @@ const Agent = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            {editRowId === agent.s_n ? (
+                            {editRowId === agent.id ? (
                               <Select
                                 value={editedData?.status || ''}
                                 onChange={(e) => handleChange(e, 'status', agent)}

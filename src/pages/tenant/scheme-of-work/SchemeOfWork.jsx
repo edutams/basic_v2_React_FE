@@ -82,7 +82,12 @@ const SchemeOfWork = () => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState({});
-  const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
+  const [analytics, setAnalytics] = useState({
+    total_topics: 0,
+    total_subtopics: 0,
+    total_lesson_content: 0,
+    total_video_content: 0,
+  });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
@@ -193,13 +198,15 @@ const SchemeOfWork = () => {
       }
     } else if (key === 'classLevel') {
       try {
-        const subjectsRes = await fetchSubjectsByClass(val);
+        // A class can now have a different curriculum per programme, so
+        // the currently selected Programme narrows which one applies here.
+        const subjectsRes = await fetchSubjectsByClass(val, programme);
         setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
       } catch (error) {
         console.error('Failed to fetch subjects', error);
       }
     }
-  }, []);
+  }, [programme]);
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -583,13 +590,13 @@ const SchemeOfWork = () => {
     },
     {
       title: 'Lesson Content',
-      value: '0',
+      value: analytics.total_lesson_content,
       icon: IconFileDescription,
       color: 'primary',
     },
     {
       title: 'Video Content',
-      value: '0',
+      value: analytics.total_video_content,
       icon: IconVideo,
       color: 'primary',
     },

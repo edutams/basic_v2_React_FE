@@ -29,6 +29,8 @@ import {
   Checkbox,
   FormControlLabel,
   Skeleton,
+  Divider,
+  Link,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -361,13 +363,13 @@ const CurriculumSetup = () => {
     }
   };
 
-  // One row per class — a curriculum is shared by every programme a class
-  // belongs to (e.g. "Senior Secondary 1" under Science/Humanity/Business/
-  // Technology all follow the same curriculum), so matching by class_id
-  // alone is correct here.
-  const handleClassCurriculumChange = (classId, curriculumId) => {
+  // One row per (class, programme) — different programmes of the same
+  // class (e.g. "Senior Secondary 1" Science vs Business) can each follow a
+  // different curriculum now, so rows are matched by their synthetic
+  // `${class_id}_${programme_id}` id, not by class_id alone.
+  const handleClassCurriculumChange = (rowId, curriculumId) => {
     const updated = classData.map((cls) =>
-      cls.id === classId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
+      cls.id === rowId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
     );
     setClassData(updated);
   };
@@ -381,7 +383,8 @@ const CurriculumSetup = () => {
     const assignments = classData
       .filter((cls) => cls.assigned_curriculum_id)
       .map((cls) => ({
-        class_id: cls.id,
+        class_id: cls.class_id,
+        programme_id: cls.programme_id,
         curriculum_id: cls.assigned_curriculum_id,
       }));
 
@@ -1037,8 +1040,9 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '5%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '40%' }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '50%' }}>Curriculum Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Programme</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '45%' }}>Curriculum Name</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1050,6 +1054,9 @@ const CurriculumSetup = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton variant="text" width={100} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={80} height={20} />
                           </TableCell>
                           <TableCell>
                             <Skeleton
@@ -1079,17 +1086,14 @@ const CurriculumSetup = () => {
                               }}
                             >
                               {item.class_code || item.class_name}
-                              {item.programme_codes?.length > 0 && (
-                                <Typography
-                                  component="span"
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ ml: 0.5 }}
-                                >
-                                  ({item.programme_codes.join(', ')})
-                                </Typography>
-                              )}
                             </Box>
+                          </TableCell>
+                          <TableCell>
+                            {item.programme_name || (
+                              <Typography variant="caption" color="text.secondary">
+                                No programme
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Select
@@ -1122,7 +1126,7 @@ const CurriculumSetup = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
+                        <TableCell colSpan={4} align="center">
                           <Typography color="textSecondary">
                             Select session and term to load classes
                           </Typography>
@@ -1624,7 +1628,7 @@ const CurriculumSetup = () => {
       <Dialog
         open={Boolean(viewSchemesSubject)}
         onClose={handleCloseViewSchemes}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
@@ -1637,31 +1641,69 @@ const CurriculumSetup = () => {
           {viewSchemesSubject?.schemes?.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={2}>
               {viewSchemesSubject.schemes.map((scheme, index) => (
-                <Paper key={scheme.id || index} sx={{ p: 2 }}>
+                <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">
                     {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
                     {scheme.week?.week_name || `Week ${scheme.week_id}`}
                   </Typography>
-                  {scheme.learning_objective && (
+
+                  {scheme.topics && scheme.topics.length > 0 ? (
+                    <Box mt={1} display="flex" flexDirection="column" gap={1.5}>
+                      {scheme.topics.map((topic) => (
+                        <Box key={topic.id}>
+                          <Typography variant="body2" fontWeight="bold">
+                            {topic.topic_name}
+                          </Typography>
+                          {topic.subtopics && topic.subtopics.length > 0 && (
+                            <Box mt={0.5} pl={2}>
+                              {topic.subtopics.map((subtopic) => (
+                                <Box key={subtopic.id} mb={1}>
+                                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                                    {subtopic.subtopic_name}
+                                  </Typography>
+                                  {subtopic.learning_objectives && subtopic.learning_objectives.length > 0 && (
+                                    <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                                      {subtopic.learning_objectives.map((objective) => (
+                                        <li key={objective.id}>
+                                          <Typography variant="body2" color="text.secondary">
+                                            {objective.learning_objective_details}
+                                          </Typography>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      <strong>Objective:</strong> {scheme.learning_objective}
+                      No topics added yet.
                     </Typography>
                   )}
-                  {scheme.topics && scheme.topics.length > 0 && (
-                    <Box mt={1}>
-                      <Typography variant="body2" fontWeight="bold">
-                        Topics:
-                      </Typography>
-                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {scheme.topics.map((topic) => (
-                          <li key={topic.id}>
-                            <Typography variant="body2" color="text.secondary">
-                              {topic.topic_name}
-                            </Typography>
-                          </li>
-                        ))}
-                      </ul>
-                    </Box>
+
+                  {(scheme.learning_material || scheme.resource_links) && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {scheme.learning_material && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Lesson Content:</strong> {scheme.learning_material}
+                          </Typography>
+                        )}
+                        {scheme.resource_links && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Video Content:</strong>{' '}
+                            <Link href={scheme.resource_links} target="_blank" rel="noopener noreferrer">
+                              {scheme.resource_links}
+                            </Link>
+                          </Typography>
+                        )}
+                      </Box>
+                    </>
                   )}
                 </Paper>
               ))}

@@ -105,9 +105,12 @@ export const fetchSubjectsByProgramme = async (programmeId, curriculumId = null)
   return response.data;
 };
 
-// Fetch subjects by class
-export const fetchSubjectsByClass = async (classId) => {
-  const response = await api.get(`/curriculum/subjects/by-class/${classId}`);
+// Fetch subjects by class, optionally narrowed to one programme (a class
+// can now have a different curriculum per programme)
+export const fetchSubjectsByClass = async (classId, programmeId = null) => {
+  const response = await api.get(`/curriculum/subjects/by-class/${classId}`, {
+    params: programmeId ? { programme_id: programmeId } : undefined,
+  });
   return response.data;
 };
 

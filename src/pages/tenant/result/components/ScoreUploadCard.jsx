@@ -1,5 +1,5 @@
 import { Box, Typography, Paper, Chip, Button, LinearProgress, Tooltip, useTheme } from '@mui/material';
-import { IconCloudUpload, IconEye, IconCheck, IconLoader, IconInfoCircle } from '@tabler/icons-react';
+import { IconCloudUpload, IconEye, IconCheck, IconLoader, IconInfoCircle, IconUser } from '@tabler/icons-react';
 
 const ScoreUploadCard = ({
   allocation,
@@ -21,6 +21,7 @@ const ScoreUploadCard = ({
   const isSubmitting = allocation?.isSubmitting || false;
   // No CA and no exam scores uploaded yet → submitting makes no sense
   const hasAnyScores = caUploaded > 0 || examUploaded > 0;
+  const teacherLabel = allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
 
   return (
     <Paper
@@ -123,6 +124,20 @@ const ScoreUploadCard = ({
               </Tooltip>
             ) : null}
           </Box>
+        </Box>
+
+        {/* Assigned subject teacher — cards only appear when a teacher is allocated */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.75, minWidth: 0 }}>
+          <IconUser size={13} color={theme.palette.info.main} style={{ flexShrink: 0 }} />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            title={teacherLabel}
+          >
+            Teacher: <strong>{teacherLabel}</strong>
+            {/* {allocation?.teacher_staff_no ? ` (${allocation.teacher_staff_no})` : ''} */}
+          </Typography>
         </Box>
       </Box>
 

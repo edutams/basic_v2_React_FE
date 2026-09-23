@@ -2,16 +2,14 @@ import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Typography, Alert,
-  CircularProgress, useTheme, Box, Snackbar,
+  TableHead, TableRow, TextField, Alert,
+  CircularProgress, Box, Snackbar,
 } from '@mui/material';
-import { IconDownload, IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
 import { Link as RouterLink } from 'react-router-dom';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 
 const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, onSaved }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const [students, setStudents] = useState([]);
   const [caType, setCaType] = useState([]);
   const [settings, setSettings] = useState({ exam_max_score: 60 });
@@ -235,6 +233,108 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     students.forEach((_, si) => handleSave(si));
   };
 
+  const esc = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const downloadTitle = singleStudent
+    ? `Edit Score — ${singleStudent.fname} ${singleStudent.lname}`
+    : `Input Score — ${allocation?.subject_name || ''} (${allocation?.class_name ?? allocation?.className ?? ''})`;
+
+  // Export the currently loaded table (incl. unsaved edits) as an Excel file.
+  const handleDownloadExcel = () => {
+    if (students.length === 0) {
+      showSnackbar('No student records to export', 'warning');
+      return;
+    }
+    const entityHeaders = caType.flatMap((ca) =>
+      getEntities(ca).map((ent) => `${ca.display_name || 'CA'} ${ent.display_name || ''}`.trim())
+    );
+    const headerCells = ['#', 'Student', ...entityHeaders, `Exam (${settings.exam_max_score})`];
+    const rowsHtml = students.map((student, si) => {
+      const caCells = caType.flatMap((ca, ci) =>
+        getEntities(ca).map((_, ei) => `<td>${esc(student.ca_details?.[ci]?.entities?.[ei]?.score ?? '')}</td>`)
+      );
+      return `<tr><td>${si + 1}</td><td>${esc(student.fullname)}</td>${caCells}<td>${esc(student.examScores ?? '')}</td></tr>`;
+    }).join('');
+
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head><meta charset="utf-8"></head>
+<body>
+  <table border="1">
+    <thead><tr>${headerCells.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+</body></html>`;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${(allocation?.subject_name || singleStudent?.fname || 'scores')}_scores.xls`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    showSnackbar('Excel file downloaded');
+  };
+
+  // Print the current table to a PDF via the browser print dialog.
+  const handleDownloadPdf = () => {
+    if (students.length === 0) {
+      showSnackbar('No student records to print', 'warning');
+      return;
+    }
+    const entityHeaders = caType.flatMap((ca) =>
+      getEntities(ca).map((ent) => `${esc(ent.display_name)}(${esc(ent.max_score)})`)
+    );
+    const rowsHtml = students.map((student, si) => {
+      const caCells = caType.flatMap((ca, ci) =>
+        getEntities(ca).map((_, ei) => `<td style="text-align:center">${esc(student.ca_details?.[ci]?.entities?.[ei]?.score ?? '-')}</td>`)
+      );
+      return `<tr><td>${si + 1}</td><td>${esc(student.fullname)}</td>${caCells}<td style="text-align:center">${esc(student.examScores || '-')}</td></tr>`;
+    }).join('');
+
+    const caGroupHeaders = caType.map((ca) =>
+      `<th colspan="${getColspan(ca)}" style="text-align:center">${esc(ca.display_name || 'CA')}</th>`
+    ).join('');
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    if (!printWindow) {
+      showSnackbar('Please allow pop-ups to print the score sheet', 'error');
+      return;
+    }
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>${esc(downloadTitle)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 16px; }
+        h2 { text-align: center; margin: 0 0 4px; }
+        .sub { text-align: center; font-size: 12px; color: #444; margin-bottom: 14px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #555; padding: 4px 6px; font-size: 12px; }
+        th { background: #f0f0f0; }
+        @page { size: landscape; margin: 10mm; }
+        @media print { body { margin: 0; } }
+      </style></head>
+      <body>
+        <h2>${esc(downloadTitle)}</h2>
+        <div class="sub">${students.length} student(s)</div>
+        <table>
+          <thead>
+            <tr><th rowspan="2">#</th><th rowspan="2">Student</th>${caGroupHeaders}<th rowspan="2">Exam (${esc(settings.exam_max_score)})</th></tr>
+            <tr>${entityHeaders.map((h) => `<th style="text-align:center">${h}</th>`).join('')}</tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 400);
+  };
+
+  const canExport = students.length > 0 && !fetching;
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
       <DialogTitle>
@@ -268,10 +368,24 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
         ) : (
           <>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
-          <Button variant="contained" size="small" color="info" startIcon={<IconFileSpreadsheet size={16} />}>
+          <Button
+            variant="contained"
+            size="small"
+            color="info"
+            startIcon={<IconFileSpreadsheet size={16} />}
+            disabled={!canExport}
+            onClick={handleDownloadExcel}
+          >
             Download Excel
           </Button>
-          <Button variant="contained" size="small" color="error" startIcon={<IconPdf size={16} />}>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            startIcon={<IconPdf size={16} />}
+            disabled={!canExport}
+            onClick={handleDownloadPdf}
+          >
             Download PDF
           </Button>
         </Box>

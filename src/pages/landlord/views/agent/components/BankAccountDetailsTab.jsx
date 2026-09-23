@@ -44,7 +44,14 @@ const BankAccountDetailsTab = ({ organizationId, organization, onSaved }) => {
       setBanksError(null);
       try {
         const res = await fetchSkoolPayBanks(organizationId);
-        setBanks(res?.data?.result || []);
+        // The SkoolPay bank list response has duplicate entries sharing the
+        // same bank_code — deduped here (not just at the render key) since
+        // duplicate <MenuItem> values also make the select behave oddly,
+        // not just trigger React's duplicate-key warning.
+        const uniqueBanks = Array.from(
+          new Map((res?.data?.result || []).map((b) => [b.bank_code, b])).values(),
+        );
+        setBanks(uniqueBanks);
       } catch (err) {
         setBanksError(
           err?.response?.data?.message || 'Failed to load banks. Please set a bank service first.',

@@ -103,6 +103,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const [sessionAnchorEl, setSessionAnchorEl] = useState(null);
   const [selectedSessionItem, setSelectedSessionItem] = useState(null);
   const [confirmSessionToggle, setConfirmSessionToggle] = useState({ open: false, session: null });
+  // A blocking, must-be-explicitly-closed notice for messages important
+  // enough that a toast (which auto-dismisses in a few seconds) isn't a
+  // safe way to communicate them — e.g. exactly why an activation was
+  // refused. No backdrop/Escape dismissal on purpose.
+  const [blockingNotice, setBlockingNotice] = useState({ open: false, title: '', message: '' });
 
   // Terms
   const [tenantTerms, setTenantTerms] = useState([]);
@@ -438,10 +443,18 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           setSessionTermsPage(0);
         }
       } else {
-        showSnackbar(res.message || 'Failed to update status', 'error');
+        setBlockingNotice({
+          open: true,
+          title: wasActivating ? 'Cannot Activate Session' : 'Cannot Deactivate Session',
+          message: res.message || 'Failed to update status',
+        });
       }
     } catch (error) {
-      showSnackbar(error.response?.data?.message || 'Failed to update status', 'error');
+      setBlockingNotice({
+        open: true,
+        title: session.status !== 'active' ? 'Cannot Activate Session' : 'Cannot Deactivate Session',
+        message: error.response?.data?.message || 'Failed to update status',
+      });
     } finally {
       setLoading(false);
     }
@@ -1289,8 +1302,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             }
             margin="normal"
             size="small"
+            helperText={
+              sessionFilterOptions.length === 0
+                ? 'No sessions added yet — add one in the All Sessions tab first'
+                : ''
+            }
           >
-            {landlordSessions.map((session) => (
+            {sessionFilterOptions.map((session) => (
               <MenuItem key={session.id} value={session.id}>
                 {session.session_name}
               </MenuItem>
@@ -1378,6 +1396,34 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             disabled={loading}
           >
             Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Blocking Notice — must be explicitly closed, no backdrop/Escape
+          dismissal, since this carries messages important enough that a
+          toast disappearing in a few seconds isn't a safe way to say them ── */}
+      <Dialog
+        open={blockingNotice.open}
+        onClose={(event, reason) => {
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+          setBlockingNotice({ open: false, title: '', message: '' });
+        }}
+        disableEscapeKeyDown
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{blockingNotice.title}</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mt: 1 }}>{blockingNotice.message}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setBlockingNotice({ open: false, title: '', message: '' })}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>

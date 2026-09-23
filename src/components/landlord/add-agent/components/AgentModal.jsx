@@ -5,7 +5,6 @@ import SchoolsView from './SchoolsView';
 import PermissionManager from './PermissionManager';
 import SetCommissionModal from './SetCommission';
 import ManageReferralModal from './ManageReferral';
-import ManageGateway from './ManageGateway';
 import ChangeColorScheme from './ChangeColorScheme';
 import { createAgentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
@@ -15,6 +14,10 @@ import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import ReusableModal from '@/components/shared/ReusableModal';
 import ManageBankService from './ManageBankService';
+// Gateway management is a per-school concept (tenant_gateways.tenant_id),
+// not per-agent — kept for reference but disabled at the agent level.
+// See Agent.jsx's ActionMenuCell for the corresponding commented-out menu item.
+// import ManageGateway from './ManageGateway';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -432,14 +435,14 @@ const AgentModal = ({
           />
         );
 
-      case 'manageGateway':
-        return (
-          <ManageGateway
-            selectedAgent={selectedAgent}
-            onSave={handleUpdate}
-            onClose={handleClose}
-          />
-        );
+      // case 'manageGateway':
+      //   return (
+      //     <ManageGateway
+      //       selectedAgent={selectedAgent}
+      //       onSave={handleUpdate}
+      //       onClose={handleClose}
+      //     />
+      //   );
 
       case 'manageBankService':
         return (

@@ -37,6 +37,7 @@ import {
   Chip,
   useTheme,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -244,14 +245,24 @@ const SchemeOfWork = () => {
   };
 
   const paginatedRows = useMemo(() => {
-    let flattened = [];
+    let filtered = [];
     Object.keys(rows).forEach((weekName) => {
       rows[weekName].forEach((row) => {
-        flattened.push({ ...row, week: weekName });
+        filtered.push({ ...row, week: weekName });
       });
     });
-    return flattened;
-  }, [rows]);
+
+    if (activeFilters.search) {
+      filtered = filtered.filter(
+        (r) =>
+          r.topic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+          r.subtopic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()),
+      );
+    }
+
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row, type) => {
     setAnchorEl(event.currentTarget);
@@ -987,6 +998,22 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, borderTop: '1px solid #eee' }}>
+          <TablePagination
+            component="div"
+            count={Object.values(rows).flat().length}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
       </Card>
 
       {/* Filter Drawer */}

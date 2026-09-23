@@ -134,9 +134,16 @@ const SubjectBox = ({
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
-                      {subject.subject_name}
-                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                        {subject.subject_name}
+                      </Typography>
+                      {subject.agent_programme_name && (
+                        <Typography variant="caption" color="text.secondary" noWrap display="block">
+                          {subject.agent_programme_name}
+                        </Typography>
+                      )}
+                    </Box>
                   }
                 />
 
@@ -733,12 +740,15 @@ const CurriculumSetup = () => {
             count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
             label="Classes With Curriculum"
             subtitle={
-              stats?.classes_without_curriculum > 0
-                ? `${stats.classes_without_curriculum} still need one`
-                : 'All classes covered'
+              stats?.total_class_programme_slots > 0
+                ? `${stats.class_programme_slots_assigned}/${stats.total_class_programme_slots} class–programme slots assigned`
+                : stats?.classes_without_curriculum > 0
+                  ? `${stats.classes_without_curriculum} still need one`
+                  : 'All classes covered'
             }
             colorIndex={2}
             loading={statsLoading}
+            tooltip="A class with several programmes (e.g. SS1) counts as covered here once at least one of its programmes has a curriculum assigned — the class–programme slot count below breaks that down further, since that's the actual assignable unit."
             sx={{ height: '100%' }}
           />
         </Grid>
@@ -978,7 +988,17 @@ const CurriculumSetup = () => {
                 flexWrap="wrap"
                 gap={1}
               >
-                <Typography variant="h5">Assign to Classes</Typography>
+                <Box>
+                  <Typography variant="h5">Assign to Classes</Typography>
+                  {classData.length > 0 && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {classData.length} class–programme row{classData.length === 1 ? '' : 's'} across{' '}
+                      {new Set(classData.map((c) => c.class_id)).size} class
+                      {new Set(classData.map((c) => c.class_id)).size === 1 ? '' : 'es'} — a class with several
+                      programmes (e.g. SS1) gets one row per programme.
+                    </Typography>
+                  )}
+                </Box>
                 <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
                     data-tour={CURRICULUM_TOUR_KEYS.ASSIGN_SELECT}
@@ -1528,7 +1548,8 @@ const CurriculumSetup = () => {
                 sx={{ mb: 2 }}
               >
                 {importResult.curriculums_imported} curriculum(s) and{' '}
-                {importResult.subjects_imported} subject(s) imported.
+                {importResult.subjects_imported} subject(s) imported —{' '}
+                {importResult.schemes_imported} scheme-of-work week(s) written.
               </Alert>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
                 <Box>
@@ -1557,8 +1578,11 @@ const CurriculumSetup = () => {
                 )}
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                Nothing already set up locally was changed — "already present" items were left
-                exactly as they are.
+                Curriculum/subject records that already existed were left exactly as they are, but
+                their scheme-of-work content (topics, sub-topics, learning objectives) still
+                refreshes to match the latest from the shared library on every import — that's what
+                the {importResult.schemes_imported} figure above reflects, even when every subject
+                shows as "already present".
               </Typography>
             </Box>
           ) : (
@@ -1635,6 +1659,7 @@ const CurriculumSetup = () => {
           Schemes of Work
           <Typography variant="caption" display="block" color="text.secondary">
             {viewSchemesSubject?.subject_name}
+            {viewSchemesSubject?.agent_programme_name && ` — ${viewSchemesSubject.agent_programme_name}`}
           </Typography>
         </DialogTitle>
         <DialogContent dividers>
@@ -1646,20 +1671,25 @@ const CurriculumSetup = () => {
                     {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
                     {scheme.week?.week_name || `Week ${scheme.week_id}`}
                   </Typography>
+                  {scheme.class?.class_name && (
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      {scheme.class.class_name}
+                    </Typography>
+                  )}
 
                   {scheme.topics && scheme.topics.length > 0 ? (
                     <Box mt={1} display="flex" flexDirection="column" gap={1.5}>
                       {scheme.topics.map((topic) => (
                         <Box key={topic.id}>
-                          <Typography variant="body2" fontWeight="bold">
-                            {topic.topic_name}
+                          <Typography variant="body2">
+                            <strong>Topic:</strong> {topic.topic_name}
                           </Typography>
                           {topic.subtopics && topic.subtopics.length > 0 && (
                             <Box mt={0.5} pl={2}>
                               {topic.subtopics.map((subtopic) => (
                                 <Box key={subtopic.id} mb={1}>
-                                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                                    {subtopic.subtopic_name}
+                                  <Typography variant="body2" color="text.secondary">
+                                    <strong>Subtopic:</strong> {subtopic.subtopic_name}
                                   </Typography>
                                   {subtopic.learning_objectives && subtopic.learning_objectives.length > 0 && (
                                     <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>

@@ -507,7 +507,7 @@ const StaffAllocationFields = ({
                   value={allocation.programme_id}
                   onChange={(e) => handleClassProgrammeChange(index, e.target.value)}
                   disabled={loadingOptions || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`classAllocations.${index}.programme_id`))}
                   helperText={getFieldError(`classAllocations.${index}.programme_id`)}
                 >

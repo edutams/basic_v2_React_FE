@@ -10,8 +10,6 @@ import {
   TableRow,
   IconButton,
   Chip,
-  Tabs,
-  Tab,
   CircularProgress,
   TextField,
   InputAdornment,
@@ -29,17 +27,11 @@ import {
   IconChevronDown,
   IconUsers,
 } from '@tabler/icons-react';
-import ClassTeacherAllocation from '../ClassTeacherAllocation';
-import SubjectTeacherAllocation from '../SubjectTeacherAllocation';
 import { statusLabel } from './StaffStatusModal';
 
 const TeachingStaffTab = ({
   loading,
   staff,
-  activeSubTab,
-  setActiveSubTab,
-  allocationSubTab,
-  setAllocationSubTab,
   searchQuery,
   setSearchQuery,
   statusFilter,
@@ -57,25 +49,8 @@ const TeachingStaffTab = ({
 }) => {
   return (
     <Box>
-      {/* <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs
-          value={activeSubTab}
-          onChange={(e, newValue) => {
-            setActiveSubTab(newValue);
-          }}
-          sx={{
-            '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
-          }}
-        >
-          <Tab label="Profiling" value="profiling" />
-          <Tab label="Allocation" value="allocation" />
-        </Tabs>
-      </Box> */}
-
-      {activeSubTab === 'profiling' && (
-        <>
-          {/* Toolbar */}
-          <Box
+      {/* Toolbar */}
+      <Box
             sx={{
               pb: 1.5,
               mb: 1.5,
@@ -168,6 +143,8 @@ const TeachingStaffTab = ({
                   <TableCell sx={{ fontWeight: 700 }}>Staff Id</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>FullName</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Class(es)</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Subject(s)</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Appointment</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>
@@ -191,6 +168,8 @@ const TeachingStaffTab = ({
                         <Skeleton variant="text" width={140} height={20} />
                         <Skeleton variant="text" width={90} height={16} />
                       </TableCell>
+                      <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                      <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                       <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
                       <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                       <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
@@ -198,7 +177,7 @@ const TeachingStaffTab = ({
                   ))
                 ) : staff.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                       <Alert severity="info" sx={{ justifyContent: 'center' }}>No staff found</Alert>
                     </TableCell>
                   </TableRow>
@@ -250,6 +229,59 @@ const TeachingStaffTab = ({
                         </Typography>
                       </TableCell>
                       <TableCell>
+                        {staffMember.class_teachers?.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: 180 }}>
+                            {staffMember.class_teachers.map((ct) => (
+                              <Chip
+                                key={ct.id}
+                                size="small"
+                                label={[
+                                  ct.class_arm?.programme_class?.class?.class_name,
+                                  ct.class_arm?.class_arm_names,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ') || 'N/A'}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="textSecondary">
+                            Not assigned
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {staffMember.subject_teachers?.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: 220 }}>
+                            {staffMember.subject_teachers.map((st) => (
+                              <Chip
+                                key={st.id}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                                label={
+                                  [
+                                    st.subject?.subject_name,
+                                    [
+                                      st.class_arm?.programme_class?.class?.class_name,
+                                      st.class_arm?.class_arm_names,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' '),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' — ') || 'N/A'
+                                }
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="textSecondary">
+                            Not assigned
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="body2">
                           {staffMember.date_of_first_appointment
                             ? new Date(staffMember.date_of_first_appointment).toLocaleDateString(
@@ -282,36 +314,15 @@ const TeachingStaffTab = ({
             </Table>
           </TableContainer>
 
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 20, 50]}
-            component="div"
-            count={total}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </>
-      )}
-
-      {activeSubTab === 'allocation' && (
-        <Box>
-          <Box sx={{ mb: 3 }}>
-            <Tabs
-              value={allocationSubTab}
-              onChange={(e, newValue) => setAllocationSubTab(newValue)}
-              sx={{
-                '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
-              }}
-            >
-              <Tab label="Class Teacher Allocation" value="class-teacher" />
-              <Tab label="Subject Teacher" value="subject-teacher" />
-            </Tabs>
-          </Box>
-          {allocationSubTab === 'class-teacher' && <ClassTeacherAllocation />}
-          {allocationSubTab === 'subject-teacher' && <SubjectTeacherAllocation />}
-        </Box>
-      )}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        component="div"
+        count={total}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </Box>
   );
 };

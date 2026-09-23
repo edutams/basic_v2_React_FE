@@ -1,6 +1,12 @@
 import tenantApi from '@/api/tenant/tenant_api';
 
 const allocationApi = {
+  // Coverage stats for the Class & Subject Allocations tab's header cards
+  getAllocationStats: async (params = {}) => {
+    const response = await tenantApi.get('/allocations/stats', { params });
+    return response.data;
+  },
+
   // Class Teacher Allocations
   getClassTeacherAllocations: async (params = {}) => {
     const response = await tenantApi.get('/allocations/class-teacher', { params });

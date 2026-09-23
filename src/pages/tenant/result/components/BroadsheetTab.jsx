@@ -40,6 +40,36 @@ const remarkFor = (average, gradeSettings = []) => {
   return found ? found.remark : '-';
 };
 
+// Short on-screen comment; full text is shown via Tooltip.
+const COMMENT_PREVIEW_LEN = 28;
+const truncateComment = (text) => {
+  if (!text) return '';
+  return text.length > COMMENT_PREVIEW_LEN ? `${text.slice(0, COMMENT_PREVIEW_LEN)}…` : text;
+};
+
+// Comment cell: truncated preview + click/hover tooltip with the full text.
+const CommentCell = ({ value }) => {
+  const full = value || '';
+  return (
+    <TableCell sx={{ minWidth: { xs: 80, sm: 96 }, maxWidth: 140, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <Tooltip title={full || 'No comment yet — use Add/Edit'} placement="top" arrow enterDelay={200}>
+        <Box
+          component="span"
+          sx={{
+            display: 'block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            cursor: full ? 'pointer' : 'default',
+          }}
+        >
+          {truncateComment(full) || '-'}
+        </Box>
+      </Tooltip>
+    </TableCell>
+  );
+};
+
 const BroadsheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -672,18 +702,35 @@ const BroadsheetTab = () => {
                 </FormControl>
               </Box>
             )}
-            <Box sx={{ flex: '1 1 0', minWidth: 120 }}>
-              <Button variant="contained" fullWidth onClick={handleFilter} disabled={loading}>
-                {loading ? <CircularProgress size={18} color="inherit" /> : 'Fetch'}
+            {/* Fetch / Export — narrow and pushed right once every filter (incl. Performance) is on screen */}
+            <Box sx={{
+              flex: showData ? '0 0 auto' : '0 0 auto',
+              minWidth: 0,
+              ml: showData ? 'auto' : 0,
+              display: 'flex',
+              gap: 1,
+              flexWrap: 'nowrap',
+            }}>
+              <Button
+                variant="contained"
+                onClick={handleFilter}
+                disabled={loading}
+                sx={{ minWidth: 0, width: showData ? 'auto' : 96, px: 1.5, whiteSpace: 'nowrap' }}
+              >
+                {loading ? <CircularProgress size={16} color="inherit" /> : 'Fetch'}
               </Button>
-            </Box>
-            {showData && (
-              <Box sx={{ flex: '1 1 0', minWidth: 130 }}>
-                <Button variant="outlined" color="success" fullWidth onClick={handleExport} disabled={loading}>
+              {showData && (
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={handleExport}
+                  disabled={loading}
+                  sx={{ minWidth: 0, width: 'auto', px: 1.5, whiteSpace: 'nowrap' }}
+                >
                   Export CSV
                 </Button>
-              </Box>
-            )}
+              )}
+            </Box>
           </Box>
 
           {showData && showPromotionButtons && (
@@ -790,10 +837,10 @@ const BroadsheetTab = () => {
                           <TableCell align="center" sx={{ bgcolor: '#0ca6e8', fontWeight: 700, color: '#fff', minWidth: { xs: 72, sm: 80 } }}>NEXT CLASS</TableCell>
                         </>
                       )}
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 110, sm: 120 } }}>
+                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}>
                         <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>CLASS TEACHER COMMENT</Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 110, sm: 120 } }}>
+                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}>
                         <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>HEAD OF SCHOOL COMMENT</Typography>
                       </TableCell>
                       <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 96, sm: 100 } }}>
@@ -926,8 +973,8 @@ const BroadsheetTab = () => {
                               </TableCell>
                             </>
                           )}
-                          <TableCell sx={{ minWidth: { xs: 110, sm: 120 }, fontSize: 12 }}>{row.class_teachers_comment || '-'}</TableCell>
-                          <TableCell sx={{ minWidth: { xs: 110, sm: 120 }, fontSize: 12 }}>{row.hos_comment || '-'}</TableCell>
+                          <CommentCell value={row.class_teachers_comment} />
+                          <CommentCell value={row.hos_comment} />
                           <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
                             <Button size="small" variant="contained" color="primary" sx={{ fontSize: 12, px: 1, minWidth: 0, textTransform: 'none' }} onClick={(e) => handleAddEditClick(e, row)}>
                               Add/Edit

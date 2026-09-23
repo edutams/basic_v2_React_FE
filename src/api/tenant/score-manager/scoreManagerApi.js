@@ -63,6 +63,11 @@ const scoreManagerApi = {
   // ── Score Sheet Routes ─────────────────────────────────────
   getScoreSheetData: (data) =>
     tenantApi.post('/score-sheet/data', data),
+
+  // ── CA Breakdown ──────────────────────────────────────────
+  // POST /ca-breakdown { student_registration_id | user_id, session_term_id? }
+  getCaBreakdown: (data) =>
+    tenantApi.post('/ca-breakdown', data),
 };
 
 export default scoreManagerApi;

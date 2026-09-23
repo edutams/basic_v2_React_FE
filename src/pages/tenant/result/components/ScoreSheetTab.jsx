@@ -473,7 +473,16 @@ const ScoreSheetTab = () => {
 
   const viewCAReport = (student) => {
     setActionMenuAnchor(null);
-    window.open('/result-cabreakdown', '_blank', 'noopener,noreferrer');
+    if (!student) return;
+    const params = new URLSearchParams();
+    if (student.student_registration_id) {
+      params.set('student_registration_id', student.student_registration_id);
+    } else if (student.user_id) {
+      params.set('user_id', student.user_id);
+    }
+    if (sessionTermId) params.set('session_term_id', sessionTermId);
+    if (selectedClassArm) params.set('class_arm_id', selectedClassArm);
+    window.open(`/result-cabreakdown?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
   const viewResult = (student) => {

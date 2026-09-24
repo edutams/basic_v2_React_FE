@@ -18,6 +18,13 @@ const allocationApi = {
     return response.data;
   },
 
+  // Whether a teacher already holds a different active class teacher
+  // assignment this term — informational, for a warn-but-allow prompt.
+  checkClassTeacherConflict: async (params) => {
+    const response = await tenantApi.get('/allocations/class-teacher/check-conflict', { params });
+    return response.data;
+  },
+
   removeClassTeacherAllocation: async (id) => {
     const response = await tenantApi.delete(`/allocations/class-teacher/${id}`);
     return response.data;

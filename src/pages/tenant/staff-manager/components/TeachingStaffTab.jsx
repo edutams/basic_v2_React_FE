@@ -143,8 +143,8 @@ const TeachingStaffTab = ({
                   <TableCell sx={{ fontWeight: 700 }}>Staff Id</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>FullName</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Class(es)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Subject(s)</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Class Teacher Of</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Subject Teacher Of</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Appointment</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>
@@ -230,17 +230,24 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         {staffMember.class_teachers?.length > 0 ? (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: 180 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {staffMember.class_teachers.map((ct) => (
                               <Chip
                                 key={ct.id}
                                 size="small"
-                                label={[
-                                  ct.class_arm?.programme_class?.class?.class_name,
-                                  ct.class_arm?.class_arm_names,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ') || 'N/A'}
+                                label={
+                                  [
+                                    ct.class_arm?.programme_class?.programme?.programme_code,
+                                    [
+                                      ct.class_arm?.programme_class?.class?.class_code,
+                                      ct.class_arm?.class_arm_names,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' '),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' — ') || 'N/A'
+                                }
                               />
                             ))}
                           </Box>
@@ -252,7 +259,7 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         {staffMember.subject_teachers?.length > 0 ? (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: 220 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {staffMember.subject_teachers.map((st) => (
                               <Chip
                                 key={st.id}
@@ -263,11 +270,16 @@ const TeachingStaffTab = ({
                                   [
                                     st.subject?.subject_name,
                                     [
-                                      st.class_arm?.programme_class?.class?.class_name,
-                                      st.class_arm?.class_arm_names,
+                                      st.class_arm?.programme_class?.programme?.programme_code,
+                                      [
+                                        st.class_arm?.programme_class?.class?.class_code,
+                                        st.class_arm?.class_arm_names,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' '),
                                     ]
                                       .filter(Boolean)
-                                      .join(' '),
+                                      .join(' — '),
                                   ]
                                     .filter(Boolean)
                                     .join(' — ') || 'N/A'

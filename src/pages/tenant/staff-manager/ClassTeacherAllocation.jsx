@@ -58,6 +58,18 @@ const ClassTeacherAllocation = () => {
   const [saving, setSaving] = useState(false);
   const [savingGroup, setSavingGroup] = useState(null);
 
+  // Warn-but-allow modal — shown when a teacher just picked already holds a
+  // different class as its class teacher this term. Not a block: a small
+  // school may not have enough staff for one class teacher per class.
+  const [conflictDialog, setConflictDialog] = useState({
+    open: false,
+    index: null,
+    teacherName: '',
+    className: '',
+    previousTeacherId: null,
+    previousTeacherName: '',
+  });
+
   // Grouped-by-class collapsible sections — a flat list of every class arm
   // in a programme gets long fast (42+ arms isn't unusual), so rows are
   // grouped by class with a collapsible header, same pattern as
@@ -201,8 +213,11 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleTeacherChange = (index, teacherUserId) => {
+  const handleTeacherChange = async (index, teacherUserId) => {
     const teacher = teachers.find((t) => t.user_id === teacherUserId);
+    const previousAllocation = allocations[index];
+    const classArmId = previousAllocation.class_arm_id;
+
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
@@ -210,6 +225,49 @@ const ClassTeacherAllocation = () => {
       teacher_name: teacher ? teacher.user.full_name : '',
     };
     setAllocations(updatedAllocations);
+
+    // Warn (but don't block) if this teacher already holds a different
+    // class this term — a small school may not have enough staff for one
+    // class teacher per class, so this is informational only. The admin
+    // can undo the pick from the modal if it wasn't intentional.
+    if (teacherUserId && selectedTerm) {
+      try {
+        const res = await allocationApi.checkClassTeacherConflict({
+          user_id: teacherUserId,
+          session_term_id: selectedTerm,
+          excluding_class_arm_id: classArmId,
+        });
+        if (res.data) {
+          setConflictDialog({
+            open: true,
+            index,
+            teacherName: teacher ? teacher.user.full_name : 'This teacher',
+            className: res.data.class_name,
+            previousTeacherId: previousAllocation.teacher_id,
+            previousTeacherName: previousAllocation.teacher_name,
+          });
+        }
+      } catch (error) {
+        // Non-blocking — a failed check shouldn't stop the admin from saving.
+        console.error(error);
+      }
+    }
+  };
+
+  const undoConflictedTeacherChange = () => {
+    const { index, previousTeacherId, previousTeacherName } = conflictDialog;
+    if (index !== null) {
+      setAllocations((prev) => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          teacher_id: previousTeacherId,
+          teacher_name: previousTeacherName,
+        };
+        return updated;
+      });
+    }
+    setConflictDialog((prev) => ({ ...prev, open: false }));
   };
 
   const handleRemoveAllocation = (index) => {
@@ -590,6 +648,18 @@ const ClassTeacherAllocation = () => {
         message="Are you sure you want to remove this teacher from the allocation?"
         severity="error"
         confirmText="Remove"
+      />
+
+      {/* Already-a-class-teacher-elsewhere warning — warn, don't block */}
+      <ConfirmationDialog
+        open={conflictDialog.open}
+        onClose={undoConflictedTeacherChange}
+        onConfirm={() => setConflictDialog((prev) => ({ ...prev, open: false }))}
+        title="Teacher already assigned elsewhere"
+        message={`${conflictDialog.teacherName} is already the class teacher of ${conflictDialog.className} this term. You can still proceed if this teacher is meant to cover both classes.`}
+        severity="warning"
+        confirmText="Proceed anyway"
+        cancelText="Undo"
       />
     </Box>
   );

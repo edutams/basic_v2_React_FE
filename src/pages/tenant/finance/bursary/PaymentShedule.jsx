@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -96,6 +96,7 @@ const PaymentShedule = () => {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [scheduleStats, setScheduleStats] = useState({
     schedule: { total: 0, classes: 0 },
+    missingSchedules: { total: 0 },
     paymentName: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
     studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
   });
@@ -126,9 +127,10 @@ const PaymentShedule = () => {
         setLoadingStats(true);
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
         if (res?.success && res.data) {
-          const { schedule, amount, student_category } = res.data;
+          const { schedule, missing_schedules, amount, student_category } = res.data;
           setScheduleStats({
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
+            missingSchedules: { total: missing_schedules?.total ?? 0 },
             paymentName: {
               withMinSchedule: amount?.min?.amount ?? 0,
               withMaxSchedule: amount?.max?.amount ?? 0,
@@ -215,12 +217,42 @@ const PaymentShedule = () => {
   const selectedCategoryLabel =
     categories.find((c) => String(c.id) === String(selectedCategory))?.name || '';
 
+  // The Set Schedule tab's own picker is session-only — which term is
+  // active gets picked via the First/Second/Third Term pills inside
+  // CompulsoryScheduleTab/OptionalPaymentTab. `sessions` is a flat list of
+  // session_term rows though (one per term), so it's deduped here to one
+  // entry per session for this dropdown's options.
+  const distinctSessions = useMemo(() => {
+    const bySessionId = new Map();
+    sessions.forEach((item) => {
+      if (!bySessionId.has(item.session_id)) {
+        bySessionId.set(item.session_id, item);
+      }
+    });
+    return Array.from(bySessionId.values());
+  }, [sessions]);
+
   const handleSessionTermChange = (sessionTermId) => {
     const selectedItem = sessions.find((s) => s.id === sessionTermId);
     if (selectedItem) {
       setSelectedSessionTerm(sessionTermId);
       setSelectedSession(selectedItem.session_id);
       setSelectedTerm(selectedItem.term_id);
+      setActiveSubTermId(null);
+    }
+  };
+
+  // Session-only change for the Set Schedule tab's picker — still resolves
+  // to a representative session_term row (any term of that session) so
+  // selectedSessionTerm/selectedTerm stay populated for the other tabs
+  // that do need a specific term, but the dropdown itself only asks "which
+  // session".
+  const handleSessionOnlyChange = (sessionId) => {
+    const representative = sessions.find((s) => s.session_id === sessionId);
+    if (representative) {
+      setSelectedSessionTerm(representative.id);
+      setSelectedSession(sessionId);
+      setSelectedTerm(representative.term_id);
       setActiveSubTermId(null);
     }
   };
@@ -312,12 +344,13 @@ const PaymentShedule = () => {
         setLoadingStats(true);
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
         if (res?.success && res.data) {
-          const { schedule, amount, student_category } = res.data;
+          const { schedule, missing_schedules, amount, student_category } = res.data;
           setScheduleStats({
             schedule: {
               total: schedule?.total ?? 0,
               classes: schedule?.classes ?? 0,
             },
+            missingSchedules: { total: missing_schedules?.total ?? 0 },
             paymentName: {
               withMinSchedule: amount?.min?.amount ?? 0,
               withMaxSchedule: amount?.max?.amount ?? 0,
@@ -456,12 +489,15 @@ const PaymentShedule = () => {
 
       {actionTab === 0 && (
         // Set Schedule Stats
-        <Grid container spacing={3} mb={1}>
-          <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={2} mb={1}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Paper
               elevation={0}
               sx={{
-                p: '14px',
+                p: '10px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 borderRadius: '14px',
                 bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -476,11 +512,11 @@ const PaymentShedule = () => {
                 },
               }}
             >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     borderRadius: '8px',
                     bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     color: isDark ? '#fff' : s0.color,
@@ -489,30 +525,29 @@ const PaymentShedule = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
+                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
                 </Typography>
               </Box>
 
-              <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} flex={1}>
                 <Box
                   sx={{
                     bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     borderRadius: 1,
-                    px: 3,
-                    py: 2,
-                    mt: 3,
-                    minWidth: 100,
+                    px: 2,
+                    py: 1.25,
+                    minWidth: 80,
                     textAlign: 'center',
                   }}
                 >
                   {loadingStats ? (
-                    <Skeleton width={90} height={48} />
+                    <Skeleton width={70} height={40} />
                   ) : (
                     <Typography
-                      variant="h2"
+                      variant="h3"
                       fontWeight={700}
                       sx={{ color: isDark ? '#ffffff' : s0.color, lineHeight: 1 }}
                     >
@@ -522,9 +557,9 @@ const PaymentShedule = () => {
                 </Box>
                 <Box>
                   {loadingStats ? (
-                    <Skeleton width={80} height={40} />
+                    <Skeleton width={60} height={32} />
                   ) : (
-                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
                       {stats.schedule.classes}
                     </Typography>
                   )}
@@ -536,11 +571,14 @@ const PaymentShedule = () => {
             </Paper>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Paper
               elevation={0}
               sx={{
-                p: '14px',
+                p: '10px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 borderRadius: '14px',
                 bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -555,11 +593,101 @@ const PaymentShedule = () => {
                 },
               }}
             >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                    color: isDark ? '#fff' : s3.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  Still Missing
+                </Typography>
+              </Box>
+
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} flex={1}>
+                <Box
+                  sx={{
+                    bgcolor: isDark
+                      ? 'rgba(255,255,255,0.08)'
+                      : stats.missingSchedules.total > 0
+                        ? s3.bg
+                        : '#ebfaf2',
+                    borderRadius: 1,
+                    px: 2,
+                    py: 1.25,
+                    minWidth: 80,
+                    textAlign: 'center',
+                  }}
+                >
+                  {loadingStats ? (
+                    <Skeleton width={70} height={40} />
+                  ) : (
+                    <Typography
+                      variant="h3"
+                      fontWeight={700}
+                      sx={{
+                        color: isDark
+                          ? '#ffffff'
+                          : stats.missingSchedules.total > 0
+                            ? s3.color
+                            : 'success.main',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {stats.missingSchedules.total}
+                    </Typography>
+                  )}
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="textSecondary"
+                  sx={{ flex: 1 }}
+                >
+                  {/* Same number you'd get adding up each row's own "X
+                      missing" count below — a class counts once per payment
+                      item it still needs a price for. */}
+                  class + payment item pairs still need a price
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: '10px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
                     borderRadius: '8px',
                     bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
                     color: isDark ? '#fff' : s1.color,
@@ -568,22 +696,22 @@ const PaymentShedule = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
+                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Payment Name
                 </Typography>
               </Box>
-              <Box display="flex" gap={2}>
+              <Box display="flex" gap={1.5}>
                 <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
                     Has Minimum Amount
                   </Typography>
                   {loadingStats ? (
-                    <Skeleton width={120} height={40} />
+                    <Skeleton width={100} height={32} />
                   ) : (
                     <Typography
-                      variant="h3"
+                      variant="h5"
                       fontWeight={700}
                       sx={{
                         lineHeight: 1,
@@ -599,14 +727,14 @@ const PaymentShedule = () => {
                   </Typography>
                 </Box>
                 <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
                     Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
-                    <Skeleton width={120} height={40} />
+                    <Skeleton width={100} height={32} />
                   ) : (
                     <Typography
-                      variant="h3"
+                      variant="h5"
                       fontWeight={700}
                       sx={{
                         lineHeight: 1,
@@ -625,11 +753,14 @@ const PaymentShedule = () => {
             </Paper>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Paper
               elevation={0}
               sx={{
-                p: '14px',
+                p: '10px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 borderRadius: '14px',
                 bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                 border: '1px solid',
@@ -644,11 +775,11 @@ const PaymentShedule = () => {
                 },
               }}
             >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     borderRadius: '8px',
                     bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
                     color: isDark ? '#fff' : s2.color,
@@ -657,22 +788,22 @@ const PaymentShedule = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 18 }} color="currentColor" />
+                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
                 </Box>
                 <Typography variant="body2" color="textSecondary">
                   Student Category
                 </Typography>
               </Box>
-              <Box display="flex" gap={2}>
+              <Box display="flex" gap={1.5}>
                 <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
                     Has Minimum Amount
                   </Typography>
                   {loadingStats ? (
-                    <Skeleton width={120} height={40} />
+                    <Skeleton width={100} height={32} />
                   ) : (
                     <Typography
-                      variant="h3"
+                      variant="h5"
                       fontWeight={700}
                       sx={{
                         lineHeight: 1,
@@ -688,14 +819,14 @@ const PaymentShedule = () => {
                   </Typography>
                 </Box>
                 <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
                     Has Maximum Amount
                   </Typography>
                   {loadingStats ? (
-                    <Skeleton width={120} height={40} />
+                    <Skeleton width={100} height={32} />
                   ) : (
                     <Typography
-                      variant="h3"
+                      variant="h5"
                       fontWeight={700}
                       sx={{
                         lineHeight: 1,
@@ -1158,9 +1289,9 @@ const PaymentShedule = () => {
                   <FormControl size="small" sx={{ minWidth: 220 }}>
                     <InputLabel>Session</InputLabel>
                     <Select
-                      value={selectedSessionTerm}
-                      label="Session Term"
-                      onChange={(e) => handleSessionTermChange(e.target.value)}
+                      value={selectedSession}
+                      label="Session"
+                      onChange={(e) => handleSessionOnlyChange(e.target.value)}
                       disabled={loadingSessions}
                     >
                       {loadingSessions ? (
@@ -1168,8 +1299,8 @@ const PaymentShedule = () => {
                           <CircularProgress size={16} />
                         </MenuItem>
                       ) : (
-                        sessions.map((item) => (
-                          <MenuItem key={item.id} value={item.id}>
+                        distinctSessions.map((item) => (
+                          <MenuItem key={item.session_id} value={item.session_id}>
                             {item.session?.session_name}
                           </MenuItem>
                         ))

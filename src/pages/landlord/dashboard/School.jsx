@@ -19,6 +19,7 @@ import {
   TableFooter,
   TablePagination,
   Snackbar,
+  Portal,
   Alert,
   Chip,
   Skeleton,
@@ -1682,20 +1683,26 @@ const SchoolDashboard = () => {
         severity={isActive ? 'warning' : 'success'}
       />
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3500}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          severity={snackbar.severity}
+      {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it can
+          get trapped under an open Dialog's stacking context regardless of
+          z-index. Portal escapes it to document.body, same as Dialog. */}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3500}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          sx={{ width: '100%', borderRadius: 2 }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <Alert
+            severity={snackbar.severity}
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            sx={{ width: '100%', borderRadius: 2 }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
 
       <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={analytics?.planDistribution ?? []} totalOrganizations={analytics?.totalOrganizations ?? 0} />
       <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />

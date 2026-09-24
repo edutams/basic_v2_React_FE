@@ -185,7 +185,7 @@ const SummarySheetTab = () => {
   const handleCellClick = async (subject, grade) => {
     if (!filters.class_arm_id || !sessionTermId) return;
     setBreakdownDialog({ open: true, subject, grade });
-    setBreakdown({ loading: true, rows: [], total: 0, grade });
+    setBreakdown({ loading: true, rows: [], total: 0, grade, error: '' });
     try {
       const res = await resultSheetApi.getSummaryBreakdown({
         class_arm_id: filters.class_arm_id,
@@ -199,11 +199,19 @@ const SummarySheetTab = () => {
         rows: payload.breakdown ?? [],
         total: payload.total ?? 0,
         grade: payload.grade ?? grade,
+        error: '',
       });
     } catch (err) {
       console.error('Failed to fetch breakdown:', err);
-      setBreakdown({ loading: false, rows: [], total: 0, grade });
-      showSnackbar(err?.response?.data?.message || 'Failed to fetch breakdown', 'error');
+      // Shown inside the still-open breakdown Dialog itself, not a toast —
+      // a Snackbar can render behind an open Dialog.
+      setBreakdown({
+        loading: false,
+        rows: [],
+        total: 0,
+        grade,
+        error: err?.response?.data?.message || 'Failed to fetch breakdown',
+      });
     }
   };
 
@@ -513,6 +521,11 @@ const SummarySheetTab = () => {
           <IconX size={20} style={{ cursor: 'pointer' }} onClick={closeBreakdown} />
         </DialogTitle>
         <DialogContent dividers>
+          {breakdown.error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {breakdown.error}
+            </Alert>
+          )}
           {breakdown.loading ? (
             <Box sx={{ py: 6, textAlign: 'center' }}><CircularProgress size={30} /></Box>
           ) : (
@@ -562,7 +575,9 @@ const SummarySheetTab = () => {
       </Dialog>
 
       {/* ── Snackbar ─────────────────────────────────────────── */}
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+      >
         <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
       </Snackbar>
     </Paper>

@@ -128,6 +128,7 @@ export default function QuickActions() {
         autoHideDuration={3000}
         onClose={() => setSnackbar({ open: false, message: "" })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           onClose={() => setSnackbar({ open: false, message: "" })}

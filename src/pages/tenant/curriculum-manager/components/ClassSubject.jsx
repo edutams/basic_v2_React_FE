@@ -121,6 +121,11 @@ const ClassSubject = () => {
   // Loading states for buttons
   const [loadingAddSubject, setLoadingAddSubject] = useState(false);
   const [loadingDeleteClassSubject, setLoadingDeleteClassSubject] = useState(false);
+  // Shown inside the delete dialog itself, not as a separate toast — a
+  // Snackbar can end up visually behind an open Dialog depending on the
+  // browser/stacking context, so the failure reason (e.g. "students
+  // already registered") is shown right where the user is already looking.
+  const [deleteClassSubjectError, setDeleteClassSubjectError] = useState('');
 
   // Methods
   const showSnackbar = (message, severity = 'success') => {
@@ -276,6 +281,7 @@ const ClassSubject = () => {
 
   const handleOpenDeleteModal = (subject) => {
     setSelectedClassSubject(subject);
+    setDeleteClassSubjectError('');
     setOpenDeleteClassSubjectModal(true);
   };
 
@@ -293,21 +299,31 @@ const ClassSubject = () => {
   const handleConfirmDeleteClassSubject = async () => {
     if (!selectedClassSubject) return;
     setLoadingDeleteClassSubject(true);
+    setDeleteClassSubjectError('');
     try {
-      const response = await deleteClassSubjectRecord(selectedClassSubject.id);
+      const response = await deleteClassSubjectRecord(selectedClassSubject.class_subject_id);
       if (response.status) {
         showSnackbar('Subject removed from class successfully', 'success');
         handleCloseDeleteClassSubjectModal();
         fetchClassSubjectsData(selectedClass);
         fetchStats();
       } else {
-        showSnackbar(response.message || 'Failed to remove subject from class', 'error');
+        // The specific reason (e.g. "students already registered") comes
+        // back under `error`, not `message` — `message` is always the
+        // generic fallback. Same convention as handleDeleteSubject above.
+        setDeleteClassSubjectError(
+          response.error || response.message || 'Failed to remove subject from class',
+        );
       }
     } catch (error) {
-      showSnackbar(
-        error.response?.data?.message || 'Failed to remove subject from class',
-        'error',
-      );
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        setDeleteClassSubjectError(
+          errorData.error || errorData.message || 'Failed to remove subject from class',
+        );
+      } else {
+        setDeleteClassSubjectError('Failed to remove subject from class');
+      }
     } finally {
       setLoadingDeleteClassSubject(false);
     }
@@ -316,9 +332,9 @@ const ClassSubject = () => {
   // Inline pass mark / unit editing directly in the table — updates local
   // state as the admin types, persists on blur via the same upsert the Add/
   // Edit modals use.
-  const handleInlineClassSubjectChange = (subjectId, field, value) => {
+  const handleInlineClassSubjectChange = (classSubjectId, field, value) => {
     setClassSubjects((prev) =>
-      prev.map((s) => (s.id === subjectId ? { ...s, [field]: value } : s)),
+      prev.map((s) => (s.class_subject_id === classSubjectId ? { ...s, [field]: value } : s)),
     );
   };
 
@@ -570,7 +586,7 @@ const ClassSubject = () => {
                     ))
                   ) : classSubjects.length > 0 ? (
                     classSubjects.map((subject, i) => (
-                      <TableRow key={subject.id} hover>
+                      <TableRow key={subject.class_subject_id} hover>
                         <TableCell>{i + 1}</TableCell>
                         <TableCell>{subject.subject_name}</TableCell>
                         <TableCell>
@@ -580,7 +596,11 @@ const ClassSubject = () => {
                             type="number"
                             value={subject.pass_mark}
                             onChange={(e) =>
-                              handleInlineClassSubjectChange(subject.id, 'pass_mark', e.target.value)
+                              handleInlineClassSubjectChange(
+                                subject.class_subject_id,
+                                'pass_mark',
+                                e.target.value,
+                              )
                             }
                             onBlur={() => handleInlineClassSubjectSave(subject)}
                             inputProps={{ min: 0, max: 100, style: { width: 48 } }}
@@ -593,7 +613,11 @@ const ClassSubject = () => {
                             type="number"
                             value={subject.unit}
                             onChange={(e) =>
-                              handleInlineClassSubjectChange(subject.id, 'unit', e.target.value)
+                              handleInlineClassSubjectChange(
+                                subject.class_subject_id,
+                                'unit',
+                                e.target.value,
+                              )
                             }
                             onBlur={() => handleInlineClassSubjectSave(subject)}
                             inputProps={{ min: 1, style: { width: 48 } }}
@@ -805,6 +829,11 @@ const ClassSubject = () => {
       >
         <DialogTitle>Remove Subject from Class</DialogTitle>
         <DialogContent>
+          {deleteClassSubjectError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {deleteClassSubjectError}
+            </Alert>
+          )}
           <Typography variant="body2">
             Are you sure you want to remove{' '}
             <strong>{selectedClassSubject?.subject_name}</strong> from this class? This cannot be
@@ -838,6 +867,7 @@ const ClassSubject = () => {
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}

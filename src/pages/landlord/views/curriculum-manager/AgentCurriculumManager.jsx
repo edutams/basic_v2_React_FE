@@ -44,6 +44,7 @@ import {
   DialogActions,
   Alert,
   Snackbar,
+  Portal,
   Skeleton,
   Menu,
   MenuList,
@@ -1420,16 +1421,22 @@ const AgentCurriculumManager = () => {
       </Dialog>
 
       {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it can
+          get trapped under an open Dialog's stacking context regardless of
+          z-index. Portal escapes it to document.body, same as Dialog. */}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </PageContainer>
   );
 };

@@ -201,7 +201,9 @@ const CommentBankTab = () => {
       </Box>
 
       {/* ── Snackbar ─────────────────────────────────────────── */}
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+      >
         <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
       </Snackbar>
     </Paper>

@@ -827,6 +827,7 @@ const ReportSheetTab = () => {
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}

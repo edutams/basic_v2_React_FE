@@ -301,13 +301,6 @@ const OptionalPaymentTab = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
-          Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.term?.term_name} ({categoryLabel || '...'})
-        </Typography>
-      </Alert>
-
       <Paper sx={{ p: 1.5 }}>
         <Box
           mb={3}

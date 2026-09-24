@@ -215,6 +215,7 @@ const SearchStudent = ({ onSearch, loading, results, onStudentClick, onClear }) 
         onClose={() => setSnackbar({ open: false, message: '' })}
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       />
     </>
   );

@@ -673,11 +673,21 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
                                 reportCacheRef.current[selArm] = newVal;
                               }
                             } catch (err) {
-                              setWeeklySnackbar({
-                                open: true,
-                                message: 'Failed to update weekly report setting',
-                                severity: 'error',
-                              });
+                              // Shown inside the still-open analytics modal
+                              // itself, not a separate toast — a Snackbar
+                              // can render behind an open Dialog regardless
+                              // of z-index tricks.
+                              setAnalyticsModal((prev) => ({
+                                ...prev,
+                                content: (
+                                  <Box>
+                                    <Alert severity="error" sx={{ mb: 2 }}>
+                                      Failed to update weekly report setting
+                                    </Alert>
+                                    {renderArmsList(applyFilter(currentArms))}
+                                  </Box>
+                                ),
+                              }));
                             } finally {
                               setTogglingArmId(null);
                             }
@@ -1335,6 +1345,7 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
         autoHideDuration={4000}
         onClose={() => setWeeklySnackbar((p) => ({ ...p, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           severity={weeklySnackbar.severity}

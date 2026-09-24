@@ -567,6 +567,7 @@ const BursarySetup = () => {
         autoHideDuration={5000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

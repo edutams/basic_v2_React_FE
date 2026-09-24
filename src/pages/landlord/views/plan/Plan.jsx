@@ -17,6 +17,7 @@ import {
   TableFooter,
   TablePagination,
   Snackbar,
+  Portal,
   Alert,
   Tooltip,
   Skeleton,
@@ -471,20 +472,27 @@ const Plan = forwardRef(({ onPlanChanged }, ref) => {
           severity="error"
         />
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
+        {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it
+            can get trapped under an open Dialog's stacking context
+            regardless of z-index. Portal escapes it to document.body,
+            same as Dialog. */}
+        <Portal>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
             onClose={() => setSnackbarOpen(false)}
-            severity={snackbarSeverity}
-            sx={{ width: '100%' }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
           >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
+            <Alert
+              onClose={() => setSnackbarOpen(false)}
+              severity={snackbarSeverity}
+              sx={{ width: '100%' }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
+        </Portal>
 
         {openPackageModal && (
           <PackageModal

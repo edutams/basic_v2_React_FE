@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Alert,
-  CircularProgress, Box, Snackbar,
+  CircularProgress, Box, Snackbar, Portal,
 } from '@mui/material';
 import { IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -482,16 +482,23 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
         )}
         <Button onClick={handleClose}>Close</Button>
       </DialogActions>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Portal — MUI's Snackbar doesn't portal itself (unlike Dialog), so
+          nested here it can get trapped under this Dialog's own stacking
+          context no matter how high its z-index is set. Portal escapes it
+          to document.body, same as Dialog already does. */}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+        >
+          <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </Dialog>
   );
 };

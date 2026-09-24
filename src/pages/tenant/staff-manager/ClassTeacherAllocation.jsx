@@ -19,6 +19,7 @@ import {
   Collapse,
   IconButton,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { IconTrash, IconSearch } from '@tabler/icons-react';
@@ -303,7 +304,13 @@ const ClassTeacherAllocation = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: '#f5f6fa', p: { xs: 1.5, sm: 2.5 }, borderRadius: 3 }}>
+    <Box
+      sx={{
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+        p: { xs: 1.5, sm: 2.5 },
+        borderRadius: 3,
+      }}
+    >
       {/* Description */}
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
         Select from classes below and allocate teacher to the class
@@ -312,7 +319,14 @@ const ClassTeacherAllocation = () => {
       {/* Filters Row: Session -> Term -> Programme -> Class -> Fetch */}
       <Paper
         variant="outlined"
-        sx={{ p: 2, mb: 3, bgcolor: '#fff', borderRadius: 2 }}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          borderTop: '3px solid',
+          borderTopColor: 'primary.main',
+        }}
       >
       <Grid container spacing={2} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
@@ -454,7 +468,11 @@ const ClassTeacherAllocation = () => {
               const withTeacher = group.rows.filter((r) => r.teacher_id).length;
 
               return (
-                <Paper key={group.className} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                <Paper
+                  key={group.className}
+                  variant="outlined"
+                  sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}
+                >
                   <Box
                     sx={{
                       display: 'flex',
@@ -462,7 +480,9 @@ const ClassTeacherAllocation = () => {
                       justifyContent: 'space-between',
                       p: 1.5,
                       cursor: 'pointer',
-                      bgcolor: '#eef1f7',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      borderLeft: '4px solid',
+                      borderLeftColor: 'primary.main',
                     }}
                     onClick={() => toggleGroup(group.className)}
                   >

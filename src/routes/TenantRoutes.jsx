@@ -123,11 +123,15 @@ const ChartOfAccounts = Loadable(
 const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
 const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
 const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
-const ResultConsiderationPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')));
+const ResultConsiderationPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')),
+);
 const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
 const ScoreSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreSheetPage')));
 const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBreakdownPage')));
-const PerformanceAnalyticsPage = Loadable(lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')));
+const PerformanceAnalyticsPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')),
+);
 const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
@@ -524,7 +528,7 @@ const TenantRoutes = [
       {
         path: 'result-cabreakdown',
         element: (
-          <TenantProtectedRoute permission="result.admin.ca_breakdown.view">
+          <TenantProtectedRoute permission="result.client.ca_breakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),

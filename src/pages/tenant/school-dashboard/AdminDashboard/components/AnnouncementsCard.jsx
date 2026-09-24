@@ -64,7 +64,7 @@ const AnnouncementsCard = ({ announcements = defaultAnnouncements, onViewAllAnno
           </Box>
           <Button
             size='small'
-            onClick={() => (onViewAllAnnouncements ? onViewAllAnnouncements() : navigate('/communications/broadcast-messaging'))}
+            onClick={() => (onViewAllAnnouncements ? onViewAllAnnouncements() : navigate('/communications'))}
             endIcon={<ArrowForward sx={{ fontSize: '14px !important' }} />}
             sx={{ fontSize: '12px' }}
           >

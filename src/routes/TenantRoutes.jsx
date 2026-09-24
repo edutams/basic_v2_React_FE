@@ -135,6 +135,7 @@ const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/Report
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
+const CommunicationsPage = Loadable(lazy(() => import('@/pages/tenant/communications/CommunicationsPage')));
 
 const TenantRoutes = [
   {
@@ -524,7 +525,7 @@ const TenantRoutes = [
       {
         path: 'result-cabreakdown',
         element: (
-          <TenantProtectedRoute permission="result.admin.ca_breakdown.view">
+          <TenantProtectedRoute permission="result.client.cabreakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),
@@ -590,6 +591,22 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.admin.messaging.index">
             <MessagingPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'communications',
+        element: (
+          <TenantProtectedRoute permission="communication.index">
+            <CommunicationsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'communications/broadcast-messaging',
+        element: (
+          <TenantProtectedRoute permission="communication.index">
+            <CommunicationsPage />
           </TenantProtectedRoute>
         ),
       },

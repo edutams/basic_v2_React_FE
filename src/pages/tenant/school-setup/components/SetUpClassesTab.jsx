@@ -23,15 +23,15 @@ import {
   Lock as LockIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import { IconSchool, IconListCheck, IconLayoutGrid, IconTrendingUp } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
 
-// One neutral, readable gray for every section header — no color cycling,
-// so the page stays calm and consistent regardless of how many groups render.
-// Dark enough to read as a clearly distinct band against the white card
-// body at a glance, not a near-invisible off-white tint.
-const SECTION_HEADER_BG = '#cdd2d8';
+// A brand-tinted band for every section header — no color cycling, so the
+// page stays calm and consistent regardless of how many groups render, but
+// tinted with the primary brand color instead of a flat neutral gray.
+const SECTION_HEADER_BG = (theme) => alpha(theme.palette.primary.main, 0.1);
 
 const generateDefaultArmNames = (count) => {
   const letters = [];
@@ -608,9 +608,11 @@ const SetUpClassesTab = forwardRef(
                   flexWrap: 'wrap',
                   cursor: 'pointer',
                   bgcolor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'action.hover' : SECTION_HEADER_BG,
+                    theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.16) : SECTION_HEADER_BG(theme),
                   borderBottom: '1px solid',
                   borderColor: (theme) => (theme.palette.mode === 'dark' ? 'divider' : '#aab1b9'),
+                  borderLeft: '4px solid',
+                  borderLeftColor: 'primary.main',
                 }}
                 onClick={() => toggleGroup(group.key)}
               >
@@ -691,7 +693,7 @@ const SetUpClassesTab = forwardRef(
                       mb: 1,
                       borderRadius: 2,
                       bgcolor: (theme) =>
-                        theme.palette.mode === 'dark' ? 'action.hover' : SECTION_HEADER_BG,
+                        theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.16) : SECTION_HEADER_BG(theme),
                     }}
                   >
                     <Grid size={4}>

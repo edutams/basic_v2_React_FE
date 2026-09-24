@@ -61,6 +61,7 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByProgramme,
+  fetchSubjectsByClass,
   fetchSubjects,
   fetchCurriculums,
 } from '@/api/landlord/curriculum/curriculumApi';
@@ -85,7 +86,12 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState([]);
-  const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
+  const [analytics, setAnalytics] = useState({
+    total_topics: 0,
+    total_subtopics: 0,
+    total_lesson_content: 0,
+    total_video_content: 0,
+  });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
@@ -169,18 +175,21 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     initData();
   }, []);
 
-  // Fetch subjects when curriculum changes
+  // Selecting a Curriculum directly (independent of Class) should still
+  // populate the Subject dropdown — scoped to the selected Programme too,
+  // when one is picked, so this doesn't reintroduce the cross-programme
+  // duplicate-subject bug the class-level scoping above was fixing.
   useEffect(() => {
-    if (curriculum) {
-      fetchSubjects(curriculum)
-        .then((subjectsRes) => {
-          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
-        })
-        .catch((error) => {
-          console.error('Failed to fetch subjects:', error);
-        });
-    }
-  }, [curriculum]);
+    if (!curriculum) return;
+
+    fetchSubjects(curriculum, programme || null)
+      .then((subjectsRes) => {
+        setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+      })
+      .catch((error) => {
+        console.error('Failed to fetch subjects', error);
+      });
+  }, [curriculum, programme]);
 
   const initData = async () => {
     try {
@@ -207,8 +216,19 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       } catch (error) {
         console.error('Failed to fetch classes', error);
       }
+    } else if (key === 'classLevel') {
+      try {
+        // Scope subjects to the selected class + programme, not the whole
+        // curriculum — two different programmes under the same curriculum
+        // can each have their own "Math", and a class can now have a
+        // different curriculum assigned per programme too.
+        const subjectsRes = await fetchSubjectsByClass(val, programme);
+        setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+      } catch (error) {
+        console.error('Failed to fetch subjects', error);
+      }
     }
-  }, []);
+  }, [programme]);
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -585,13 +605,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     },
     {
       label: 'Lesson Content',
-      count: '0',
+      count: analytics.total_lesson_content,
       icon: IconFileDescription,
       colorIndex: 2,
     },
     {
       label: 'Video Content',
-      count: '0',
+      count: analytics.total_video_content,
       icon: IconVideo,
       colorIndex: 3,
     },

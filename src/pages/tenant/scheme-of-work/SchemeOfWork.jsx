@@ -37,6 +37,7 @@ import {
   Chip,
   useTheme,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -82,7 +83,12 @@ const SchemeOfWork = () => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState({});
-  const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
+  const [analytics, setAnalytics] = useState({
+    total_topics: 0,
+    total_subtopics: 0,
+    total_lesson_content: 0,
+    total_video_content: 0,
+  });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
@@ -193,13 +199,15 @@ const SchemeOfWork = () => {
       }
     } else if (key === 'classLevel') {
       try {
-        const subjectsRes = await fetchSubjectsByClass(val);
+        // A class can now have a different curriculum per programme, so
+        // the currently selected Programme narrows which one applies here.
+        const subjectsRes = await fetchSubjectsByClass(val, programme);
         setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
       } catch (error) {
         console.error('Failed to fetch subjects', error);
       }
     }
-  }, []);
+  }, [programme]);
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -237,14 +245,24 @@ const SchemeOfWork = () => {
   };
 
   const paginatedRows = useMemo(() => {
-    let flattened = [];
+    let filtered = [];
     Object.keys(rows).forEach((weekName) => {
       rows[weekName].forEach((row) => {
-        flattened.push({ ...row, week: weekName });
+        filtered.push({ ...row, week: weekName });
       });
     });
-    return flattened;
-  }, [rows]);
+
+    if (activeFilters.search) {
+      filtered = filtered.filter(
+        (r) =>
+          r.topic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+          r.subtopic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()),
+      );
+    }
+
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row, type) => {
     setAnchorEl(event.currentTarget);
@@ -583,13 +601,13 @@ const SchemeOfWork = () => {
     },
     {
       title: 'Lesson Content',
-      value: '0',
+      value: analytics.total_lesson_content,
       icon: IconFileDescription,
       color: 'primary',
     },
     {
       title: 'Video Content',
-      value: '0',
+      value: analytics.total_video_content,
       icon: IconVideo,
       color: 'primary',
     },
@@ -980,6 +998,22 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, borderTop: '1px solid #eee' }}>
+          <TablePagination
+            component="div"
+            count={Object.values(rows).flat().length}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
       </Card>
 
       {/* Filter Drawer */}

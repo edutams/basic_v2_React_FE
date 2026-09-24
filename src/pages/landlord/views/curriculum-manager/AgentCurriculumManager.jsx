@@ -12,7 +12,9 @@ import {
   createSubjectRecord,
   updateSubjectRecord,
   deleteSubjectRecord,
+  fetchCurriculumSetupStats,
 } from '@/api/landlord/curriculum/curriculumApi';
+import StatCard from '@/components/shared/StatCard';
 import AgentSchemeOfWork from '../scheme-of-work/AgentSchemeOfWork';
 import {
   Box,
@@ -55,7 +57,15 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon, Subject, Search as SearchIcon } from '@mui/icons-material';
-import { IconEdit, IconTrash, IconFilter } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconFilter,
+  IconBooks,
+  IconSchool,
+  IconStack2,
+  IconAlertCircle,
+} from '@tabler/icons-react';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -125,9 +135,28 @@ const AgentCurriculumManager = () => {
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Curriculum Setup tab's own header stat cards
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     loadCurriculums();
+    loadStats();
   }, []);
 
   useEffect(() => {
@@ -222,6 +251,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum created successfully', 'success');
         handleCloseCreateModal();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to create curriculum', 'error');
       }
@@ -261,6 +291,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum updated successfully', 'success');
         handleCloseEditModal();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to update curriculum', 'error');
       }
@@ -291,6 +322,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum deleted successfully', 'success');
         handleCloseDeleteDialog();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to delete curriculum', 'error');
       }
@@ -409,6 +441,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject created successfully', 'success');
         handleCloseAddSubjectModal();
         loadSubjectsList();
+        loadStats();
       } else {
         if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to create subject', 'error');
@@ -462,6 +495,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject updated successfully', 'success');
         handleCloseEditSubjectModal();
         loadSubjectsList();
+        loadStats();
       } else {
         if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to update subject', 'error');
@@ -494,6 +528,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject deleted successfully', 'success');
         handleCloseDeleteSubjectDialog();
         loadSubjectsList();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to delete subject', 'error');
       }
@@ -520,6 +555,64 @@ const AgentCurriculumManager = () => {
         {/* CONTENT */}
         {/* <ParentCard > */}
           <TabPanel value={tab} index={0}>
+            <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconBooks}
+                  count={stats?.total_curricula ?? 0}
+                  label="Active Curricula"
+                  colorIndex={1}
+                  loading={statsLoading}
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconStack2}
+                  count={stats?.total_subjects ?? 0}
+                  label="Total Subjects"
+                  subtitle={
+                    stats?.subjects_missing_programme_mapping > 0
+                      ? `${stats.subjects_missing_programme_mapping} missing a programme`
+                      : 'All mapped to a programme'
+                  }
+                  colorIndex={stats?.subjects_missing_programme_mapping > 0 ? 4 : 0}
+                  loading={statsLoading}
+                  tooltip="A subject with no programme mapping silently disappears from every programme-scoped subject list."
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconSchool}
+                  count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
+                  label="Classes With Curriculum"
+                  subtitle={
+                    stats?.classes_without_curriculum > 0
+                      ? `${stats.classes_without_curriculum} still need one`
+                      : 'All classes covered'
+                  }
+                  colorIndex={2}
+                  loading={statsLoading}
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconAlertCircle}
+                  count={stats?.curricula_never_assigned ?? 0}
+                  label="Curricula Never Assigned"
+                  subtitle={
+                    stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
+                  }
+                  colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
+                  loading={statsLoading}
+                  tooltip="A curriculum that has never been assigned to a single class in any session/term — likely worth reviewing or removing."
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+            </Grid>
+
             <Box
               sx={{
                 display: 'grid',

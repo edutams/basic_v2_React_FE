@@ -151,9 +151,14 @@ const StaffAllocationFields = ({
                 const classes = classRes.data || classRes || [];
                 setClassClasses((prev) => ({ ...prev, [i]: classes }));
 
-                // Load class arms for this class
+                // Load class arms for this class, scoped to this row's
+                // programme — otherwise a class shared across programmes
+                // (e.g. SSS1 under both Science and Humanity) lists every
+                // programme's arms stacked together.
                 if (allocation.class_id) {
-                  const armRes = await fetchClassArmsByClass(allocation.class_id);
+                  const armRes = await fetchClassArmsByClass(allocation.class_id, {
+                    programme_id: allocation.programme_id,
+                  });
                   const allArms = armRes.data || armRes || [];
 
                   setClassArms((prev) => ({ ...prev, [i]: allArms }));
@@ -178,9 +183,12 @@ const StaffAllocationFields = ({
 
                 setSubjectClasses((prev) => ({ ...prev, [i]: classes }));
 
-                // Load class arms for this class
+                // Same programme-scoping fix as the class allocation branch
+                // above.
                 if (allocation.class_id) {
-                  const armRes = await fetchClassArmsByClass(allocation.class_id);
+                  const armRes = await fetchClassArmsByClass(allocation.class_id, {
+                    programme_id: allocation.programme_id,
+                  });
                   const allArms = armRes.data || armRes || [];
                   setSubjectClassArms((prev) => ({ ...prev, [i]: allArms }));
                 }
@@ -263,7 +271,13 @@ const StaffAllocationFields = ({
 
     if (classId) {
       try {
-        const res = await fetchClassArmsByClass(classId);
+        // A class can belong to more than one programme (e.g. SSS1 under
+        // both Science and Humanity), each with its own set of arms —
+        // scope by the programme already selected in this row, or the arm
+        // dropdown lists every programme's arms for this class stacked
+        // together as if they were one list.
+        const programmeId = classAllocations[index]?.programme_id;
+        const res = await fetchClassArmsByClass(classId, programmeId ? { programme_id: programmeId } : {});
         setClassArms((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load class arms');
@@ -354,7 +368,11 @@ const StaffAllocationFields = ({
 
     if (classId) {
       try {
-        const res = await fetchClassArmsByClass(classId);
+        // Same fix as handleClassChange() — scope arms to the programme
+        // already selected in this row, not every programme this class
+        // belongs to.
+        const programmeId = subjectAllocations[index]?.programme_id;
+        const res = await fetchClassArmsByClass(classId, programmeId ? { programme_id: programmeId } : {});
         setSubjectClassArms((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load class arms');
@@ -507,7 +525,7 @@ const StaffAllocationFields = ({
                   value={allocation.programme_id}
                   onChange={(e) => handleClassProgrammeChange(index, e.target.value)}
                   disabled={loadingOptions || isLoading}
-                  required
+                  // required
                   error={Boolean(getFieldError(`classAllocations.${index}.programme_id`))}
                   helperText={getFieldError(`classAllocations.${index}.programme_id`)}
                 >

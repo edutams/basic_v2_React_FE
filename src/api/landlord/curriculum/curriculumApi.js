@@ -67,9 +67,17 @@ export const fetchProgrammes = async () => {
   return response.data;
 };
 
-// Fetch subjects by curriculum
-export const fetchSubjects = async (curriculumId) => {
-  const response = await api.get(`/v1/landlord/curriculum/subjects/${curriculumId}`);
+// Curriculum-setup completeness stats
+export const fetchCurriculumSetupStats = async () => {
+  const response = await api.get('/v1/landlord/curriculum/setup-stats');
+  return response.data;
+};
+
+// Fetch subjects by curriculum, optionally narrowed to one programme
+export const fetchSubjects = async (curriculumId, programmeId = null) => {
+  const response = await api.get(`/v1/landlord/curriculum/subjects/${curriculumId}`, {
+    params: programmeId ? { programme_id: programmeId } : undefined,
+  });
   return response.data;
 };
 
@@ -85,9 +93,12 @@ export const fetchSubjectsByProgramme = async (programmeId) => {
   return response.data;
 };
 
-// Fetch subjects by class
-export const fetchSubjectsByClass = async (classId) => {
-  const response = await api.get(`/v1/landlord/curriculum/subjects/by-class/${classId}`);
+// Fetch subjects by class, optionally narrowed to one programme (a class
+// can now have a different curriculum per programme)
+export const fetchSubjectsByClass = async (classId, programmeId = null) => {
+  const response = await api.get(`/v1/landlord/curriculum/subjects/by-class/${classId}`, {
+    params: programmeId ? { programme_id: programmeId } : undefined,
+  });
   return response.data;
 };
 

@@ -29,6 +29,8 @@ import {
   Checkbox,
   FormControlLabel,
   Skeleton,
+  Divider,
+  Link,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -132,9 +134,16 @@ const SubjectBox = ({
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
-                      {subject.subject_name}
-                    </Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                        {subject.subject_name}
+                      </Typography>
+                      {subject.agent_programme_name && (
+                        <Typography variant="caption" color="text.secondary" noWrap display="block">
+                          {subject.agent_programme_name}
+                        </Typography>
+                      )}
+                    </Box>
                   }
                 />
 
@@ -361,13 +370,13 @@ const CurriculumSetup = () => {
     }
   };
 
-  // One row per class — a curriculum is shared by every programme a class
-  // belongs to (e.g. "Senior Secondary 1" under Science/Humanity/Business/
-  // Technology all follow the same curriculum), so matching by class_id
-  // alone is correct here.
-  const handleClassCurriculumChange = (classId, curriculumId) => {
+  // One row per (class, programme) — different programmes of the same
+  // class (e.g. "Senior Secondary 1" Science vs Business) can each follow a
+  // different curriculum now, so rows are matched by their synthetic
+  // `${class_id}_${programme_id}` id, not by class_id alone.
+  const handleClassCurriculumChange = (rowId, curriculumId) => {
     const updated = classData.map((cls) =>
-      cls.id === classId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
+      cls.id === rowId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
     );
     setClassData(updated);
   };
@@ -381,7 +390,8 @@ const CurriculumSetup = () => {
     const assignments = classData
       .filter((cls) => cls.assigned_curriculum_id)
       .map((cls) => ({
-        class_id: cls.id,
+        class_id: cls.class_id,
+        programme_id: cls.programme_id,
         curriculum_id: cls.assigned_curriculum_id,
       }));
 
@@ -730,12 +740,15 @@ const CurriculumSetup = () => {
             count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
             label="Classes With Curriculum"
             subtitle={
-              stats?.classes_without_curriculum > 0
-                ? `${stats.classes_without_curriculum} still need one`
-                : 'All classes covered'
+              stats?.total_class_programme_slots > 0
+                ? `${stats.class_programme_slots_assigned}/${stats.total_class_programme_slots} class–programme slots assigned`
+                : stats?.classes_without_curriculum > 0
+                  ? `${stats.classes_without_curriculum} still need one`
+                  : 'All classes covered'
             }
             colorIndex={2}
             loading={statsLoading}
+            tooltip="A class with several programmes (e.g. SS1) counts as covered here once at least one of its programmes has a curriculum assigned — the class–programme slot count below breaks that down further, since that's the actual assignable unit."
             sx={{ height: '100%' }}
           />
         </Grid>
@@ -975,7 +988,17 @@ const CurriculumSetup = () => {
                 flexWrap="wrap"
                 gap={1}
               >
-                <Typography variant="h5">Assign to Classes</Typography>
+                <Box>
+                  <Typography variant="h5">Assign to Classes</Typography>
+                  {classData.length > 0 && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {classData.length} class–programme row{classData.length === 1 ? '' : 's'} across{' '}
+                      {new Set(classData.map((c) => c.class_id)).size} class
+                      {new Set(classData.map((c) => c.class_id)).size === 1 ? '' : 'es'} — a class with several
+                      programmes (e.g. SS1) gets one row per programme.
+                    </Typography>
+                  )}
+                </Box>
                 <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
                     data-tour={CURRICULUM_TOUR_KEYS.ASSIGN_SELECT}
@@ -1037,8 +1060,9 @@ const CurriculumSetup = () => {
                       <TableCell sx={{ fontWeight: 700, width: '5%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '40%' }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '50%' }}>Curriculum Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Programme</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '45%' }}>Curriculum Name</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1050,6 +1074,9 @@ const CurriculumSetup = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton variant="text" width={100} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={80} height={20} />
                           </TableCell>
                           <TableCell>
                             <Skeleton
@@ -1079,17 +1106,14 @@ const CurriculumSetup = () => {
                               }}
                             >
                               {item.class_code || item.class_name}
-                              {item.programme_codes?.length > 0 && (
-                                <Typography
-                                  component="span"
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ ml: 0.5 }}
-                                >
-                                  ({item.programme_codes.join(', ')})
-                                </Typography>
-                              )}
                             </Box>
+                          </TableCell>
+                          <TableCell>
+                            {item.programme_name || (
+                              <Typography variant="caption" color="text.secondary">
+                                No programme
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Select
@@ -1122,7 +1146,7 @@ const CurriculumSetup = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
+                        <TableCell colSpan={4} align="center">
                           <Typography color="textSecondary">
                             Select session and term to load classes
                           </Typography>
@@ -1524,7 +1548,8 @@ const CurriculumSetup = () => {
                 sx={{ mb: 2 }}
               >
                 {importResult.curriculums_imported} curriculum(s) and{' '}
-                {importResult.subjects_imported} subject(s) imported.
+                {importResult.subjects_imported} subject(s) imported —{' '}
+                {importResult.schemes_imported} scheme-of-work week(s) written.
               </Alert>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
                 <Box>
@@ -1553,8 +1578,11 @@ const CurriculumSetup = () => {
                 )}
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-                Nothing already set up locally was changed — "already present" items were left
-                exactly as they are.
+                Curriculum/subject records that already existed were left exactly as they are, but
+                their scheme-of-work content (topics, sub-topics, learning objectives) still
+                refreshes to match the latest from the shared library on every import — that's what
+                the {importResult.schemes_imported} figure above reflects, even when every subject
+                shows as "already present".
               </Typography>
             </Box>
           ) : (
@@ -1624,44 +1652,88 @@ const CurriculumSetup = () => {
       <Dialog
         open={Boolean(viewSchemesSubject)}
         onClose={handleCloseViewSchemes}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
           Schemes of Work
           <Typography variant="caption" display="block" color="text.secondary">
             {viewSchemesSubject?.subject_name}
+            {viewSchemesSubject?.agent_programme_name && ` — ${viewSchemesSubject.agent_programme_name}`}
           </Typography>
         </DialogTitle>
         <DialogContent dividers>
           {viewSchemesSubject?.schemes?.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={2}>
               {viewSchemesSubject.schemes.map((scheme, index) => (
-                <Paper key={scheme.id || index} sx={{ p: 2 }}>
+                <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">
                     {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
                     {scheme.week?.week_name || `Week ${scheme.week_id}`}
                   </Typography>
-                  {scheme.learning_objective && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      <strong>Objective:</strong> {scheme.learning_objective}
+                  {scheme.class?.class_name && (
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      {scheme.class.class_name}
                     </Typography>
                   )}
-                  {scheme.topics && scheme.topics.length > 0 && (
-                    <Box mt={1}>
-                      <Typography variant="body2" fontWeight="bold">
-                        Topics:
-                      </Typography>
-                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {scheme.topics.map((topic) => (
-                          <li key={topic.id}>
-                            <Typography variant="body2" color="text.secondary">
-                              {topic.topic_name}
-                            </Typography>
-                          </li>
-                        ))}
-                      </ul>
+
+                  {scheme.topics && scheme.topics.length > 0 ? (
+                    <Box mt={1} display="flex" flexDirection="column" gap={1.5}>
+                      {scheme.topics.map((topic) => (
+                        <Box key={topic.id}>
+                          <Typography variant="body2">
+                            <strong>Topic:</strong> {topic.topic_name}
+                          </Typography>
+                          {topic.subtopics && topic.subtopics.length > 0 && (
+                            <Box mt={0.5} pl={2}>
+                              {topic.subtopics.map((subtopic) => (
+                                <Box key={subtopic.id} mb={1}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    <strong>Subtopic:</strong> {subtopic.subtopic_name}
+                                  </Typography>
+                                  {subtopic.learning_objectives && subtopic.learning_objectives.length > 0 && (
+                                    <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                                      {subtopic.learning_objectives.map((objective) => (
+                                        <li key={objective.id}>
+                                          <Typography variant="body2" color="text.secondary">
+                                            {objective.learning_objective_details}
+                                          </Typography>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      ))}
                     </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      No topics added yet.
+                    </Typography>
+                  )}
+
+                  {(scheme.learning_material || scheme.resource_links) && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {scheme.learning_material && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Lesson Content:</strong> {scheme.learning_material}
+                          </Typography>
+                        )}
+                        {scheme.resource_links && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Video Content:</strong>{' '}
+                            <Link href={scheme.resource_links} target="_blank" rel="noopener noreferrer">
+                              {scheme.resource_links}
+                            </Link>
+                          </Typography>
+                        )}
+                      </Box>
+                    </>
                   )}
                 </Paper>
               ))}

@@ -44,16 +44,27 @@ import {
   IconDownload,
   IconUpload,
   IconHistory,
+  IconSchool,
+  IconBook,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
+import allocationApi from '@/api/tenant/allocations/allocationApi';
 import { useNotification } from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
+import ClassTeacherAllocation from './ClassTeacherAllocation';
+import SubjectTeacherAllocation from './SubjectTeacherAllocation';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import {
+  migrateClassTeacherAllocations,
+  migrateSubjectTeacherAllocations,
+} from '@/api/tenant/term-migration/termMigrationApi';
+import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import UploadStaffModal from './components/UploadStaffModal';
 import StaffStatusModal from './components/StaffStatusModal';
 import dayjs from 'dayjs';
@@ -76,8 +87,9 @@ const StaffManager = () => {
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState([]);
   const [activeTab, setActiveTab] = useState('teaching');
-  const [activeSubTab, setActiveSubTab] = useState('profiling'); // For Teaching Staff sub-tabs
-  const [allocationSubTab, setAllocationSubTab] = useState('class-teacher'); // For Allocation sub-tabs
+  const [allocationSubTab, setAllocationSubTab] = useState('class-teacher'); // For Class & Subject Allocations sub-tabs
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+  const [allocationsRefreshKey, setAllocationsRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
@@ -95,6 +107,8 @@ const StaffManager = () => {
     nonTeaching: 0,
     onLeave: 0,
   });
+  const [allocationStats, setAllocationStats] = useState(null);
+  const [allocationStatsLoading, setAllocationStatsLoading] = useState(true);
 
   // Menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -130,6 +144,26 @@ const StaffManager = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'allocations') {
+      fetchAllocationStats();
+    }
+  }, [activeTab, allocationsRefreshKey]);
+
+  const fetchAllocationStats = async () => {
+    setAllocationStatsLoading(true);
+    try {
+      const response = await allocationApi.getAllocationStats();
+      if (response.status) {
+        setAllocationStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch allocation stats', error);
+    } finally {
+      setAllocationStatsLoading(false);
+    }
+  };
 
   const confirmImpersonateStaff = (staffMember) => {
     setStaffToImpersonate(staffMember);
@@ -531,7 +565,7 @@ const StaffManager = () => {
     }
   };
 
-  const statCards = [
+  const staffStatCards = [
     {
       title: 'Total Staff',
       value: stats.total,
@@ -558,6 +592,61 @@ const StaffManager = () => {
     },
   ];
 
+  const classAllocationStatCards = [
+    {
+      title: 'Total Class Arms',
+      value: allocationStats?.total_class_arms ?? 0,
+      icon: IconSchool,
+    },
+    {
+      title: 'Arms With Class Teacher',
+      value: `${allocationStats?.class_arms_with_teacher ?? 0}/${allocationStats?.total_class_arms ?? 0}`,
+      icon: IconUserCheck,
+    },
+    {
+      title: 'Still Need a Teacher',
+      value: allocationStats?.class_arms_without_teacher ?? 0,
+      icon: IconUserX,
+    },
+    {
+      title: 'Class Teachers Assigned',
+      value: allocationStats?.total_class_teachers ?? 0,
+      icon: IconUsers,
+    },
+  ];
+
+  const subjectAllocationStatCards = [
+    {
+      title: 'Total Subject Slots',
+      value: allocationStats?.total_class_subject_pairs ?? 0,
+      icon: IconBook,
+    },
+    {
+      title: 'Slots With a Teacher',
+      value: `${allocationStats?.class_subject_pairs_with_teacher ?? 0}/${allocationStats?.total_class_subject_pairs ?? 0}`,
+      icon: IconUserCheck,
+    },
+    {
+      title: 'Still Need a Teacher',
+      value: allocationStats?.class_subject_pairs_without_teacher ?? 0,
+      icon: IconUserX,
+    },
+    {
+      title: 'Subject Teachers Assigned',
+      value: allocationStats?.total_subject_teachers ?? 0,
+      icon: IconUsers,
+    },
+  ];
+
+  const statCards =
+    activeTab === 'allocations'
+      ? allocationSubTab === 'class-teacher'
+        ? classAllocationStatCards
+        : subjectAllocationStatCards
+      : staffStatCards;
+
+  const statCardsLoading = activeTab === 'allocations' ? allocationStatsLoading : loading;
+
   return (
     <PageContainer title="Staff Manager" description="Manage Teaching & Non Teaching Staff">
       <Breadcrumb title="Staff Manager" items={BCrumb} />
@@ -571,7 +660,7 @@ const StaffManager = () => {
               label={stat.title}
               icon={stat.icon}
               colorIndex={i}
-              loading={loading}
+              loading={statCardsLoading}
             />
           </Grid>
         ))}
@@ -584,14 +673,12 @@ const StaffManager = () => {
           onChange={(e, newValue) => {
             setActiveTab(newValue);
             setPage(0);
-            if (newValue === 'teaching') {
-              setActiveSubTab('profiling');
-            }
           }}
           sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
         >
           <Tab label="Teaching Staff" value="teaching" />
           <Tab label="Non-Teaching Staff" value="non-teaching" />
+          <Tab label="Class & Subject Allocations" value="allocations" />
         </Tabs>
       </Box>
 
@@ -614,10 +701,6 @@ const StaffManager = () => {
             <TeachingStaffTab
               loading={loading}
               staff={staff}
-              activeSubTab={activeSubTab}
-              setActiveSubTab={setActiveSubTab}
-              allocationSubTab={allocationSubTab}
-              setAllocationSubTab={setAllocationSubTab}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               statusFilter={statusFilter}
@@ -654,6 +737,47 @@ const StaffManager = () => {
               handleMenuOpen={handleMenuOpen}
               getStatusColor={getStatusColor}
             />
+          )}
+
+          {activeTab === 'allocations' && (
+            <Box>
+              <Box
+                sx={{
+                  mb: 3,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                }}
+              >
+                <Tabs
+                  value={allocationSubTab}
+                  onChange={(e, newValue) => setAllocationSubTab(newValue)}
+                  sx={{
+                    '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
+                  }}
+                >
+                  <Tab label="Class Allocations" value="class-teacher" />
+                  <Tab label="Subject Allocations" value="subject-teacher" />
+                </Tabs>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<MigrateIcon />}
+                  onClick={() => setMigrateModalOpen(true)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Migrate from Previous Term
+                </Button>
+              </Box>
+              {allocationSubTab === 'class-teacher' && (
+                <ClassTeacherAllocation key={`class-${allocationsRefreshKey}`} />
+              )}
+              {allocationSubTab === 'subject-teacher' && (
+                <SubjectTeacherAllocation key={`subject-${allocationsRefreshKey}`} />
+              )}
+            </Box>
           )}
         </Box>
       </Card>
@@ -705,6 +829,28 @@ const StaffManager = () => {
           Upload Filled Template
         </MenuItem>
       </Menu>
+
+      {/* Term Migration Modal for Class/Subject Allocations */}
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title={
+          allocationSubTab === 'class-teacher'
+            ? 'Migrate Class Teacher Allocations'
+            : 'Migrate Subject Teacher Allocations'
+        }
+        description={
+          allocationSubTab === 'class-teacher'
+            ? "Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
+            : "Carries every active subject-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
+        }
+        migrateFn={
+          allocationSubTab === 'class-teacher'
+            ? migrateClassTeacherAllocations
+            : migrateSubjectTeacherAllocations
+        }
+        onSuccess={() => setAllocationsRefreshKey((k) => k + 1)}
+      />
 
       {/* Add Staff Modal - Teaching */}
       {activeTab === 'teaching' && (

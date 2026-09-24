@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -11,45 +11,97 @@ import {
   Button,
   TextField,
   MenuItem,
-  IconButton,
-  CircularProgress,
+  Skeleton,
   Chip,
   Grid,
   Alert,
+  Paper,
+  Collapse,
+  IconButton,
 } from '@mui/material';
-import { IconTrash } from '@tabler/icons-react';
-import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { IconTrash, IconSearch } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
-import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
-import { migrateClassTeacherAllocations } from '@/api/tenant/term-migration/termMigrationApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
 const ClassTeacherAllocation = () => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState([]);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const [sessions, setSessions] = useState([]);
+  const [sessionTerms, setSessionTerms] = useState([]);
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
-  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
-  // Filters
+  // Filters — nothing here re-fetches the table on its own; only the Fetch
+  // button does. Session -> Term -> Programme -> Class, in that order.
+  const [selectedSession, setSelectedSession] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedProgramme, setSelectedProgramme] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
 
   // Confirmation Dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [allocationToDelete, setAllocationToDelete] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savingGroup, setSavingGroup] = useState(null);
+
+  // Warn-but-allow modal — shown when a teacher just picked already holds a
+  // different class as its class teacher this term. Not a block: a small
+  // school may not have enough staff for one class teacher per class.
+  const [conflictDialog, setConflictDialog] = useState({
+    open: false,
+    index: null,
+    teacherName: '',
+    className: '',
+    previousTeacherId: null,
+    previousTeacherName: '',
+  });
+
+  // Grouped-by-class collapsible sections — a flat list of every class arm
+  // in a programme gets long fast (42+ arms isn't unusual), so rows are
+  // grouped by class with a collapsible header, same pattern as
+  // SetUpClassesTab's class-structure manager.
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+
+  const groupedAllocations = useMemo(() => {
+    const groups = new Map();
+    allocations.forEach((allocation, index) => {
+      const key = allocation.class_name || 'Unassigned';
+      if (!groups.has(key)) {
+        groups.set(key, { className: key, rows: [] });
+      }
+      groups.get(key).rows.push({ ...allocation, _index: index });
+    });
+    return Array.from(groups.values());
+  }, [allocations]);
+
+  const toggleGroup = (className) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(className)) {
+        next.delete(className);
+      } else {
+        next.add(className);
+      }
+      return next;
+    });
+  };
+
+  const collapseAll = () => setCollapsedGroups(new Set(groupedAllocations.map((g) => g.className)));
+  const expandAll = () => setCollapsedGroups(new Set());
 
   useEffect(() => {
     initData();
@@ -57,34 +109,30 @@ const ClassTeacherAllocation = () => {
 
   const initData = async () => {
     try {
-      // Fetch all subscribed session terms
-      const termsRes = await fetchSessionTerms();
-      if (termsRes.status) {
-        const terms = termsRes.data || [];
-        setSessionTerms(terms);
+      const [sessionsRes, progsRes, staffRes] = await Promise.all([
+        fetchTenantSessions({ pagination: false }),
+        fetchProgrammes(),
+        staffApi.getAll({ staff_type: 'teaching' }),
+      ]);
 
-        // Find active term
-        const activeTerm = terms.find((t) => t.status?.toUpperCase() === 'ACTIVE');
-        if (activeTerm) {
-          setActiveSessionTermId(activeTerm.id);
-          setSelectedTerm(activeTerm.id);
-        } else if (terms.length > 0) {
-          setActiveSessionTermId(terms[0].id);
-          setSelectedTerm(terms[0].id);
-        }
-      }
+      const allSessions = sessionsRes.data || [];
+      setSessions(allSessions);
+      setTeachers(staffRes.data || []);
 
-      const progsRes = await fetchProgrammes();
       const progs = progsRes.data || [];
       setProgrammes(progs);
-      if (progs.length > 0) {
-        handleProgrammeChange(progs[0].id);
+
+      // Pre-fill sensible defaults (active session, its terms, first
+      // programme's classes) without fetching the table itself.
+      const activeSession = allSessions.find((s) => s.status === 'active') || allSessions[0];
+      if (activeSession) {
+        setSelectedSession(activeSession.id);
+        await loadTermsForSession(activeSession.id);
       }
 
-      // Fetch teaching staff
-      const staffRes = await staffApi.getAll({ staff_type: 'teaching' });
-      if (staffRes.status) {
-        setTeachers(staffRes.data || []);
+      if (progs.length > 0) {
+        setSelectedProgramme(progs[0].id);
+        await loadClassesForProgramme(progs[0].id);
       }
     } catch (error) {
       notify.error('Failed to initialize data');
@@ -92,41 +140,70 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleTermChange = (termId) => {
-    setSelectedTerm(termId);
-    if (selectedProgramme) {
-      fetchAllocations(selectedProgramme, termId);
+  const loadTermsForSession = async (sessionId) => {
+    try {
+      const termsRes = await fetchSessionTerms(sessionId);
+      const terms = termsRes.data || [];
+      setSessionTerms(terms);
+
+      const activeTerm = terms.find((t) => t.status === 'active') || terms[0];
+      setSelectedTerm(activeTerm ? activeTerm.id : '');
+    } catch (error) {
+      notify.error('Failed to fetch terms for the selected session');
+    }
+  };
+
+  const loadClassesForProgramme = async (progId) => {
+    try {
+      const classesRes = await fetchClassesByProgramme(progId);
+      setClasses(classesRes.data || []);
+      setSelectedClass('');
+    } catch (error) {
+      notify.error('Failed to fetch classes');
+    }
+  };
+
+  const handleSessionChange = async (sessionId) => {
+    setSelectedSession(sessionId);
+    setSelectedTerm('');
+    setSessionTerms([]);
+    if (sessionId) {
+      await loadTermsForSession(sessionId);
     }
   };
 
   const handleProgrammeChange = async (progId) => {
     setSelectedProgramme(progId);
+    setClasses([]);
+    setSelectedClass('');
     if (progId) {
-      try {
-        const classesRes = await fetchClassesByProgramme(progId);
-        setClasses(classesRes.data || []);
-        fetchAllocations(progId, selectedTerm);
-      } catch (error) {
-        notify.error('Failed to fetch classes');
-      }
-    } else {
-      setClasses([]);
-      setAllocations([]);
+      await loadClassesForProgramme(progId);
     }
   };
 
-  const fetchAllocations = async (progId, termId = null) => {
-    if (!progId) return;
+  const fetchAllocations = async () => {
+    if (!selectedProgramme || !selectedTerm) {
+      notify.error('Select a session, term, and programme first');
+      return;
+    }
 
     setLoading(true);
+    setHasFetched(true);
     try {
       const response = await allocationApi.getClassTeacherAllocations({
-        programme_id: progId,
-        session_term_id: termId || selectedTerm || activeSessionTermId,
+        programme_id: selectedProgramme,
+        session_term_id: selectedTerm,
       });
 
       if (response.status) {
-        setAllocations(response.data || []);
+        let rows = response.data || [];
+        if (selectedClass) {
+          const className = classes.find((c) => c.id === selectedClass)?.class_name;
+          if (className) {
+            rows = rows.filter((r) => r.class_name === className);
+          }
+        }
+        setAllocations(rows);
       }
     } catch (error) {
       notify.error('Failed to fetch allocations');
@@ -136,8 +213,11 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleTeacherChange = (index, teacherUserId) => {
+  const handleTeacherChange = async (index, teacherUserId) => {
     const teacher = teachers.find((t) => t.user_id === teacherUserId);
+    const previousAllocation = allocations[index];
+    const classArmId = previousAllocation.class_arm_id;
+
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
@@ -145,6 +225,49 @@ const ClassTeacherAllocation = () => {
       teacher_name: teacher ? teacher.user.full_name : '',
     };
     setAllocations(updatedAllocations);
+
+    // Warn (but don't block) if this teacher already holds a different
+    // class this term — a small school may not have enough staff for one
+    // class teacher per class, so this is informational only. The admin
+    // can undo the pick from the modal if it wasn't intentional.
+    if (teacherUserId && selectedTerm) {
+      try {
+        const res = await allocationApi.checkClassTeacherConflict({
+          user_id: teacherUserId,
+          session_term_id: selectedTerm,
+          excluding_class_arm_id: classArmId,
+        });
+        if (res.data) {
+          setConflictDialog({
+            open: true,
+            index,
+            teacherName: teacher ? teacher.user.full_name : 'This teacher',
+            className: res.data.class_name,
+            previousTeacherId: previousAllocation.teacher_id,
+            previousTeacherName: previousAllocation.teacher_name,
+          });
+        }
+      } catch (error) {
+        // Non-blocking — a failed check shouldn't stop the admin from saving.
+        console.error(error);
+      }
+    }
+  };
+
+  const undoConflictedTeacherChange = () => {
+    const { index, previousTeacherId, previousTeacherName } = conflictDialog;
+    if (index !== null) {
+      setAllocations((prev) => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          teacher_id: previousTeacherId,
+          teacher_name: previousTeacherName,
+        };
+        return updated;
+      });
+    }
+    setConflictDialog((prev) => ({ ...prev, open: false }));
   };
 
   const handleRemoveAllocation = (index) => {
@@ -162,9 +285,7 @@ const ClassTeacherAllocation = () => {
         );
         if (response.status) {
           notify.success('Allocation removed successfully');
-          if (selectedProgramme) {
-            fetchAllocations(selectedProgramme);
-          }
+          fetchAllocations();
         }
       } else {
         const updatedAllocations = allocations.map((a) =>
@@ -182,77 +303,126 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleSaveAll = async () => {
-    if (!activeSessionTermId) {
-      notify.error('No active session term found');
-      return;
+  const saveRows = async (rows) => {
+    if (!selectedTerm) {
+      notify.error('No session term selected');
+      return false;
     }
 
+    const allocationsData = rows
+      .filter((a) => a.teacher_id) // Only send allocations with teachers
+      .map((a) => ({
+        class_arm_id: a.class_arm_id,
+        user_id: a.teacher_id,
+      }));
+
+    if (allocationsData.length === 0) {
+      notify.error('Select at least one teacher before saving');
+      return false;
+    }
+
+    const response = await allocationApi.saveClassTeacherAllocations({
+      session_term_id: selectedTerm,
+      allocations: allocationsData,
+    });
+
+    return response.status;
+  };
+
+  const handleSaveAll = async () => {
+    setSaving(true);
     try {
-      // Prepare allocations data
-      const allocationsData = allocations
-        .filter((a) => a.teacher_id) // Only send allocations with teachers
-        .map((a) => ({
-          class_arm_id: a.class_arm_id,
-          user_id: a.teacher_id,
-        }));
-
-      const response = await allocationApi.saveClassTeacherAllocations({
-        session_term_id: selectedTerm || activeSessionTermId,
-        allocations: allocationsData,
-      });
-
-      if (response.status) {
+      const saved = await saveRows(allocations);
+      if (saved) {
         notify.success('Class teacher allocations saved successfully');
-        // Refresh allocations
-        if (selectedProgramme) {
-          fetchAllocations(selectedProgramme);
-        }
+        fetchAllocations();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to save allocations');
       console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveGroup = async (group) => {
+    setSavingGroup(group.className);
+    try {
+      const saved = await saveRows(group.rows);
+      if (saved) {
+        notify.success(`${group.className} allocations saved successfully`);
+        fetchAllocations();
+      }
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Failed to save allocations');
+      console.error(error);
+    } finally {
+      setSavingGroup(null);
     }
   };
 
   return (
-    <Box>
+    <Box
+      sx={{
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+        p: { xs: 1.5, sm: 2.5 },
+        borderRadius: 3,
+      }}
+    >
       {/* Description */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
-        <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', flex: 1 }}>
-          Select from classes below and allocate teacher to the class
-        </Alert>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<MigrateIcon />}
-          onClick={() => setMigrateModalOpen(true)}
-          sx={{ whiteSpace: 'nowrap' }}
-        >
-          Migrate from Previous Term
-        </Button>
-      </Box>
+      <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
+        Select from classes below and allocate teacher to the class
+      </Alert>
 
-      {/* Filters Row */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      {/* Filters Row: Session -> Term -> Programme -> Class -> Fetch */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          borderTop: '3px solid',
+          borderTopColor: 'primary.main',
+        }}
+      >
+      <Grid container spacing={2} alignItems="center">
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <TextField
             select
             size="small"
-            label="Session Term"
-            value={selectedTerm}
-            onChange={(e) => handleTermChange(e.target.value)}
+            label="Session"
+            value={selectedSession}
+            onChange={(e) => handleSessionChange(e.target.value)}
             fullWidth
           >
-            {sessionTerms.map((term) => (
-              <MenuItem key={term.id} value={term.id}>
-                {term.display_name}
+            {sessions.map((session) => (
+              <MenuItem key={session.id} value={session.id}>
+                {session.session_name}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <TextField
+            select
+            size="small"
+            label="Term"
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            fullWidth
+            disabled={!selectedSession}
+          >
+            {sessionTerms.map((term) => (
+              <MenuItem key={term.id} value={term.id}>
+                {term.term?.term_name || term.term_name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <TextField
             select
             size="small"
@@ -269,99 +439,204 @@ const ClassTeacherAllocation = () => {
             ))}
           </TextField>
         </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <TextField
+            select
+            size="small"
+            label="Class"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            fullWidth
+            disabled={!selectedProgramme}
+          >
+            <MenuItem value="">All Classes</MenuItem>
+            {classes.map((cls) => (
+              <MenuItem key={cls.id} value={cls.id}>
+                {cls.class_name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            startIcon={<IconSearch size={16} />}
+            onClick={fetchAllocations}
+            sx={{ height: '40px' }}
+          >
+            Fetch
+          </Button>
+        </Grid>
       </Grid>
+      </Paper>
 
       {/* Table */}
-      <TableContainer>
-        <Table sx={{ border: '1px solid #e0e0e0' }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Programme</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      {loading ? (
+        <TableContainer>
+          <Table sx={{ border: '1px solid #e0e0e0' }}>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                  <CircularProgress />
-                </TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
               </TableRow>
-            ) : allocations.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                  <Typography color="textSecondary">
-                    Select a programme to view class allocations
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              allocations.map((allocation, index) => (
-                <TableRow key={allocation.id} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
-                      {allocation.programme_name}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {allocation.class_name} {allocation.arm_name}
-                  </TableCell>
-
-                  <TableCell>
-                    <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
-                      <TextField
-                        select
-                        size="small"
-                        fullWidth
-                        placeholder="Select Teacher"
-                        value={allocation.teacher_id || ''}
-                        onChange={(e) => handleTeacherChange(index, e.target.value)}
-                      >
-                        <MenuItem value="">Select Teacher</MenuItem>
-                        {teachers.map((teacher) => (
-                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
-                            {teacher.user.full_name} ({teacher.staff_id})
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Box>
-                  </TableCell>
-
-                  <TableCell>
-                    {allocation.teacher_id && (
-                      <Chip
-                        label="Remove Allocation"
-                        size="small"
-                        onClick={() => handleRemoveAllocation(index)}
-                        onDelete={() => handleRemoveAllocation(index)}
-                        deleteIcon={<IconTrash size={14} />}
-                        sx={{
-                          bgcolor: '#ffebee',
-                          color: '#c62828',
-                          cursor: 'pointer',
-                          '& .MuiChip-deleteIcon': {
-                            color: '#c62828',
-                          },
-                        }}
-                      />
-                    )}
-                  </TableCell>
+            </TableHead>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={100} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width="100%" height={36} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={130} height={24} /></TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Save Button */}
-      {allocations.length > 0 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'right' }}>
-          <Button variant="contained" size="small" onClick={handleSaveAll}>Save All</Button>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : allocations.length === 0 ? (
+        <Box sx={{ py: 10, textAlign: 'center' }}>
+          <Typography color="textSecondary">
+            {hasFetched
+              ? 'No class allocations found for these filters'
+              : 'Select a session, term, and programme, then click Fetch'}
+          </Typography>
         </Box>
+      ) : (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mb: 1.5 }}>
+            <Button size="small" onClick={collapseAll}>
+              Collapse all
+            </Button>
+            <Button size="small" variant="outlined" onClick={expandAll}>
+              Expand all
+            </Button>
+            <Button variant="contained" size="small" onClick={handleSaveAll} disabled={saving}>
+              {saving ? 'Saving...' : 'Save All'}
+            </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {groupedAllocations.map((group) => {
+              const collapsed = collapsedGroups.has(group.className);
+              const withTeacher = group.rows.filter((r) => r.teacher_id).length;
+
+              return (
+                <Paper
+                  key={group.className}
+                  variant="outlined"
+                  sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 1.5,
+                      cursor: 'pointer',
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                      borderLeft: '4px solid',
+                      borderLeftColor: 'primary.main',
+                    }}
+                    onClick={() => toggleGroup(group.className)}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <IconButton size="small">
+                        {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                      </IconButton>
+                      <Box>
+                        <Typography fontWeight={700}>
+                          {group.rows[0]?.programme_name} — {group.className}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {group.rows.length} arm{group.rows.length !== 1 ? 's' : ''} · {withTeacher}{' '}
+                          with a teacher
+                          {group.rows.length - withTeacher > 0
+                            ? ` · ${group.rows.length - withTeacher} still need one`
+                            : ''}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      disabled={savingGroup === group.className}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveGroup(group);
+                      }}
+                    >
+                      {savingGroup === group.className ? 'Saving...' : 'Save'}
+                    </Button>
+                  </Box>
+
+                  <Collapse in={!collapsed}>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {group.rows.map((allocation) => (
+                            <TableRow key={allocation.id} hover>
+                              <TableCell>{allocation.arm_name}</TableCell>
+                              <TableCell>
+                                <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
+                                  <TextField
+                                    select
+                                    size="small"
+                                    fullWidth
+                                    placeholder="Select Teacher"
+                                    value={allocation.teacher_id || ''}
+                                    onChange={(e) => handleTeacherChange(allocation._index, e.target.value)}
+                                  >
+                                    <MenuItem value="">Select Teacher</MenuItem>
+                                    {teachers.map((teacher) => (
+                                      <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                                        {teacher.user.full_name} ({teacher.staff_id})
+                                      </MenuItem>
+                                    ))}
+                                  </TextField>
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                {allocation.teacher_id && (
+                                  <Chip
+                                    label="Remove Allocation"
+                                    size="small"
+                                    onClick={() => handleRemoveAllocation(allocation._index)}
+                                    onDelete={() => handleRemoveAllocation(allocation._index)}
+                                    deleteIcon={<IconTrash size={14} />}
+                                    sx={{
+                                      bgcolor: '#ffebee',
+                                      color: '#c62828',
+                                      cursor: 'pointer',
+                                      '& .MuiChip-deleteIcon': {
+                                        color: '#c62828',
+                                      },
+                                    }}
+                                  />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Collapse>
+                </Paper>
+              );
+            })}
+          </Box>
+        </>
       )}
 
       {/* Confirmation Dialog */}
@@ -375,17 +650,16 @@ const ClassTeacherAllocation = () => {
         confirmText="Remove"
       />
 
-      <TermMigrationModal
-        open={migrateModalOpen}
-        onClose={() => setMigrateModalOpen(false)}
-        title="Migrate Class Teacher Allocations"
-        description="Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
-        migrateFn={migrateClassTeacherAllocations}
-        onSuccess={() => {
-          if (selectedProgramme) {
-            fetchAllocations(selectedProgramme, selectedTerm);
-          }
-        }}
+      {/* Already-a-class-teacher-elsewhere warning — warn, don't block */}
+      <ConfirmationDialog
+        open={conflictDialog.open}
+        onClose={undoConflictedTeacherChange}
+        onConfirm={() => setConflictDialog((prev) => ({ ...prev, open: false }))}
+        title="Teacher already assigned elsewhere"
+        message={`${conflictDialog.teacherName} is already the class teacher of ${conflictDialog.className} this term. You can still proceed if this teacher is meant to cover both classes.`}
+        severity="warning"
+        confirmText="Proceed anyway"
+        cancelText="Undo"
       />
     </Box>
   );

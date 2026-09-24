@@ -43,7 +43,7 @@ const ReportSheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
-  const { getTemplateIndex } = useResultTemplate();
+  const { getTemplateIndexForSample } = useResultTemplate();
   const printRef = useRef(null);
 
   // ── Filters ──────────────────────────────────────────────
@@ -397,7 +397,10 @@ const ReportSheetTab = () => {
   const renderDossier = (student) => {
     const report = reportCache[student.student_registration_id];
     if (!report) return null;
-    const TemplateComponent = getResultTemplate(getTemplateIndex());
+    // Prefer the division-scoped template returned by the dossier API;
+    // fall back to the school-wide active template from context.
+    const sample = report.result_template?.result_sample;
+    const TemplateComponent = getResultTemplate(getTemplateIndexForSample(sample));
     const cls = classInfo
       ? `${classInfo.class_name || ''} ${classInfo.arm_name || ''}`.trim()
       : student.class_name;

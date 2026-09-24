@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, TextField, Grid, Tabs, Tab, IconButton, Tooltip, Snackbar, Alert,
+  Chip, Button, TextField, Grid, Tabs, Tab, IconButton, Snackbar, Alert,
   Switch, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent,
   DialogActions, Menu, useTheme, Stack,
 } from '@mui/material';
 import {
   IconSettings, IconTemplate, IconMoodSmile, IconMessageCircle, IconAward,
   IconPlus, IconEdit, IconTrash, IconCheck, IconX,
-  IconBook, IconHash, IconSchool, IconFile, IconUsers, IconList, IconStack,
+  IconBook, IconHash, IconSchool, IconFile, IconList,
   IconSignature, IconEye,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -19,17 +19,6 @@ import PromotionSettings from './PromotionSettings';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import StatCard from '@/components/shared/StatCard';
 import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
-
-const dummyProgrammes = [
-  { id: 1, name: 'Junior Secondary' }, { id: 2, name: 'Senior Secondary' },
-];
-
-const mockTemplateStats = {
-  templates: 13,
-  active: 1,
-  programmes: 2,
-  caReports: 'Enabled',
-};
 
 function InnerTabPanel({ children, value, index }) {
   return (
@@ -42,7 +31,11 @@ function InnerTabPanel({ children, value, index }) {
 const ResultSetupTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { activeTemplate, selectTemplate, enableCAReport, setEnableCAReport, templateSamples } = useResultTemplate();
+  const {
+    activeTemplate, selectTemplate, setEnableCAReport,
+    templateSamples, fetchActiveTemplate, divisionTemplates, fetchTemplateSamples,
+    getCAReportForDivision,
+  } = useResultTemplate();
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
@@ -50,7 +43,12 @@ const ResultSetupTab = () => {
   const [gradeStatsLoading, setGradeStatsLoading] = useState(false);
   const [promotionStats, setPromotionStats] = useState({ total_rules: 0, programmes: 0, subject_types: 0, total_subjects: 0, pass_mark: '—' });
   const [promotionStatsLoading, setPromotionStatsLoading] = useState(false);
-  const [templateDivFilter, setTemplateDivFilter] = useState(dummyProgrammes[0].name);
+  // Real school divisions from /result-setup/divisions (one tab each).
+  const [divisions, setDivisions] = useState([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState(null);
+  const [templateStats, setTemplateStats] = useState({
+    templates: 13, active: 1, divisions: 0, caReports: 'Disabled',
+  });
   const [nomenclature, setNomenclature] = useState([]);
   const [nomenclatureLoading, setNomenclatureLoading] = useState(false);
 
@@ -82,9 +80,60 @@ const ResultSetupTab = () => {
     }
   }, []);
 
+  // ── Comment Nomenclatures (tab 4 only) ─────────────────────
   useEffect(() => {
+    if (innerTab !== 3) return;
     fetchNomenclatures();
-  }, [fetchNomenclatures]);
+  }, [innerTab, fetchNomenclatures]);
+
+  // ── Divisions + template stats (tab 2 only) ────────────────
+  useEffect(() => {
+    if (innerTab !== 1) return;
+    let cancelled = false;
+    const loadDivisions = async () => {
+      try {
+        const res = await resultSetupApi.getDivisions();
+        if (cancelled || !res.data?.status) return;
+        const list = res.data.data || [];
+        setDivisions(list);
+        if (list.length > 0) {
+          setSelectedDivisionId((prev) => (prev == null ? list[0].id : prev));
+        }
+      } catch (err) {
+        console.error('Failed to fetch divisions:', err);
+      }
+    };
+    const loadTemplateStats = async () => {
+      try {
+        const samples = await fetchTemplateSamples();
+        const [tplRes, activeRes] = await Promise.all([
+          resultSetupApi.getTemplates(),
+          resultSetupApi.getActiveTemplate(),
+        ]);
+        if (cancelled) return;
+        const templates = tplRes.data?.data || [];
+        const active = activeRes.data?.data || {};
+        setTemplateStats({
+          templates: (samples || []).length || templateSamples.length,
+          active: 1,
+          divisions: new Set(templates.map((t) => t.division_id).filter((v) => v != null)).size,
+          caReports: active.enable_ca_report === 'yes' ? 'Enabled' : 'Disabled',
+        });
+      } catch (err) {
+        console.error('Failed to fetch template stats:', err);
+      }
+    };
+    loadDivisions();
+    loadTemplateStats();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [innerTab]);
+
+  // Load the selected division's active template when on the templates tab.
+  useEffect(() => {
+    if (innerTab !== 1 || selectedDivisionId == null) return;
+    fetchActiveTemplate(selectedDivisionId).catch(() => {});
+  }, [innerTab, selectedDivisionId, fetchActiveTemplate]);
 
   // ── Fetch grade config stats when session term changes ──────
   useEffect(() => {
@@ -126,9 +175,11 @@ const ResultSetupTab = () => {
     }
   }, []);
 
+  // ── Promotion stats (tab 5 only) ───────────────────────────
   useEffect(() => {
+    if (innerTab !== 4) return;
     fetchPromotionStats();
-  }, [fetchPromotionStats]);
+  }, [innerTab, fetchPromotionStats]);
 
   const innerTabs = [
     { label: '1. Grade & Config. Settings', icon: <IconAward size={16} /> },
@@ -189,10 +240,24 @@ const ResultSetupTab = () => {
     setNomMenuAnchor(null);
   };
 
-  const handleTemplateSelect = (sample) => {
-    selectTemplate(sample);
-    showSnackbar(`Template "${sample}" selected`);
+  const handleTemplateSelect = async (sample) => {
+    try {
+      await selectTemplate(sample, selectedDivisionId);
+      showSnackbar(`Template "${sample}" selected`);
+    } catch (err) {
+      console.error('Failed to select template:', err);
+      showSnackbar('Failed to select template', 'error');
+    }
   };
+
+  // Template currently active for the selected division (falls back to
+  // the default active template when no division is selected).
+  const currentTemplateForDivision = selectedDivisionId != null
+    ? (divisionTemplates[selectedDivisionId] || activeTemplate)
+    : activeTemplate;
+
+  // CA Reportsheet flag for the selected division (per-division cache).
+  const caReportChecked = getCAReportForDivision(selectedDivisionId);
 
   return (
     <Box>
@@ -267,7 +332,7 @@ const ResultSetupTab = () => {
                   if (res.data.status) {
                     showSnackbar(res.data.message);
                   }
-                } catch (err) {
+                } catch {
                   showSnackbar('Failed to sync config', 'error');
                 }
               }}
@@ -285,7 +350,7 @@ const ResultSetupTab = () => {
       <InnerTabPanel value={innerTab} index={1}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <StatCard
-            count={mockTemplateStats.templates}
+            count={templateStats.templates}
             label="Templates"
             subtitle="Available report card designs"
             icon={IconTemplate}
@@ -293,7 +358,7 @@ const ResultSetupTab = () => {
             loading={false}
           />
           <StatCard
-            count={mockTemplateStats.active}
+            count={templateStats.active}
             label="Active Template"
             subtitle="Currently selected"
             icon={IconCheck}
@@ -301,15 +366,15 @@ const ResultSetupTab = () => {
             loading={false}
           />
           <StatCard
-            count={mockTemplateStats.programmes}
-            label="Programmes"
-            subtitle="Junior & Senior Secondary"
+            count={templateStats.divisions}
+            label="Divisions"
+            subtitle="Configured school divisions"
             icon={IconSchool}
             colorIndex={2}
             loading={false}
           />
           <StatCard
-            count={mockTemplateStats.caReports}
+            count={templateStats.caReports}
             label="CA Reports"
             subtitle="Reportsheet status"
             icon={IconFile}
@@ -323,28 +388,48 @@ const ResultSetupTab = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" fontWeight={600}>Enable C.A Reportsheet</Typography>
               <Switch
-                checked={enableCAReport}
-                onChange={(e) => { setEnableCAReport(e.target.checked); showSnackbar(`CA Reportsheet ${e.target.checked ? 'enabled' : 'disabled'}`); }}
+                checked={caReportChecked}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  try {
+                    await setEnableCAReport(next, selectedDivisionId);
+                    setTemplateStats((prev) => ({
+                      ...prev,
+                      caReports: next ? 'Enabled' : 'Disabled',
+                    }));
+                    showSnackbar(`CA Reportsheet ${next ? 'enabled' : 'disabled'}`);
+                  } catch (err) {
+                    console.error('Failed to toggle CA report:', err);
+                    showSnackbar('Failed to update CA Reportsheet', 'error');
+                  }
+                }}
                 color="primary"
               />
             </Box>
           </Box>
           <Alert severity="info" sx={{ mb: 2 }}>
-            The current template is the one with the green outline. To change, click on a template image or use the <strong>Select</strong> button.
+            The current template is the one with the green outline. To change, click on a template image or use the <strong>Select</strong> button. Templates are saved per division.
           </Alert>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs
-              value={templateDivFilter}
-              onChange={(_, v) => setTemplateDivFilter(v)}
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '13px' } }}
-            >
-              {dummyProgrammes.map(p => (
-                <Tab key={p.id} label={p.name} value={p.name} />
-              ))}
-            </Tabs>
-          </Box>
+          {divisions.length > 0 && (
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs
+                value={selectedDivisionId ?? divisions[0]?.id}
+                onChange={(_, v) => setSelectedDivisionId(v)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '13px' } }}
+              >
+                {divisions.map((d) => (
+                  <Tab key={d.id} label={d.division_name} value={d.id} />
+                ))}
+              </Tabs>
+            </Box>
+          )}
+          {divisions.length === 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              No school divisions found. Configure divisions in School Setup before assigning templates.
+            </Alert>
+          )}
           <Grid container spacing={2}>
             {templateSamples.map((t) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={t.id}>
@@ -352,7 +437,7 @@ const ResultSetupTab = () => {
                   elevation={0}
                   sx={{
                     border: '2px solid',
-                    borderColor: activeTemplate === t.sample ? 'success.main' : isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    borderColor: currentTemplateForDivision === t.sample ? 'success.main' : isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
                     borderRadius: '12px',
                     overflow: 'hidden',
                     transition: 'all 0.2s',
@@ -361,7 +446,7 @@ const ResultSetupTab = () => {
                   }}
                 >
                   <Box sx={{ position: 'relative' }}>
-                    {activeTemplate === t.sample && (
+                    {currentTemplateForDivision === t.sample && (
                       <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1, bgcolor: 'success.main', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <IconCheck size={16} color="#fff" />
                       </Box>
@@ -376,8 +461,8 @@ const ResultSetupTab = () => {
                   </Box>
                   <Box sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="subtitle2" fontWeight={600}>{t.sample}</Typography>
-                    {activeTemplate !== t.sample ? (
-                      <Button size="small"  onClick={() => handleTemplateSelect(t.sample)}>Select</Button>
+                    {currentTemplateForDivision !== t.sample ? (
+                      <Button size="small" disabled={selectedDivisionId == null} onClick={() => handleTemplateSelect(t.sample)}>Select</Button>
                     ) : (
                       <Chip label="Active" size="small" color="success" />
                     )}

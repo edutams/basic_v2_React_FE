@@ -3,32 +3,31 @@ import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 
 const ResultTemplateContext = createContext(null);
 
-// The 13 shipped report-card designs (result_templates.result_sample enum
-// on the backend). The selected sample name is persisted per division
-// through the /result-templates API; the preview images are static assets.
-const TEMPLATE_SAMPLES = [
-  { id: 1, sample: 'Sample 1', image: 'https://i.ibb.co/Pt1LngW/Template01-Screenshot.png' },
-  { id: 2, sample: 'Sample 2', image: 'https://i.ibb.co/sJFDMCj/Template02-Screenshot.png' },
-  { id: 3, sample: 'Sample 3', image: 'https://i.ibb.co/G01BBMM/Template03-Screenshot.png' },
-  { id: 4, sample: 'Sample 4', image: 'https://i.ibb.co/tbDkbP8/Template04-Screenshot.png' },
-  { id: 5, sample: 'Sample 5', image: 'https://i.ibb.co/pPv4w6N/Template05-Screenshot.png' },
-  { id: 6, sample: 'Sample 6', image: 'https://i.ibb.co/w00w4kt/Template06-Screenshot.png' },
-  { id: 7, sample: 'Sample 7', image: 'https://i.ibb.co/88vdsKW/Template07-Screenshot.png' },
-  { id: 8, sample: 'Sample 8', image: 'https://i.ibb.co/WnYdb83/Template08-Screenshot.png' },
-  { id: 9, sample: 'Sample 9', image: 'https://i.ibb.co/6bdvW2m/Template09-Screenshot.png' },
-  { id: 10, sample: 'Sample 10', image: 'https://i.ibb.co/LvHLWyW/Template10-Screenshot.png' },
-  { id: 11, sample: 'Sample 11', image: 'https://i.ibb.co/KrpPzsL/Template11-Screenshot.png' },
-  { id: 12, sample: 'Sample 12', image: 'https://i.ibb.co/1mPDkpB/Template12-Screenshot.png' },
-  { id: 13, sample: 'Sample 13', image: 'https://i.ibb.co/JmkK00t/Template13-Screenshot.png' },
-];
+// Fallback index when the samples catalog has not loaded yet:
+// "Sample N" → component index N-1 (clamped to the 13 shipped React templates).
+const sampleIndex = (sample) => {
+  const match = /Sample\s*(\d+)/i.exec(sample || '');
+  const n = match ? parseInt(match[1], 10) : 1;
+  return Math.max(0, Math.min(n - 1, 12));
+};
 
 export const ResultTemplateProvider = ({ children }) => {
+  // School-wide / default active template — the boot default.
   const [activeTemplate, setActiveTemplate] = useState('Sample 1');
+  // Per-division overrides: { [divisionId]: 'Sample N' } — populated as
+  // the setup page (or a report) resolves each division's template.
+  const [divisionTemplates, setDivisionTemplates] = useState({});
   const [enableCAReport, setEnableCAReportState] = useState(false);
+  // Per-division CA Reportsheet flag: { [divisionId]: boolean }.
+  const [divisionCAReports, setDivisionCAReports] = useState({});
   const [initializing, setInitializing] = useState(true);
+  // Catalog from DB (result_template_samples) — fetched when the setup
+  // gallery needs it; empty until then.
+  const [templateSamples, setTemplateSamples] = useState([]);
+  const [samplesLoading, setSamplesLoading] = useState(false);
 
-  // Load the school-wide (division_id = null) template on boot so report
-  // rendering (getTemplateIndex) knows which sample to use.
+  // Load the default template on boot so report rendering
+  // (getTemplateIndex) knows which sample to use.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -47,51 +46,119 @@ export const ResultTemplateProvider = ({ children }) => {
     return () => { cancelled = true; };
   }, []);
 
-  // Fetch the active template for one division (school-wide when
-  // divisionId is null). Resolves { resultSample, enableCAReport }.
-  const fetchActiveTemplate = useCallback(async (divisionId = null) => {
-    const res = await resultSetupApi.getActiveTemplate(
-      divisionId ? { division_id: divisionId } : {},
-    );
-    const data = res.data?.data || {};
-    return {
-      resultSample: data.result_sample || 'Sample 1',
-      enableCAReport: data.enable_ca_report === 'yes',
-    };
+  // Load the template samples catalog from the DB (idempotent GET).
+  const fetchTemplateSamples = useCallback(async () => {
+    setSamplesLoading(true);
+    try {
+      const res = await resultSetupApi.getTemplateSamples();
+      const list = res.data?.status
+        ? (res.data.data || []).map((s) => ({
+            id: s.id,
+            sample: s.result_sample,
+            image: s.image_url,
+            sort_order: s.sort_order,
+          }))
+        : [];
+      setTemplateSamples(list);
+      return list;
+    } catch (err) {
+      console.error('Failed to fetch template samples:', err);
+      return [];
+    } finally {
+      setSamplesLoading(false);
+    }
   }, []);
 
+  // Fetch the active template for one division (default when
+  // divisionId is null). Caches result sample + CA flag per division.
+  const fetchActiveTemplate = useCallback(async (divisionId = null) => {
+    const params = divisionId ? { division_id: divisionId } : {};
+    const res = await resultSetupApi.getActiveTemplate(params);
+    const data = res.data?.data || {};
+    const resultSample = data.result_sample || 'Sample 1';
+    const caEnabled = data.enable_ca_report === 'yes';
+    if (divisionId) {
+      setDivisionTemplates((prev) => ({ ...prev, [divisionId]: resultSample }));
+      setDivisionCAReports((prev) => ({ ...prev, [divisionId]: caEnabled }));
+    } else {
+      setActiveTemplate(resultSample);
+      setEnableCAReportState(caEnabled);
+    }
+    return { resultSample, enableCAReport: caEnabled };
+  }, []);
+
+  // Resolve the template for a division (from cache or API).
+  const getTemplateForDivision = useCallback(async (divisionId) => {
+    if (!divisionId) return activeTemplate;
+    if (divisionTemplates[divisionId]) return divisionTemplates[divisionId];
+    const { resultSample } = await fetchActiveTemplate(divisionId);
+    return resultSample;
+  }, [activeTemplate, divisionTemplates, fetchActiveTemplate]);
+
   // Persist the selected template for a division and mirror it into the
-  // global state. Throws on API failure so callers can revert/recover.
+  // global/per-division state. Throws on API failure so callers can
+  // revert/recover.
   const selectTemplate = useCallback(async (sampleName, divisionId = null) => {
     const res = await resultSetupApi.setTemplate({
       result_sample: sampleName,
       division_id: divisionId,
     });
-    setActiveTemplate(sampleName);
+    if (divisionId) {
+      setDivisionTemplates((prev) => ({ ...prev, [divisionId]: sampleName }));
+    } else {
+      setActiveTemplate(sampleName);
+    }
     return res;
   }, []);
 
-  // Persist the CA Reportsheet switch for a division (null = school-wide).
+  // Persist the CA Reportsheet switch for a division (null = default).
+  // Always mirrors the new value into local state so the Switch re-renders.
   const setEnableCAReport = useCallback(async (value, divisionId = null) => {
-    const res = await resultSetupApi.toggleCAReport({ value, division_id: divisionId });
-    setEnableCAReportState(value);
+    const res = await resultSetupApi.toggleCAReport({
+      value,
+      division_id: divisionId,
+    });
+    if (divisionId) {
+      setDivisionCAReports((prev) => ({ ...prev, [divisionId]: value }));
+    } else {
+      setEnableCAReportState(value);
+    }
     return res;
   }, []);
 
-  const getTemplateIndex = useCallback(() => {
-    const idx = TEMPLATE_SAMPLES.findIndex((t) => t.sample === activeTemplate);
-    return idx >= 0 ? idx : 0;
-  }, [activeTemplate]);
+  // CA flag for the currently selected division (falls back to default).
+  const getCAReportForDivision = useCallback(
+    (divisionId) => (divisionId != null
+      ? (divisionCAReports[divisionId] ?? enableCAReport)
+      : enableCAReport),
+    [divisionCAReports, enableCAReport],
+  );
+
+  // Index of the default active template (report rendering default).
+  const getTemplateIndex = useCallback(() => sampleIndex(activeTemplate), [activeTemplate]);
+
+  // Index for an explicit sample name (e.g. a dossier's result_template).
+  const getTemplateIndexForSample = useCallback(
+    (sample) => sampleIndex(sample || activeTemplate),
+    [activeTemplate],
+  );
 
   return (
     <ResultTemplateContext.Provider value={{
       activeTemplate,
+      divisionTemplates,
       selectTemplate,
       fetchActiveTemplate,
+      getTemplateForDivision,
       getTemplateIndex,
+      getTemplateIndexForSample,
       enableCAReport,
+      divisionCAReports,
+      getCAReportForDivision,
       setEnableCAReport,
-      templateSamples: TEMPLATE_SAMPLES,
+      templateSamples,
+      samplesLoading,
+      fetchTemplateSamples,
       initializing,
     }}>
       {children}
@@ -105,5 +172,5 @@ export const useResultTemplate = () => {
   return ctx;
 };
 
-export { TEMPLATE_SAMPLES };
+export { sampleIndex };
 export default ResultTemplateContext;

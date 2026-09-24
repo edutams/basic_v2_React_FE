@@ -524,7 +524,7 @@ const TenantRoutes = [
       {
         path: 'result-cabreakdown',
         element: (
-          <TenantProtectedRoute permission="result.admin.ca_breakdown.view">
+          <TenantProtectedRoute permission="result.client.cabreakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),

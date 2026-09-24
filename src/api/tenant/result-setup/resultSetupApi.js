@@ -77,10 +77,12 @@ const resultSetupApi = {
     tenantApi.post(`/result-setup/comment-nomenclatures/${id}/toggle-status`),
 
   // ── Result Templates ─────────────────────────────────────
-  getTemplates: () => tenantApi.get('/result-templates/'),
-  getActiveTemplate: (params) => tenantApi.get('/result-templates/active', { params }),
-  setTemplate: (data) => tenantApi.post('/result-templates/set', data),
-  toggleCAReport: (data) => tenantApi.post('/result-templates/enable-ca-report', data),
+  getDivisions: () => tenantApi.get('/result-setup/divisions'),
+  getTemplateSamples: () => tenantApi.get('/result-setup/result-templates/samples'),
+  getTemplates: () => tenantApi.get('/result-setup/result-templates/'),
+  getActiveTemplate: (params) => tenantApi.get('/result-setup/result-templates/active', { params }),
+  setTemplate: (data) => tenantApi.post('/result-setup/result-templates/set', data),
+  toggleCAReport: (data) => tenantApi.post('/result-setup/result-templates/enable-ca-report', data),
 };
 
 export default resultSetupApi;

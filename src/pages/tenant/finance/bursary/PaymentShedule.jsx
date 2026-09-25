@@ -31,8 +31,8 @@ import {
   Message as MessageIcon,
   Email as EmailIcon,
   Article as ArticleIcon,
-  Settings as SettingsIcon,
   SwapHoriz as MigrateIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
@@ -83,6 +83,10 @@ const PaymentShedule = () => {
 
   const [sessions, setSessions] = useState([]);
   const [categories, setCategories] = useState([]);
+  // null = not evaluated yet; false only once the backend confirms zero
+  // payment items exist for the current pay_option — a state every
+  // category's own missing_count can't tell apart from "fully scheduled".
+  const [hasPaymentItems, setHasPaymentItems] = useState(null);
 
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
   const [selectedSession, setSelectedSession] = useState('');
@@ -187,15 +191,31 @@ const PaymentShedule = () => {
       }
     };
 
+    loadSessionTerms();
+  }, []);
+
+  // Refetches whenever the session, term, or Compulsory/Optional tab
+  // changes so each category's `missing_count` reflects what's actually
+  // selected — a category can be fully scheduled for one term/pay_option
+  // and missing for another. Doesn't reset `selectedCategory` on refetch
+  // so switching term/tab doesn't yank the bursar's current pick away.
+  useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoadingCategories(true);
-        const res = await fetchActiveCategories();
+        const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+        const res = await fetchActiveCategories({
+          sessionId: selectedSession || undefined,
+          termId: activeSubTermId || undefined,
+          payOption,
+          payType: 'bursary',
+        });
 
         const list = Array.isArray(res?.data) ? res.data : [];
         setCategories(list);
+        setHasPaymentItems(res?.has_payment_items ?? null);
 
-        if (list.length > 0) {
+        if (list.length > 0 && !selectedCategory) {
           setSelectedCategory(String(list[0].id));
         }
       } catch (err) {
@@ -205,15 +225,44 @@ const PaymentShedule = () => {
       }
     };
 
-    loadSessionTerms();
     loadCategories();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSession, activeSubTermId, scheduleTab]);
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTerm)?.session?.session_name || '';
 
   const selectedCategoryLabel =
     categories.find((c) => String(c.id) === String(selectedCategory))?.name || '';
+
+  // Flags categories with zero prices set for the current session/term/tab
+  // before the bursar even opens the dropdown — the whole point being they
+  // shouldn't have to click through each one just to find the gaps.
+  const categoriesMissingCount = categories.filter((c) => (c.missing_count ?? 0) > 0).length;
+  const totalMissingAcrossCategories = categories.reduce((sum, c) => sum + (c.missing_count ?? 0), 0);
+  // Categories with literally nothing priced yet vs. ones that are only
+  // partially done — same missing_count > 0 either way, but a bursar
+  // needs to know which is which.
+  const categoriesFullyUnsetCount = categories.filter((c) => c.has_none_set).length;
+  const categoriesPartiallyMissingCount = categoriesMissingCount - categoriesFullyUnsetCount;
+
+  // hasPaymentItems === false takes priority: with zero payment items,
+  // every category's missing_count is silently 0 (nothing to schedule
+  // against yet), which would otherwise look identical to "fully done".
+  const categoryCalloutMessage =
+    hasPaymentItems === false
+      ? `No ${scheduleTab === 0 ? 'compulsory' : 'optional'} payment items created yet — add one to start scheduling`
+      : categoriesFullyUnsetCount > 0
+        ? `${categoriesFullyUnsetCount} categor${categoriesFullyUnsetCount === 1 ? 'y has' : 'ies have'} no schedule/price set for any class${
+            categoriesPartiallyMissingCount > 0
+              ? ` — ${categoriesPartiallyMissingCount} more only partially priced across classes`
+              : ''
+          }`
+        : categoriesMissingCount > 0
+          ? `${categoriesMissingCount} categor${categoriesMissingCount === 1 ? 'y' : 'ies'} missing schedules${
+              totalMissingAcrossCategories > 0 ? ` — ${totalMissingAcrossCategories} class/item pairs` : ''
+            }`
+          : null;
 
   // The Set Schedule tab's own picker is session-only — which term is
   // active gets picked via the First/Second/Third Term pills inside
@@ -1204,35 +1253,11 @@ const PaymentShedule = () => {
                 sx={{
                   display: 'flex',
                   flexDirection: { xs: 'column', lg: 'row' },
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   alignItems: { xs: 'flex-start', lg: 'center' },
                   gap: 2,
                 }}
               >
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1,
-                      bgcolor: 'primary.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <SettingsIcon sx={{ color: 'primary.main' }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>
-                      Payment Schedule
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Switch tabs to configure compulsory or optional items.
-                    </Typography>
-                  </Box>
-                </Box>
-
                 <Box
                   sx={{
                     display: 'flex',
@@ -1271,6 +1296,9 @@ const PaymentShedule = () => {
                       label="Student Pay Category"
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       disabled={loadingCategories}
+                      renderValue={(val) =>
+                        categories.find((c) => String(c.id) === String(val))?.name || ''
+                      }
                     >
                       {loadingCategories ? (
                         <MenuItem disabled>
@@ -1279,12 +1307,73 @@ const PaymentShedule = () => {
                       ) : (
                         categories.map((category) => (
                           <MenuItem key={category.id} value={String(category.id)}>
-                            {category.name}
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              width="100%"
+                              gap={1}
+                            >
+                              {category.name}
+                              {category.missing_count > 0 && (
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    color: '#fff',
+                                    bgcolor: 'error.main',
+                                    borderRadius: '10px',
+                                    px: 1,
+                                    py: 0.25,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {category.missing_count} missing
+                                </Box>
+                              )}
+                            </Box>
                           </MenuItem>
                         ))
                       )}
                     </Select>
                   </FormControl>
+
+                  {/* Always-visible, not hover-only — a bursar needs to see
+                      this without discovering a tooltip first. */}
+                  {categoryCalloutMessage && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        animation: 'pointAtCategoryPicker 1.4s ease-in-out infinite',
+                        '@keyframes pointAtCategoryPicker': {
+                          '0%, 100%': { opacity: 1, transform: 'translateX(0)' },
+                          '50%': { opacity: 0.65, transform: 'translateX(-3px)' },
+                        },
+                      }}
+                    >
+                      <ArrowBackIcon sx={{ fontSize: 18, color: 'error.main' }} />
+                      <Box
+                        sx={{
+                          bgcolor: 'error.main',
+                          color: '#fff',
+                          borderRadius: '6px',
+                          px: 1,
+                          py: 0.4,
+                          boxShadow: '0 2px 6px rgba(211,47,47,0.45)',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: '#fff', fontWeight: 800, lineHeight: 1.2, whiteSpace: 'nowrap' }}
+                        >
+                          {categoryCalloutMessage}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>

@@ -1,18 +1,61 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle,
-  DialogContent, DialogActions, Snackbar, Alert, CircularProgress, TextField,
-  Checkbox, ListItemText, LinearProgress, Paper, useTheme, Avatar, IconButton, Tooltip,
-  Stack, Divider,
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Button,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  TextField,
+  Checkbox,
+  ListItemText,
+  LinearProgress,
+  Paper,
+  useTheme,
+  Avatar,
+  IconButton,
+  Tooltip,
+  Stack,
+  Divider,
 } from '@mui/material';
 import {
-  IconMail, IconMessage, IconSend, IconTrash, IconMailForward, IconDeviceMobileMessage,
-  IconBrandWhatsapp, IconUsers, IconFilter, IconRefresh, IconAlertCircle, IconCircleCheck,
-  IconClock, IconUpload, IconDownload,
+  IconMail,
+  IconMessage,
+  IconSend,
+  IconTrash,
+  IconMailForward,
+  IconDeviceMobileMessage,
+  IconBrandWhatsapp,
+  IconUsers,
+  IconFilter,
+  IconRefresh,
+  IconAlertCircle,
+  IconCircleCheck,
+  IconClock,
+  IconUpload,
+  IconDownload,
 } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
-import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessionTerms,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
 import StatCard from '@/components/shared/StatCard';
 
 const CHANNELS = {
@@ -80,7 +123,8 @@ const MessagingTab = () => {
   const [stats, setStats] = useState({ Email: null, SMS: null, WhatsApp: null });
   const [statsLoading, setStatsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
   const channelKey = (name) => CHANNELS[name]?.key ?? name.toLowerCase();
 
@@ -94,7 +138,7 @@ const MessagingTab = () => {
       const stRows = st?.data ?? [];
       setSessionTerms(stRows);
       setProgrammes(Array.isArray(progs.data) ? progs.data : []);
-      const activeRow = active?.data ?? active?.status ? (active?.data ?? active) : null;
+      const activeRow = (active?.data ?? active?.status) ? (active?.data ?? active) : null;
       const activeId = activeRow?.id ?? stRows.find((s) => s.status === 'active')?.id ?? '';
       setForm((f) => ({ ...f, sessTermId: activeId || '' }));
     } catch (err) {
@@ -102,7 +146,9 @@ const MessagingTab = () => {
     }
   }, []);
 
-  useEffect(() => { loadBase(); }, [loadBase]);
+  useEffect(() => {
+    loadBase();
+  }, [loadBase]);
 
   const loadClasses = async (progId) => {
     try {
@@ -117,7 +163,9 @@ const MessagingTab = () => {
     setStatsLoading(true);
     try {
       const results = await Promise.all(
-        Object.values(CHANNELS).map((c) => communicationApi.resultAnalytic(c.key).catch(() => ({ data: {} }))),
+        Object.values(CHANNELS).map((c) =>
+          communicationApi.resultAnalytic(c.key).catch(() => ({ data: {} })),
+        ),
       );
       const next = {};
       Object.keys(CHANNELS).forEach((name, i) => {
@@ -131,7 +179,9 @@ const MessagingTab = () => {
     }
   };
 
-  useEffect(() => { loadStats(); }, []);
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   const openDialog = (channel) => {
     setRows([]);
@@ -161,11 +211,16 @@ const MessagingTab = () => {
       setRows(data);
       setSelected(data.map((r) => r.res_msg_id));
       const edits = {};
-      data.forEach((r) => { edits[r.res_msg_id] = contactValue(r, channel); });
+      data.forEach((r) => {
+        edits[r.res_msg_id] = contactValue(r, channel);
+      });
       setContactEdits(edits);
       showSnackbar(`Loaded ${data.length} student(s)`);
     } catch (err) {
-      showSnackbar(err.response?.data?.message || err.response?.data?.error || 'Failed to load students', 'error');
+      showSnackbar(
+        err.response?.data?.message || err.response?.data?.error || 'Failed to load students',
+        'error',
+      );
     } finally {
       setPopulating(false);
     }
@@ -174,7 +229,10 @@ const MessagingTab = () => {
   const removeRow = async (row) => {
     const { channel } = sendDialog;
     try {
-      await communicationApi.resultDelete(channelKey(channel), { id: row.res_msg_id, reg_id: row.reg_id });
+      await communicationApi.resultDelete(channelKey(channel), {
+        id: row.res_msg_id,
+        reg_id: row.reg_id,
+      });
       setRows((r) => r.filter((x) => x.res_msg_id !== row.res_msg_id));
       setSelected((s) => s.filter((id) => id !== row.res_msg_id));
     } catch (err) {
@@ -190,11 +248,16 @@ const MessagingTab = () => {
       if (channel === 'Email') {
         await communicationApi.resultEditEmail({ id: row.res_msg_id, email: value });
       } else {
-        await communicationApi.resultUpdatePhone(channelKey(channel), { id: row.res_msg_id, phone: value });
+        await communicationApi.resultUpdatePhone(channelKey(channel), {
+          id: row.res_msg_id,
+          phone: value,
+        });
       }
-      setRows((rs) => rs.map((r) => (r.res_msg_id === row.res_msg_id
-        ? { ...r, [CHANNELS[channel].contactField]: value }
-        : r)));
+      setRows((rs) =>
+        rs.map((r) =>
+          r.res_msg_id === row.res_msg_id ? { ...r, [CHANNELS[channel].contactField]: value } : r,
+        ),
+      );
       showSnackbar('Contact updated');
     } catch (err) {
       showSnackbar(err.response?.data?.message || 'Failed to update contact', 'error');
@@ -213,9 +276,16 @@ const MessagingTab = () => {
       showSnackbar('No students selected', 'warning');
       return;
     }
-    const missing = payloadRows.filter((r) => !contactValue(r, channel) && !(CHANNELS[channel].contactField in r && r[CHANNELS[channel].contactField]));
+    const missing = payloadRows.filter(
+      (r) =>
+        !contactValue(r, channel) &&
+        !(CHANNELS[channel].contactField in r && r[CHANNELS[channel].contactField]),
+    );
     if (missing.length) {
-      showSnackbar(`${missing.length} selected student(s) are missing a ${CHANNELS[channel].contactLabel}`, 'warning');
+      showSnackbar(
+        `${missing.length} selected student(s) are missing a ${CHANNELS[channel].contactLabel}`,
+        'warning',
+      );
       return;
     }
     setSending(true);
@@ -241,14 +311,19 @@ const MessagingTab = () => {
       setSelected([]);
       setContactEdits({});
     } catch (err) {
-      showSnackbar(err.response?.data?.message || err.response?.data?.error || 'Send failed', 'error');
+      showSnackbar(
+        err.response?.data?.message || err.response?.data?.error || 'Send failed',
+        'error',
+      );
     } finally {
       setSending(false);
     }
   };
 
   const toggleAll = () => {
-    setSelected(selected.length === rows.length && rows.length > 0 ? [] : rows.map((r) => r.res_msg_id));
+    setSelected(
+      selected.length === rows.length && rows.length > 0 ? [] : rows.map((r) => r.res_msg_id),
+    );
   };
 
   const toggleRow = (id) => {
@@ -258,8 +333,10 @@ const MessagingTab = () => {
   const activeTermCount = (name) => {
     const s = stats[name];
     if (!s) return 0;
-    if (name === 'WhatsApp') return s.total_active_sess_term_result_whatsapp ?? s.total_active_sess_term_result_sms ?? 0;
-    if (name === 'Email') return s.total_active_sess_term_result_email ?? s.total_active_sess_term_result_sms ?? 0;
+    if (name === 'WhatsApp')
+      return s.total_active_sess_term_result_whatsapp ?? s.total_active_sess_term_result_sms ?? 0;
+    if (name === 'Email')
+      return s.total_active_sess_term_result_email ?? s.total_active_sess_term_result_sms ?? 0;
     return s.total_active_sess_term_result_sms ?? 0;
   };
 
@@ -279,7 +356,8 @@ const MessagingTab = () => {
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2.5, borderRadius: '10px' }}>
-        Send result notifications to students and parents via SMS, Email, or WhatsApp. Choose a channel, load recipients for a class, review the list, then send.
+        Send result notifications to students and parents via SMS, Email, or WhatsApp. Choose a
+        channel, load recipients for a class, review the list, then send.
       </Alert>
 
       {/* ── Stats ─────────────────────────────────────── */}
@@ -318,9 +396,21 @@ const MessagingTab = () => {
 
       {/* ── Filters + Channel readiness (one card) ───── */}
       <Paper elevation={0} sx={{ ...cardBorder, overflow: 'hidden' }}>
-        <Box sx={{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1.25,
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           <IconFilter size={18} color={theme.palette.primary.main} />
-          <Typography variant="subtitle2" fontWeight={700}>Recipient Filters</Typography>
+          <Typography variant="subtitle2" fontWeight={700}>
+            Recipient Filters
+          </Typography>
           <Chip
             size="small"
             label={filtersReady ? 'Ready' : 'Incomplete'}
@@ -329,7 +419,9 @@ const MessagingTab = () => {
             sx={{ ml: 'auto' }}
           />
           <Tooltip title="Reload stats">
-            <IconButton size="small" onClick={loadStats}><IconRefresh size={16} /></IconButton>
+            <IconButton size="small" onClick={loadStats}>
+              <IconRefresh size={16} />
+            </IconButton>
           </Tooltip>
         </Box>
         <Box sx={{ p: 2, pb: 1.5 }}>
@@ -344,7 +436,8 @@ const MessagingTab = () => {
                 >
                   {sessionTerms.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} — {s.term?.term_name ?? s.display_name}
+                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
+                      {s.term?.term_name ?? s.display_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -362,7 +455,9 @@ const MessagingTab = () => {
                   }}
                 >
                   {programmes.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>{p.programme_name}</MenuItem>
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.programme_name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -376,7 +471,9 @@ const MessagingTab = () => {
                   label="Class(es)"
                   onChange={(e) => setForm((f) => ({ ...f, classArmIds: e.target.value }))}
                   renderValue={(v) => {
-                    const names = classes.filter((c) => v.includes(c.class_arm_id ?? c.cID)).map((c) => c.class_name);
+                    const names = classes
+                      .filter((c) => v.includes(c.class_arm_id ?? c.cID))
+                      .map((c) => c.class_name);
                     return names.length ? names.join(', ') : `${v.length} selected`;
                   }}
                 >
@@ -420,21 +517,54 @@ const MessagingTab = () => {
 
         <Divider />
 
-        <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1, borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 1.25,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
           <IconSend size={18} color={theme.palette.primary.main} />
-          <Typography variant="subtitle2" fontWeight={700}>Channel Readiness</Typography>
-          <Chip size="small" label={`${Object.keys(CHANNELS).length} channels`} variant="outlined" sx={{ ml: 'auto' }} />
+          <Typography variant="subtitle2" fontWeight={700}>
+            Channel Readiness
+          </Typography>
+          <Chip
+            size="small"
+            label={`${Object.keys(CHANNELS).length} channels`}
+            variant="outlined"
+            sx={{ ml: 'auto' }}
+          />
         </Box>
         <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 1, px: 1.5 } }}>
+          <Table
+            stickyHeader
+            size="small"
+            sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 1, px: 1.5 } }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={cellHeaderSx} width="5%">#</TableCell>
-                <TableCell sx={cellHeaderSx} width="18%">Channel</TableCell>
-                <TableCell sx={cellHeaderSx} width="18%">Active Term</TableCell>
-                <TableCell sx={cellHeaderSx} width="18%">All-time</TableCell>
-                <TableCell sx={cellHeaderSx} width="26%">Status</TableCell>
-                <TableCell sx={cellHeaderSx} width="15%" align="right">Action</TableCell>
+                <TableCell sx={cellHeaderSx} width="5%">
+                  #
+                </TableCell>
+                <TableCell sx={cellHeaderSx} width="18%">
+                  Channel
+                </TableCell>
+                <TableCell sx={cellHeaderSx} width="18%">
+                  Active Term
+                </TableCell>
+                <TableCell sx={cellHeaderSx} width="18%">
+                  All-time
+                </TableCell>
+                <TableCell sx={cellHeaderSx} width="26%">
+                  Status
+                </TableCell>
+                <TableCell sx={cellHeaderSx} width="15%" align="right">
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -448,19 +578,32 @@ const MessagingTab = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar
                           sx={{
-                            width: 32, height: 32, borderRadius: '10px',
-                            bgcolor: isDark ? 'rgba(255,255,255,0.08)'
-                              : cfg.color === 'primary' ? '#DBEAFE'
-                                : cfg.color === 'info' ? '#DBEAFE' : '#DCFCE7',
-                            color: isDark ? '#fff'
-                              : cfg.color === 'success' ? '#16A34A' : '#2563EB',
+                            width: 32,
+                            height: 32,
+                            borderRadius: '10px',
+                            bgcolor: isDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : cfg.color === 'primary'
+                                ? '#DBEAFE'
+                                : cfg.color === 'info'
+                                  ? '#DBEAFE'
+                                  : '#DCFCE7',
+                            color: isDark
+                              ? '#fff'
+                              : cfg.color === 'success'
+                                ? '#16A34A'
+                                : '#2563EB',
                           }}
                         >
                           <Icon size={18} />
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" fontWeight={700}>{name}</Typography>
-                          <Typography variant="caption" color="text.secondary">Channel {i + 1}</Typography>
+                          <Typography variant="body2" fontWeight={700}>
+                            {name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Channel {i + 1}
+                          </Typography>
                         </Box>
                       </Box>
                     </TableCell>
@@ -474,12 +617,20 @@ const MessagingTab = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={700} color="primary.main">{active}</Typography>
-                      <Typography variant="caption" color="text.secondary">queued this term</Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary.main">
+                        {active}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        queued this term
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={700}>{total}</Typography>
-                      <Typography variant="caption" color="text.secondary">messages sent</Typography>
+                      <Typography variant="body2" fontWeight={700}>
+                        {total}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        messages sent
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       {statsLoading ? (
@@ -557,7 +708,8 @@ const MessagingTab = () => {
                 >
                   {sessionTerms.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} — {s.term?.term_name ?? s.display_name}
+                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
+                      {s.term?.term_name ?? s.display_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -575,7 +727,9 @@ const MessagingTab = () => {
                   }}
                 >
                   {programmes.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>{p.programme_name}</MenuItem>
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.programme_name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -589,7 +743,9 @@ const MessagingTab = () => {
                   label="Class(es)"
                   onChange={(e) => setForm((f) => ({ ...f, classArmIds: e.target.value }))}
                   renderValue={(v) => {
-                    const names = classes.filter((c) => v.includes(c.class_arm_id ?? c.cID)).map((c) => c.class_name);
+                    const names = classes
+                      .filter((c) => v.includes(c.class_arm_id ?? c.cID))
+                      .map((c) => c.class_name);
                     return names.length ? names.join(', ') : `${v.length} selected`;
                   }}
                 >
@@ -612,8 +768,16 @@ const MessagingTab = () => {
                   variant="contained"
                   size="medium"
                   onClick={populate}
-                  disabled={populating || !form.sessTermId || !form.progId || !form.classArmIds.length}
-                  startIcon={populating ? <CircularProgress size={14} color="inherit" /> : <IconDownload size={16} />}
+                  disabled={
+                    populating || !form.sessTermId || !form.progId || !form.classArmIds.length
+                  }
+                  startIcon={
+                    populating ? (
+                      <CircularProgress size={14} color="inherit" />
+                    ) : (
+                      <IconDownload size={16} />
+                    )
+                  }
                   sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
                 >
                   {populating ? 'Loading students…' : 'Load Students'}
@@ -652,7 +816,11 @@ const MessagingTab = () => {
                     overflowX: 'auto',
                   }}
                 >
-                  <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 0.75, px: 1.25 } }}>
+                  <Table
+                    stickyHeader
+                    size="small"
+                    sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 0.75, px: 1.25 } }}
+                  >
                     <TableHead>
                       <TableRow>
                         <TableCell padding="checkbox" sx={cellHeaderSx}>
@@ -665,17 +833,22 @@ const MessagingTab = () => {
                         </TableCell>
                         <TableCell sx={cellHeaderSx}>#</TableCell>
                         <TableCell sx={cellHeaderSx}>Student</TableCell>
-                        <TableCell sx={cellHeaderSx}>{dialogChannel?.contactLabel ?? 'Contact'}</TableCell>
+                        <TableCell sx={cellHeaderSx}>
+                          {dialogChannel?.contactLabel ?? 'Contact'}
+                        </TableCell>
                         <TableCell sx={cellHeaderSx}>Reg. No</TableCell>
                         <TableCell sx={cellHeaderSx}>Status</TableCell>
-                        <TableCell sx={cellHeaderSx} align="right">Action</TableCell>
+                        <TableCell sx={cellHeaderSx} align="right">
+                          Action
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {rows.map((r, idx) => {
                         const isSelected = selected.includes(r.res_msg_id);
                         const name = [r.fname, r.mname, r.lname].filter(Boolean).join(' ');
-                        const initials = `${(r.fname || '?').charAt(0)}${(r.lname || '').charAt(0)}`.toUpperCase();
+                        const initials =
+                          `${(r.fname || '?').charAt(0)}${(r.lname || '').charAt(0)}`.toUpperCase();
                         const status = (r.res_msg_status || 'pending').toLowerCase();
                         return (
                           <TableRow
@@ -693,15 +866,27 @@ const MessagingTab = () => {
                               />
                             </TableCell>
                             <TableCell>
-                              <Typography variant="caption" color="text.secondary">{idx + 1}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {idx + 1}
+                              </Typography>
                             </TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 30, height: 30, fontSize: 12, borderRadius: '8px', bgcolor: 'primary.main' }}>
+                                <Avatar
+                                  sx={{
+                                    width: 30,
+                                    height: 30,
+                                    fontSize: 12,
+                                    borderRadius: '8px',
+                                    bgcolor: 'primary.main',
+                                  }}
+                                >
                                   {initials}
                                 </Avatar>
                                 <Box>
-                                  <Typography variant="body2" fontWeight={600}>{name}</Typography>
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {name}
+                                  </Typography>
                                   <Typography variant="caption" color="text.secondary">
                                     {r.userid || r.user_id || '—'}
                                   </Typography>
@@ -713,11 +898,21 @@ const MessagingTab = () => {
                                 size="small"
                                 value={contactEdits[r.res_msg_id] ?? ''}
                                 placeholder={dialogChannel?.contactPlaceholder}
-                                onChange={(e) => setContactEdits((ed) => ({ ...ed, [r.res_msg_id]: e.target.value }))}
+                                onChange={(e) =>
+                                  setContactEdits((ed) => ({
+                                    ...ed,
+                                    [r.res_msg_id]: e.target.value,
+                                  }))
+                                }
                                 onBlur={() => saveContact(r)}
                                 error={!(contactEdits[r.res_msg_id] ?? '').trim()}
-                                helperText={!(contactEdits[r.res_msg_id] ?? '').trim() ? 'Required' : ' '}
-                                sx={{ minWidth: 180, '& .MuiFormHelperText-root': { mx: 0, mt: 0, mb: -0.5 } }}
+                                helperText={
+                                  !(contactEdits[r.res_msg_id] ?? '').trim() ? 'Required' : ' '
+                                }
+                                sx={{
+                                  minWidth: 180,
+                                  '& .MuiFormHelperText-root': { mx: 0, mt: 0, mb: -0.5 },
+                                }}
                               />
                             </TableCell>
                             <TableCell>
@@ -727,14 +922,24 @@ const MessagingTab = () => {
                             </TableCell>
                             <TableCell>
                               <Chip
-                                icon={status === 'sent' || status === 'delivered'
-                                  ? <IconCircleCheck size={14} />
-                                  : status === 'failed'
-                                    ? <IconAlertCircle size={14} />
-                                    : <IconClock size={14} />}
+                                icon={
+                                  status === 'sent' || status === 'delivered' ? (
+                                    <IconCircleCheck size={14} />
+                                  ) : status === 'failed' ? (
+                                    <IconAlertCircle size={14} />
+                                  ) : (
+                                    <IconClock size={14} />
+                                  )
+                                }
                                 label={status}
                                 size="small"
-                                color={status === 'sent' || status === 'delivered' ? 'success' : status === 'failed' ? 'error' : 'warning'}
+                                color={
+                                  status === 'sent' || status === 'delivered'
+                                    ? 'success'
+                                    : status === 'failed'
+                                      ? 'error'
+                                      : 'warning'
+                                }
                                 variant="soft"
                               />
                             </TableCell>
@@ -761,8 +966,20 @@ const MessagingTab = () => {
 
             {rows.length === 0 && !populating && (
               <Grid size={12}>
-                <Box sx={{ p: 4, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: '10px' }}>
-                  <IconUpload size={44} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 10 }} />
+                <Box
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <IconUpload
+                    size={44}
+                    color={isDark ? '#fff' : '#94a3b8'}
+                    style={{ marginBottom: 10 }}
+                  />
                   <Typography variant="h6" color="text.secondary" fontWeight={600}>
                     No recipients loaded yet
                   </Typography>
@@ -787,37 +1004,29 @@ const MessagingTab = () => {
             color={dialogChannel?.color || 'primary'}
             onClick={send}
             disabled={sending || rows.length === 0 || selected.length === 0}
-            startIcon={sending ? <CircularProgress size={14} color="inherit" /> : dialogChannel?.buttonIcon}
+            startIcon={
+              sending ? <CircularProgress size={14} color="inherit" /> : dialogChannel?.buttonIcon
+            }
             sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 3 }}
           >
-            {sending
-              ? 'Sending…'
-              : `Send ${selected.length} via ${sendDialog.channel}`}
+            {sending ? 'Sending…' : `Send ${selected.length} via ${sendDialog.channel}`}
           </Button>
         </DialogActions>
       </Dialog>
 
-<<<<<<< HEAD
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
           severity={snackbar.severity}
-          variant="filled"
-          sx={{ borderRadius: '10px' }}
         >
           {snackbar.message}
         </Alert>
-=======
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
-      >
-        <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity}>{snackbar.message}</Alert>
->>>>>>> version_control
       </Snackbar>
     </Box>
   );
